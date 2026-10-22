@@ -198,6 +198,9 @@ batch assigns it no frame.
   again: its beliefs, outgoing messages and hard decisions keep the values
   they hold when it leaves the active set. It changes no other lane.
 - **Idle lanes.** An idle lane holds zero LLRs.
+- **Worker context.** Configured decode concurrency changes route eligibility
+  through the coding selectors. The equality clauses hold across explicit
+  worker counts, worker scheduling and decoder reuse under another pool.
 - **Lane backends.** The lane kernels of `gf2-kernels-simd` have a portable
   backend and an AVX2 backend that writes the same bit patterns, so each
   clause holds on either. `LdpcBatchDecoder` runs the AVX2 backend when

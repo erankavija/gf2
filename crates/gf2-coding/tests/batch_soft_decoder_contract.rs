@@ -400,3 +400,26 @@ fn ldpc_default_path_outcome_is_the_parity_test_of_the_hard_decision() {
         code.n(),
     );
 }
+
+#[test]
+fn trait_object_worker_context_defaults_to_the_same_decode() {
+    let frames = frame_set(&LdpcEncoder::new(ldpc_code()));
+    let views: Vec<_> = frames.iter().map(Vec::as_slice).collect();
+    let mut decoder = IterativeBatchDecoder::new(LdpcDecoder::new(ldpc_code()), CAP);
+    let mut expected = vec![BitVec::new(); frames.len()];
+    let mut expected_outcomes = vec![DecodeOutcome::default(); frames.len()];
+    decoder.decode_batch(&views, &mut expected, &mut expected_outcomes);
+    let decoder: &mut dyn BatchSoftDecoder = &mut decoder;
+    for workers in [1, 6, 24] {
+        let mut decoded = vec![BitVec::new(); frames.len()];
+        let mut outcomes = vec![DecodeOutcome::default(); frames.len()];
+        decoder.decode_batch_with_workers(
+            &views,
+            &mut decoded,
+            &mut outcomes,
+            std::num::NonZeroUsize::new(workers).unwrap(),
+        );
+        assert_eq!(decoded, expected);
+        assert_eq!(outcomes, expected_outcomes);
+    }
+}

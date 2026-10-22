@@ -1794,6 +1794,24 @@ pub trait BatchSoftDecoder {
         decoded: &mut [BitVec],
         outcomes: &mut [DecodeOutcome],
     );
+
+    /// Decodes with the configured concurrency of the caller. Standalone
+    /// decoders use one worker in [`decode_batch`](Self::decode_batch);
+    /// executors that launch parallel tasks supply their execution width.
+    /// The default forwards to `decode_batch` because it has no worker-dependent route.
+    ///
+    /// # Panics
+    ///
+    /// Panics as [`decode_batch`](Self::decode_batch) does.
+    fn decode_batch_with_workers(
+        &mut self,
+        frames: &[&[Llr]],
+        decoded: &mut [BitVec],
+        outcomes: &mut [DecodeOutcome],
+        _workers: std::num::NonZeroUsize,
+    ) {
+        self.decode_batch(frames, decoded, outcomes);
+    }
 }
 
 /// Decodes each frame with `decode_frame`, in input order.

@@ -9,6 +9,7 @@ use crate::traits::{BatchSoftDecoder, DecodeOutcome};
 use crate::tuning::{self, DecodeSelectors};
 use gf2_core::BitVec;
 use gf2_kernels_simd::ldpc_lanes::LANES;
+use std::num::NonZeroUsize;
 
 /// Batch decoder of one rate-matched 5G NR LDPC code under one algorithm and
 /// iteration cap.
@@ -173,6 +174,12 @@ impl Nr5gRateMatchedBatchDecoder {
     pub fn batch_route(&self, frames: usize) -> BatchRoute {
         self.inner.batch_route(frames)
     }
+
+    /// The mother-code wave route under configured concurrent decode `workers`.
+    #[must_use]
+    pub fn batch_route_with_workers(&self, frames: usize, workers: NonZeroUsize) -> BatchRoute {
+        self.inner.batch_route_with_workers(frames, workers)
+    }
 }
 
 impl BatchSoftDecoder for Nr5gRateMatchedBatchDecoder {
@@ -200,6 +207,16 @@ impl BatchSoftDecoder for Nr5gRateMatchedBatchDecoder {
         frames: &[&[Llr]],
         decoded: &mut [BitVec],
         outcomes: &mut [DecodeOutcome],
+    ) {
+        self.decode_batch_with_workers(frames, decoded, outcomes, NonZeroUsize::MIN);
+    }
+
+    fn decode_batch_with_workers(
+        &mut self,
+        frames: &[&[Llr]],
+        decoded: &mut [BitVec],
+        outcomes: &mut [DecodeOutcome],
+        workers: NonZeroUsize,
     ) {
         let n = self.frame_len();
         assert_eq!(
@@ -235,10 +252,11 @@ impl BatchSoftDecoder for Nr5gRateMatchedBatchDecoder {
                 *view = full;
             }
             let codewords = &mut self.codewords[..wave.len()];
-            self.inner.decode_batch(
+            self.inner.decode_batch_with_workers(
                 &views[..wave.len()],
                 codewords,
                 &mut outcomes[slots.clone()],
+                workers,
             );
             for (word, codeword) in decoded[slots].iter_mut().zip(codewords.iter()) {
                 self.rm_code.natural_order_message_into(codeword, word);

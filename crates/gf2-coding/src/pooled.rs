@@ -1,5 +1,6 @@
 //! Parallel batch decoding over one inner decoder per worker.
 
+use std::num::NonZeroUsize;
 use std::sync::{Mutex, MutexGuard};
 
 use gf2_core::BitVec;
@@ -27,7 +28,9 @@ use crate::tuning::DecodeSelectors;
 ///
 /// A `decode_batch` under a pool of another width, or outside any pool, stays
 /// correct: workers beyond the inner decoders share them by index, and a
-/// shared decoder serialises its tasks. Without the `parallel` feature a batch
+/// shared decoder serialises its tasks. Each task passes the execution pool's
+/// configured width to its inner decoder, preserving a larger explicit caller
+/// width. Without the `parallel` feature a batch
 /// decodes sequentially on the first inner decoder.
 ///
 /// # Bounds and cost
@@ -180,6 +183,19 @@ impl<D: BatchSoftDecoder + Send> BatchSoftDecoder for PooledBatchDecoder<D> {
         decoded: &mut [BitVec],
         outcomes: &mut [DecodeOutcome],
     ) {
+        self.decode_batch_with_workers(frames, decoded, outcomes, NonZeroUsize::MIN);
+    }
+
+    fn decode_batch_with_workers(
+        &mut self,
+        frames: &[&[Llr]],
+        decoded: &mut [BitVec],
+        outcomes: &mut [DecodeOutcome],
+        workers: NonZeroUsize,
+    ) {
+        // This executor launches tasks on the current pool, including from outside
+        // a Rayon worker; an outer executor can supply a larger concurrency.
+        let workers = workers.max(NonZeroUsize::new(worker_count()).unwrap());
         assert_eq!(
             decoded.len(),
             frames.len(),
@@ -201,7 +217,8 @@ impl<D: BatchSoftDecoder + Send> BatchSoftDecoder for PooledBatchDecoder<D> {
                 .zip(outcomes.par_chunks_mut(task))
                 .for_each(|((frames, decoded), outcomes)| {
                     let worker = rayon::current_thread_index().unwrap_or(0) % decoders.len();
-                    lock(&decoders[worker]).decode_batch(frames, decoded, outcomes);
+                    lock(&decoders[worker])
+                        .decode_batch_with_workers(frames, decoded, outcomes, workers);
                 });
         }
         #[cfg(not(feature = "parallel"))]
@@ -212,7 +229,7 @@ impl<D: BatchSoftDecoder + Send> BatchSoftDecoder for PooledBatchDecoder<D> {
                 .zip(decoded.chunks_mut(task))
                 .zip(outcomes.chunks_mut(task))
             {
-                decoder.decode_batch(frames, decoded, outcomes);
+                decoder.decode_batch_with_workers(frames, decoded, outcomes, workers);
             }
         }
     }

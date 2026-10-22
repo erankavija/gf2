@@ -696,7 +696,7 @@ mod imp {
             let code = qc_code();
             let cap = 20;
             let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
-            let every_wave = DecodeSelectors::try_new(1, usize::MAX, 1).unwrap();
+            let every_wave = DecodeSelectors::try_new(1, usize::MAX, 1, 1).unwrap();
             for portable in [false, true] {
                 let decoder = LdpcBatchDecoder::with_selectors(
                     code.clone(),

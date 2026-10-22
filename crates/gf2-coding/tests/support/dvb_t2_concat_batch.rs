@@ -15,7 +15,7 @@ use gf2_core::BitVec;
 /// Selectors under which a wave of at least `lane_min_frames` frames takes
 /// the lane route for a min-sum rule, whatever the edge count.
 pub fn selectors(lane_min_frames: usize) -> DecodeSelectors {
-    DecodeSelectors::try_new(lane_min_frames, usize::MAX, 1).unwrap()
+    DecodeSelectors::try_new(lane_min_frames, usize::MAX, 1, 1).unwrap()
 }
 
 /// The batch decoder of `codec` under `selectors` whose lane route runs

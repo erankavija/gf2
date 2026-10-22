@@ -62,8 +62,8 @@ detected bundle is used:
   conservative defaults for the rest of the process.
 
 The `CodingTuning` section carries an `encode` family for BCH batch encoding
-and a `decode` family, `lane_min_frames`, `lane_max_edges` and
-`granules_per_task`, for LDPC batch decoding. `LdpcBatchDecoder` gives each wave of a batch a route through
+and a `decode` family for LDPC batch decoding, whose canonical selectors
+are defined by [`DecodeSelectors`](../../crates/gf2-coding/src/tuning.rs). `LdpcBatchDecoder` gives each wave of a batch a route through
 `gf2_coding::ldpc::decide_batch_route`: the lane kernels of
 `gf2_kernels_simd::ldpc_lanes`, or frame by frame on `LdpcDecoder`. The
 conditions are in

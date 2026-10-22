@@ -86,7 +86,7 @@ fn without_the_lane_capability_the_lane_route_names_the_portable_backend() {
     } else {
         LaneBackend::Portable
     };
-    let open = || DecodeSelectors::try_new(0, usize::MAX, 1).unwrap();
+    let open = || DecodeSelectors::try_new(0, usize::MAX, 1, 1).unwrap();
     for code in codes() {
         for algorithm in &ALGORITHMS[..3] {
             let decoder = decoder(&code, *algorithm, open());
@@ -112,7 +112,8 @@ fn without_the_lane_capability_the_lane_route_names_the_portable_backend() {
 fn every_route_threshold_is_a_decode_selector() {
     assert_eq!(
         DecodeSelectors::CONSERVATIVE,
-        DecodeSelectors::try_new(LANE_MIN_FRAMES, LANE_MAX_EDGES, GRANULES_PER_TASK.get()).unwrap()
+        DecodeSelectors::try_new(LANE_MIN_FRAMES, LANE_MAX_EDGES, 1, GRANULES_PER_TASK.get())
+            .unwrap()
     );
     let backend = LaneBackend::detected();
     for code in codes() {
@@ -123,7 +124,8 @@ fn every_route_threshold_is_a_decode_selector() {
         let by_edges =
             [LANE_MAX_EDGES, edges - 1, edges, edges + 1].map(|lane_max_edges| (0, lane_max_edges));
         for (lane_min_frames, lane_max_edges) in by_frames.chain(by_edges) {
-            let selectors = DecodeSelectors::try_new(lane_min_frames, lane_max_edges, 1).unwrap();
+            let selectors =
+                DecodeSelectors::try_new(lane_min_frames, lane_max_edges, 1, 1).unwrap();
             for algorithm in ALGORITHMS {
                 let decoder = decoder(&code, algorithm, selectors.clone());
                 for frames in batch_sizes() {

@@ -75,8 +75,8 @@ of the coding tuning section
 ([route selection](../how-to/select-acceleration.md#route-ldpc-batch-decoding)):
 
 - The min-sum family (`MinSum`, `NormalizedMinSum`, `OffsetMinSum`) takes the
-  lane route when the wave and the code satisfy `lane_min_frames` and
-  `lane_max_edges`.
+  lane route when the wave, code and configured decode concurrency satisfy
+  `lane_min_frames`, `lane_max_edges` and `lane_max_workers`.
 - `SumProduct` takes the single-frame route.
 - The lane route runs AVX2 kernels when `gf2-coding` is built with `simd` and
   the host reports AVX2. On a host without AVX2, or in a build without `simd`,

@@ -263,7 +263,7 @@ fn selectors_admitting_the_table_family() -> CodingSelectors {
 fn selectors_carrying_a_decode_family() -> CodingSelectors {
     let (lane_min_frames, lane_max_edges, granules_per_task) = INSTALLED_DECODE;
     CodingSelectors {
-        decode: DecodeSelectors::try_new(lane_min_frames, lane_max_edges, granules_per_task)
+        decode: DecodeSelectors::try_new(lane_min_frames, lane_max_edges, 1, granules_per_task)
             .expect("a positive group count"),
         ..selectors_admitting_the_table_family()
     }
@@ -274,6 +274,7 @@ pub fn decode_report(decode: &DecodeSelectors) -> serde_json::Value {
     serde_json::json!({
         "lane_min_frames": decode.lane_min_frames(),
         "lane_max_edges": decode.lane_max_edges(),
+        "lane_max_workers": decode.lane_max_workers().get(),
         "granules_per_task": decode.granules_per_task().get(),
     })
 }

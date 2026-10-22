@@ -53,7 +53,9 @@ fn run() -> Result<(), String> {
         options.perf_control.as_ref(),
         setup_start,
         |_| BatchWorker::new(&code, decoder_config, cap, batch, route),
-        |worker: &mut BatchWorker| worker.decode_batch(llrs),
+        |worker: &mut BatchWorker| {
+            worker.decode_batch_with_workers(llrs, std::num::NonZeroUsize::new(cpus.len()).unwrap())
+        },
     )?;
     let workers = verify_workers(
         "gf2-batch-profile",

@@ -10,6 +10,7 @@ use crate::traits::block::BlockCode;
 use crate::traits::{BatchSoftDecoder, DecodeOutcome};
 use crate::tuning::{self, DecodeSelectors};
 use gf2_core::BitVec;
+use std::num::NonZeroUsize;
 
 /// Batch decoder of the DVB-T2 concatenated BCH and LDPC code
 /// (`@/citation/Etsi2015` §6): FECFRAMEs of LLRs in, BBFRAMEs out.
@@ -168,6 +169,16 @@ impl BatchSoftDecoder for DvbT2ConcatBatchDecoder {
         decoded: &mut [BitVec],
         outcomes: &mut [DecodeOutcome],
     ) {
+        self.decode_batch_with_workers(frames, decoded, outcomes, NonZeroUsize::MIN);
+    }
+
+    fn decode_batch_with_workers(
+        &mut self,
+        frames: &[&[Llr]],
+        decoded: &mut [BitVec],
+        outcomes: &mut [DecodeOutcome],
+        workers: NonZeroUsize,
+    ) {
         let n = self.frame_len();
         assert_eq!(
             decoded.len(),
@@ -197,7 +208,8 @@ impl BatchSoftDecoder for DvbT2ConcatBatchDecoder {
             .zip(outcomes.chunks_mut(lanes))
         {
             let codewords = &mut self.codewords[..wave.len()];
-            self.ldpc.decode_batch(wave, codewords, outcomes);
+            self.ldpc
+                .decode_batch_with_workers(wave, codewords, outcomes, workers);
             for (bbframe, codeword) in decoded.iter_mut().zip(codewords.iter()) {
                 *bbframe = bch_decode_ldpc_codeword(&self.bch_code, codeword);
             }

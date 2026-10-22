@@ -240,3 +240,41 @@ fn fresh_tuning_process_child() {
     };
     fresh::emit_result(fresh::execute_child(case));
 }
+
+#[test]
+fn committed_lane_domain_rejects_multicore_loss_configurations() {
+    use gf2_coding::ldpc::{DecodedWord, DecoderConfig, LdpcBatchDecoder};
+    use std::num::NonZeroUsize;
+    let (selectors, _) = measured_decode();
+    for code in [
+        test_support::ldpc_batch_code(),
+        gf2_coding::ldpc::LdpcCode::dvb_t2_normal(gf2_coding::CodeRate::Rate1_2),
+    ] {
+        let decoder = LdpcBatchDecoder::with_selectors(
+            code,
+            DecoderConfig::default(),
+            1,
+            DecodedWord::Codeword,
+            selectors.clone(),
+        );
+        assert!(matches!(decoder.batch_route(LANES), BatchRoute::Lane(_)));
+        for workers in [2, 6, 12, 24] {
+            assert_eq!(
+                decoder.batch_route_with_workers(LANES, NonZeroUsize::new(workers).unwrap()),
+                BatchRoute::SingleFrame
+            );
+        }
+    }
+}
+
+#[test]
+fn committed_worker_default_preserves_the_envelope_bytes() {
+    let prepared = fresh::measured_owner();
+    let assembly = prepared.verified_assembly().unwrap().provenance.clone();
+    assert_eq!(
+        fresh::coding_registry()
+            .to_json(&prepared, &assembly)
+            .unwrap(),
+        fresh::MEASURED_OWNER
+    );
+}

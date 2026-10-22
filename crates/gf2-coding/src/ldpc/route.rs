@@ -1,5 +1,7 @@
 //! Route decision of LDPC batch decoding.
 
+use std::num::NonZeroUsize;
+
 use super::DecoderAlgorithm;
 use crate::tuning::DecodeSelectors;
 use gf2_kernels_simd::ldpc_lanes::LdpcLaneFns;
@@ -66,10 +68,12 @@ pub enum BatchRoute {
 ///   [`DecoderAlgorithm::OffsetMinSum`];
 /// - `capability` is [`LaneCapability::Present`];
 /// - `occupied_lanes >= selectors.lane_min_frames()`;
-/// - `edges <= selectors.lane_max_edges()`.
+/// - `edges <= selectors.lane_max_edges()`;
+/// - `workers <= selectors.lane_max_workers()`.
 ///
 /// `occupied_lanes` counts the frames of the wave and `edges` the
-/// Tanner-graph edges of the code. The decision reads the decode selector
+/// Tanner-graph edges of the code. `workers` is the configured concurrent
+/// decode worker count, independent of how many are presently scheduled. The decision reads the decode selector
 /// family only; the caller resolves the family from the coding tuning
 /// section.
 #[must_use]
@@ -79,13 +83,15 @@ pub fn decide_batch_route(
     capability: LaneCapability,
     occupied_lanes: usize,
     edges: usize,
+    workers: NonZeroUsize,
 ) -> BatchRoute {
     let min_sum_family = !matches!(algorithm, DecoderAlgorithm::SumProduct);
     match capability {
         LaneCapability::Present(backend)
             if min_sum_family
                 && occupied_lanes >= selectors.lane_min_frames()
-                && edges <= selectors.lane_max_edges() =>
+                && edges <= selectors.lane_max_edges()
+                && workers <= selectors.lane_max_workers() =>
         {
             BatchRoute::Lane(backend)
         }
@@ -104,14 +110,44 @@ mod tests {
     ];
 
     fn selectors(min_frames: usize, max_edges: usize) -> DecodeSelectors {
-        DecodeSelectors::try_new(min_frames, max_edges, 1).unwrap()
+        DecodeSelectors::try_new(min_frames, max_edges, 1, 1).unwrap()
     }
 
     const PORTABLE: LaneCapability = LaneCapability::Present(LaneBackend::Portable);
     const LANE: BatchRoute = BatchRoute::Lane(LaneBackend::Portable);
 
     fn decide(s: &DecodeSelectors, lanes: usize, edges: usize) -> BatchRoute {
-        decide_batch_route(s, DecoderAlgorithm::MinSum, PORTABLE, lanes, edges)
+        decide_batch_route(
+            s,
+            DecoderAlgorithm::MinSum,
+            PORTABLE,
+            lanes,
+            edges,
+            NonZeroUsize::MIN,
+        )
+    }
+
+    #[test]
+    fn worker_limit_bounds_configured_decode_concurrency() {
+        let s = DecodeSelectors::try_new(1, 1000, 2, 1).unwrap();
+        for workers in [1, 2, 3, 6, 12, 24] {
+            let got = decide_batch_route(
+                &s,
+                DecoderAlgorithm::MinSum,
+                PORTABLE,
+                8,
+                100,
+                std::num::NonZeroUsize::new(workers).unwrap(),
+            );
+            assert_eq!(
+                got,
+                if workers <= 2 {
+                    LANE
+                } else {
+                    BatchRoute::SingleFrame
+                }
+            );
+        }
     }
 
     #[test]
@@ -134,7 +170,7 @@ mod tests {
     fn min_sum_family_takes_the_lane_route() {
         let s = selectors(1, 1000);
         for algorithm in MIN_SUM_FAMILY {
-            let route = decide_batch_route(&s, algorithm, PORTABLE, 8, 100);
+            let route = decide_batch_route(&s, algorithm, PORTABLE, 8, 100, NonZeroUsize::MIN);
             assert_eq!(route, LANE, "{algorithm:?}");
         }
     }
@@ -144,7 +180,14 @@ mod tests {
         let s = selectors(1, 1000);
         for backend in [LaneBackend::Portable, LaneBackend::Avx2] {
             let capability = LaneCapability::Present(backend);
-            let route = decide_batch_route(&s, DecoderAlgorithm::MinSum, capability, 8, 100);
+            let route = decide_batch_route(
+                &s,
+                DecoderAlgorithm::MinSum,
+                capability,
+                8,
+                100,
+                NonZeroUsize::MIN,
+            );
             assert_eq!(route, BatchRoute::Lane(backend));
         }
     }
@@ -163,7 +206,14 @@ mod tests {
     #[test]
     fn sum_product_is_single_frame() {
         let s = selectors(0, usize::MAX);
-        let route = decide_batch_route(&s, DecoderAlgorithm::SumProduct, PORTABLE, 8, 0);
+        let route = decide_batch_route(
+            &s,
+            DecoderAlgorithm::SumProduct,
+            PORTABLE,
+            8,
+            0,
+            NonZeroUsize::MIN,
+        );
         assert_eq!(route, BatchRoute::SingleFrame);
     }
 
@@ -171,7 +221,14 @@ mod tests {
     fn absent_capability_is_single_frame() {
         let s = selectors(0, usize::MAX);
         for algorithm in MIN_SUM_FAMILY {
-            let route = decide_batch_route(&s, algorithm, LaneCapability::Absent, 8, 0);
+            let route = decide_batch_route(
+                &s,
+                algorithm,
+                LaneCapability::Absent,
+                8,
+                0,
+                NonZeroUsize::MIN,
+            );
             assert_eq!(route, BatchRoute::SingleFrame, "{algorithm:?}");
         }
     }

@@ -926,6 +926,28 @@ class CodingOwner(unittest.TestCase):
         self.assertEqual(self.preflight(stage), {})
         self.assertEqual(stage.manifest["counts"], declared)
 
+    def test_worker_aware_payloads_declare_only_the_measured_concurrency(self):
+        stage = self.staged()
+        for key in CODING_FIELDS:
+            accepted = next(item for item in stage.bundle["accepted"]
+                            if item["unit"]["identity"]["field"] == f"decode.{key}")
+            result = dict(accepted["result"])
+            case = json.loads(accepted["unit"]["case"])
+            payload = json.loads(result["payload"])
+            selectors = payload["profile"]["active_decode"]
+            selectors["lane_max_workers"] = 4 if key == "granules_per_task" else 1
+            hashes = self.v.forced_hashes("gf2-coding", {"encode": self.v.CODING_ENCODE,
+                                                        "decode": selectors})
+            payload["profile"].update(envelope_sha256=hashes["envelope"],
+                                      content_sha256=hashes["content"],
+                                      wrapper_sha256=hashes["section"])
+            result["payload"] = self.v.compact(payload).decode()
+            self.v.validate_result_payload(result, case, "gf2-coding")
+            selectors["lane_max_workers"] += 1
+            result["payload"] = self.v.compact(payload).decode()
+            with self.assertRaises(self.v.ValidationError):
+                self.v.validate_result_payload(result, case, "gf2-coding")
+
     def test_the_owner_decisions_are_recomputed(self):
         stage = self.staged()
         decided = self.decisions(stage)["coding_decisions"]["fields"]

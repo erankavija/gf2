@@ -111,7 +111,7 @@ fn assembly(assembled_at: &str, tool: &str) -> AssemblyProvenance {
 
 fn calibrated_section() -> CodingTuning {
     CodingTuning::from_selectors(CodingSelectors {
-        decode: DecodeSelectors::try_new(4, 64_800, 2).unwrap(),
+        decode: DecodeSelectors::try_new(4, 64_800, 1, 2).unwrap(),
         ..CodingSelectors::CONSERVATIVE
     })
 }

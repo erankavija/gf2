@@ -1,7 +1,7 @@
 //! Coding-owned tuning selectors and their process-wide typed accessor; the
 //! generic process authority is [`gf2_core::tuning`]. The section holds two
 //! selector families: `encode`, the profile half of the batch-encoding family
-//! dispatch of [`crate::bch::encode::EncodeFamily`], and `decode`, three
+//! dispatch of [`crate::bch::encode::EncodeFamily`], and `decode`, the
 //! batch-decoding bounds the section stores, validates and serializes.
 
 use std::fmt;
@@ -21,6 +21,9 @@ pub const LANE_MIN_FRAMES: usize = usize::MAX;
 /// Conservative [`DecodeSelectors::lane_max_edges`]: the smallest value of
 /// the field's domain.
 pub const LANE_MAX_EDGES: usize = 0;
+
+/// Conservative upper bound on configured decode workers.
+pub const LANE_MAX_WORKERS: NonZeroUsize = NonZeroUsize::MIN;
 
 /// Conservative [`DecodeSelectors::granules_per_task`]: the smallest value of
 /// the field's domain.
@@ -99,7 +102,8 @@ impl EncodeSelectors {
 ///
 /// `lane_min_frames` is a lower bound on a count of occupied lanes and
 /// `lane_max_edges` an upper bound on a Tanner-graph edge count, each over
-/// all of `usize`; `granules_per_task` is a positive count of
+/// all of `usize`; `lane_max_workers` bounds configured decode concurrency;
+/// `granules_per_task` is a positive count of
 /// preferred-granularity frame groups. The section stores, validates and
 /// serializes the family, and
 /// [`decide_batch_route`](crate::ldpc::decide_batch_route) reads it to decide
@@ -108,15 +112,17 @@ impl EncodeSelectors {
 pub struct DecodeSelectors {
     lane_min_frames: usize,
     lane_max_edges: usize,
+    lane_max_workers: NonZeroUsize,
     granules_per_task: NonZeroUsize,
 }
 
 impl DecodeSelectors {
     /// The conservative decode family: [`LANE_MIN_FRAMES`],
-    /// [`LANE_MAX_EDGES`] and [`GRANULES_PER_TASK`].
+    /// [`LANE_MAX_EDGES`], [`LANE_MAX_WORKERS`] and [`GRANULES_PER_TASK`].
     pub const CONSERVATIVE: Self = Self {
         lane_min_frames: LANE_MIN_FRAMES,
         lane_max_edges: LANE_MAX_EDGES,
+        lane_max_workers: LANE_MAX_WORKERS,
         granules_per_task: GRANULES_PER_TASK,
     };
 
@@ -125,13 +131,20 @@ impl DecodeSelectors {
     ///
     /// # Errors
     ///
-    /// Returns [`SectionError::SelectorOutOfRange`] when `granules_per_task`
-    /// is zero, because the group count is positive.
+    /// Returns [`SectionError::SelectorOutOfRange`] when `lane_max_workers` or
+    /// `granules_per_task` is zero, because both counts are positive.
     pub fn try_new(
         lane_min_frames: usize,
         lane_max_edges: usize,
+        lane_max_workers: usize,
         granules_per_task: usize,
     ) -> Result<Self, SectionError> {
+        let lane_max_workers =
+            NonZeroUsize::new(lane_max_workers).ok_or(SectionError::SelectorOutOfRange {
+                family: "decode",
+                field: "lane_max_workers",
+                value: 0,
+            })?;
         let granules_per_task =
             NonZeroUsize::new(granules_per_task).ok_or(SectionError::SelectorOutOfRange {
                 family: "decode",
@@ -141,6 +154,7 @@ impl DecodeSelectors {
         Ok(Self {
             lane_min_frames,
             lane_max_edges,
+            lane_max_workers,
             granules_per_task,
         })
     }
@@ -155,6 +169,12 @@ impl DecodeSelectors {
     #[must_use]
     pub const fn lane_max_edges(&self) -> usize {
         self.lane_max_edges
+    }
+
+    /// Returns the upper bound on configured decode workers for lane eligibility.
+    #[must_use]
+    pub const fn lane_max_workers(&self) -> NonZeroUsize {
+        self.lane_max_workers
     }
 
     /// Returns the count of preferred-granularity frame groups.
@@ -200,6 +220,7 @@ struct CodingPresence {
     decode: bool,
     lane_min_frames: bool,
     lane_max_edges: bool,
+    lane_max_workers: bool,
     granules_per_task: bool,
 }
 
@@ -214,6 +235,7 @@ impl CodingPresence {
         decode: true,
         lane_min_frames: true,
         lane_max_edges: true,
+        lane_max_workers: true,
         granules_per_task: true,
     };
 }
@@ -279,6 +301,7 @@ impl fmt::Debug for CodingTuning {
                 + usize::from(self.presence.clmul_fold_min_batch)
                 + usize::from(self.presence.lane_min_frames)
                 + usize::from(self.presence.lane_max_edges)
+                + usize::from(self.presence.lane_max_workers)
                 + usize::from(self.presence.granules_per_task);
             debug
                 .field("declared_families", &declared_families)
@@ -382,6 +405,11 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
             selector_or(decode.lane_min_frames, LANE_MIN_FRAMES, "lane_min_frames")?;
         let (lane_edges_present, lane_max_edges) =
             selector_or(decode.lane_max_edges, LANE_MAX_EDGES, "lane_max_edges")?;
+        let (workers_present, lane_max_workers) = selector_or(
+            decode.lane_max_workers,
+            LANE_MAX_WORKERS.get(),
+            "lane_max_workers",
+        )?;
         let (granules_present, granules_per_task) = selector_or(
             decode.granules_per_task,
             GRANULES_PER_TASK.get(),
@@ -398,6 +426,7 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
                 decode: DecodeSelectors::try_new(
                     lane_min_frames,
                     lane_max_edges,
+                    lane_max_workers,
                     granules_per_task,
                 )?,
             },
@@ -410,6 +439,7 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
                 decode: decode_present,
                 lane_min_frames: lane_frames_present,
                 lane_max_edges: lane_edges_present,
+                lane_max_workers: workers_present,
                 granules_per_task: granules_present,
             },
         })
@@ -456,6 +486,9 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
             if section.presence.lane_max_edges {
                 decode.insert("lane_max_edges", family.lane_max_edges());
             }
+            if section.presence.lane_max_workers {
+                decode.insert("lane_max_workers", family.lane_max_workers().get());
+            }
             if section.presence.granules_per_task {
                 decode.insert("granules_per_task", family.granules_per_task().get());
             }
@@ -497,6 +530,8 @@ struct JsonDecode {
     lane_min_frames: Present<usize>,
     #[serde(default)]
     lane_max_edges: Present<usize>,
+    #[serde(default)]
+    lane_max_workers: Present<usize>,
     #[serde(default)]
     granules_per_task: Present<usize>,
 }

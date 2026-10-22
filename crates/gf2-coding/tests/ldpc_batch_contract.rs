@@ -63,7 +63,7 @@ impl Route {
             Route::LaneFromFourFrames(_) => 4,
             Route::SingleFrame => usize::MAX,
         };
-        DecodeSelectors::try_new(lane_min_frames, usize::MAX, 1).unwrap()
+        DecodeSelectors::try_new(lane_min_frames, usize::MAX, 1, 1).unwrap()
     }
 
     /// The route of a wave of `frames` frames under a min-sum rule.

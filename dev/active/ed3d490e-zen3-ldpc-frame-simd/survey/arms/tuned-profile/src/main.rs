@@ -24,6 +24,7 @@ use ldpc_throughput::gf2::config;
 use ldpc_throughput::workload::{check_request, Workload};
 use serde::Serialize;
 use std::hint::black_box;
+use std::num::NonZeroUsize;
 use std::process::ExitCode;
 use std::sync::Mutex;
 use std::time::Instant;
@@ -72,13 +73,13 @@ fn install_envelope() -> Result<EnvelopeIdentity, String> {
 
 /// The route of each wave size of a batch of `batch` frames: the first wave,
 /// and a shorter final wave when the batch has one.
-fn wave_routes(decoder: &LdpcBatchDecoder, batch: usize) -> Vec<WaveRoute> {
+fn wave_routes(decoder: &LdpcBatchDecoder, batch: usize, workers: NonZeroUsize) -> Vec<WaveRoute> {
     let last = batch % LANES;
     std::iter::once(batch.min(LANES))
         .chain((batch > LANES && last > 0).then_some(last))
         .map(|frames| WaveRoute {
             frames,
-            route: format!("{:?}", decoder.batch_route(frames)),
+            route: format!("{:?}", decoder.batch_route_with_workers(frames, workers)),
         })
         .collect()
 }
@@ -130,14 +131,14 @@ impl TunedWorker {
     }
 
     /// Decodes every frame of `llrs`, `n` values per frame, through
-    /// [`BatchSoftDecoder::decode_batch`] in waves of [`LANES`], as the
+    /// [`BatchSoftDecoder::decode_batch_with_workers`] in waves of [`LANES`], as the
     /// explicit-selector arms do, and extracts the information-window hard
     /// decisions.
     ///
     /// # Panics
     ///
     /// Panics when `llrs` holds another frame count than the worker's batch.
-    fn decode_batch(&mut self, llrs: &[f32]) {
+    fn decode_batch(&mut self, llrs: &[f32], workers: NonZeroUsize) {
         let n = self.n;
         assert_eq!(llrs.len(), self.decoded.len() * n, "batch size");
         for (wave, recorded) in llrs.chunks(LANES * n).enumerate() {
@@ -152,11 +153,12 @@ impl TunedWorker {
                 frames += 1;
             }
             let slots = wave * LANES..wave * LANES + frames;
-            BatchSoftDecoder::decode_batch(
+            BatchSoftDecoder::decode_batch_with_workers(
                 &mut self.decoder,
                 black_box(&views[..frames]),
                 &mut self.decoded[slots.clone()],
                 &mut self.outcomes[slots],
+                workers,
             );
         }
         for (word, decided) in self
@@ -182,6 +184,7 @@ struct Diagnostics<'a> {
     wave_routes: Vec<WaveRoute>,
     lane_min_frames: usize,
     lane_max_edges: usize,
+    lane_max_workers: usize,
     granules_per_task: usize,
     batch_frames: usize,
     wave_frames: usize,
@@ -247,11 +250,17 @@ fn run() -> Result<(), String> {
             let state = TunedWorker::new(&code, decoder_config, cap, batch)?;
             workers.lock().expect("worker list")[worker] = (
                 state.decoder.workspace_bytes(),
-                wave_routes(&state.decoder, batch),
+                wave_routes(
+                    &state.decoder,
+                    batch,
+                    NonZeroUsize::new(request.cpus.len()).unwrap(),
+                ),
             );
             Ok(state)
         },
-        |worker: &mut TunedWorker| worker.decode_batch(llrs),
+        |worker: &mut TunedWorker| {
+            worker.decode_batch(llrs, NonZeroUsize::new(request.cpus.len()).unwrap())
+        },
         |worker: &TunedWorker| &worker.decisions,
     )?;
 
@@ -283,6 +292,7 @@ fn run() -> Result<(), String> {
         wave_routes: routes,
         lane_min_frames: selectors.lane_min_frames(),
         lane_max_edges: selectors.lane_max_edges(),
+        lane_max_workers: selectors.lane_max_workers().get(),
         granules_per_task: selectors.granules_per_task().get(),
         batch_frames: batch,
         wave_frames: LANES,
@@ -320,13 +330,40 @@ fn main() -> ExitCode {
 
 #[cfg(test)]
 mod tests {
-    use super::{install_envelope, wave_routes, TunedWorker, ENVELOPE, LANES};
+    use super::{
+        install_envelope, wave_routes, CodingTuning, CodingTuningCodec, NonZeroUsize,
+        ProfileRegistryBuilder, TunedWorker, ENVELOPE, LANES,
+    };
     use gf2_coding::ldpc::{BatchRoute, DecodedWord, LdpcBatchDecoder};
     use gf2_coding::test_support::{ldpc_batch_code, ldpc_batch_frames, LDPC_BATCH_CAP};
     use gf2_coding::tuning::{self, DecodeSelectors};
     use ldpc_throughput::gf2::{config, Gf2Worker};
 
-    // The one test of this binary that resolves the process tuning.
+    #[test]
+    fn committed_profile_routes_multicore_cells_to_single_frame() {
+        let registry = ProfileRegistryBuilder::new()
+            .register::<CodingTuning, CodingTuningCodec>()
+            .unwrap()
+            .build()
+            .unwrap();
+        let prepared = registry.from_json(ENVELOPE).unwrap();
+        let section = prepared.section::<CodingTuning>().unwrap().unwrap().section;
+        let decoder = LdpcBatchDecoder::with_selectors(
+            ldpc_batch_code(),
+            config(0.75, true),
+            LDPC_BATCH_CAP,
+            DecodedWord::Codeword,
+            section.decode().clone(),
+        );
+        for workers in [6, 12, 24] {
+            assert!(
+                wave_routes(&decoder, LANES + 1, NonZeroUsize::new(workers).unwrap())
+                    .iter()
+                    .all(|wave| wave.route == format!("{:?}", BatchRoute::SingleFrame))
+            );
+        }
+    }
+
     #[test]
     fn default_construction_decodes_under_the_installed_envelope() {
         let envelope = install_envelope().expect("install");
@@ -348,7 +385,7 @@ mod tests {
             );
             let mut reference = Gf2Worker::new(&code, decoder_config, batch, LDPC_BATCH_CAP);
             reference.decode_batch(llrs);
-            worker.decode_batch(llrs);
+            worker.decode_batch(llrs, NonZeroUsize::MIN);
             assert_eq!(worker.decisions, reference.decisions, "batch {batch}");
         }
     }
@@ -363,7 +400,7 @@ mod tests {
             DecodeSelectors::CONSERVATIVE,
         );
         let sizes = |batch| -> Vec<usize> {
-            wave_routes(&decoder, batch)
+            wave_routes(&decoder, batch, NonZeroUsize::MIN)
                 .iter()
                 .map(|wave| wave.frames)
                 .collect()
@@ -373,7 +410,7 @@ mod tests {
         assert_eq!(sizes(2 * LANES), [LANES]);
         assert_eq!(sizes(2 * LANES + 3), [LANES, 3]);
         let route = format!("{:?}", BatchRoute::SingleFrame);
-        assert!(wave_routes(&decoder, LANES + 1)
+        assert!(wave_routes(&decoder, LANES + 1, NonZeroUsize::MIN)
             .iter()
             .all(|wave| wave.route == route));
     }

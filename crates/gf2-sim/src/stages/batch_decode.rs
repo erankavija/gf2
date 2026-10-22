@@ -2,6 +2,8 @@
 //! [`BatchDecode`] hands a whole [`LlrBatch`] to one decoder held in its
 //! [`BatchDecodeScratch`].
 
+use std::num::NonZeroUsize;
+
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
 use gf2_coding::Llr;
 use gf2_core::BitVec;
@@ -42,7 +44,9 @@ fn recycle(mut views: Vec<&[Llr]>) -> Vec<&'static [Llr]> {
 /// [`BatchSoftDecoder`].
 ///
 /// One `process` call passes every frame of the batch to
-/// [`BatchSoftDecoder::decode_batch`] in input order, without copying LLRs.
+/// [`BatchSoftDecoder::decode_batch_with_workers`] in input order, without
+/// copying LLRs. Decode concurrency is the active Rayon pool width, or one
+/// when called outside a Rayon worker.
 /// Each input frame is [`frame_len`](BatchSoftDecoder::frame_len) LLRs; each
 /// output frame is the [`decoded_len`](BatchSoftDecoder::decoded_len)-bit word
 /// the decoder writes. The per-frame iteration counts are recorded into the
@@ -109,7 +113,11 @@ where
             .outcomes
             .resize(views.len(), DecodeOutcome::default());
 
-        decoder.decode_batch(&views, &mut decoded, &mut scratch.outcomes);
+        let workers = NonZeroUsize::new(
+            rayon::current_thread_index().map_or(1, |_| rayon::current_num_threads()),
+        )
+        .expect("Rayon pools have at least one worker");
+        decoder.decode_batch_with_workers(&views, &mut decoded, &mut scratch.outcomes, workers);
 
         scratch.frame_views = recycle(views);
         scratch.iterations.clear();

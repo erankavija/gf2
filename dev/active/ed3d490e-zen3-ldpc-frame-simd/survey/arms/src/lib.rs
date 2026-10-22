@@ -25,6 +25,7 @@ use ldpc_throughput::gf2::config;
 use ldpc_throughput::workload::{check_request, median_u64, Workload};
 use serde::Serialize;
 use std::hint::black_box;
+use std::num::NonZeroUsize;
 use std::sync::Mutex;
 use std::time::Instant;
 
@@ -56,13 +57,13 @@ fn lane_backend(name: &str) -> Option<LaneBackend> {
 
 /// The selectors an arm on `route` decodes under: the conservative family,
 /// which closes the lane route, or a family that opens it to every wave size
-/// and edge count.
+/// and edge count, through the benchmark grid's maximum of 24 workers.
 #[must_use]
 pub fn route_selectors(route: BatchRoute) -> DecodeSelectors {
     match route {
         BatchRoute::SingleFrame => DecodeSelectors::CONSERVATIVE,
         BatchRoute::Lane(_) => {
-            DecodeSelectors::try_new(1, usize::MAX, 1).expect("a positive group count")
+            DecodeSelectors::try_new(1, usize::MAX, 24, 1).expect("a positive group count")
         }
     }
 }
@@ -165,7 +166,16 @@ impl BatchWorker {
     ///
     /// Panics when `llrs` holds another frame count than the worker's batch.
     pub fn decode_batch(&mut self, llrs: &[f32]) {
-        self.run_stages(llrs, |_| {});
+        self.decode_batch_with_workers(llrs, NonZeroUsize::MIN);
+    }
+
+    /// Decodes the batch with the configured concurrency of the benchmark cell.
+    ///
+    /// # Panics
+    ///
+    /// Panics as [`Self::decode_batch`] does.
+    pub fn decode_batch_with_workers(&mut self, llrs: &[f32], workers: NonZeroUsize) {
+        self.run_stages(llrs, workers, |_| {});
     }
 
     /// Decodes as [`Self::decode_batch`] and reports the time of each stage.
@@ -176,7 +186,7 @@ impl BatchWorker {
     pub fn decode_batch_staged(&mut self, llrs: &[f32]) -> StageCosts {
         let mut costs = StageCosts::default();
         let mut last = Instant::now();
-        self.run_stages(llrs, |stage| {
+        self.run_stages(llrs, NonZeroUsize::MIN, |stage| {
             let now = Instant::now();
             let elapsed = now.duration_since(last).as_nanos() as u64;
             match stage {
@@ -190,7 +200,7 @@ impl BatchWorker {
     }
 
     /// Runs the batch and calls `lap` at the end of each stage.
-    fn run_stages(&mut self, llrs: &[f32], mut lap: impl FnMut(Stage)) {
+    fn run_stages(&mut self, llrs: &[f32], workers: NonZeroUsize, mut lap: impl FnMut(Stage)) {
         let n = self.n;
         assert_eq!(llrs.len(), self.decoded.len() * n, "batch size");
         for (wave, recorded) in llrs.chunks(LANES * n).enumerate() {
@@ -206,10 +216,11 @@ impl BatchWorker {
                 frames += 1;
             }
             let slots = wave * LANES..wave * LANES + frames;
-            self.decoder.decode_batch(
+            self.decoder.decode_batch_with_workers(
                 black_box(&views[..frames]),
                 &mut self.decoded[slots.clone()],
                 &mut self.outcomes[slots],
+                workers,
             );
             lap(Stage::Decode);
         }
@@ -270,6 +281,7 @@ struct Diagnostics<'a> {
     route: String,
     lane_min_frames: usize,
     lane_max_edges: usize,
+    lane_max_workers: usize,
     granules_per_task: usize,
     batch_frames: usize,
     wave_frames: usize,
@@ -347,7 +359,9 @@ pub fn run(arm_name: &str, route: BatchRoute) -> Result<(), String> {
             workspace_bytes.lock().expect("workspace list")[worker] = state.workspace_bytes();
             Ok(state)
         },
-        |worker: &mut BatchWorker| worker.decode_batch(llrs),
+        |worker: &mut BatchWorker| {
+            worker.decode_batch_with_workers(llrs, NonZeroUsize::new(request.cpus.len()).unwrap())
+        },
         |worker: &BatchWorker| &worker.decisions,
     )?;
     let stages = probe_stages(&code, decoder_config, batch, route, llrs)?;
@@ -363,6 +377,7 @@ pub fn run(arm_name: &str, route: BatchRoute) -> Result<(), String> {
         route: format!("{route:?}"),
         lane_min_frames: selectors.lane_min_frames(),
         lane_max_edges: selectors.lane_max_edges(),
+        lane_max_workers: selectors.lane_max_workers().get(),
         granules_per_task: selectors.granules_per_task().get(),
         batch_frames: batch,
         wave_frames: LANES,
@@ -402,7 +417,7 @@ pub fn run(arm_name: &str, route: BatchRoute) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{lane_backend, probe_stages, BatchWorker, LANES};
+    use super::{lane_backend, probe_stages, BatchWorker, NonZeroUsize, LANES};
     use gf2_coding::ldpc::{BatchRoute, LaneBackend, LdpcCode, LdpcEncoder, QuasiCyclicLdpc};
     use gf2_coding::traits::BlockEncoder;
     use gf2_core::BitVec;
@@ -459,7 +474,13 @@ mod tests {
             for route in routes() {
                 let mut worker =
                     BatchWorker::new(&code, decoder_config, CAP, batch, route).expect("route");
-                worker.decode_batch(&llrs);
+                for workers in [1, 6, 12, 24] {
+                    worker.decode_batch_with_workers(&llrs, NonZeroUsize::new(workers).unwrap());
+                    assert_eq!(
+                        worker.decisions, reference.decisions,
+                        "{route:?} batch {batch} workers {workers}"
+                    );
+                }
                 assert_eq!(
                     worker.decisions, reference.decisions,
                     "{route:?} batch {batch}"
@@ -515,7 +536,15 @@ mod tests {
             let worker =
                 BatchWorker::new(&code, config(0.75, true), CAP, LANES, route).expect("route");
             for frames in 1..=LANES {
-                assert_eq!(worker.decoder.batch_route(frames), route, "{frames} frames");
+                for workers in [1, 6, 12, 24] {
+                    assert_eq!(
+                        worker
+                            .decoder
+                            .batch_route_with_workers(frames, NonZeroUsize::new(workers).unwrap()),
+                        route,
+                        "{frames} frames, {workers} workers"
+                    );
+                }
             }
         }
     }

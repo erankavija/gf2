@@ -9,6 +9,7 @@ use std::env;
 use std::fs;
 use std::hint::black_box;
 use std::io::{self, Read};
+use std::num::NonZeroUsize;
 use std::sync::{Mutex, OnceLock};
 
 use gf2_coding::channel::AwgnChannel;
@@ -249,14 +250,23 @@ impl Field {
         };
         match self {
             Self::LaneMinFrames => {
-                DecodeSelectors::try_new(candidate, max_edges, GRANULES_PER_TASK.get())
+                DecodeSelectors::try_new(candidate, max_edges, 1, GRANULES_PER_TASK.get())
             }
             Self::LaneMaxEdges => {
-                DecodeSelectors::try_new(min_frames, candidate, GRANULES_PER_TASK.get())
+                DecodeSelectors::try_new(min_frames, candidate, 1, GRANULES_PER_TASK.get())
             }
-            Self::GranulesPerTask => DecodeSelectors::try_new(min_frames, max_edges, candidate),
+            Self::GranulesPerTask => {
+                DecodeSelectors::try_new(min_frames, max_edges, POOL_THREADS, candidate)
+            }
         }
         .map_err(|error| error.to_string())
+    }
+
+    fn workers(self) -> NonZeroUsize {
+        match self {
+            Self::GranulesPerTask => NonZeroUsize::new(POOL_THREADS).unwrap(),
+            Self::LaneMinFrames | Self::LaneMaxEdges => NonZeroUsize::MIN,
+        }
     }
 
     const fn entry(self) -> &'static str {
@@ -276,6 +286,7 @@ impl Field {
             LaneCapability::Present(LaneBackend::detected()),
             stratum.frames.min(LANES),
             codes()?[stratum.code].edges,
+            self.workers(),
         );
         let task_frames = match self {
             Self::GranulesPerTask => LANES
@@ -396,6 +407,7 @@ struct CodingCase {
 struct SelectorEvidence {
     lane_min_frames: usize,
     lane_max_edges: usize,
+    lane_max_workers: usize,
     granules_per_task: usize,
 }
 
@@ -404,6 +416,7 @@ impl From<&DecodeSelectors> for SelectorEvidence {
         Self {
             lane_min_frames: selectors.lane_min_frames(),
             lane_max_edges: selectors.lane_max_edges(),
+            lane_max_workers: selectors.lane_max_workers().get(),
             granules_per_task: selectors.granules_per_task().get(),
         }
     }
@@ -1095,7 +1108,7 @@ fn execute_case(case: CodingCase, case_json: CanonicalJson) -> Result<ChildResul
         if direct.selectors() != &selectors {
             return Err("batch decoder did not read the installed selectors".to_owned());
         }
-        let route = direct.batch_route(stratum.frames);
+        let route = direct.batch_route_with_workers(stratum.frames, field.workers());
         let workspace_bytes = direct.workspace_bytes();
         let (mut entry, task_frames) = match field {
             Field::GranulesPerTask => {
@@ -2117,6 +2130,37 @@ mod tests {
                 })
                 .collect();
             assert!(tasks.windows(2).all(|pair| pair[0] > pair[1]), "{tasks:?}");
+        }
+    }
+
+    #[test]
+    fn measured_lane_bounds_preserve_the_single_worker_domain() {
+        let section =
+            emitted_section(&[(Field::LaneMinFrames, 1), (Field::LaneMaxEdges, usize::MAX)])
+                .unwrap();
+        assert_eq!(section.decode().lane_max_workers(), NonZeroUsize::MIN);
+        for field in [Field::LaneMinFrames, Field::LaneMaxEdges] {
+            for stratum in field.strata() {
+                for candidate in field.candidates().unwrap() {
+                    assert_eq!(
+                        field
+                            .selectors(&stratum, candidate)
+                            .unwrap()
+                            .lane_max_workers(),
+                        NonZeroUsize::MIN
+                    );
+                }
+            }
+        }
+        for stratum in Field::GranulesPerTask.strata() {
+            assert_eq!(
+                Field::GranulesPerTask
+                    .selectors(&stratum, 1)
+                    .unwrap()
+                    .lane_max_workers()
+                    .get(),
+                POOL_THREADS
+            );
         }
     }
 

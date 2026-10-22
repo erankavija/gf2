@@ -47,6 +47,9 @@ The committed selectors are the decode family of the coding owner envelope
   calibration*, rows of both fields; receipt
   [`gf2-0a77ecfc-20261013t011147z-815998.md`](../../../benchmarks/tuning_profiles/gf2-0a77ecfc-20261013t011147z-815998.md),
   section *Argmin and threshold decisions*).
+- `decode.lane_max_workers` is omitted, so it resolves to the canonical
+  one-worker bound. `@/issue/d06a99ed` supplies explicit execution-time worker
+  context through batch decoders, wrappers and consumers.
 - `decode.granules_per_task` is omitted, so it resolves to its conservative
   value ([campaign findings](../../ed3d490e-zen3-ldpc-frame-simd/calibration/campaign-findings.md), F-04).
 - The envelope states no encode selector.
@@ -58,9 +61,9 @@ section *Decision*).
 `gf2-coding` installs no envelope by itself. A process that installs none
 resolves the conservative family of
 [`tuning.rs`](../../../../crates/gf2-coding/src/tuning.rs) (`LANE_MIN_FRAMES`,
-`LANE_MAX_EDGES`, `GRANULES_PER_TASK`), which closes the lane route, so every
+`LANE_MAX_EDGES`, `LANE_MAX_WORKERS`, `GRANULES_PER_TASK`), which closes the lane route, so every
 wave decodes frame by frame. A process that installs the committed envelope
-opens the lane route under the two stated bounds.
+opens the lane route under the stated bounds only at one configured worker.
 [`tuning_profile_committed.rs`](../../../../crates/gf2-coding/tests/tuning_profile_committed.rs)
 installs the envelope in a fresh process and checks routes and results, and
 [`ldpc_decode_dispatch.rs`](../../../../crates/gf2-coding/tests/ldpc_decode_dispatch.rs)
@@ -68,9 +71,9 @@ checks the routes with no envelope installed.
 
 The selectors' measured domain:
 
-- The route decision reads the algorithm, the wave's occupied lanes and the
-  code's edge count, and no worker count. The two route selectors are
-  calibrated on one worker
+- The route decision reads the algorithm, the wave's occupied lanes, the
+  code's edge count and configured decode concurrency. The two calibrated
+  route bounds have a one-worker measured domain
   ([premeasurement protocol](../../ed3d490e-zen3-ldpc-frame-simd/calibration/premeasurement-protocol.md), §2).
 - `decode.granules_per_task` is measured in a pool of four workers (same
   section).
@@ -269,14 +272,14 @@ Each row gives the status and points to the sections that carry it.
 
 | Criterion | Status | Evidence |
 |---|---|---|
-| REQ-01 | MET for the evidence; adoption domain open | Every campaign is accepted and verified from its execution log, with the finding count of its row (tables, *Campaigns*); each receipt's `inputs/` pins the contract, protocol and family addendum. Before-after confirmations and preserved negative outcomes: [Outcomes by comparison](#outcomes-by-comparison). Adoption domain: R-01, tracked by `@/issue/d06a99ed`. |
+| REQ-01 | MET for the evidence and conservative adoption domain | Every campaign is accepted and verified from its execution log, with the finding count of its row (tables, *Campaigns*); each receipt's `inputs/` pins the contract, protocol and family addendum. Before-after confirmations and preserved negative outcomes: [Outcomes by comparison](#outcomes-by-comparison). Adoption domain: R-01; the worker bound of `@/issue/d06a99ed` selects the single-frame route outside one worker. |
 | REQ-07 | MET | The [plan](../../ed3d490e-zen3-ldpc-frame-simd/plan.md) and the [terminal audit](../../ed3d490e-zen3-ldpc-frame-simd/terminal-audit.md) specify precision, lane layout, scalar references, workspace ownership, per-frame termination, partial batches and integration points before implementation; the [feasibility record](../../../bench_results/ed3d490e/intrinsic-feasibility/feasibility.json) compiles the register forms at Rust 1.95. |
 | REQ-08 | MET | Batch trait with default paths ([`batch_soft_decoder_contract.rs`](../../../../crates/gf2-coding/tests/batch_soft_decoder_contract.rs)); lane kernels in `gf2-kernels-simd` with their [assembly artefact](../../../../crates/gf2-kernels-simd/src/x86/asm/ldpc_lanes.asm.txt); `gf2-sim` stages over the trait; inherent batch functions removed (`@/issue/e4e2ba52`). Order and results for batches below, at and above eight frames and an incomplete final wave: [`ldpc_batch_contract.rs`](../../../../crates/gf2-coding/tests/ldpc_batch_contract.rs). The default batch path of `LdpcDecoder` is a hard decision, a contract `@/issue/e29fd776` tracks. |
 | REQ-09 | MET | Posterior-level equality on every route and backend, with mixed convergence and nonconvergence (`ldpc_batch_contract.rs`); worker counts and scheduling ([`batch_decode_worker_determinism.rs`](../../../../crates/gf2-sim/tests/batch_decode_worker_determinism.rs), [`pooled_batch_decoder.rs`](../../../../crates/gf2-coding/tests/pooled_batch_decoder.rs)); checkpoint resume (batch-decode resume tests of [`checkpoint_compat.rs`](../../../../crates/gf2-sim/tests/checkpoint_compat.rs)); portable fallback (backend tests of `ldpc_batch_contract.rs`). |
 | REQ-10 | MET with recorded unavailable comparisons | Matched and fastest-compatible results are separate parts of the tables. Measured and unavailable cells: [matched algorithm](#lane-route-against-aff3ct-matched-algorithm), [fastest compatible](#lane-route-against-aff3ct-fastest-compatible), [memory, batch fill and latency](#memory-batch-fill-and-latency), and the last paragraph of [Lane route against the single-frame route](#lane-route-against-the-single-frame-route). |
 | REQ-11 | MET | No quantization or schedule change enters; the numerical contract places quantized alphabets and layered schedules outside the contract (*Scope*) and states no channel scaling and no saturation. |
 | REQ-12 | MET | [Inter-frame and QC-aware intra-frame cells against the canonical baseline](#inter-frame-and-qc-aware-intra-frame-cells-against-the-canonical-baseline). |
-| REQ-13 | PARTLY MET | Selectors live in the coding section with one route decision and no private threshold. Calibration and holdout: [Decode selector calibration and holdout](#decode-selector-calibration-and-holdout). Batch width and worker configuration: the selectors' measured domain under [Committed decode selectors](#committed-decode-selectors); R-01, tracked by `@/issue/d06a99ed`. |
+| REQ-13 | MET within the measured domain | Selectors live in the coding section with one route decision and no private threshold. Calibration and holdout: [Decode selector calibration and holdout](#decode-selector-calibration-and-holdout). Batch width and worker configuration: the selectors' measured domain under [Committed decode selectors](#committed-decode-selectors); R-01, with conservative worker-aware selection under `@/issue/d06a99ed`. |
 | REQ-14 | MET | The [numerical contract](../../../../docs/reference/ldpc-decoder-numerical-contract.md) states the sign and tie rules, punctured and filler semantics and the accumulation order; `ldpc_batch_contract.rs` covers random and all-zero codewords, special values, mixed convergence and nonconvergence, and rate-matched NR frames with punctured and filler positions; the lane kernel suite of `gf2-kernels-simd` asserts negative zero. No quantized or changed-schedule candidate enters, so the clauses on scaling, saturation and quality bounds have no subject. |
 
 ## Residual gaps and their limits
@@ -293,11 +296,12 @@ limit: the counter bullets of [Profile series](#profile-series) show the added
 time is stall time, not added work. That shared cache or memory bandwidth,
 loaded by the lane workspace each worker streams, is the binding resource is
 an interpretation of the counters; no experiment varies the workspace at a
-fixed worker count. Because the route decision reads no worker count
-([Committed decode selectors](#committed-decode-selectors)), these
-configurations take the lane route under the committed envelope. Tracked
-follow-up: `@/issue/d06a99ed` calibrates the lane route against the worker
-configuration.
+fixed worker count. The canonical worker bound of `@/issue/d06a99ed`
+([Committed decode selectors](#committed-decode-selectors)) selects the
+single-frame route at these worker counts under the committed envelope.
+This conservative decision makes no multicore lane-performance claim and
+keeps the recorded `fail` outcomes. Its implementation and verification are
+recorded in [worker-aware routing](../d06a99ed/implementation.md).
 
 **R-02: the lane variable step dominates one-worker time.** Measured limit:
 the category bullet of [Profile series](#profile-series) and the

@@ -62,7 +62,7 @@ fn the_owner_codec_round_trips_its_selectors() {
     let section = CodingTuning::from_selectors(CodingSelectors {
         encode: EncodeSelectors::try_new(32, 16, 64, 8)
             .expect("every selector bound is admissible"),
-        decode: DecodeSelectors::try_new(4, 4096, 3).expect("a positive group count"),
+        decode: DecodeSelectors::try_new(4, 4096, 2, 3).expect("a positive group count"),
     });
     let body = CodingTuningCodec::encode_body(&section).expect("a complete section encodes");
     let decoded = CodingTuningCodec::decode_body(body).expect("the canonical body decodes");
@@ -73,6 +73,7 @@ fn the_owner_codec_round_trips_its_selectors() {
     assert_eq!(decoded.encode().clmul_fold_min_batch(), 8);
     assert_eq!(decoded.decode().lane_min_frames(), 4);
     assert_eq!(decoded.decode().lane_max_edges(), 4096);
+    assert_eq!(decoded.decode().lane_max_workers().get(), 2);
     assert_eq!(decoded.decode().granules_per_task().get(), 3);
 }
 
@@ -106,6 +107,10 @@ fn a_partial_decode_family_defaults_the_absent_selectors() {
         decoded.decode().lane_min_frames(),
         conservative.lane_min_frames()
     );
+    assert_eq!(
+        decoded.decode().lane_max_workers(),
+        conservative.lane_max_workers()
+    );
     assert_eq!(decoded.decode().lane_max_edges(), 4096);
     assert_eq!(
         decoded.decode().granules_per_task(),
@@ -122,6 +127,7 @@ fn the_codec_encodes_the_fields_a_body_states_and_no_others() {
         r#"{"decode": {"lane_min_frames": 2}}"#,
         r#"{"decode": {"lane_max_edges": 4096}}"#,
         r#"{"decode": {"granules_per_task": 5}}"#,
+        r#"{"decode": {"lane_max_workers": 6}}"#,
         r#"{"decode": {"granules_per_task": 5, "lane_min_frames": 2}, "encode": {}}"#,
         r#"{"encode": {"clmul_fold_min_batch": 8}}"#,
     ] {
@@ -168,6 +174,7 @@ fn a_null_family_or_selector_is_rejected() {
         r#"{"decode": null}"#,
         r#"{"decode": {"lane_min_frames": null}}"#,
         r#"{"decode": {"lane_max_edges": null}}"#,
+        r#"{"decode": {"lane_max_workers": null}}"#,
         r#"{"decode": {"granules_per_task": null}}"#,
         r#"{"encode": null}"#,
         r#"{"encode": {"clmul_fold_min_batch": null}}"#,
@@ -193,7 +200,7 @@ fn a_zero_group_count_is_rejected() {
         CodingTuningCodec::decode_body(body(r#"{"decode": {"granules_per_task": 0}}"#)),
         Err(rejected.clone())
     );
-    assert_eq!(DecodeSelectors::try_new(8, 4096, 0), Err(rejected));
+    assert_eq!(DecodeSelectors::try_new(8, 4096, 1, 0), Err(rejected));
 }
 
 #[test]
@@ -237,7 +244,7 @@ fn an_uninstalled_process_resolves_the_conservative_decode_family() {
 fn an_installed_profile_resolves_both_families_through_one_section() {
     let (lane_min_frames, lane_max_edges, granules_per_task) = fresh::INSTALLED_DECODE;
     let installed = fresh::decode_report(
-        &DecodeSelectors::try_new(lane_min_frames, lane_max_edges, granules_per_task)
+        &DecodeSelectors::try_new(lane_min_frames, lane_max_edges, 1, granules_per_task)
             .expect("a positive group count"),
     );
     assert_ne!(
@@ -267,4 +274,21 @@ fn fresh_tuning_process_child() {
         return;
     };
     fresh::emit_result(fresh::execute_child(case));
+}
+
+#[test]
+fn zero_lane_worker_limit_is_rejected() {
+    let rejected = SectionError::SelectorOutOfRange {
+        family: "decode",
+        field: "lane_max_workers",
+        value: 0,
+    };
+    assert_eq!(
+        DecodeSelectors::try_new(1, 4096, 0, 1),
+        Err(rejected.clone())
+    );
+    assert_eq!(
+        CodingTuningCodec::decode_body(body(r#"{"decode":{"lane_max_workers":0}}"#)),
+        Err(rejected)
+    );
 }

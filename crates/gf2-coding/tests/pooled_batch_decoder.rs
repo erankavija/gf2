@@ -2,6 +2,7 @@
 //! batch contract, equality with the inner decoder's own results for several
 //! worker counts and task sizes, and the partition each task decodes.
 
+use std::num::NonZeroUsize;
 use std::sync::{Arc, Mutex};
 
 use gf2_coding::channel::AwgnChannel;
@@ -102,7 +103,7 @@ fn grouped(sizes: &Sizes) -> Grouped {
 }
 
 fn selectors(granules_per_task: usize) -> DecodeSelectors {
-    DecodeSelectors::try_new(0, 0, granules_per_task).unwrap()
+    DecodeSelectors::try_new(0, 0, 1, granules_per_task).unwrap()
 }
 
 fn decode_all<D: BatchSoftDecoder>(
@@ -214,7 +215,7 @@ fn lane_decoder() -> LdpcBatchDecoder {
         DecoderConfig::default(),
         CAP,
         DecodedWord::Codeword,
-        DecodeSelectors::try_new(1, usize::MAX, 1).unwrap(),
+        DecodeSelectors::try_new(1, usize::MAX, 24, 1).unwrap(),
     )
 }
 
@@ -237,4 +238,76 @@ fn pooled_ldpc_batch_decoder_satisfies_the_contract_and_equals_the_single_decode
             ConvergenceMix::EarlyLateAndNonConverging,
         );
     }
+}
+
+#[derive(Clone)]
+struct WorkerContext {
+    seen: Arc<Mutex<Vec<NonZeroUsize>>>,
+}
+
+impl BatchSoftDecoder for WorkerContext {
+    fn frame_len(&self) -> usize {
+        0
+    }
+    fn decoded_len(&self) -> usize {
+        0
+    }
+    fn batch_granularity(&self) -> usize {
+        1
+    }
+    fn decode_batch(
+        &mut self,
+        _frames: &[&[Llr]],
+        _decoded: &mut [BitVec],
+        _outcomes: &mut [DecodeOutcome],
+    ) {
+        panic!("pool must forward the worker context")
+    }
+    fn decode_batch_with_workers(
+        &mut self,
+        _frames: &[&[Llr]],
+        _decoded: &mut [BitVec],
+        _outcomes: &mut [DecodeOutcome],
+        workers: NonZeroUsize,
+    ) {
+        self.seen.lock().unwrap().push(workers);
+    }
+}
+
+#[test]
+fn pooled_worker_context_uses_the_execution_pool_and_preserves_larger_explicit_widths() {
+    let seen = Arc::new(Mutex::new(Vec::new()));
+    let factory = || WorkerContext { seen: seen.clone() };
+    let mut pooled = PooledBatchDecoder::with_selectors(factory, &selectors(1));
+    let mut run = |expected: usize, explicit: NonZeroUsize| {
+        seen.lock().unwrap().clear();
+        let mut decoded: [BitVec; 5] = Default::default();
+        pooled.decode_batch_with_workers(
+            &[&[] as &[Llr]; 5],
+            &mut decoded,
+            &mut [DecodeOutcome::default(); 5],
+            explicit,
+        );
+        let seen = seen.lock().unwrap();
+        assert!(!seen.is_empty());
+        assert!(
+            seen.iter().all(|workers| workers.get() == expected),
+            "{seen:?}"
+        );
+    };
+    #[cfg(feature = "parallel")]
+    {
+        for width in [1, 2, 4] {
+            let pool = rayon::ThreadPoolBuilder::new()
+                .num_threads(width)
+                .build()
+                .unwrap();
+            pool.install(|| run(width, NonZeroUsize::MIN));
+            pool.install(|| run(12, NonZeroUsize::new(12).unwrap()));
+        }
+        run(rayon::current_num_threads(), NonZeroUsize::MIN);
+    }
+    #[cfg(not(feature = "parallel"))]
+    run(1, NonZeroUsize::MIN);
+    run(24, NonZeroUsize::new(24).unwrap());
 }

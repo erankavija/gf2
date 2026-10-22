@@ -161,7 +161,7 @@ pub fn ldpc_lane_backends() -> Vec<LaneBackend> {
 ///
 /// As [`ldpc_lane_backends`].
 pub fn ldpc_batch_routes() -> Vec<(DecodeSelectors, LaneBackend, BatchRoute)> {
-    let lane_from = |frames| DecodeSelectors::try_new(frames, usize::MAX, 1).unwrap();
+    let lane_from = |frames| DecodeSelectors::try_new(frames, usize::MAX, 1, 1).unwrap();
     let mut routes = Vec::new();
     for backend in ldpc_lane_backends() {
         routes.push((lane_from(1), backend, BatchRoute::Lane(backend)));

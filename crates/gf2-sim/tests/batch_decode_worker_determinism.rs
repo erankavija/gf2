@@ -54,7 +54,13 @@ fn routes() -> Vec<Route> {
         .into_iter()
         .map(|(selectors, backend, route)| Route {
             label: format!("{route:?} on {backend:?}"),
-            selectors,
+            selectors: DecodeSelectors::try_new(
+                selectors.lane_min_frames(),
+                selectors.lane_max_edges(),
+                worker_counts().into_iter().max().unwrap(),
+                selectors.granules_per_task().get(),
+            )
+            .unwrap(),
             backend,
             route,
         })
@@ -138,7 +144,7 @@ fn conservative(routes: &[Route]) -> &Route {
 fn assert_invariant(
     name: &str,
     build: impl Fn(&Route) -> Box<dyn AnyStage>,
-    full_wave: impl Fn(&Route) -> BatchRoute,
+    full_wave: impl Fn(&Route, NonZeroUsize) -> BatchRoute,
     llrs: &[Vec<Llr>],
     sent: &[BitVec],
 ) {
@@ -151,14 +157,14 @@ fn assert_invariant(
         llrs.len()
     );
     for route in &routes {
-        assert_eq!(
-            full_wave(route),
-            route.route,
-            "{name}: {} takes another route",
-            route.label
-        );
         let stage = build(route);
         for count in worker_counts() {
+            assert_eq!(
+                full_wave(route, workers(count)),
+                route.route,
+                "{name}: {} takes another route at {count} workers",
+                route.label
+            );
             assert_eq!(
                 decode_via_executor(build(route), llrs, count),
                 reference,
@@ -198,11 +204,11 @@ fn dvb_t2_decode_is_worker_and_route_invariant() {
             let stage = DvbT2Decode::with_selectors(codec.clone(), route.selectors.clone());
             erase(on_backend(stage, route, DvbT2Decode::with_portable_lanes))
         },
-        |route| {
+        |route, workers| {
             let decoder = DvbT2ConcatBatchDecoder::with_selectors(&codec, route.selectors.clone());
             on_backend(decoder, route, DvbT2ConcatBatchDecoder::with_portable_lanes)
                 .ldpc()
-                .batch_route(WAVE)
+                .batch_route_with_workers(WAVE, workers)
         },
         &llrs,
         &sent,
@@ -237,7 +243,7 @@ fn nr_decode_is_worker_and_route_invariant() {
             );
             erase(on_backend(stage, route, Nr5gDecode::with_portable_lanes))
         },
-        |route| {
+        |route, workers| {
             let decoder = Nr5gRateMatchedBatchDecoder::with_selectors(
                 (*code).clone(),
                 DecoderAlgorithm::NormalizedMinSum(0.75),
@@ -249,7 +255,7 @@ fn nr_decode_is_worker_and_route_invariant() {
                 route,
                 Nr5gRateMatchedBatchDecoder::with_portable_lanes,
             )
-            .batch_route(WAVE)
+            .batch_route_with_workers(WAVE, workers)
         },
         &llrs,
         &sent,
@@ -289,7 +295,7 @@ fn cpu_ldpc_decode_is_worker_and_route_invariant() {
                 CpuLdpcBp::with_selectors(code.clone(), config, 20, route.selectors.clone());
             erase(on_backend(stage, route, CpuLdpcBp::with_portable_lanes))
         },
-        |route| {
+        |route, workers| {
             let decoder = LdpcBatchDecoder::with_selectors(
                 code.clone(),
                 config,
@@ -297,7 +303,8 @@ fn cpu_ldpc_decode_is_worker_and_route_invariant() {
                 DecodedWord::Codeword,
                 route.selectors.clone(),
             );
-            on_backend(decoder, route, LdpcBatchDecoder::with_portable_lanes).batch_route(WAVE)
+            on_backend(decoder, route, LdpcBatchDecoder::with_portable_lanes)
+                .batch_route_with_workers(WAVE, workers)
         },
         &llrs,
         &sent,
@@ -335,7 +342,12 @@ fn nr_chain_is_worker_and_route_invariant() {
                     route,
                     Nr5gRateMatchedBatchDecoder::with_portable_lanes,
                 );
-                assert_eq!(decoder.batch_route(WAVE), route.route, "{}", route.label);
+                assert_eq!(
+                    decoder.batch_route_with_workers(WAVE, workers(count)),
+                    route.route,
+                    "{}",
+                    route.label
+                );
                 let stage = Nr5gDecode::with_selectors(
                     code,
                     DecoderAlgorithm::NormalizedMinSum(0.75),
@@ -387,11 +399,11 @@ fn assert_sweep_invariant(target: BatchRoute) {
     let (rate, modulation, es_n0_db) = (CodeRate::Rate1_2, DvbT2Modulation::Qam16, 6.4_f32);
     let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
 
-    let one_frame = |codec: &DvbT2Concat, route: &Route| {
+    let one_frame = |codec: &DvbT2Concat, route: &Route, workers| {
         let decoder = DvbT2ConcatBatchDecoder::with_selectors(codec, route.selectors.clone());
         on_backend(decoder, route, DvbT2ConcatBatchDecoder::with_portable_lanes)
             .ldpc()
-            .batch_route(1)
+            .batch_route_with_workers(1, workers)
     };
     let run = |route: &Route, taken: BatchRoute, count: usize| -> WorkerCounters {
         let pipeline = common::build_dvb_t2_graph_chain_with_decode(
@@ -404,7 +416,12 @@ fn assert_sweep_invariant(target: BatchRoute) {
             SEED,
             workers(count),
             |codec| {
-                assert_eq!(one_frame(&codec, route), taken, "{}", route.label);
+                assert_eq!(
+                    one_frame(&codec, route, workers(count)),
+                    taken,
+                    "{}",
+                    route.label
+                );
                 let stage = DvbT2Decode::with_selectors(codec, route.selectors.clone());
                 on_backend(stage, route, DvbT2Decode::with_portable_lanes)
             },
@@ -423,7 +440,7 @@ fn assert_sweep_invariant(target: BatchRoute) {
     probe.set_decoder_config(config);
     let selected: Vec<&Route> = routes
         .iter()
-        .filter(|route| one_frame(&probe, route) == target)
+        .filter(|route| one_frame(&probe, route, NonZeroUsize::MIN) == target)
         .collect();
     assert!(
         !selected.is_empty() || routes.iter().all(|route| route.route != target),
@@ -461,4 +478,104 @@ fn dvb_t2_sweep_is_worker_invariant_on_portable_lanes() {
 #[test]
 fn dvb_t2_sweep_is_worker_invariant_on_avx2_lanes() {
     assert_sweep_invariant(BatchRoute::Lane(LaneBackend::Avx2));
+}
+
+mod worker_context {
+    //! Decode concurrency follows execution, including reuse of stage scratch.
+
+    use std::num::NonZeroUsize;
+    use std::sync::{Arc, Mutex};
+
+    use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
+    use gf2_coding::Llr;
+    use gf2_core::BitVec;
+    use gf2_sim::batch::LlrBatch;
+    use gf2_sim::bler_sweep::slice_errors;
+    use gf2_sim::stage::Stage;
+    use gf2_sim::stages::batch_decode::{BatchDecode, BatchDecodeScratch};
+
+    struct RecordingDecoder(Arc<Mutex<Vec<usize>>>);
+
+    impl BatchSoftDecoder for RecordingDecoder {
+        fn frame_len(&self) -> usize {
+            3
+        }
+
+        fn decoded_len(&self) -> usize {
+            3
+        }
+
+        fn batch_granularity(&self) -> usize {
+            1
+        }
+
+        fn decode_batch(
+            &mut self,
+            frames: &[&[Llr]],
+            decoded: &mut [BitVec],
+            outcomes: &mut [DecodeOutcome],
+        ) {
+            self.decode_batch_with_workers(frames, decoded, outcomes, NonZeroUsize::MIN);
+        }
+
+        fn decode_batch_with_workers(
+            &mut self,
+            frames: &[&[Llr]],
+            decoded: &mut [BitVec],
+            outcomes: &mut [DecodeOutcome],
+            workers: NonZeroUsize,
+        ) {
+            self.0.lock().unwrap().push(workers.get());
+            for ((frame, word), outcome) in frames.iter().zip(decoded).zip(outcomes) {
+                *word = BitVec::new();
+                for llr in *frame {
+                    word.push_bit(llr.hard_decision());
+                }
+                *outcome = DecodeOutcome::default();
+            }
+        }
+    }
+
+    #[test]
+    fn stage_and_sweep_pass_execution_workers_when_decoders_are_reused() {
+        let stage_calls = Arc::new(Mutex::new(Vec::new()));
+        let sweep_calls = Arc::new(Mutex::new(Vec::new()));
+        let factories = Arc::new(Mutex::new(0));
+        let stage = BatchDecode::new({
+            let calls = stage_calls.clone();
+            let factories = factories.clone();
+            move || {
+                *factories.lock().unwrap() += 1;
+                RecordingDecoder(calls.clone())
+            }
+        });
+        let mut scratch = BatchDecodeScratch::default();
+        let mut decoder = RecordingDecoder(sweep_calls.clone());
+        let input = LlrBatch::new(vec![vec![Llr::new(1.0), Llr::new(-2.0), Llr::new(3.0)]]);
+        assert!(rayon::current_thread_index().is_none());
+        let expected = stage.process(&input, &mut scratch).unwrap().frames;
+        let expected_errors = slice_errors(&mut decoder, 42, 1.0, 5);
+
+        for width in [1, 2, 4] {
+            let pool = rayon::ThreadPoolBuilder::new()
+                .num_threads(width)
+                .build()
+                .unwrap();
+            pool.install(|| {
+                assert_eq!(
+                    stage.process(&input, &mut scratch).unwrap().frames,
+                    expected
+                );
+                assert_eq!(slice_errors(&mut decoder, 42, 1.0, 5), expected_errors);
+            });
+        }
+        assert_eq!(
+            stage.process(&input, &mut scratch).unwrap().frames,
+            expected
+        );
+        assert_eq!(slice_errors(&mut decoder, 42, 1.0, 5), expected_errors);
+        assert_eq!(*stage_calls.lock().unwrap(), [1, 1, 2, 4, 1]);
+        assert_eq!(*sweep_calls.lock().unwrap(), [1, 1, 2, 4, 1]);
+        assert_eq!(*factories.lock().unwrap(), 1);
+    }
 }

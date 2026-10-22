@@ -140,8 +140,14 @@ one of two routes, which
 The route follows from the algorithm and the decode family of the coding
 section. A wave takes `Lane` when the algorithm is of the min-sum family
 (`MinSum`, `NormalizedMinSum`, `OffsetMinSum`), the wave holds at least
-`lane_min_frames` frames, and the code has at most `lane_max_edges`
-Tanner-graph edges. `SumProduct` takes `SingleFrame`. `granules_per_task` is
+`lane_min_frames` frames, the code has at most `lane_max_edges`
+Tanner-graph edges, and configured decode concurrency is at most
+`lane_max_workers`. An omitted worker bound resolves to one.
+`decode_batch` uses one-worker semantics for standalone decoders;
+`decode_batch_with_workers` accepts the caller's configured concurrency.
+`PooledBatchDecoder` supplies the execution pool's width, preserving a larger
+explicit caller width; simulation stages pass their executing pool's width.
+`SumProduct` takes `SingleFrame`. `granules_per_task` is
 the number of `batch_granularity` frame groups in a task of
 `PooledBatchDecoder` ([Decode LDPC frames in parallel](#decode-ldpc-frames-in-parallel)).
 The conservative family closes the lane route, so a process that installs no

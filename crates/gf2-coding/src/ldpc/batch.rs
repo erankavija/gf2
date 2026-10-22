@@ -13,6 +13,7 @@ use crate::traits::{BatchSoftDecoder, DecodeOutcome};
 use crate::tuning::{self, DecodeSelectors};
 use gf2_core::BitVec;
 use gf2_kernels_simd::ldpc_lanes::{F32x8, LaneMask, LaneMinSumRule, LdpcLaneFns, LANES};
+use std::num::NonZeroUsize;
 
 /// The word an [`LdpcBatchDecoder`] writes for each frame.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -30,7 +31,8 @@ pub enum DecodedWord {
 /// A batch is decoded in consecutive waves of [`LANES`] frames; the last wave
 /// holds the remaining frames. [`decide_batch_route`] gives each wave its
 /// route from the decoder's [`DecodeSelectors`], the algorithm, the number of
-/// frames in the wave and the edge count of the code:
+/// frames in the wave, the edge count of the code and configured decode
+/// concurrency:
 ///
 /// - [`BatchRoute::Lane`]: the frames occupy one lane each of the flooding
 ///   min-sum lane kernels. A frame stops as the single-frame decoder stops
@@ -93,7 +95,7 @@ pub enum DecodedWord {
 ///     })
 ///     .collect();
 ///
-/// let selectors = DecodeSelectors::try_new(1, usize::MAX, 1).unwrap();
+/// let selectors = DecodeSelectors::try_new(1, usize::MAX, 1, 1).unwrap();
 /// let decoder = LdpcBatchDecoder::with_selectors(
 ///     code,
 ///     DecoderConfig::default(),
@@ -226,19 +228,26 @@ impl LdpcBatchDecoder {
         self.max_iterations
     }
 
-    /// The route of a wave of `frames` frames, without decoding.
+    /// The route of a wave of `frames` frames at one configured worker, without decoding.
     ///
     /// A batch of at most [`LANES`] frames is one wave and takes this route.
     /// A longer batch takes `batch_route(LANES)`, the value returned for it,
     /// in each full wave, and `batch_route(r)` in a final wave of `r` frames.
     #[must_use]
     pub fn batch_route(&self, frames: usize) -> BatchRoute {
+        self.batch_route_with_workers(frames, NonZeroUsize::MIN)
+    }
+
+    /// The wave route under configured concurrent decode `workers`.
+    #[must_use]
+    pub fn batch_route_with_workers(&self, frames: usize, workers: NonZeroUsize) -> BatchRoute {
         decide_batch_route(
             &self.selectors,
             self.config.algorithm(),
             LaneCapability::Present(self.lane_backend),
             frames.min(LANES),
             self.single.edge_layout().edges(),
+            workers,
         )
     }
 
@@ -257,7 +266,7 @@ impl LdpcBatchDecoder {
 
     /// Decodes as [`BatchSoftDecoder::decode_batch`] and writes the posterior
     /// LLRs of `frames[i]` to `posteriors[i * n..(i + 1) * n]`, with `n` the
-    /// frame length.
+    /// frame length. Uses one configured worker.
     ///
     /// A posterior is the frame's beliefs at its own last iteration, the
     /// slice [`LdpcDecoder::posterior_llrs`] holds after decoding that frame;
@@ -274,12 +283,34 @@ impl LdpcBatchDecoder {
         outcomes: &mut [DecodeOutcome],
         posteriors: &mut [Llr],
     ) {
+        self.decode_batch_with_posteriors_and_workers(
+            frames,
+            decoded,
+            outcomes,
+            posteriors,
+            NonZeroUsize::MIN,
+        );
+    }
+
+    /// Decodes with posterior output and configured concurrent decode `workers`.
+    ///
+    /// # Panics
+    ///
+    /// Panics as [`Self::decode_batch_with_posteriors`] does.
+    pub fn decode_batch_with_posteriors_and_workers(
+        &mut self,
+        frames: &[&[Llr]],
+        decoded: &mut [BitVec],
+        outcomes: &mut [DecodeOutcome],
+        posteriors: &mut [Llr],
+        workers: NonZeroUsize,
+    ) {
         assert_eq!(
             posteriors.len(),
             frames.len() * self.frame_len(),
             "a batch needs one posterior LLR per frame position"
         );
-        self.decode_waves(frames, decoded, outcomes, Some(posteriors));
+        self.decode_waves(frames, decoded, outcomes, Some(posteriors), workers);
     }
 
     fn decode_waves(
@@ -288,6 +319,7 @@ impl LdpcBatchDecoder {
         decoded: &mut [BitVec],
         outcomes: &mut [DecodeOutcome],
         mut posteriors: Option<&mut [Llr]>,
+        workers: NonZeroUsize,
     ) {
         let n = self.frame_len();
         assert_eq!(
@@ -318,7 +350,7 @@ impl LdpcBatchDecoder {
             let posteriors = posteriors
                 .as_deref_mut()
                 .map(|all| &mut all[slots.start * n..slots.end * n]);
-            match (self.batch_route(wave.len()), rule) {
+            match (self.batch_route_with_workers(wave.len(), workers), rule) {
                 (BatchRoute::Lane(_), Some(rule)) => {
                     self.decode_wave_in_lanes(rule.into(), wave, decoded, outcomes, posteriors);
                 }
@@ -496,7 +528,17 @@ impl BatchSoftDecoder for LdpcBatchDecoder {
         decoded: &mut [BitVec],
         outcomes: &mut [DecodeOutcome],
     ) {
-        self.decode_waves(frames, decoded, outcomes, None);
+        self.decode_batch_with_workers(frames, decoded, outcomes, NonZeroUsize::MIN);
+    }
+
+    fn decode_batch_with_workers(
+        &mut self,
+        frames: &[&[Llr]],
+        decoded: &mut [BitVec],
+        outcomes: &mut [DecodeOutcome],
+        workers: NonZeroUsize,
+    ) {
+        self.decode_waves(frames, decoded, outcomes, None, workers);
     }
 }
 
@@ -539,13 +581,13 @@ mod tests {
 
     /// Selectors that give every wave the lane route.
     fn lane_selectors() -> DecodeSelectors {
-        DecodeSelectors::try_new(1, usize::MAX, 1).unwrap()
+        DecodeSelectors::try_new(1, usize::MAX, 1, 1).unwrap()
     }
 
     /// Selectors that give a wave of fewer than four frames the single-frame
     /// route and the lane route otherwise.
     fn mixed_selectors() -> DecodeSelectors {
-        DecodeSelectors::try_new(4, usize::MAX, 1).unwrap()
+        DecodeSelectors::try_new(4, usize::MAX, 1, 1).unwrap()
     }
 
     /// A decoder whose lane route runs `backend`, one of
@@ -655,6 +697,24 @@ mod tests {
         selectors: DecodeSelectors,
         frames: &[Vec<Llr>],
     ) {
+        assert_equals_single_frame_with_workers(
+            backend,
+            config,
+            cap,
+            selectors,
+            frames,
+            NonZeroUsize::MIN,
+        );
+    }
+
+    fn assert_equals_single_frame_with_workers(
+        backend: LaneBackend,
+        config: DecoderConfig,
+        cap: usize,
+        selectors: DecodeSelectors,
+        frames: &[Vec<Llr>],
+        workers: NonZeroUsize,
+    ) {
         let n = code().n();
         let expected = single_frame_results(config, cap, frames);
         let mut decoder = batch_decoder_on(
@@ -667,11 +727,12 @@ mod tests {
         let mut decoded = vec![BitVec::new(); frames.len()];
         let mut outcomes = vec![DecodeOutcome::default(); frames.len()];
         let mut posteriors = vec![Llr::new(f32::NAN); frames.len() * n];
-        decoder.decode_batch_with_posteriors(
+        decoder.decode_batch_with_posteriors_and_workers(
             &views(frames),
             &mut decoded,
             &mut outcomes,
             &mut posteriors,
+            workers,
         );
 
         for (f, (result, posterior)) in expected.iter().enumerate() {
@@ -683,6 +744,48 @@ mod tests {
                 .map(|p| p.value().to_bits())
                 .collect();
             assert_eq!(&got, posterior, "posterior of {context}");
+        }
+    }
+
+    #[test]
+    fn explicit_worker_context_preserves_posteriors_on_selected_and_forced_routes() {
+        let frames = frames();
+        for backend in ldpc_lane_backends() {
+            for algorithm in MIN_SUM_FAMILY {
+                let config = DecoderConfig::new(algorithm, true);
+                for max_workers in [1, 24] {
+                    let selectors =
+                        DecodeSelectors::try_new(4, usize::MAX, max_workers, 1).unwrap();
+                    for workers in [1, 6, 12, 24] {
+                        let workers = NonZeroUsize::new(workers).unwrap();
+                        let decoder = batch_decoder_on(
+                            backend,
+                            config,
+                            CAP,
+                            DecodedWord::Codeword,
+                            selectors.clone(),
+                        );
+                        let expected = if workers.get() <= max_workers {
+                            BatchRoute::Lane(backend)
+                        } else {
+                            BatchRoute::SingleFrame
+                        };
+                        assert_eq!(decoder.batch_route_with_workers(LANES, workers), expected);
+                        assert_eq!(
+                            decoder.batch_route_with_workers(1, workers),
+                            BatchRoute::SingleFrame
+                        );
+                        assert_equals_single_frame_with_workers(
+                            backend,
+                            config,
+                            CAP,
+                            selectors.clone(),
+                            &frames,
+                            workers,
+                        );
+                    }
+                }
+            }
         }
     }
 
@@ -799,8 +902,8 @@ mod tests {
             assert_eq!(by_frames.batch_route(size), expected, "{size} frames");
         }
 
-        let at_bound = decoder(DecodeSelectors::try_new(1, edges, 1).unwrap());
-        let below_bound = decoder(DecodeSelectors::try_new(1, edges - 1, 1).unwrap());
+        let at_bound = decoder(DecodeSelectors::try_new(1, edges, 1, 1).unwrap());
+        let below_bound = decoder(DecodeSelectors::try_new(1, edges - 1, 1, 1).unwrap());
         for size in 1..=FRAMES {
             assert_eq!(at_bound.batch_route(size), lane);
             assert_eq!(below_bound.batch_route(size), BatchRoute::SingleFrame);

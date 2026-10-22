@@ -1665,6 +1665,10 @@ def validate_result_payload(result: Any, case: Any, owner: str) -> None:
         field, stratum = case["identity"]["field"], case["stratum"]
         code = CODING_CODES[stratum["code"]]
         selectors = coding_selectors(field, stratum, case["candidate"])
+        # Worker-aware producers declare the measured direct width and the
+        # explicit pooled candidate width. Frozen producers omit this selector.
+        if "lane_max_workers" in profile["active_decode"]:
+            selectors["lane_max_workers"] = 4 if field == "decode.granules_per_task" else 1
         frames = 8 * stratum["frames"]
         require(payload["schema"] == CODING_PROTOCOL and payload["field"] == case["field"]
                 and payload["stratum_index"] == case["stratum_index"]

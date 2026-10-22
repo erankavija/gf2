@@ -352,7 +352,7 @@ fn check_batch_decodes(
 
     let routes = [
         (
-            DecodeSelectors::try_new(1, usize::MAX, 1).unwrap(),
+            DecodeSelectors::try_new(1, usize::MAX, 1, 1).unwrap(),
             BatchRoute::Lane(LaneBackend::detected()),
         ),
         (DecodeSelectors::CONSERVATIVE, BatchRoute::SingleFrame),

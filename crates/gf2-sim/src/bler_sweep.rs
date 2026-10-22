@@ -3,6 +3,8 @@
 //! [`BatchSoftDecoder`]. Compiled under `cfg(test)` or the `test-support`
 //! feature with [`testutil`](crate::testutil).
 
+use std::num::NonZeroUsize;
+
 use gf2_core::BitVec;
 use rayon::prelude::*;
 
@@ -38,7 +40,8 @@ pub fn sweep_decoder(code: LdpcCode, max_iter: usize) -> Box<dyn BatchSoftDecode
 
 /// Counts the frame errors among `frames` all-zero-codeword frames drawn from
 /// `AwgnLlrSource::new(seed)` at noise std `sigma` and decoded as one batch by
-/// `dec`. A frame error is a nonzero bit in the decoded message.
+/// `dec`. A frame error is a nonzero bit in the decoded message. Decode
+/// concurrency is the active Rayon pool width, or one outside a Rayon worker.
 ///
 /// # Panics
 ///
@@ -51,7 +54,11 @@ pub fn slice_errors(dec: &mut dyn BatchSoftDecoder, seed: u64, sigma: f64, frame
     let views: Vec<&[Llr]> = llrs.iter().map(Vec::as_slice).collect();
     let mut decoded = vec![BitVec::new(); views.len()];
     let mut outcomes = vec![DecodeOutcome::default(); views.len()];
-    dec.decode_batch(&views, &mut decoded, &mut outcomes);
+    let workers = NonZeroUsize::new(
+        rayon::current_thread_index().map_or(1, |_| rayon::current_num_threads()),
+    )
+    .expect("Rayon pools have at least one worker");
+    dec.decode_batch_with_workers(&views, &mut decoded, &mut outcomes, workers);
     decoded
         .iter()
         .filter(|word| (0..word.len()).any(|i| word.get(i)))
