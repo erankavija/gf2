@@ -2489,8 +2489,9 @@
     "B: accept all three gaps as recorded, close the story with REQ-10/REQ-13 partly met (amends story criteria), d06a99ed and f768c925 stay outside the epic",
     "C: bring both follow-ups into the story and also require further AFF3CT INTRA/INTER cells for REQ-10"
    ],
-   "status": "open",
-   "raised_at": "2026-10-21"
+   "status": "resolved",
+   "raised_at": "2026-10-21",
+   "answer": "Invoker approved 2026-10-22: add d06a99ed to the story; unavailable AFF3CT comparisons remain explicit limits, f768c925 stays outside the epic; amend 6230e0b6 REQ-01 and relocate only findings.md under the epic directory."
   },
   {
    "issue": "6230e0b6",
@@ -2502,8 +2503,9 @@
     "B: amend 6230e0b6 REQ-01 to place the record under dev/active/1a379447-zen3-cpu-performance/6230e0b6/findings.md and move it",
     "C: move the whole story directory under the epic directory (wide churn, many cited paths)"
    ],
-   "status": "open",
-   "raised_at": "2026-10-21"
+   "status": "resolved",
+   "raised_at": "2026-10-21",
+   "answer": "Invoker approved 2026-10-22: add d06a99ed to the story; unavailable AFF3CT comparisons remain explicit limits, f768c925 stays outside the epic; amend 6230e0b6 REQ-01 and relocate only findings.md under the epic directory."
   }
  ],
  "rework_counts": {
@@ -3413,7 +3415,8 @@
   "Session 37: 63bad95d done at f8ed59d3e after two rework rounds (verdict reviews/63bad95d-r2.md). 20af7e6e at a4fd0c390 awaits the lead's cargo-ci, merge and gates. 815703a1 filed in the epic. One intermittent failure of gf2-coding bch_matrix_allocation caller_buffer_materialization_reaches_no_allocator in a worker's cargo-ci; five isolated reruns and a full rerun passed.",
   "Session 37 evening: 20af7e6e done at 8d606de6a (reviews/20af7e6e-r4.md); 817fc47d done at 19aedabfb (reviews/817fc47d-r1.md), including a fix of fp_small_batch_dot (wrapping u32 drain sum, primes 131-251). Filed in the epic: 815703a1 (in progress, tip e9ec2e91c, awaiting cargo-ci), 9eb6f13c (RNG in producer reports, after 815703a1), 17e08faa (runtime records defined once, after 9eb6f13c). Order: 815703a1, 9eb6f13c, 17e08faa, then regenerate the gf2 arms build record in agent-ed3d490e-run and dispatch 5d590bac. 807ddab2 is rejected in the tracker. Reclaimed agent-63bad95d-int, -fam, -m4ri, -pm4ri.",
   "Session 37 night: 815703a1 done at 81734321a (reviews/815703a1-r2.md). 9eb6f13c merged at b6e363c40, cargo-ci passes, code-review fails on the algebra fixture pin (rework 1 dispatched to w-815703a1 in agent-9eb6f13c). Open epic children: 9eb6f13c, 17e08faa (after it), d93a1c7e (after 17e08faa), d11a45d4, ec4e71ca, 1362381c; story ed3d490e: regenerate the gf2 arms build record after d93a1c7e merges, then 5d590bac. Workers go idle without reporting when cargo-ci outlives their foreground limit; the lead runs cargo-ci in the worker's worktree itself. A lead CI run in a worktree a worker is still editing gives false failures: wait for the worker's explicit stop first.",
-  "Session 41 (2026-10-22): resumed read-only with two gpt-6.1-sol agents (high reasoning for HPC, medium for tooling). Existing scope escalations in handoff-36 remain unresolved. F5 is already fixed on main; no implementation or gate rerun is justified until F1 is resolved. Installed jit rejects docs-mechanical and gate auto; explicit compatible CLI exists at /home/vkaskivuo/Projects/just-in-time/target/jit-stale-child-test-cache/debug/jit. No configuration changes or installations. HPC next action is worker-aware route decision d06a99ed, subject to scope ruling. See handoff-37.md."
+  "Session 41 (2026-10-22): resumed read-only with two gpt-6.1-sol agents (high reasoning for HPC, medium for tooling). Existing scope escalations in handoff-36 remain unresolved. F5 is already fixed on main; no implementation or gate rerun is justified until F1 is resolved. Installed jit rejects docs-mechanical and gate auto; explicit compatible CLI exists at /home/vkaskivuo/Projects/just-in-time/target/jit-stale-child-test-cache/debug/jit. No configuration changes or installations. HPC next action is worker-aware route decision d06a99ed, subject to scope ruling. See handoff-37.md.",
+  "Session 42 (2026-10-22): invoker approved both session-41 scope proposals. Apply story worker-aware blocker and criterion clarification, relocate outcome report, then continue dependency order. No new protocol work."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
