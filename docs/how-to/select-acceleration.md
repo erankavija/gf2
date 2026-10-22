@@ -171,7 +171,7 @@ checks the route and decodes through the trait
 `frames` built):
 
 ```rust
-let selectors = DecodeSelectors::try_new(1, usize::MAX, 1)?;
+let selectors = DecodeSelectors::try_new(1, usize::MAX, 1, 1)?;
 let decoder = LdpcBatchDecoder::with_selectors(
     code,
     DecoderConfig::default(),
