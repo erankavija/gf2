@@ -9,9 +9,12 @@ use std::path::Path;
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use gf2_coding::ldpc::{
-    DecodedWord, DecoderAlgorithm, DecoderConfig, LdpcBatchDecoder, QuasiCyclicLdpc,
+    BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LaneBackend, LdpcBatchDecoder,
+    QuasiCyclicLdpc,
 };
+use gf2_coding::test_support::ldpc_batch_routes;
 use gf2_coding::traits::BatchSoftDecoder;
+use gf2_coding::tuning::DecodeSelectors;
 use gf2_coding::{LdpcCode, Llr};
 use gf2_sim::batch::{LlrBatch, SymbolBatch};
 use gf2_sim::channels::{Awgn, Rayleigh, Rician};
@@ -243,10 +246,27 @@ fn batch_code() -> LdpcCode {
         .clone()
 }
 
-fn batch_decoder_factory(code: LdpcCode) -> impl Fn() -> LdpcBatchDecoder + Send + Sync + 'static {
+fn batch_decoder_factory(
+    code: LdpcCode,
+    case: &(DecodeSelectors, LaneBackend, BatchRoute),
+) -> impl Fn() -> LdpcBatchDecoder + Send + Sync + 'static {
+    let (selectors, backend, _) = case.clone();
     move || {
         let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
-        LdpcBatchDecoder::new(code.clone(), cfg, BATCH_MAX_ITER, DecodedWord::Message)
+        let decoder = LdpcBatchDecoder::with_selectors(
+            code.clone(),
+            cfg,
+            BATCH_MAX_ITER,
+            DecodedWord::Message,
+            selectors.clone(),
+        );
+        match backend {
+            LaneBackend::Portable => decoder.with_portable_lanes(),
+            LaneBackend::Avx2 => {
+                assert_eq!(LaneBackend::detected(), LaneBackend::Avx2);
+                decoder
+            }
+        }
     }
 }
 
@@ -330,6 +350,7 @@ fn batch_decode_frame<'a>(
 /// the frame indices of every decoded batch. The caller holds
 /// [`interrupt_guard`].
 fn run_batch_campaign(
+    case: &(DecodeSelectors, LaneBackend, BatchRoute),
     batch: usize,
     config: &PipelineConfig,
     dir: &Path,
@@ -337,7 +358,7 @@ fn run_batch_campaign(
     on_heartbeat_flush: impl FnMut(usize, u64),
 ) -> (CheckpointedRun, Vec<Vec<usize>>) {
     let code = batch_code();
-    let stage = BatchDecode::new(batch_decoder_factory(code.clone()));
+    let stage = BatchDecode::new(batch_decoder_factory(code.clone(), case));
     let decoded = Mutex::new(Vec::new());
     let run = run_snr_point_checkpointed(
         config,
@@ -360,96 +381,126 @@ fn sorted_frames(batches: &[Vec<usize>]) -> Vec<usize> {
     frames
 }
 
-/// Interrupts a campaign decoding `batch`-frame batches at its first heartbeat
-/// checkpoint, resumes it, and asserts at each worker count that the counters
+/// Interrupts each route at its first heartbeat checkpoint and resumes it.
+/// `batch_size` chooses the batch length from the decoder granularity.
+/// Asserts at each worker count that the counters
 /// equal those of two uninterrupted runs, one of which decodes a wave across
 /// the checkpoint boundary.
-fn assert_batch_decode_resume(batch: usize) {
-    let lanes = batch_decoder_factory(batch_code())().batch_granularity();
-    // A batch the dispatch end cuts short, leaving a lane wave partly filled.
-    let cut_short = |batches: &[Vec<usize>]| {
-        batches
-            .iter()
-            .filter(|b| b.len() < batch && !b.len().is_multiple_of(lanes))
-            .count()
-    };
-    for parallelism in [1, 2, 4] {
-        let tag = format!("batch{batch}-p{parallelism}");
-        let _guard = interrupt_guard();
-        let full = cfg(parallelism, BATCH_FRAMES, BATCH_HEARTBEAT);
-
-        let dir = tempdir(&format!("{tag}-resume"));
-        clear_interrupt();
-        let mut heartbeats = 0;
-        let (interrupted, before) = run_batch_campaign(batch, &full, dir.path(), None, |_, _| {
-            heartbeats += 1;
-            request_interrupt();
-        });
-        clear_interrupt();
-        assert!(
-            interrupted.interrupted && !interrupted.completed,
-            "[{tag}] the run must stop on the interrupt: {interrupted:?}"
-        );
-        assert_eq!(
-            heartbeats, 1,
-            "[{tag}] the run stops at its first heartbeat"
-        );
-        let boundary = interrupted.counters.frames as usize;
-        assert_eq!(
-            sorted_frames(&before),
-            (0..boundary).collect::<Vec<_>>(),
-            "[{tag}] the interrupted run decodes the frames below the checkpoint"
-        );
-        assert_eq!(
-            cut_short(&before),
-            parallelism,
-            "[{tag}] the checkpoint must cut each worker's last batch short: {before:?}"
-        );
-
-        let loaded = CheckpointReader::new(dir.path(), config_hash(&full))
-            .load(0)
-            .unwrap()
-            .unwrap();
-        assert!(!loaded.completed, "[{tag}] the checkpoint is resumable");
-        assert_eq!(loaded.frames_completed as usize, boundary);
-        let (resumed, after) =
-            run_batch_campaign(batch, &full, dir.path(), Some(loaded), |_, _| {});
-        assert!(resumed.completed && !resumed.interrupted);
-        assert_eq!(
-            sorted_frames(&after),
-            (boundary..BATCH_FRAMES as usize).collect::<Vec<_>>(),
-            "[{tag}] the resumed run decodes the remaining frames"
-        );
-        assert!(
-            resumed.counters.errors > 0 && resumed.counters.errors < resumed.counters.frames,
-            "[{tag}] the campaign must mix frame errors and successes: {:?}",
-            resumed.counters
-        );
-
-        // One dispatch over the whole range, so no checkpoint bounds a batch.
-        let undivided = PipelineConfig {
-            heartbeat_every_frames: 0,
-            ..full.clone()
+fn assert_batch_decode_resume(batch_size: impl Fn(usize) -> usize) {
+    for (selectors, backend, route) in ldpc_batch_routes() {
+        let selectors = DecodeSelectors::try_new(
+            selectors.lane_min_frames(),
+            selectors.lane_max_edges(),
+            4,
+            selectors.granules_per_task().get(),
+        )
+        .unwrap();
+        let case = (selectors.clone(), backend, route);
+        let decoder = batch_decoder_factory(batch_code(), &case)();
+        let lanes = decoder.batch_granularity();
+        let batch = batch_size(lanes);
+        // A batch the dispatch end cuts short, leaving a lane wave partly filled.
+        let cut_short = |batches: &[Vec<usize>]| {
+            batches
+                .iter()
+                .filter(|b| b.len() < batch && !b.len().is_multiple_of(lanes))
+                .count()
         };
-        for (name, config) in [("checkpointed", &full), ("undivided", &undivided)] {
-            let dir_ref = tempdir(&format!("{tag}-{name}"));
-            let (reference, batches) =
-                run_batch_campaign(batch, config, dir_ref.path(), None, |_, _| {});
-            assert!(reference.completed && !reference.interrupted);
-            assert_eq!(
-                resumed.counters, reference.counters,
-                "[{tag}] resume must be byte-identical to the {name} uninterrupted run"
+        for parallelism in [1, 2, 4] {
+            let tag = format!(
+                "batch{batch}-p{parallelism}-{backend:?}-{route:?}-min{}",
+                selectors.lane_min_frames()
             );
-            if config.heartbeat_every_frames == 0 {
-                let across_boundary = batches
-                    .iter()
-                    .filter(|b| b[0] < boundary && boundary <= b[b.len() - 1])
-                    .count();
+            for frames in 1..=batch {
+                let expected = if frames < selectors.lane_min_frames() {
+                    BatchRoute::SingleFrame
+                } else {
+                    route
+                };
                 assert_eq!(
-                    across_boundary, parallelism,
-                    "[{tag}] each worker of the undivided run must decode one \
-                     batch across the checkpoint boundary: {batches:?}"
+                    decoder
+                        .batch_route_with_workers(frames, NonZeroUsize::new(parallelism).unwrap()),
+                    expected,
+                    "[{tag}] route for {frames} frames"
                 );
+            }
+            let _guard = interrupt_guard();
+            let full = cfg(parallelism, BATCH_FRAMES, BATCH_HEARTBEAT);
+
+            let dir = tempdir(&format!("{tag}-resume"));
+            clear_interrupt();
+            let mut heartbeats = 0;
+            let (interrupted, before) =
+                run_batch_campaign(&case, batch, &full, dir.path(), None, |_, _| {
+                    heartbeats += 1;
+                    request_interrupt();
+                });
+            clear_interrupt();
+            assert!(
+                interrupted.interrupted && !interrupted.completed,
+                "[{tag}] the run must stop on the interrupt: {interrupted:?}"
+            );
+            assert_eq!(
+                heartbeats, 1,
+                "[{tag}] the run stops at its first heartbeat"
+            );
+            let boundary = interrupted.counters.frames as usize;
+            assert_eq!(
+                sorted_frames(&before),
+                (0..boundary).collect::<Vec<_>>(),
+                "[{tag}] the interrupted run decodes the frames below the checkpoint"
+            );
+            assert_eq!(
+                cut_short(&before),
+                parallelism,
+                "[{tag}] the checkpoint must cut each worker's last batch short: {before:?}"
+            );
+
+            let loaded = CheckpointReader::new(dir.path(), config_hash(&full))
+                .load(0)
+                .unwrap()
+                .unwrap();
+            assert!(!loaded.completed, "[{tag}] the checkpoint is resumable");
+            assert_eq!(loaded.frames_completed as usize, boundary);
+            let (resumed, after) =
+                run_batch_campaign(&case, batch, &full, dir.path(), Some(loaded), |_, _| {});
+            assert!(resumed.completed && !resumed.interrupted);
+            assert_eq!(
+                sorted_frames(&after),
+                (boundary..BATCH_FRAMES as usize).collect::<Vec<_>>(),
+                "[{tag}] the resumed run decodes the remaining frames"
+            );
+            assert!(
+                resumed.counters.errors > 0 && resumed.counters.errors < resumed.counters.frames,
+                "[{tag}] the campaign must mix frame errors and successes: {:?}",
+                resumed.counters
+            );
+
+            // One dispatch over the whole range, so no checkpoint bounds a batch.
+            let undivided = PipelineConfig {
+                heartbeat_every_frames: 0,
+                ..full.clone()
+            };
+            for (name, config) in [("checkpointed", &full), ("undivided", &undivided)] {
+                let dir_ref = tempdir(&format!("{tag}-{name}"));
+                let (reference, batches) =
+                    run_batch_campaign(&case, batch, config, dir_ref.path(), None, |_, _| {});
+                assert!(reference.completed && !reference.interrupted);
+                assert_eq!(
+                    resumed.counters, reference.counters,
+                    "[{tag}] resume must be byte-identical to the {name} uninterrupted run"
+                );
+                if config.heartbeat_every_frames == 0 {
+                    let across_boundary = batches
+                        .iter()
+                        .filter(|b| b[0] < boundary && boundary <= b[b.len() - 1])
+                        .count();
+                    assert_eq!(
+                        across_boundary, parallelism,
+                        "[{tag}] each worker of the undivided run must decode one \
+                     batch across the checkpoint boundary: {batches:?}"
+                    );
+                }
             }
         }
     }
@@ -457,15 +508,13 @@ fn assert_batch_decode_resume(batch: usize) {
 
 #[test]
 fn test_v2_resume_byte_identical_batch_decode_one_wave_batches() {
-    let lanes = batch_decoder_factory(batch_code())().batch_granularity();
-    assert_batch_decode_resume(lanes);
+    assert_batch_decode_resume(|lanes| lanes);
 }
 
 #[test]
 fn test_v2_resume_byte_identical_batch_decode_partial_wave_batches() {
     // A batch of 1.5 waves decodes a full wave and a half-filled one.
-    let lanes = batch_decoder_factory(batch_code())().batch_granularity();
-    assert_batch_decode_resume(lanes + lanes / 2);
+    assert_batch_decode_resume(|lanes| lanes + lanes / 2);
 }
 
 #[test]

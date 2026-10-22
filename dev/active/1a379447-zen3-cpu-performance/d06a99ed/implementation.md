@@ -73,6 +73,13 @@ profile and the `ci` nextest profile.
   The execution-context regression first observed `[1, 1, 1, 1, 1]` instead
   of `[1, 1, 2, 4, 1]`, then passed after context propagation. The same scratch
   and decoder are reused across standalone calls and pools of different widths.
+- Checkpoint/resume regression: both existing batch tests pass over canonical
+  scalar, portable and detected native route cases at one, two and four workers
+  (nextest run `e0dcd7cd-ef98-4ea7-b65d-b12d900e3bf4`). Their initial lane
+  assertion fails with the default conservative factory in run
+  `cf02bc29-c455-4e6b-894e-0872d7b16177`. Explicit selectors retain each case's
+  batch threshold and admit four workers; route assertions cover partial tails.
+  Genuine interruption, frame partitions and resumed counters remain checked.
 
 The shared posterior assertion compares each frame to the single-frame
 reference at workers 1, 6, 12 and 24, on portable and detected native lane
