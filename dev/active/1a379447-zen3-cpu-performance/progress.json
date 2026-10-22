@@ -1,7 +1,7 @@
 {
  "epic_id": "1a379447-212f-4aff-b2c3-a83c13021e1d",
  "epic_short_id": "1a379447",
- "current_wave": 4,
+ "current_wave": 6,
  "waves": [
   {
    "wave_number": 1,
@@ -398,7 +398,7 @@
      "title": "Profile and optimize mid-range buffer operations (8-64 words)",
      "classification": "implementation",
      "status": "backlog; dense harness done; dense baseline, ISA-L and logical candidate jobs prepared for September 27 02:00 EEST window.",
-     "tracker_state": "backlog"
+     "tracker_state": "done"
     },
     {
      "id": "c04dd4ac-8103-47bb-b504-7cca92417dfc",
@@ -406,7 +406,7 @@
      "title": "Optimize arbitrary-offset shifts and coding permutations",
      "classification": "implementation",
      "status": "done",
-     "tracker_state": "backlog"
+     "tracker_state": "done"
     },
     {
      "id": "12fdeb5b-685d-4232-a350-2585c29cfed6",
@@ -517,11 +517,13 @@
     },
     {
      "id": "f6df53a9",
-     "status": "done. Session 30: merged at 7f7bcad2a; rework 1 (input-derived test values, batch rustdoc) merged at 1fde31e97; rework 2 by the lead (evidence citation in the contract page, 0be5739b5); cargo-ci, code-review, doc-review pass; review reviews/f6df53a9-r2.md."
+     "status": "done. Session 30: merged at 7f7bcad2a; rework 1 (input-derived test values, batch rustdoc) merged at 1fde31e97; rework 2 by the lead (evidence citation in the contract page, 0be5739b5); cargo-ci, code-review, doc-review pass; review reviews/f6df53a9-r2.md.",
+     "tracker_state": "done"
     },
     {
      "id": "07ae376c",
-     "status": "pending: filed session 30 (default decode_soft_with_result reports converged and one iteration on the LDPC and GLDPC hard-decision path); gates cargo-ci, code-review"
+     "status": "pending: filed session 30 (default decode_soft_with_result reports converged and one iteration on the LDPC and GLDPC hard-decision path); gates cargo-ci, code-review",
+     "tracker_state": "done"
     }
    ]
   },
@@ -555,7 +557,7 @@
      "title": "Calibrate production dispatch for the 5900X",
      "classification": "implementation",
      "status": "in_progress, blocked on the invoker (contended 2026-10-09 window). Branch worktree-agent-63bad95d-fam at a257dd63b: native-ladder confirmation committed (3 pass, 3 inconclusive, attempt spent), dispatch-overhead r2 pilot committed and its freeze refused (pilot budget spent), disturbance-record.md. Branch worktree-agent-63bad95d-m4ri at 998a0a3d4 and worktree-agent-63bad95d-pm4ri at 1aad07d0e: both M4RI pilots committed, both resolution-insufficient, no confirmation. pm4ri carries a 72-character subject (96d44eded) to reword before merge. None merged.",
-     "tracker_state": "in_progress"
+     "tracker_state": "done"
     },
     {
      "id": "b64dc9c4",
@@ -579,7 +581,7 @@
      "title": "Confirm the GF(2^8) axpy path against the current vector route",
      "classification": "research",
      "status": "in_progress: pilot collected from the 2026-09-19 window and merged at e736999ee; confirmation frozen (6 of 10 cells; equivalence margin replaced 1.15 -> 1.3 by the freezer's sanctioned option because the cold cells set the resolution at 0.29, recorded in the derivation record as plan.md anticipates) and queued for the 2026-09-20 window from the pinned worktree agent-0a357f94. Replay note: the worker's launcher/closure convergence on the shared log checker duplicated main's 2d95c4d4f and was resolved to main's side; its two-stage private smoke commit 37b14c464 was skipped on main (main's smoke-arms.sh stays on dev/scripts/smoke-campaign-arms.sh over the pilot plan), so main carries no smoke record of the confirmation plan while the pinned tree does. Final round after the confirmation: converge the smoke on benchmark-ab-runner smoke over both plans, add the finding count to the tables' Source line, outcome prose, rebase, gates.",
-     "tracker_state": "in_progress"
+     "tracker_state": "done"
     },
     {
      "id": "b9302771",
@@ -615,7 +617,7 @@
      "title": "Stop gf2-kernels-simd kernel tests passing without running on hosts without SIMD",
      "classification": "implementation",
      "status": "in_progress: dispatched session 29 (sonnet) in agent-6605cac2",
-     "tracker_state": "ready"
+     "tracker_state": "done"
     },
     {
      "id": "dcfe8386",
@@ -623,7 +625,7 @@
      "title": "Stop gf2-algebra SIMD cross-checks passing without running on hosts without SIMD",
      "classification": "implementation",
      "status": "done. Session 30: merged at 29853498d; code-review failed once on unlinked records (lead linked them); cargo-ci and code-review pass; review reviews/dcfe8386-r1.md.",
-     "tracker_state": "ready"
+     "tracker_state": "done"
     },
     {
      "id": "3a8ec493",
@@ -637,7 +639,8 @@
      "id": "fa1d8733",
      "short_id": "fa1d8733",
      "classification": "implementation",
-     "status": "done"
+     "status": "done",
+     "tracker_state": "done"
     },
     {
      "id": "a87ae828",
@@ -658,7 +661,7 @@
      "short_id": "4337c02e",
      "classification": "implementation",
      "status": "rejected (superseded by 7dbe1393, invoker ruling 2026-10-07). Confirmation rejected by acceptance on P-03; rework 1 closed code-review R1 (digest-located rederive, selector-outcomes record); code-review R2 rules REQ-01 unmet; family admits no further confirmatory cell. Evidence and freezer repair stay on main; review reviews/4337c02e-r2.md.",
-     "tracker_state": "in_progress"
+     "tracker_state": "rejected"
     },
     {
      "id": "bfc2ceab",
@@ -672,7 +675,7 @@
      "short_id": "dd359005",
      "classification": "implementation",
      "status": "done. Session 30: code-review passes on the amended REQ-02; review reviews/dd359005-r1.md.",
-     "tracker_state": "ready"
+     "tracker_state": "done"
     },
     {
      "id": "81afdf8e",
@@ -686,25 +689,29 @@
      "short_id": "e6fe64c9",
      "title": "Make the llr-f64 cargo feature select f64 LLRs or remove it",
      "classification": "implementation",
-     "status": "done. Session 31: invoker amended REQ-01 (current documents; run records at a named commit exempt); rework 1 (design page, empty default feature, feature-effect check) merged at 2726f000f; gates pass; review reviews/e6fe64c9-r2.md."
+     "status": "done. Session 31: invoker amended REQ-01 (current documents; run records at a named commit exempt); rework 1 (design page, empty default feature, feature-effect check) merged at 2726f000f; gates pass; review reviews/e6fe64c9-r2.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "07ae376c",
      "title": "Report hard-decision outcomes of the default soft decode truthfully",
      "classification": "implementation",
-     "status": "done. Session 31: merged at 2b44dda8c; cargo-ci and code-review pass first round; review reviews/07ae376c-r1.md."
+     "status": "done. Session 31: merged at 2b44dda8c; cargo-ci and code-review pass first round; review reviews/07ae376c-r1.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "95ca83aa",
      "title": "Return the encoded message from LDPC decode_iterative on QC codes",
      "classification": "implementation",
-     "status": "done. Session 31: merged at 86247af1f; gates pass; slow-tier DVB tests run by the lead (7 passed); review reviews/95ca83aa-r1.md."
+     "status": "done. Session 31: merged at 86247af1f; gates pass; slow-tier DVB tests run by the lead (7 passed); review reviews/95ca83aa-r1.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "556eb4fa",
      "title": "Report the iterative outcome of the rate-matched 5G NR soft decode",
      "classification": "implementation",
-     "status": "done. Session 31: merged at 72b58b92e; gates pass first round; review reviews/556eb4fa-r1.md."
+     "status": "done. Session 31: merged at 72b58b92e; gates pass first round; review reviews/556eb4fa-r1.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "7dbe1393",
@@ -715,15 +722,18 @@
     },
     {
      "short_id": "e4e2ba52",
-     "status": "done. Session 33: merged at 5d6508af4; code-review failed once because it ran before cargo-ci (lead ordering error); both gates pass; review reviews/e4e2ba52-r1.md."
+     "status": "done. Session 33: merged at 5d6508af4; code-review failed once because it ran before cargo-ci (lead ordering error); both gates pass; review reviews/e4e2ba52-r1.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "395fe4e2",
-     "status": "done. Session 33: merged at a1dd4e77f, rework 1 at 1d5245607 (real interruption, range-bounded batches); cargo-ci and code-review pass; review reviews/395fe4e2-r2.md."
+     "status": "done. Session 33: merged at a1dd4e77f, rework 1 at 1d5245607 (real interruption, range-bounded batches); cargo-ci and code-review pass; review reviews/395fe4e2-r2.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "a96a4cd6",
-     "status": "done. Session 33: first worker blocked on REQ-02 (no stage exposes selectors); lead decision: stage constructors with_selectors and with_portable_lanes; merged at 4d1fd626f, rework 1 at 9a32ec1d6 (min-sum sweeps, route assertions, nextest reservation), lead comment removal b607e8e9d; cargo-ci and code-review pass; review reviews/a96a4cd6-r2.md."
+     "status": "done. Session 33: first worker blocked on REQ-02 (no stage exposes selectors); lead decision: stage constructors with_selectors and with_portable_lanes; merged at 4d1fd626f, rework 1 at 9a32ec1d6 (min-sum sweeps, route assertions, nextest reservation), lead comment removal b607e8e9d; cargo-ci and code-review pass; review reviews/a96a4cd6-r2.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "8e53235b",
@@ -732,55 +742,68 @@
     },
     {
      "short_id": "bad1aea8",
-     "status": "done. Session 33: merged at a82eea0a2, rework 1 at ad461cb37 (buffer validation before the AFF3CT FFI call); cargo-ci, code-review, research-review pass; review reviews/bad1aea8-r2.md."
+     "status": "done. Session 33: merged at a82eea0a2, rework 1 at ad461cb37 (buffer validation before the AFF3CT FFI call); cargo-ci, code-review, research-review pass; review reviews/bad1aea8-r2.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "859bc8cb",
-     "status": "done (session 39): REQ-02 amended by invoker; lead fixes e8f24fa37; gates pass first round."
+     "status": "done (session 39): REQ-02 amended by invoker; lead fixes e8f24fa37; gates pass first round.",
+     "tracker_state": "done"
     },
     {
      "short_id": "32bfe9f8",
-     "status": "done (session 39): collected; rework 1 generated outcome tables (make-collection-outcome.py); gates pass."
+     "status": "done (session 39): collected; rework 1 generated outcome tables (make-collection-outcome.py); gates pass.",
+     "tracker_state": "done"
     },
     {
      "short_id": "a03daf3f",
-     "status": "done (session 39): collected; rework 1 generated outcome tables; gates pass."
+     "status": "done (session 39): collected; rework 1 generated outcome tables; gates pass.",
+     "tracker_state": "done"
     },
     {
      "short_id": "7eddc5e2",
-     "status": "done (session 39): collected; rework 1 generated outcome tables; gates pass."
+     "status": "done (session 39): collected; rework 1 generated outcome tables; gates pass.",
+     "tracker_state": "done"
     },
     {
      "short_id": "3bb47302",
-     "status": "done (session 39): profile series committed and summarized; lead fix 1ecd0f20c (orphan done record); gates pass."
+     "status": "done (session 39): profile series committed and summarized; lead fix 1ecd0f20c (orphan done record); gates pass.",
+     "tracker_state": "done"
     },
     {
      "short_id": "dba82422",
-     "status": "done (session 39): portable arms; its record preparation-portable/ is superseded by preparation-portable-build-tree/ (37aa7254)."
+     "status": "done (session 39): portable arms; its record preparation-portable/ is superseded by preparation-portable-build-tree/ (37aa7254).",
+     "tracker_state": "done"
     },
     {
      "short_id": "37aa7254",
-     "status": "done (session 39): REQ-01 amended by invoker; holdout pilot frozen and queued; rework 1 retention rule requires qualifies; gates pass."
+     "status": "done (session 39): REQ-01 amended by invoker; holdout pilot frozen and queued; rework 1 retention rule requires qualifies; gates pass.",
+     "tracker_state": "done"
     },
     {
      "short_id": "92c53589",
-     "status": "done (session 39): 07ca8585 profile recategorized under its own spans; contradictions recorded; rework 1 executable guard."
+     "status": "done (session 39): 07ca8585 profile recategorized under its own spans; contradictions recorded; rework 1 executable guard.",
+     "tracker_state": "done"
     },
     {
      "short_id": "6ca89655",
-     "status": "rejected (session 39): REQ-02 misstated by the lead before any work; superseded by 70a63a20."
+     "status": "rejected (session 39): REQ-02 misstated by the lead before any work; superseded by 70a63a20.",
+     "tracker_state": "rejected"
     },
     {
      "short_id": "70a63a20",
-     "status": "done (session 39): harness rules by location-independent suffix."
+     "status": "done (session 39): harness rules by location-independent suffix.",
+     "tracker_state": "done"
     },
     {
      "short_id": "67517a7b",
-     "status": "ready: waits for the benchmark window to run the 37aa7254 queue line."
+     "status": "ready: waits for the benchmark window to run the 37aa7254 queue line.",
+     "tracker_state": "done"
     },
     {
      "short_id": "262ca018",
-     "status": "ready: blocked on invoker approval (shared CI contract change)."
+     "status": "ready: blocked on invoker approval (shared CI contract change).",
+     "tracker_state": "done"
     }
    ]
   },
@@ -801,15 +824,17 @@
      "title": "Confirm the GF(2^8) dense product against the current matrix route",
      "classification": "research",
      "status": "in_progress: pilot collected from the 2026-09-19 window and merged at 57ded10db; confirmation frozen (6 of 8 cells) and queued for the 2026-09-20 window from the pinned worktree agent-c04dd4ac; final round after the confirmation: converge smoke-arms.sh on benchmark-ab-runner smoke (the shared smoke script labels the throwaway plan 'pilot' unconditionally: fix at the shared source then), tables, outcome prose, rebase, gates.",
-     "tracker_state": "in_progress"
+     "tracker_state": "done"
     },
     {
      "id": "6818f1b6",
-     "status": "done. Session 30: rustdoc rework merged at e3caac554; cargo-ci, code-review, doc-review pass; review reviews/6818f1b6-r1.md."
+     "status": "done. Session 30: rustdoc rework merged at e3caac554; cargo-ci, code-review, doc-review pass; review reviews/6818f1b6-r1.md.",
+     "tracker_state": "done"
     },
     {
      "id": "8840b0ff",
-     "status": "done. Session 30: rework 1 (decoded length from the single-frame traits) merged at 52f9535c0; cargo-ci, code-review, doc-review pass; review reviews/8840b0ff-r2.md."
+     "status": "done. Session 30: rework 1 (decoded length from the single-frame traits) merged at 52f9535c0; cargo-ci, code-review, doc-review pass; review reviews/8840b0ff-r2.md.",
+     "tracker_state": "done"
     }
    ]
   },
@@ -893,7 +918,7 @@
      "title": "Measure the M4RI comparison and the matvec fusion, and select the dense-parity outcome",
      "classification": "research",
      "status": "in_progress",
-     "tracker_state": "in_progress",
+     "tracker_state": "done",
      "dispatch": {
       "model": "gpt-6-sol",
       "reasoning_effort": "xhigh",
@@ -909,7 +934,7 @@
      "title": "Implement and confirm the dense-parity outcome",
      "classification": "implementation",
      "status": "pending; merged from 1956017f, 49b1611b (session 19)",
-     "tracker_state": "backlog"
+     "tracker_state": "done"
     },
     {
      "id": "a1ad6d4e",
@@ -932,91 +957,106 @@
      "short_id": "5cb74f81",
      "title": "Decode LDPC frame batches in lanes behind the batch decoder trait",
      "classification": "implementation",
-     "status": "done. Session 31: merged at c77ee049d; doc-review F1 (contract page evidence) fixed by the lead; three gates pass; review reviews/5cb74f81-r1.md."
+     "status": "done. Session 31: merged at c77ee049d; doc-review F1 (contract page evidence) fixed by the lead; three gates pass; review reviews/5cb74f81-r1.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "1d4b05d5",
      "title": "Decode batches across workers through one pooled batch decoder",
      "classification": "implementation",
-     "status": "done. Session 31: merged at 4ef008e36; doc-review F1-F4 (rustdoc bounds, panics, evidence; poisoned decoder panics) fixed by the lead; three gates pass; review reviews/1d4b05d5-r1.md."
+     "status": "done. Session 31: merged at 4ef008e36; doc-review F1-F4 (rustdoc bounds, panics, evidence; poisoned decoder panics) fixed by the lead; three gates pass; review reviews/1d4b05d5-r1.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "941ac609",
      "title": "Assert LDPC batch decoding at the posterior level across codes",
      "classification": "implementation",
-     "status": "done. Session 31: merged at 5504c92a1; code-review R1 F1 (REQ-05 unverified under a failed cargo-ci caused by a stale sccache server) closed by the passing re-run; review reviews/941ac609-r1.md."
+     "status": "done. Session 31: merged at 5504c92a1; code-review R1 F1 (REQ-05 unverified under a failed cargo-ci caused by a stale sccache server) closed by the passing re-run; review reviews/941ac609-r1.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "13728e1a",
      "title": "Vectorize the lane kernels with AVX2",
      "classification": "implementation",
-     "status": "done. Session 32: merged at eb60f6b23, rework 1 at 14bee8212 (x86 import, safety contracts), rework 2 by the lead (host precondition names avx2); REQ-04 amended by the invoker; all four gates pass; review reviews/13728e1a-r2.md"
+     "status": "done. Session 32: merged at eb60f6b23, rework 1 at 14bee8212 (x86 import, safety contracts), rework 2 by the lead (host precondition names avx2); REQ-04 amended by the invoker; all four gates pass; review reviews/13728e1a-r2.md",
+     "tracker_state": "done"
     },
     {
      "short_id": "4767d936",
      "title": "Decode rate-matched 5G NR frame batches in lanes",
      "classification": "implementation",
-     "status": "done. Session 32: merged at 4a985be44, rework 1 at efc7e42c8 (Sionna LDPC5GEncoder vectors, invoker ruling); cargo-ci, code-review, doc-review pass; review reviews/4767d936-r2.md"
+     "status": "done. Session 32: merged at 4a985be44, rework 1 at efc7e42c8 (Sionna LDPC5GEncoder vectors, invoker ruling); cargo-ci, code-review, doc-review pass; review reviews/4767d936-r2.md",
+     "tracker_state": "done"
     },
     {
      "short_id": "4e68f9b2",
      "title": "Decode DVB-T2 concatenated frame batches in lanes",
      "classification": "implementation",
-     "status": "done. Session 32: merged at 7f30c65cc (closure fix f. logical family after it); cargo-ci, code-review, doc-review passed first round; review reviews/4e68f9b2-r1.md"
+     "status": "done. Session 32: merged at 7f30c65cc (closure fix f. logical family after it); cargo-ci, code-review, doc-review passed first round; review reviews/4e68f9b2-r1.md",
+     "tracker_state": "done"
     },
     {
      "short_id": "c317f5ac",
      "title": "Route LDPC batch decoding to the AVX2 lanes by capability",
      "classification": "implementation",
-     "status": "done. Session 32: merged at bb4e110da; cargo-ci, code-review, doc-review passed first round; review reviews/c317f5ac-r1.md"
+     "status": "done. Session 32: merged at bb4e110da; cargo-ci, code-review, doc-review passed first round; review reviews/c317f5ac-r1.md",
+     "tracker_state": "done"
     },
     {
      "short_id": "391f5419",
      "title": "Decode DVB-T2 stage batches through the batch decode stage",
      "classification": "implementation",
-     "status": "done. Session 32: merged at 92e0cd689; cargo-ci and code-review passed first round"
+     "status": "done. Session 32: merged at 92e0cd689; cargo-ci and code-review passed first round",
+     "tracker_state": "done"
     },
     {
      "short_id": "9e0cd346",
      "title": "Decode NR stage batches through the batch decode stage",
      "classification": "implementation",
-     "status": "done. Session 32: merged at d15a0436d, rework 1 at d63891b7b (NR preset-versus-graph byte identity); cargo-ci and code-review pass; review reviews/9e0cd346-r2.md"
+     "status": "done. Session 32: merged at d15a0436d, rework 1 at d63891b7b (NR preset-versus-graph byte identity); cargo-ci and code-review pass; review reviews/9e0cd346-r2.md",
+     "tracker_state": "done"
     },
     {
      "short_id": "86d9260e",
      "title": "Decode CPU LDPC stage batches through the batch decode stage",
      "classification": "implementation",
-     "status": "done. Session 32: merged at 912ae2ad2; cargo-ci and code-review passed first round"
+     "status": "done. Session 32: merged at 912ae2ad2; cargo-ci and code-review passed first round",
+     "tracker_state": "done"
     },
     {
      "short_id": "e918a8ee",
      "title": "Move the tests of the inherent LDPC batch functions to the batch trait",
      "classification": "implementation",
-     "status": "done. Session 32: merged at 8702a88ac, rework 1 at 7ee112158 (shared test adapter); cargo-ci and code-review pass; review reviews/e918a8ee-r2.md"
+     "status": "done. Session 32: merged at 8702a88ac, rework 1 at 7ee112158 (shared test adapter); cargo-ci and code-review pass; review reviews/e918a8ee-r2.md",
+     "tracker_state": "done"
     },
     {
      "short_id": "83ed701d",
      "title": "Move the benchmarks of the inherent LDPC batch functions to the batch trait",
      "classification": "implementation",
-     "status": "done. Session 32: merged at 1b375873a; cargo-ci and code-review passed first round"
+     "status": "done. Session 32: merged at 1b375873a; cargo-ci and code-review passed first round",
+     "tracker_state": "done"
     },
     {
      "short_id": "f5ae4c49",
      "title": "Show parallel LDPC decoding through the batch trait in the how-to page",
      "classification": "documentation",
-     "status": "done. Session 32: merged at eb91991a1; cargo-ci and doc-review passed first round"
+     "status": "done. Session 32: merged at eb91991a1; cargo-ci and doc-review passed first round",
+     "tracker_state": "done"
     },
     {
      "short_id": "4de9d983",
      "title": "Decode BLER sweep slices through the batch decoder trait",
      "classification": "implementation",
-     "status": "done. Session 32: merged at 339dc19b6; cargo-ci and code-review passed first round; review reviews/4de9d983-r1.md"
+     "status": "done. Session 32: merged at 339dc19b6; cargo-ci and code-review passed first round; review reviews/4de9d983-r1.md",
+     "tracker_state": "done"
     },
     {
      "short_id": "feb60d0d",
      "title": "Build the gf2 batch decoder benchmark arms",
      "classification": "implementation",
-     "status": "done. Session 33: rework 1 merged at 807ea8838 (exception citation, build record), rework 2 at bf78efc81 (content-identity recorder); cargo-ci, code-review, research-review pass; review reviews/feb60d0d-r3.md."
+     "status": "done. Session 33: rework 1 merged at 807ea8838 (exception citation, build record), rework 2 at bf78efc81 (content-identity recorder); cargo-ci, code-review, research-review pass; review reviews/feb60d0d-r3.md.",
+     "tracker_state": "done"
     },
     {
      "short_id": "aff59c3c",
@@ -1030,7 +1070,7 @@
      "title": "Prepare the quality record of the sum-product INTRA arm",
      "classification": "research",
      "status": "blocked on the invoker: three reworks spent and the same finding class three times (the check compares fields outside the closed identity set; round 3 names REPLAYED linked_aff3ct at record-intra-quality.py:66). Round-3 tree merged d9420f9de; cargo-ci pass, code-review fail, research-review not rerun; also waits for cba35553",
-     "tracker_state": "in_progress",
+     "tracker_state": "done",
      "dispatch": {
       "model": "sonnet",
       "worktree": ".agents/worktrees/agent-ed3d490e-run",
@@ -1073,7 +1113,28 @@
      "title": "Feed the sum-product INTRA arm closed-form-scale LLRs",
      "classification": "implementation",
      "status": "merged d9420f9de, not gated: REQ-03 as the lead wrote it asks the catalogue to name executables by digest, which no recorder does; amendment waits for the invoker",
-     "tracker_state": "in_progress"
+     "tracker_state": "done"
+    },
+    {
+     "id": "6230e0b6-e04c-47b6-a55b-4b364290305d",
+     "short_id": "6230e0b6",
+     "title": "Report the inter-frame decoder outcomes with their limits",
+     "classification": "documentation",
+     "status": "done",
+     "tracker_state": "done"
+    },
+    {
+     "id": "d06a99ed-cd68-4abc-a1a9-4c8da3f211ea",
+     "short_id": "d06a99ed",
+     "title": "Calibrate the lane route against the worker configuration",
+     "classification": "implementation",
+     "status": "in_progress",
+     "tracker_state": "in_progress",
+     "dispatch": {
+      "model": "gpt-6.1-sol high (coding), gpt-6.1-sol medium (simulation)",
+      "worktree": "main; disjoint crate ownership, lead commits after both stop",
+      "session": 42
+     }
     }
    ]
   },
@@ -1086,7 +1147,7 @@
      "title": "Trim comments and rustdoc in epic-touched files to the non-obvious-only standard",
      "classification": "implementation",
      "status": "pending; after 63bad95d",
-     "tracker_state": "backlog"
+     "tracker_state": "rejected"
     },
     {
      "id": "1362381c-78c0-42eb-bdc9-4327f20bc343",
@@ -2604,7 +2665,7 @@
   "92c53589": 1,
   "37aa7254": 1,
   "7211ae53": 1,
-  "6230e0b6": 1
+  "6230e0b6": 2
  },
  "surfaced_pitfalls": [
   {
@@ -3416,7 +3477,8 @@
   "Session 37 evening: 20af7e6e done at 8d606de6a (reviews/20af7e6e-r4.md); 817fc47d done at 19aedabfb (reviews/817fc47d-r1.md), including a fix of fp_small_batch_dot (wrapping u32 drain sum, primes 131-251). Filed in the epic: 815703a1 (in progress, tip e9ec2e91c, awaiting cargo-ci), 9eb6f13c (RNG in producer reports, after 815703a1), 17e08faa (runtime records defined once, after 9eb6f13c). Order: 815703a1, 9eb6f13c, 17e08faa, then regenerate the gf2 arms build record in agent-ed3d490e-run and dispatch 5d590bac. 807ddab2 is rejected in the tracker. Reclaimed agent-63bad95d-int, -fam, -m4ri, -pm4ri.",
   "Session 37 night: 815703a1 done at 81734321a (reviews/815703a1-r2.md). 9eb6f13c merged at b6e363c40, cargo-ci passes, code-review fails on the algebra fixture pin (rework 1 dispatched to w-815703a1 in agent-9eb6f13c). Open epic children: 9eb6f13c, 17e08faa (after it), d93a1c7e (after 17e08faa), d11a45d4, ec4e71ca, 1362381c; story ed3d490e: regenerate the gf2 arms build record after d93a1c7e merges, then 5d590bac. Workers go idle without reporting when cargo-ci outlives their foreground limit; the lead runs cargo-ci in the worker's worktree itself. A lead CI run in a worktree a worker is still editing gives false failures: wait for the worker's explicit stop first.",
   "Session 41 (2026-10-22): resumed read-only with two gpt-6.1-sol agents (high reasoning for HPC, medium for tooling). Existing scope escalations in handoff-36 remain unresolved. F5 is already fixed on main; no implementation or gate rerun is justified until F1 is resolved. Installed jit rejects docs-mechanical and gate auto; explicit compatible CLI exists at /home/vkaskivuo/Projects/just-in-time/target/jit-stale-child-test-cache/debug/jit. No configuration changes or installations. HPC next action is worker-aware route decision d06a99ed, subject to scope ruling. See handoff-37.md.",
-  "Session 42 (2026-10-22): invoker approved both session-41 scope proposals. Apply story worker-aware blocker and criterion clarification, relocate outcome report, then continue dependency order. No new protocol work."
+  "Session 42 (2026-10-22): invoker approved both session-41 scope proposals. Apply story worker-aware blocker and criterion clarification, relocate outcome report, then continue dependency order. No new protocol work.",
+  "Session 42: 6230e0b6 complete after approved relocation and F6 tracker citation fix; all three gates passed. d06a99ed is the next implementation, with conservative single-worker lane eligibility and explicit call-time worker context. Read-only final-scorecard audit: reusable family evidence remains valid; 1362381c needs fresh integrated holdout and profiles in at least one overnight window, plus unified publication; no broad search rerun."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
