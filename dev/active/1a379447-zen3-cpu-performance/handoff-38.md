@@ -90,6 +90,14 @@
   first-attempt confirmatory bound. Do not add cells or relax margins after
   reading results.
 - Earlier unresolved traps in handoff-37 and its predecessors remain in force.
+- The survey registry discovers live catalogue records by the exact basename
+  `build-identity.json`. Comparison snapshots must use explicit comparison
+  filenames (`before-build.json`, `after-build.json`) and explicit runner
+  arguments; they do not replace live catalogue ownership. Registering both
+  comparisons as live records caused four CI failures. Renames preserve their
+  bytes; no shared checker is changed. The live calibration digest manifest
+  also needs canonical regeneration after coding changes; frozen receipt
+  snapshots remain untouched.
 
 ## Open questions needing invoker input
 
