@@ -1,0 +1,163 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "d06a99ed-worker-routing-pilot",
+  "issue": "d06a99ed",
+  "label": "pilot",
+  "campaign_seed": 3496646913,
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement/pilot/addendum.json",
+  "producing_manifest": "dev/active/1a379447-zen3-cpu-performance/f547c394/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "gf2-batch-tuned-after-dvb-t2-r12": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope",
+      "executable": "/home/vkaskivuo/Projects/gf2/target/d06a99ed-builds/after/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-tuned-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": {
+        "id": "gf2-0a77ecfc-20261013t011147z-815998",
+        "sha256": "05782eedfc58da8d7860f7a2306363443a36f05bd7a20efa3a3841ec8c59f4f5"
+      }
+    },
+    "gf2-batch-tuned-after-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope",
+      "executable": "/home/vkaskivuo/Projects/gf2/target/d06a99ed-builds/after/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-tuned-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": {
+        "id": "gf2-0a77ecfc-20261013t011147z-815998",
+        "sha256": "05782eedfc58da8d7860f7a2306363443a36f05bd7a20efa3a3841ec8c59f4f5"
+      }
+    },
+    "gf2-batch-tuned-before-dvb-t2-r12": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope",
+      "executable": "/home/vkaskivuo/Projects/gf2/target/d06a99ed-builds/before/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-tuned-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": {
+        "id": "gf2-0a77ecfc-20261013t011147z-815998",
+        "sha256": "05782eedfc58da8d7860f7a2306363443a36f05bd7a20efa3a3841ec8c59f4f5"
+      }
+    },
+    "gf2-batch-tuned-before-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope",
+      "executable": "/home/vkaskivuo/Projects/gf2/target/d06a99ed-builds/before/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-tuned-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "/home/vkaskivuo/Projects/gf2/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": {
+        "id": "gf2-0a77ecfc-20261013t011147z-815998",
+        "sha256": "05782eedfc58da8d7860f7a2306363443a36f05bd7a20efa3a3841ec8c59f4f5"
+      }
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-production-w1-b1",
+      "baseline_arm": "gf2-batch-tuned-before-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-after-dvb-t2-r12",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement/pilot/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "dvb-t2-r12-production-w1-b8",
+      "baseline_arm": "gf2-batch-tuned-before-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-after-dvb-t2-r12",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement/pilot/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "nr-bg1-z384-production-w1-b1",
+      "baseline_arm": "gf2-batch-tuned-before-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-after-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement/pilot/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "nr-bg1-z384-production-w1-b8",
+      "baseline_arm": "gf2-batch-tuned-before-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-after-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement/pilot/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "dvb-t2-r12-production-w12-b8",
+      "baseline_arm": "gf2-batch-tuned-before-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-after-dvb-t2-r12",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement/pilot/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 6
+    },
+    {
+      "cell_id": "nr-bg1-z384-production-w24-b8",
+      "baseline_arm": "gf2-batch-tuned-before-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-after-nr-bg1-z384",
+      "case": {
+        "bundle": "/home/vkaskivuo/Projects/gf2/dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement/pilot/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 6
+    }
+  ],
+  "max_cells_per_session": 1
+}

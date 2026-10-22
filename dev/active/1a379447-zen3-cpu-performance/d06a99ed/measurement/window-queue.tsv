@@ -1,0 +1,2 @@
+# issue	worktree	est_minutes	command
+d06a99ed	.	20	bash dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement/window.sh dev/active/ed3d490e-zen3-ldpc-frame-simd/survey dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py

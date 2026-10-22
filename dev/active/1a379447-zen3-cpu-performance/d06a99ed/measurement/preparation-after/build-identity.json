@@ -1,0 +1,1173 @@
+{
+  "schema": "ldpc-batch-arms-build-v3",
+  "build_root": "/home/vkaskivuo/Projects/gf2/target/d06a99ed-builds/after",
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
+  "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
+  "cxx": "c++ (GCC) 16.2.1 20260810",
+  "linker": {
+    "driver": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/link-inputs-cc.sh",
+    "sha256": "e8d78e58a493ba924d3af494e5a49bde7a9747c42014e5f4f7c944695e7e7846",
+    "cc": "cc (GCC) 16.2.1 20260810"
+  },
+  "cargo_configuration": [
+    {
+      "path": "/home/vkaskivuo/Projects/gf2/target/d06a99ed-builds/after/.cargo/config.toml",
+      "sha256": "5531072b1f017dc9124317782bbd7c1198935e7e931119840e3db1690420768c",
+      "env": {
+        "RAYON_NUM_THREADS": "4"
+      }
+    },
+    {
+      "path": "/home/vkaskivuo/Projects/gf2/.cargo/config.toml",
+      "sha256": "5531072b1f017dc9124317782bbd7c1198935e7e931119840e3db1690420768c",
+      "env": {
+        "RAYON_NUM_THREADS": "4"
+      }
+    }
+  ],
+  "build_commands": [
+    {
+      "environment": {
+        "CARGO_CI_NO_SCCACHE": "1",
+        "RUSTFLAGS": "-C target-cpu=native",
+        "CXX": "c++"
+      },
+      "argv": [
+        "./scripts/cargo-budget.sh",
+        "cargo",
+        "+1.95",
+        "build",
+        "--offline",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml",
+        "--config",
+        "target.x86_64-unknown-linux-gnu.linker=\"dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/link-inputs-cc.sh\""
+      ]
+    },
+    {
+      "environment": {
+        "CARGO_CI_NO_SCCACHE": "1",
+        "RUSTFLAGS": "-C target-cpu=native",
+        "CXX": "c++",
+        "GF2_AFF3CT_ROOT": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct"
+      },
+      "argv": [
+        "./scripts/cargo-budget.sh",
+        "cargo",
+        "+1.95",
+        "build",
+        "--offline",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml",
+        "--config",
+        "target.x86_64-unknown-linux-gnu.linker=\"dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/link-inputs-cc.sh\"",
+        "--package",
+        "ldpc-aff3ct-intra-arm"
+      ]
+    },
+    {
+      "environment": {
+        "CARGO_CI_NO_SCCACHE": "1",
+        "RUSTFLAGS": "-C target-cpu=native",
+        "CXX": "c++"
+      },
+      "argv": [
+        "./scripts/cargo-budget.sh",
+        "cargo",
+        "+1.95",
+        "build",
+        "--offline",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml",
+        "--config",
+        "target.x86_64-unknown-linux-gnu.linker=\"dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/link-inputs-cc.sh\"",
+        "--package",
+        "ldpc-batch-tuned-arm"
+      ]
+    }
+  ],
+  "release_profile": {
+    "opt-level": 3,
+    "lto": true,
+    "codegen-units": 1,
+    "debug": "line-tables-only"
+  },
+  "executables": {
+    "aff3ct-intra-arm": {
+      "sha256": "ff6dba1472162d4a4e1bbb67654c68e496ac683fb61df1303f27b848728940b9",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [
+        "GNU C++11 16.2.1 20260810 -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param=l1-cache-size=32 --param=l1-cache-line-size=64 --param=l2-cache-size=512 -mtune=znver3 -mno-omit-leaf-frame-pointer -m64 -g -gdwarf-4 -g1 -O3 -O3 -std=gnu++11 -ffunction-sections -fdata-sections -fPIC -fno-omit-frame-pointer"
+      ],
+      "inputs": {
+        "repository_files_sha256": "cd9cbe4f191421a20ee77b267468e94d9db025ca6580f18de70e700786b930f2",
+        "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/libaff3ct-4.7.0.a": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/streampu/lib/cpptrace/lib/libcpptrace.a": "3abb1478c37b386fcb978606b50d36ce9dbd68cc18f3704733f60fe7ec57f7c9",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libstdc++.so": "f5fc7380f2ae46fa4053a64be04e7b98109f1066a4bbfff3c37042488aa0be0e",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libdwarf.so": "150d0b85aaa2fc6343408a3c80beb535b8917443411ed84aa531922b3f937dc8",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libz.so": "6c78c5e58c3bb49a1cd151a95cdf1a17fe07a91a57a59e0279b984c533075ca9",
+          "/usr/lib/libzstd.so": "f023d49e85fb22057bfdd21857263d2638b73356c06f3b342f678a75212379f8"
+        }
+      }
+    },
+    "aff3ct-intra-quality": {
+      "sha256": "7810a2766d270d1e61fd22718497fcf29563169e08e1af457e6561239a2419d8",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [
+        "GNU C++11 16.2.1 20260810 -march=znver3 -mmmx -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -mavx2 -msse4a -mno-fma4 -mno-xop -mfma -mno-avx512f -mbmi -mbmi2 -maes -mpclmul -mno-avx512vl -mno-avx512bw -mno-avx512dq -mno-avx512cd -mno-avx512vbmi -mno-avx512ifma -mno-avx512vpopcntdq -mno-avx512vbmi2 -mno-gfni -mvpclmulqdq -mno-avx512vnni -mno-avx512bitalg -mno-avx512bf16 -mno-avx512vp2intersect -mno-3dnow -madx -mabm -mno-cldemote -mclflushopt -mclwb -mclzero -mcx16 -mno-enqcmd -mf16c -mfsgsbase -mfxsr -mno-hle -msahf -mno-lwp -mlzcnt -mmovbe -mno-movdir64b -mno-movdiri -mmwaitx -mno-pconfig -mpku -mprfchw -mno-ptwrite -mrdpid -mrdrnd -mrdseed -mno-rtm -mno-serialize -mno-sgx -msha -mshstk -mno-tbm -mno-tsxldtrk -mvaes -mno-waitpkg -mwbnoinvd -mxsave -mxsavec -mxsaveopt -mxsaves -mno-amx-tile -mno-amx-int8 -mno-amx-bf16 -mno-uintr -mno-hreset -mno-kl -mno-widekl -mno-avxvnni -mno-avx512fp16 -mno-avxifma -mno-avxvnniint8 -mno-avxneconvert -mno-cmpccxadd -mno-amx-fp16 -mno-prefetchi -mno-raoint -mno-amx-complex -mno-avxvnniint16 -mno-sm3 -mno-sha512 -mno-sm4 -mno-apxf -mno-usermsr -mno-avx10.1 -mno-avx10.2 -mno-amx-avx512 -mno-amx-tf32 -mno-amx-fp8 -mno-movrs -mno-amx-movrs -mno-avx512bmm --param=l1-cache-size=32 --param=l1-cache-line-size=64 --param=l2-cache-size=512 -mtune=znver3 -mno-omit-leaf-frame-pointer -m64 -g -gdwarf-4 -g1 -O3 -O3 -std=gnu++11 -ffunction-sections -fdata-sections -fPIC -fno-omit-frame-pointer"
+      ],
+      "inputs": {
+        "repository_files_sha256": "b89bc4e6ccdd8e56a1601ca5afa53b49cb00d9836f6a4f5ea5c671387d7873c9",
+        "other_files_sha256": "eace0b26635e3b0a3c013e4b536ecd2ae1a53f282cdc4cca41144f55db55ba1d",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/libaff3ct-4.7.0.a": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct/build/lib/streampu/lib/cpptrace/lib/libcpptrace.a": "3abb1478c37b386fcb978606b50d36ce9dbd68cc18f3704733f60fe7ec57f7c9",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libstdc++.so": "f5fc7380f2ae46fa4053a64be04e7b98109f1066a4bbfff3c37042488aa0be0e",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libdwarf.so": "150d0b85aaa2fc6343408a3c80beb535b8917443411ed84aa531922b3f937dc8",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libz.so": "6c78c5e58c3bb49a1cd151a95cdf1a17fe07a91a57a59e0279b984c533075ca9",
+          "/usr/lib/libzstd.so": "f023d49e85fb22057bfdd21857263d2638b73356c06f3b342f678a75212379f8"
+        }
+      }
+    },
+    "gf2-batch-lane-arm": {
+      "sha256": "e02afcbc80fe128de622ad65356282036fb605a35cd2fda5714f4c4a52055f04",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [],
+      "inputs": {
+        "repository_files_sha256": "26d3c6dabed309c31f687286464628cec19c1bf8c7297d9d61e757c3377ef35d",
+        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
+        }
+      }
+    },
+    "gf2-batch-single-frame-arm": {
+      "sha256": "1b4a58c3a2b913b8a40a2c7a1402278e746ebfec4127d60aef489deceb3874c5",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [],
+      "inputs": {
+        "repository_files_sha256": "e612093a1b9fe648b8283e165e5d4779b63986d4fbbb03b723d2995fca404af2",
+        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
+        }
+      }
+    },
+    "gf2-batch-tuned-arm": {
+      "sha256": "3223208c5ffe3aa99bac443da63ed9e88c944aaaf88d2e86ce095ef4a63d0f36",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [],
+      "inputs": {
+        "repository_files_sha256": "9bdfb6ce00858d4357d64da92fa24c25a4e9b785d3f1744175bc49bc19d0caf9",
+        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
+        }
+      }
+    },
+    "ldpc-batch-profile": {
+      "sha256": "b8803def8658b54c68cdcb882a4c0ce5ed5e5617374250e670ef2abfe9ced7db",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [],
+      "inputs": {
+        "repository_files_sha256": "73e0d5189440433cf09b180a933de60e71c4e58614a85171eb3461aed6953512",
+        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
+        }
+      }
+    }
+  },
+  "aff3ct": {
+    "root": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct",
+    "revision": "e8a65c5047262d97a15563b9edc961f69b2792cc",
+    "revision_stated_by": [
+      "dev/bench_results/07ca8585/preparation/build-identity.json",
+      "dev/bench_results/3be770d5/preparation/build-identity.json"
+    ],
+    "static_library": "libaff3ct-4.7.0.a",
+    "static_library_sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+    "static_library_pinned_by": [
+      "dev/bench_results/07ca8585/preparation/build-identity.json",
+      "dev/bench_results/3be770d5/preparation/build-identity.json",
+      "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json",
+      "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/build-identity.json",
+      "dev/bench_results/c077a88b/v3-preparation/build-identity.json",
+      "dev/bench_results/c077a88b/v3-preparation/superseded-before-final-rebuild/build-identity.json",
+      "dev/bench_results/f63a2464/preparation/build-identity.json"
+    ]
+  },
+  "catalogue": {
+    "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json",
+    "sha256": "d7105d81edd849088e4c5dec56cf4520c2593b8235e2487eef44b1bc762b36a5"
+  },
+  "arms": {
+    "aff3ct-flooding-nms-f32": {
+      "source": "pinned",
+      "executable": "aff3ct-throughput-arm",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      },
+      "found_at": [
+        "target/pinned/release/aff3ct-throughput-arm"
+      ],
+      "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+      "pinned_by": {
+        "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+        "sha256": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696"
+      }
+    },
+    "aff3ct-layered-nms-f32-inter": {
+      "source": "pinned",
+      "executable": "aff3ct-throughput-arm",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "horizontal-layered",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "INTER",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      },
+      "found_at": [
+        "target/pinned/release/aff3ct-throughput-arm"
+      ],
+      "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+      "pinned_by": {
+        "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+        "sha256": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696"
+      }
+    },
+    "aff3ct-layered-nms-i16-inter": {
+      "source": "pinned",
+      "executable": "aff3ct-throughput-arm",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "horizontal-layered",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "INTER",
+        "GF2_AFF3CT_PRECISION": "i16",
+        "GF2_AFF3CT_QUANT_SCALE": "16",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      },
+      "found_at": [
+        "target/pinned/release/aff3ct-throughput-arm"
+      ],
+      "executable_sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+      "pinned_by": {
+        "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+        "sha256": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696"
+      }
+    },
+    "aff3ct-spa-intra": {
+      "source": "workspace",
+      "executable": "aff3ct-intra-arm",
+      "environment": {
+        "GF2_AFF3CT_LLR_FACTOR": "2"
+      },
+      "package": "ldpc-aff3ct-intra-arm",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/aff3ct-intra-arm",
+      "executable_sha256": "ff6dba1472162d4a4e1bbb67654c68e496ac683fb61df1303f27b848728940b9"
+    },
+    "gf2-batch-lane-avx2": {
+      "source": "workspace",
+      "executable": "gf2-batch-lane-arm",
+      "environment": {
+        "GF2_LDPC_LANE_BACKEND": "avx2"
+      },
+      "package": "ldpc-batch-arms",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+      "executable_sha256": "e02afcbc80fe128de622ad65356282036fb605a35cd2fda5714f4c4a52055f04"
+    },
+    "gf2-batch-lane-portable": {
+      "source": "workspace",
+      "executable": "gf2-batch-lane-arm",
+      "environment": {
+        "GF2_LDPC_LANE_BACKEND": "portable"
+      },
+      "package": "ldpc-batch-arms",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+      "executable_sha256": "e02afcbc80fe128de622ad65356282036fb605a35cd2fda5714f4c4a52055f04"
+    },
+    "gf2-batch-single-frame": {
+      "source": "workspace",
+      "executable": "gf2-batch-single-frame-arm",
+      "environment": {},
+      "package": "ldpc-batch-arms",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-single-frame-arm",
+      "executable_sha256": "1b4a58c3a2b913b8a40a2c7a1402278e746ebfec4127d60aef489deceb3874c5"
+    },
+    "gf2-batch-tuned": {
+      "source": "workspace",
+      "executable": "gf2-batch-tuned-arm",
+      "environment": {},
+      "package": "ldpc-batch-tuned-arm",
+      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-tuned-arm",
+      "executable_sha256": "3223208c5ffe3aa99bac443da63ed9e88c944aaaf88d2e86ce095ef4a63d0f36"
+    }
+  },
+  "isolation": {
+    "workspace_root": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms",
+    "manifest_sha256": "4a7e2fca8a879ffbe983e23efb7d0d179841f493fcad8fc3a66d8f42ae6c0216",
+    "lockfile_sha256": "84cc3b99130d0a1fc0cde55f9e8feb6853cbcfad18db2616b6ac160c2cf7fd4e",
+    "target_directory": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target",
+    "declared_names": [
+      "aff3ct-intra-arm",
+      "aff3ct-intra-quality",
+      "aff3ct_intra",
+      "gf2-batch-lane-arm",
+      "gf2-batch-single-frame-arm",
+      "gf2-batch-tuned-arm",
+      "ldpc-aff3ct-intra-arm",
+      "ldpc-batch-arms",
+      "ldpc-batch-profile",
+      "ldpc-batch-tuned-arm",
+      "ldpc_batch_arms"
+    ],
+    "names_shared_with_pinned_executables": [],
+    "pinned_names_or_digests_in_target_directory": []
+  },
+  "pinned_records": {
+    "dev/bench_results/07ca8585/preparation/build-identity.json": {
+      "sha256": "978101eb18b948d59046ac571bfeb37ced516fcf1b3dfd3835f9227b9e440b1c",
+      "pins": [
+        {
+          "pin": "/harness/cargo_lock_sha256",
+          "sha256": "e9fe1334df76a9cba6a705cd5edf7af943b3d141c107bdd69e71f492172389a6",
+          "carried_by": [
+            "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/Cargo.lock"
+          ]
+        },
+        {
+          "pin": "/aff3ct/static_library_sha256",
+          "sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "carried_by": []
+        },
+        {
+          "pin": "/aff3ct/c077a88b_build_identity/sha256",
+          "sha256": "8f42c2afbea96b763117335d3daab9c415bc84bfebe28272457bc82b65a56eea",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/build-identity.json"
+          ]
+        },
+        {
+          "pin": "/aff3ct/source_archive/sha256",
+          "sha256": "370f78e20000bc5fa0ae56c5534f6cf44c278480321a478f7b95b277ab7091fb",
+          "carried_by": [
+            "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/source-inputs/aff3ct-source.tar.gz",
+            "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/source-inputs/aff3ct-source.tar.gz",
+            "dev/bench_results/c077a88b/v3-preparation/source-inputs/aff3ct-source.tar.gz"
+          ]
+        },
+        {
+          "pin": "/shim/unit_sha256",
+          "sha256": "9db3c2a0200de22dae836dfd1d3d2c6a7b4639d531bc426aa3f8222e08f1e66e",
+          "carried_by": []
+        },
+        {
+          "pin": "/shim/included_sha256",
+          "sha256": "95cf0245f13dd8c24a3e36ad2a7ffc6a2d485a7686ce2b5d2f3b7de25de70d89",
+          "carried_by": [
+            "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/harness/cpp/aff3ct_shim.cpp"
+          ]
+        },
+        {
+          "pin": "/shim/build_rs_sha256",
+          "sha256": "405b98e7352fd72355c4865851b78b8a9ef0cf2e064e09ef55ed05fcc31888c9",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/archive/sha256",
+          "sha256": "a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba",
+          "carried_by": [
+            "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/source-inputs/recorded-inputs.tar.gz",
+            "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/source-inputs/recorded-inputs.tar.gz",
+            "dev/bench_results/c077a88b/v3-preparation/source-inputs/recorded-inputs.tar.gz"
+          ]
+        },
+        {
+          "pin": "/inputs/bundles/dvb-t2-r12-waterfall/h_sha256",
+          "sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/bundles/dvb-t2-r12-waterfall/codewords_sha256",
+          "sha256": "4b70fec2970f72c57e55678192e01b5a72c3cdc4043e2330f9fa221f097dc44a",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/bundles/dvb-t2-r12-waterfall/llrs_sha256",
+          "sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/bundles/nr-bg1-z384-mother/h_sha256",
+          "sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/bundles/nr-bg1-z384-mother/codewords_sha256",
+          "sha256": "7bb775743d7f17a807db66663185e49f2d6ab49202ed75692d090375733296af",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/bundles/nr-bg1-z384-mother/llrs_sha256",
+          "sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "carried_by": []
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json",
+          "sha256": "8443cdfae4e6bfb7036c8dbb10142baecacd40f911c582bf18a369aefa15559a",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json",
+          "sha256": "330e6dd7c7c90c904128328084e4ceb678fbe3a38a2ed56e7155ec4e6a2f72d0",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-dvb-t2-r12.json",
+          "sha256": "ce3b3131cb445afad9240703ee381d314dc5606fdcc60825aa1893c078aec220",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-nr-bg1-z384.json",
+          "sha256": "1e26ac7ca28a997054fca90080d2736fe41e0439ad568e8f2a862e839d0008f2",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-dvb-t2-r12.json",
+          "sha256": "82a065128d3f1400ca1be37aab75f40e270b61307e7713a0f9f808c91c95273a",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-dvb-t2-r12.json",
+          "sha256": "fc00b05ba8e05726b733e8e6c05d4ddaff3a2ae6f9b3b5f565fdd2a786cc6ef1",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-nr-bg1-z384.json",
+          "sha256": "29248fdeeb0f408166190f9c0c5d72b7ce8b40f09a1eb3ddb7a7c9cd437fea4d",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-nr-bg1-z384.json",
+          "sha256": "c2af6d639fc07ad0d3871a4595b81328faeba999a5ac63471e100e4fc2ed6d77",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-dvb-t2-r12.json",
+          "sha256": "68beaf11e9139cf3a12123016215747ede3ac796663a23c51bcd3c78c5e4e5ce",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-nr-bg1-z384.json",
+          "sha256": "12d9c0994d23424fecbbf286d5c0250a2d599a172505c08c855805ca47575fad",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
+          "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
+          "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json"
+          ]
+        }
+      ]
+    },
+    "dev/bench_results/3be770d5/preparation/build-identity.json": {
+      "sha256": "ea7dcdd499140801eed8c4a230dd4e3936df9b09fafa6ab2bd027c768e1f2696",
+      "pins": [
+        {
+          "pin": "/aff3ct/static_library_sha256",
+          "sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "carried_by": []
+        },
+        {
+          "pin": "/aff3ct/c077a88b_build_identity/sha256",
+          "sha256": "8f42c2afbea96b763117335d3daab9c415bc84bfebe28272457bc82b65a56eea",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/build-identity.json"
+          ]
+        },
+        {
+          "pin": "/aff3ct/source_archive/sha256",
+          "sha256": "370f78e20000bc5fa0ae56c5534f6cf44c278480321a478f7b95b277ab7091fb",
+          "carried_by": [
+            "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/source-inputs/aff3ct-source.tar.gz",
+            "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/source-inputs/aff3ct-source.tar.gz",
+            "dev/bench_results/c077a88b/v3-preparation/source-inputs/aff3ct-source.tar.gz"
+          ]
+        },
+        {
+          "pin": "/shim/unit_sha256",
+          "sha256": "9db3c2a0200de22dae836dfd1d3d2c6a7b4639d531bc426aa3f8222e08f1e66e",
+          "carried_by": []
+        },
+        {
+          "pin": "/shim/included_sha256",
+          "sha256": "95cf0245f13dd8c24a3e36ad2a7ffc6a2d485a7686ce2b5d2f3b7de25de70d89",
+          "carried_by": [
+            "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/harness/cpp/aff3ct_shim.cpp"
+          ]
+        },
+        {
+          "pin": "/shim/build_rs_sha256",
+          "sha256": "405b98e7352fd72355c4865851b78b8a9ef0cf2e064e09ef55ed05fcc31888c9",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/archive/sha256",
+          "sha256": "a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba",
+          "carried_by": [
+            "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/source-inputs/recorded-inputs.tar.gz",
+            "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/source-inputs/recorded-inputs.tar.gz",
+            "dev/bench_results/c077a88b/v3-preparation/source-inputs/recorded-inputs.tar.gz"
+          ]
+        },
+        {
+          "pin": "/inputs/bundles/dvb-t2-r12-waterfall/h_sha256",
+          "sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/bundles/dvb-t2-r12-waterfall/codewords_sha256",
+          "sha256": "4b70fec2970f72c57e55678192e01b5a72c3cdc4043e2330f9fa221f097dc44a",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/bundles/dvb-t2-r12-waterfall/llrs_sha256",
+          "sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/bundles/nr-bg1-z384-mother/h_sha256",
+          "sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/bundles/nr-bg1-z384-mother/codewords_sha256",
+          "sha256": "7bb775743d7f17a807db66663185e49f2d6ab49202ed75692d090375733296af",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/bundles/nr-bg1-z384-mother/llrs_sha256",
+          "sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/generator_sha256",
+          "sha256": "f66be20b3934eec75e92c4f9c1709f91cf9a7b0e61731783c3da84ee877b27a7",
+          "carried_by": [
+            "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/harness/src/bin/ldpc-make-inputs.rs"
+          ]
+        },
+        {
+          "pin": "/inputs/testutil_sha256",
+          "sha256": "1170a18fac78d57ef6802346527e1aa34722fe5b4049ebb9d8759ec3ffb24adb",
+          "carried_by": []
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json",
+          "sha256": "8443cdfae4e6bfb7036c8dbb10142baecacd40f911c582bf18a369aefa15559a",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json",
+          "sha256": "330e6dd7c7c90c904128328084e4ceb678fbe3a38a2ed56e7155ec4e6a2f72d0",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-dvb-t2-r12.json",
+          "sha256": "ce3b3131cb445afad9240703ee381d314dc5606fdcc60825aa1893c078aec220",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-nr-bg1-z384.json",
+          "sha256": "1e26ac7ca28a997054fca90080d2736fe41e0439ad568e8f2a862e839d0008f2",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-dvb-t2-r12.json",
+          "sha256": "82a065128d3f1400ca1be37aab75f40e270b61307e7713a0f9f808c91c95273a",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-dvb-t2-r12.json",
+          "sha256": "fc00b05ba8e05726b733e8e6c05d4ddaff3a2ae6f9b3b5f565fdd2a786cc6ef1",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-nr-bg1-z384.json",
+          "sha256": "29248fdeeb0f408166190f9c0c5d72b7ce8b40f09a1eb3ddb7a7c9cd437fea4d",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-nr-bg1-z384.json",
+          "sha256": "c2af6d639fc07ad0d3871a4595b81328faeba999a5ac63471e100e4fc2ed6d77",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-dvb-t2-r12.json",
+          "sha256": "68beaf11e9139cf3a12123016215747ede3ac796663a23c51bcd3c78c5e4e5ce",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-nr-bg1-z384.json",
+          "sha256": "12d9c0994d23424fecbbf286d5c0250a2d599a172505c08c855805ca47575fad",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
+          "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
+          "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json"
+          ]
+        }
+      ]
+    },
+    "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json": {
+      "sha256": "1ec2e69490aa6d43ecc022c09b84f1a3864b95470e15b0673ed9d1e98bbed773",
+      "pins": [
+        {
+          "pin": "/aff3ct-static-sha256",
+          "sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "carried_by": []
+        }
+      ]
+    },
+    "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/build-identity.json": {
+      "sha256": "e2c2c9f2a8e10f1e7a98d7b48ea2c6079515cf30f0d60f48f73377fcb9d64f30",
+      "pins": [
+        {
+          "pin": "/aff3ct-static-sha256",
+          "sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "carried_by": []
+        }
+      ]
+    },
+    "dev/bench_results/c077a88b/v3-preparation/build-identity.json": {
+      "sha256": "8f42c2afbea96b763117335d3daab9c415bc84bfebe28272457bc82b65a56eea",
+      "pins": [
+        {
+          "pin": "/aff3ct-static-sha256",
+          "sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "carried_by": []
+        },
+        {
+          "pin": "/upstream_build_evidence_sha256",
+          "sha256": "e2c2c9f2a8e10f1e7a98d7b48ea2c6079515cf30f0d60f48f73377fcb9d64f30",
+          "carried_by": [
+            "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/build-identity.json"
+          ]
+        }
+      ]
+    },
+    "dev/bench_results/c077a88b/v3-preparation/superseded-before-final-rebuild/build-identity.json": {
+      "sha256": "bf62265e14389b7ca0db7d5c9dc3c4e289251269673ddedb0fa456dceaed72a1",
+      "pins": [
+        {
+          "pin": "/aff3ct-static-sha256",
+          "sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "carried_by": []
+        },
+        {
+          "pin": "/upstream_build_evidence_sha256",
+          "sha256": "e2c2c9f2a8e10f1e7a98d7b48ea2c6079515cf30f0d60f48f73377fcb9d64f30",
+          "carried_by": [
+            "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/build-identity.json"
+          ]
+        }
+      ]
+    },
+    "dev/bench_results/f63a2464/preparation/build-identity.json": {
+      "sha256": "019a84f495b59419a3c27e2a6498306995c6a5c673f748ae524f2691c579955c",
+      "pins": [
+        {
+          "pin": "/aff3ct/static_library_sha256",
+          "sha256": "b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529",
+          "carried_by": []
+        },
+        {
+          "pin": "/inputs/archive_sha256",
+          "sha256": "a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba",
+          "carried_by": [
+            "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/source-inputs/recorded-inputs.tar.gz",
+            "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/source-inputs/recorded-inputs.tar.gz",
+            "dev/bench_results/c077a88b/v3-preparation/source-inputs/recorded-inputs.tar.gz"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json",
+          "sha256": "8443cdfae4e6bfb7036c8dbb10142baecacd40f911c582bf18a369aefa15559a",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json",
+          "sha256": "330e6dd7c7c90c904128328084e4ceb678fbe3a38a2ed56e7155ec4e6a2f72d0",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-dvb-t2-r12.json",
+          "sha256": "ce3b3131cb445afad9240703ee381d314dc5606fdcc60825aa1893c078aec220",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-nr-bg1-z384.json",
+          "sha256": "1e26ac7ca28a997054fca90080d2736fe41e0439ad568e8f2a862e839d0008f2",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-flooding-nms-i16-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-dvb-t2-r12.json",
+          "sha256": "82a065128d3f1400ca1be37aab75f40e270b61307e7713a0f9f808c91c95273a",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-dvb-t2-r12.json",
+          "sha256": "fc00b05ba8e05726b733e8e6c05d4ddaff3a2ae6f9b3b5f565fdd2a786cc6ef1",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-nr-bg1-z384.json",
+          "sha256": "29248fdeeb0f408166190f9c0c5d72b7ce8b40f09a1eb3ddb7a7c9cd437fea4d",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-inter-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-nr-bg1-z384.json",
+          "sha256": "c2af6d639fc07ad0d3871a4595b81328faeba999a5ac63471e100e4fc2ed6d77",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-f32-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-dvb-t2-r12.json",
+          "sha256": "68beaf11e9139cf3a12123016215747ede3ac796663a23c51bcd3c78c5e4e5ce",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-nr-bg1-z384.json",
+          "sha256": "12d9c0994d23424fecbbf286d5c0250a2d599a172505c08c855805ca47575fad",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/aff3ct-layered-nms-i16-inter-nr-bg1-z384.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json",
+          "sha256": "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json"
+          ]
+        },
+        {
+          "pin": "/prepared_quality/dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json",
+          "sha256": "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f",
+          "carried_by": [
+            "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json"
+          ]
+        }
+      ]
+    }
+  },
+  "pinned_executables": [
+    {
+      "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
+      "executable": "aff3ct-throughput-arm",
+      "sha256": "991ddbc661244be9a186f2ef1f54e44737a601ce064797270b1177e28f1d65cf",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
+      "executable": "gf2-throughput-arm",
+      "sha256": "27852917abecb3df39b00c260c45fb33c1fc808ff87b491c861c1dc9b1e32391",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
+      "executable": "gf2-throughput-arm",
+      "sha256": "76425724ff2e7af21f728666734077d24ea4659222889ba95ab5663a621e4583",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
+      "executable": "ldpc-alloc-census",
+      "sha256": "30a46921ce6613ed350ce47afbf1da96033544a98b5804ec0676e50f9b1ab5cd",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
+      "executable": "ldpc-alloc-census",
+      "sha256": "8cbd5c9a6901d1411bc6ceaba07bff0e7d0af23c22b4ab746f21684acae17030",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
+      "executable": "ldpc-plan-check",
+      "sha256": "53ee3883b3cb0f1d766803feae6e4052d1b13c4e5a63eb7fb6bf5fd35ef2ab1a",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/07ca8585/preparation/build-identity.json",
+      "executable": "ldpc-throughput-validate",
+      "sha256": "51e904d1f4eefb5164a3dc8790f147c8c27a7b8302051f9fabfc1a5f09394d97",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+      "executable": "aff3ct-throughput-arm",
+      "sha256": "ebd963788c742bdc452de71d178982c62718d6cab6eab451d17bdf4a5d56b42b",
+      "found_at": [
+        "target/pinned/release/aff3ct-throughput-arm"
+      ]
+    },
+    {
+      "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+      "executable": "gf2-throughput-arm",
+      "sha256": "350f2e448de11f7f8853474342a189dd805ac974b89a0ba48ef7c949ac574f69",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+      "executable": "ldpc-alloc-census",
+      "sha256": "44d5ef19daa827b2af2a5d0c9aafd60de394d41809bd794cfc3012ef6ea20006",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+      "executable": "ldpc-plan-check",
+      "sha256": "b7f58d61e418f0e1f7b8fff9d00812859de0409017372d48117bbeb10f643707",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+      "executable": "ldpc-profile",
+      "sha256": "2ba24e5a81aa4193ede75e51270b2c49968d8af43f942014ef323254a489f017",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/3be770d5/preparation/build-identity.json",
+      "executable": "ldpc-throughput-validate",
+      "sha256": "f932f709abd8c60b3683e8bda52e5da534f4e0f4097fb420230c5d1a900781f8",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json",
+      "executable": "aff3ct-ldpc-arm",
+      "sha256": "c30d7901fada187639b941c5b9691b8a37470933e7d2e48a19c374dbe383a344",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json",
+      "executable": "aff3ct-ldpc-arm",
+      "sha256": "ee934f0581a04e545d7d4fb7a3d3686f5ef5fd96d6592cb8cd643183ae0289b0",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json",
+      "executable": "gf2-ldpc-arm",
+      "sha256": "1be2c26f2d059bb40143180bfde66e04af8ed619fc03bae696f822d479af3c6e",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json",
+      "executable": "gf2-ldpc-arm",
+      "sha256": "a5af6463b612fda4371134ceb3650d6e3d1e43f398790662eed967a03161aa09",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/2026-09-08-c077a88b-preparation/build-identity.json",
+      "executable": "ldpc-validate",
+      "sha256": "a574dee35785494bb40c1abda8148fc83feb0667a98f9bb73fd79b02330e34f8",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/build-identity.json",
+      "executable": "aff3ct-ldpc-arm",
+      "sha256": "301390dfd096b5eea362f212c1816019c41e2f81d033e1f42aee917a97185a02",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/build-identity.json",
+      "executable": "gf2-ldpc-arm",
+      "sha256": "a2362e76c875c483a5b2f349f5e72019ea50569ac4915a7e93df873c98c7e9ea",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/2026-09-08-r4-c077a88b-preparation/build-identity.json",
+      "executable": "ldpc-validate",
+      "sha256": "f6ede5d60719ff035a6fafe465f8b5e68da3f338ce8164578f84a5d30d8fc685",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/v3-preparation/build-identity.json",
+      "executable": "aff3ct-ldpc-arm",
+      "sha256": "6afbf03ce34d3330415c4e74b9d0596bb65469329da6daa016b3c1569daac46f",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/v3-preparation/build-identity.json",
+      "executable": "gf2-ldpc-arm",
+      "sha256": "967ffc4c869ca523f0f018d63662b74b4ddc73662f5a95da82b360cb8feb21c9",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/v3-preparation/build-identity.json",
+      "executable": "ldpc-validate",
+      "sha256": "5a1ba07f37bd445c5aa4d8f6d38861fbd031f0368facd722a7fc469fd525cc37",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/v3-preparation/superseded-before-final-rebuild/build-identity.json",
+      "executable": "aff3ct-ldpc-arm",
+      "sha256": "79b500c7739d586c51ab24046f8bb8e2495fa8f745dbb440bcfe23050ea91060",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/v3-preparation/superseded-before-final-rebuild/build-identity.json",
+      "executable": "gf2-ldpc-arm",
+      "sha256": "967ffc4c869ca523f0f018d63662b74b4ddc73662f5a95da82b360cb8feb21c9",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/c077a88b/v3-preparation/superseded-before-final-rebuild/build-identity.json",
+      "executable": "ldpc-validate",
+      "sha256": "5a1ba07f37bd445c5aa4d8f6d38861fbd031f0368facd722a7fc469fd525cc37",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/f63a2464/preparation/build-identity.json",
+      "executable": "aff3ct-throughput-arm",
+      "sha256": "5f8df6f3c9c0abfe23dee1b0589c7e45e867c0c1903366c3f54197dec48bc9b8",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/f63a2464/preparation/build-identity.json",
+      "executable": "gf2-throughput-arm",
+      "sha256": "3b27a8694d55f22911787d8edfc358cfa3c59e2174c76fb81e791f57f10a0447",
+      "found_at": []
+    },
+    {
+      "record": "dev/bench_results/f63a2464/preparation/build-identity.json",
+      "executable": "qc-decoder-arm",
+      "sha256": "6d3bd83c37f5d7fd42920e6888a6cf668c3d3fd7904377018557b4a742ea6236",
+      "found_at": []
+    }
+  ]
+}

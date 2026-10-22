@@ -1,0 +1,144 @@
+{
+  "family": {
+    "id": "d06a99ed-worker-aware-production-v1",
+    "issue": "d06a99ed",
+    "purpose": "decoder-family",
+    "description": "Current production before/after evidence for worker-aware routing. Baseline is the default-constructed tuned decoder at source 40d0d7aff; candidate is source 24db08ef936e9b8eb42d31205d37c30207ba81a0. Both install the same committed coding envelope, use native Rust 1.95 release builds, decode the same recorded f32 flooding normalized-min-sum inputs at factor 0.75 and iteration cap 50 with per-frame syndrome stopping, and check decisions against the existing prepared quality records. The measured steady-state call is the existing tuned-profile arm: pinned workers, prepared decoder state, conversion, route dispatch, decode and extraction. Cells cover both codes at one frame and one full wave on one worker, DVB-T2 at twelve physical workers and NR at twenty-four logical workers. Small whole-call cells include selector overhead; conversion.dispatch_ns is the existing empty-body executor-dispatch diagnostic and is not isolated selector timing. Baseline multicore waves take the lane route; candidate multicore waves take single-frame. No forced selectors or tuning search are used. Pilot outcomes are exploratory. Confirmation uses fresh samples at the protocol pair count and retains the worker policy only if every non-regression cell records pass; every outcome is reported as evaluated. This distinct worker-policy candidate has no prior confirmatory reservation; its first confirmation has six cells, within the fixed bootstrap-tail bound."
+  },
+  "frozen_utc": "2026-10-22T19:35:48Z",
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "The improvement vocabulary uses the existing ten-percent material threshold, fixed before this pilot; all declared cells have the non-regression objective.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.05,
+    "equivalence_rationale": "At most five percent whole-call regression is admissible, fixed before this pilot. The canonical freezer stops when pilot resolution reaches this margin; the margin is not widened from observed results.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The family has no comparator-gap cell."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 1000,
+    "maintenance_rationale": "Worker context and one canonical tuning selector; no kernels or numerical algorithm changes. The budget bounds this implementation and issue-local measurement glue."
+  },
+  "family_wise": {
+    "ledger_path": "dev/bench_results/d06a99ed/worker-routing/ledger.jsonl",
+    "prior_trials": []
+  },
+  "max_pilot_trials_per_cell": 2,
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "campaign": {
+    "id": "d06a99ed-worker-routing-pilot",
+    "seed": 3496646913,
+    "pilot_pairs": 6,
+    "max_cells_per_session": 1
+  },
+  "confirmation": {
+    "id": "d06a99ed-worker-routing-confirmation",
+    "seed": 3496646914,
+    "max_cells_per_session": 1
+  },
+  "codes": {
+    "dvb-t2-r12": {
+      "code_identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+      "workload_identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs"
+    },
+    "nr-bg1-z384": {
+      "code_identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+      "workload_identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs"
+    }
+  },
+  "cell": {
+    "objective": "non-regression",
+    "metric_kind": "whole-consumer",
+    "scaling": "sustained-throughput",
+    "core_arm": "single-core",
+    "workers": {
+      "declared": 1,
+      "nested_pools_allowed": false
+    },
+    "cache_state": "warm",
+    "conversion_costs_included": true,
+    "baseline": "gf2-batch-tuned-before",
+    "candidate": "gf2-batch-tuned-after",
+    "timed_batch": 8,
+    "size": {
+      "timed_fixture_banks": 1
+    },
+    "decoder": {
+      "arm_kind": "matched-algorithm",
+      "precision": "f32",
+      "schedule": "flooding",
+      "normalization": {
+        "kind": "normalized-min-sum",
+        "factor": 0.75
+      },
+      "iteration_cap": 50,
+      "stopping": {
+        "kind": "syndrome",
+        "crc": null
+      },
+      "batching": {
+        "batch_size": 1,
+        "batch_fill_included": true
+      },
+      "quality_tolerance": {
+        "fer_ratio_max": 1.0
+      },
+      "rate_matching": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-production-w1-b1",
+      "code": "dvb-t2-r12",
+      "timed_batch": 1,
+      "scaling": "single-core-latency"
+    },
+    {
+      "cell_id": "dvb-t2-r12-production-w1-b8",
+      "code": "dvb-t2-r12",
+      "timed_batch": 8,
+      "scaling": "sustained-throughput"
+    },
+    {
+      "cell_id": "nr-bg1-z384-production-w1-b1",
+      "code": "nr-bg1-z384",
+      "timed_batch": 1,
+      "scaling": "single-core-latency"
+    },
+    {
+      "cell_id": "nr-bg1-z384-production-w1-b8",
+      "code": "nr-bg1-z384",
+      "timed_batch": 8,
+      "scaling": "sustained-throughput"
+    },
+    {
+      "cell_id": "dvb-t2-r12-production-w12-b8",
+      "code": "dvb-t2-r12",
+      "timed_batch": 8,
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12,
+        "nested_pools_allowed": false
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-production-w24-b8",
+      "code": "nr-bg1-z384",
+      "timed_batch": 8,
+      "core_arm": "logical-cpus-24",
+      "workers": {
+        "declared": 24,
+        "nested_pools_allowed": false
+      }
+    }
+  ],
+  "tuning_profiles": {
+    "gf2-batch-tuned-before": "crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json",
+    "gf2-batch-tuned-after": "crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json"
+  }
+}
