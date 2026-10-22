@@ -45,6 +45,6 @@ Prior unresolved traps remain in [handoff-36](handoff-36.md).
 ## Reference artefacts
 
 - [Prior open decisions](handoff-36.md)
-- [Decoder outcome record](../ed3d490e-zen3-ldpc-frame-simd/findings.md)
+- [Decoder outcome record](6230e0b6/findings.md)
 - [Generated decoder results](../../bench_results/ed3d490e/tables.md)
 - JIT items: `1a379447`, `6230e0b6`, `ed3d490e`, `d06a99ed`, `e5f8b3ae`, `1362381c`.

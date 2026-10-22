@@ -3,21 +3,21 @@
 > **Diátaxis Type:** Research
 
 Outcome record of story `@/issue/ed3d490e`. The
-[measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
-and the [frozen protocol](../1a379447-zen3-cpu-performance/f547c394/protocol.md)
-with its [version-4 amendment](../1a379447-zen3-cpu-performance/f547c394/amendment-v4.md)
-govern every timed cell; the [story plan](plan.md) is the design this record
+[measurement contract](../measurement-contract.md)
+and the [frozen protocol](../f547c394/protocol.md)
+with its [version-4 amendment](../f547c394/amendment-v4.md)
+govern every timed cell; the [story plan](../../ed3d490e-zen3-ldpc-frame-simd/plan.md) is the design this record
 is judged against.
 
 This record states each conclusion once, in the section that owns it, and
 points to the evidence that carries it; it copies no measured or derived
 figure. The figures live in the generated
-[outcome tables](../../bench_results/ed3d490e/tables.md) ("the tables"), written
-by [`survey/make-outcome-tables.py`](survey/make-outcome-tables.py) from the
+[outcome tables](../../../bench_results/ed3d490e/tables.md) ("the tables"), written
+by [`survey/make-outcome-tables.py`](../../ed3d490e-zen3-ldpc-frame-simd/survey/make-outcome-tables.py) from the
 committed receipts; in the
-[profile summary](../../bench_results/f434ddd3/profile/profile.md) of the
+[profile summary](../../../bench_results/f434ddd3/profile/profile.md) of the
 profile series; in the
-[timing tables](../../bench_results/f63a2464/timing-tables.md) of the candidate
+[timing tables](../../../bench_results/f63a2464/timing-tables.md) of the candidate
 evaluation `@/issue/f63a2464`; and in the receipts those files name. A pointer
 names a table section as *part › section* and a row by its family and cell.
 Outcome labels (`pass`, `fail`, `regressed`, `not-material`, `pilot`) are
@@ -30,40 +30,40 @@ per lane of an eight-lane f32 register, over the portable and AVX2 lane kernels
 of `gf2-kernels-simd`. It implements the batch soft-decoder trait of
 `gf2-coding`, which `PooledBatchDecoder` and the `gf2-sim` decode stages
 consume. The float flooding contract is unchanged: the
-[numerical contract](../../../docs/reference/ldpc-decoder-numerical-contract.md),
+[numerical contract](../../../../docs/reference/ldpc-decoder-numerical-contract.md),
 section *Batch clauses*, states per-frame equality with the single-frame
 `LdpcDecoder` in posterior bit patterns, hard decisions, iteration count and
 flags. Each wave takes the lane route or the single-frame route by the decode
 selectors of the coding tuning section
-([`route.rs`](../../../crates/gf2-coding/src/ldpc/route.rs)).
+([`route.rs`](../../../../crates/gf2-coding/src/ldpc/route.rs)).
 
 ## Committed decode selectors
 
 The committed selectors are the decode family of the coding owner envelope
-[`gf2-0a77ecfc-20261013t011147z-815998.json`](../../../crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json):
+[`gf2-0a77ecfc-20261013t011147z-815998.json`](../../../../crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json):
 
 - `decode.lane_min_frames` and `decode.lane_max_edges` are stated at the
   values the calibration campaign selects (tables, *Decode selector
   calibration*, rows of both fields; receipt
-  [`gf2-0a77ecfc-20261013t011147z-815998.md`](../../benchmarks/tuning_profiles/gf2-0a77ecfc-20261013t011147z-815998.md),
+  [`gf2-0a77ecfc-20261013t011147z-815998.md`](../../../benchmarks/tuning_profiles/gf2-0a77ecfc-20261013t011147z-815998.md),
   section *Argmin and threshold decisions*).
 - `decode.granules_per_task` is omitted, so it resolves to its conservative
-  value ([campaign findings](calibration/campaign-findings.md), F-04).
+  value ([campaign findings](../../ed3d490e-zen3-ldpc-frame-simd/calibration/campaign-findings.md), F-04).
 - The envelope states no encode selector.
 
 The holdout confirmation retains these selectors under its frozen decision
-rule ([holdout collection](../1a379447-zen3-cpu-performance/7695aaee/collection.md),
+rule ([holdout collection](../7695aaee/collection.md),
 section *Decision*).
 
 `gf2-coding` installs no envelope by itself. A process that installs none
 resolves the conservative family of
-[`tuning.rs`](../../../crates/gf2-coding/src/tuning.rs) (`LANE_MIN_FRAMES`,
+[`tuning.rs`](../../../../crates/gf2-coding/src/tuning.rs) (`LANE_MIN_FRAMES`,
 `LANE_MAX_EDGES`, `GRANULES_PER_TASK`), which closes the lane route, so every
 wave decodes frame by frame. A process that installs the committed envelope
 opens the lane route under the two stated bounds.
-[`tuning_profile_committed.rs`](../../../crates/gf2-coding/tests/tuning_profile_committed.rs)
+[`tuning_profile_committed.rs`](../../../../crates/gf2-coding/tests/tuning_profile_committed.rs)
 installs the envelope in a fresh process and checks routes and results, and
-[`ldpc_decode_dispatch.rs`](../../../crates/gf2-coding/tests/ldpc_decode_dispatch.rs)
+[`ldpc_decode_dispatch.rs`](../../../../crates/gf2-coding/tests/ldpc_decode_dispatch.rs)
 checks the routes with no envelope installed.
 
 The selectors' measured domain:
@@ -71,7 +71,7 @@ The selectors' measured domain:
 - The route decision reads the algorithm, the wave's occupied lanes and the
   code's edge count, and no worker count. The two route selectors are
   calibrated on one worker
-  ([premeasurement protocol](calibration/premeasurement-protocol.md), §2).
+  ([premeasurement protocol](../../ed3d490e-zen3-ldpc-frame-simd/calibration/premeasurement-protocol.md), §2).
 - `decode.granules_per_task` is measured in a pool of four workers (same
   section).
 - Batch width has no selector: one wave is eight frames by the plan's DEC-03.
@@ -94,13 +94,13 @@ under selectors that open the lane route to every wave size and edge count.
   non-regression with an incomplete final wave (cells `*-lane-w1-b11`). At a
   batch of one frame, DVB-T2 records `not-worse` and `pass` and NR records
   `regressed` and `fail`. The receipt does not qualify
-  ([collection](../1a379447-zen3-cpu-performance/32bfe9f8/collection.md)).
+  ([collection](../32bfe9f8/collection.md)).
 - **Several workers** (`ldpc-batch-multicore-v1`, confirmation). The lane
   route records `improved` and `pass` on the NR code at six and twelve
   physical cores. It records `regressed` and `fail` on DVB-T2 at six and twelve
   physical cores and twenty-four logical CPUs, and on NR at twenty-four logical
   CPUs. The receipt does not qualify
-  ([collection](../1a379447-zen3-cpu-performance/a03daf3f/collection.md)).
+  ([collection](../a03daf3f/collection.md)).
 - **Batch sizes** (`ldpc-batch-size-sweep-v1`, pilot). Every cell is
   exploratory and decides nothing; the per-frame times by batch size are in
   *Before-after results of the lane route › Batch-size sweep*.
@@ -115,7 +115,7 @@ Tables, *AFF3CT matched-algorithm results › Outcomes*. The baseline arm is the
 gf2 lane route and the candidate AFF3CT's flooding f32 normalized min-sum
 decoder [Cassagne2019], so `improved` states a material gap in AFF3CT's favour
 and `regressed` states AFF3CT slower than the lane route beyond the
-equivalence margin ([collection](../1a379447-zen3-cpu-performance/7eddc5e2/collection.md)).
+equivalence margin ([collection](../7eddc5e2/collection.md)).
 
 - At one worker and a full wave, both codes record `regressed` and `fail`:
   AFF3CT is the slower arm.
@@ -128,7 +128,7 @@ The receipt is accepted, does not qualify and selects nothing. No AFF3CT cell
 runs on six physical cores or on logical CPUs. AFF3CT's matched SIMD modes,
 flooding normalized min-sum INTER and normalized min-sum INTRA, are
 unavailable in the pinned build and carry no cell (family description of the
-[addendum](../1a379447-zen3-cpu-performance/87a6bb36/addendum.json)).
+[addendum](../87a6bb36/addendum.json)).
 
 ### Lane route against AFF3CT, fastest compatible
 
@@ -150,7 +150,7 @@ and stopping granularity, so their iteration columns are not compared
 - **Workspace.** The decoder's lane workspace per worker is a diagnostic of
   every gf2 lane arm (*Arm measurements*, column *Lane workspace*). The AFF3CT
   arms report none.
-- **Peak resident set.** The [peak-memory record](../../bench_results/ed3d490e/preparation/peak-memory.json)
+- **Peak resident set.** The [peak-memory record](../../../bench_results/ed3d490e/preparation/peak-memory.json)
   measures the process memory of each arm at one configuration (*Peak memory*
   of each part); it is no allocation census of the decoder state. The lane
   and single-frame arms of one code have overlapping intervals, so the process
@@ -166,22 +166,22 @@ and stopping granularity, so their iteration columns are not compared
 ### Decode selector calibration and holdout
 
 The calibration campaign is measured and published
-([campaign findings](calibration/campaign-findings.md)); it imports committed
-core and algebra owners ([premeasurement protocol](calibration/premeasurement-protocol.md),
-§6, with its [corrections](calibration/premeasurement-protocol-corrections.md)).
+([campaign findings](../../ed3d490e-zen3-ldpc-frame-simd/calibration/campaign-findings.md)); it imports committed
+core and algebra owners ([premeasurement protocol](../../ed3d490e-zen3-ldpc-frame-simd/calibration/premeasurement-protocol.md),
+§6, with its [corrections](../../ed3d490e-zen3-ldpc-frame-simd/calibration/premeasurement-protocol-corrections.md)).
 The holdout confirmation is accepted and qualifies: every confirmatory and
 holdout cell records `pass`, the tuned-portable build against the
 conservative-portable build and the native build against the tuned-portable
 build, with fill, transposition and workspace inside the call (tables,
 *Decode selector holdout › Outcomes*;
-[outcome table](../1a379447-zen3-cpu-performance/7695aaee/outcome.md), *Builds
+[outcome table](../7695aaee/outcome.md), *Builds
 and holdout*). Every holdout cell runs one worker.
 
 ### Profile series
 
 The series of `@/issue/f434ddd3` profiles both routes on both codes at one,
 six, twelve and twenty-four workers
-([record](../1a379447-zen3-cpu-performance/3bb47302/record.md); tables,
+([record](../3bb47302/record.md); tables,
 *Profile series*). Its categories are sample shares with Wilson intervals.
 
 - In every lane case `lane-variable-step` is the largest category, ahead of
@@ -204,14 +204,14 @@ six, twelve and twenty-four workers
 ## Inter-frame and QC-aware intra-frame cells against the canonical baseline
 
 No quantized, layered or QC-aware candidate enters the decoder. The
-[decision record](../1a379447-zen3-cpu-performance/f63a2464/decision-record.md),
+[decision record](../f63a2464/decision-record.md),
 section *Decisions after the confirmations*, rules:
 
 - family Q, quantized min-sum: no proceed, closed by stop rule S2;
 - family L, layered min-sum: no proceed, closed by stop rule S2;
 - family QC, QC-aware intra-frame: no proceed; its three confirmation
   campaigns exceed the frozen cap of one, so it has no valid confirmatory
-  verdict ([corrections](../1a379447-zen3-cpu-performance/f63a2464/corrections.md),
+  verdict ([corrections](../f63a2464/corrections.md),
   C-09; repository owner's ruling of 2026-10-05).
 
 The canonical `LdpcDecoder` stays the production decoder, and the numerical
@@ -251,7 +251,7 @@ Limits of the comparison:
   measurement, in a different campaign and session; no cell pairs the two
   layouts.
 - The QC-aware family covers the NR code only; the DVB-T2 code has no QC arm
-  ([findings](../1a379447-zen3-cpu-performance/f63a2464/findings.md) of
+  ([findings](../f63a2464/findings.md) of
   `@/issue/f63a2464`, *Limits and problems*).
 - The QC-aware prototype is an experiment outside the production decoder path;
   the plan's DEC-10 rejects a paired cell with it because the frozen budget
@@ -260,7 +260,7 @@ Limits of the comparison:
 srsRAN [Srsran2026] and OpenAirInterface [OpenAirInterface2026] do not build
 on the host, and xdsopl [Xdsopl2026] exposes no normalized min-sum rule, so
 none supplies a measurable matched arm and AFF3CT is the only measured
-comparator ([comparator survey](../1a379447-zen3-cpu-performance/c077a88b/findings.md),
+comparator ([comparator survey](../c077a88b/findings.md),
 *Pinned arms and upstream status*).
 
 ## Criterion status
@@ -270,14 +270,14 @@ Each row gives the status and points to the sections that carry it.
 | Criterion | Status | Evidence |
 |---|---|---|
 | REQ-01 | MET for the evidence; adoption domain open | Every campaign is accepted and verified from its execution log, with the finding count of its row (tables, *Campaigns*); each receipt's `inputs/` pins the contract, protocol and family addendum. Before-after confirmations and preserved negative outcomes: [Outcomes by comparison](#outcomes-by-comparison). Adoption domain: R-01, tracked by `@/issue/d06a99ed`. |
-| REQ-07 | MET | The [plan](plan.md) and the [terminal audit](terminal-audit.md) specify precision, lane layout, scalar references, workspace ownership, per-frame termination, partial batches and integration points before implementation; the [feasibility record](../../bench_results/ed3d490e/intrinsic-feasibility/feasibility.json) compiles the register forms at Rust 1.95. |
-| REQ-08 | MET | Batch trait with default paths ([`batch_soft_decoder_contract.rs`](../../../crates/gf2-coding/tests/batch_soft_decoder_contract.rs)); lane kernels in `gf2-kernels-simd` with their [assembly artefact](../../../crates/gf2-kernels-simd/src/x86/asm/ldpc_lanes.asm.txt); `gf2-sim` stages over the trait; inherent batch functions removed (`@/issue/e4e2ba52`). Order and results for batches below, at and above eight frames and an incomplete final wave: [`ldpc_batch_contract.rs`](../../../crates/gf2-coding/tests/ldpc_batch_contract.rs). The default batch path of `LdpcDecoder` is a hard decision, a contract `@/issue/e29fd776` tracks. |
-| REQ-09 | MET | Posterior-level equality on every route and backend, with mixed convergence and nonconvergence (`ldpc_batch_contract.rs`); worker counts and scheduling ([`batch_decode_worker_determinism.rs`](../../../crates/gf2-sim/tests/batch_decode_worker_determinism.rs), [`pooled_batch_decoder.rs`](../../../crates/gf2-coding/tests/pooled_batch_decoder.rs)); checkpoint resume (batch-decode resume tests of [`checkpoint_compat.rs`](../../../crates/gf2-sim/tests/checkpoint_compat.rs)); portable fallback (backend tests of `ldpc_batch_contract.rs`). |
+| REQ-07 | MET | The [plan](../../ed3d490e-zen3-ldpc-frame-simd/plan.md) and the [terminal audit](../../ed3d490e-zen3-ldpc-frame-simd/terminal-audit.md) specify precision, lane layout, scalar references, workspace ownership, per-frame termination, partial batches and integration points before implementation; the [feasibility record](../../../bench_results/ed3d490e/intrinsic-feasibility/feasibility.json) compiles the register forms at Rust 1.95. |
+| REQ-08 | MET | Batch trait with default paths ([`batch_soft_decoder_contract.rs`](../../../../crates/gf2-coding/tests/batch_soft_decoder_contract.rs)); lane kernels in `gf2-kernels-simd` with their [assembly artefact](../../../../crates/gf2-kernels-simd/src/x86/asm/ldpc_lanes.asm.txt); `gf2-sim` stages over the trait; inherent batch functions removed (`@/issue/e4e2ba52`). Order and results for batches below, at and above eight frames and an incomplete final wave: [`ldpc_batch_contract.rs`](../../../../crates/gf2-coding/tests/ldpc_batch_contract.rs). The default batch path of `LdpcDecoder` is a hard decision, a contract `@/issue/e29fd776` tracks. |
+| REQ-09 | MET | Posterior-level equality on every route and backend, with mixed convergence and nonconvergence (`ldpc_batch_contract.rs`); worker counts and scheduling ([`batch_decode_worker_determinism.rs`](../../../../crates/gf2-sim/tests/batch_decode_worker_determinism.rs), [`pooled_batch_decoder.rs`](../../../../crates/gf2-coding/tests/pooled_batch_decoder.rs)); checkpoint resume (batch-decode resume tests of [`checkpoint_compat.rs`](../../../../crates/gf2-sim/tests/checkpoint_compat.rs)); portable fallback (backend tests of `ldpc_batch_contract.rs`). |
 | REQ-10 | PARTLY MET | Matched and fastest-compatible results are separate parts of the tables. Measured and unavailable cells: [matched algorithm](#lane-route-against-aff3ct-matched-algorithm), [fastest compatible](#lane-route-against-aff3ct-fastest-compatible), [memory, batch fill and latency](#memory-batch-fill-and-latency), and the last paragraph of [Lane route against the single-frame route](#lane-route-against-the-single-frame-route). |
 | REQ-11 | MET | No quantization or schedule change enters; the numerical contract places quantized alphabets and layered schedules outside the contract (*Scope*) and states no channel scaling and no saturation. |
 | REQ-12 | MET | [Inter-frame and QC-aware intra-frame cells against the canonical baseline](#inter-frame-and-qc-aware-intra-frame-cells-against-the-canonical-baseline). |
 | REQ-13 | PARTLY MET | Selectors live in the coding section with one route decision and no private threshold. Calibration and holdout: [Decode selector calibration and holdout](#decode-selector-calibration-and-holdout). Batch width and worker configuration: the selectors' measured domain under [Committed decode selectors](#committed-decode-selectors); R-01, tracked by `@/issue/d06a99ed`. |
-| REQ-14 | MET | The [numerical contract](../../../docs/reference/ldpc-decoder-numerical-contract.md) states the sign and tie rules, punctured and filler semantics and the accumulation order; `ldpc_batch_contract.rs` covers random and all-zero codewords, special values, mixed convergence and nonconvergence, and rate-matched NR frames with punctured and filler positions; the lane kernel suite of `gf2-kernels-simd` asserts negative zero. No quantized or changed-schedule candidate enters, so the clauses on scaling, saturation and quality bounds have no subject. |
+| REQ-14 | MET | The [numerical contract](../../../../docs/reference/ldpc-decoder-numerical-contract.md) states the sign and tie rules, punctured and filler semantics and the accumulation order; `ldpc_batch_contract.rs` covers random and all-zero codewords, special values, mixed convergence and nonconvergence, and rate-matched NR frames with punctured and filler positions; the lane kernel suite of `gf2-kernels-simd` asserts negative zero. No quantized or changed-schedule candidate enters, so the clauses on scaling, saturation and quality bounds have no subject. |
 
 ## Residual gaps and their limits
 
@@ -301,7 +301,7 @@ configuration.
 
 **R-02: the lane variable step dominates one-worker time.** Measured limit:
 the category bullet of [Profile series](#profile-series) and the
-[committed assembly](../../../crates/gf2-kernels-simd/src/x86/asm/ldpc_lanes.asm.txt)
+[committed assembly](../../../../crates/gf2-kernels-simd/src/x86/asm/ldpc_lanes.asm.txt)
 of `lane_variable_step_avx2_unchecked`, which reaches each edge through a
 32-bit slot-to-edge index load, a bounds compare and a memory-operand `vaddps`
 into one accumulator, so a variable's belief is one dependent add chain over
@@ -351,7 +351,7 @@ under [Profile series](#profile-series).
 
 ## Recorded contradictions carried forward
 
-- The [recategorization record](../1a379447-zen3-cpu-performance/92c53589/record.md)
+- The [recategorization record](../92c53589/record.md)
   of `@/issue/92c53589` records four statements that cite the
   `@/issue/07ca8585` re-sampled profile; each keeps its text with a pointer to
   the record. Three are in the `@/issue/07ca8585` findings, "The residual
@@ -366,9 +366,9 @@ under [Profile series](#profile-series).
   contradicted as the record's second row states. The verdicts and their
   evidence are the record's table.
 - The holdout pilot's first window run is superseded, not voided, and stays
-  committed ([attempt record](../1a379447-zen3-cpu-performance/67517a7b/superseded-pilot-attempt.md)).
+  committed ([attempt record](../67517a7b/superseded-pilot-attempt.md)).
 - The calibration's premeasurement protocol keeps its pinned bytes; its
-  [corrections](calibration/premeasurement-protocol-corrections.md) state where
+  [corrections](../../ed3d490e-zen3-ldpc-frame-simd/calibration/premeasurement-protocol-corrections.md) state where
   the current state differs.
 - Family QC's confirmations against the frozen cap: the C-09 ruling under
   [Inter-frame and QC-aware intra-frame cells against the canonical baseline](#inter-frame-and-qc-aware-intra-frame-cells-against-the-canonical-baseline).
