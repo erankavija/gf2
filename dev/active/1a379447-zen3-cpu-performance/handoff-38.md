@@ -14,8 +14,8 @@
 - Progress file: [progress.json](progress.json).
 - Timer: `gf2-bench-window-20261023.timer`, 2026-10-23 04:00 Helsinki time.
   It runs the existing benchmark-window runner from the main repository.
-- Routing implementation and checkpoint correction are committed. Final CI
-  is pending at this handoff checkpoint. Both review gates remain failed on
+- Routing implementation and checkpoint correction are committed. Full CI
+  passed in run `c048c1c2-0d5b-4e53-86fe-79580d5d417a`. Both review gates remain failed on
   the missing current before/after evidence; do not close the issue yet.
 
 ## What just happened
@@ -43,8 +43,8 @@
 
 ## What to do next
 
-- [ ] Inspect the final CI result recorded after this checkpoint; if absent,
-  evaluate d06a99ed `cargo-ci` once with every writer stopped.
+- [ ] Preserve the passing CI result; rerun only when subsequent changes
+  require it, with every writer stopped.
 - [ ] After the window, inspect `.agents/bench-window/window.log`, the d06 job
   output, and each campaign execution log under
   `dev/bench_results/d06a99ed/worker-routing/`. Do not infer completion from
