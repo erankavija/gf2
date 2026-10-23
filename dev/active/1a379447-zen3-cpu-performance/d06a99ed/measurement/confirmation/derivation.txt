@@ -1,0 +1,21 @@
+pilot receipt  /home/vkaskivuo/Projects/gf2/dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot/receipt.json
+receipt sha256 75005fda12d792fe068c75d96c7e93ea03a8d787c4c37258f4529a4d06b4d660
+campaign       d06a99ed-worker-routing-pilot
+verdict        accepted (label pilot)
+family         d06a99ed-worker-aware-production-v1: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+dvb-t2-r12-production-w1-b1              6     0.97954     0.97761     0.98338    0.0039
+dvb-t2-r12-production-w1-b8              6      1.0026     0.99691      1.0165    0.0139
+nr-bg1-z384-production-w1-b1             6      0.9872     0.98625     0.98951    0.0023
+nr-bg1-z384-production-w1-b8             6     0.99084     0.98812     0.99671    0.0059
+dvb-t2-r12-production-w12-b8             6      1.7629      1.7307      1.7759    0.0183
+nr-bg1-z384-production-w24-b8            6      2.8357      2.8205      2.8556    0.0070
+
+widest relative half-width   0.018313
+frozen measurement resolution 0.02
+replaced worthwhile_speedup 1.1 -> 1.1
+replaced equivalence_margin 1.05 -> 1.05
+restated the family description for the confirmatory stage
+margins: equivalence 1.05, material gap None
+confirmation addendum /home/vkaskivuo/Projects/gf2/dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement/confirmation/addendum.json
