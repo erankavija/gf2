@@ -1,7 +1,7 @@
 # Untimed dry session of the batch decoder profile series (jit:f434ddd3)
 
 Untimed and diagnostic: no flock wrapper, no benchmark window, one case, one
-session. Its outputs are not evidence of any rate and carry no timing figure.
+session. Its outputs contain timing fields but are not performance evidence.
 
 The committed `profile-session.sh` of `@/issue/3be770d5` ran directly on the
 `lane-dvb-w1` record case of `dev/bench_results/ed3d490e/profile-cases.tsv`:
