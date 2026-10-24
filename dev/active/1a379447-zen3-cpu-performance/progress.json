@@ -3484,7 +3484,8 @@
   "Session 43 tooling trap: compatible e2da055a gate evaluation uses optimistic capture; code/doc/JIT mutations during evaluation can restart the checker instead of recording its completed run. Initial full-CI script completed but gate auto-restarted after inputs changed. Root terminated duplicate own CI groups 3061484/2858828; final CI must run once after all edits stop, with no concurrent JIT mutation/gate evaluations for this issue. No final cargo-ci verdict is claimed. Checkpoint lane-resume correction committed04652b0ee, two selected tests pass.",
   "Session43: pinned40d0d7aff/24db08ef9 Rust1.95 builds and six-cell untimed smoke pass; preparation committedcfa4dfecb.04:00 Helsinki2026-10-23 systemd timer armed. RemainingF1 timed evidence; no user decision needed. See handoff-38.md.",
   "Session43 CI8ab3d1ef: all6478 workspace/2321 scalar tests pass; five preparation checks fail. Corrected live calibration hashes with canonical generator; all7 closure checks pass. Comparison build snapshots renamed byte-identically to before-build.json/after-build.json: build-identity.json is the live catalogue registry basename, and historical comparisons must not replace its ownership. No shared checkers changed. Four affected survey suites56/56 and explicit-input untimed smoke12/12 pass. Final CI rerun follows with all writers stopped.",
-  "Session 43 final: full cargo-ci passes, run c048c1c2-0d5b-4e53-86fe-79580d5d417a. All source/preparation fixes committed. Timer gf2-bench-window-20261023 remains armed for 04:00 EEST. Code/research F1 stays open until timed before/after receipts; no invoker decision pending. Workers stopped, handoff-38 current."
+  "Session 43 final: full cargo-ci passes, run c048c1c2-0d5b-4e53-86fe-79580d5d417a. All source/preparation fixes committed. Timer gf2-bench-window-20261023 remains armed for 04:00 EEST. Code/research F1 stays open until timed before/after receipts; no invoker decision pending. Workers stopped, handoff-38 current.",
+  "Session 44 (2026-10-24): 2026-10-23 window ran the d06a99ed pilot to completion (6 cells, accepted, qualifies=false). Confirmation stopped before any timing window: window.sh gave the freezer an absolute pilot path, so the addendum failed the runner's repository-relative check. c3ebd86d6 makes the path repository-relative and re-freezes with the original frozen_utc and digest; untimed confirmation smoke passes 12 dispatches. The zero-progress confirmation stage moved to target/d06a99ed-builds/rejected-confirmation-stage-20261023. bc2b95d14 fixes the f434ddd3 dry-session wording for the ed3d490e checkpoint. Timer gf2-bench-window-20261025 armed for 04:00 EET with invoker approval."
  ],
  "started_at": "2026-09-06T20:22:15+00:00",
  "handoffs": [
@@ -3524,27 +3525,28 @@
   "handoff-35.md",
   "handoff-36.md",
   "handoff-37.md",
-  "handoff-38.md"
+  "handoff-38.md",
+  "handoff-39.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
  },
  "benchmark_window": {
-  "unit": "gf2-bench-window-20261023",
-  "armed_for": "2026-10-23T04:00:00+03:00",
+  "unit": "gf2-bench-window-20261025",
+  "armed_for": "2026-10-25T04:00:00+02:00",
   "state_dir": ".agents/bench-window",
   "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
   "pending_jobs": {
    "d06a99ed": [
-    "six-cell current production before/after pilot and confirmation;20min estimate; main checkout"
+    "confirmation only; pilot complete and accepted (receipt sha256 75005fda...); queue line unchanged, no done marker; 20min estimate; main checkout"
    ]
   },
-  "note": "Timer verified. Existing runner; narrow automatic confirmation freeze commit. All other retained jobs have done markers. No working-session timed execution."
+  "note": "Invoker approved arming 2026-10-24. 2026-10-23 window: pilot complete, confirmation refused before timing (absolute resolution_evidence path), fixed in c3ebd86d6."
  },
  "session_scope": {
-  "session": 39,
-  "date": "2026-10-20",
-  "instruction": "Invoker 2026-10-20 (session 39): drive epic 1a379447; subagent model by task difficulty; no Fable. Do not stop to ask; block and record; check workers every 30 minutes; write the handoff when nothing remains that does not wait for input.",
+  "session": 44,
+  "date": "2026-10-24",
+  "instruction": "Invoker 2026-10-24 (session 44): drive epic 1a379447; subagent model by task difficulty; no Fable.",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-12 (session 36), restated: do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish or when all remaining work waits on the invoker; check workers every 30 minutes.",
