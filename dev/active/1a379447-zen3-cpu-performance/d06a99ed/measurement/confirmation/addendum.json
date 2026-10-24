@@ -18,7 +18,7 @@
     "rationale": "The improvement vocabulary uses the existing ten-percent material threshold, fixed before this pilot; all declared cells have the non-regression objective.",
     "measurement_resolution": 0.02,
     "resolution_evidence": {
-      "receipt": "/home/vkaskivuo/Projects/gf2/dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot/receipt.json",
+      "receipt": "dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot/receipt.json",
       "sha256": "75005fda12d792fe068c75d96c7e93ea03a8d787c4c37258f4529a4d06b4d660"
     },
     "equivalence_margin": 1.05,

@@ -1,4 +1,4 @@
-pilot receipt  /home/vkaskivuo/Projects/gf2/dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot/receipt.json
+pilot receipt  dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot/receipt.json
 receipt sha256 75005fda12d792fe068c75d96c7e93ea03a8d787c4c37258f4529a4d06b4d660
 campaign       d06a99ed-worker-routing-pilot
 verdict        accepted (label pilot)
@@ -18,4 +18,4 @@ replaced worthwhile_speedup 1.1 -> 1.1
 replaced equivalence_margin 1.05 -> 1.05
 restated the family description for the confirmatory stage
 margins: equivalence 1.05, material gap None
-confirmation addendum /home/vkaskivuo/Projects/gf2/dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement/confirmation/addendum.json
+confirmation addendum dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement/confirmation/addendum.json

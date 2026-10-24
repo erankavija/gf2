@@ -13,7 +13,7 @@ freezer=$(realpath "$2")
 cd "$repo"
 before="$here/before-build.json"
 after="$here/after-build.json"
-pilot="$repo/dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot"
+pilot="dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot"
 
 python3 "$survey/run-family-campaign.py" "$here/pilot/plan.json" "$before" "$after"
 mkdir -p "$here/confirmation"
