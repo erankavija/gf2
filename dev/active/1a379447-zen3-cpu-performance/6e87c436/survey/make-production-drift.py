@@ -250,10 +250,14 @@ RECEIPT_CLASSES = {
     "revision; `unresolved_inputs` names its pinned producing inputs",
 }
 COMPILED = (
-    "only compiled production files take part: `.rs` files, `Cargo.toml`, and the "
+    "only compiled production files take part: Rust and native-kernel sources "
+    "(`.rs`, `.hip`, C and C++ sources and headers), `Cargo.toml`, and the "
     "non-Markdown files a current `.rs` file names in a literal `include!`, "
-    "`include_str!` or `include_bytes!`"
+    "`include_str!` or `include_bytes!`; a package's `tests/`, `benches/` and "
+    "`examples/` targets are not production"
 )
+SOURCE_SUFFIXES = (".rs", ".hip", ".c", ".cc", ".cpp", ".h", ".hpp", ".cuh")
+NON_PRODUCTION_TARGETS = ("tests", "benches", "examples")
 FILES = "production files"
 REVISION = "production files at the source revision"
 UNAVAILABLE = "measured bytes unavailable"
@@ -304,10 +308,11 @@ def compiled_filter(directories):
     targets = included(tracked, lambda path: (ROOT / path).read_bytes())
 
     def compiled(path):
-        name = pathlib.PurePath(path).name
-        if name.endswith(".md"):
+        parts = pathlib.PurePath(path).parts
+        if len(parts) > 3 and parts[2] in NON_PRODUCTION_TARGETS:
             return False
-        return name.endswith(".rs") or name == "Cargo.toml" or path in targets
+        name = parts[-1]
+        return name.endswith(SOURCE_SUFFIXES) or name == "Cargo.toml" or path in targets
 
     return compiled
 

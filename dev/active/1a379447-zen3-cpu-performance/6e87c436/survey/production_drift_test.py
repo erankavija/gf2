@@ -27,6 +27,10 @@ BENCHMARK_SCHEMA = "zen3-benchmark-receipt-v1"
 MANIFEST = b'[package]\nname = "gf2-core"\n'
 LIB = b"fn one() {}\n"
 EARLIER_LIB = b"fn zero() {}\n"
+KERNEL = b"__global__ void one() {}\n"
+EARLIER_KERNEL = b"__global__ void zero() {}\n"
+TEST = b"#[test]\nfn one() {}\n"
+EARLIER_TEST = b"#[test]\nfn zero() {}\n"
 
 
 def run(command, cwd):
@@ -73,6 +77,18 @@ class AllReceipts(unittest.TestCase):
             None,
         ),
         "added": (BENCHMARK_SCHEMA, {"Cargo.toml": MANIFEST}, {}, None),
+        "kernel-source": (
+            BENCHMARK_SCHEMA,
+            {"Cargo.toml": MANIFEST, "src/lib.rs": LIB, "hip/kernel.hip": EARLIER_KERNEL},
+            {"hip/kernel.hip": EARLIER_KERNEL},
+            None,
+        ),
+        "test-only": (
+            BENCHMARK_SCHEMA,
+            {"Cargo.toml": MANIFEST, "src/lib.rs": LIB, "tests/check.rs": EARLIER_TEST},
+            {"tests/check.rs": EARLIER_TEST},
+            None,
+        ),
         "unavailable": (
             BENCHMARK_SCHEMA,
             {"Cargo.toml": MANIFEST, "src/lib.rs": b"fn three() {}\n"},
@@ -109,6 +125,10 @@ class AllReceipts(unittest.TestCase):
         commits = {"earlier": cls.commit()}
         (package / "src" / "lib.rs").write_bytes(LIB)
         (package / "src" / "notes.md").write_bytes(b"# Notes\n")
+        (package / "hip").mkdir()
+        (package / "hip" / "kernel.hip").write_bytes(KERNEL)
+        (package / "tests").mkdir()
+        (package / "tests" / "check.rs").write_bytes(TEST)
         commits["current"] = cls.commit()
         for name, (schema, pinned, held, revision) in cls.RECEIPTS.items():
             receipt = cls.root / "dev" / "bench_results" / "fixture" / name
@@ -182,6 +202,17 @@ class AllReceipts(unittest.TestCase):
         }
         for name, files in expected.items():
             self.assert_row(name, "code-differs", "production files", files)
+
+    def test_a_changed_kernel_source_makes_code_differs(self):
+        self.assert_row(
+            "kernel-source",
+            "code-differs",
+            "production files",
+            [("crates/gf2-core/hip/kernel.hip", "code-differs")],
+        )
+
+    def test_a_changed_integration_test_is_not_production_drift(self):
+        self.assert_row("test-only", "code-identical", "production files", [])
 
     def test_missing_measured_bytes_make_code_differs_by_path(self):
         self.assert_row(

@@ -11,7 +11,7 @@
     "crates/gf2-sim",
     "crates/gf2-stats"
   ],
-  "compiled_files": "only compiled production files take part: `.rs` files, `Cargo.toml`, and the non-Markdown files a current `.rs` file names in a literal `include!`, `include_str!` or `include_bytes!`",
+  "compiled_files": "only compiled production files take part: Rust and native-kernel sources (`.rs`, `.hip`, C and C++ sources and headers), `Cargo.toml`, and the non-Markdown files a current `.rs` file names in a literal `include!`, `include_str!` or `include_bytes!`; a package's `tests/`, `benches/` and `examples/` targets are not production",
   "receipt_classes": {
     "code-identical": "the row's basis proves the measured production code equal to the current tree",
     "code-differs": "the row's basis shows a difference; `differing_files` names each differing file",
@@ -44,7 +44,7 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 62,
-        "comment-or-blank-only": 83,
+        "comment-or-blank-only": 82,
         "identical": 2,
         "added": 6
       },
@@ -1465,10 +1465,10 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 142,
-        "comment-or-blank-only": 198,
+        "code-differs": 143,
+        "comment-or-blank-only": 196,
         "removed": 1,
-        "identical": 17,
+        "identical": 24,
         "added": 18
       },
       "differing_files": [
@@ -1621,10 +1621,6 @@
           "class": "code-differs"
         },
         {
-          "path": "crates/gf2-coding/tests/ldpc_check_update_contract.rs",
-          "class": "code-differs"
-        },
-        {
           "path": "crates/gf2-core/Cargo.toml",
           "class": "code-differs"
         },
@@ -1742,6 +1738,22 @@
         },
         {
           "path": "crates/gf2-kernels-hip/build.rs",
+          "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-kernels-hip/hip/bch_syndrome.hip",
+          "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-kernels-hip/hip/permanent/permanent_bipedal3.hip",
+          "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip",
+          "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-kernels-hip/hip/permanent/permanent_bipedal7.hip",
           "class": "code-differs"
         },
         {
@@ -2034,14 +2046,6 @@
         },
         {
           "path": "crates/gf2-sim/src/stages/nr_5g.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-sim/tests/common/mod.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-sim/tests/gpu_byte_identity.rs",
           "class": "code-differs"
         },
         {
@@ -5369,30 +5373,14 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 93,
-        "comment-or-blank-only": 175,
-        "identical": 34,
+        "code-differs": 71,
+        "identical": 4,
+        "comment-or-blank-only": 68,
         "added": 12
       },
       "differing_files": [
         {
           "path": "crates/gf2-core/Cargo.toml",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/benches/gf2m_wide_mul.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/benches/selector_non_regression.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/benches/shifts.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/benches/tuning_calibration.rs",
           "class": "code-differs"
         },
         {
@@ -5509,78 +5497,6 @@
         },
         {
           "path": "crates/gf2-core/src/tuning/mod.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/backend_selection_baked.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/backend_selection_profile.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/backend_selection_tunable.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/field_vec_baked.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/gemm_tiles_baked.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/prime_route_baked.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/rank_select_proptests.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/simd_equiv_demo.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/simd_equiv_dispatch_hoist.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/simd_equiv_gf2m_batch.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/simd_equiv_matvec.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/sparse.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/sparse_dual.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/support/measured_format2.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/tuning_envelope_v2.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/tuning_observation_quiet.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/tuning_profile_committed.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/tuning_profile_ple_scalar_base_install.rs",
           "class": "code-differs"
         },
         {
@@ -5819,30 +5735,14 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 93,
-        "comment-or-blank-only": 175,
-        "identical": 34,
+        "code-differs": 71,
+        "identical": 4,
+        "comment-or-blank-only": 68,
         "added": 12
       },
       "differing_files": [
         {
           "path": "crates/gf2-core/Cargo.toml",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/benches/gf2m_wide_mul.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/benches/selector_non_regression.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/benches/shifts.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/benches/tuning_calibration.rs",
           "class": "code-differs"
         },
         {
@@ -5959,78 +5859,6 @@
         },
         {
           "path": "crates/gf2-core/src/tuning/mod.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/backend_selection_baked.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/backend_selection_profile.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/backend_selection_tunable.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/field_vec_baked.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/gemm_tiles_baked.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/prime_route_baked.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/rank_select_proptests.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/simd_equiv_demo.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/simd_equiv_dispatch_hoist.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/simd_equiv_gf2m_batch.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/simd_equiv_matvec.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/sparse.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/sparse_dual.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/support/measured_format2.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/tuning_envelope_v2.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/tuning_observation_quiet.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/tuning_profile_committed.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/tests/tuning_profile_ple_scalar_base_install.rs",
           "class": "code-differs"
         },
         {
@@ -12890,7 +12718,7 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 69,
+        "code-differs": 68,
         "comment-or-blank-only": 71,
         "identical": 2,
         "added": 11
@@ -12898,10 +12726,6 @@
       "differing_files": [
         {
           "path": "crates/gf2-core/Cargo.toml",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/benches/shifts.rs",
           "class": "code-differs"
         },
         {
