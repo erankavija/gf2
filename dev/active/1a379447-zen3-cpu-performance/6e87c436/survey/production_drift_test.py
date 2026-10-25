@@ -26,11 +26,7 @@ SCRIPTS = ("locate", "make-production-drift")
 BENCHMARK_SCHEMA = "zen3-benchmark-receipt-v1"
 MANIFEST = b'[package]\nname = "gf2-core"\n'
 LIB = b"fn one() {}\n"
-# The live arm build records' reader and the files it loads beside itself.
-ARM_FILES = (
-    "record-peak-memory.py", "record-intra-quality.py", "smoke-gf2-arms.py", "arm_build.py",
-    "arms.json",
-)
+EARLIER_LIB = b"fn zero() {}\n"
 
 
 def run(command, cwd):
@@ -41,45 +37,51 @@ def sha256(data):
     return hashlib.sha256(data).hexdigest()
 
 
-BUILT, REBUILT = sha256(b"arm build"), sha256(b"another arm build")
-
-
 class AllReceipts(unittest.TestCase):
-    """The all-receipt mode on a fixture tree with one receipt per class."""
+    """The all-receipt mode on a fixture tree with one receipt per class and basis.
+
+    The tree holds a documentation file the receipts do not pin, and its history
+    an earlier commit whose `lib.rs` differs.
+    """
 
     # Receipt name: (declared schema, pinned path to measured bytes, bytes its snapshot holds,
-    # arm to pinned executable digest).
+    # the `source_revision` its checkpoint manifest records: a commit label or a literal).
     RECEIPTS = {
-        "identical": (BENCHMARK_SCHEMA, {"Cargo.toml": MANIFEST, "src/lib.rs": LIB}, {}, {}),
+        "identical": (BENCHMARK_SCHEMA, {"Cargo.toml": MANIFEST, "src/lib.rs": LIB}, {}, None),
         "comment-only": (
             BENCHMARK_SCHEMA,
             {"Cargo.toml": MANIFEST, "src/lib.rs": b"// note\nfn one() {}\n"},
             {"src/lib.rs": b"// note\nfn one() {}\n"},
-            {},
+            None,
+        ),
+        "documentation-only": (
+            BENCHMARK_SCHEMA,
+            {"Cargo.toml": MANIFEST, "src/lib.rs": LIB, "src/notes.md": b"# Earlier notes\n"},
+            {"src/notes.md": b"# Earlier notes\n"},
+            None,
         ),
         "code": (
             BENCHMARK_SCHEMA,
             {"Cargo.toml": MANIFEST, "src/lib.rs": b"fn two() {}\n"},
             {"src/lib.rs": b"fn two() {}\n"},
-            {},
+            None,
         ),
         "removed": (
             BENCHMARK_SCHEMA,
             {"Cargo.toml": MANIFEST, "src/lib.rs": LIB, "src/gone.rs": b"fn gone() {}\n"},
             {"src/gone.rs": b"fn gone() {}\n"},
-            {},
+            None,
         ),
-        "added": (BENCHMARK_SCHEMA, {"Cargo.toml": MANIFEST}, {}, {}),
+        "added": (BENCHMARK_SCHEMA, {"Cargo.toml": MANIFEST}, {}, None),
         "unavailable": (
             BENCHMARK_SCHEMA,
             {"Cargo.toml": MANIFEST, "src/lib.rs": b"fn three() {}\n"},
             {},
-            {},
+            None,
         ),
-        "executable-identical": (BENCHMARK_SCHEMA, {}, {}, {"built-dvb-t2-r12": BUILT}),
-        "executable-differs": (BENCHMARK_SCHEMA, {}, {}, {"built-nr-bg1-z384": REBUILT}),
-        "executable-unrecorded": (BENCHMARK_SCHEMA, {}, {}, {"other-dvb-t2-r12": BUILT}),
-        "unpinned": ("other-receipt-v1", {}, {}, {"built-dvb-t2-r12": None}),
+        "revision-identical": (BENCHMARK_SCHEMA, {}, {}, "current"),
+        "revision-differs": (BENCHMARK_SCHEMA, {}, {}, "earlier"),
+        "unpinned": ("other-receipt-v1", {}, {}, ""),
     }
 
     @classmethod
@@ -97,19 +99,18 @@ class AllReceipts(unittest.TestCase):
         shutil.copy(ROOT / repository_files.live_file(ROOT, "select-receipts.py"), cls.root / "selector")
         for script in SCRIPTS:
             shutil.copy(SURVEY / f"{script}.py", survey)
-        arms = cls.root / "arms"
-        arms.mkdir()
-        reader = (ROOT / repository_files.live_file(ROOT, ARM_FILES[0])).parent
-        for name in ARM_FILES:
-            shutil.copy(reader / name, arms)
-        (arms / "build-identity.json").write_text(
-            json.dumps({"catalogue": {}, "arms": {"built": {"executable_sha256": BUILT}}})
-        )
         package = cls.root / "crates" / "gf2-core"
         (package / "src").mkdir(parents=True)
         (package / "Cargo.toml").write_bytes(MANIFEST)
+        (package / "src" / "lib.rs").write_bytes(EARLIER_LIB)
+        run(["git", "init", "-q"], cls.root)
+        run(["git", "config", "user.email", "fixture@example.invalid"], cls.root)
+        run(["git", "config", "user.name", "Fixture"], cls.root)
+        commits = {"earlier": cls.commit()}
         (package / "src" / "lib.rs").write_bytes(LIB)
-        for name, (schema, pinned, held, executables) in cls.RECEIPTS.items():
+        (package / "src" / "notes.md").write_bytes(b"# Notes\n")
+        commits["current"] = cls.commit()
+        for name, (schema, pinned, held, revision) in cls.RECEIPTS.items():
             receipt = cls.root / "dev" / "bench_results" / "fixture" / name
             producing = receipt / "inputs" / "producing"
             producing.mkdir(parents=True)
@@ -122,13 +123,12 @@ class AllReceipts(unittest.TestCase):
             for path, data in held.items():
                 (producing / "crates" / "gf2-core" / path).parent.mkdir(parents=True, exist_ok=True)
                 (producing / "crates" / "gf2-core" / path).write_bytes(data)
-            arms_pinned = {
-                arm: {"executable_path": f"/built/{arm}"}
-                | ({} if digest is None else {"executable_sha256": digest})
-                for arm, digest in executables.items()
-            }
-            (receipt / "receipt.json").write_text(json.dumps({"schema": schema, "arms": arms_pinned}))
-        run(["git", "init", "-q"], cls.root)
+            (receipt / "receipt.json").write_text(json.dumps({"schema": schema}))
+            if revision is not None:
+                (receipt / "checkpoints").mkdir()
+                (receipt / "checkpoints" / "manifest.json").write_text(
+                    json.dumps({"source_revision": commits.get(revision, revision)})
+                )
         run(["git", "add", "-A"], cls.root)
         cls.outputs = []
         for attempt in ("first.json", "second.json"):
@@ -145,11 +145,14 @@ class AllReceipts(unittest.TestCase):
             for receipt in row["receipts"]
         }
 
+    @classmethod
+    def commit(cls):
+        run(["git", "add", "-A"], cls.root)
+        run(["git", "commit", "-q", "-m", "fixture"], cls.root)
+        return run(["git", "rev-parse", "HEAD"], cls.root).stdout.strip()
+
     def differing(self, name):
-        return [
-            (entry.get("arm", entry.get("path")), entry["class"])
-            for entry in self.rows[name]["differing_files"]
-        ]
+        return [(entry["path"], entry["class"]) for entry in self.rows[name]["differing_files"]]
 
     def assert_row(self, name, verdict, basis, differing):
         self.assertEqual(self.rows[name]["class"], verdict, name)
@@ -165,8 +168,8 @@ class AllReceipts(unittest.TestCase):
     def test_two_runs_write_identical_bytes(self):
         self.assertEqual(self.outputs[0], self.outputs[1])
 
-    def test_identical_and_comment_only_files_are_code_identical(self):
-        for name in ("identical", "comment-only"):
+    def test_identical_comment_and_documentation_changes_are_code_identical(self):
+        for name in ("identical", "comment-only", "documentation-only"):
             self.assert_row(name, "code-identical", "production files", [])
         self.assertIn("comment-or-blank-only", self.rows["comment-only"]["class_counts"])
 
@@ -187,22 +190,14 @@ class AllReceipts(unittest.TestCase):
             [("crates/gf2-core/src/lib.rs", "unavailable")],
         )
 
-    def test_executables_compare_with_the_live_build_record_by_arm(self):
-        self.assert_row("executable-identical", "code-identical", "executable identity", [])
+    def test_a_recorded_source_revision_compares_its_files_with_the_tree(self):
+        basis = "production files at the source revision"
+        self.assert_row("revision-identical", "code-identical", basis, [])
         self.assert_row(
-            "executable-differs",
-            "code-differs",
-            "executable identity",
-            [("built-nr-bg1-z384", "executable-differs")],
-        )
-        self.assert_row(
-            "executable-unrecorded",
-            "code-differs",
-            "executable identity",
-            [("other-dvb-t2-r12", "arm-unrecorded")],
+            "revision-differs", "code-differs", basis, [("crates/gf2-core/src/lib.rs", "code-differs")]
         )
 
-    def test_unpinned_measured_content_names_the_unresolved_inputs(self):
+    def test_unresolved_measured_content_names_the_producing_inputs(self):
         self.assert_row(
             "unpinned", "code-differs", "measured content not pinned", [("Cargo.lock", "unresolved")]
         )
