@@ -3286,6 +3286,12 @@
    "issue": "70a63a20",
    "date": "2026-10-20",
    "finding": "STEADY_RULES omit the comparator shim rule so the committed v4-r1-steady-profile categories reproduce; that summary records the shim's samples under other:aff3ct_shim.cpp and other:stl_vector.h (70a63a20/record.md)."
+  },
+  {
+   "issue": "ed3d490e",
+   "date": "2026-10-25",
+   "source": "holistic-review pass, 6 low advisories",
+   "disposition": "F1-F4 provenance gaps: provenance freeze ruling 2026-09-17 (no epic REQ names them); F5 harness profile.rs comments and F6 inherited explanatory intervals: advisory, outside any story criterion; carried to the epic-completion reconciliation"
   }
  ],
  "notes": [
@@ -3587,6 +3593,7 @@
   "dispatch_log": [
    "d06a99ed: Claude opus; evidence commit and record updates closing F1",
    "d06a99ed rework 2: Codex gpt-6-luna xhigh; record invoker adoption ruling (narrow doc change), worktree agent-d06a99ed"
-  ]
+  ],
+  "session_45": "Done: d06a99ed (invoker adoption ruling A), ed3d490e (all seven gates pass at 20f9652da)."
  }
 }
