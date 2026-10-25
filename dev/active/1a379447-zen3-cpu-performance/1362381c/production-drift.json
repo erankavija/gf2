@@ -1822,9 +1822,9 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 168,
+        "code-differs": 169,
         "comment-or-blank-only": 198,
-        "removed": 2,
+        "removed": 1,
         "identical": 27,
         "added": 24
       },
@@ -2099,7 +2099,7 @@
         },
         {
           "path": "crates/gf2-kernels-hip/Cargo.lock",
-          "class": "removed"
+          "class": "code-differs"
         },
         {
           "path": "crates/gf2-kernels-hip/Cargo.toml",
@@ -19705,9 +19705,34 @@
           "snapshot": "dev/bench_results/ed3d490e/aff3ct-fastest/caabc4e1-ldpc-batch-aff3ct-fastest-pilot/inputs/producing"
         }
       ],
-      "class": "code-identical",
+      "class": "code-differs",
       "basis": "executable identity",
-      "differing_files": []
+      "differing_files": [
+        {
+          "arm": "aff3ct-spa-intra-dvb-t2-r12",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/aff3ct-intra-arm",
+          "executable_sha256": "a5f71f8c6ad58d519be159f97212e0a4a77c1184bbddca8ee5c5b2dde8d0714f",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "aff3ct-spa-intra-nr-bg1-z384",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/aff3ct-intra-arm",
+          "executable_sha256": "a5f71f8c6ad58d519be159f97212e0a4a77c1184bbddca8ee5c5b2dde8d0714f",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-lane-avx2-dvb-t2-r12",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+          "executable_sha256": "1541a3b872cafc46e318ea0f0d5a707c428109d6373e7c2298a09662235a5f62",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-lane-avx2-nr-bg1-z384",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+          "executable_sha256": "1541a3b872cafc46e318ea0f0d5a707c428109d6373e7c2298a09662235a5f62",
+          "class": "executable-differs"
+        }
+      ]
     },
     {
       "receipts": [
@@ -19720,9 +19745,22 @@
           "snapshot": "dev/bench_results/ed3d490e/aff3ct-matched/87a6bb36-ldpc-batch-aff3ct-matched-confirmation/inputs/producing"
         }
       ],
-      "class": "code-identical",
+      "class": "code-differs",
       "basis": "executable identity",
-      "differing_files": []
+      "differing_files": [
+        {
+          "arm": "gf2-batch-lane-avx2-dvb-t2-r12",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+          "executable_sha256": "1541a3b872cafc46e318ea0f0d5a707c428109d6373e7c2298a09662235a5f62",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-lane-avx2-nr-bg1-z384",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+          "executable_sha256": "1541a3b872cafc46e318ea0f0d5a707c428109d6373e7c2298a09662235a5f62",
+          "class": "executable-differs"
+        }
+      ]
     },
     {
       "receipts": [
@@ -19747,9 +19785,34 @@
           "snapshot": "dev/bench_results/ed3d490e/single-worker/d0d2c1bd-ldpc-batch-single-worker-confirmation/inputs/producing"
         }
       ],
-      "class": "code-identical",
+      "class": "code-differs",
       "basis": "executable identity",
-      "differing_files": []
+      "differing_files": [
+        {
+          "arm": "gf2-batch-lane-avx2-dvb-t2-r12",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+          "executable_sha256": "1541a3b872cafc46e318ea0f0d5a707c428109d6373e7c2298a09662235a5f62",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-lane-avx2-nr-bg1-z384",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-lane-arm",
+          "executable_sha256": "1541a3b872cafc46e318ea0f0d5a707c428109d6373e7c2298a09662235a5f62",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-single-frame-dvb-t2-r12",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "8bf89e432b7ac18d6734052b04f90b4e398058ae2dd62c90814b94e29594aeb0",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-single-frame-nr-bg1-z384",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "8bf89e432b7ac18d6734052b04f90b4e398058ae2dd62c90814b94e29594aeb0",
+          "class": "executable-differs"
+        }
+      ]
     },
     {
       "receipts": [
@@ -19762,9 +19825,28 @@
           "snapshot": "dev/bench_results/ed3d490e/decode-selector-holdout/37aa7254-ldpc-batch-decode-selector-holdout-pilot/inputs/producing"
         }
       ],
-      "class": "code-identical",
+      "class": "code-differs",
       "basis": "executable identity",
-      "differing_files": []
+      "differing_files": [
+        {
+          "arm": "gf2-batch-conservative-portable-dvb-t2-r12",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "5251cc0dbb2c41930122cfa1cdfe8f71d78f334bd089eb759a36aa0239c8741c",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-tuned-dvb-t2-r12",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-tuned-arm",
+          "executable_sha256": "cbd1cc20edf3beaa5d39348314332c8cca38cb4b34d5dac2924153a079994ff5",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-dvb-t2-r12",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "4808a623b6421cd8b2654a995c4f5e152361c17ee30372ffe20095adaffd4aad",
+          "class": "executable-differs"
+        }
+      ]
     },
     {
       "receipts": [
@@ -19773,9 +19855,46 @@
           "snapshot": "dev/bench_results/ed3d490e/decode-selector-holdout/67517a7b-ldpc-batch-decode-selector-holdout-confirmation/inputs/producing"
         }
       ],
-      "class": "code-identical",
+      "class": "code-differs",
       "basis": "executable identity",
-      "differing_files": []
+      "differing_files": [
+        {
+          "arm": "gf2-batch-conservative-portable-dvb-t2-r12",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "5251cc0dbb2c41930122cfa1cdfe8f71d78f334bd089eb759a36aa0239c8741c",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-conservative-portable-nr-bg1-z384",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "5251cc0dbb2c41930122cfa1cdfe8f71d78f334bd089eb759a36aa0239c8741c",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-tuned-dvb-t2-r12",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-tuned-arm",
+          "executable_sha256": "cbd1cc20edf3beaa5d39348314332c8cca38cb4b34d5dac2924153a079994ff5",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-tuned-nr-bg1-z384",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-tuned-arm",
+          "executable_sha256": "cbd1cc20edf3beaa5d39348314332c8cca38cb4b34d5dac2924153a079994ff5",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-dvb-t2-r12",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "4808a623b6421cd8b2654a995c4f5e152361c17ee30372ffe20095adaffd4aad",
+          "class": "executable-differs"
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-nr-bg1-z384",
+          "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "4808a623b6421cd8b2654a995c4f5e152361c17ee30372ffe20095adaffd4aad",
+          "class": "executable-differs"
+        }
+      ]
     },
     {
       "receipts": [
