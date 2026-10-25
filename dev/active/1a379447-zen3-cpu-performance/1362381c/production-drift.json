@@ -14,13 +14,14 @@
   "compiled_files": "only compiled production files take part: `.rs` files, `Cargo.toml`, and the non-Markdown files a current `.rs` file names in a literal `include!`, `include_str!` or `include_bytes!`",
   "receipt_classes": {
     "code-identical": "the row's basis proves the measured production code equal to the current tree",
-    "code-differs": "the row's basis does not prove it; `differing_files` names each file that differs or could not be resolved"
+    "code-differs": "the row's basis shows a difference; `differing_files` names each differing file",
+    "unresolvable": "the receipt pins neither production files nor a resolvable source revision; `unresolved_inputs` names its pinned producing inputs"
   },
   "bases": {
     "production files": "the compiled files under `crates/` the producing snapshot pins, against the tree: identical or comment-or-blank-only is equal; code-differs, removed, and a tracked `src/` file the receipt does not pin (added) differ",
     "production files at the source revision": "the snapshot pins no file under `crates/`; the compiled files of every package under `crates/` at the `source_revision` the receipt records, read as bytes, against the tree by the same file classes",
     "measured bytes unavailable": "no snapshot of the row holds the measured bytes of a pinned file whose current bytes differ",
-    "measured content not pinned": "the snapshot pins no file under `crates/` and no recorded `source_revision` resolves; `differing_files` names the producing inputs"
+    "measured content not pinned": "the snapshot pins no file under `crates/` and no recorded `source_revision` resolves"
   },
   "classifier_rule": "Rust sources only. Line comments (`//` to the end of the line, doc comments included) and block comments (`/* */`, nested) outside string, raw-string, byte-string and character literals are removed; trailing whitespace is removed from every line; lines left empty are removed. Two files whose remaining text is equal are comment-or-blank-only. Leading whitespace, line breaks inside code and `#[doc]` attributes count as code.",
   "rows": [
@@ -389,101 +390,32 @@
           "snapshot": "dev/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/inputs/producing"
         }
       ],
-      "class": "code-differs",
+      "class": "unresolvable",
       "basis": "measured content not pinned",
-      "differing_files": [
-        {
-          "path": ".cargo/config.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "Cargo.lock",
-          "class": "unresolved"
-        },
-        {
-          "path": "Cargo.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/bench_results/f547c394/run-smoke.sh",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/scripts/ccx1-bench-flock.sh",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/Cargo.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/abtest.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/campaign.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/host.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/journal.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/lib.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/process.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/provenance.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/schema.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/seed.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/statistics.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/timing.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/transport.rs",
-          "class": "unresolved"
-        }
+      "unresolved_inputs": [
+        ".cargo/config.toml",
+        "Cargo.lock",
+        "Cargo.toml",
+        "dev/bench_results/f547c394/run-smoke.sh",
+        "dev/scripts/ccx1-bench-flock.sh",
+        "dev/tools/tuning-campaign-support/Cargo.toml",
+        "dev/tools/tuning-campaign-support/src/abtest.rs",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
+        "dev/tools/tuning-campaign-support/src/campaign.rs",
+        "dev/tools/tuning-campaign-support/src/host.rs",
+        "dev/tools/tuning-campaign-support/src/journal.rs",
+        "dev/tools/tuning-campaign-support/src/lib.rs",
+        "dev/tools/tuning-campaign-support/src/process.rs",
+        "dev/tools/tuning-campaign-support/src/protocol.rs",
+        "dev/tools/tuning-campaign-support/src/provenance.rs",
+        "dev/tools/tuning-campaign-support/src/receipt.rs",
+        "dev/tools/tuning-campaign-support/src/schema.rs",
+        "dev/tools/tuning-campaign-support/src/seed.rs",
+        "dev/tools/tuning-campaign-support/src/statistics.rs",
+        "dev/tools/tuning-campaign-support/src/timing.rs",
+        "dev/tools/tuning-campaign-support/src/transport.rs"
       ]
     },
     {
@@ -15576,113 +15508,35 @@
           "snapshot": "dev/bench_results/ed3d490e/single-worker/d0d2c1bd-ldpc-batch-single-worker-confirmation/inputs/producing"
         }
       ],
-      "class": "code-differs",
+      "class": "unresolvable",
       "basis": "measured content not pinned",
-      "differing_files": [
-        {
-          "path": ".cargo/config.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "Cargo.lock",
-          "class": "unresolved"
-        },
-        {
-          "path": "Cargo.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/bench_results/f547c394/run-smoke-v3.sh",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/scripts/ccx1-bench-flock.sh",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/Cargo.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/abtest.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/arm.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/campaign.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/host.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/journal.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/lib.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/process.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/provenance.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/repository.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/schema.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/seed.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/statistics.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/timing.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/transport.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
-          "class": "unresolved"
-        }
+      "unresolved_inputs": [
+        ".cargo/config.toml",
+        "Cargo.lock",
+        "Cargo.toml",
+        "dev/bench_results/f547c394/run-smoke-v3.sh",
+        "dev/scripts/ccx1-bench-flock.sh",
+        "dev/tools/tuning-campaign-support/Cargo.toml",
+        "dev/tools/tuning-campaign-support/src/abtest.rs",
+        "dev/tools/tuning-campaign-support/src/arm.rs",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
+        "dev/tools/tuning-campaign-support/src/campaign.rs",
+        "dev/tools/tuning-campaign-support/src/host.rs",
+        "dev/tools/tuning-campaign-support/src/journal.rs",
+        "dev/tools/tuning-campaign-support/src/lib.rs",
+        "dev/tools/tuning-campaign-support/src/process.rs",
+        "dev/tools/tuning-campaign-support/src/protocol.rs",
+        "dev/tools/tuning-campaign-support/src/provenance.rs",
+        "dev/tools/tuning-campaign-support/src/receipt.rs",
+        "dev/tools/tuning-campaign-support/src/repository.rs",
+        "dev/tools/tuning-campaign-support/src/schema.rs",
+        "dev/tools/tuning-campaign-support/src/seed.rs",
+        "dev/tools/tuning-campaign-support/src/statistics.rs",
+        "dev/tools/tuning-campaign-support/src/timing.rs",
+        "dev/tools/tuning-campaign-support/src/transport.rs",
+        "dev/tools/tuning-campaign-support/src/trial_ledger.rs"
       ]
     },
     {
@@ -16252,105 +16106,33 @@
           "snapshot": "dev/bench_results/f547c394/v3-pilot/inputs/producing"
         }
       ],
-      "class": "code-differs",
+      "class": "unresolvable",
       "basis": "measured content not pinned",
-      "differing_files": [
-        {
-          "path": ".cargo/config.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "Cargo.lock",
-          "class": "unresolved"
-        },
-        {
-          "path": "Cargo.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/bench_results/f547c394/run-smoke-v2.sh",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/scripts/ccx1-bench-flock.sh",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/Cargo.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/abtest.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/campaign.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/host.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/journal.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/lib.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/process.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/provenance.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/schema.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/seed.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/statistics.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/timing.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/transport.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
-          "class": "unresolved"
-        }
+      "unresolved_inputs": [
+        ".cargo/config.toml",
+        "Cargo.lock",
+        "Cargo.toml",
+        "dev/bench_results/f547c394/run-smoke-v2.sh",
+        "dev/scripts/ccx1-bench-flock.sh",
+        "dev/tools/tuning-campaign-support/Cargo.toml",
+        "dev/tools/tuning-campaign-support/src/abtest.rs",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
+        "dev/tools/tuning-campaign-support/src/campaign.rs",
+        "dev/tools/tuning-campaign-support/src/host.rs",
+        "dev/tools/tuning-campaign-support/src/journal.rs",
+        "dev/tools/tuning-campaign-support/src/lib.rs",
+        "dev/tools/tuning-campaign-support/src/process.rs",
+        "dev/tools/tuning-campaign-support/src/protocol.rs",
+        "dev/tools/tuning-campaign-support/src/provenance.rs",
+        "dev/tools/tuning-campaign-support/src/receipt.rs",
+        "dev/tools/tuning-campaign-support/src/schema.rs",
+        "dev/tools/tuning-campaign-support/src/seed.rs",
+        "dev/tools/tuning-campaign-support/src/statistics.rs",
+        "dev/tools/tuning-campaign-support/src/timing.rs",
+        "dev/tools/tuning-campaign-support/src/transport.rs",
+        "dev/tools/tuning-campaign-support/src/trial_ledger.rs"
       ]
     },
     {
@@ -16364,105 +16146,33 @@
           "snapshot": "dev/bench_results/f547c394/v3-r2-pilot/inputs/producing"
         }
       ],
-      "class": "code-differs",
+      "class": "unresolvable",
       "basis": "measured content not pinned",
-      "differing_files": [
-        {
-          "path": ".cargo/config.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "Cargo.lock",
-          "class": "unresolved"
-        },
-        {
-          "path": "Cargo.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/bench_results/f547c394/run-smoke-v3.sh",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/scripts/ccx1-bench-flock.sh",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/Cargo.toml",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/abtest.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/campaign.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/host.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/journal.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/lib.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/process.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/protocol.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/provenance.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/receipt.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/schema.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/seed.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/statistics.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/timing.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/transport.rs",
-          "class": "unresolved"
-        },
-        {
-          "path": "dev/tools/tuning-campaign-support/src/trial_ledger.rs",
-          "class": "unresolved"
-        }
+      "unresolved_inputs": [
+        ".cargo/config.toml",
+        "Cargo.lock",
+        "Cargo.toml",
+        "dev/bench_results/f547c394/run-smoke-v3.sh",
+        "dev/scripts/ccx1-bench-flock.sh",
+        "dev/tools/tuning-campaign-support/Cargo.toml",
+        "dev/tools/tuning-campaign-support/src/abtest.rs",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
+        "dev/tools/tuning-campaign-support/src/campaign.rs",
+        "dev/tools/tuning-campaign-support/src/host.rs",
+        "dev/tools/tuning-campaign-support/src/journal.rs",
+        "dev/tools/tuning-campaign-support/src/lib.rs",
+        "dev/tools/tuning-campaign-support/src/process.rs",
+        "dev/tools/tuning-campaign-support/src/protocol.rs",
+        "dev/tools/tuning-campaign-support/src/provenance.rs",
+        "dev/tools/tuning-campaign-support/src/receipt.rs",
+        "dev/tools/tuning-campaign-support/src/schema.rs",
+        "dev/tools/tuning-campaign-support/src/seed.rs",
+        "dev/tools/tuning-campaign-support/src/statistics.rs",
+        "dev/tools/tuning-campaign-support/src/timing.rs",
+        "dev/tools/tuning-campaign-support/src/transport.rs",
+        "dev/tools/tuning-campaign-support/src/trial_ledger.rs"
       ]
     },
     {

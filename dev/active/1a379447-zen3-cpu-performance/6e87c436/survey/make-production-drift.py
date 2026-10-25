@@ -25,10 +25,11 @@ script fails when a changed production path is `code-differs`, and refuses to
 write on a tree that differs from the one `dense-verdict-end-state.json` pins.
 
 With `--all-receipts OUTPUT` it instead classifies every committed receipt the
-`select-receipts.py` selector enumerates, of any schema, as `code-identical` or
-`code-differs`: by the same file classes over the compiled files under `crates/`
+`select-receipts.py` selector enumerates, of any schema, as `code-identical`,
+`code-differs` or `unresolvable`: by the same file classes over the compiled files under `crates/`
 its `inputs/producing/producing-snapshot.json` pins, or else over the compiled
-files at the `source_revision` it records, read from git as bytes. Receipts with
+files at the `source_revision` it records, read from git as bytes; a receipt
+with neither is `unresolvable`. Receipts with
 one measured identity share a row; the record defines each class and basis.
 This mode lists no commits, and any tree may be compared.
 
@@ -243,8 +244,10 @@ SCOPE = (
 RECEIPT_CLASSES = {
     "code-identical": "the row's basis proves the measured production code equal to the "
     "current tree",
-    "code-differs": "the row's basis does not prove it; `differing_files` names each "
-    "file that differs or could not be resolved",
+    "code-differs": "the row's basis shows a difference; `differing_files` names each "
+    "differing file",
+    "unresolvable": "the receipt pins neither production files nor a resolvable source "
+    "revision; `unresolved_inputs` names its pinned producing inputs",
 }
 COMPILED = (
     "only compiled production files take part: `.rs` files, `Cargo.toml`, and the "
@@ -265,7 +268,7 @@ BASES = {
     UNAVAILABLE: "no snapshot of the row holds the measured bytes of a pinned file "
     "whose current bytes differ",
     UNPINNED: "the snapshot pins no file under `crates/` and no recorded "
-    "`source_revision` resolves; `differing_files` names the producing inputs",
+    "`source_revision` resolves",
 }
 FILE_CLASSES_THAT_DIFFER = ("code-differs", "removed", "added")
 INCLUDE = re.compile(r'include(?:_str|_bytes)?!\s*\(\s*"([^"]+)"')
@@ -444,9 +447,9 @@ def all_receipts(output):
             row = revision_row(content, directories, compiled)
         else:
             row = {
-                "class": "code-differs",
+                "class": "unresolvable",
                 "basis": UNPINNED,
-                "differing_files": [{"path": path, "class": "unresolved"} for path in content],
+                "unresolved_inputs": content,
             }
         rows.append({"receipts": measured["receipts"]} | row)
     record = {

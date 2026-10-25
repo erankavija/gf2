@@ -159,10 +159,11 @@ class AllReceipts(unittest.TestCase):
         self.assertEqual(self.rows[name]["basis"], basis, name)
         self.assertEqual(self.differing(name), differing, name)
 
-    def test_every_enumerated_receipt_has_one_row_of_two_classes(self):
+    def test_every_enumerated_receipt_has_one_row_of_three_classes(self):
         self.assertEqual(set(self.rows), set(self.RECEIPTS))
         self.assertEqual(
-            {row["class"] for row in self.rows.values()}, {"code-identical", "code-differs"}
+            {row["class"] for row in self.rows.values()},
+            {"code-identical", "code-differs", "unresolvable"},
         )
 
     def test_two_runs_write_identical_bytes(self):
@@ -197,10 +198,10 @@ class AllReceipts(unittest.TestCase):
             "revision-differs", "code-differs", basis, [("crates/gf2-core/src/lib.rs", "code-differs")]
         )
 
-    def test_unresolved_measured_content_names_the_producing_inputs(self):
-        self.assert_row(
-            "unpinned", "code-differs", "measured content not pinned", [("Cargo.lock", "unresolved")]
-        )
+    def test_unresolvable_measured_content_names_the_producing_inputs(self):
+        row = self.rows["unpinned"]
+        self.assertEqual((row["class"], row["basis"]), ("unresolvable", "measured content not pinned"))
+        self.assertIn("Cargo.lock", row["unresolved_inputs"])
 
 
 class DenseRecordReproduces(unittest.TestCase):
