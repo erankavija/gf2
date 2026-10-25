@@ -11,7 +11,7 @@
     "crates/gf2-sim",
     "crates/gf2-stats"
   ],
-  "compiled_files": "only compiled production files take part: Rust and native-kernel sources (`.rs`, `.hip`, C and C++ sources and headers), `Cargo.toml`, and the non-Markdown files a current `.rs` file names in a literal `include!`, `include_str!` or `include_bytes!`; a package's `tests/`, `benches/` and `examples/` targets are not production",
+  "compiled_files": "only compiled production files take part: Rust and native-kernel sources (`.rs`, `.hip`, C and C++ sources and headers), `Cargo.toml`, and the non-Markdown files a current `.rs` file names in a literal `include!`, `include_str!` or `include_bytes!`; a package's `tests/`, `benches/` and `examples/` targets, modules loaded only under `#[cfg(test)]` and files included only from test code are not production",
   "receipt_classes": {
     "code-identical": "the row's basis proves the measured production code equal to the current tree",
     "code-differs": "the row's basis shows a difference; `differing_files` names each differing file",
@@ -44,9 +44,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 62,
-        "comment-or-blank-only": 82,
+        "comment-or-blank-only": 79,
         "identical": 2,
-        "added": 6
+        "added": 11
       },
       "differing_files": [
         {
@@ -296,6 +296,26 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/popcount.rs",
           "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
         },
         {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
@@ -478,10 +498,10 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 95,
-        "comment-or-blank-only": 124,
+        "comment-or-blank-only": 121,
         "removed": 1,
-        "identical": 14,
-        "added": 19
+        "identical": 2,
+        "added": 24
       },
       "differing_files": [
         {
@@ -894,6 +914,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -978,10 +1018,10 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 95,
-        "comment-or-blank-only": 124,
+        "comment-or-blank-only": 121,
         "removed": 1,
-        "identical": 14,
-        "added": 19
+        "identical": 2,
+        "added": 24
       },
       "differing_files": [
         {
@@ -1397,6 +1437,26 @@
           "class": "added"
         },
         {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
           "class": "added"
         },
@@ -1465,11 +1525,11 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 143,
-        "comment-or-blank-only": 196,
+        "code-differs": 141,
+        "comment-or-blank-only": 193,
         "removed": 1,
-        "identical": 24,
-        "added": 18
+        "identical": 12,
+        "added": 23
       },
       "differing_files": [
         {
@@ -2009,14 +2069,6 @@
           "class": "code-differs"
         },
         {
-          "path": "crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-sim/src/permanent_campaign/fixture.rs",
-          "class": "code-differs"
-        },
-        {
           "path": "crates/gf2-sim/src/permanent_campaign/provenance.rs",
           "class": "code-differs"
         },
@@ -2066,6 +2118,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -2164,11 +2236,11 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 130,
-        "comment-or-blank-only": 188,
+        "code-differs": 128,
+        "comment-or-blank-only": 185,
         "removed": 1,
-        "identical": 17,
-        "added": 21
+        "identical": 5,
+        "added": 26
       },
       "differing_files": [
         {
@@ -2656,14 +2728,6 @@
           "class": "code-differs"
         },
         {
-          "path": "crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-sim/src/permanent_campaign/fixture.rs",
-          "class": "code-differs"
-        },
-        {
           "path": "crates/gf2-sim/src/permanent_campaign/provenance.rs",
           "class": "code-differs"
         },
@@ -2721,6 +2785,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -2803,11 +2887,11 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 132,
-        "comment-or-blank-only": 186,
+        "code-differs": 130,
+        "comment-or-blank-only": 183,
         "removed": 1,
-        "identical": 17,
-        "added": 21
+        "identical": 5,
+        "added": 26
       },
       "differing_files": [
         {
@@ -3303,14 +3387,6 @@
           "class": "code-differs"
         },
         {
-          "path": "crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-sim/src/permanent_campaign/fixture.rs",
-          "class": "code-differs"
-        },
-        {
           "path": "crates/gf2-sim/src/permanent_campaign/provenance.rs",
           "class": "code-differs"
         },
@@ -3368,6 +3444,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -3450,11 +3546,11 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 132,
-        "comment-or-blank-only": 186,
+        "code-differs": 130,
+        "comment-or-blank-only": 183,
         "removed": 1,
-        "identical": 17,
-        "added": 21
+        "identical": 5,
+        "added": 26
       },
       "differing_files": [
         {
@@ -3950,14 +4046,6 @@
           "class": "code-differs"
         },
         {
-          "path": "crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-sim/src/permanent_campaign/fixture.rs",
-          "class": "code-differs"
-        },
-        {
           "path": "crates/gf2-sim/src/permanent_campaign/provenance.rs",
           "class": "code-differs"
         },
@@ -4015,6 +4103,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -4119,10 +4227,10 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 95,
-        "comment-or-blank-only": 124,
+        "comment-or-blank-only": 121,
         "removed": 1,
         "identical": 2,
-        "added": 31
+        "added": 24
       },
       "differing_files": [
         {
@@ -4518,54 +4626,6 @@
           "class": "added"
         },
         {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_1_R1_2_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_2_R3_5_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_3_R2_3_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_4_R3_4_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_5_R4_5_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_6_R5_6_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_1_R1_2_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_2_R3_5_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_3_R2_3_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_4_R3_4_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_5_R4_5_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_6_R5_6_N16200.txt",
-          "class": "added"
-        },
-        {
           "path": "crates/gf2-coding/src/ldpc/edge_layout.rs",
           "class": "added"
         },
@@ -4583,6 +4643,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -4670,9 +4750,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 70,
-        "comment-or-blank-only": 68,
+        "comment-or-blank-only": 65,
         "identical": 2,
-        "added": 12
+        "added": 17
       },
       "differing_files": [
         {
@@ -4954,6 +5034,26 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
           "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
         },
         {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
@@ -5024,9 +5124,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 70,
-        "comment-or-blank-only": 68,
+        "comment-or-blank-only": 65,
         "identical": 2,
-        "added": 12
+        "added": 17
       },
       "differing_files": [
         {
@@ -5308,6 +5408,26 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
           "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
         },
         {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
@@ -5373,18 +5493,14 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 71,
-        "identical": 4,
-        "comment-or-blank-only": 68,
-        "added": 12
+        "code-differs": 70,
+        "comment-or-blank-only": 65,
+        "identical": 2,
+        "added": 17
       },
       "differing_files": [
         {
           "path": "crates/gf2-core/Cargo.toml",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/data/tuning-profiles/conservative.json",
           "class": "code-differs"
         },
         {
@@ -5662,6 +5778,26 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
           "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
         },
         {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
@@ -5735,18 +5871,14 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 71,
-        "identical": 4,
-        "comment-or-blank-only": 68,
-        "added": 12
+        "code-differs": 70,
+        "comment-or-blank-only": 65,
+        "identical": 2,
+        "added": 17
       },
       "differing_files": [
         {
           "path": "crates/gf2-core/Cargo.toml",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-core/data/tuning-profiles/conservative.json",
           "class": "code-differs"
         },
         {
@@ -6024,6 +6156,26 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
           "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
         },
         {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
@@ -6315,10 +6467,10 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 93,
-        "comment-or-blank-only": 126,
+        "comment-or-blank-only": 123,
         "removed": 1,
         "identical": 2,
-        "added": 31
+        "added": 24
       },
       "differing_files": [
         {
@@ -6706,54 +6858,6 @@
           "class": "added"
         },
         {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_1_R1_2_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_2_R3_5_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_3_R2_3_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_4_R3_4_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_5_R4_5_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_6_R5_6_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_1_R1_2_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_2_R3_5_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_3_R2_3_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_4_R3_4_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_5_R4_5_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_6_R5_6_N16200.txt",
-          "class": "added"
-        },
-        {
           "path": "crates/gf2-coding/src/ldpc/edge_layout.rs",
           "class": "added"
         },
@@ -6771,6 +6875,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -6850,9 +6974,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 62,
-        "comment-or-blank-only": 82,
+        "comment-or-blank-only": 79,
         "identical": 2,
-        "added": 6
+        "added": 11
       },
       "differing_files": [
         {
@@ -7104,6 +7228,26 @@
           "class": "code-differs"
         },
         {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
           "class": "added"
         },
@@ -7145,10 +7289,10 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 87,
-        "comment-or-blank-only": 140,
+        "comment-or-blank-only": 137,
         "removed": 1,
-        "identical": 14,
-        "added": 11
+        "identical": 2,
+        "added": 16
       },
       "differing_files": [
         {
@@ -7521,6 +7665,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -7577,10 +7741,10 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 87,
-        "comment-or-blank-only": 140,
+        "comment-or-blank-only": 137,
         "removed": 1,
-        "identical": 14,
-        "added": 11
+        "identical": 2,
+        "added": 16
       },
       "differing_files": [
         {
@@ -7956,6 +8120,26 @@
           "class": "added"
         },
         {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
           "class": "added"
         },
@@ -8005,10 +8189,10 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 86,
-        "comment-or-blank-only": 138,
+        "comment-or-blank-only": 135,
         "removed": 1,
-        "identical": 14,
-        "added": 14
+        "identical": 2,
+        "added": 19
       },
       "differing_files": [
         {
@@ -8377,6 +8561,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -8472,9 +8676,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 70,
-        "comment-or-blank-only": 68,
+        "comment-or-blank-only": 65,
         "identical": 2,
-        "added": 12
+        "added": 17
       },
       "differing_files": [
         {
@@ -8758,6 +8962,26 @@
           "class": "code-differs"
         },
         {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
           "class": "added"
         },
@@ -8841,11 +9065,11 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 132,
-        "comment-or-blank-only": 186,
+        "code-differs": 130,
+        "comment-or-blank-only": 183,
         "removed": 1,
-        "identical": 17,
-        "added": 21
+        "identical": 5,
+        "added": 26
       },
       "differing_files": [
         {
@@ -9341,14 +9565,6 @@
           "class": "code-differs"
         },
         {
-          "path": "crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-sim/src/permanent_campaign/fixture.rs",
-          "class": "code-differs"
-        },
-        {
           "path": "crates/gf2-sim/src/permanent_campaign/provenance.rs",
           "class": "code-differs"
         },
@@ -9406,6 +9622,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -9485,9 +9721,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 56,
-        "identical": 91,
+        "identical": 88,
         "comment-or-blank-only": 1,
-        "added": 4
+        "added": 9
       },
       "differing_files": [
         {
@@ -9715,6 +9951,26 @@
           "class": "code-differs"
         },
         {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-kernels-simd/src/contract.rs",
           "class": "added"
         },
@@ -9759,9 +10015,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 61,
-        "comment-or-blank-only": 80,
+        "comment-or-blank-only": 77,
         "identical": 2,
-        "added": 9
+        "added": 14
       },
       "differing_files": [
         {
@@ -10009,6 +10265,26 @@
           "class": "code-differs"
         },
         {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
           "class": "added"
         },
@@ -10081,9 +10357,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 70,
-        "comment-or-blank-only": 68,
+        "comment-or-blank-only": 65,
         "identical": 2,
-        "added": 12
+        "added": 17
       },
       "differing_files": [
         {
@@ -10365,6 +10641,26 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
           "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
         },
         {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
@@ -10451,9 +10747,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 71,
-        "comment-or-blank-only": 68,
+        "comment-or-blank-only": 65,
         "identical": 2,
-        "added": 11
+        "added": 16
       },
       "differing_files": [
         {
@@ -10739,6 +11035,26 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
           "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
         },
         {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
@@ -10813,9 +11129,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 71,
-        "comment-or-blank-only": 68,
+        "comment-or-blank-only": 65,
         "identical": 2,
-        "added": 11
+        "added": 16
       },
       "differing_files": [
         {
@@ -11101,6 +11417,26 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
           "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
         },
         {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
@@ -11191,8 +11527,8 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 34,
-        "identical": 117,
-        "added": 2
+        "identical": 113,
+        "added": 7
       },
       "differing_files": [
         {
@@ -11332,6 +11668,26 @@
           "class": "code-differs"
         },
         {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-kernels-simd/src/entry_check.rs",
           "class": "added"
         },
@@ -11364,7 +11720,8 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 25,
-        "identical": 127
+        "identical": 124,
+        "added": 5
       },
       "differing_files": [
         {
@@ -11466,6 +11823,26 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
           "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
         }
       ]
     },
@@ -11492,7 +11869,8 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 23,
-        "identical": 129
+        "identical": 126,
+        "added": 5
       },
       "differing_files": [
         {
@@ -11586,6 +11964,26 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
           "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
         }
       ]
     },
@@ -11608,8 +12006,8 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 24,
-        "identical": 127,
-        "added": 1
+        "identical": 124,
+        "added": 6
       },
       "differing_files": [
         {
@@ -11709,6 +12107,26 @@
           "class": "code-differs"
         },
         {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs",
           "class": "added"
         }
@@ -11734,8 +12152,8 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 26,
-        "identical": 214,
-        "added": 12
+        "identical": 211,
+        "added": 5
       },
       "differing_files": [
         {
@@ -11843,51 +12261,23 @@
           "class": "code-differs"
         },
         {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_1_R1_2_N64800.txt",
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
           "class": "added"
         },
         {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_2_R3_5_N64800.txt",
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
           "class": "added"
         },
         {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_3_R2_3_N64800.txt",
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
           "class": "added"
         },
         {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_4_R3_4_N64800.txt",
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
           "class": "added"
         },
         {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_5_R4_5_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_6_R5_6_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_1_R1_2_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_2_R3_5_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_3_R2_3_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_4_R3_4_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_5_R4_5_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_6_R5_6_N16200.txt",
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         }
       ]
@@ -11912,9 +12302,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 64,
-        "identical": 106,
+        "identical": 103,
         "comment-or-blank-only": 2,
-        "added": 3
+        "added": 8
       },
       "differing_files": [
         {
@@ -12174,6 +12564,26 @@
           "class": "code-differs"
         },
         {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-kernels-simd/src/contract.rs",
           "class": "added"
         },
@@ -12206,8 +12616,8 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 26,
-        "identical": 125,
-        "added": 1
+        "identical": 122,
+        "added": 6
       },
       "differing_files": [
         {
@@ -12315,6 +12725,26 @@
           "class": "code-differs"
         },
         {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-kernels-simd/src/x86/ldpc_lanes.rs",
           "class": "added"
         }
@@ -12335,11 +12765,11 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 78,
-        "comment-or-blank-only": 159,
+        "code-differs": 76,
+        "comment-or-blank-only": 156,
         "removed": 1,
-        "identical": 14,
-        "added": 11
+        "identical": 2,
+        "added": 20
       },
       "differing_files": [
         {
@@ -12619,14 +13049,6 @@
           "class": "code-differs"
         },
         {
-          "path": "crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-sim/src/permanent_campaign/fixture.rs",
-          "class": "code-differs"
-        },
-        {
           "path": "crates/gf2-sim/src/permanent_campaign/provenance.rs",
           "class": "code-differs"
         },
@@ -12659,6 +13081,10 @@
           "class": "code-differs"
         },
         {
+          "path": "crates/gf2-coding/Cargo.toml",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-coding/src/ldpc/batch.rs",
           "class": "added"
         },
@@ -12679,6 +13105,30 @@
           "class": "added"
         },
         {
+          "path": "crates/gf2-core/Cargo.toml",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
           "class": "added"
         },
@@ -12692,6 +13142,14 @@
         },
         {
           "path": "crates/gf2-core/src/test_scratch.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-sim/Cargo.toml",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-sim/build.rs",
           "class": "added"
         },
         {
@@ -12719,9 +13177,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 68,
-        "comment-or-blank-only": 71,
+        "comment-or-blank-only": 68,
         "identical": 2,
-        "added": 11
+        "added": 16
       },
       "differing_files": [
         {
@@ -12997,6 +13455,26 @@
           "class": "code-differs"
         },
         {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
+        },
+        {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
           "class": "added"
         },
@@ -13066,11 +13544,11 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 123,
-        "comment-or-blank-only": 166,
+        "code-differs": 121,
+        "comment-or-blank-only": 163,
         "removed": 1,
-        "identical": 15,
-        "added": 21
+        "identical": 3,
+        "added": 26
       },
       "differing_files": [
         {
@@ -13530,14 +14008,6 @@
           "class": "code-differs"
         },
         {
-          "path": "crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-sim/src/permanent_campaign/fixture.rs",
-          "class": "code-differs"
-        },
-        {
           "path": "crates/gf2-sim/src/permanent_campaign/provenance.rs",
           "class": "code-differs"
         },
@@ -13595,6 +14065,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -13675,11 +14165,11 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 123,
-        "comment-or-blank-only": 166,
+        "code-differs": 121,
+        "comment-or-blank-only": 163,
         "removed": 1,
-        "identical": 15,
-        "added": 21
+        "identical": 3,
+        "added": 26
       },
       "differing_files": [
         {
@@ -14139,14 +14629,6 @@
           "class": "code-differs"
         },
         {
-          "path": "crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-sim/src/permanent_campaign/fixture.rs",
-          "class": "code-differs"
-        },
-        {
           "path": "crates/gf2-sim/src/permanent_campaign/provenance.rs",
           "class": "code-differs"
         },
@@ -14204,6 +14686,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -14290,11 +14792,11 @@
       "class": "code-differs",
       "basis": "production files",
       "class_counts": {
-        "code-differs": 132,
-        "comment-or-blank-only": 186,
+        "code-differs": 130,
+        "comment-or-blank-only": 183,
         "removed": 1,
-        "identical": 17,
-        "added": 21
+        "identical": 5,
+        "added": 26
       },
       "differing_files": [
         {
@@ -14790,14 +15292,6 @@
           "class": "code-differs"
         },
         {
-          "path": "crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs",
-          "class": "code-differs"
-        },
-        {
-          "path": "crates/gf2-sim/src/permanent_campaign/fixture.rs",
-          "class": "code-differs"
-        },
-        {
           "path": "crates/gf2-sim/src/permanent_campaign/provenance.rs",
           "class": "code-differs"
         },
@@ -14855,6 +15349,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -14942,9 +15456,9 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 70,
-        "comment-or-blank-only": 68,
+        "comment-or-blank-only": 65,
         "identical": 2,
-        "added": 12
+        "added": 17
       },
       "differing_files": [
         {
@@ -15226,6 +15740,26 @@
         {
           "path": "crates/gf2-kernels-simd/src/x86/transpose.rs",
           "class": "code-differs"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
+          "class": "added"
         },
         {
           "path": "crates/gf2-core/src/dispatch_contract.rs",
@@ -15395,10 +15929,10 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 95,
-        "comment-or-blank-only": 124,
+        "comment-or-blank-only": 121,
         "removed": 1,
         "identical": 2,
-        "added": 31
+        "added": 24
       },
       "differing_files": [
         {
@@ -15794,54 +16328,6 @@
           "class": "added"
         },
         {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_1_R1_2_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_2_R3_5_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_3_R2_3_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_4_R3_4_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_5_R4_5_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_6_R5_6_N64800.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_1_R1_2_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_2_R3_5_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_3_R2_3_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_4_R3_4_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_5_R4_5_N16200.txt",
-          "class": "added"
-        },
-        {
-          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_6_R5_6_N16200.txt",
-          "class": "added"
-        },
-        {
           "path": "crates/gf2-coding/src/ldpc/edge_layout.rs",
           "class": "added"
         },
@@ -15859,6 +16345,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {
@@ -16038,10 +16544,10 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 117,
-        "comment-or-blank-only": 205,
+        "comment-or-blank-only": 201,
         "removed": 1,
-        "identical": 18,
-        "added": 16
+        "identical": 5,
+        "added": 21
       },
       "differing_files": [
         {
@@ -16534,6 +17040,26 @@
         },
         {
           "path": "crates/gf2-coding/src/pooled.rs",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_flint_poly.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_gauss.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matrix.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_m4ri_matvec.cpp",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/benchmarks-cpp/bench_ntl_field.cpp",
           "class": "added"
         },
         {

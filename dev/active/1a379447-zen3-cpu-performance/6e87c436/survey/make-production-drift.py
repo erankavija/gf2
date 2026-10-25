@@ -134,13 +134,14 @@ def class_counts(files):
     return counts
 
 
-def added_files(directories, digests, keep=lambda path: True):
-    """Tracked `src/` files of `directories` that `digests` does not pin and `keep` accepts."""
+def added_files(directories, digests, keep=None):
+    """Tracked files of `directories` that `digests` does not pin: under `src/`, or
+    anywhere in the package that `keep` accepts when it is given."""
     return [
         {"path": path, "class": "added", "current_sha256": sha256((ROOT / path).read_bytes())}
         for package in directories
-        for path in git("ls-files", "--", f"{package}/src").splitlines()
-        if path not in digests and keep(path)
+        for path in git("ls-files", "--", package if keep else f"{package}/src").splitlines()
+        if path not in digests and (keep is None or keep(path))
     ]
 
 
@@ -254,7 +255,8 @@ COMPILED = (
     "(`.rs`, `.hip`, C and C++ sources and headers), `Cargo.toml`, and the "
     "non-Markdown files a current `.rs` file names in a literal `include!`, "
     "`include_str!` or `include_bytes!`; a package's `tests/`, `benches/` and "
-    "`examples/` targets are not production"
+    "`examples/` targets, modules loaded only under `#[cfg(test)]` and files "
+    "included only from test code are not production"
 )
 SOURCE_SUFFIXES = (".rs", ".hip", ".c", ".cc", ".cpp", ".h", ".hpp", ".cuh")
 NON_PRODUCTION_TARGETS = ("tests", "benches", "examples")
@@ -276,6 +278,10 @@ BASES = {
 }
 FILE_CLASSES_THAT_DIFFER = ("code-differs", "removed", "added")
 INCLUDE = re.compile(r'include(?:_str|_bytes)?!\s*\(\s*"([^"]+)"')
+_VISIBILITY = r"(?:pub(?:\([^)]*\))?\s+)?"
+MODULE_DECLARATION = re.compile(r"((?:#\[[^\]]*\]\s*)*)" + _VISIBILITY + r"mod\s+(\w+)\s*;")
+PATH_ATTRIBUTE = re.compile(r'#\[path\s*=\s*"([^"]+)"\]')
+INLINE_TEST_MODULE = re.compile(r"#\[cfg\(test\)\]\s*(?:#\[[^\]]*\]\s*)*" + _VISIBILITY + r"mod\s+\w+\s*\{")
 # Files of a receipt directory that may record the revision its arms were built from.
 REVISION_RECORDS = ("receipt.json", "checkpoints/manifest.json")
 BUILD_RECORD = "build-identity.json"
@@ -290,14 +296,81 @@ def sibling_module(name):
     return module
 
 
-def included(paths, read):
-    """Root-relative targets of the literal includes in the `.rs` files among `paths`."""
+def test_spans(text):
+    """Character spans of the inline `#[cfg(test)]` modules of a Rust source."""
+    spans = []
+    for match in INLINE_TEST_MODULE.finditer(text):
+        depth, end = 1, match.end()
+        while depth and end < len(text):
+            depth += {"{": 1, "}": -1}.get(text[end], 0)
+            end += 1
+        spans.append((match.start(), end))
+    return spans
+
+
+def module_file(parent, name, listed):
+    """The file a `mod name;` in `parent` loads, if `listed` holds it."""
+    base = pathlib.PurePath(parent)
+    directory = base.parent if base.name in ("lib.rs", "main.rs", "mod.rs") else base.with_suffix("")
+    for candidate in (directory / f"{name}.rs", directory / name / "mod.rs"):
+        if str(candidate) in listed:
+            return str(candidate)
+    return None
+
+
+def production_filter(listed, read):
+    """Whether a root-relative path among `listed` is a compiled production file.
+
+    Production files are the native and Rust sources, `Cargo.toml` and the literal
+    include targets of the package's library, binaries and build script; a package's
+    `tests/`, `benches/` and `examples/` targets, Rust modules loaded only by
+    `#[cfg(test)]` declarations and files included only from test code are not.
+    """
+    listed = set(listed)
+    sources = {path: read(path).decode(errors="replace") for path in listed if path.endswith(".rs")}
+    loads = {}
+    for path, text in sources.items():
+        for match in MODULE_DECLARATION.finditer(text):
+            attributes = match.group(1)
+            explicit = PATH_ATTRIBUTE.search(attributes)
+            if explicit:
+                child = os.path.normpath(os.path.join(os.path.dirname(path), explicit.group(1)))
+                child = child if child in listed else None
+            else:
+                child = module_file(path, match.group(2), listed)
+            if child:
+                loads.setdefault(child, []).append((path, "#[cfg(test)]" in attributes))
+    test_only = set()
+    changed = True
+    while changed:
+        changed = False
+        for child, parents in loads.items():
+            if child not in test_only and all(
+                gated or parent in test_only for parent, gated in parents
+            ):
+                test_only.add(child)
+                changed = True
     targets = set()
-    for path in paths:
-        if path.endswith(".rs"):
-            for name in INCLUDE.findall(read(path).decode(errors="replace")):
-                targets.add(os.path.normpath(os.path.join(os.path.dirname(path), name)))
-    return targets
+    for path, text in sources.items():
+        if path in test_only or not_production_target(path):
+            continue
+        spans = test_spans(text)
+        for match in INCLUDE.finditer(text):
+            if not any(start <= match.start() < end for start, end in spans):
+                targets.add(os.path.normpath(os.path.join(os.path.dirname(path), match.group(1))))
+
+    def compiled(path):
+        if not_production_target(path) or path in test_only:
+            return False
+        name = pathlib.PurePath(path).name
+        return name.endswith(SOURCE_SUFFIXES) or name == "Cargo.toml" or path in targets
+
+    return compiled
+
+
+def not_production_target(path):
+    parts = pathlib.PurePath(path).parts
+    return len(parts) > 3 and parts[2] in NON_PRODUCTION_TARGETS
 
 
 def compiled_filter(directories):
@@ -305,16 +378,7 @@ def compiled_filter(directories):
     tracked = [
         path for directory in directories for path in git("ls-files", "--", directory).splitlines()
     ]
-    targets = included(tracked, lambda path: (ROOT / path).read_bytes())
-
-    def compiled(path):
-        parts = pathlib.PurePath(path).parts
-        if len(parts) > 3 and parts[2] in NON_PRODUCTION_TARGETS:
-            return False
-        name = parts[-1]
-        return name.endswith(SOURCE_SUFFIXES) or name == "Cargo.toml" or path in targets
-
-    return compiled
+    return production_filter(tracked, lambda path: (ROOT / path).read_bytes())
 
 
 def file_row(receipts, digests, directories, compiled):
@@ -361,13 +425,8 @@ def revision_row(revision, directories, compiled):
         ).stdout
 
     listed = git("ls-tree", "-r", "--name-only", revision, "--", *directories).splitlines()
-    targets = included(listed, show)
-    measured = {
-        path: sha256(show(path))
-        for path in listed
-        if not path.endswith(".md")
-        and (path.endswith(".rs") or pathlib.PurePath(path).name == "Cargo.toml" or path in targets)
-    }
+    at_revision = production_filter(listed, show)
+    measured = {path: sha256(show(path)) for path in listed if at_revision(path)}
     packages = [
         directory
         for directory in directories

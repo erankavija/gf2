@@ -25,12 +25,26 @@ SHARED = ("content_anchor", "repository_files", "rust_code_text", "asm_listing")
 SCRIPTS = ("locate", "make-production-drift")
 BENCHMARK_SCHEMA = "zen3-benchmark-receipt-v1"
 MANIFEST = b'[package]\nname = "gf2-core"\n'
-LIB = b"fn one() {}\n"
+LIB = b'fn one() {}\n#[cfg(test)]\nmod unit;\n#[cfg(test)]\n#[path = "paired.rs"]\nmod paired_tests;\n'
 EARLIER_LIB = b"fn zero() {}\n"
 KERNEL = b"__global__ void one() {}\n"
 EARLIER_KERNEL = b"__global__ void zero() {}\n"
+EXTRA = b"__global__ void extra() {}\n"
 TEST = b"#[test]\nfn one() {}\n"
 EARLIER_TEST = b"#[test]\nfn zero() {}\n"
+UNIT = b"#[test]\nfn unit() {}\n"
+EARLIER_UNIT = b"#[test]\nfn earlier_unit() {}\n"
+# The production files of the current fixture package.
+PRODUCTION = {
+    "Cargo.toml": MANIFEST,
+    "src/lib.rs": LIB,
+    "hip/kernel.hip": KERNEL,
+    "hip/extra.hip": EXTRA,
+}
+
+
+def without(path):
+    return {name: data for name, data in PRODUCTION.items() if name != path}
 
 
 def run(command, cwd):
@@ -51,52 +65,61 @@ class AllReceipts(unittest.TestCase):
     # Receipt name: (declared schema, pinned path to measured bytes, bytes its snapshot holds,
     # the `source_revision` its checkpoint manifest records: a commit label or a literal).
     RECEIPTS = {
-        "identical": (BENCHMARK_SCHEMA, {"Cargo.toml": MANIFEST, "src/lib.rs": LIB}, {}, None),
+        "identical": (BENCHMARK_SCHEMA, PRODUCTION, {}, None),
         "comment-only": (
             BENCHMARK_SCHEMA,
-            {"Cargo.toml": MANIFEST, "src/lib.rs": b"// note\nfn one() {}\n"},
-            {"src/lib.rs": b"// note\nfn one() {}\n"},
+            PRODUCTION | {"src/lib.rs": b"// note\n" + LIB},
+            {"src/lib.rs": b"// note\n" + LIB},
             None,
         ),
         "documentation-only": (
             BENCHMARK_SCHEMA,
-            {"Cargo.toml": MANIFEST, "src/lib.rs": LIB, "src/notes.md": b"# Earlier notes\n"},
+            PRODUCTION | {"src/notes.md": b"# Earlier notes\n"},
             {"src/notes.md": b"# Earlier notes\n"},
             None,
         ),
         "code": (
             BENCHMARK_SCHEMA,
-            {"Cargo.toml": MANIFEST, "src/lib.rs": b"fn two() {}\n"},
+            PRODUCTION | {"src/lib.rs": b"fn two() {}\n"},
             {"src/lib.rs": b"fn two() {}\n"},
             None,
         ),
         "removed": (
             BENCHMARK_SCHEMA,
-            {"Cargo.toml": MANIFEST, "src/lib.rs": LIB, "src/gone.rs": b"fn gone() {}\n"},
+            PRODUCTION | {"src/gone.rs": b"fn gone() {}\n"},
             {"src/gone.rs": b"fn gone() {}\n"},
             None,
         ),
-        "added": (BENCHMARK_SCHEMA, {"Cargo.toml": MANIFEST}, {}, None),
+        "added": (BENCHMARK_SCHEMA, without("src/lib.rs"), {}, None),
+        "added-kernel": (BENCHMARK_SCHEMA, without("hip/extra.hip"), {}, None),
         "kernel-source": (
             BENCHMARK_SCHEMA,
-            {"Cargo.toml": MANIFEST, "src/lib.rs": LIB, "hip/kernel.hip": EARLIER_KERNEL},
+            PRODUCTION | {"hip/kernel.hip": EARLIER_KERNEL},
             {"hip/kernel.hip": EARLIER_KERNEL},
             None,
         ),
         "test-only": (
             BENCHMARK_SCHEMA,
-            {"Cargo.toml": MANIFEST, "src/lib.rs": LIB, "tests/check.rs": EARLIER_TEST},
+            PRODUCTION | {"tests/check.rs": EARLIER_TEST},
             {"tests/check.rs": EARLIER_TEST},
+            None,
+        ),
+        "unit-test-only": (
+            BENCHMARK_SCHEMA,
+            PRODUCTION | {"src/unit.rs": EARLIER_UNIT, "src/paired.rs": EARLIER_UNIT},
+            {"src/unit.rs": EARLIER_UNIT, "src/paired.rs": EARLIER_UNIT},
             None,
         ),
         "unavailable": (
             BENCHMARK_SCHEMA,
-            {"Cargo.toml": MANIFEST, "src/lib.rs": b"fn three() {}\n"},
+            PRODUCTION | {"src/lib.rs": b"fn three() {}\n"},
             {},
             None,
         ),
         "revision-identical": (BENCHMARK_SCHEMA, {}, {}, "current"),
         "revision-differs": (BENCHMARK_SCHEMA, {}, {}, "earlier"),
+        "revision-kernel": (BENCHMARK_SCHEMA, {}, {}, "kernel-earlier"),
+        "revision-test-only": (BENCHMARK_SCHEMA, {}, {}, "tests-earlier"),
         "unpinned": ("other-receipt-v1", {}, {}, ""),
     }
 
@@ -124,11 +147,21 @@ class AllReceipts(unittest.TestCase):
         run(["git", "config", "user.name", "Fixture"], cls.root)
         commits = {"earlier": cls.commit()}
         (package / "src" / "lib.rs").write_bytes(LIB)
+        (package / "src" / "unit.rs").write_bytes(UNIT)
+        (package / "src" / "paired.rs").write_bytes(UNIT)
         (package / "src" / "notes.md").write_bytes(b"# Notes\n")
         (package / "hip").mkdir()
-        (package / "hip" / "kernel.hip").write_bytes(KERNEL)
+        (package / "hip" / "kernel.hip").write_bytes(EARLIER_KERNEL)
+        (package / "hip" / "extra.hip").write_bytes(EXTRA)
         (package / "tests").mkdir()
         (package / "tests" / "check.rs").write_bytes(TEST)
+        commits["kernel-earlier"] = cls.commit()
+        (package / "hip" / "kernel.hip").write_bytes(KERNEL)
+        (package / "tests" / "check.rs").write_bytes(EARLIER_TEST)
+        (package / "src" / "unit.rs").write_bytes(EARLIER_UNIT)
+        commits["tests-earlier"] = cls.commit()
+        (package / "tests" / "check.rs").write_bytes(TEST)
+        (package / "src" / "unit.rs").write_bytes(UNIT)
         commits["current"] = cls.commit()
         for name, (schema, pinned, held, revision) in cls.RECEIPTS.items():
             receipt = cls.root / "dev" / "bench_results" / "fixture" / name
@@ -211,8 +244,17 @@ class AllReceipts(unittest.TestCase):
             [("crates/gf2-core/hip/kernel.hip", "code-differs")],
         )
 
-    def test_a_changed_integration_test_is_not_production_drift(self):
-        self.assert_row("test-only", "code-identical", "production files", [])
+    def test_changed_test_code_is_not_production_drift(self):
+        for name in ("test-only", "unit-test-only"):
+            self.assert_row(name, "code-identical", "production files", [])
+
+    def test_an_added_kernel_source_makes_code_differs(self):
+        self.assert_row(
+            "added-kernel",
+            "code-differs",
+            "production files",
+            [("crates/gf2-core/hip/extra.hip", "added")],
+        )
 
     def test_missing_measured_bytes_make_code_differs_by_path(self):
         self.assert_row(
@@ -226,8 +268,19 @@ class AllReceipts(unittest.TestCase):
         basis = "production files at the source revision"
         self.assert_row("revision-identical", "code-identical", basis, [])
         self.assert_row(
-            "revision-differs", "code-differs", basis, [("crates/gf2-core/src/lib.rs", "code-differs")]
+            "revision-differs",
+            "code-differs",
+            basis,
+            [
+                ("crates/gf2-core/src/lib.rs", "code-differs"),
+                ("crates/gf2-core/hip/extra.hip", "added"),
+                ("crates/gf2-core/hip/kernel.hip", "added"),
+            ],
         )
+        self.assert_row(
+            "revision-kernel", "code-differs", basis, [("crates/gf2-core/hip/kernel.hip", "code-differs")]
+        )
+        self.assert_row("revision-test-only", "code-identical", basis, [])
 
     def test_unresolvable_measured_content_names_the_producing_inputs(self):
         row = self.rows["unpinned"]
