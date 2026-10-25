@@ -2567,6 +2567,20 @@
    "status": "resolved",
    "raised_at": "2026-10-21",
    "answer": "Invoker approved 2026-10-22: add d06a99ed to the story; unavailable AFF3CT comparisons remain explicit limits, f768c925 stays outside the epic; amend 6230e0b6 REQ-01 and relocate only findings.md under the epic directory."
+  },
+  {
+   "issue": "d06a99ed",
+   "date": "2026-10-25",
+   "category": "adoption ruling (policy item 5)",
+   "question": "code-review F1 (run after 1ac182614): worker-routing confirmation Accepted, qualifies=false; dvb-t2-r12-production-w1-b8 Inconclusive (8/240 flagged), route-identical in both revisions; both multicore cells Improved; family ledger admits 0 cells for attempt 2. Keep worker bound, revert, or new family?",
+   "options": [
+    "A (recommended): keep the worker bound; record the inconclusive cell as a preserved outcome and measured limit",
+    "B: revert to lanes at every worker count",
+    "C: new narrower family in the next window"
+   ],
+   "status": "resolved",
+   "raised_at": "2026-10-25",
+   "answer": "Invoker 2026-10-25 (session 45): A. Keep the worker bound in production; the inconclusive cell is a preserved outcome and measured limit (route-identical control); the ruling is recorded in the review record for the gates to cite."
   }
  ],
  "rework_counts": {
@@ -2666,7 +2680,7 @@
   "37aa7254": 1,
   "7211ae53": 1,
   "6230e0b6": 2,
-  "d06a99ed": 1
+  "d06a99ed": 2
  },
  "surfaced_pitfalls": [
   {
