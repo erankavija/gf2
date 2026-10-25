@@ -26,11 +26,11 @@ write on a tree that differs from the one `dense-verdict-end-state.json` pins.
 
 With `--all-receipts OUTPUT` it instead classifies every committed receipt the
 `select-receipts.py` selector enumerates, of any schema, as `code-identical` or
-`code-differs`: by the same file classes over the files under `crates/` its
-`inputs/producing/producing-snapshot.json` pins, or else by its arms' executable
-digests against the live arm build records of `record-peak-memory.py`.
-Receipts with one measured identity share a row; the record defines each class
-and basis. This mode lists no commits, and any tree may be compared.
+`code-differs`: by the same file classes over the compiled files under `crates/`
+its `inputs/producing/producing-snapshot.json` pins, or else over the compiled
+files at the `source_revision` it records, read from git as bytes. Receipts with
+one measured identity share a row; the record defines each class and basis.
+This mode lists no commits, and any tree may be compared.
 
 Usage:
   make-production-drift.py
@@ -41,6 +41,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import pathlib
 import re
 import subprocess
@@ -103,7 +104,11 @@ def held_bytes(path, measured, snapshots):
 
 
 def classify(path, measured, snapshots, history=True):
-    """The class of `path` against the first of `snapshots` holding its `measured` bytes."""
+    """The class of `path` against its `measured` bytes.
+
+    `snapshots` lists directories holding measured bytes at their paths, or is a
+    callable `(path, measured)` returning them.
+    """
     current = ROOT / path
     if not current.is_file():
         return {"path": path, "class": "removed", "measured_sha256": measured}
@@ -111,7 +116,9 @@ def classify(path, measured, snapshots, history=True):
     entry = {"path": path, "measured_sha256": measured, "current_sha256": sha256(data)}
     if entry["current_sha256"] == measured:
         return entry | {"class": "identical"}
-    held = held_bytes(path, measured, snapshots)
+    held = (
+        snapshots(path, measured) if callable(snapshots) else held_bytes(path, measured, snapshots)
+    )
     if byte_class(path, held, data) == "comment-or-blank-only":
         return entry | {"class": "comment-or-blank-only"}
     if not history:
@@ -126,13 +133,13 @@ def class_counts(files):
     return counts
 
 
-def added_files(directories, digests):
-    """Tracked `src/` files of `directories` that `digests` does not pin."""
+def added_files(directories, digests, keep=lambda path: True):
+    """Tracked `src/` files of `directories` that `digests` does not pin and `keep` accepts."""
     return [
         {"path": path, "class": "added", "current_sha256": sha256((ROOT / path).read_bytes())}
         for package in directories
         for path in git("ls-files", "--", f"{package}/src").splitlines()
-        if path not in digests
+        if path not in digests and keep(path)
     ]
 
 
@@ -234,27 +241,37 @@ SCOPE = (
     "content is a receipt-level producing input."
 )
 RECEIPT_CLASSES = {
-    "code-identical": "the row's basis proves the measured content equal to the current tree",
+    "code-identical": "the row's basis proves the measured production code equal to the "
+    "current tree",
     "code-differs": "the row's basis does not prove it; `differing_files` names each "
-    "file or executable that differs or could not be resolved",
+    "file that differs or could not be resolved",
 }
+COMPILED = (
+    "only compiled production files take part: `.rs` files, `Cargo.toml`, and the "
+    "non-Markdown files a current `.rs` file names in a literal `include!`, "
+    "`include_str!` or `include_bytes!`"
+)
 FILES = "production files"
-EXECUTABLES = "executable identity"
+REVISION = "production files at the source revision"
 UNAVAILABLE = "measured bytes unavailable"
 UNPINNED = "measured content not pinned"
 BASES = {
-    FILES: "the pinned files of the measured packages under `crates/` against the tree: "
-    "identical or comment-or-blank-only is equal; code-differs, removed, and a tracked "
-    "`src/` file the receipt does not pin (added) differ",
-    EXECUTABLES: "the receipt pins no file under `crates/`; each arm's pinned executable "
-    "digest against the same arm's digest in the live arm build records, where a "
-    "different or unrecorded digest differs",
+    FILES: "the compiled files under `crates/` the producing snapshot pins, against the "
+    "tree: identical or comment-or-blank-only is equal; code-differs, removed, and a "
+    "tracked `src/` file the receipt does not pin (added) differ",
+    REVISION: "the snapshot pins no file under `crates/`; the compiled files of every "
+    "package under `crates/` at the `source_revision` the receipt records, read as "
+    "bytes, against the tree by the same file classes",
     UNAVAILABLE: "no snapshot of the row holds the measured bytes of a pinned file "
     "whose current bytes differ",
-    UNPINNED: "the receipt pins neither a file under `crates/` nor an executable digest "
-    "for every arm; `differing_files` names its unresolved producing inputs",
+    UNPINNED: "the snapshot pins no file under `crates/` and no recorded "
+    "`source_revision` resolves; `differing_files` names the producing inputs",
 }
 FILE_CLASSES_THAT_DIFFER = ("code-differs", "removed", "added")
+INCLUDE = re.compile(r'include(?:_str|_bytes)?!\s*\(\s*"([^"]+)"')
+# Files of a receipt directory that may record the revision its arms were built from.
+REVISION_RECORDS = ("receipt.json", "checkpoints/manifest.json")
+BUILD_RECORD = "build-identity.json"
 
 
 def sibling_module(name):
@@ -266,65 +283,122 @@ def sibling_module(name):
     return module
 
 
-def live_executables():
-    """Arm name, as a receipt records it, to the digests the live arm build records hold."""
-    peak = sibling_module("record-peak-memory.py")
-    digests = {}
-    for _, record in peak.build_records():
-        for arm, row in record["arms"].items():
-            for key in peak.smoke.CODES:
-                digests.setdefault(f"{arm}-{key}", set()).add(row["executable_sha256"])
-    return digests
+def included(paths, read):
+    """Root-relative targets of the literal includes in the `.rs` files among `paths`."""
+    targets = set()
+    for path in paths:
+        if path.endswith(".rs"):
+            for name in INCLUDE.findall(read(path).decode(errors="replace")):
+                targets.add(os.path.normpath(os.path.join(os.path.dirname(path), name)))
+    return targets
 
 
-def file_row(receipts, digests, directories):
+def compiled_filter(directories):
+    """Whether a root-relative path is a compiled production file of the current tree."""
+    tracked = [
+        path for directory in directories for path in git("ls-files", "--", directory).splitlines()
+    ]
+    targets = included(tracked, lambda path: (ROOT / path).read_bytes())
+
+    def compiled(path):
+        name = pathlib.PurePath(path).name
+        if name.endswith(".md"):
+            return False
+        return name.endswith(".rs") or name == "Cargo.toml" or path in targets
+
+    return compiled
+
+
+def file_row(receipts, digests, directories, compiled):
     snapshots = [ROOT / receipt["snapshot"] for receipt in receipts]
     packages = [
         directory
         for directory in directories
         if any(path.startswith(f"{directory}/") for path in digests)
     ]
+    digests = {path: digest for path, digest in digests.items() if compiled(path)}
     files, unavailable = [], []
     for path, digest in sorted(digests.items()):
         try:
             files.append(classify(path, digest, snapshots, history=False))
         except UnavailableSnapshot:
             unavailable.append({"path": path, "class": "unavailable"})
-    files += added_files(packages, digests)
+    files += added_files(packages, digests, compiled)
     row = {"packages": packages}
     if unavailable:
         return row | {"class": "code-differs", "basis": UNAVAILABLE, "differing_files": unavailable}
+    return row | verdict(files, FILES)
+
+
+def verdict(files, basis):
     differing = [
         {"path": entry["path"], "class": entry["class"]}
         for entry in files
         if entry["class"] in FILE_CLASSES_THAT_DIFFER
     ]
-    return row | {
+    return {
         "class": "code-differs" if differing else "code-identical",
-        "basis": FILES,
+        "basis": basis,
         "class_counts": class_counts(files),
         "differing_files": differing,
     }
 
 
-def executable_row(arms, live):
-    differing = []
-    for arm, (path, digest) in sorted(arms.items()):
-        held = live.get(arm)
-        if held != {digest}:
-            differing.append(
-                {
-                    "arm": arm,
-                    "path": path,
-                    "executable_sha256": digest,
-                    "class": "executable-differs" if held else "arm-unrecorded",
-                }
-            )
-    return {
-        "class": "code-differs" if differing else "code-identical",
-        "basis": EXECUTABLES,
-        "differing_files": differing,
+def revision_row(revision, directories, compiled):
+    """The compiled production files at `revision` against the tree."""
+
+    def show(path, measured=None):
+        return subprocess.run(
+            ["git", "-C", str(ROOT), "show", f"{revision}:{path}"], capture_output=True, check=True
+        ).stdout
+
+    listed = git("ls-tree", "-r", "--name-only", revision, "--", *directories).splitlines()
+    targets = included(listed, show)
+    measured = {
+        path: sha256(show(path))
+        for path in listed
+        if not path.endswith(".md")
+        and (path.endswith(".rs") or pathlib.PurePath(path).name == "Cargo.toml" or path in targets)
     }
+    packages = [
+        directory
+        for directory in directories
+        if any(path.startswith(f"{directory}/") for path in measured)
+    ]
+    files = [classify(path, digest, show, history=False) for path, digest in sorted(measured.items())]
+    files += added_files(packages, measured, compiled)
+    return {"packages": packages, "source_revision": revision} | verdict(files, REVISION)
+
+
+def source_revision(receipt):
+    """The one commit the receipt's records name as `source_revision`, or `None`."""
+    directory = ROOT / pathlib.PurePath(receipt).parent
+    records = [directory / name for name in REVISION_RECORDS]
+    records += sorted((directory / "inputs").rglob(BUILD_RECORD))
+    named = set()
+
+    def walk(node):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == "source_revision" and isinstance(value, str) and value:
+                    named.add(value)
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    for record in records:
+        if record.is_file():
+            walk(json.loads(record.read_bytes()))
+    if len(named) != 1:
+        return None
+    (revision,) = named
+    resolved = subprocess.run(
+        ["git", "-C", str(ROOT), "rev-parse", "--verify", "--quiet", f"{revision}^{{commit}}"],
+        capture_output=True,
+        text=True,
+    )
+    return resolved.stdout.strip() if resolved.returncode == 0 else None
 
 
 def measured_identity(receipt, producing, directories):
@@ -337,12 +411,9 @@ def measured_identity(receipt, producing, directories):
     }
     if digests:
         return FILES, digests
-    arms = json.loads((ROOT / receipt).read_bytes()).get("arms") or {}
-    if arms and all("executable_sha256" in arm for arm in arms.values()):
-        return EXECUTABLES, {
-            name: (arm.get("executable_path"), arm["executable_sha256"])
-            for name, arm in arms.items()
-        }
+    revision = source_revision(receipt)
+    if revision is not None:
+        return REVISION, revision
     return UNPINNED, sorted({path for name in DIGEST_MAPS for path in producing[name]})
 
 
@@ -354,6 +425,7 @@ def all_receipts(output):
         for manifest in repository_files.tracked_files(ROOT, "Cargo.toml")
         if pathlib.Path(manifest).parent.parent == PRODUCTION_ROOT
     )
+    compiled = compiled_filter(directories)
     measured_sets = {}
     for receipt in sorted(selected + [path for path, _ in skipped]):
         snapshot = pathlib.Path(receipt).parent / SNAPSHOT
@@ -363,15 +435,13 @@ def all_receipts(output):
         measured_sets.setdefault(key, {"basis": basis, "content": content, "receipts": []})[
             "receipts"
         ].append({"receipt": receipt, "snapshot": str(snapshot)})
-    live = None
     rows = []
     for measured in measured_sets.values():
         basis, content = measured["basis"], measured["content"]
         if basis == FILES:
-            row = file_row(measured["receipts"], content, directories)
-        elif basis == EXECUTABLES:
-            live = live_executables() if live is None else live
-            row = executable_row(content, live)
+            row = file_row(measured["receipts"], content, directories, compiled)
+        elif basis == REVISION:
+            row = revision_row(content, directories, compiled)
         else:
             row = {
                 "class": "code-differs",
@@ -384,6 +454,7 @@ def all_receipts(output):
         "scope": SCOPE,
         "receipt_selector": repository_files.live_file(ROOT, "select-receipts.py"),
         "production_packages": directories,
+        "compiled_files": COMPILED,
         "receipt_classes": RECEIPT_CLASSES,
         "bases": BASES,
         "classifier_rule": rust_code_text.RULE,
