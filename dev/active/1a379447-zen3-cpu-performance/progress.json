@@ -1150,6 +1150,46 @@
      "tracker_state": "rejected"
     },
     {
+     "id": "eb07aa88",
+     "short_id": "eb07aa88",
+     "title": "Freeze the integrated workload set as a generated declaration",
+     "classification": "implementation",
+     "status": "pending",
+     "tracker_state": "ready"
+    },
+    {
+     "id": "ecad1724",
+     "short_id": "ecad1724",
+     "title": "Classify committed receipts by production-code drift",
+     "classification": "implementation",
+     "status": "pending",
+     "tracker_state": "ready"
+    },
+    {
+     "id": "31727c57",
+     "short_id": "31727c57",
+     "title": "Confirm the core and decoder routes after integration",
+     "classification": "research",
+     "status": "pending",
+     "tracker_state": "ready"
+    },
+    {
+     "id": "1358d6ab",
+     "short_id": "1358d6ab",
+     "title": "Remeasure comparator gaps on the integrated tree",
+     "classification": "research",
+     "status": "pending",
+     "tracker_state": "ready"
+    },
+    {
+     "id": "78f0aafd",
+     "short_id": "78f0aafd",
+     "title": "Profile the integrated bottlenecks",
+     "classification": "research",
+     "status": "pending",
+     "tracker_state": "ready"
+    },
+    {
      "id": "1362381c-78c0-42eb-bdc9-4327f20bc343",
      "short_id": "1362381c",
      "title": "Publish end-to-end competitive results and remaining limits",
@@ -1569,6 +1609,17 @@
    "type": "bug",
    "in_epic": false,
    "reason": "three worker cargo-ci runs under load hit the 15 s kill on protocol_contracts acceptance_rejects_every_self_consistent_frozen_fact_replacement, two leaking a fixture; depends on 67517a7b"
+  },
+  {
+   "session": 46,
+   "ids": [
+    "eb07aa88",
+    "ecad1724",
+    "31727c57",
+    "1358d6ab",
+    "78f0aafd"
+   ],
+   "reason": "work packages WP-1..WP-5 of the 1362381c design"
   }
  ],
  "escalations": [
@@ -2581,6 +2632,13 @@
    "status": "resolved",
    "raised_at": "2026-10-25",
    "answer": "Invoker 2026-10-25 (session 45): A. Keep the worker bound in production; the inconclusive cell is a preserved outcome and measured limit (route-identical control); the ruling is recorded in the review record for the gates to cite."
+  },
+  {
+   "id": "1362381c-D",
+   "question": "1362381c design decisions D-1 (frozen workload set), D-2 (BCH evidence), D-3 (affected cells), D-6 (BCH external arms)",
+   "status": "resolved",
+   "raised_at": "2026-10-25",
+   "answer": "Invoker 2026-10-25 (session 46): recommended option for D-1, D-2, D-3 and D-6; lead takes recommended D-4 and D-5. Recorded in 1362381c/design.md Decisions."
   }
  ],
  "rework_counts": {
@@ -3564,17 +3622,15 @@
   "note": "Invoker approved arming 2026-10-24. 2026-10-23 window: pilot complete, confirmation refused before timing (absolute resolution_evidence path), fixed in c3ebd86d6."
  },
  "session_scope": {
-  "session": 45,
+  "session": 46,
   "date": "2026-10-25",
-  "instruction": "Invoker 2026-10-25 (session 45): drive epic 1a379447; subagent model by task difficulty; no Fable; also use Codex sub-agents, alternating Claude and Codex per implementation dispatch (gpt-6-luna xhigh for narrow tasks, gpt-6.1-sol high for moderate).",
-  "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation.",
+  "instruction": "Invoker 2026-10-25 (session 46): drive epic 1a379447; subagent model by task difficulty; no Fable; also use Codex sub-agents, alternating Claude and Codex per implementation dispatch (gpt-6-luna xhigh for narrow tasks, gpt-6.1-sol high for moderate). Session 45 ended without a handoff.",
+  "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation. Session 46: sibling edges for the 1362381c work packages are refused under transitive reduction and held by the lead: 31727c57 after eb07aa88 and e5f8b3ae; 1358d6ab after eb07aa88, ecad1724 and e5f8b3ae; 78f0aafd after 31727c57 and 1358d6ab; 1362381c after all five.",
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-12 (session 36), restated: do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish or when all remaining work waits on the invoker; check workers every 30 minutes.",
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
   "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run and 0a77ecfc (pinned for the window), ed3d490e-run (story build tree, on branch worktree-agent-cba35553; arm digests are reproducible only at this path), and three of other epics",
-  "active_workers": {
-   "d06a99ed": "codex gpt-6-luna, worktree agent-d06a99ed: adoption ruling records"
-  },
+  "active_workers": {},
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
   "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
   "session_36": "Dispatched 4252085a (sonnet, branch worktree-agent-4252085a in agent-ed3d490e-run) and 0a77ecfc (opus, agent-0a77ecfc) at 22:00 EEST; 05c9065e follows 4252085a in the same worktree. The four 63bad95d confirmations wait for the 2026-10-13 04:00 window; builds and gates stop by 01:30.",
@@ -3592,8 +3648,11 @@
   "window_run": "Session 38 (invoker: no window policy this session): the lead runs bench-window/run-window.sh in-session on a quiet host for f434ddd3 (profile series), a91e7cef, a7ae2623, 9bcc7e73, 493dba5a, caabc4e1 pilots; collection issues d0d2c1bd, 093ae4d0, fb65bb3f, 87a6bb36, a80062a1 claimed by the lead. Ran 2026-10-15 04:37-05:13Z, window rc 0: profile series 9 sessions complete; five pilots complete at declared pairs, each Accepted (caabc4e1 with 6 findings). Collection dispatched to w-collect on worktree-agent-collect. Confirmations ran 06:15-06:50Z (d0d2c1bd, 093ae4d0, 87a6bb36 queue lines): each complete and Accepted, qualifies=false; collection issues 32bfe9f8, a03daf3f, 7eddc5e2 claimed by the lead, not dispatched.",
   "dispatch_log": [
    "d06a99ed: Claude opus; evidence commit and record updates closing F1",
-   "d06a99ed rework 2: Codex gpt-6-luna xhigh; record invoker adoption ruling (narrow doc change), worktree agent-d06a99ed"
+   "d06a99ed rework 2: Codex gpt-6-luna xhigh; record invoker adoption ruling (narrow doc change), worktree agent-d06a99ed",
+   "e5f8b3ae: Codex gpt-6.1-sol high; shared runner across feature-split arm packages (moderate multi-file reasoning), worktree agent-e5f8b3ae",
+   "1362381c design: Claude opus; architect plan and decomposition (contract-setting), on main"
   ],
-  "session_45": "Done: d06a99ed (invoker adoption ruling A), ed3d490e (all seven gates pass at 20f9652da)."
+  "session_45": "Done: d06a99ed (invoker adoption ruling A), ed3d490e (all seven gates pass at 20f9652da).",
+  "session_46": "Resumed from session 45 state without a handoff. e5f8b3ae Codex output reviewed and committed (cc8f8af69, branch worktree-agent-e5f8b3ae, lead doc fixes); canonical build and validation records run in agent-ed3d490e-run on branch worktree-agent-e5f8b3ae-run. 1362381c design rulings D-1..D-6 recorded; work packages created: eb07aa88 WP-1, ecad1724 WP-2, 31727c57 WP-3, 1358d6ab WP-4, 78f0aafd WP-5; 1362381c is WP-6."
  }
 }

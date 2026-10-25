@@ -11,10 +11,12 @@ with REQ-01, REQ-03, REQ-04 and REQ-06 support). The
 [worker brief](../worker-brief.md) govern every step; this design adds no
 protocol, schema or checker version.
 
-## Decisions for the invoker
+## Decisions
 
-Each item needs a ruling before the work package it names starts. The
-recommendation is the lightest option that meets the criteria literally.
+Each item is ruled before the work package it names starts. The invoker
+selected the recommended option of D-1, D-2, D-3 and D-6 on 2026-10-25; the
+lead selected the recommended option of D-4 and D-5. The recommendation is the
+lightest option that meets the criteria literally.
 
 **D-1. The frozen workload set is not defined anywhere.** The epic
 description and this issue's REQ-07 and REQ-12 refer to "the frozen workload
@@ -353,7 +355,6 @@ queue lines in its report.
 
 ## Risks and open questions
 
-- D-1 to D-6 above. Without D-1 and D-3 no package after WP-1 can start.
 - WP-2 may classify many primary cells as affected. If the FI-5 families
   exceed what window 1 holds, the overflow moves to window 2, with the reason
   recorded per cell. A cell that does not run remains a consumed historical
