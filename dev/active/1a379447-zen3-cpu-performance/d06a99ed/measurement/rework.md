@@ -3,9 +3,9 @@
 > **Diátaxis Type:** Reference
 
 Preparation for `@/issue/d06a99ed`, under the governing
-[measurement contract](../../measurement-contract.md). No timed results exist
-for this preparation. F1 remains open until the current before/after receipts
-and their acceptance outcomes are committed.
+[measurement contract](../../measurement-contract.md). The committed pilot and
+confirmation receipts close F1; [Measurement outcome](#measurement-outcome)
+points to them.
 
 ## Prior-findings and deferred-item audit
 
@@ -15,13 +15,13 @@ The complete [round-one review](../../reviews/d06a99ed-r1.md), code-review run
 records are inspected before edits. There is no earlier closed gate finding.
 The issue links [implementation.md](../implementation.md); its deferred-item
 marker search returns no matches. Its explicit absence of measured execution
-is the F1 evidence gap. The review's deferred-audit heading and its statement
+is the F1 evidence gap the committed receipts close. The review's deferred-audit heading and its statement
 that no marker exists are audit narration, not a deferred implementation item.
 
 | Round and source | Finding | Current disposition |
 |---|---|---|
-| R1 code-review F1 | Commit current pinned before/after measurements, including dispatch overhead, as required by the governing measurement contract. | OPEN: executable preparation and six-cell plans are the scope of this record; overnight measurement and committed acceptance outcomes are required for closure. |
-| R1 research-review F1 | REQ-01 is marked met without required current pinned before/after measurements of the production routing change, including dispatch overhead. | OPEN: the lead marks REQ-01 partly met in the current findings; measurements remain required. |
+| R1 code-review F1 | Commit current pinned before/after measurements, including dispatch overhead, as required by the governing measurement contract. | CLOSED at `2fd908bd3`: the pilot and confirmation receipts, with execution logs, checkpoints, input snapshots and acceptance summaries, are committed; dispatch-inclusive small whole-call cells are part of the confirmation. |
+| R1 research-review F1 | REQ-01 is marked met without required current pinned before/after measurements of the production routing change, including dispatch overhead. | CLOSED at `2fd908bd3`: the [outcome table](outcome.md) and the [findings](../../6230e0b6/findings.md) criterion row cite the committed confirmation. |
 | R1 lead review L1 | Parameterize the existing batch checkpoint/resume tests over canonical scalar, portable and native route cases, with explicit worker bounds and route assertions. Preserve their interruption and partial-wave assertions. | CLOSED at `04652b0ee`; the independent reviewer verifies canonical scalar, portable and native checkpoint/resume coverage. No checkpoint source edits belong to this preparation. |
 | R1 prior-findings audit | Obsolete three-argument constructor example in docs/how-to/select-acceleration.md. | CLOSED at `24db08ef9`, the pinned after revision. |
 | Linked implementation deferred-marker search | No matches. | No additional deferred item. |
@@ -131,8 +131,7 @@ manual user step or commitment-check bypass is required.
 `bash -n window.sh`, Python compilation, and the diff whitespace check pass.
 Extracted bundle directories are reproducible from the committed archive by
 `prepare.py` and are locally ignored; the generated plans and validation records
-remain durable. F1 is still OPEN: this preparation provides no current timing
-sample, interval or acceptance outcome. The queued window supplies that evidence.
+remain durable. The preparation itself records no timing sample.
 
 ## Catalogue integration correction
 
@@ -157,3 +156,20 @@ all 56 tests after staging the comparison snapshot renames. Explicit-path
 untimed validation again passes twelve dispatches across six cells, with zero
 timing windows. The canonical live calibration manifest regeneration passes
 all seven family closure checks; historical receipt inputs remain unchanged.
+
+## Measurement outcome
+
+The benchmark window runs [window.sh](window.sh). Both campaigns are verified
+from their own execution logs: six `cell-start` and six `cell-complete`
+records, every cell `measured` at its declared pairs, and a terminal
+`complete` record.
+
+- [Pilot acceptance summary](../../../../bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot/acceptance-summary.md):
+  accepted, exploratory.
+- [Confirmation acceptance summary](../../../../bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-confirmation/acceptance-summary.md):
+  accepted, does not qualify; one cell records `inconclusive`. The generated
+  [outcome table](outcome.md) gives every cell's decision and outcome.
+
+The [implementation record](../implementation.md), section *Before/after
+measurement*, interprets the cells, including the dispatch-inclusive small
+whole-call cells and the empty-body executor-dispatch diagnostic.

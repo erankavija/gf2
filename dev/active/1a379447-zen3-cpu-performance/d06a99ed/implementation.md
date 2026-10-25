@@ -13,8 +13,10 @@ reencoding a partial section. The committed coding envelope therefore retains
 its bytes and its single-worker lane domain. At six, twelve and twenty-four
 workers it selects the single-frame route, including every configuration the
 [multicore outcome](../a03daf3f/outcome.md) records as `fail`. Those outcomes
-remain unchanged; no measurement or multicore lane-performance claim is added.
-This satisfies REQ-02 through its conservative-selection alternative.
+remain unchanged, and no multicore lane-performance claim is added. This
+satisfies REQ-02 through its conservative-selection alternative; the
+production before/after confirmation is under
+[Before/after measurement](#beforeafter-measurement).
 
 `BatchSoftDecoder::decode_batch_with_workers` accepts an explicit
 `NonZeroUsize` per call and remains object safe. Its default forwards to the
@@ -40,7 +42,46 @@ candidate contexts. No schema or protocol version changes.
 
 Live lane benchmark arms explicitly admit up to the existing twenty-four-worker
 grid and pass cell concurrency. The tuned arm passes cell concurrency and
-reports the corresponding route. No benchmark runs as part of this work.
+reports the corresponding route.
+
+## Before/after measurement
+
+The [measurement preparation](measurement/rework.md) states the six-cell
+non-regression family, the pinned before and after revisions and the
+unchanged `tuned-profile` arm; [commands](measurement/commands.md) gives the
+exact commands. Both campaigns are verified from their own execution logs:
+six `cell-start` and six `cell-complete` records, every cell `measured` at its
+declared pairs, and a terminal `complete` record.
+
+- The [pilot receipt](../../../bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot/acceptance-summary.md)
+  is accepted and exploratory; its cells decide nothing. The canonical freezer
+  derives the confirmation's resolution from it
+  ([derivation](measurement/confirmation/derivation.txt)).
+- The [confirmation receipt](../../../bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-confirmation/acceptance-summary.md)
+  is accepted and does not qualify for production selection. The
+  [outcome table](measurement/outcome.md) gives each cell's decision and
+  outcome as the evaluator records them; intervals, pair counts and flagged
+  windows are the acceptance summary's columns.
+- Each pair's `selected_path` in the confirmation receipt records the wave
+  route each arm takes: single-frame on both revisions for one-frame calls,
+  AVX2 lanes on both revisions for one-worker full waves, and lanes before
+  versus single-frame after at both multicore cells.
+- At twelve physical cores (DVB-T2) and twenty-four logical CPUs (NR), the
+  multicore cells record `improved` and `pass`: the interval's lower bound
+  for the after revision's single-frame route against the before revision's
+  lane route reaches the improvement margin.
+- The small whole-call cells, one frame at one worker on both codes, include
+  worker dispatch, selector evaluation, conversion and extraction in every
+  timed call; both record `not-worse` and `pass`. No cell isolates the
+  selector predicate.
+- The NR full wave at one worker records `pass`. The DVB-T2 full wave at one
+  worker, where both revisions take the lane route, records `inconclusive`:
+  its interval spans a margin, and it is the only cell with flagged windows
+  (acceptance summary, column *Flagged*).
+- Each pair's `conversion.dispatch_ns` in the confirmation receipt
+  (`cells[].pairs[].{baseline,candidate}.conversion`) is the driver's
+  empty-body executor-dispatch diagnostic, the median of empty-body dispatches
+  after the measured windows, not a selector-predicate timing.
 
 ## Behavioral verification
 
