@@ -3567,7 +3567,7 @@
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
   "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run and 0a77ecfc (pinned for the window), ed3d490e-run (story build tree, on branch worktree-agent-cba35553; arm digests are reproducible only at this path), and three of other epics",
   "active_workers": {
-   "d06a99ed": "opus, on main: commit pilot+confirmation receipts, outcome projection, record updates"
+   "d06a99ed": "codex gpt-6-luna, worktree agent-d06a99ed: adoption ruling records"
   },
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
   "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
@@ -3585,7 +3585,8 @@
   },
   "window_run": "Session 38 (invoker: no window policy this session): the lead runs bench-window/run-window.sh in-session on a quiet host for f434ddd3 (profile series), a91e7cef, a7ae2623, 9bcc7e73, 493dba5a, caabc4e1 pilots; collection issues d0d2c1bd, 093ae4d0, fb65bb3f, 87a6bb36, a80062a1 claimed by the lead. Ran 2026-10-15 04:37-05:13Z, window rc 0: profile series 9 sessions complete; five pilots complete at declared pairs, each Accepted (caabc4e1 with 6 findings). Collection dispatched to w-collect on worktree-agent-collect. Confirmations ran 06:15-06:50Z (d0d2c1bd, 093ae4d0, 87a6bb36 queue lines): each complete and Accepted, qualifies=false; collection issues 32bfe9f8, a03daf3f, 7eddc5e2 claimed by the lead, not dispatched.",
   "dispatch_log": [
-   "d06a99ed: Claude opus; evidence commit and record updates closing F1"
+   "d06a99ed: Claude opus; evidence commit and record updates closing F1",
+   "d06a99ed rework 2: Codex gpt-6-luna xhigh; record invoker adoption ruling (narrow doc change), worktree agent-d06a99ed"
   ]
  }
 }

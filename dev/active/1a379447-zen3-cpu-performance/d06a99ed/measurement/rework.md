@@ -22,6 +22,7 @@ that no marker exists are audit narration, not a deferred implementation item.
 |---|---|---|
 | R1 code-review F1 | Commit current pinned before/after measurements, including dispatch overhead, as required by the governing measurement contract. | CLOSED at `2fd908bd3`: the pilot and confirmation receipts, with execution logs, checkpoints, input snapshots and acceptance summaries, are committed; dispatch-inclusive small whole-call cells are part of the confirmation. |
 | R1 research-review F1 | REQ-01 is marked met without required current pinned before/after measurements of the production routing change, including dispatch overhead. | CLOSED at `2fd908bd3`: the [outcome table](outcome.md) and the [findings](../../6230e0b6/findings.md) criterion row cite the committed confirmation. |
+| R2 code-review F1 (`7f4ef93d-8cbb-4c2e-9ab6-76d057a4a179`, at `1ac182614`) | F1 [medium] crates/gf2-coding/src/ldpc/route.rs:94, refs @/issue/ed3d490e/requirement/REQ-01: "The worker-aware production policy remains active although its frozen confirmation requires every non-regression cell to pass and one cell is inconclusive, leaving qualifies false." | CLOSED by invoker adoption ruling 2026-10-25. |
 | R1 lead review L1 | Parameterize the existing batch checkpoint/resume tests over canonical scalar, portable and native route cases, with explicit worker bounds and route assertions. Preserve their interruption and partial-wave assertions. | CLOSED at `04652b0ee`; the independent reviewer verifies canonical scalar, portable and native checkpoint/resume coverage. No checkpoint source edits belong to this preparation. |
 | R1 prior-findings audit | Obsolete three-argument constructor example in docs/how-to/select-acceleration.md. | CLOSED at `24db08ef9`, the pinned after revision. |
 | Linked implementation deferred-marker search | No matches. | No additional deferred item. |
@@ -173,3 +174,19 @@ records, every cell `measured` at its declared pairs, and a terminal
 The [implementation record](../implementation.md), section *Before/after
 measurement*, interprets the cells, including the dispatch-inclusive small
 whole-call cells and the empty-body executor-dispatch diagnostic.
+
+## Adoption ruling
+
+The invoker's 2026-10-25 ruling keeps the worker bound in production
+([recorded escalation](../../progress.json), issue `d06a99ed`). The confirmation
+remains accepted with `qualifies=false`
+([acceptance summary](../../../../bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-confirmation/acceptance-summary.md)).
+The `dvb-t2-r12-production-w1-b8` cell remains `inconclusive`; each pair's
+`selected_path` records the AVX2 lane route on both revisions, so the worker
+bound changes no route in this control. The route-changing multicore cells
+record `improved` and `pass` ([outcome table](outcome.md)). The ledger admits
+no further confirmatory cell: `target/release/benchmark-acceptance
+--next-attempt dev/bench_results/d06a99ed/worker-routing/ledger.jsonl
+d06a99ed-worker-aware-production-v1` reports attempt 2 with `max_cells 0`.
+The inconclusive outcome is preserved as a measured limit, and `qualifies=false`
+stands as recorded.

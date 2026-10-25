@@ -70,6 +70,8 @@ declared pairs, and a terminal `complete` record.
   multicore cells record `improved` and `pass`: the interval's lower bound
   for the after revision's single-frame route against the before revision's
   lane route reaches the improvement margin.
+- The worker bound stays in production under the [invoker adoption
+  ruling](measurement/rework.md#adoption-ruling).
 - The small whole-call cells, one frame at one worker on both codes, include
   worker dispatch, selector evaluation, conversion and extraction in every
   timed call; both record `not-worse` and `pass`. No cell isolates the

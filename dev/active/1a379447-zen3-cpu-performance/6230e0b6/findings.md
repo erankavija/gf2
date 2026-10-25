@@ -273,7 +273,7 @@ Each row gives the status and points to the sections that carry it.
 
 | Criterion | Status | Evidence |
 |---|---|---|
-| REQ-01 | PARTLY MET; the worker-routing before/after confirmation does not qualify: one cell records `inconclusive` | Every campaign is accepted and verified from its execution log, with the finding count of its row (tables, *Campaigns*); each receipt's `inputs/` pins the contract, protocol and family addendum. Before-after confirmations and preserved negative outcomes: [Outcomes by comparison](#outcomes-by-comparison). Adoption domain: R-01; the worker bound of `@/issue/d06a99ed` selects the single-frame route outside one worker, and its before/after confirmation is the [worker-routing outcome table](../d06a99ed/measurement/outcome.md). |
+| REQ-01 | MET; the worker-routing confirmation does not qualify (one route-identical cell records `inconclusive`, preserved), and the worker bound is retained under the [invoker adoption ruling](../d06a99ed/measurement/rework.md#adoption-ruling) | Every campaign is accepted and verified from its execution log, with the finding count of its row (tables, *Campaigns*); each receipt's `inputs/` pins the contract, protocol and family addendum. Before-after confirmations and preserved negative outcomes: [Outcomes by comparison](#outcomes-by-comparison). Adoption domain: R-01; the worker bound of `@/issue/d06a99ed` selects the single-frame route outside one worker, and its before/after confirmation is the [worker-routing outcome table](../d06a99ed/measurement/outcome.md). |
 | REQ-07 | MET | The [plan](../../ed3d490e-zen3-ldpc-frame-simd/plan.md) and the [terminal audit](../../ed3d490e-zen3-ldpc-frame-simd/terminal-audit.md) specify precision, lane layout, scalar references, workspace ownership, per-frame termination, partial batches and integration points before implementation; the [feasibility record](../../../bench_results/ed3d490e/intrinsic-feasibility/feasibility.json) compiles the register forms at Rust 1.95. |
 | REQ-08 | MET | Batch trait with default paths ([`batch_soft_decoder_contract.rs`](../../../../crates/gf2-coding/tests/batch_soft_decoder_contract.rs)); lane kernels in `gf2-kernels-simd` with their [assembly artefact](../../../../crates/gf2-kernels-simd/src/x86/asm/ldpc_lanes.asm.txt); `gf2-sim` stages over the trait; inherent batch functions removed (`@/issue/e4e2ba52`). Order and results for batches below, at and above eight frames and an incomplete final wave: [`ldpc_batch_contract.rs`](../../../../crates/gf2-coding/tests/ldpc_batch_contract.rs). The default batch path of `LdpcDecoder` is a hard decision, a contract `@/issue/e29fd776` tracks. |
 | REQ-09 | MET | Posterior-level equality on every route and backend, with mixed convergence and nonconvergence (`ldpc_batch_contract.rs`); worker counts and scheduling ([`batch_decode_worker_determinism.rs`](../../../../crates/gf2-sim/tests/batch_decode_worker_determinism.rs), [`pooled_batch_decoder.rs`](../../../../crates/gf2-coding/tests/pooled_batch_decoder.rs)); checkpoint resume (batch-decode resume tests of [`checkpoint_compat.rs`](../../../../crates/gf2-sim/tests/checkpoint_compat.rs)); portable fallback (backend tests of `ldpc_batch_contract.rs`). |
@@ -313,7 +313,10 @@ one-frame cells record `pass`, as does the NR one-worker full wave; the DVB-T2
 one-worker full wave, on the lane route in both revisions, records
 `inconclusive`. Each cell's route is the `selected_path` the receipt records
 ([worker-aware routing](../d06a99ed/implementation.md), *Before/after
-measurement*).
+measurement*). Under the [invoker adoption
+ruling](../d06a99ed/measurement/rework.md#adoption-ruling), the
+`dvb-t2-r12-production-w1-b8` `inconclusive` outcome is a measured limit:
+both revisions take the AVX2 lane route.
 
 **R-02: the lane variable step dominates one-worker time.** Measured limit:
 the category bullet of [Profile series](#profile-series) and the
