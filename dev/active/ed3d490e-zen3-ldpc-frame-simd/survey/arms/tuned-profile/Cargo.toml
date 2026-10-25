@@ -3,8 +3,7 @@
 #
 # A member outside the default build that the build record builds alone: its
 # `tuning-profile` feature of `gf2-coding` would otherwise unify into the
-# other arms' builds and move the digests of their executables. It repeats the
-# cell of the arms' library, whose change moves those digests too.
+# other arms' builds and change their decoder selection.
 
 # The path dependencies below count directory levels to the harness crates and
 # the workspace crates: the named exception `harness-path-dependencies` to
@@ -17,6 +16,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
+ldpc-batch-arms = { path = ".." }
 ldpc-survey-harness = { path = "../../../../1a379447-zen3-cpu-performance/c077a88b/survey/harness" }
 ldpc-throughput-harness = { path = "../../../../1a379447-zen3-cpu-performance/3be770d5/survey/harness" }
 tuning-campaign-support = { path = "../../../../../tools/tuning-campaign-support" }

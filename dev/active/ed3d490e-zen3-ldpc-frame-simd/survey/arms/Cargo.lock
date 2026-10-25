@@ -386,6 +386,7 @@ dependencies = [
  "gf2-coding",
  "gf2-core",
  "gf2-kernels-simd",
+ "ldpc-batch-arms",
  "ldpc-survey-harness",
  "ldpc-throughput-harness",
  "serde",

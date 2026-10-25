@@ -5,9 +5,10 @@
 //! each owning a decoder built before timing, and a timed call that decodes
 //! the declared per-worker batch of recorded frames, including the LLR
 //! conversion, the decoder's lane transposition in and out, the dispatch and
-//! the extraction of the information-window decisions. An arm declares one
-//! [`BatchRoute`], holds it through explicit [`DecodeSelectors`], and fails
-//! when a wave of its batch decodes on another.
+//! the extraction of the information-window decisions. An [`ArmPolicy`]
+//! builds each worker's decoder and writes the untimed diagnostics; a
+//! [`BatchRoute`] policy holds its route through explicit [`DecodeSelectors`]
+//! and fails when a wave of its batch decodes on another.
 
 pub use gf2_coding::ldpc::{BatchRoute, LaneBackend};
 use gf2_coding::ldpc::{DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode};
@@ -20,7 +21,7 @@ use ldpc_survey::arm::{
     self, ArmResult, ConversionCosts, DecoderCase, Normalization, NormalizationKind, Precision,
     Schedule, Stopping, StoppingKind, ARM_RESULT_SCHEMA,
 };
-use ldpc_throughput::driver::run_cell;
+use ldpc_throughput::driver::{run_cell, CellRun};
 use ldpc_throughput::gf2::config;
 use ldpc_throughput::workload::{check_request, median_u64, Workload};
 use serde::Serialize;
@@ -115,28 +116,22 @@ impl BatchWorker {
         batch: usize,
         route: BatchRoute,
     ) -> Result<Self, String> {
+        Self::from_decoder(code, batch, route.build_decoder(code, config, cap, batch)?)
+    }
+
+    /// Reuses a decoder built for `code` with codeword output.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when its wave granularity differs from [`LANES`].
+    pub fn from_decoder(
+        code: &LdpcCode,
+        batch: usize,
+        decoder: LdpcBatchDecoder,
+    ) -> Result<Self, String> {
         let (n, k) = (code.n(), code.k());
-        let decoder = LdpcBatchDecoder::with_selectors(
-            code.clone(),
-            config,
-            cap,
-            DecodedWord::Codeword,
-            route_selectors(route),
-        );
-        let decoder = match route {
-            BatchRoute::Lane(LaneBackend::Portable) => decoder.with_portable_lanes(),
-            _ => decoder,
-        };
         if decoder.batch_granularity() != LANES {
             return Err("the decoder groups frames in other waves than the arm".to_owned());
-        }
-        for frames in [batch.min(LANES), batch % LANES] {
-            let observed = decoder.batch_route(frames);
-            if frames > 0 && observed != route {
-                return Err(format!(
-                    "a wave of {frames} frames decodes on {observed:?}; the arm declares {route:?}"
-                ));
-            }
         }
         Ok(Self {
             decoder,
@@ -147,6 +142,12 @@ impl BatchWorker {
             k,
             decisions: vec![0; batch * k],
         })
+    }
+
+    /// Decoder whose selectors and routes describe this worker.
+    #[must_use]
+    pub fn decoder(&self) -> &LdpcBatchDecoder {
+        &self.decoder
     }
 
     /// Bytes of the decoder's lane workspace.
@@ -294,6 +295,145 @@ struct Diagnostics<'a> {
     conversion: ConversionCosts,
 }
 
+/// Decoder construction and route diagnostics for the shared cell lifecycle.
+pub trait ArmPolicy: Sync {
+    /// Per-worker route observations, collected before dispatch.
+    type Observation: Send;
+
+    /// Builds a codeword decoder, rejecting routes the arm does not declare.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the requested route is unavailable.
+    fn build_decoder(
+        &self,
+        code: &LdpcCode,
+        config: DecoderConfig,
+        cap: usize,
+        batch: usize,
+    ) -> Result<LdpcBatchDecoder, String>;
+
+    /// Observes the routes with the cell's actual worker count.
+    fn observe(
+        &self,
+        decoder: &LdpcBatchDecoder,
+        batch: usize,
+        workers: NonZeroUsize,
+    ) -> Self::Observation;
+
+    /// Writes untimed diagnostics and returns the result's selected path.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a diagnostic probe or serialization fails.
+    fn report(
+        &self,
+        context: CellContext<'_>,
+        observations: Vec<Self::Observation>,
+        workspace_bytes: Vec<usize>,
+        cell: &mut CellRun,
+    ) -> Result<String, String>;
+}
+
+/// Inputs available to an arm's untimed diagnostic probes.
+pub struct CellContext<'a> {
+    pub arm_name: &'a str,
+    pub code: &'a LdpcCode,
+    pub decoder_config: DecoderConfig,
+    pub batch: usize,
+    pub llrs: &'a [f32],
+}
+
+impl ArmPolicy for BatchRoute {
+    type Observation = ();
+
+    fn build_decoder(
+        &self,
+        code: &LdpcCode,
+        config: DecoderConfig,
+        cap: usize,
+        batch: usize,
+    ) -> Result<LdpcBatchDecoder, String> {
+        let route = *self;
+        let decoder = LdpcBatchDecoder::with_selectors(
+            code.clone(),
+            config,
+            cap,
+            DecodedWord::Codeword,
+            route_selectors(route),
+        );
+        let decoder = match route {
+            BatchRoute::Lane(LaneBackend::Portable) => decoder.with_portable_lanes(),
+            _ => decoder,
+        };
+        for frames in [batch.min(LANES), batch % LANES] {
+            let observed = decoder.batch_route(frames);
+            if frames > 0 && observed != route {
+                return Err(format!(
+                    "a wave of {frames} frames decodes on {observed:?}; the arm declares {route:?}"
+                ));
+            }
+        }
+        Ok(decoder)
+    }
+
+    fn observe(&self, _: &LdpcBatchDecoder, _: usize, _: NonZeroUsize) {}
+
+    fn report(
+        &self,
+        context: CellContext<'_>,
+        _: Vec<()>,
+        workspace_bytes: Vec<usize>,
+        cell: &mut CellRun,
+    ) -> Result<String, String> {
+        let route = *self;
+        let CellContext {
+            arm_name,
+            code,
+            decoder_config,
+            batch,
+            llrs,
+        } = context;
+        let stages = probe_stages(code, decoder_config, batch, route, llrs)?;
+        cell.conversion.pack_ns = stages.pack_ns;
+        cell.conversion.batch_fill_ns = stages.decode_ns;
+        cell.conversion.unpack_ns = stages.extract_ns;
+
+        let selectors = route_selectors(route);
+        let diagnostics = Diagnostics {
+            kind: "batch-decoder-diagnostics",
+            arm: arm_name,
+            route: format!("{route:?}"),
+            lane_min_frames: selectors.lane_min_frames(),
+            lane_max_edges: selectors.lane_max_edges(),
+            lane_max_workers: selectors.lane_max_workers().get(),
+            granules_per_task: selectors.granules_per_task().get(),
+            batch_frames: batch,
+            wave_frames: LANES,
+            workspace_bytes: workspace_bytes.clone(),
+            stage_probes: STAGE_PROBES,
+            stage_statistic: "median",
+            conversion: cell.conversion,
+        };
+        eprintln!(
+            "{}",
+            serde_json::to_string(&diagnostics).map_err(|e| e.to_string())?
+        );
+
+        Ok(format!(
+            "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route {route:?} under \
+             selectors lane_min_frames {} lane_max_edges {}, batches of {batch} frames in waves \
+             of {LANES}, lane workspace {} bytes per worker, reused decoder per worker; \
+             {} pinned workers, {} process threads",
+            selectors.lane_min_frames(),
+            selectors.lane_max_edges(),
+            workspace_bytes.first().copied().unwrap_or_default(),
+            cell.workers_observed,
+            cell.threads.ready
+        ))
+    }
+}
+
 /// Runs one steady-state cell of the batch decoder on `route` and writes the
 /// arm result.
 ///
@@ -303,6 +443,15 @@ struct Diagnostics<'a> {
 /// unusable, when a wave leaves `route`, or when a worker violates its
 /// placement or decodes other than the prepared per-frame error counts.
 pub fn run(arm_name: &str, route: BatchRoute) -> Result<(), String> {
+    run_with_policy(arm_name, route)
+}
+
+/// Runs the shared cell lifecycle with arm-specific construction and diagnostics.
+///
+/// # Errors
+///
+/// As [`run`], including errors from `policy`.
+pub fn run_with_policy(arm_name: &str, policy: impl ArmPolicy) -> Result<(), String> {
     let request = arm::read_request()?;
     let quality = arm::prepared_quality()?
         .ok_or("steady-state cells reuse prepared quality; GF2_LDPC_QUALITY is unset")?;
@@ -346,7 +495,12 @@ pub fn run(arm_name: &str, route: BatchRoute) -> Result<(), String> {
     }
     let decoder_config = config(case.normalization_factor, case.syndrome_stopping);
     let cap = case.iteration_cap as usize;
-    let workspace_bytes = Mutex::new(vec![0usize; request.cpus.len()]);
+    let concurrency = NonZeroUsize::new(request.cpus.len());
+    let observations = Mutex::new(
+        std::iter::repeat_with(|| None)
+            .take(request.cpus.len())
+            .collect::<Vec<_>>(),
+    );
     let mut cell = run_cell(
         arm_name,
         &request,
@@ -355,41 +509,33 @@ pub fn run(arm_name: &str, route: BatchRoute) -> Result<(), String> {
         setup_start,
         0,
         |worker| {
-            let state = BatchWorker::new(&code, decoder_config, cap, batch, route)?;
-            workspace_bytes.lock().expect("workspace list")[worker] = state.workspace_bytes();
+            let decoder = policy.build_decoder(&code, decoder_config, cap, batch)?;
+            let state = BatchWorker::from_decoder(&code, batch, decoder)?;
+            let observed =
+                policy.observe(state.decoder(), batch, concurrency.expect("nonempty pool"));
+            observations.lock().expect("worker observations")[worker] =
+                Some((state.workspace_bytes(), observed));
             Ok(state)
         },
         |worker: &mut BatchWorker| {
-            worker.decode_batch_with_workers(llrs, NonZeroUsize::new(request.cpus.len()).unwrap())
+            worker.decode_batch_with_workers(llrs, concurrency.expect("nonempty pool"))
         },
         |worker: &BatchWorker| &worker.decisions,
     )?;
-    let stages = probe_stages(&code, decoder_config, batch, route, llrs)?;
-    cell.conversion.pack_ns = stages.pack_ns;
-    cell.conversion.batch_fill_ns = stages.decode_ns;
-    cell.conversion.unpack_ns = stages.extract_ns;
-
-    let selectors = route_selectors(route);
-    let workspace_bytes = workspace_bytes.into_inner().expect("workspace list");
-    let diagnostics = Diagnostics {
-        kind: "batch-decoder-diagnostics",
-        arm: arm_name,
-        route: format!("{route:?}"),
-        lane_min_frames: selectors.lane_min_frames(),
-        lane_max_edges: selectors.lane_max_edges(),
-        lane_max_workers: selectors.lane_max_workers().get(),
-        granules_per_task: selectors.granules_per_task().get(),
-        batch_frames: batch,
-        wave_frames: LANES,
-        workspace_bytes: workspace_bytes.clone(),
-        stage_probes: STAGE_PROBES,
-        stage_statistic: "median",
-        conversion: cell.conversion,
-    };
-    eprintln!(
-        "{}",
-        serde_json::to_string(&diagnostics).map_err(|e| e.to_string())?
-    );
+    let observations = observations.into_inner().expect("worker observations");
+    let (workspace_bytes, routes) = observations.into_iter().map(Option::unwrap).unzip();
+    let selected_path = policy.report(
+        CellContext {
+            arm_name,
+            code: &code,
+            decoder_config,
+            batch,
+            llrs,
+        },
+        routes,
+        workspace_bytes,
+        &mut cell,
+    )?;
 
     let result = ArmResult {
         schema: ARM_RESULT_SCHEMA.to_owned(),
@@ -398,17 +544,7 @@ pub fn run(arm_name: &str, route: BatchRoute) -> Result<(), String> {
         cache_state_applied: request.cache_state.clone(),
         workers_observed: cell.workers_observed,
         cpus_observed: arm::observed_cpus(),
-        selected_path: Some(format!(
-            "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route {route:?} under \
-             selectors lane_min_frames {} lane_max_edges {}, batches of {batch} frames in waves \
-             of {LANES}, lane workspace {} bytes per worker, reused decoder per worker; \
-             {} pinned workers, {} process threads",
-            selectors.lane_min_frames(),
-            selectors.lane_max_edges(),
-            workspace_bytes.first().copied().unwrap_or_default(),
-            cell.workers_observed,
-            cell.threads.ready
-        )),
+        selected_path: Some(selected_path),
         conversion: Some(cell.conversion),
         quality: Some(quality),
     };
