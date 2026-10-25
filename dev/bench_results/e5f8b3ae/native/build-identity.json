@@ -349,6 +349,10 @@
     "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json",
     "sha256": "d7105d81edd849088e4c5dec56cf4520c2593b8235e2487eef44b1bc762b36a5"
   },
+  "supersedes": {
+    "path": "dev/bench_results/ed3d490e/preparation/build-identity.json",
+    "sha256": "94a57cb10fca64a7c3a2d4b00ed3db2d26a766ec19df45658c9e7534a4bd0ed4"
+  },
   "arms": {
     "aff3ct-flooding-nms-f32": {
       "source": "pinned",
