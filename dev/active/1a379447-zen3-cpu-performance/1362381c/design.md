@@ -67,6 +67,16 @@ remeasuring every primary cell, needs roughly one family per six primary cells
 (P-20 below) and every family harness rebuilt. That fails the lightest-approach
 standing rule and gains nothing the invariant does not already grant.
 
+The [drift record](production-drift.json) contradicts the premise of D-3: it
+classifies every committed receipt `code-differs`, because each receipt's
+measured packages carry code changes. The invoker therefore ruled on
+2026-10-25 that consumed cells keep their evidence by identity, each labelled
+with its drift class (REQ-07 invalidates evidence only for producing
+measurement-behavior changes), and that the integrated families remeasure only
+what the criteria name: the BCH cells (FI-4), the core and decoder routes
+(FI-1, FI-2) and the AFF3CT decoder comparison (FI-3); no family remeasures
+other consumed cells.
+
 **D-4. Several integrated families instead of one.** P-20 admits at most six
 confirmatory and holdout cells per first attempt. The integrated measurement
 is therefore split into families that each ask one post-integration question
@@ -163,7 +173,7 @@ and the AFF3CT flooding SIMD modes
 | surfaced pitfall 34: comparator-gap outcome inversion | Folded in: the scorecard reads comparator-gap outcomes through the `INTERPRETATION` map of `make-collection-outcome.py`, extended at its source where a family's arm order differs. |
 | surfaced pitfall 50: no zero-window runner mode | Resolved: the shared `benchmark-ab-runner smoke` (`@/issue/d45aff82`) answers the validation position with one untimed dispatch; WP-3 and WP-4 use it. |
 | surfaced pitfall 83: AFF3CT INTRA at half LLR scale | Outside any criterion of this issue: bug `@/issue/11bfbfd9` tracks it outside the epic. The scorecard reports the arm as not quality-compatible on the recorded corpus, as recorded. |
-| `12fdeb5b` NR encoder baselines | Resolved, done: consumed by identity, or remeasured if D-3 marks it affected. |
+| `12fdeb5b` NR encoder baselines | Resolved, done: consumed by identity with its drift class. |
 | `bdc507a3` resumable P-11 | Resolved by protocol v4; integrated campaigns resume under it. |
 | `428f2f6b` hand-copied numbers | Resolved; the scorecard copies no figure into prose. |
 | `a387825e` lock leak | Resolved on main; the window runner also replaces lock-holding compiler-cache servers. |
@@ -188,7 +198,6 @@ release builds of the current tree, built in-session before the window.
 | FI-2 `1362381c-decoder-route-integration` | `final-integration` | Does the committed coding envelope with worker-aware routing decode no slower than the conservative selectors at every worker configuration? | tuned-portable tuned-profile arm against the conservative-portable single-frame arm, rebuilt after `e5f8b3ae`; `make-family.py` declaration under `survey/families/` with `holdout_declaration` | Both codes, one worker at full and one-frame waves, plus six and twelve physical cores and twenty-four logical CPUs; holdout cells from batch sizes and seeds absent from the calibration inventory. |
 | FI-3 `1362381c-ldpc-aff3ct-integration` | `decoder-family`, `comparator-gap` | Is the integrated production route materially slower than AFF3CT's matched flooding NMS decoder? | production gf2 arm under the committed envelope; pinned AFF3CT matched arm; `make-family.py` | Both codes at one worker, full wave and one frame, plus twelve physical cores. Matched-algorithm only: the fastest-compatible pilot admitted no AFF3CT mode as quality-compatible, so that comparison is consumed by identity. |
 | FI-4 `1362381c-bch-integration` | `consumer-family`, `comparator-gap` | Is gf2's production BCH batch encode materially slower than the strongest external arm of the `4e732b56` survey on its workloads? | production gf2 BCH encode (the `8e53235b` harness); AFF3CT and bchlib programs wrapped as runner arms (D-6) | One cell per survey code class that `8e53235b` changed (m14 and the DVB-T2 short and normal codes), at the batch sizes of the `fd9d5416` W1 table; one core, plus a parallel batch cell at six physical cores if the arm exposes workers. |
-| FI-5… `1362381c-<domain>-integration` | `consumer-family` or `kernel-family`, `comparator-gap` | As the original family, on the integrated tree | the original family's harness and pinned external arm | Only the primary cells WP-2 classifies as affected, grouped by harness, at most six per family. Zero families if none is affected. |
 
 Each family freezes its own `material_gap_threshold`, margins and
 `search_budget` in the pilot addendum committed before the window, with a
@@ -224,7 +233,7 @@ and the freezer's cell selection stays within `max_cells`.
 flowchart LR
   A[WP-1 workload set + registry] --> B[WP-2 drift classification]
   B --> C[WP-3 core and decoder route families]
-  B --> D[WP-4 comparator families FI-3, FI-4, FI-5]
+  B --> D[WP-4 comparator families FI-3, FI-4]
   E[e5f8b3ae lands] --> C
   E --> D
   C --> W[window 1: pilots, in-window freeze, confirmations, profiles]
@@ -341,9 +350,9 @@ estimate.
 | WP | Goal | Files | Inputs | Untimed verification | Queue lines |
 |---|---|---|---|---|---|
 | WP-1 | Freeze the workload set (D-1) and the family registry | `1362381c/survey/make-workload-set.py`, `1362381c/workload-set.json` | committed addenda and acceptance summaries | generator self-test; byte-stable rerun | none |
-| WP-2 | Classify consumed cells as affected or unaffected (D-3) | extend `6e87c436/survey/make-production-drift.py` at its source to take any receipt; `1362381c/production-drift.json` | receipts' `inputs/` snapshots, current tree | rerun identical; each FI-5 cell traces to a `code-differs` row | none |
+| WP-2 | Classify consumed cells as affected or unaffected (D-3) | extend `6e87c436/survey/make-production-drift.py` at its source to take any receipt; `1362381c/production-drift.json` | receipts' `inputs/` snapshots, current tree | rerun identical | none |
 | WP-3 | Core and decoder route integration families FI-1, FI-2 | `63bad95d/survey/planned-families.json` entry and its generators; `ed3d490e-zen3-ldpc-frame-simd/survey/families/1362381c-decoder-route.json`; holdout declarations; ledgers; launchers | WP-1; `e5f8b3ae` merged | arm builds at Rust 1.95; `benchmark-ab-runner smoke`; untimed staged runs | two (pilot → freeze → confirmation each) |
-| WP-4 | Comparator integration families FI-3, FI-4, FI-5… | FI-3 declaration under `survey/families/`; BCH arm wrappers beside the `8e53235b` harness; per-family addenda and launchers | WP-1, WP-2; `e5f8b3ae` merged | bit-exact equivalence gates; smoke | one per family |
+| WP-4 | Comparator integration families FI-3, FI-4 | FI-3 declaration under `survey/families/`; BCH arm wrappers beside the `8e53235b` harness; per-family addenda and launchers | WP-1, WP-2; `e5f8b3ae` merged | bit-exact equivalence gates; smoke | one per family |
 | WP-5 | Reprofile cases and launchers | decoder case file and build record; `RULES_BY_EXECUTABLE` entry; launchers over `profile-series.sh` for the other subjects | WP-2, WP-3 builds | dry session (outputs are not evidence); allocation witnesses | one per series |
 | WP-6 | Scorecard, gap register, report, determinism record, publication | `make-scorecard.py`, `gaps.json`, `dev/bench_results/1362381c/*`, `1362381c/findings.md`, `performance-evidence.md` entries | window outputs, WP-1/2 | byte-reproducible double run; `reevaluate-receipts.sh`; determinism suites through `./scripts/cargo-budget.sh --test`; `./scripts/cargo-ci.sh` | none |
 
@@ -355,10 +364,9 @@ queue lines in its report.
 
 ## Risks and open questions
 
-- WP-2 may classify many primary cells as affected. If the FI-5 families
-  exceed what window 1 holds, the overflow moves to window 2, with the reason
-  recorded per cell. A cell that does not run remains a consumed historical
-  row labelled `affected, not remeasured`. It is never presented as current.
+- A consumed cell is a historical row labelled with its drift class; the
+  scorecard never presents a `code-differs` row as a measurement of the
+  current tree.
 - A host disturbance during window 1 cannot be repaired by a second attempt
   (P-20, $t = 2$). It is recorded as in the `63bad95d` disturbance record. A
   repeat needs an invoker ruling like F-08 of
