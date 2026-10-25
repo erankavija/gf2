@@ -190,6 +190,10 @@
     "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json",
     "sha256": "d7105d81edd849088e4c5dec56cf4520c2593b8235e2487eef44b1bc762b36a5"
   },
+  "supersedes": {
+    "path": "dev/bench_results/ed3d490e/preparation-portable-build-tree/build-identity.json",
+    "sha256": "7d026318220023c8e3a41c0c6064a8e8d651a09a135c7e64191dfcff4ae51d5b"
+  },
   "arms": {
     "gf2-batch-conservative-portable": {
       "source": "workspace",
