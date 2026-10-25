@@ -25,7 +25,7 @@ SHARED = ("content_anchor", "repository_files", "rust_code_text", "asm_listing")
 SCRIPTS = ("locate", "make-production-drift")
 BENCHMARK_SCHEMA = "zen3-benchmark-receipt-v1"
 MANIFEST = b'[package]\nname = "gf2-core"\n'
-LIB = b'fn one() {}\n#[cfg(test)]\nmod unit;\n#[cfg(test)]\n#[path = "paired.rs"]\nmod paired_tests;\n'
+LIB = b'mod inline;\nfn one() {}\n#[cfg(test)]\nmod unit;\n#[cfg(test)]\n#[path = "paired.rs"]\nmod paired_tests;\n'
 EARLIER_LIB = b"fn zero() {}\n"
 KERNEL = b"__global__ void one() {}\n"
 EARLIER_KERNEL = b"__global__ void zero() {}\n"
@@ -35,9 +35,14 @@ EARLIER_TEST = b"#[test]\nfn zero() {}\n"
 UNIT = b"#[test]\nfn unit() {}\n"
 EARLIER_UNIT = b"#[test]\nfn earlier_unit() {}\n"
 # The production files of the current fixture package.
+BUILD = b'fn main() { cc::Build::new().file("hip/kernel.hip").file("hip/extra.hip"); }\n'
+INLINE_TEST = b"fn two() {}\n#[cfg(test)]\nmod checks {\n    #[test]\n    fn two() {}\n}\n"
+EARLIER_INLINE_TEST = b"fn two() {}\n#[cfg(test)]\nmod checks {\n    #[test]\n    fn zero() {}\n}\n"
 PRODUCTION = {
     "Cargo.toml": MANIFEST,
+    "build.rs": BUILD,
     "src/lib.rs": LIB,
+    "src/inline.rs": INLINE_TEST,
     "hip/kernel.hip": KERNEL,
     "hip/extra.hip": EXTRA,
 }
@@ -110,6 +115,12 @@ class AllReceipts(unittest.TestCase):
             {"src/unit.rs": EARLIER_UNIT, "src/paired.rs": EARLIER_UNIT},
             None,
         ),
+        "inline-test-only": (
+            BENCHMARK_SCHEMA,
+            PRODUCTION | {"src/inline.rs": EARLIER_INLINE_TEST},
+            {"src/inline.rs": EARLIER_INLINE_TEST},
+            None,
+        ),
         "unavailable": (
             BENCHMARK_SCHEMA,
             PRODUCTION | {"src/lib.rs": b"fn three() {}\n"},
@@ -149,6 +160,10 @@ class AllReceipts(unittest.TestCase):
         (package / "src" / "lib.rs").write_bytes(LIB)
         (package / "src" / "unit.rs").write_bytes(UNIT)
         (package / "src" / "paired.rs").write_bytes(UNIT)
+        (package / "src" / "inline.rs").write_bytes(INLINE_TEST)
+        (package / "build.rs").write_bytes(BUILD)
+        (package / "benchmarks-cpp").mkdir()
+        (package / "benchmarks-cpp" / "standalone.cpp").write_bytes(b"int main() {}\n")
         (package / "src" / "notes.md").write_bytes(b"# Notes\n")
         (package / "hip").mkdir()
         (package / "hip" / "kernel.hip").write_bytes(EARLIER_KERNEL)
@@ -245,7 +260,7 @@ class AllReceipts(unittest.TestCase):
         )
 
     def test_changed_test_code_is_not_production_drift(self):
-        for name in ("test-only", "unit-test-only"):
+        for name in ("test-only", "unit-test-only", "inline-test-only"):
             self.assert_row(name, "code-identical", "production files", [])
 
     def test_an_added_kernel_source_makes_code_differs(self):
@@ -273,8 +288,10 @@ class AllReceipts(unittest.TestCase):
             basis,
             [
                 ("crates/gf2-core/src/lib.rs", "code-differs"),
+                ("crates/gf2-core/build.rs", "added"),
                 ("crates/gf2-core/hip/extra.hip", "added"),
                 ("crates/gf2-core/hip/kernel.hip", "added"),
+                ("crates/gf2-core/src/inline.rs", "added"),
             ],
         )
         self.assert_row(

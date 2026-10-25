@@ -104,11 +104,13 @@ def held_bytes(path, measured, snapshots):
     )
 
 
-def classify(path, measured, snapshots, history=True):
+def classify(path, measured, snapshots, history=True, tests_apart=False):
     """The class of `path` against its `measured` bytes.
 
     `snapshots` lists directories holding measured bytes at their paths, or is a
-    callable `(path, measured)` returning them.
+    callable `(path, measured)` returning them. With `tests_apart`, a Rust source
+    whose code text agrees outside its inline `#[cfg(test)]` modules is
+    `test-code-only`.
     """
     current = ROOT / path
     if not current.is_file():
@@ -122,6 +124,8 @@ def classify(path, measured, snapshots, history=True):
     )
     if byte_class(path, held, data) == "comment-or-blank-only":
         return entry | {"class": "comment-or-blank-only"}
+    if tests_apart and byte_class(path, without_tests(held), without_tests(data)) != "code-differs":
+        return entry | {"class": "test-code-only"}
     if not history:
         return entry | {"class": "code-differs"}
     return entry | {"class": "code-differs", "changed_by": changing_commits(path, measured)}
@@ -251,14 +255,15 @@ RECEIPT_CLASSES = {
     "revision; `unresolved_inputs` names its pinned producing inputs",
 }
 COMPILED = (
-    "only compiled production files take part: Rust and native-kernel sources "
-    "(`.rs`, `.hip`, C and C++ sources and headers), `Cargo.toml`, and the "
-    "non-Markdown files a current `.rs` file names in a literal `include!`, "
-    "`include_str!` or `include_bytes!`; a package's `tests/`, `benches/` and "
+    "only compiled production files take part: `.rs` files, `Cargo.toml`, the "
+    "native sources a build script names in a literal `.file(...)` with their "
+    "`#include` closure, and the files a production `.rs` file names in a literal "
+    "`include!`, `include_str!` or `include_bytes!`; a package's `tests/`, `benches/` and "
     "`examples/` targets, modules loaded only under `#[cfg(test)]` and files "
     "included only from test code are not production"
 )
-SOURCE_SUFFIXES = (".rs", ".hip", ".c", ".cc", ".cpp", ".h", ".hpp", ".cuh")
+BUILD_FILE = re.compile(r'\.file\(\s*"([^"]+)"\s*\)')
+NATIVE_INCLUDE = re.compile(r'^\s*#\s*include\s*"([^"]+)"', re.MULTILINE)
 NON_PRODUCTION_TARGETS = ("tests", "benches", "examples")
 FILES = "production files"
 REVISION = "production files at the source revision"
@@ -266,8 +271,8 @@ UNAVAILABLE = "measured bytes unavailable"
 UNPINNED = "measured content not pinned"
 BASES = {
     FILES: "the compiled files under `crates/` the producing snapshot pins, against the "
-    "tree: identical or comment-or-blank-only is equal; code-differs, removed, and a "
-    "tracked `src/` file the receipt does not pin (added) differ",
+    "tree: identical, comment-or-blank-only or test-code-only is equal; code-differs, "
+    "removed, and a tracked production file the receipt does not pin (added) differ",
     REVISION: "the snapshot pins no file under `crates/`; the compiled files of every "
     "package under `crates/` at the `source_revision` the receipt records, read as "
     "bytes, against the tree by the same file classes",
@@ -296,6 +301,35 @@ def sibling_module(name):
     return module
 
 
+def without_tests(data):
+    """Rust source bytes without their inline `#[cfg(test)]` modules."""
+    text = data.decode(errors="replace")
+    kept, position = [], 0
+    for start, end in test_spans(text):
+        kept.append(text[position:start])
+        position = end
+    return "".join(kept + [text[position:]]).encode()
+
+
+def native_sources(listed, read):
+    """The native files the build scripts among `listed` compile, with their includes."""
+    pending = []
+    for path in listed:
+        if pathlib.PurePath(path).name == "build.rs" and not not_production_target(path):
+            package = os.path.dirname(path)
+            for name in BUILD_FILE.findall(read(path).decode(errors="replace")):
+                pending.append(os.path.normpath(os.path.join(package, name)))
+    found = set()
+    while pending:
+        path = pending.pop()
+        if path in found or path not in listed:
+            continue
+        found.add(path)
+        for name in NATIVE_INCLUDE.findall(read(path).decode(errors="replace")):
+            pending.append(os.path.normpath(os.path.join(os.path.dirname(path), name)))
+    return found
+
+
 def test_spans(text):
     """Character spans of the inline `#[cfg(test)]` modules of a Rust source."""
     spans = []
@@ -321,8 +355,9 @@ def module_file(parent, name, listed):
 def production_filter(listed, read):
     """Whether a root-relative path among `listed` is a compiled production file.
 
-    Production files are the native and Rust sources, `Cargo.toml` and the literal
-    include targets of the package's library, binaries and build script; a package's
+    Production files are the Rust sources, `Cargo.toml`, the native sources its build
+    script compiles and the literal include targets of its library, binaries and build
+    script; a package's
     `tests/`, `benches/` and `examples/` targets, Rust modules loaded only by
     `#[cfg(test)]` declarations and files included only from test code are not.
     """
@@ -359,11 +394,13 @@ def production_filter(listed, read):
             if not any(start <= match.start() < end for start, end in spans):
                 targets.add(os.path.normpath(os.path.join(os.path.dirname(path), match.group(1))))
 
+    native = native_sources(listed, read)
+
     def compiled(path):
         if not_production_target(path) or path in test_only:
             return False
         name = pathlib.PurePath(path).name
-        return name.endswith(SOURCE_SUFFIXES) or name == "Cargo.toml" or path in targets
+        return name.endswith(".rs") or name == "Cargo.toml" or path in targets or path in native
 
     return compiled
 
@@ -392,7 +429,7 @@ def file_row(receipts, digests, directories, compiled):
     files, unavailable = [], []
     for path, digest in sorted(digests.items()):
         try:
-            files.append(classify(path, digest, snapshots, history=False))
+            files.append(classify(path, digest, snapshots, history=False, tests_apart=True))
         except UnavailableSnapshot:
             unavailable.append({"path": path, "class": "unavailable"})
     files += added_files(packages, digests, compiled)
@@ -432,7 +469,10 @@ def revision_row(revision, directories, compiled):
         for directory in directories
         if any(path.startswith(f"{directory}/") for path in measured)
     ]
-    files = [classify(path, digest, show, history=False) for path, digest in sorted(measured.items())]
+    files = [
+        classify(path, digest, show, history=False, tests_apart=True)
+        for path, digest in sorted(measured.items())
+    ]
     files += added_files(packages, measured, compiled)
     return {"packages": packages, "source_revision": revision} | verdict(files, REVISION)
 
