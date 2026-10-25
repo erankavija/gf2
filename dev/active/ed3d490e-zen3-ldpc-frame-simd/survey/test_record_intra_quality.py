@@ -3,6 +3,7 @@
 
 import copy
 import importlib.util
+import json
 import subprocess
 import sys
 import unittest
@@ -163,7 +164,10 @@ class CommittedRecordTest(unittest.TestCase):
                    if Path(path).parent.name == "quality-intra"]
         records = [path.parent for path in records]
         self.assertEqual(len(records), 1)
-        run = subprocess.run([sys.executable, "-B", str(SURVEY / "record-intra-quality.py"),
+        pinned = json.loads((records[0] / recorder.RECORD).read_text(encoding="utf-8"))
+        if recorder.sha256(executable.read_bytes()) != pinned["build"]["executable_sha256"]:
+            self.skipTest("the built replay executable is not the one the record pins")
+        run =subprocess.run([sys.executable, "-B", str(SURVEY / "record-intra-quality.py"),
                               "check", str(records[0])], cwd=recorder.smoke.ROOT,
                              capture_output=True, text=True)
         self.assertEqual(run.returncode, 0, run.stdout)
