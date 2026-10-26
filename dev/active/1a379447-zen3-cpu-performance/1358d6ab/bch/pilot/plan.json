@@ -87,6 +87,20 @@
       "pilot_pairs": 24
     },
     {
+      "cell_id": "m14-b16-aff3ct-lfsr-simd-inter",
+      "baseline_arm": "gf2-bch-encode-batch",
+      "candidate_arm": "aff3ct-lfsr-simd-inter",
+      "case": {
+        "workload": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 16
+        },
+        "seed": 13582
+      },
+      "pilot_pairs": 24
+    },
+    {
       "cell_id": "m14-b256-aff3ct-lfsr-simd-inter",
       "baseline_arm": "gf2-bch-encode-batch",
       "candidate_arm": "aff3ct-lfsr-simd-inter",
@@ -96,7 +110,77 @@
           "degree": 14,
           "batch": 256
         },
-        "seed": 13582
+        "seed": 13583
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "m14-b4096-aff3ct-lfsr-simd-inter",
+      "baseline_arm": "gf2-bch-encode-batch",
+      "candidate_arm": "aff3ct-lfsr-simd-inter",
+      "case": {
+        "workload": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 4096
+        },
+        "seed": 13584
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2s-b1-aff3ct-lfsr-scalar",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "aff3ct-lfsr-scalar",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 7200,
+          "batch": 1
+        },
+        "seed": 13585
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2s-b16-aff3ct-lfsr-simd-inter",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "aff3ct-lfsr-simd-inter",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 7200,
+          "batch": 16
+        },
+        "seed": 13586
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2s-b256-aff3ct-lfsr-simd-inter",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "aff3ct-lfsr-simd-inter",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 7200,
+          "batch": 256
+        },
+        "seed": 13587
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2s-b4096-aff3ct-lfsr-simd-inter",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "aff3ct-lfsr-simd-inter",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 7200,
+          "batch": 4096
+        },
+        "seed": 13588
       },
       "pilot_pairs": 24
     },
@@ -110,7 +194,21 @@
           "n": 7200,
           "batch": 1
         },
-        "seed": 13583
+        "seed": 13589
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2s-b16-bchlib-table-remainder",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "bchlib-table-remainder",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 7200,
+          "batch": 16
+        },
+        "seed": 13590
       },
       "pilot_pairs": 24
     },
@@ -124,7 +222,77 @@
           "n": 7200,
           "batch": 256
         },
-        "seed": 13584
+        "seed": 13591
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2s-b4096-bchlib-table-remainder",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "bchlib-table-remainder",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 7200,
+          "batch": 4096
+        },
+        "seed": 13592
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2n-b1-aff3ct-lfsr-scalar",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "aff3ct-lfsr-scalar",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 32400,
+          "batch": 1
+        },
+        "seed": 13593
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2n-b16-aff3ct-lfsr-simd-inter",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "aff3ct-lfsr-simd-inter",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 32400,
+          "batch": 16
+        },
+        "seed": 13594
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2n-b256-aff3ct-lfsr-simd-inter",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "aff3ct-lfsr-simd-inter",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 32400,
+          "batch": 256
+        },
+        "seed": 13595
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2n-b4096-aff3ct-lfsr-simd-inter",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "aff3ct-lfsr-simd-inter",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 32400,
+          "batch": 4096
+        },
+        "seed": 13596
       },
       "pilot_pairs": 24
     },
@@ -138,7 +306,21 @@
           "n": 32400,
           "batch": 1
         },
-        "seed": 13585
+        "seed": 13597
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2n-b16-bchlib-table-remainder",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "bchlib-table-remainder",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 32400,
+          "batch": 16
+        },
+        "seed": 13598
       },
       "pilot_pairs": 24
     },
@@ -152,7 +334,21 @@
           "n": 32400,
           "batch": 256
         },
-        "seed": 13586
+        "seed": 13599
+      },
+      "pilot_pairs": 24
+    },
+    {
+      "cell_id": "t2n-b4096-bchlib-table-remainder",
+      "baseline_arm": "gf2-dvb-bch-encode",
+      "candidate_arm": "bchlib-table-remainder",
+      "case": {
+        "workload": "dvb-bch-encode",
+        "size": {
+          "n": 32400,
+          "batch": 4096
+        },
+        "seed": 13600
       },
       "pilot_pairs": 24
     }

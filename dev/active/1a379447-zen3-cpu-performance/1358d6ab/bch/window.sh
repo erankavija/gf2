@@ -7,10 +7,11 @@
 #
 # `plan` projects a stage's runner plan over the arms `build-identity.json`
 # pins; it times nothing. `window` runs in the benchmark window: the pilot, the
-# canonical freeze, a commit of the freeze outputs alone, and the confirmation,
-# each through the story launcher `run-family-campaign.py` in SURVEY_DIRECTORY,
-# which resumes an interrupted campaign under its own identity. A frozen
-# confirmation is reused, never re-derived.
+# canonical freeze of the frozen cell selection, a commit of the freeze outputs
+# alone, and the confirmation, each through the story launcher
+# `run-family-campaign.py` in SURVEY_DIRECTORY, which resumes an interrupted
+# campaign under its own identity. A frozen confirmation is reused, never
+# re-derived.
 set -euo pipefail
 
 repo=$(git rev-parse --show-toplevel)
@@ -64,9 +65,19 @@ target/release/benchmark-acceptance --next-attempt "${stage[1]}" "${stage[2]}"
 
 mkdir -p "$here/confirmation"
 if [[ ! -f "$here/confirmation/addendum.json" || ! -f "$here/confirmation/derivation.txt" ]]; then
-    description=$(cd "$here" && python3 -B -c 'import importlib; print(importlib.import_module("make-pilot-addendum").CONFIRMATION_DESCRIPTION)')
+    # The cell selection, its rationale and the confirmation prose the pilot addendum's
+    # generator froze, one per line.
+    mapfile -t frozen < <(cd "$here" && python3 -B -c '
+import importlib
+declared = importlib.import_module("make-pilot-addendum")
+print(declared.CONFIRMATION_DESCRIPTION)
+print(declared.SELECTION_RATIONALE)
+print("\n".join(declared.CONFIRMATORY))')
+    cells=()
+    for cell in "${frozen[@]:2}"; do cells+=(--cell "$cell"); done
     python3 "$freezer" --pilot-addendum "$here/pilot/addendum.json" --pilot "${stage[0]}" \
-        --frozen-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --family-description "$description" \
+        --frozen-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --family-description "${frozen[0]}" \
+        "${cells[@]}" --selection-rationale "${frozen[1]}" \
         --output "$here/confirmation/addendum.json" --record "$here/confirmation/derivation.txt"
 fi
 project confirmation "$rel/confirmation/addendum.json" "$here/confirmation/plan.json"

@@ -3,9 +3,9 @@
   "campaign_id": "1358d6ab-bch-integration-pilot",
   "issue": "1358d6ab",
   "family": "1362381c-bch-integration",
-  "plan_sha256": "ffadfc226fdcc279c5df4c9af4fd06ac11ebd43abc1ce708317dfcbdeade4065",
+  "plan_sha256": "ee8f8a23500fe0e9498c8cff73e22ce44d4651d872c8cd88f13ff4cbda4ac88b",
   "addendum": "dev/active/1a379447-zen3-cpu-performance/1358d6ab/bch/pilot/addendum.json",
-  "addendum_sha256": "97fca79391cf6d1259e83e1c6b9a3598fbac7d1b46bdeb1f13e7d3104740dcf7",
+  "addendum_sha256": "4a14206d6d8b568303ad86e959e25e32e15eb3f5aff2bb3d1d55caa33eeabb0d",
   "cells": [
     {
       "cell_id": "m14-b1-aff3ct-lfsr-scalar",
@@ -29,6 +29,32 @@
           "cache_state_declared": "warm",
           "cache_state_applied": "warm",
           "selected_path": "aff3ct-lfsr-scalar/(16383, 16215) batch 1, codewords equal gf2's; AFF3CT v4.7.0 at e8a65c5047262d97a15563b9edc961f69b2792cc (library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529), 1 frames per wave, MIPP AVX2",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "m14-b16-aff3ct-lfsr-simd-inter",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-bch-encode-batch",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/PolyRemainderScalar",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-lfsr-simd-inter",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "aff3ct-lfsr-simd-inter/(16383, 16215) batch 16, codewords equal gf2's; AFF3CT v4.7.0 at e8a65c5047262d97a15563b9edc961f69b2792cc (library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529), 8 frames per wave, MIPP AVX2",
           "windows": 0
         }
       ]
@@ -60,6 +86,136 @@
       ]
     },
     {
+      "cell_id": "m14-b4096-aff3ct-lfsr-simd-inter",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-bch-encode-batch",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/PolyRemainderScalar",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-lfsr-simd-inter",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "aff3ct-lfsr-simd-inter/(16383, 16215) batch 4096, codewords equal gf2's; AFF3CT v4.7.0 at e8a65c5047262d97a15563b9edc961f69b2792cc (library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529), 8 frames per wave, MIPP AVX2",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "t2s-b1-aff3ct-lfsr-scalar",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-lfsr-scalar",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "aff3ct-lfsr-scalar/(7200, 7032) batch 1, codewords equal gf2's; AFF3CT v4.7.0 at e8a65c5047262d97a15563b9edc961f69b2792cc (library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529), 1 frames per wave, MIPP AVX2",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "t2s-b16-aff3ct-lfsr-simd-inter",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-lfsr-simd-inter",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "aff3ct-lfsr-simd-inter/(7200, 7032) batch 16, codewords equal gf2's; AFF3CT v4.7.0 at e8a65c5047262d97a15563b9edc961f69b2792cc (library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529), 8 frames per wave, MIPP AVX2",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "t2s-b256-aff3ct-lfsr-simd-inter",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-lfsr-simd-inter",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "aff3ct-lfsr-simd-inter/(7200, 7032) batch 256, codewords equal gf2's; AFF3CT v4.7.0 at e8a65c5047262d97a15563b9edc961f69b2792cc (library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529), 8 frames per wave, MIPP AVX2",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "t2s-b4096-aff3ct-lfsr-simd-inter",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-lfsr-simd-inter",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "aff3ct-lfsr-simd-inter/(7200, 7032) batch 4096, codewords equal gf2's; AFF3CT v4.7.0 at e8a65c5047262d97a15563b9edc961f69b2792cc (library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529), 8 frames per wave, MIPP AVX2",
+          "windows": 0
+        }
+      ]
+    },
+    {
       "cell_id": "t2s-b1-bchlib-table-remainder",
       "cache_state": "warm",
       "arms": [
@@ -81,6 +237,32 @@
           "cache_state_declared": "warm",
           "cache_state_applied": "warm",
           "selected_path": "bchlib-table-remainder/(7200, 7032) batch 1, codewords equal gf2's; bchlib bch.c at 8d0656ab8f37e734428635501738d360ad80eebd",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "t2s-b16-bchlib-table-remainder",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "bchlib-table-remainder",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bchlib-table-remainder/(7200, 7032) batch 16, codewords equal gf2's; bchlib bch.c at 8d0656ab8f37e734428635501738d360ad80eebd",
           "windows": 0
         }
       ]
@@ -112,6 +294,136 @@
       ]
     },
     {
+      "cell_id": "t2s-b4096-bchlib-table-remainder",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "bchlib-table-remainder",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bchlib-table-remainder/(7200, 7032) batch 4096, codewords equal gf2's; bchlib bch.c at 8d0656ab8f37e734428635501738d360ad80eebd",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "t2n-b1-aff3ct-lfsr-scalar",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-lfsr-scalar",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "aff3ct-lfsr-scalar/(32400, 32208) batch 1, codewords equal gf2's; AFF3CT v4.7.0 at e8a65c5047262d97a15563b9edc961f69b2792cc (library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529), 1 frames per wave, MIPP AVX2",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "t2n-b16-aff3ct-lfsr-simd-inter",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-lfsr-simd-inter",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "aff3ct-lfsr-simd-inter/(32400, 32208) batch 16, codewords equal gf2's; AFF3CT v4.7.0 at e8a65c5047262d97a15563b9edc961f69b2792cc (library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529), 8 frames per wave, MIPP AVX2",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "t2n-b256-aff3ct-lfsr-simd-inter",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-lfsr-simd-inter",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "aff3ct-lfsr-simd-inter/(32400, 32208) batch 256, codewords equal gf2's; AFF3CT v4.7.0 at e8a65c5047262d97a15563b9edc961f69b2792cc (library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529), 8 frames per wave, MIPP AVX2",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "t2n-b4096-aff3ct-lfsr-simd-inter",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "aff3ct-lfsr-simd-inter",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "aff3ct-lfsr-simd-inter/(32400, 32208) batch 4096, codewords equal gf2's; AFF3CT v4.7.0 at e8a65c5047262d97a15563b9edc961f69b2792cc (library sha256 b9605974b1d1413524e3a393a79c0842594683fdc9e240eee4f72a287cb92529), 8 frames per wave, MIPP AVX2",
+          "windows": 0
+        }
+      ]
+    },
+    {
       "cell_id": "t2n-b1-bchlib-table-remainder",
       "cache_state": "warm",
       "arms": [
@@ -138,6 +450,32 @@
       ]
     },
     {
+      "cell_id": "t2n-b16-bchlib-table-remainder",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "bchlib-table-remainder",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bchlib-table-remainder/(32400, 32208) batch 16, codewords equal gf2's; bchlib bch.c at 8d0656ab8f37e734428635501738d360ad80eebd",
+          "windows": 0
+        }
+      ]
+    },
+    {
       "cell_id": "t2n-b256-bchlib-table-remainder",
       "cache_state": "warm",
       "arms": [
@@ -159,6 +497,32 @@
           "cache_state_declared": "warm",
           "cache_state_applied": "warm",
           "selected_path": "bchlib-table-remainder/(32400, 32208) batch 256, codewords equal gf2's; bchlib bch.c at 8d0656ab8f37e734428635501738d360ad80eebd",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "t2n-b4096-bchlib-table-remainder",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-dvb-bch-encode",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/consumer-arm",
+          "executable_sha256": "9d455f72bb2222b3ecf949793e8dc5b9be71d0e9c42365fcd44e491e3c10b740",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "current/shortened-systematic",
+          "windows": 0
+        },
+        {
+          "arm": "bchlib-table-remainder",
+          "role": "validation",
+          "executable": "target/1358d6ab-arm/release/bch-external-arm",
+          "executable_sha256": "41c7f9e8a453524a60fc9bdcf1c93a45853c5df40e9d81572fa25b2219a9ea60",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "bchlib-table-remainder/(32400, 32208) batch 4096, codewords equal gf2's; bchlib bch.c at 8d0656ab8f37e734428635501738d360ad80eebd",
           "windows": 0
         }
       ]

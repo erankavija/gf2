@@ -5,7 +5,8 @@ Usage: make-pilot-addendum.py [--check]
 
 Writes `pilot/addendum.json` beside this script. The confirmation stage derives
 its own addendum from the committed pilot receipt with the repository's
-canonical freezer; `CONFIRMATION_DESCRIPTION` is the family prose it passes.
+canonical freezer; `CONFIRMATORY`, `SELECTION_RATIONALE` and
+`CONFIRMATION_DESCRIPTION` are the cell selection and prose it passes.
 `--check` writes nothing and exits non-zero when the committed addendum differs.
 """
 
@@ -15,7 +16,7 @@ from pathlib import Path
 
 from locate import HERE, ISSUE, ROOT, repository_files
 
-FROZEN_UTC = "2026-10-26T22:42:13Z"
+FROZEN_UTC = "2026-10-26T22:46:00Z"
 FAMILY = "1362381c-bch-integration"
 OUTPUT = HERE / "pilot" / "addendum.json"
 # The family's results sit beside the other issues' result directories.
@@ -28,15 +29,48 @@ CODES = {
     "t2s": ("dvb-bch-encode", {"n": 7200}),
     "t2n": ("dvb-bch-encode", {"n": 32400}),
 }
+# The fd9d5416 W1 batch sizes.
+BATCHES = (1, 16, 256, 4096)
+# External engines per code class, in cell order: the survey's AFF3CT and bchlib encoders where
+# they serve the code. AFF3CT's interleaved encoder serves whole SIMD waves, so a one-message
+# batch takes its scalar encoder.
+ENGINES = {
+    "m14": ("aff3ct",),
+    "t2s": ("aff3ct", "bchlib-table-remainder"),
+    "t2n": ("aff3ct", "bchlib-table-remainder"),
+}
+FIRST_SEED = 13581
+
+
+def engine(name, batch):
+    if name != "aff3ct":
+        return name
+    return "aff3ct-lfsr-scalar" if batch == 1 else "aff3ct-lfsr-simd-inter"
+
+
 # (code, batch, external engine, seed); the identifier is `<code>-b<batch>-<engine>`.
-CELLS = [
-    ("m14", 1, "aff3ct-lfsr-scalar", 13581),
-    ("m14", 256, "aff3ct-lfsr-simd-inter", 13582),
-    ("t2s", 1, "bchlib-table-remainder", 13583),
-    ("t2s", 256, "bchlib-table-remainder", 13584),
-    ("t2n", 1, "bchlib-table-remainder", 13585),
-    ("t2n", 256, "bchlib-table-remainder", 13586),
+CELLS = [(code, batch, engine(name, batch))
+         for code, names in ENGINES.items() for name in names for batch in BATCHES]
+CELLS = [(*cell, FIRST_SEED + index) for index, cell in enumerate(CELLS)]
+
+# The frozen confirmation selection: per code class, the one-message and 256-message batches
+# against the strongest external encoder that serves the code in the 4e732b56 survey.
+CONFIRMATORY = [
+    "m14-b1-aff3ct-lfsr-scalar",
+    "m14-b256-aff3ct-lfsr-simd-inter",
+    "t2s-b1-bchlib-table-remainder",
+    "t2s-b256-bchlib-table-remainder",
+    "t2n-b1-bchlib-table-remainder",
+    "t2n-b256-bchlib-table-remainder",
 ]
+SELECTION_RATIONALE = (
+    "Frozen before the pilot: P-20 admits six confirmatory cells on the family's first attempt, "
+    "so the confirmation retains, per code class, the one-message latency endpoint and the "
+    "256-message batch the 8e53235b family measured, each against the strongest external encoder "
+    "serving that code in the 4e732b56 survey: AFF3CT on the mother code, which bchlib does not "
+    "serve, and bchlib on the shortened DVB-T2 codes, where the survey records it ahead of both "
+    "AFF3CT encoders. The other pilot cells stay exploratory."
+)
 
 COMMON = (
     "gf2's production binary BCH encode against the external encoders of the 4e732b56 survey, "
@@ -53,32 +87,31 @@ COMMON = (
     "kernel's table-driven remainder; the external sources are compiled with the survey's "
     "-O3 -march=native flags, so the candidate build is external. bchlib takes whole message "
     "bytes and does not serve the mother code, whose dimension 16215 is no whole number of "
-    "bytes; on the shortened codes the survey records bchlib ahead of both AFF3CT encoders, so "
-    "each cell pairs gf2 with the strongest external encoder that serves its code. AFF3CT's "
-    "interleaved encoder serves whole waves only, so the one-message cell takes its scalar "
-    "encoder. "
+    "bytes. AFF3CT's interleaved encoder serves whole SIMD waves only, so a one-message batch "
+    "takes its scalar encoder. "
     "Both arms of a cell encode the same messages, BitVec::random_seeded(k, seed + i + 1) for "
     "message i of the cell's batch, and each external dispatch requires, before timing, its "
     "codewords mapped into gf2's user coordinates to equal gf2's bit for bit. A timed call is "
     "each arm's batch encode on messages already in its library's representation (packed "
     "words for gf2, one int per bit for AFF3CT, packed bytes for bchlib) into codewords in that "
     "representation; the external arm reports its conversions from and to packed BitVec as "
-    "pack and unpack costs measured outside the timed call. The batch sizes are the one-message "
-    "and 256-message entries of the fd9d5416 W1 table. Every cell is single-core and warm: "
+    "pack and unpack costs measured outside the timed call. Every cell is single-core and warm: "
     "neither external encoder exposes workers. A comparator-gap outcome improved records a "
-    "material gap in the external encoder's favour. The family's fresh ledger admits six "
-    "confirmatory cells on its first attempt under P-20, the cell count declared here."
+    "material gap in the external encoder's favour."
 )
 FAMILY_DESCRIPTION = (
     "Exploratory pilot of the integrated comparison of " + COMMON +
+    " The pilot measures every code class at every fd9d5416 W1 batch size against every "
+    "external encoder that serves it. " + SELECTION_RATIONALE.replace("Frozen before the pilot: ", "Frozen confirmation selection: ") +
     " This pilot observes the measurement resolution that the family's confirmation freezes; "
     "it decides nothing."
 )
 CONFIRMATION_DESCRIPTION = (
     "Confirmation of the integrated comparison of " + COMMON +
-    " The measurement resolution is frozen from the family's pilot receipt with the margins "
-    "this family fixed before its pilot; every cell is confirmatory and every outcome is "
-    "reported as evaluated."
+    " The confirmatory cells are the selection the pilot addendum froze, recorded in the "
+    "derivation record beside this addendum. The measurement resolution is frozen from the "
+    "family's whole pilot receipt with the margins this family fixed before its pilot; every "
+    "outcome is reported as evaluated."
 )
 
 EQUIVALENCE_RATIONALE = (
