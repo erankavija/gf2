@@ -1,0 +1,75 @@
+{
+  "scope": "untimed integrated-tree allocation witnesses; test workloads only, no per-profile extrapolation",
+  "toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "runs": [
+    {
+      "tests": [
+        "gf256_gemm_allocation",
+        "gf256_axpy_allocation"
+      ],
+      "result": "passed",
+      "log": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/78f0aafd-alloc.log",
+      "log_sha256": "e9b71d4ddc494a661f7dd4731fb8363283984b9a0af88d0a99f36946e1197082",
+      "executables": [
+        {
+          "path": "target/ci-test/deps/gf256_gemm_allocation-a359c0e54925e2a4",
+          "sha256": "408c023cb0972a52922bdf0a42a058209a070d66651dca0a17af4c71d120aa5e"
+        },
+        {
+          "path": "target/ci-test/deps/gf256_gemm_allocation-c40d247d6c45b1d4",
+          "sha256": "fd6ce436d5936fa83403dcc2cf08dde5e66176424faa01b3b60673e18600aa92"
+        },
+        {
+          "path": "target/ci-test/deps/gf256_gemm_allocation-cd4f3913648a3d7b",
+          "sha256": "9b3c27f2e64080380ff1ddedb5c1a9a74621eca8a66278fe92ae1456d9e98404"
+        },
+        {
+          "path": "target/ci-test/deps/gf256_axpy_allocation-055114e59bed9064",
+          "sha256": "904b4d9fbb3e79fc69e1ff70f868a05625b2aedcae2239ee0b27adbf1f87ab77"
+        },
+        {
+          "path": "target/ci-test/deps/gf256_axpy_allocation-71800d7680ede1b2",
+          "sha256": "e772d242ebd4e26d357560e884c88fa97a31dd66f1cf52c7efa0664e1de62ddc"
+        },
+        {
+          "path": "target/ci-test/deps/gf256_axpy_allocation-ebba72f0dc81f3f4",
+          "sha256": "8aa5c66a386d83a9d0f805e43d3ead02cd31c36497a252f8a93eb1969ea7b059"
+        }
+      ]
+    },
+    {
+      "tests": [
+        "ldpc_decode_allocations"
+      ],
+      "result": "passed",
+      "log": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/78f0aafd-ldpc-alloc.log",
+      "log_sha256": "35d988079777f804229975ef7707311c59d572d3f789c8ec6ddc0571600d00ac",
+      "executables": [
+        {
+          "path": "target/ci-test/deps/ldpc_decode_allocations-17b869f3a465f47e",
+          "sha256": "08be498b19f99c365f816db73207d56d01df1f0a7fd3a2acb61115a3ed1fd80f"
+        },
+        {
+          "path": "target/ci-test/deps/ldpc_decode_allocations-41cb1fe61c9f0e20",
+          "sha256": "90706848892d7c48902c8c39fdbfd177768578b2a10d8e6ea7118dfdb2b5f2b9"
+        },
+        {
+          "path": "target/ci-test/deps/ldpc_decode_allocations-4ad24bbb32dae108",
+          "sha256": "a5adfac5b32ad2f0277e9f7660b56383308b1a48c543fd01772cb018f3a7bcc1"
+        },
+        {
+          "path": "target/ci-test/deps/ldpc_decode_allocations-4bc02f9de2ab64c9",
+          "sha256": "34d50eecff1e7d61104a9c6cbb72864c72cd71b6c970d922328d3c244895fe17"
+        },
+        {
+          "path": "target/ci-test/deps/ldpc_decode_allocations-5d1e23910db9d24b",
+          "sha256": "68f1afc0e9faf00eebbbd5483d02a6ff2d1db144453b4cc0835f0f1d56b2818e"
+        },
+        {
+          "path": "target/ci-test/deps/ldpc_decode_allocations-be313930cb33da9e",
+          "sha256": "dd64ab242071a5727515e8e361d677609cf8fb9d09543ab134ed34ff7ca888c3"
+        }
+      ]
+    }
+  ]
+}

@@ -198,9 +198,25 @@ BATCH_RULES = ALLOCATOR_RULES + [
     ("syndrome-termination", CORE, 761, 761),
     ("decode-loop-other", CORE, 725, 782),
 ] + SHIM_RULES + HARNESS_RULES
+# Production profile: the integrated batch-wave interface carries worker counts.
+INTEGRATED_RULES = [
+    (category, path, first, last) for category, path, first, last in BATCH_RULES
+    if path != BATCH
+] + [
+    ("conversion-input", "/ed3d490e-zen3-ldpc-frame-simd/survey/arms/src/lib.rs", 208, 212),
+    ("conversion-output", "/ed3d490e-zen3-ldpc-frame-simd/survey/arms/src/lib.rs", 228, 238),
+    ("batch-wave-dispatch", "/ed3d490e-zen3-ldpc-frame-simd/survey/arms/src/lib.rs", 204, 227),
+    ("lane-transpose-in", BATCH, 408, 427),
+    ("lane-transpose-out", BATCH, 462, 489),
+    ("lane-syndrome", BATCH, 494, 507),
+    ("lane-decode-other", BATCH, 397, 490),
+    ("batch-wave-dispatch", BATCH, 237, 394),
+    ("batch-wave-dispatch", BATCH, 525, 542),
+]
 # Keyed by the executable digest a series' resolution records, or for a
 # resolution without one, the build identity's digest `resolve` verified.
 RULES_BY_EXECUTABLE = {
+    "805bdcb457c22d3f713763a29f909bad152fd28bf75eca6d0f1532bbde2eacfa": INTEGRATED_RULES,
     "2ba24e5a81aa4193ede75e51270b2c49968d8af43f942014ef323254a489f017": STEADY_RULES,
     "4349a556571af45fc6af56b4b15effde9223fee4934f6c7f264304f0fd291aa9": UPDATE_RULES,
     "647f1526ee1851bf9e0bd8b4ed94008e4b01079f6da723f74c95b27b7eb6c483": BATCH_RULES,

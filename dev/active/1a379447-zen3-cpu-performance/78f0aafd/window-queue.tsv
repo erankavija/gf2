@@ -1,0 +1,6 @@
+# issue	worktree	est_minutes	command; estimates, not measurements
+78f0aafd	.agents/worktrees/agent-78f0aafd	25	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-window.sh
+78f0aafd	.agents/worktrees/agent-78f0aafd	12	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/nr-encode-window.sh
+78f0aafd	.agents/worktrees/agent-78f0aafd	20	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-window.sh
+78f0aafd	.agents/worktrees/agent-78f0aafd	25	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/byte-field-window.sh
+78f0aafd	.agents/worktrees/agent-78f0aafd	12	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/polynomial-window.sh

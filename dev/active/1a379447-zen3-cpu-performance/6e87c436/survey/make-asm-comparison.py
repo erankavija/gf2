@@ -17,6 +17,10 @@ Usage: make-asm-comparison.py
 
 import json
 import pathlib
+import re
+import sys
+
+sys.dont_write_bytecode = True
 
 from locate import ANCHOR, HERE, ROOT, asm_listing, end_state, repository_files
 
@@ -63,4 +67,15 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 3 and sys.argv[1] == "--stack-traffic":
+        artefact = pathlib.Path(sys.argv[2])
+        symbols = asm_listing.symbols(artefact.read_text())
+        rows = [{"symbol": symbol, "instruction_text_sha256": asm_listing.digest(body),
+                 "stack_address_lines": sum(bool(re.search(r"\[[^\]]*\b(?:rsp|rbp)\b", line))
+                                           for line in body.splitlines())}
+                for symbol, body in sorted(symbols.items())]
+        print(json.dumps({"artefact": str(artefact), "symbols": rows,
+                          "scope": "static stack references; spill attribution and dynamic cost unmeasured"},
+                         indent=2))
+    else:
+        main()
