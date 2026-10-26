@@ -110,3 +110,11 @@ d06a99ed	.	20	bash dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement
 # 1358d6ab integrated AFF3CT LDPC and BCH comparator families (FI-3, FI-4): pilot, canonical freeze, confirmation; est_minutes are estimates (BCH pilot 20 cells)
 1358d6ab	.agents/worktrees/agent-1358d6ab	25	bash dev/active/1a379447-zen3-cpu-performance/1358d6ab/ldpc-aff3ct/window.sh dev/active/ed3d490e-zen3-ldpc-frame-simd/survey dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py dev/bench_results/e5f8b3ae/native/build-identity.json
 1358d6ab	.agents/worktrees/agent-1358d6ab	50	bash dev/active/1a379447-zen3-cpu-performance/1358d6ab/bch/window.sh window dev/active/ed3d490e-zen3-ldpc-frame-simd/survey dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py
+
+# 78f0aafd integrated decoder and BCH profile series after the FI campaigns; est_minutes are estimates
+78f0aafd	.agents/worktrees/agent-78f0aafd	25	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-window.sh
+78f0aafd	.agents/worktrees/agent-78f0aafd	20	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-window.sh
+# Held for the invoker ruling on profiling historical executables (NR encoder, byte-field, polynomial); see handoff-41.md
+#78f0aafd	.agents/worktrees/agent-78f0aafd	12	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/nr-encode-window.sh
+#78f0aafd	.agents/worktrees/agent-78f0aafd	25	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/byte-field-window.sh
+#78f0aafd	.agents/worktrees/agent-78f0aafd	12	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/polynomial-window.sh
