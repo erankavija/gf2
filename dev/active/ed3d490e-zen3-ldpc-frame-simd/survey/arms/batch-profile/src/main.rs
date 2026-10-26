@@ -7,11 +7,13 @@
 //! output; the placement report goes to standard error.
 //!
 //! Usage:
-//!   ldpc-batch-profile --arm single-frame|lane --bundle DIR --code NAME
+//!   ldpc-batch-profile --arm single-frame|lane|production --bundle DIR --code NAME
 //!       --core-arm ARM [--batch 16] [--passes 1] [--iteration-cap 50]
 //!       [--norm 0.75] [--perf-control CTL,ACK]
 
 use ldpc_batch_arms::{declared_lane_backend, BatchRoute, BatchWorker};
+#[cfg(feature = "committed-envelope")]
+use ldpc_batch_tuned_arm as tuned;
 use ldpc_survey::arm;
 use ldpc_throughput::gf2::config;
 use ldpc_throughput::workload::verify_workers;
@@ -36,7 +38,16 @@ fn route(name: &str) -> Result<BatchRoute, String> {
 
 fn run() -> Result<(), String> {
     let options = ProfileOptions::parse(std::env::args().skip(1))?;
-    let route = route(&options.arm)?;
+    let production = options.arm == "production";
+    #[cfg(feature = "committed-envelope")]
+    let policy = production
+        .then(|| ldpc_batch_tuned_arm::install_envelope().map(tuned::profile_policy))
+        .transpose()?;
+    #[cfg(not(feature = "committed-envelope"))]
+    if production {
+        return Err("production profiling requires committed-envelope".to_owned());
+    }
+    let route = (!production).then(|| route(&options.arm)).transpose()?;
     let quality = arm::prepared_quality()?.ok_or(
         "the profile checks decisions against prepared quality; GF2_LDPC_QUALITY is unset",
     )?;
@@ -52,7 +63,24 @@ fn run() -> Result<(), String> {
         options.passes,
         options.perf_control.as_ref(),
         setup_start,
-        |_| BatchWorker::new(&code, decoder_config, cap, batch, route),
+        |_| {
+            #[cfg(feature = "committed-envelope")]
+            if let Some(policy) = &policy {
+                use ldpc_batch_arms::ArmPolicy;
+                return BatchWorker::from_decoder(
+                    &code,
+                    batch,
+                    policy.build_decoder(&code, decoder_config, cap, batch)?,
+                );
+            }
+            BatchWorker::new(
+                &code,
+                decoder_config,
+                cap,
+                batch,
+                route.expect("forced route"),
+            )
+        },
         |worker: &mut BatchWorker| {
             worker.decode_batch_with_workers(llrs, std::num::NonZeroUsize::new(cpus.len()).unwrap())
         },
@@ -66,8 +94,24 @@ fn run() -> Result<(), String> {
         &workload,
         &quality,
     )?;
+    let route = if production {
+        #[cfg(feature = "committed-envelope")]
+        {
+            tuned::profile_routes(
+                finished[0].state.decoder(),
+                batch,
+                std::num::NonZeroUsize::new(cpus.len()).unwrap(),
+            )
+        }
+        #[cfg(not(feature = "committed-envelope"))]
+        {
+            unreachable!()
+        }
+    } else {
+        format!("{:?}", route.expect("forced route"))
+    };
     let selected = format!(
-        "gf2-coding LdpcBatchDecoder f32 flooding NMS, route {route:?}, lane workspace {} \
+        "gf2-coding LdpcBatchDecoder f32 flooding NMS, route {route}, lane workspace {} \
          bytes per worker",
         finished[0].state.workspace_bytes()
     );

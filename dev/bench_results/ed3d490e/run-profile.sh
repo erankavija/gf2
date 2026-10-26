@@ -9,16 +9,32 @@
 # driver reads.
 #
 # Usage (from the worktree root):
-#   <this directory>/run-profile.sh <case-file> <output-dir>
+#   <this directory>/run-profile.sh [--record PROFILE_BUILD] [--arms-record ARMS_BUILD]
+#       [--smoke] <case-file> <output-dir>
+# --smoke expands the cases and checks one warm dispatch and one pass without perf.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 [[ "$(pwd -P)" == "$(cd "${REPO}" && pwd -P)" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
 USAGE="usage: run-profile.sh <case-file> <output-dir>"
+MODE=window
+RECORD="${HERE}/preparation/build-identity.json"
+ARMS_RECORD=""
+while [[ "${1:-}" == --* ]]; do
+    case "$1" in
+        --record) RECORD="$2"; shift 2 ;;
+        --arms-record) ARMS_RECORD="$2"; shift 2 ;;
+        --smoke) MODE=smoke; shift ;;
+        *) echo "unknown option $1" >&2; exit 2 ;;
+    esac
+done
+if [[ "$MODE" == window && "${GF2_BENCH_WINDOW:-}" != 1 ]]; then
+    echo 'profiles require GF2_BENCH_WINDOW=1' >&2; exit 2
+fi
+ARMS_RECORD="${ARMS_RECORD:-${RECORD}}"
 CASES="$(realpath -e "${1:?${USAGE}}")"
 OUT="${2:?${USAGE}}"
-RECORD="${HERE}/preparation/build-identity.json"
 DRIVER=ldpc-batch-profile
 # The `3be770d5` session count, so both series' medians carry the same
 # order-statistic interval.
@@ -33,7 +49,7 @@ SESSION="${REPO}/$(series_located profile-session.sh)"
 PEAK="${REPO}/$(series_located record-peak-memory.py)"
 recorded() { series_recorded "${RECORD}" "$@"; }
 EXPECTED="$(recorded executables "${DRIVER}" sha256)"
-CATALOGUE="${REPO}/$(recorded catalogue path)"
+CATALOGUE="${REPO}/$(series_recorded "${ARMS_RECORD}" catalogue path)"
 mkdir -p "${SCRATCH}"
 BIN="$(mktemp -d "${SCRATCH}/bin.XXXXXX")"
 trap 'rm -rf "${BIN}"' EXIT
@@ -74,14 +90,14 @@ series_identity() {
     echo "${line}"
 }
 series_cases() {
-    python3 -B - "${CASES}" "${PEAK}" "${RECORD}" "${SCRATCH}" <<'PY'
+    python3 -B - "${CASES}" "${PEAK}" "${ARMS_RECORD}" "${SCRATCH}" <<'PY'
 import importlib.util, json, pathlib, shutil, sys, tarfile, tempfile
 cases, peak_path, record, scratch = sys.argv[1:]
 spec = importlib.util.spec_from_file_location("peak", peak_path)
 peak = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(peak)
 smoke = peak.smoke
-ROUTES = {"gf2-batch-single-frame-arm": "single-frame", "gf2-batch-lane-arm": "lane"}
+ROUTES = {"gf2-batch-single-frame-arm": "single-frame", "gf2-batch-lane-arm": "lane", "gf2-batch-tuned-arm": "production"}
 build = json.loads(pathlib.Path(record).read_text(encoding="utf-8"))
 codes = json.loads((smoke.ROOT / build["catalogue"]["path"]).read_text(encoding="utf-8"))["codes"]
 quality = peak.quality_files(build)
@@ -108,6 +124,21 @@ for line in open(cases, encoding="utf-8"):
                      str(smoke.ROOT / quality[arm, code][0]), env]))
 PY
 }
+if [[ "$MODE" == smoke ]]; then
+    mkdir -p "${OUT}"
+    series_cases >"${OUT}/cases.expanded.tsv"
+    series_identity "${OUT}/cases.expanded.tsv" >"${OUT}/identity.txt"
+    while IFS=$'\t' read -r kind label route bundle code core_arm batch passes quality envpairs; do
+        [[ "$kind" == stat ]] || continue
+        # One dispatch after warm-up, without perf or a timing window.
+        env RAYON_NUM_THREADS=1 GF2_LDPC_QUALITY="${quality}" ${envpairs} \
+            "${BIN}/ldpc-profile" --arm "$route" --bundle "$bundle" --code "$code" \
+            --core-arm "$core_arm" --batch "$batch" --passes 1 \
+            >"${OUT}/${label}.json" 2>"${OUT}/${label}.err"
+    done <"${OUT}/cases.expanded.tsv"
+    echo 'Untimed diagnostic smoke; timing fields are not performance evidence.' >"${OUT}/README.txt"
+    exit 0
+fi
 profile_series "${OUT}" "${BIN}" "${SESSION}" "${REPETITIONS}" \
     "LDPC batch decoder profile host record - produced by run-profile.sh"
 echo "profile written to ${OUT}" >&2

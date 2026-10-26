@@ -11,6 +11,7 @@ this one replaces; the record pins it by digest, and the arms tooling reads only
 
 Usage (from the worktree root):
   record-gf2-arms-build.py OUT_DIR AFF3CT_ROOT|--portable [--supersedes RECORD]
+  record-gf2-arms-build.py OUT_DIR --profile-only
 """
 
 import hashlib
@@ -365,9 +366,52 @@ def arguments(argv):
             sys.exit(__doc__)
 
 
+def profile_build(out_dir):
+    """Build only the production profiler; campaign arms retain their bytes."""
+    arms = located("package-directory", PACKAGE)
+    manifest = arms / "Cargo.toml"
+    target = out_dir / "target"
+    inherited = build_environment(os.environ, "native")
+    rustc = output(["rustc", f"+{TOOLCHAIN}", "--version", "--verbose"], env=inherited)
+    host = re.search(r"^host: (.*)$", rustc, re.MULTILINE).group(1)
+    linker = arms / LINKER
+    command = ["./scripts/cargo-budget.sh", "cargo", f"+{TOOLCHAIN}", "build", "--offline",
+               "--release", "--locked", "--manifest-path", str(manifest), "--package", "ldpc-batch-profile",
+               "--features", "committed-envelope", "--target-dir", str(target),
+               "--config", f"target.{host}.linker={json.dumps(str(linker))}"]
+    subprocess.run(command, check=True, env=inherited)
+    release = target / "release"
+    executable = release / "ldpc-batch-profile"
+    record = {
+        "schema": "ldpc-batch-arms-build-v3",
+        "build_root": str(ROOT),
+        "rustc": rustc,
+        "cargo": output(["cargo", f"+{TOOLCHAIN}", "--version"], env=inherited),
+        "build_commands": [{"environment": environment("native"), "argv": command}],
+        "release_profile": tomllib.loads(manifest.read_text())["profile"]["release"],
+        "production_inputs": {
+            str(path.relative_to(ROOT)): digest(path)
+            for path in sorted({pathlib.Path(os.path.normpath(entry)) for entry in prerequisites(
+                (release / "ldpc-batch-profile.d").read_text())})
+            if path.is_relative_to(ROOT / "crates")
+        },
+        "executables": {"ldpc-batch-profile": {
+            "sha256": digest(executable),
+            "written_by": strings(executable, ".comment"),
+            "compiler_options": strings(executable, ".GCC.command.line"),
+            "inputs": inputs(executable, release / "ldpc-batch-profile.d",
+                             link_rules(executable), ROOT, ROOT / target)}},
+        "isolation": {"target_directory": str(target)},
+    }
+    write_record(out_dir, record)
+    print(out_dir / RECORD)
+
+
 def main():
     if pathlib.Path.cwd() != ROOT:
         sys.exit("invoke from the worktree root")
+    if len(sys.argv) == 3 and sys.argv[2] == "--profile-only":
+        return profile_build(pathlib.Path(sys.argv[1]))
     out_dir, flavour, aff3ct, supersedes = arguments(sys.argv[1:])
     arms = located("package-directory", PACKAGE)
     manifest = arms / "Cargo.toml"

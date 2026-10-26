@@ -24,3 +24,10 @@ serde_json = { version = "1", features = ["float_roundtrip"] }
 [[bin]]
 name = "ldpc-batch-profile"
 path = "src/main.rs"
+
+[features]
+committed-envelope = ["dep:ldpc-batch-tuned-arm"]
+
+[dependencies.ldpc-batch-tuned-arm]
+path = "../tuned-profile"
+optional = true
