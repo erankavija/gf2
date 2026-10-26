@@ -6,7 +6,8 @@ recorded input bundles or the arms' build identity records; the generator holds 
 the declaration's `cell` overlaid with its own entry, and its `case` overrides the runner case
 its decoder block derives, where the arms' shared case differs from that block; a family's declaration is
 `families/<family>.json` beside this script. The plan names its addendum relative to the repository root when
-it lies inside it, and the bundles extracted beside it by absolute host path; one declaration and one output directory give the same bytes.
+it lies inside it, the bundles extracted beside it and each arm's executable under its build record's
+`build_root` by absolute host path; one declaration and one output directory give the same bytes.
 `--confirmation` plans the declaration's `confirmation` campaign over the cells of the confirmation
 addendum the canonical freezer wrote to OUT_DIR, which the generator reads and never writes.
 The declaration's optional `tuning_profiles` names, per arm, the root-relative envelope file the arm
@@ -272,7 +273,8 @@ def plan(declaration, cells, manifests, catalogue, records, profiles, addendum_p
             arms[f"{name}-{key}"] = {
                 "build": build_identity(catalogue["arms"][name], profiles.get(name)),
                 "description": catalogue["arms"][name]["description"],
-                "executable": str(peak.executable_path(row)),
+                "executable": str(peak.executable_path(
+                    row, pathlib.Path(builds[name]["build_root"]))),
                 "arguments": [],
                 "environment": {**row["environment"],
                                 peak.QUALITY_ENVIRONMENT: str(smoke.ROOT / quality)},

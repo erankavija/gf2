@@ -137,7 +137,8 @@ class GeneratorTest(unittest.TestCase):
                 name = self.declaration["cell"][role]
                 arm = plan["arms"][cell[f"{role}_arm"]]
                 self.assertEqual(arm["executable"],
-                                 str(peak.executable_path(build["arms"][name])))
+                                 str(peak.executable_path(
+                                     build["arms"][name], Path(build["build_root"]))))
                 self.assertLessEqual(build["arms"][name]["environment"].items(),
                                      arm["environment"].items())
         moved = copy.deepcopy(build)
