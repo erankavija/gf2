@@ -235,9 +235,10 @@ def arm_identity(build, name):
     return {**arm_build.arm_build(build, name), "environment": build["arms"][name]["environment"]}
 
 
-def executable_path(row):
-    """Where the build record found the arm's executable, without checking it."""
-    return smoke.ROOT / (row["path"] if "path" in row else row["found_at"][0])
+def executable_path(row, root=smoke.ROOT):
+    """Where the build record found the arm's executable under the build root `root`, without
+    checking it."""
+    return root / (row["path"] if "path" in row else row["found_at"][0])
 
 
 def executable_of(row):

@@ -64,6 +64,14 @@ def stage_complete(verifier, log):
         return False
 
 
+def session_command(plan, runner, stage, plan_path):
+    """One bounded runner session under the plan's lock wrapper, holding the full host; the
+    plan's wrapper names the script and may carry its flags."""
+    wrapper, *flags = plan["wrapper"].split()
+    return [str(smoke.ROOT / wrapper), *dict.fromkeys([*flags, "--full-host"]), runner, "run",
+            str(stage), str(plan_path)]
+
+
 def timed(plan_path, plan, campaign, ledger):
     runner, environment = smoke.build_runner("benchmark-acceptance")
     acceptance = pathlib.Path(runner).with_name("benchmark-acceptance")
@@ -72,8 +80,7 @@ def timed(plan_path, plan, campaign, ledger):
     log = stage / "execution.log"
     environment.update(GF2_BENCH="1", CARGO_CI_NO_LOCK="1", GF2_CCX1_LOCK=plan["lock_path"])
     print(f"GF2_CAMPAIGN_EXECUTION_LOG={log}", flush=True)
-    session = [str(smoke.ROOT / plan["wrapper"]), "--full-host", runner, "run", str(stage),
-               str(plan_path)]
+    session = session_command(plan, runner, stage, plan_path)
     while not stage_complete(verifier, log):
         status = subprocess.run(session, env=environment).returncode
         if status not in (0, validation.PAUSED):
