@@ -25,8 +25,8 @@ twelve-worker and twenty-four-worker/full-wave cells, and the
 thirteen. Confirmation claims apply only to its selected cells. The shared generator verifies holdout code,
 seed and batch absence from the calibration inventory.
 
-Both [core](core/confirmatory-bound.json) and
-[decoder](decoder/confirmatory-bound.json) `benchmark-acceptance --next-attempt`
+Both [core](core/next-attempt.json) and
+[decoder](decoder/next-attempt.json) `benchmark-acceptance --next-attempt`
 outputs report attempt 1, alpha 0.025, max_cells 6, prior_comparisons 0 and
 reservations 0. Allocations are 3 + 3 and 4 + 2 respectively; pilots spend no
 comparisons. The launcher checks the ledger before freezing.
