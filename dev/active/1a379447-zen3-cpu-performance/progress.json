@@ -1162,7 +1162,7 @@
      "short_id": "ecad1724",
      "title": "Classify committed receipts by production-code drift",
      "classification": "implementation",
-     "status": "rework 2: gate F1 (resolve executable receipts' sources), F2 (docs as added)",
+     "status": "lead-finished at d1748dd39; gates to re-run; invoker rulings in issue Notes",
      "tracker_state": "in_progress"
     },
     {
@@ -1186,6 +1186,14 @@
      "short_id": "78f0aafd",
      "title": "Profile the integrated bottlenecks",
      "classification": "research",
+     "status": "pending",
+     "tracker_state": "ready"
+    },
+    {
+     "id": "94213540",
+     "short_id": "94213540",
+     "title": "Keep the frozen-fact replacement test inside the fast-tier budget",
+     "classification": "implementation",
      "status": "pending",
      "tracker_state": "ready"
     },
@@ -1620,6 +1628,13 @@
     "78f0aafd"
    ],
    "reason": "work packages WP-1..WP-5 of the 1362381c design"
+  },
+  {
+   "session": 46,
+   "ids": [
+    "94213540"
+   ],
+   "reason": "cargo-ci timeout surfaced while gating ecad1724"
   }
  ],
  "escalations": [
@@ -3612,7 +3627,8 @@
   "handoff-36.md",
   "handoff-37.md",
   "handoff-38.md",
-  "handoff-39.md"
+  "handoff-39.md",
+  "handoff-40.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -3638,9 +3654,7 @@
   "no_questions_rule": "Invoker 2026-10-12 (session 36), restated: do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish or when all remaining work waits on the invoker; check workers every 30 minutes.",
   "window_collected": "2026-10-12 window: six jobs, each accepted with zero findings, start loads 0.02 to 1.15, no other session on the host. 8e53235b confirmation qualifies; the five others are pilots.",
   "disk": "worktrees kept: 63bad95d-fam, -m4ri, -pm4ri, -run and 0a77ecfc (pinned for the window), ed3d490e-run (story build tree, on branch worktree-agent-cba35553; arm digests are reproducible only at this path), and three of other epics",
-  "active_workers": {
-   "ecad1724": "claude opus rework 2, worktree agent-ecad1724"
-  },
+  "active_workers": {},
   "rulings": "63bad95d native-ladder-v2 confirmation margin 1.08 kept (lead, routine: the pilot addendum's frozen rationale refreezes the margin above 1 + resolution). 7dbe1393 repeat ends resolution-insufficient (0.038 above the 0.035 ceiling); candidate kernel stays unselected.",
   "session_35_outcome": "Done: aff59c3c, bfc2ceab, cb8f7c36, 958639ec, 8e53235b, 7dbe1393, 824cde7c, d4185e9e, 07024d65, dd50ea11, 1ca04967. Invariants 37 to 33 (54b4540f6), review prompts bad5c7ce3. Ready: 4252085a, 05c9065e, 0a77ecfc.",
   "session_36": "Dispatched 4252085a (sonnet, branch worktree-agent-4252085a in agent-ed3d490e-run) and 0a77ecfc (opus, agent-0a77ecfc) at 22:00 EEST; 05c9065e follows 4252085a in the same worktree. The four 63bad95d confirmations wait for the 2026-10-13 04:00 window; builds and gates stop by 01:30.",
@@ -3663,9 +3677,10 @@
    "1362381c design: Claude opus; architect plan and decomposition (contract-setting), on main",
    "e5f8b3ae review: lead; Codex output kept with lead doc fixes; canonical build/smoke/validation records run by the lead in agent-ed3d490e-run",
    "eb07aa88: Codex gpt-6.1-sol high; workload-set generator (moderate, well specified), worktree agent-eb07aa88",
-   "ecad1724: Claude opus; production-drift generator extension (classification semantics), worktree agent-ecad1724; rework 1 (two classes) and rework 2 (gate F1 source resolution, F2 docs) by SendMessage"
+   "ecad1724: Claude opus; production-drift generator extension (classification semantics), worktree agent-ecad1724; rework 1 (two classes) and rework 2 (gate F1 source resolution, F2 docs) by SendMessage",
+   "ecad1724 rounds 3-7: lead fixes directly (review findings on file filters); invoker ruling ends test-code separation"
   ],
   "session_45": "Done: d06a99ed (invoker adoption ruling A), ed3d490e (all seven gates pass at 20f9652da).",
-  "session_46": "Resumed from session 45 state without a handoff. e5f8b3ae Codex output reviewed and committed (cc8f8af69, branch worktree-agent-e5f8b3ae, lead doc fixes); canonical build and validation records run in agent-ed3d490e-run on branch worktree-agent-e5f8b3ae-run. 1362381c design rulings D-1..D-6 recorded; work packages created: eb07aa88 WP-1, ecad1724 WP-2, 31727c57 WP-3, 1358d6ab WP-4, 78f0aafd WP-5; 1362381c is WP-6."
+  "session_46": "Resumed from session 45 state without a handoff. e5f8b3ae Codex output reviewed and committed (cc8f8af69, branch worktree-agent-e5f8b3ae, lead doc fixes); canonical build and validation records run in agent-ed3d490e-run on branch worktree-agent-e5f8b3ae-run. 1362381c design rulings D-1..D-6 recorded; work packages created: eb07aa88 WP-1, ecad1724 WP-2, 31727c57 WP-3, 1358d6ab WP-4, 78f0aafd WP-5; 1362381c is WP-6. ecad1724 finished by the lead after rework 2 under two invoker rulings (unresolvable class; package-level measured content, no test-code separation); gates pending at d1748dd39. Bug 94213540 filed (fast-tier budget). Briefs for 31727c57 and 1358d6ab under 1362381c/dispatch/. Handoff: handoff-40.md."
  }
 }
