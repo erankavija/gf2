@@ -1162,15 +1162,15 @@
      "short_id": "ecad1724",
      "title": "Classify committed receipts by production-code drift",
      "classification": "implementation",
-     "status": "lead-finished at d1748dd39; gates to re-run; invoker rulings in issue Notes",
-     "tracker_state": "in_progress"
+     "status": "done; gates pass zero findings after three lead fix rounds (session 47); review reviews/ecad1724-r1.md",
+     "tracker_state": "done"
     },
     {
      "id": "31727c57",
      "short_id": "31727c57",
      "title": "Confirm the core and decoder routes after integration",
      "classification": "research",
-     "status": "dispatched session 47",
+     "status": "in-session preparation merged (b81b48534); queued FI-1/FI-2 launchers on worktree agent-31727c57 (pinned); waits for window",
      "tracker_state": "in_progress"
     },
     {
@@ -1178,7 +1178,7 @@
      "short_id": "1358d6ab",
      "title": "Remeasure comparator gaps on the integrated tree",
      "classification": "research",
-     "status": "dispatched session 47",
+     "status": "in-session preparation merged (ff9147b35); queued FI-3/FI-4 launchers on worktree agent-1358d6ab (pinned; BCH arms built there); waits for window",
      "tracker_state": "in_progress"
     },
     {
@@ -1186,16 +1186,16 @@
      "short_id": "78f0aafd",
      "title": "Profile the integrated bottlenecks",
      "classification": "research",
-     "status": "pending",
-     "tracker_state": "ready"
+     "status": "dispatched session 47 (Codex gpt-6.1-sol high): in-session profile preparation",
+     "tracker_state": "in_progress"
     },
     {
      "id": "94213540",
      "short_id": "94213540",
      "title": "Keep the frozen-fact replacement test inside the fast-tier budget",
      "classification": "implementation",
-     "status": "dispatched session 47",
-     "tracker_state": "in_progress"
+     "status": "done; split tests plus kill-safe Reaped guard (Codex luna, Claude sonnet rework, lead fixes); review reviews/94213540-r1.md; follow-up 53f5b940",
+     "tracker_state": "done"
     },
     {
      "id": "1362381c-78c0-42eb-bdc9-4327f20bc343",
@@ -1635,6 +1635,11 @@
     "94213540"
    ],
    "reason": "cargo-ci timeout surfaced while gating ecad1724"
+  },
+  {
+   "id": "53f5b940",
+   "title": "Make shared scratch trees survive a killed test process",
+   "reason": "convention-convergence exception for the test-local Reaped guard of 94213540; outside the epic until the invoker brings it in; starts after the 1362381c window results"
   }
  ],
  "escalations": [
@@ -2761,7 +2766,8 @@
   "7211ae53": 1,
   "6230e0b6": 2,
   "d06a99ed": 2,
-  "ecad1724": 2
+  "ecad1724": 2,
+  "94213540": 1
  },
  "surfaced_pitfalls": [
   {
@@ -3682,6 +3688,7 @@
    "session 47: 31727c57 Codex gpt-6.1-sol high (moderate: family tooling extension, launchers); 1358d6ab Claude opus (new BCH runner arms, citation key, two families); 94213540 Codex gpt-6-luna xhigh (narrow test split)"
   ],
   "session_45": "Done: d06a99ed (invoker adoption ruling A), ed3d490e (all seven gates pass at 20f9652da).",
-  "session_46": "Resumed from session 45 state without a handoff. e5f8b3ae Codex output reviewed and committed (cc8f8af69, branch worktree-agent-e5f8b3ae, lead doc fixes); canonical build and validation records run in agent-ed3d490e-run on branch worktree-agent-e5f8b3ae-run. 1362381c design rulings D-1..D-6 recorded; work packages created: eb07aa88 WP-1, ecad1724 WP-2, 31727c57 WP-3, 1358d6ab WP-4, 78f0aafd WP-5; 1362381c is WP-6. ecad1724 finished by the lead after rework 2 under two invoker rulings (unresolvable class; package-level measured content, no test-code separation); gates pending at d1748dd39. Bug 94213540 filed (fast-tier budget). Briefs for 31727c57 and 1358d6ab under 1362381c/dispatch/. Handoff: handoff-40.md."
+  "session_46": "Resumed from session 45 state without a handoff. e5f8b3ae Codex output reviewed and committed (cc8f8af69, branch worktree-agent-e5f8b3ae, lead doc fixes); canonical build and validation records run in agent-ed3d490e-run on branch worktree-agent-e5f8b3ae-run. 1362381c design rulings D-1..D-6 recorded; work packages created: eb07aa88 WP-1, ecad1724 WP-2, 31727c57 WP-3, 1358d6ab WP-4, 78f0aafd WP-5; 1362381c is WP-6. ecad1724 finished by the lead after rework 2 under two invoker rulings (unresolvable class; package-level measured content, no test-code separation); gates pending at d1748dd39. Bug 94213540 filed (fast-tier budget). Briefs for 31727c57 and 1358d6ab under 1362381c/dispatch/. Handoff: handoff-40.md.",
+  "rulings_session_47": "Lead: (1) brief constraint 'no ledger/addendum changes' means existing ones; new family inputs are required. (2) P-20 counts confirmatory plus holdout cells only; pilots may measure every named configuration as exploratory cells and the freeze selects at most six (design P-20 section). (3) Ledger genesis at the first timed run accepted (1358d6ab). (4) Bchlib2026 added to .jit/references.toml."
  }
 }
