@@ -43,6 +43,8 @@ PRODUCTION = {
     "build.rs": BUILD,
     "src/lib.rs": LIB,
     "src/inline.rs": INLINE_TEST,
+    "src/unit.rs": UNIT,
+    "src/paired.rs": UNIT,
     "hip/kernel.hip": KERNEL,
     "hip/extra.hip": EXTRA,
 }
@@ -121,6 +123,12 @@ class AllReceipts(unittest.TestCase):
             {"src/inline.rs": EARLIER_INLINE_TEST},
             None,
         ),
+        "removed-kernel": (
+            BENCHMARK_SCHEMA,
+            PRODUCTION | {"hip/old.hip": EARLIER_KERNEL},
+            {"hip/old.hip": EARLIER_KERNEL},
+            None,
+        ),
         "unavailable": (
             BENCHMARK_SCHEMA,
             PRODUCTION | {"src/lib.rs": b"fn three() {}\n"},
@@ -173,10 +181,8 @@ class AllReceipts(unittest.TestCase):
         commits["kernel-earlier"] = cls.commit()
         (package / "hip" / "kernel.hip").write_bytes(KERNEL)
         (package / "tests" / "check.rs").write_bytes(EARLIER_TEST)
-        (package / "src" / "unit.rs").write_bytes(EARLIER_UNIT)
         commits["tests-earlier"] = cls.commit()
         (package / "tests" / "check.rs").write_bytes(TEST)
-        (package / "src" / "unit.rs").write_bytes(UNIT)
         commits["current"] = cls.commit()
         for name, (schema, pinned, held, revision) in cls.RECEIPTS.items():
             receipt = cls.root / "dev" / "bench_results" / "fixture" / name
@@ -259,9 +265,22 @@ class AllReceipts(unittest.TestCase):
             [("crates/gf2-core/hip/kernel.hip", "code-differs")],
         )
 
-    def test_changed_test_code_is_not_production_drift(self):
-        for name in ("test-only", "unit-test-only", "inline-test-only"):
-            self.assert_row(name, "code-identical", "production files", [])
+    def test_a_changed_test_target_is_not_production_drift(self):
+        self.assert_row("test-only", "code-identical", "production files", [])
+
+    def test_test_code_inside_the_library_is_measured_content(self):
+        for name, path in (("unit-test-only", "src/paired.rs"), ("inline-test-only", "src/inline.rs")):
+            self.assertIn(
+                (f"crates/gf2-core/{path}", "code-differs"), self.differing(name), name
+            )
+
+    def test_a_deleted_pinned_kernel_is_removed(self):
+        self.assert_row(
+            "removed-kernel",
+            "code-differs",
+            "production files",
+            [("crates/gf2-core/hip/old.hip", "removed")],
+        )
 
     def test_an_added_kernel_source_makes_code_differs(self):
         self.assert_row(
@@ -292,6 +311,8 @@ class AllReceipts(unittest.TestCase):
                 ("crates/gf2-core/hip/extra.hip", "added"),
                 ("crates/gf2-core/hip/kernel.hip", "added"),
                 ("crates/gf2-core/src/inline.rs", "added"),
+                ("crates/gf2-core/src/paired.rs", "added"),
+                ("crates/gf2-core/src/unit.rs", "added"),
             ],
         )
         self.assert_row(
