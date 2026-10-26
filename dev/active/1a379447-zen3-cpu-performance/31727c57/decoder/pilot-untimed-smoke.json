@@ -1,0 +1,271 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "31727c57-decoder-pilot",
+  "issue": "31727c57",
+  "family": "1362381c-decoder-route-integration",
+  "plan_sha256": "deba650f4b65be3305dc08acda51c3b5ac30a342a8e530d04551eedd0ec8b012",
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/pilot/addendum.json",
+  "addendum_sha256": "f3e506b021069918ebcd57040577f6a668886a0261da9fa56500e74f2550121b",
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-integrated-w1-b1",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-conservative-portable-dvb-t2-r12",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "cc2f07eecf443cbd2a536a1c73b7bd2e398841db04edc2bb8ede598d29f5129f",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 1 frames in waves of 8, lane workspace 18727136 bytes per worker, reused decoder per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-dvb-t2-r12",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "340ed845fce2280996f3aec370df33a5967ab3a1125094ad44177c38ec9300fb",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction under tuning profile gf2-0a77ecfc-20261013t011147z-815998 (lane_min_frames 2 lane_max_edges 226799), wave routes 1 frames SingleFrame, batches of 1 frames in waves of 8, lane workspace 18727136 bytes per worker, reused decoder per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w1-b8",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-conservative-portable-dvb-t2-r12",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "cc2f07eecf443cbd2a536a1c73b7bd2e398841db04edc2bb8ede598d29f5129f",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 8 frames in waves of 8, lane workspace 18727136 bytes per worker, reused decoder per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-dvb-t2-r12",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "340ed845fce2280996f3aec370df33a5967ab3a1125094ad44177c38ec9300fb",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction under tuning profile gf2-0a77ecfc-20261013t011147z-815998 (lane_min_frames 2 lane_max_edges 226799), wave routes 8 frames Lane(Avx2), batches of 8 frames in waves of 8, lane workspace 18727136 bytes per worker, reused decoder per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w6-b8",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-conservative-portable-dvb-t2-r12",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "cc2f07eecf443cbd2a536a1c73b7bd2e398841db04edc2bb8ede598d29f5129f",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 8 frames in waves of 8, lane workspace 18727136 bytes per worker, reused decoder per worker; 6 pinned workers, 7 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-dvb-t2-r12",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "340ed845fce2280996f3aec370df33a5967ab3a1125094ad44177c38ec9300fb",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction under tuning profile gf2-0a77ecfc-20261013t011147z-815998 (lane_min_frames 2 lane_max_edges 226799), wave routes 8 frames SingleFrame, batches of 8 frames in waves of 8, lane workspace 18727136 bytes per worker, reused decoder per worker; 6 pinned workers, 7 process threads",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w12-b8",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-conservative-portable-dvb-t2-r12",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "cc2f07eecf443cbd2a536a1c73b7bd2e398841db04edc2bb8ede598d29f5129f",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 8 frames in waves of 8, lane workspace 18727136 bytes per worker, reused decoder per worker; 12 pinned workers, 13 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-dvb-t2-r12",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "340ed845fce2280996f3aec370df33a5967ab3a1125094ad44177c38ec9300fb",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction under tuning profile gf2-0a77ecfc-20261013t011147z-815998 (lane_min_frames 2 lane_max_edges 226799), wave routes 8 frames SingleFrame, batches of 8 frames in waves of 8, lane workspace 18727136 bytes per worker, reused decoder per worker; 12 pinned workers, 13 process threads",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w24-b8",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-conservative-portable-dvb-t2-r12",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "cc2f07eecf443cbd2a536a1c73b7bd2e398841db04edc2bb8ede598d29f5129f",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 8 frames in waves of 8, lane workspace 18727136 bytes per worker, reused decoder per worker; 24 pinned workers, 25 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-dvb-t2-r12",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "340ed845fce2280996f3aec370df33a5967ab3a1125094ad44177c38ec9300fb",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction under tuning profile gf2-0a77ecfc-20261013t011147z-815998 (lane_min_frames 2 lane_max_edges 226799), wave routes 8 frames SingleFrame, batches of 8 frames in waves of 8, lane workspace 18727136 bytes per worker, reused decoder per worker; 24 pinned workers, 25 process threads",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w1-b1",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-conservative-portable-nr-bg1-z384",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "cc2f07eecf443cbd2a536a1c73b7bd2e398841db04edc2bb8ede598d29f5129f",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 1 frames in waves of 8, lane workspace 9463296 bytes per worker, reused decoder per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-nr-bg1-z384",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "340ed845fce2280996f3aec370df33a5967ab3a1125094ad44177c38ec9300fb",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction under tuning profile gf2-0a77ecfc-20261013t011147z-815998 (lane_min_frames 2 lane_max_edges 226799), wave routes 1 frames SingleFrame, batches of 1 frames in waves of 8, lane workspace 9463296 bytes per worker, reused decoder per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w1-b8",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-conservative-portable-nr-bg1-z384",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "cc2f07eecf443cbd2a536a1c73b7bd2e398841db04edc2bb8ede598d29f5129f",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 8 frames in waves of 8, lane workspace 9463296 bytes per worker, reused decoder per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-nr-bg1-z384",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "340ed845fce2280996f3aec370df33a5967ab3a1125094ad44177c38ec9300fb",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction under tuning profile gf2-0a77ecfc-20261013t011147z-815998 (lane_min_frames 2 lane_max_edges 226799), wave routes 8 frames Lane(Avx2), batches of 8 frames in waves of 8, lane workspace 9463296 bytes per worker, reused decoder per worker; 1 pinned workers, 2 process threads",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w6-b8",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-conservative-portable-nr-bg1-z384",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "cc2f07eecf443cbd2a536a1c73b7bd2e398841db04edc2bb8ede598d29f5129f",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 8 frames in waves of 8, lane workspace 9463296 bytes per worker, reused decoder per worker; 6 pinned workers, 7 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-nr-bg1-z384",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "340ed845fce2280996f3aec370df33a5967ab3a1125094ad44177c38ec9300fb",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction under tuning profile gf2-0a77ecfc-20261013t011147z-815998 (lane_min_frames 2 lane_max_edges 226799), wave routes 8 frames SingleFrame, batches of 8 frames in waves of 8, lane workspace 9463296 bytes per worker, reused decoder per worker; 6 pinned workers, 7 process threads",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w12-b8",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-conservative-portable-nr-bg1-z384",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "cc2f07eecf443cbd2a536a1c73b7bd2e398841db04edc2bb8ede598d29f5129f",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 8 frames in waves of 8, lane workspace 9463296 bytes per worker, reused decoder per worker; 12 pinned workers, 13 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-nr-bg1-z384",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "340ed845fce2280996f3aec370df33a5967ab3a1125094ad44177c38ec9300fb",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction under tuning profile gf2-0a77ecfc-20261013t011147z-815998 (lane_min_frames 2 lane_max_edges 226799), wave routes 8 frames SingleFrame, batches of 8 frames in waves of 8, lane workspace 9463296 bytes per worker, reused decoder per worker; 12 pinned workers, 13 process threads",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w24-b8",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "gf2-batch-conservative-portable-nr-bg1-z384",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-single-frame-arm",
+          "executable_sha256": "cc2f07eecf443cbd2a536a1c73b7bd2e398841db04edc2bb8ede598d29f5129f",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, route SingleFrame under selectors lane_min_frames 18446744073709551615 lane_max_edges 0, batches of 8 frames in waves of 8, lane workspace 9463296 bytes per worker, reused decoder per worker; 24 pinned workers, 25 process threads",
+          "windows": 0
+        },
+        {
+          "arm": "gf2-batch-tuned-portable-nr-bg1-z384",
+          "role": "validation",
+          "executable": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/portable/release/gf2-batch-tuned-arm",
+          "executable_sha256": "340ed845fce2280996f3aec370df33a5967ab3a1125094ad44177c38ec9300fb",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction under tuning profile gf2-0a77ecfc-20261013t011147z-815998 (lane_min_frames 2 lane_max_edges 226799), wave routes 8 frames SingleFrame, batches of 8 frames in waves of 8, lane workspace 9463296 bytes per worker, reused decoder per worker; 24 pinned workers, 25 process threads",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}

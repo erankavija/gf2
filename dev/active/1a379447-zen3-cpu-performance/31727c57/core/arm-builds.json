@@ -1,0 +1,80 @@
+{
+  "arms": {
+    "conservative-portable": {
+      "path": "target/31727c57-core-conservative-portable/release/profile-arm",
+      "executable_sha256": "c35dbcf89ea2f2988d3f2983052288170eef901d598f5baecb25cf73a3274e03",
+      "rustflags": null
+    },
+    "tuned-portable": {
+      "path": "target/31727c57-core-tuned-portable/release/profile-arm",
+      "executable_sha256": "d29de1f980e6de4ce2c8f6c19117ad9e9b47a77f3090fa3fdb8ea3acb0625ec6",
+      "rustflags": "--cfg gf2_tuning_baked"
+    },
+    "native": {
+      "path": "target/31727c57-core-native/release/profile-arm",
+      "executable_sha256": "ba3f6e524a25e64e80fd1cf5c68ffbf6d0bc931e98d32d97d47a19c22344685d",
+      "rustflags": "-C target-cpu=native --cfg gf2_tuning_baked"
+    }
+  },
+  "build_commands": [
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "./scripts/cargo-budget.sh",
+        "cargo",
+        "+1.95",
+        "build",
+        "--offline",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/profile-arms/Cargo.toml",
+        "--target-dir",
+        "target/31727c57-core-conservative-portable"
+      ],
+      "rustflags": null
+    },
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "./scripts/cargo-budget.sh",
+        "cargo",
+        "+1.95",
+        "build",
+        "--offline",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/profile-arms/Cargo.toml",
+        "--target-dir",
+        "target/31727c57-core-tuned-portable"
+      ],
+      "rustflags": "--cfg gf2_tuning_baked"
+    },
+    {
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "./scripts/cargo-budget.sh",
+        "cargo",
+        "+1.95",
+        "build",
+        "--offline",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/profile-arms/Cargo.toml",
+        "--target-dir",
+        "target/31727c57-core-native"
+      ],
+      "rustflags": "-C target-cpu=native --cfg gf2_tuning_baked"
+    }
+  ],
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
+  "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)"
+}

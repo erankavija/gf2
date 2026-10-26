@@ -1,0 +1,167 @@
+{
+  "schema": "zen3-arm-smoke-record-v1",
+  "campaign_id": "31727c57-core-confirmation-untimed",
+  "issue": "31727c57",
+  "family": "1362381c-core-route-integration",
+  "plan_sha256": "236bf987cecdd3c0c0a483a4c57164b98854a26e238328d9ecf6d2bf59e0d83f",
+  "addendum": "target/31727c57-confirmation-smoke/core/addendum.json",
+  "addendum_sha256": "dc5d25d3caa6763592d5f5cdf2e1f543eb9ea3c5adf2da59e3fd0ee35a144cc0",
+  "cells": [
+    {
+      "cell_id": "matvec-r1024-24w-native",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/31727c57-core-tuned-portable/release/profile-arm",
+          "executable_sha256": "d29de1f980e6de4ce2c8f6c19117ad9e9b47a77f3090fa3fdb8ea3acb0625ec6",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        },
+        {
+          "arm": "native",
+          "role": "validation",
+          "executable": "target/31727c57-core-native/release/profile-arm",
+          "executable_sha256": "ba3f6e524a25e64e80fd1cf5c68ffbf6d0bc931e98d32d97d47a19c22344685d",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/BitMatrix::matvec+release/rows=1024/cols=1536/stride=24w/route=Simd/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "popcount-1024w-native",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/31727c57-core-tuned-portable/release/profile-arm",
+          "executable_sha256": "d29de1f980e6de4ce2c8f6c19117ad9e9b47a77f3090fa3fdb8ea3acb0625ec6",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        },
+        {
+          "arm": "native",
+          "role": "validation",
+          "executable": "target/31727c57-core-native/release/profile-arm",
+          "executable_sha256": "ba3f6e524a25e64e80fd1cf5c68ffbf6d0bc931e98d32d97d47a19c22344685d",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::popcount/w=1024/route=simd-nibble-lut/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "clmul-wide-9w-native",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/31727c57-core-tuned-portable/release/profile-arm",
+          "executable_sha256": "d29de1f980e6de4ce2c8f6c19117ad9e9b47a77f3090fa3fdb8ea3acb0625ec6",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/gf2m::wide::clmul_wide/w=9/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        },
+        {
+          "arm": "native",
+          "role": "validation",
+          "executable": "target/31727c57-core-native/release/profile-arm",
+          "executable_sha256": "ba3f6e524a25e64e80fd1cf5c68ffbf6d0bc931e98d32d97d47a19c22344685d",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/gf2m::wide::clmul_wide/w=9/build=native/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-inplace-5w",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "conservative-portable",
+          "role": "validation",
+          "executable": "target/31727c57-core-conservative-portable/release/profile-arm",
+          "executable_sha256": "c35dbcf89ea2f2988d3f2983052288170eef901d598f5baecb25cf73a3274e03",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/w=5/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+          "windows": 0
+        },
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/31727c57-core-tuned-portable/release/profile-arm",
+          "executable_sha256": "d29de1f980e6de4ce2c8f6c19117ad9e9b47a77f3090fa3fdb8ea3acb0625ec6",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/w=5/backend=simd/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "popcount-6w",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "conservative-portable",
+          "role": "validation",
+          "executable": "target/31727c57-core-conservative-portable/release/profile-arm",
+          "executable_sha256": "c35dbcf89ea2f2988d3f2983052288170eef901d598f5baecb25cf73a3274e03",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::popcount/w=6/route=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+          "windows": 0
+        },
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/31727c57-core-tuned-portable/release/profile-arm",
+          "executable_sha256": "d29de1f980e6de4ce2c8f6c19117ad9e9b47a77f3090fa3fdb8ea3acb0625ec6",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::popcount/w=6/route=simd-nibble-lut/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    },
+    {
+      "cell_id": "xor-inplace-3w",
+      "cache_state": "warm",
+      "arms": [
+        {
+          "arm": "conservative-portable",
+          "role": "validation",
+          "executable": "target/31727c57-core-conservative-portable/release/profile-arm",
+          "executable_sha256": "c35dbcf89ea2f2988d3f2983052288170eef901d598f5baecb25cf73a3274e03",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/w=3/backend=scalar/build=conservative-portable/bit-backend-simd-from=8w/profile=none",
+          "windows": 0
+        },
+        {
+          "arm": "tuned-portable",
+          "role": "validation",
+          "executable": "target/31727c57-core-tuned-portable/release/profile-arm",
+          "executable_sha256": "d29de1f980e6de4ce2c8f6c19117ad9e9b47a77f3090fa3fdb8ea3acb0625ec6",
+          "cache_state_declared": "warm",
+          "cache_state_applied": "warm",
+          "selected_path": "gf2-core/kernels::ops::xor_inplace/w=3/backend=scalar/build=tuned-portable/bit-backend-simd-from=4w/profile=gf2-63bad95d-20261006t230547z-2073085",
+          "windows": 0
+        }
+      ]
+    }
+  ]
+}

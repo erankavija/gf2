@@ -11,11 +11,14 @@ another under `repeats` asks that family's question again on its own ledger.
 Nothing here is a measurement. `--check` compares the committed files with the
 projection and writes nothing.
 
-Usage: make-family-addenda.py [--check]
+Usage: make-family-addenda.py [--check] [--family ID]
 """
 
+import argparse
 import json
 import sys
+
+sys.dont_write_bytecode = True
 
 from locate import HERE, ROOT, repository_files
 
@@ -124,7 +127,7 @@ def declaration(cell, role):
 def description(family, plan, issue):
     repeats = family.get("repeats")
     if repeats is None:
-        return DESCRIPTIONS[family["id"]]
+        return family["description"] if "description" in family else DESCRIPTIONS[family["id"]]
     text = DESCRIPTIONS[repeats]
     (repeated,) = [other for other in plan["families"] if other["id"] == repeats]
     if "holdout_declaration" in family:
@@ -136,8 +139,9 @@ def description(family, plan, issue):
 def projections(plan):
     """Root-relative path to canonical text, for every file this generator owns."""
     files = {}
-    issue = ISSUE.relative_to(ROOT)
     for family in plan["families"]:
+        issue = family.get("artifact_directory", str(ISSUE.relative_to(ROOT)))
+        results = family.get("results_directory", RESULTS)
         piloted = [cell for cell in family["cells"] if cell["role"] != "holdout"]
         held_out = [cell for cell in family["cells"] if cell["role"] == "holdout"]
         addendum = {
@@ -145,12 +149,12 @@ def projections(plan):
             "protocol": {"id": "zen3-benchmark-protocol", "version": 4},
             "family": {
                 "id": family["id"],
-                "issue": plan["issue"],
+                "issue": family.get("issue", plan["issue"]),
                 "purpose": family["pilot_purpose"],
                 "description": description(family, plan, issue),
             },
             "frozen": {
-                "frozen_utc": REPEAT_FROZEN_UTC if "repeats" in family else FROZEN_UTC
+                "frozen_utc": family.get("frozen_utc", REPEAT_FROZEN_UTC if "repeats" in family else FROZEN_UTC)
             },
             "effect": {
                 "worthwhile_speedup": WORTHWHILE[0],
@@ -171,7 +175,7 @@ def projections(plan):
                 "alpha": 0.05,
                 "prior_confirmatory_trials": 0,
                 "prior_trials": [],
-                "ledger_path": f"{RESULTS}/{family['ledger']}",
+                "ledger_path": f"{results}/{family['ledger']}",
             },
             "search_budget": {
                 "max_pilot_trials_per_cell": 2,
@@ -180,7 +184,8 @@ def projections(plan):
             "holdout": {"required": False, "cells": []},
             "cells": [declaration(cell, "exploratory") for cell in piloted],
         }
-        files[f"{issue}/campaigns/{family['id']}-pilot.json"] = (
+        pilot_path = family.get("pilot_addendum", f"campaigns/{family['id']}-pilot.json")
+        files[f"{issue}/{pilot_path}"] = (
             json.dumps(addendum, indent=1) + "\n"
         )
         if held_out:
@@ -190,17 +195,26 @@ def projections(plan):
                 "rationale": HOLDOUT_RATIONALE,
                 "addendum_cells": [declaration(cell, "holdout") for cell in held_out],
             }
-            files[f"{issue}/survey/{family['holdout_declaration']}"] = (
+            holdout_path = family["holdout_declaration"]
+            if "artifact_directory" not in family:
+                holdout_path = f"survey/{holdout_path}"
+            files[f"{issue}/{holdout_path}"] = (
                 json.dumps(record, indent=1) + "\n"
             )
     return files
 
 
 def main():
-    check = sys.argv[1:] == ["--check"]
-    if sys.argv[1:] and not check:
-        raise SystemExit(__doc__)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true")
+    parser.add_argument("--family")
+    args = parser.parse_args()
+    check = args.check
     plan = json.loads((HERE / "planned-families.json").read_text())
+    if args.family:
+        plan["families"] = [family for family in plan["families"] if family["id"] == args.family]
+        if not plan["families"]:
+            parser.error("unknown family")
     stale = []
     for path, text in sorted(projections(plan).items()):
         target = ROOT / path
@@ -212,7 +226,7 @@ def main():
         target.write_text(text)
         print(path)
     for family in plan["families"]:
-        ledger = ROOT / RESULTS / family["ledger"]
+        ledger = ROOT / family.get("results_directory", RESULTS) / family["ledger"]
         if check:
             if not ledger.is_file():
                 stale.append(str(ledger.relative_to(ROOT)))

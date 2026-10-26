@@ -15,6 +15,9 @@ come from the plan record and must agree with the frozen addendum's workload.
 import argparse
 import hashlib
 import json
+import sys
+
+sys.dont_write_bytecode = True
 
 from locate import HERE, ROOT, repository_files, tracked
 
@@ -67,7 +70,7 @@ def main():
             profiled = level["rustflags"] is not None
             environment = {BUILD_VAR: build}
             if profiled:
-                environment[OWNER_VAR] = str(ROOT / owner)
+                environment[OWNER_VAR] = owner
                 environment[OWNER_SHA256_VAR] = owner_sha256
             arms[build] = {
                 "build": build,
