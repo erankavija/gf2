@@ -1703,186 +1703,192 @@ fn exploratory_only_receipts_never_qualify_for_production_selection() {
     );
 }
 
-#[test]
-fn acceptance_rejects_every_self_consistent_frozen_fact_replacement() {
+fn frozen_fact_replacement_is_rejected(replacement: &str) {
     let family = addendum(vec![cell(
         "a",
         CellObjective::Improvement,
         CellRole::Exploratory,
         CoreArm::SingleCore,
     )]);
-    for replacement in [
-        "protocol-pin",
-        "contract-pin",
-        "schema-pin",
-        "addendum-pin",
-        "executable",
-        "execution-environment",
-        "producing-inputs",
-        "plan",
-        "settings",
-        "toolchain",
-        "arm-descriptor",
-        "checkpoint-identity",
-        "missing-plan",
-        "plan-case",
-        "plan-arm",
-    ] {
-        let built = build_receipt(
-            &format!("replaced-{replacement}"),
-            &family,
-            &[spec("a", 2.0)],
-            false,
-            false,
-            |_| {},
-        );
-        let receipt_path = built.dir.join(RECEIPT_FILE);
-        let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
-        match replacement {
-            "protocol-pin" | "contract-pin" | "schema-pin" | "addendum-pin" => {
-                let pin = match replacement {
-                    "protocol-pin" => &mut receipt.protocol,
-                    "contract-pin" => &mut receipt.contract,
-                    "schema-pin" => &mut receipt.addendum_schema,
-                    _ => &mut receipt.addendum,
-                };
-                let mut bytes = fs::read(built.dir.join(&pin.snapshot)).unwrap();
-                bytes.push(b' ');
-                fs::write(built.dir.join(&pin.snapshot), &bytes).unwrap();
-                pin.sha256 = sha256_hex(&bytes);
-                pin.verify_content(&built.dir).unwrap();
-            }
-            "executable" => {
-                receipt
-                    .arms
-                    .get_mut("candidate-portable")
-                    .unwrap()
-                    .executable_sha256 = sha256_hex(b"another executable");
-            }
-            "execution-environment" => {
-                receipt
-                    .arms
-                    .get_mut("candidate-portable")
-                    .unwrap()
-                    .environment
-                    .insert("GF2_SMOKE_PASSES".into(), "3".into());
-            }
-            "producing-inputs" => {
-                fs::write(
-                    built.repo.join("producer.rs"),
-                    b"fn replacement_measured_behavior() {}\n",
-                )
-                .unwrap();
-                let snapshot_root = built.dir.join("inputs/producing");
-                fs::remove_dir_all(&snapshot_root).unwrap();
-                receipt.source.producing = ProducingInputs::capture_to(
-                    &built.repo,
-                    "producing-inputs.json",
-                    &snapshot_root,
-                )
-                .unwrap();
-            }
-            "missing-plan" => {
-                fs::remove_file(built.dir.join(PLAN_FILE)).unwrap();
-            }
-            "plan" | "plan-case" | "plan-arm" => {
-                let plan_path = built.dir.join("plan.json");
-                let mut plan: Value =
-                    serde_json::from_slice(&fs::read(&plan_path).unwrap()).unwrap();
-                match replacement {
-                    "plan-case" => plan["cells"][0]["case"] = json!({"fixture": "different-input"}),
-                    "plan-arm" => plan["cells"][0]["candidate_arm"] = json!("baseline-portable"),
-                    _ => plan["max_cells_per_session"] = json!(1),
-                }
-                fs::write(plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
-            }
-            "settings" => {
-                receipt.settings.window_target_ms += 1;
-                receipt.settings_deviation = true;
-            }
-            "toolchain" => receipt.toolchain = "rustc replacement".into(),
-            "arm-descriptor" => {
-                receipt
-                    .arms
-                    .get_mut("candidate-portable")
-                    .unwrap()
-                    .description = "self-consistent replacement candidate".into();
-            }
-            "checkpoint-identity" => {}
-            _ => unreachable!(),
+    let built = build_receipt(
+        &format!("replaced-{replacement}"),
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    let receipt_path = built.dir.join(RECEIPT_FILE);
+    let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
+    match replacement {
+        "protocol-pin" | "contract-pin" | "schema-pin" | "addendum-pin" => {
+            let pin = match replacement {
+                "protocol-pin" => &mut receipt.protocol,
+                "contract-pin" => &mut receipt.contract,
+                "schema-pin" => &mut receipt.addendum_schema,
+                _ => &mut receipt.addendum,
+            };
+            let mut bytes = fs::read(built.dir.join(&pin.snapshot)).unwrap();
+            bytes.push(b' ');
+            fs::write(built.dir.join(&pin.snapshot), &bytes).unwrap();
+            pin.sha256 = sha256_hex(&bytes);
+            pin.verify_content(&built.dir).unwrap();
         }
-        if !matches!(replacement, "missing-plan" | "plan-case" | "plan-arm") {
-            // Publish a completely consistent replacement content closure. The
-            // opening record remains byte-for-byte unchanged: only its binding
-            // can distinguish these replacements from valid standalone facts.
-            let plan_path = built.dir.join(PLAN_FILE);
-            let mut plan: RunnerPlan = RunnerPlan::decode(&fs::read(&plan_path).unwrap()).unwrap();
-            for (name, arm) in &receipt.arms {
-                let planned = plan.arms.get_mut(name).unwrap();
-                planned.description = arm.description.clone();
-                planned.environment = arm.environment.clone();
-            }
-            if replacement == "settings" {
-                plan.timing_override = Some(tuning_campaign_support::protocol::TimingOverride {
-                    windows_per_execution: receipt.settings.windows_per_execution,
-                    window_target_ms: receipt.settings.window_target_ms,
-                });
-            }
-            fs::write(&plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
-            let mut replacement_identity = identity(
-                &receipt.protocol,
-                &receipt.source.producing,
-                &plan,
-                &receipt.arms,
-                &receipt.host,
-            );
-            if replacement == "checkpoint-identity" {
-                replacement_identity.feature_contract = "replacement-release".into();
-            }
-            let checkpoint_root = built.dir.join(CHECKPOINT_DIR);
-            fs::remove_dir_all(&checkpoint_root).unwrap();
-            let mut store = CheckpointStore::create_new(
-                &checkpoint_root,
-                &receipt.campaign_id,
-                replacement_identity,
+        "executable" => {
+            receipt
+                .arms
+                .get_mut("candidate-portable")
+                .unwrap()
+                .executable_sha256 = sha256_hex(b"another executable");
+        }
+        "execution-environment" => {
+            receipt
+                .arms
+                .get_mut("candidate-portable")
+                .unwrap()
+                .environment
+                .insert("GF2_SMOKE_PASSES".into(), "3".into());
+        }
+        "producing-inputs" => {
+            fs::write(
+                built.repo.join("producer.rs"),
+                b"fn replacement_measured_behavior() {}\n",
             )
             .unwrap();
-            for cell in &mut receipt.cells {
-                let planned = plan
-                    .cells
-                    .iter()
-                    .find(|p| p.cell_id == cell.cell_id)
+            let snapshot_root = built.dir.join("inputs/producing");
+            fs::remove_dir_all(&snapshot_root).unwrap();
+            receipt.source.producing =
+                ProducingInputs::capture_to(&built.repo, "producing-inputs.json", &snapshot_root)
                     .unwrap();
-                let case = json!({"key": cell.key, "cell_id": cell.cell_id, "case": planned.case});
-                cell.checkpoint_sha256 = None;
-                cell.checkpoint_sha256 = Some(store.accept(&cell.key, &case, cell).unwrap().sha256);
+        }
+        "missing-plan" => {
+            fs::remove_file(built.dir.join(PLAN_FILE)).unwrap();
+        }
+        "plan" | "plan-case" | "plan-arm" => {
+            let plan_path = built.dir.join("plan.json");
+            let mut plan: Value = serde_json::from_slice(&fs::read(&plan_path).unwrap()).unwrap();
+            match replacement {
+                "plan-case" => plan["cells"][0]["case"] = json!({"fixture": "different-input"}),
+                "plan-arm" => plan["cells"][0]["candidate_arm"] = json!("baseline-portable"),
+                _ => plan["max_cells_per_session"] = json!(1),
             }
-            receipt.checkpoints.manifest_sha256 =
-                sha256_hex(&fs::read(checkpoint_root.join("manifest.json")).unwrap());
-            CheckpointStore::inspect(&checkpoint_root).unwrap();
+            fs::write(plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
         }
-        fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
-        let summary = evaluate(&built.dir).unwrap();
-        assert_eq!(summary.verdict, Verdict::Rejected, "{replacement}");
-        if !matches!(replacement, "missing-plan" | "plan-case" | "plan-arm") {
-            assert!(
-                summary
-                    .findings
-                    .iter()
-                    .all(|finding| finding.severity != Severity::Error || finding.rule == "P-23"),
-                "replacement must fail specifically at the freeze: {replacement}: {:?}",
-                summary.findings
-            );
+        "settings" => {
+            receipt.settings.window_target_ms += 1;
+            receipt.settings_deviation = true;
         }
+        "toolchain" => receipt.toolchain = "rustc replacement".into(),
+        "arm-descriptor" => {
+            receipt
+                .arms
+                .get_mut("candidate-portable")
+                .unwrap()
+                .description = "self-consistent replacement candidate".into();
+        }
+        "checkpoint-identity" => {}
+        _ => unreachable!(),
+    }
+    if !matches!(replacement, "missing-plan" | "plan-case" | "plan-arm") {
+        // Publish a completely consistent replacement content closure. The
+        // opening record remains byte-for-byte unchanged: only its binding
+        // can distinguish these replacements from valid standalone facts.
+        let plan_path = built.dir.join(PLAN_FILE);
+        let mut plan: RunnerPlan = RunnerPlan::decode(&fs::read(&plan_path).unwrap()).unwrap();
+        for (name, arm) in &receipt.arms {
+            let planned = plan.arms.get_mut(name).unwrap();
+            planned.description = arm.description.clone();
+            planned.environment = arm.environment.clone();
+        }
+        if replacement == "settings" {
+            plan.timing_override = Some(tuning_campaign_support::protocol::TimingOverride {
+                windows_per_execution: receipt.settings.windows_per_execution,
+                window_target_ms: receipt.settings.window_target_ms,
+            });
+        }
+        fs::write(&plan_path, serde_json::to_vec_pretty(&plan).unwrap()).unwrap();
+        let mut replacement_identity = identity(
+            &receipt.protocol,
+            &receipt.source.producing,
+            &plan,
+            &receipt.arms,
+            &receipt.host,
+        );
+        if replacement == "checkpoint-identity" {
+            replacement_identity.feature_contract = "replacement-release".into();
+        }
+        let checkpoint_root = built.dir.join(CHECKPOINT_DIR);
+        fs::remove_dir_all(&checkpoint_root).unwrap();
+        let mut store = CheckpointStore::create_new(
+            &checkpoint_root,
+            &receipt.campaign_id,
+            replacement_identity,
+        )
+        .unwrap();
+        for cell in &mut receipt.cells {
+            let planned = plan
+                .cells
+                .iter()
+                .find(|p| p.cell_id == cell.cell_id)
+                .unwrap();
+            let case = json!({"key": cell.key, "cell_id": cell.cell_id, "case": planned.case});
+            cell.checkpoint_sha256 = None;
+            cell.checkpoint_sha256 = Some(store.accept(&cell.key, &case, cell).unwrap().sha256);
+        }
+        receipt.checkpoints.manifest_sha256 =
+            sha256_hex(&fs::read(checkpoint_root.join("manifest.json")).unwrap());
+        CheckpointStore::inspect(&checkpoint_root).unwrap();
+    }
+    fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
+    let summary = evaluate(&built.dir).unwrap();
+    assert_eq!(summary.verdict, Verdict::Rejected, "{replacement}");
+    if !matches!(replacement, "missing-plan" | "plan-case" | "plan-arm") {
         assert!(
             summary
                 .findings
                 .iter()
-                .any(|finding| finding.rule == "P-23" && finding.severity == Severity::Error),
-            "{replacement}: {:?}",
+                .all(|finding| finding.severity != Severity::Error || finding.rule == "P-23"),
+            "replacement must fail specifically at the freeze: {replacement}: {:?}",
             summary.findings
         );
     }
+    assert!(
+        summary
+            .findings
+            .iter()
+            .any(|finding| finding.rule == "P-23" && finding.severity == Severity::Error),
+        "{replacement}: {:?}",
+        summary.findings
+    );
+}
+
+macro_rules! frozen_fact_replacement_tests {
+    ($($test:ident => $replacement:literal),+ $(,)?) => {
+        $(
+            #[test]
+            fn $test() {
+                frozen_fact_replacement_is_rejected($replacement);
+            }
+        )+
+    };
+}
+
+frozen_fact_replacement_tests! {
+    acceptance_rejects_protocol_pin_replacement => "protocol-pin",
+    acceptance_rejects_contract_pin_replacement => "contract-pin",
+    acceptance_rejects_schema_pin_replacement => "schema-pin",
+    acceptance_rejects_addendum_pin_replacement => "addendum-pin",
+    acceptance_rejects_executable_replacement => "executable",
+    acceptance_rejects_execution_environment_replacement => "execution-environment",
+    acceptance_rejects_producing_inputs_replacement => "producing-inputs",
+    acceptance_rejects_plan_replacement => "plan",
+    acceptance_rejects_settings_replacement => "settings",
+    acceptance_rejects_toolchain_replacement => "toolchain",
+    acceptance_rejects_arm_descriptor_replacement => "arm-descriptor",
+    acceptance_rejects_checkpoint_identity_replacement => "checkpoint-identity",
+    acceptance_rejects_missing_plan => "missing-plan",
+    acceptance_rejects_plan_case_replacement => "plan-case",
+    acceptance_rejects_plan_arm_replacement => "plan-arm",
 }
 
 #[test]
