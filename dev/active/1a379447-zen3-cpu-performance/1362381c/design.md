@@ -68,8 +68,9 @@ remeasuring every primary cell, needs roughly one family per six primary cells
 standing rule and gains nothing the invariant does not already grant.
 
 The [drift record](production-drift.json) contradicts the premise of D-3: it
-classifies every committed receipt `code-differs`, because each receipt's
-measured packages carry code changes. The invoker therefore ruled on
+classifies every committed receipt whose measured content resolves as
+`code-differs`, because each such receipt's measured packages carry code
+changes; the rest pin no production content and are `unresolvable`. The invoker therefore ruled on
 2026-10-25 that consumed cells keep their evidence by identity, each labelled
 with its drift class (REQ-07 invalidates evidence only for producing
 measurement-behavior changes), and that the integrated families remeasure only
