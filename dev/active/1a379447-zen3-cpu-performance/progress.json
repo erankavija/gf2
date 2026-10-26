@@ -1170,16 +1170,16 @@
      "short_id": "31727c57",
      "title": "Confirm the core and decoder routes after integration",
      "classification": "research",
-     "status": "pending",
-     "tracker_state": "ready"
+     "status": "dispatched session 47",
+     "tracker_state": "in_progress"
     },
     {
      "id": "1358d6ab",
      "short_id": "1358d6ab",
      "title": "Remeasure comparator gaps on the integrated tree",
      "classification": "research",
-     "status": "pending",
-     "tracker_state": "ready"
+     "status": "dispatched session 47",
+     "tracker_state": "in_progress"
     },
     {
      "id": "78f0aafd",
@@ -1194,8 +1194,8 @@
      "short_id": "94213540",
      "title": "Keep the frozen-fact replacement test inside the fast-tier budget",
      "classification": "implementation",
-     "status": "pending",
-     "tracker_state": "ready"
+     "status": "dispatched session 47",
+     "tracker_state": "in_progress"
     },
     {
      "id": "1362381c-78c0-42eb-bdc9-4327f20bc343",
@@ -3646,9 +3646,9 @@
   "note": "Invoker approved arming 2026-10-24. 2026-10-23 window: pilot complete, confirmation refused before timing (absolute resolution_evidence path), fixed in c3ebd86d6."
  },
  "session_scope": {
-  "session": 46,
-  "date": "2026-10-25",
-  "instruction": "Invoker 2026-10-25 (session 46): drive epic 1a379447; subagent model by task difficulty; no Fable; also use Codex sub-agents, alternating Claude and Codex per implementation dispatch (gpt-6-luna xhigh for narrow tasks, gpt-6.1-sol high for moderate). Session 45 ended without a handoff.",
+  "session": 47,
+  "date": "2026-10-27",
+  "instruction": "Invoker 2026-10-27 (session 47): drive epic 1a379447; subagent model by task difficulty; no Fable; alternate Claude and Codex sub-agents per implementation dispatch (gpt-6-luna xhigh narrow, gpt-6.1-sol high moderate).",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation. Session 46: sibling edges for the 1362381c work packages are refused under transitive reduction and held by the lead: 31727c57 after eb07aa88 and e5f8b3ae; 1358d6ab after eb07aa88, ecad1724 and e5f8b3ae; 78f0aafd after 31727c57 and 1358d6ab; 1362381c after all five.",
   "standing_rule": "Invoker 2026-10-06 (session 30): provenance or protocols shall not prevent work; focus on HPC. A provenance or protocol question takes the cheapest compliant resolution and holds no wave.",
   "no_questions_rule": "Invoker 2026-10-12 (session 36), restated: do not stop to ask; a task that needs the invoker is blocked and its question recorded for the next session; handoff when this and the next wave finish or when all remaining work waits on the invoker; check workers every 30 minutes.",
@@ -3678,7 +3678,8 @@
    "e5f8b3ae review: lead; Codex output kept with lead doc fixes; canonical build/smoke/validation records run by the lead in agent-ed3d490e-run",
    "eb07aa88: Codex gpt-6.1-sol high; workload-set generator (moderate, well specified), worktree agent-eb07aa88",
    "ecad1724: Claude opus; production-drift generator extension (classification semantics), worktree agent-ecad1724; rework 1 (two classes) and rework 2 (gate F1 source resolution, F2 docs) by SendMessage",
-   "ecad1724 rounds 3-7: lead fixes directly (review findings on file filters); invoker ruling ends test-code separation"
+   "ecad1724 rounds 3-7: lead fixes directly (review findings on file filters); invoker ruling ends test-code separation",
+   "session 47: 31727c57 Codex gpt-6.1-sol high (moderate: family tooling extension, launchers); 1358d6ab Claude opus (new BCH runner arms, citation key, two families); 94213540 Codex gpt-6-luna xhigh (narrow test split)"
   ],
   "session_45": "Done: d06a99ed (invoker adoption ruling A), ed3d490e (all seven gates pass at 20f9652da).",
   "session_46": "Resumed from session 45 state without a handoff. e5f8b3ae Codex output reviewed and committed (cc8f8af69, branch worktree-agent-e5f8b3ae, lead doc fixes); canonical build and validation records run in agent-ed3d490e-run on branch worktree-agent-e5f8b3ae-run. 1362381c design rulings D-1..D-6 recorded; work packages created: eb07aa88 WP-1, ecad1724 WP-2, 31727c57 WP-3, 1358d6ab WP-4, 78f0aafd WP-5; 1362381c is WP-6. ecad1724 finished by the lead after rework 2 under two invoker rulings (unresolvable class; package-level measured content, no test-code separation); gates pending at d1748dd39. Bug 94213540 filed (fast-tier budget). Briefs for 31727c57 and 1358d6ab under 1362381c/dispatch/. Handoff: handoff-40.md."
