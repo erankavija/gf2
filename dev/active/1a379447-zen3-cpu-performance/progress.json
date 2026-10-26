@@ -1640,6 +1640,11 @@
    "id": "53f5b940",
    "title": "Make shared scratch trees survive a killed test process",
    "reason": "convention-convergence exception for the test-local Reaped guard of 94213540; outside the epic until the invoker brings it in; starts after the 1362381c window results"
+  },
+  {
+   "id": "ff10cb51",
+   "title": "Make the profile launcher's quality-file resumption test bind its refusal",
+   "reason": "pre-existing failure surfaced by 78f0aafd; outside the epic"
   }
  ],
  "escalations": [
@@ -2666,6 +2671,16 @@
    "status": "resolved",
    "raised_at": "2026-10-25",
    "answer": "Invoker 2026-10-25 (session 46): criteria minimum. Consumed cells keep evidence by identity with drift class; remeasure only FI-1..FI-4; no other family. Recorded in design D-3 and 1358d6ab REQ-03."
+  },
+  {
+   "session": 47,
+   "status": "open",
+   "questions": [
+    "Q1 arm the benchmark window for the queued FI-1..FI-4 campaigns and decoder/BCH profile series",
+    "Q2 78f0aafd REQ-02 profiles of historical executables (NR encoder, byte-field, polynomial): restore-by-rebuild vs profile integrated code with amendment",
+    "Q3 bring follow-ups 53f5b940 and ff10cb51 into the epic"
+   ],
+   "record": "handoff-41.md"
   }
  ],
  "rework_counts": {
@@ -3634,7 +3649,8 @@
   "handoff-37.md",
   "handoff-38.md",
   "handoff-39.md",
-  "handoff-40.md"
+  "handoff-40.md",
+  "handoff-41.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -3689,6 +3705,7 @@
   ],
   "session_45": "Done: d06a99ed (invoker adoption ruling A), ed3d490e (all seven gates pass at 20f9652da).",
   "session_46": "Resumed from session 45 state without a handoff. e5f8b3ae Codex output reviewed and committed (cc8f8af69, branch worktree-agent-e5f8b3ae, lead doc fixes); canonical build and validation records run in agent-ed3d490e-run on branch worktree-agent-e5f8b3ae-run. 1362381c design rulings D-1..D-6 recorded; work packages created: eb07aa88 WP-1, ecad1724 WP-2, 31727c57 WP-3, 1358d6ab WP-4, 78f0aafd WP-5; 1362381c is WP-6. ecad1724 finished by the lead after rework 2 under two invoker rulings (unresolvable class; package-level measured content, no test-code separation); gates pending at d1748dd39. Bug 94213540 filed (fast-tier budget). Briefs for 31727c57 and 1358d6ab under 1362381c/dispatch/. Handoff: handoff-40.md.",
-  "rulings_session_47": "Lead: (1) brief constraint 'no ledger/addendum changes' means existing ones; new family inputs are required. (2) P-20 counts confirmatory plus holdout cells only; pilots may measure every named configuration as exploratory cells and the freeze selects at most six (design P-20 section). (3) Ledger genesis at the first timed run accepted (1358d6ab). (4) Bchlib2026 added to .jit/references.toml."
+  "rulings_session_47": "Lead: (1) brief constraint 'no ledger/addendum changes' means existing ones; new family inputs are required. (2) P-20 counts confirmatory plus holdout cells only; pilots may measure every named configuration as exploratory cells and the freeze selects at most six (design P-20 section). (3) Ledger genesis at the first timed run accepted (1358d6ab). (4) Bchlib2026 added to .jit/references.toml.",
+  "session_47_end": "Session 47 ended 2026-10-27 with handoff-41.md: all remaining epic work waits on the benchmark window (Q1) and Q2."
  }
 }
