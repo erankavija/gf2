@@ -45,6 +45,9 @@ TABLE = b"\x01"
 EARLIER_TABLE = b"\x00"
 # A package-relative path that leaves the package: an include target at the root.
 OUTSIDE_TABLE = "../../data/table.bin"
+# A literal include path split by a Rust string continuation.
+WRAPPED_SOURCE = b'static WRAPPED: &[u8] = include_bytes!("../../../data/\\\n    wrapped.bin");\n'
+OUTSIDE_WRAPPED = "../../data/wrapped.bin"
 PRODUCTION = {
     "Cargo.toml": MANIFEST,
     "build.rs": BUILD,
@@ -56,6 +59,8 @@ PRODUCTION = {
     "hip/extra.hip": EXTRA,
     "src/table.rs": TABLE_SOURCE,
     OUTSIDE_TABLE: TABLE,
+    "src/wrapped.rs": WRAPPED_SOURCE,
+    OUTSIDE_WRAPPED: TABLE,
 }
 
 
@@ -162,6 +167,13 @@ class AllReceipts(unittest.TestCase):
             {OUTSIDE_TABLE: EARLIER_TABLE},
             None,
         ),
+        "added-include-target": (BENCHMARK_SCHEMA, without(OUTSIDE_TABLE), {}, None),
+        "wrapped-include-target": (
+            BENCHMARK_SCHEMA,
+            PRODUCTION | {OUTSIDE_WRAPPED: EARLIER_TABLE},
+            {OUTSIDE_WRAPPED: EARLIER_TABLE},
+            None,
+        ),
         "test-target-pin-only": (BENCHMARK_SCHEMA, {"tests/check.rs": TEST}, {}, "current"),
         "revision-identical": (BENCHMARK_SCHEMA, {}, {}, "current"),
         "revision-differs": (BENCHMARK_SCHEMA, {}, {}, "earlier"),
@@ -209,6 +221,8 @@ class AllReceipts(unittest.TestCase):
         (package / "src" / "table.rs").write_bytes(TABLE_SOURCE)
         (cls.root / "data").mkdir()
         (cls.root / "data" / "table.bin").write_bytes(TABLE)
+        (package / "src" / "wrapped.rs").write_bytes(WRAPPED_SOURCE)
+        (cls.root / "data" / "wrapped.bin").write_bytes(TABLE)
         commits["kernel-earlier"] = cls.commit()
         (package / "hip" / "kernel.hip").write_bytes(KERNEL)
         (package / "tests" / "check.rs").write_bytes(EARLIER_TEST)
@@ -356,6 +370,19 @@ class AllReceipts(unittest.TestCase):
             "include-target", "code-differs", "production files", [("data/table.bin", "code-differs")]
         )
 
+    def test_an_unpinned_include_target_outside_the_package_is_added(self):
+        self.assert_row(
+            "added-include-target", "code-differs", "production files", [("data/table.bin", "added")]
+        )
+
+    def test_a_continued_include_path_names_its_target(self):
+        self.assert_row(
+            "wrapped-include-target",
+            "code-differs",
+            "production files",
+            [("data/wrapped.bin", "code-differs")],
+        )
+
     def test_a_pin_of_test_targets_only_falls_back_to_the_source_revision(self):
         self.assert_row(
             "test-target-pin-only", "code-identical", "production files at the source revision", []
@@ -377,6 +404,9 @@ class AllReceipts(unittest.TestCase):
                 ("crates/gf2-core/src/paired.rs", "added"),
                 ("crates/gf2-core/src/table.rs", "added"),
                 ("crates/gf2-core/src/unit.rs", "added"),
+                ("crates/gf2-core/src/wrapped.rs", "added"),
+                ("data/table.bin", "added"),
+                ("data/wrapped.bin", "added"),
             ],
         )
         self.assert_row(

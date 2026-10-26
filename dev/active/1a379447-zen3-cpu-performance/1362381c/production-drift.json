@@ -1481,7 +1481,7 @@
         "comment-or-blank-only": 196,
         "removed": 1,
         "identical": 24,
-        "added": 19
+        "added": 21
       },
       "differing_files": [
         {
@@ -2135,6 +2135,14 @@
         {
           "path": "crates/gf2-sim/src/stages/batch_decode.rs",
           "class": "added"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+          "class": "added"
+        },
+        {
+          "path": "dev/studies/b488f02c/literature-search-2026-08-08.md",
+          "class": "added"
         }
       ]
     },
@@ -2184,7 +2192,7 @@
         "comment-or-blank-only": 188,
         "removed": 1,
         "identical": 17,
-        "added": 22
+        "added": 24
       },
       "differing_files": [
         {
@@ -2797,6 +2805,14 @@
         },
         {
           "path": "crates/gf2-sim/src/stages/batch_decode.rs",
+          "class": "added"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+          "class": "added"
+        },
+        {
+          "path": "dev/studies/b488f02c/literature-search-2026-08-08.md",
           "class": "added"
         }
       ]
@@ -2827,7 +2843,7 @@
         "comment-or-blank-only": 186,
         "removed": 1,
         "identical": 17,
-        "added": 22
+        "added": 24
       },
       "differing_files": [
         {
@@ -3448,6 +3464,14 @@
         },
         {
           "path": "crates/gf2-sim/src/stages/batch_decode.rs",
+          "class": "added"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+          "class": "added"
+        },
+        {
+          "path": "dev/studies/b488f02c/literature-search-2026-08-08.md",
           "class": "added"
         }
       ]
@@ -3478,7 +3502,7 @@
         "comment-or-blank-only": 186,
         "removed": 1,
         "identical": 17,
-        "added": 22
+        "added": 24
       },
       "differing_files": [
         {
@@ -4099,6 +4123,14 @@
         },
         {
           "path": "crates/gf2-sim/src/stages/batch_decode.rs",
+          "class": "added"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+          "class": "added"
+        },
+        {
+          "path": "dev/studies/b488f02c/literature-search-2026-08-08.md",
           "class": "added"
         }
       ]
@@ -8909,7 +8941,7 @@
         "comment-or-blank-only": 186,
         "removed": 1,
         "identical": 17,
-        "added": 22
+        "added": 24
       },
       "differing_files": [
         {
@@ -9530,6 +9562,14 @@
         },
         {
           "path": "crates/gf2-sim/src/stages/batch_decode.rs",
+          "class": "added"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+          "class": "added"
+        },
+        {
+          "path": "dev/studies/b488f02c/literature-search-2026-08-08.md",
           "class": "added"
         }
       ]
@@ -12453,7 +12493,7 @@
         "comment-or-blank-only": 159,
         "removed": 1,
         "identical": 14,
-        "added": 16
+        "added": 18
       },
       "differing_files": [
         {
@@ -12835,6 +12875,14 @@
         {
           "path": "crates/gf2-sim/src/stages/batch_decode.rs",
           "class": "added"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+          "class": "added"
+        },
+        {
+          "path": "dev/studies/b488f02c/literature-search-2026-08-08.md",
+          "class": "added"
         }
       ]
     },
@@ -13208,7 +13256,7 @@
         "comment-or-blank-only": 166,
         "removed": 1,
         "identical": 15,
-        "added": 22
+        "added": 24
       },
       "differing_files": [
         {
@@ -13793,6 +13841,14 @@
         },
         {
           "path": "crates/gf2-sim/src/stages/batch_decode.rs",
+          "class": "added"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+          "class": "added"
+        },
+        {
+          "path": "dev/studies/b488f02c/literature-search-2026-08-08.md",
           "class": "added"
         }
       ]
@@ -13821,7 +13877,7 @@
         "comment-or-blank-only": 166,
         "removed": 1,
         "identical": 15,
-        "added": 22
+        "added": 24
       },
       "differing_files": [
         {
@@ -14406,6 +14462,14 @@
         },
         {
           "path": "crates/gf2-sim/src/stages/batch_decode.rs",
+          "class": "added"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+          "class": "added"
+        },
+        {
+          "path": "dev/studies/b488f02c/literature-search-2026-08-08.md",
           "class": "added"
         }
       ]
@@ -14440,7 +14504,7 @@
         "comment-or-blank-only": 186,
         "removed": 1,
         "identical": 17,
-        "added": 22
+        "added": 24
       },
       "differing_files": [
         {
@@ -15061,6 +15125,14 @@
         },
         {
           "path": "crates/gf2-sim/src/stages/batch_decode.rs",
+          "class": "added"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+          "class": "added"
+        },
+        {
+          "path": "dev/studies/b488f02c/literature-search-2026-08-08.md",
           "class": "added"
         }
       ]
@@ -16199,7 +16271,7 @@
         "comment-or-blank-only": 205,
         "removed": 1,
         "identical": 18,
-        "added": 17
+        "added": 19
       },
       "differing_files": [
         {
@@ -16740,6 +16812,14 @@
         },
         {
           "path": "crates/gf2-sim/src/stages/batch_decode.rs",
+          "class": "added"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv",
+          "class": "added"
+        },
+        {
+          "path": "dev/studies/b488f02c/literature-search-2026-08-08.md",
           "class": "added"
         }
       ]

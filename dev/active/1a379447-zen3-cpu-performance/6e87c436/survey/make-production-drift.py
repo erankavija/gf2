@@ -136,12 +136,26 @@ def class_counts(files):
 
 def added_files(directories, digests, keep=None):
     """Tracked files of `directories` that `digests` does not pin: under `src/`, or
-    anywhere in the package that `keep` accepts when it is given."""
-    return [
-        {"path": path, "class": "added", "current_sha256": sha256((ROOT / path).read_bytes())}
+    anywhere in the package that `keep` accepts when it is given, together with
+    the include targets outside the packages that their production files name."""
+    added = [
+        path
         for package in directories
         for path in git("ls-files", "--", package if keep else f"{package}/src").splitlines()
         if path not in digests and (keep is None or keep(path))
+    ]
+    inside = tuple(f"{package}/" for package in directories)
+    added += sorted(
+        target
+        for target, source in getattr(keep, "targets", {}).items()
+        if source.startswith(inside)
+        and not target.startswith(inside)
+        and target not in digests
+        and git("ls-files", "--", target).strip()
+    )
+    return [
+        {"path": path, "class": "added", "current_sha256": sha256((ROOT / path).read_bytes())}
+        for path in added
     ]
 
 
@@ -279,6 +293,7 @@ BASES = {
 }
 FILE_CLASSES_THAT_DIFFER = ("code-differs", "removed", "added", "unavailable")
 INCLUDE = re.compile(r'include(?:_str|_bytes)?!\s*\(\s*"([^"]+)"')
+STRING_CONTINUATION = re.compile(r"\\\n\s*")
 # Files of a receipt directory that may record the revision its arms were built from.
 REVISION_RECORDS = ("receipt.json", "checkpoints/manifest.json")
 BUILD_RECORD = "build-identity.json"
@@ -321,11 +336,12 @@ def production_filter(listed, read):
     targets are not production.
     """
     listed = set(listed)
-    targets = set()
+    targets = {}
     for path in listed:
         if path.endswith(".rs") and not not_production_target(path):
             for name in INCLUDE.findall(read(path).decode(errors="replace")):
-                targets.add(os.path.normpath(os.path.join(os.path.dirname(path), name)))
+                name = STRING_CONTINUATION.sub("", name)
+                targets[os.path.normpath(os.path.join(os.path.dirname(path), name))] = path
     native = native_sources(listed, read)
 
     def compiled(path):
@@ -336,6 +352,7 @@ def production_filter(listed, read):
         name = pathlib.PurePath(path).name
         return path in listed and (name.endswith(".rs") or name == "Cargo.toml" or path in native)
 
+    # Each literal include target, mapped to the production file that names it.
     compiled.targets = targets
     return compiled
 
@@ -398,7 +415,7 @@ def revision_row(revision, directories, compiled):
     listed = git("ls-tree", "-r", "--name-only", revision, "--", *directories).splitlines()
     at_revision = production_filter(listed, show)
     measured = {path: sha256(show(path)) for path in listed if at_revision(path)}
-    for path in sorted(at_revision.targets - set(listed)):
+    for path in sorted(at_revision.targets.keys() - set(listed)):
         try:
             measured[path] = sha256(show(path))
         except subprocess.CalledProcessError:
