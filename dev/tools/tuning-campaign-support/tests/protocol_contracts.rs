@@ -7,7 +7,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 use tuning_campaign_support::abtest::{
     bonferroni_confidence, bootstrap_seed, decide, median, pair_orders, paired_bootstrap_speedup,
@@ -45,6 +45,68 @@ const CAMPAIGN_SEED: u64 = 7;
 
 fn scratch(name: &str) -> Scratch {
     tuning_campaign_support::scratch::scratch(&format!("gf2-f547c394-{name}"))
+}
+
+/// A fixture tree removed on drop, on panic, and when the test process is
+/// killed. A reaper in its own process group holds the tree's path and removes
+/// it once the pipe the test process holds closes, which the kernel does at
+/// any process exit including SIGKILL of the process or its group.
+struct Reaped {
+    path: PathBuf,
+    /// Its stdin is the lifeline: closing it releases the reaper.
+    reaper: Option<Child>,
+}
+
+impl Reaped {
+    fn new(name: &str) -> Self {
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let path = std::env::temp_dir().join(format!(
+            "gf2-f547c394-{name}-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        ));
+        if tuning_campaign_support::scratch::keep_scratch() {
+            fs::create_dir(&path).unwrap();
+            return Self { path, reaper: None };
+        }
+        let mut reaper = Command::new("sh")
+            .args([
+                "-c",
+                r#"IFS= read -r tree; cat >/dev/null; rm -rf -- "$tree""#,
+            ])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .process_group(0)
+            .spawn()
+            .expect("spawn fixture reaper");
+        let lifeline = reaper.stdin.as_mut().unwrap();
+        // The reaper learns the path before the tree exists.
+        std::io::Write::write_all(lifeline, format!("{}\n", path.display()).as_bytes()).unwrap();
+        fs::create_dir(&path).unwrap();
+        Self {
+            path,
+            reaper: Some(reaper),
+        }
+    }
+}
+
+impl std::ops::Deref for Reaped {
+    type Target = Path;
+
+    fn deref(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for Reaped {
+    fn drop(&mut self) {
+        if let Some(mut reaper) = self.reaper.take() {
+            let _ = fs::remove_dir_all(&self.path);
+            drop(reaper.stdin.take());
+            let _ = reaper.wait();
+        }
+    }
 }
 
 /// Scratch-repository locations of the shared documents and family addenda.
@@ -421,7 +483,7 @@ fn identity(
 
 struct Built {
     /// Owns the tree `repo` and `dir` point into.
-    _root: Scratch,
+    _root: Reaped,
     repo: PathBuf,
     dir: PathBuf,
 }
@@ -559,7 +621,7 @@ fn build_receipt_with_history(
     pilot_fixture: PilotFixture<'_>,
     mutate: impl FnOnce(&mut BenchmarkReceipt),
 ) -> Built {
-    let root = scratch(name);
+    let root = Reaped::new(name);
     let repo = root.join("repo");
     stage_repo(&repo);
     if addendum.protocol.version >= 2 {
@@ -1859,6 +1921,71 @@ fn frozen_fact_replacement_is_rejected(replacement: &str) {
             .any(|finding| finding.rule == "P-23" && finding.severity == Severity::Error),
         "{replacement}: {:?}",
         summary.findings
+    );
+}
+
+const KILL_PROBE_VAR: &str = "GF2_KILL_PROBE";
+
+/// Child half of the kill test: builds one fixture, announces its path and
+/// blocks until killed. Inert unless the parent sets `KILL_PROBE_VAR`.
+#[test]
+fn kill_probe_holds_a_fixture() {
+    if std::env::var_os(KILL_PROBE_VAR).is_none() {
+        return;
+    }
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Exploratory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "kill-probe",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    println!("FIXTURE {}", built._root.display());
+    loop {
+        std::thread::park();
+    }
+}
+
+#[test]
+fn a_fixture_is_removed_when_its_test_process_is_killed() {
+    let mut child = Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", "kill_probe_holds_a_fixture", "--nocapture"])
+        .env(KILL_PROBE_VAR, "1")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .process_group(0)
+        .spawn()
+        .unwrap();
+    let stdout = child.stdout.take().unwrap();
+    let mut lines = std::io::BufRead::lines(std::io::BufReader::new(stdout));
+    let tree = loop {
+        let line = lines.next().expect("probe exited early").unwrap();
+        if let Some(path) = line.strip_prefix("FIXTURE ") {
+            break PathBuf::from(path);
+        }
+    };
+    assert!(tree.join("repo").is_dir());
+    rustix::process::kill_process_group(
+        rustix::process::Pid::from_raw(child.id() as i32).unwrap(),
+        rustix::process::Signal::KILL,
+    )
+    .unwrap();
+    child.wait().unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while tree.exists() && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    assert!(
+        !tree.exists(),
+        "fixture survived SIGKILL: {}",
+        tree.display()
     );
 }
 
