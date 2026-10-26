@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -36,8 +37,14 @@ UNIT = b"#[test]\nfn unit() {}\n"
 EARLIER_UNIT = b"#[test]\nfn earlier_unit() {}\n"
 # The production files of the current fixture package.
 BUILD = b'fn main() { cc::Build::new().file("hip/kernel.hip").file("hip/extra.hip"); }\n'
+EARLIER_BUILD = b'fn main() { cc::Build::new().file("hip/kernel.hip").file("hip/old.hip"); }\n'
 INLINE_TEST = b"fn two() {}\n#[cfg(test)]\nmod checks {\n    #[test]\n    fn two() {}\n}\n"
 EARLIER_INLINE_TEST = b"fn two() {}\n#[cfg(test)]\nmod checks {\n    #[test]\n    fn zero() {}\n}\n"
+TABLE_SOURCE = b'static TABLE: &[u8] = include_bytes!("../../../data/table.bin");\n'
+TABLE = b"\x01"
+EARLIER_TABLE = b"\x00"
+# A package-relative path that leaves the package: an include target at the root.
+OUTSIDE_TABLE = "../../data/table.bin"
 PRODUCTION = {
     "Cargo.toml": MANIFEST,
     "build.rs": BUILD,
@@ -47,6 +54,8 @@ PRODUCTION = {
     "src/paired.rs": UNIT,
     "hip/kernel.hip": KERNEL,
     "hip/extra.hip": EXTRA,
+    "src/table.rs": TABLE_SOURCE,
+    OUTSIDE_TABLE: TABLE,
 }
 
 
@@ -125,8 +134,8 @@ class AllReceipts(unittest.TestCase):
         ),
         "removed-kernel": (
             BENCHMARK_SCHEMA,
-            PRODUCTION | {"hip/old.hip": EARLIER_KERNEL},
-            {"hip/old.hip": EARLIER_KERNEL},
+            without("hip/extra.hip") | {"build.rs": EARLIER_BUILD, "hip/old.hip": EARLIER_KERNEL},
+            {"build.rs": EARLIER_BUILD, "hip/old.hip": EARLIER_KERNEL},
             None,
         ),
         "unavailable": (
@@ -135,6 +144,25 @@ class AllReceipts(unittest.TestCase):
             {},
             None,
         ),
+        "unavailable-and-code": (
+            BENCHMARK_SCHEMA,
+            PRODUCTION | {"src/lib.rs": b"fn three() {}\n", "hip/kernel.hip": EARLIER_KERNEL},
+            {"hip/kernel.hip": EARLIER_KERNEL},
+            None,
+        ),
+        "deleted-test-target": (
+            BENCHMARK_SCHEMA,
+            PRODUCTION | {"tests/gone.rs": TEST},
+            {"tests/gone.rs": TEST},
+            None,
+        ),
+        "include-target": (
+            BENCHMARK_SCHEMA,
+            PRODUCTION | {OUTSIDE_TABLE: EARLIER_TABLE},
+            {OUTSIDE_TABLE: EARLIER_TABLE},
+            None,
+        ),
+        "test-target-pin-only": (BENCHMARK_SCHEMA, {"tests/check.rs": TEST}, {}, "current"),
         "revision-identical": (BENCHMARK_SCHEMA, {}, {}, "current"),
         "revision-differs": (BENCHMARK_SCHEMA, {}, {}, "earlier"),
         "revision-kernel": (BENCHMARK_SCHEMA, {}, {}, "kernel-earlier"),
@@ -178,6 +206,9 @@ class AllReceipts(unittest.TestCase):
         (package / "hip" / "extra.hip").write_bytes(EXTRA)
         (package / "tests").mkdir()
         (package / "tests" / "check.rs").write_bytes(TEST)
+        (package / "src" / "table.rs").write_bytes(TABLE_SOURCE)
+        (cls.root / "data").mkdir()
+        (cls.root / "data" / "table.bin").write_bytes(TABLE)
         commits["kernel-earlier"] = cls.commit()
         (package / "hip" / "kernel.hip").write_bytes(KERNEL)
         (package / "tests" / "check.rs").write_bytes(EARLIER_TEST)
@@ -188,15 +219,19 @@ class AllReceipts(unittest.TestCase):
             receipt = cls.root / "dev" / "bench_results" / "fixture" / name
             producing = receipt / "inputs" / "producing"
             producing.mkdir(parents=True)
-            digests = {f"crates/gf2-core/{path}": sha256(data) for path, data in pinned.items()}
+            digests = {
+                os.path.normpath(f"crates/gf2-core/{path}"): sha256(data)
+                for path, data in pinned.items()
+            }
             if not pinned:
                 digests = {"Cargo.lock": sha256(b"version = 4\n")}
             (producing / "producing-snapshot.json").write_text(
                 json.dumps({"behavior_sha256": digests, "build_inputs_sha256": {}})
             )
             for path, data in held.items():
-                (producing / "crates" / "gf2-core" / path).parent.mkdir(parents=True, exist_ok=True)
-                (producing / "crates" / "gf2-core" / path).write_bytes(data)
+                held_path = producing / os.path.normpath(f"crates/gf2-core/{path}")
+                held_path.parent.mkdir(parents=True, exist_ok=True)
+                held_path.write_bytes(data)
             (receipt / "receipt.json").write_text(json.dumps({"schema": schema}))
             if revision is not None:
                 (receipt / "checkpoints").mkdir()
@@ -279,7 +314,11 @@ class AllReceipts(unittest.TestCase):
             "removed-kernel",
             "code-differs",
             "production files",
-            [("crates/gf2-core/hip/old.hip", "removed")],
+            [
+                ("crates/gf2-core/build.rs", "code-differs"),
+                ("crates/gf2-core/hip/old.hip", "removed"),
+                ("crates/gf2-core/hip/extra.hip", "added"),
+            ],
         )
 
     def test_an_added_kernel_source_makes_code_differs(self):
@@ -298,6 +337,30 @@ class AllReceipts(unittest.TestCase):
             [("crates/gf2-core/src/lib.rs", "unavailable")],
         )
 
+    def test_known_differences_stay_listed_beside_unavailable_bytes(self):
+        self.assert_row(
+            "unavailable-and-code",
+            "code-differs",
+            "measured bytes unavailable",
+            [
+                ("crates/gf2-core/hip/kernel.hip", "code-differs"),
+                ("crates/gf2-core/src/lib.rs", "unavailable"),
+            ],
+        )
+
+    def test_a_deleted_test_target_is_not_production_drift(self):
+        self.assert_row("deleted-test-target", "code-identical", "production files", [])
+
+    def test_a_changed_include_target_outside_the_package_makes_code_differs(self):
+        self.assert_row(
+            "include-target", "code-differs", "production files", [("data/table.bin", "code-differs")]
+        )
+
+    def test_a_pin_of_test_targets_only_falls_back_to_the_source_revision(self):
+        self.assert_row(
+            "test-target-pin-only", "code-identical", "production files at the source revision", []
+        )
+
     def test_a_recorded_source_revision_compares_its_files_with_the_tree(self):
         basis = "production files at the source revision"
         self.assert_row("revision-identical", "code-identical", basis, [])
@@ -312,6 +375,7 @@ class AllReceipts(unittest.TestCase):
                 ("crates/gf2-core/hip/kernel.hip", "added"),
                 ("crates/gf2-core/src/inline.rs", "added"),
                 ("crates/gf2-core/src/paired.rs", "added"),
+                ("crates/gf2-core/src/table.rs", "added"),
                 ("crates/gf2-core/src/unit.rs", "added"),
             ],
         )

@@ -26,8 +26,8 @@ write on a tree that differs from the one `dense-verdict-end-state.json` pins.
 
 With `--all-receipts OUTPUT` it instead classifies every committed receipt the
 `select-receipts.py` selector enumerates, of any schema, as `code-identical`,
-`code-differs` or `unresolvable`: by the same file classes over the compiled files under `crates/`
-its `inputs/producing/producing-snapshot.json` pins, or else over the compiled
+`code-differs` or `unresolvable`: by the same file classes over the compiled production
+files its `inputs/producing/producing-snapshot.json` pins, or else over the compiled
 files at the `source_revision` it records, read from git as bytes; a receipt
 with neither is `unresolvable`. Receipts with
 one measured identity share a row; the record defines each class and basis.
@@ -265,18 +265,19 @@ REVISION = "production files at the source revision"
 UNAVAILABLE = "measured bytes unavailable"
 UNPINNED = "measured content not pinned"
 BASES = {
-    FILES: "the compiled files under `crates/` the producing snapshot pins, against the "
-    "tree: identical or comment-or-blank-only is equal; code-differs, "
+    FILES: "the compiled production files the producing snapshot pins, judged by "
+    "the pinned bytes, against the tree: identical or comment-or-blank-only is equal; code-differs, "
     "removed, and a tracked production file the receipt does not pin (added) differ",
-    REVISION: "the snapshot pins no file under `crates/`; the compiled files of every "
+    REVISION: "the snapshot pins no compiled production file; the compiled files of every "
     "package under `crates/` at the `source_revision` the receipt records, read as "
     "bytes, against the tree by the same file classes",
-    UNAVAILABLE: "no snapshot of the row holds the measured bytes of a pinned file "
-    "whose current bytes differ",
-    UNPINNED: "the snapshot pins no file under `crates/` and no recorded "
+    UNAVAILABLE: "the production-files basis, where no snapshot of the row holds the "
+    "measured bytes of a pinned file whose current bytes differ; that file classifies "
+    "`unavailable`",
+    UNPINNED: "the snapshot pins no compiled production file and no recorded "
     "`source_revision` resolves",
 }
-FILE_CLASSES_THAT_DIFFER = ("code-differs", "removed", "added")
+FILE_CLASSES_THAT_DIFFER = ("code-differs", "removed", "added", "unavailable")
 INCLUDE = re.compile(r'include(?:_str|_bytes)?!\s*\(\s*"([^"]+)"')
 # Files of a receipt directory that may record the revision its arms were built from.
 REVISION_RECORDS = ("receipt.json", "checkpoints/manifest.json")
@@ -330,9 +331,12 @@ def production_filter(listed, read):
     def compiled(path):
         if not_production_target(path):
             return False
+        if path in targets:
+            return True
         name = pathlib.PurePath(path).name
-        return name.endswith(".rs") or name == "Cargo.toml" or path in targets or path in native
+        return path in listed and (name.endswith(".rs") or name == "Cargo.toml" or path in native)
 
+    compiled.targets = targets
     return compiled
 
 
@@ -356,12 +360,6 @@ def file_row(receipts, digests, directories, compiled):
         for directory in directories
         if any(path.startswith(f"{directory}/") for path in digests)
     ]
-    # A pinned file the tree no longer holds stays measured, so it classifies `removed`.
-    digests = {
-        path: digest
-        for path, digest in digests.items()
-        if compiled(path) or not (ROOT / path).is_file() and not path.endswith(".md")
-    }
     files, unavailable = [], []
     for path, digest in sorted(digests.items()):
         try:
@@ -369,10 +367,10 @@ def file_row(receipts, digests, directories, compiled):
         except UnavailableSnapshot:
             unavailable.append({"path": path, "class": "unavailable"})
     files += added_files(packages, digests, compiled)
-    row = {"packages": packages}
+    row = {"packages": packages} | verdict(files + unavailable, FILES)
     if unavailable:
-        return row | {"class": "code-differs", "basis": UNAVAILABLE, "differing_files": unavailable}
-    return row | verdict(files, FILES)
+        row |= {"class": "code-differs", "basis": UNAVAILABLE}
+    return row
 
 
 def verdict(files, basis):
@@ -400,6 +398,11 @@ def revision_row(revision, directories, compiled):
     listed = git("ls-tree", "-r", "--name-only", revision, "--", *directories).splitlines()
     at_revision = production_filter(listed, show)
     measured = {path: sha256(show(path)) for path in listed if at_revision(path)}
+    for path in sorted(at_revision.targets - set(listed)):
+        try:
+            measured[path] = sha256(show(path))
+        except subprocess.CalledProcessError:
+            pass
     packages = [
         directory
         for directory in directories
@@ -445,13 +448,28 @@ def source_revision(receipt):
 
 
 def measured_identity(receipt, producing, directories):
-    """The basis and content by which `receipt` is compared, as a hashable key and value."""
-    digests = {
-        path: digest
-        for name in DIGEST_MAPS
-        for path, digest in producing[name].items()
-        if any(path.startswith(f"{directory}/") for directory in directories)
-    }
+    """The basis and content by which `receipt` is compared, as a hashable key and value.
+
+    The pinned files are filtered by the production rule applied to the pinned
+    bytes, so a removed file keeps its measured role.
+    """
+    pinned = {path: digest for name in DIGEST_MAPS for path, digest in producing[name].items()}
+    snapshot = ROOT / pathlib.PurePath(receipt).parent / SNAPSHOT
+
+    def read(path):
+        try:
+            return held_bytes(path, pinned[path], [snapshot])
+        except UnavailableSnapshot:
+            current = ROOT / path
+            if current.is_file() and sha256(data := current.read_bytes()) == pinned[path]:
+                return data
+            return b""
+
+    packaged = [
+        path for path in pinned if any(path.startswith(f"{directory}/") for directory in directories)
+    ]
+    measured = production_filter(packaged, read)
+    digests = {path: digest for path, digest in pinned.items() if measured(path)}
     if digests:
         return FILES, digests
     revision = source_revision(receipt)

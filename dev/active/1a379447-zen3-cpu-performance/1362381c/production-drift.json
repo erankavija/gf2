@@ -18,10 +18,10 @@
     "unresolvable": "the receipt pins neither production files nor a resolvable source revision; `unresolved_inputs` names its pinned producing inputs"
   },
   "bases": {
-    "production files": "the compiled files under `crates/` the producing snapshot pins, against the tree: identical or comment-or-blank-only is equal; code-differs, removed, and a tracked production file the receipt does not pin (added) differ",
-    "production files at the source revision": "the snapshot pins no file under `crates/`; the compiled files of every package under `crates/` at the `source_revision` the receipt records, read as bytes, against the tree by the same file classes",
-    "measured bytes unavailable": "no snapshot of the row holds the measured bytes of a pinned file whose current bytes differ",
-    "measured content not pinned": "the snapshot pins no file under `crates/` and no recorded `source_revision` resolves"
+    "production files": "the compiled production files the producing snapshot pins, judged by the pinned bytes, against the tree: identical or comment-or-blank-only is equal; code-differs, removed, and a tracked production file the receipt does not pin (added) differ",
+    "production files at the source revision": "the snapshot pins no compiled production file; the compiled files of every package under `crates/` at the `source_revision` the receipt records, read as bytes, against the tree by the same file classes",
+    "measured bytes unavailable": "the production-files basis, where no snapshot of the row holds the measured bytes of a pinned file whose current bytes differ; that file classifies `unavailable`",
+    "measured content not pinned": "the snapshot pins no compiled production file and no recorded `source_revision` resolves"
   },
   "classifier_rule": "Rust sources only. Line comments (`//` to the end of the line, doc comments included) and block comments (`/* */`, nested) outside string, raw-string, byte-string and character literals are removed; trailing whitespace is removed from every line; lines left empty are removed. Two files whose remaining text is equal are comment-or-blank-only. Leading whitespace, line breaks inside code and `#[doc]` attributes count as code.",
   "rows": [
@@ -5414,8 +5414,8 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 70,
+        "identical": 3,
         "comment-or-blank-only": 68,
-        "identical": 2,
         "added": 13
       },
       "differing_files": [
@@ -5776,8 +5776,8 @@
       "basis": "production files",
       "class_counts": {
         "code-differs": 70,
+        "identical": 3,
         "comment-or-blank-only": 68,
-        "identical": 2,
         "added": 13
       },
       "differing_files": [
