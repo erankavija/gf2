@@ -51,6 +51,9 @@ fn scratch(name: &str) -> Scratch {
 /// killed. A reaper in its own process group holds the tree's path and removes
 /// it once the pipe the test process holds closes, which the kernel does at
 /// any process exit including SIGKILL of the process or its group.
+///
+/// Test-local exception to `tuning_campaign_support::scratch` until
+/// `@/issue/53f5b940` gives the shared form this removal.
 struct Reaped {
     path: PathBuf,
     /// Its stdin is the lifeline: closing it releases the reaper.
@@ -1927,7 +1930,8 @@ fn frozen_fact_replacement_is_rejected(replacement: &str) {
 const KILL_PROBE_VAR: &str = "GF2_KILL_PROBE";
 
 /// Child half of the kill test: builds one fixture, announces its path and
-/// blocks until killed. Inert unless the parent sets `KILL_PROBE_VAR`.
+/// holds it until killed or until its stdin, which the parent holds, closes.
+/// Inert unless the parent sets `KILL_PROBE_VAR`.
 #[test]
 fn kill_probe_holds_a_fixture() {
     if std::env::var_os(KILL_PROBE_VAR).is_none() {
@@ -1948,9 +1952,7 @@ fn kill_probe_holds_a_fixture() {
         |_| {},
     );
     println!("FIXTURE {}", built._root.display());
-    loop {
-        std::thread::park();
-    }
+    std::io::Read::read_to_end(&mut std::io::stdin(), &mut Vec::new()).unwrap();
 }
 
 #[test]
@@ -1958,6 +1960,7 @@ fn a_fixture_is_removed_when_its_test_process_is_killed() {
     let mut child = Command::new(std::env::current_exe().unwrap())
         .args(["--exact", "kill_probe_holds_a_fixture", "--nocapture"])
         .env(KILL_PROBE_VAR, "1")
+        .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .process_group(0)
