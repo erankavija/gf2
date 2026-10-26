@@ -28,7 +28,9 @@ use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
 
-use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchCode, FrameSize};
+use gf2_coding::bch::dvb_t2::{
+    dvb_t2_bch_code, DvbBchParams, DvbT2BchCode, FrameSize, DVB_T2_LAYOUT,
+};
 use gf2_coding::bch::encode::{
     max_parallel_batch_workers, BchEncodeWorkspace, EncodeFamily, SystematicLayout,
 };
@@ -139,7 +141,7 @@ pub struct Conversion {
 /// Phases short enough to sit under the clock's resolution are measured in
 /// bulk so their reported figure is a per-call cost rather than a rounding
 /// artefact.
-fn per_call_ns(reps: u32, mut body: impl FnMut()) -> u64 {
+pub fn per_call_ns(reps: u32, mut body: impl FnMut()) -> u64 {
     let reps = reps.max(1);
     let start = Instant::now();
     for _ in 0..reps {
@@ -590,13 +592,99 @@ fn ldpc_code(n: usize) -> Result<LdpcCode, String> {
 
 /// Builds the DVB-T2 rate-1/2 outer BCH code of one declared length.
 fn dvb_bch_code(n: usize) -> Result<DvbT2BchCode, String> {
-    let frame = match n {
-        7200 => FrameSize::Short,
-        32400 => FrameSize::Normal,
-        other => return Err(format!("no declared DVB-T2 BCH row of length {other}")),
-    };
-    dvb_t2_bch_code(frame, CodeRate::Rate1_2)
+    dvb_t2_bch_code(dvb_frame(n)?, CodeRate::Rate1_2)
         .map_err(|error| format!("the declared DVB-T2 BCH construction is rejected: {error:?}"))
+}
+
+fn dvb_frame(n: usize) -> Result<FrameSize, String> {
+    match n {
+        7200 => Ok(FrameSize::Short),
+        32400 => Ok(FrameSize::Normal),
+        other => Err(format!("no declared DVB-T2 BCH row of length {other}")),
+    }
+}
+
+/// The message batch every BCH workload encodes: message `index` is
+/// `BitVec::random_seeded(k, seed + index + 1)`.
+#[must_use]
+pub fn bch_messages(k: usize, seed: u64, batch: usize) -> Vec<BitVec> {
+    (0..batch)
+        .map(|index| BitVec::random_seeded(k, seed.wrapping_add(index as u64 + 1)))
+        .collect()
+}
+
+/// A BCH case's code and the codewords this harness's route writes for its
+/// messages: the reference an external encoder's codewords are held to.
+#[derive(Clone, Debug)]
+pub struct BchReference {
+    /// Degree of the mother field.
+    pub degree: usize,
+    /// Primitive polynomial of the mother field, as a bit-packed integer.
+    pub modulus: u64,
+    /// Correction radius of the mother code.
+    pub t: usize,
+    /// Codeword length of the encoded code.
+    pub n: usize,
+    /// Message length of the encoded code.
+    pub k: usize,
+    /// User coordinate order of [`Self::codewords`].
+    pub layout: SystematicLayout,
+    /// The case's messages, from [`bch_messages`].
+    pub messages: Vec<BitVec>,
+    /// Codeword of each message under [`Self::layout`].
+    pub codewords: Vec<BitVec>,
+}
+
+/// The reference of a `bch-encode-batch` or `dvb-bch-encode` case.
+///
+/// # Errors
+///
+/// Returns the declaration error of an unknown workload, a missing size or an
+/// undeclared row.
+pub fn bch_reference(case: &Case) -> Result<BchReference, String> {
+    let batch = case.size("batch")?;
+    match case.workload.as_str() {
+        "bch-encode-batch" => {
+            let row = bch_row(case.size("degree")?)?;
+            let code = packed_bch_code(row.degree)?;
+            let layout = SystematicLayout::default();
+            let messages = bch_messages(code.k(), case.seed, batch);
+            let codewords = code
+                .encode_batch(&messages, layout)
+                .map_err(|error| format!("the batch does not encode: {error:?}"))?;
+            Ok(BchReference {
+                degree: row.degree,
+                modulus: row.modulus,
+                t: (row.designed_distance as usize - 1) / 2,
+                n: code.n(),
+                k: code.k(),
+                layout,
+                messages,
+                codewords,
+            })
+        }
+        "dvb-bch-encode" => {
+            let n = case.size("n")?;
+            let params = DvbBchParams::for_code(dvb_frame(n)?, CodeRate::Rate1_2);
+            let code = dvb_bch_code(n)?;
+            let messages = bch_messages(code.k(), case.seed, batch);
+            let codewords = messages
+                .iter()
+                .map(|message| code.encode(message))
+                .collect();
+            Ok(BchReference {
+                degree: params.field_m,
+                modulus: params.primitive_poly,
+                t: params.t,
+                n: code.n(),
+                k: code.k(),
+                layout: DVB_T2_LAYOUT,
+                messages,
+                codewords,
+            })
+        }
+        other => Err(format!("{other:?} is no BCH encode workload")),
+    }
 }
 
 /// The code a cell's declared sizes name, as this harness constructs it.
@@ -969,20 +1057,11 @@ pub fn prepare(
             });
             let code = Box::new(packed_bch_code(degree)?);
             let layout = SystematicLayout::default();
-            let messages: Vec<BitVec> = (0..batch)
-                .map(|index| {
-                    BitVec::random_seeded(code.k(), case.seed.wrapping_add(index as u64 + 1))
-                })
-                .collect();
+            let messages = bch_messages(code.k(), case.seed, batch);
             // Regenerating the batch: allocation plus the fixture generator's
             // fill, which a consumer replaces with a copy of its own data.
             let batch_fill_ns = per_call_ns(4, || {
-                let filled: Vec<BitVec> = (0..batch)
-                    .map(|index| {
-                        BitVec::random_seeded(code.k(), case.seed.wrapping_add(index as u64 + 1))
-                    })
-                    .collect();
-                black_box(filled);
+                black_box(bch_messages(code.k(), case.seed, batch));
             });
             let selected = code.selected_encode_family(layout, batch);
             let dispatch_ns = per_call_ns(1024, || {
@@ -1073,15 +1152,10 @@ pub fn prepare(
             });
             let code = Box::new(dvb_bch_code(n)?);
             let k = code.k();
-            let messages: Vec<BitVec> = (0..batch)
-                .map(|index| BitVec::random_seeded(k, case.seed.wrapping_add(index as u64 + 1)))
-                .collect();
+            let messages = bch_messages(k, case.seed, batch);
             // Regenerating the batch, as in the packed BCH workloads.
             let batch_fill_ns = per_call_ns(4, || {
-                let filled: Vec<BitVec> = (0..batch)
-                    .map(|index| BitVec::random_seeded(k, case.seed.wrapping_add(index as u64 + 1)))
-                    .collect();
-                black_box(filled);
+                black_box(bch_messages(k, case.seed, batch));
             });
             conversion = Some(Conversion {
                 setup_ns,
