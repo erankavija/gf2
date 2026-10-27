@@ -3650,7 +3650,8 @@
   "handoff-38.md",
   "handoff-39.md",
   "handoff-40.md",
-  "handoff-41.md"
+  "handoff-41.md",
+  "handoff-42.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
@@ -3722,7 +3723,8 @@
     "provenance_gap": "None: the wide-polynomial receipt records gf2-long-product as build \"native\" (BuildIdentity::Native, host targeting) with optional rustflags null, which matches the -C target-cpu=native rebuild. No follow-up.",
     "cargo_ci": "Worker run failed test (host load timeout) and survey-test_record_confirmatory_bound.py on the branch base (stale 31727c57 confirmatory-bound.json names, renamed on main); the test passes on main. Full cargo-ci runs at gating.",
     "queued": "nr-encode, byte-field and polynomial series appended to bench-window/queue.tsv for the 2026-10-28 window."
-   }
+   },
+   "end": "Handoff-42 written; window armed for 2026-10-28 04:00; no worker running."
   }
  }
 }
