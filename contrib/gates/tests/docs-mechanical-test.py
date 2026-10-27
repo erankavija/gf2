@@ -36,13 +36,13 @@ sys.exit(1 if args[0] == "item" else 3)
 """
 
 FIXTURE = {
-    ".jit/config.toml": """
-        [docs-mechanical]
+    "contrib/gates/docs-mechanical.toml": """
         markdown = ["README.md", "docs/**/*.md", "dev/**/*.md"]
         citations = ["README.md", "docs/**/*.md", "dev/**/*.md"]
         rustdoc = ["crates/**/*.rs"]
         exclude = ["dev/archive"]
-
+        """,
+    ".jit/config.toml": """
         [projection.guide]
         target = "GUIDE.md"
         """,
@@ -174,7 +174,7 @@ class DocsMechanicalTest(unittest.TestCase):
     def test_baseline_suppresses_only_recorded_findings(self):
         recorded = self.append("dev/active/x/plan.md", "Old [link](gone.md).")
         unrecorded = self.append("dev/active/x/plan.md", "New [link](absent.md).")
-        config = self.root / ".jit/config.toml"
+        config = self.root / "contrib/gates/docs-mechanical.toml"
         config.write_text(config.read_text().replace(
             'exclude = ["dev/archive"]', 'exclude = ["dev/archive"]\nbaseline = "dev/active/x/baseline.md"'))
         (self.root / "dev/active/x/baseline.md").write_text(

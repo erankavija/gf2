@@ -1,6 +1,6 @@
 # docs-mechanical baseline findings
 
-The `baseline` key of `[docs-mechanical]` in `.jit/config.toml` names this
+The `baseline` key of `contrib/gates/docs-mechanical.toml` names this
 record, and the check suppresses exactly its rows. Each row of the first
 table quotes an unresolvable address on purpose (8f61d6de DEC-01).
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Mechanical documentation check over the footprint in `[docs-mechanical]`.
+"""Mechanical documentation check over the footprint in `contrib/gates/docs-mechanical.toml`.
 
-`.jit/config.toml` keys: `markdown` and `rustdoc` globs, `citations` (the
+Settings keys: `markdown` and `rustdoc` globs, `citations` (the
 Markdown files whose repository-path code spans are checked), `exclude` path
 prefixes, and an optional `baseline` record whose table rows suppress findings.
 
@@ -43,6 +43,7 @@ LINE_SUFFIX = re.compile(r":\d+(?:-\d+)?$")
 LINE_ANCHOR = re.compile(r"^L(\d+)(?:-L(\d+))?$")
 BASELINE_ROW = re.compile(r"^\|\s*`([^`]+):(\d+)`\s*\|\s*`([a-z-]+)`\s*\|\s*`([^`]+)`\s*\|")
 UNRESOLVED_CODES = {"ITEM_COMMAND_FAILED", "ISSUE_NOT_FOUND"}
+SETTINGS = Path("contrib/gates/docs-mechanical.toml")
 
 
 class EnvironmentFailure(Exception):
@@ -271,7 +272,7 @@ def main() -> int:
     root = args.root.resolve()
     try:
         config = tomllib.loads((root / ".jit/config.toml").read_text(encoding="utf-8"))
-        settings = config["docs-mechanical"]
+        settings = tomllib.loads((root / SETTINGS).read_text(encoding="utf-8"))
         excluded = [root / prefix for prefix in settings.get("exclude", [])]
         baseline_path = root / settings["baseline"] if "baseline" in settings else None
         markdown = [p for p in collect(root, settings.get("markdown", []), excluded) if p != baseline_path]
