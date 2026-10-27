@@ -3714,7 +3714,15 @@
     "Q2": "78f0aafd REQ-02: (a) rebuild each historical NR-encoder, byte-field and polynomial executable from its receipt snapshot and profile it only on digest match; (b) for a cell whose digest cannot be reproduced, profile the integrated code labelled integrated, with its drift class, under an amended REQ-02 wording.",
     "Q3": "Follow-ups 53f5b940 and ff10cb51 stay outside the epic."
    },
-   "dispatch_policy": "Model by task difficulty; no Fable; alternate Claude and Codex workers."
+   "dispatch_policy": "Model by task difficulty; no Fable; alternate Claude and Codex workers.",
+   "78f0aafd_q2": {
+    "worker": "Claude opus (w-78f0aafd-q2), commits 3a67d955c and 587c80bd9 on agent-78f0aafd",
+    "outcome": "All five historical executables restored by rebuild with digests matching (restoration.json); no integrated-code fallback, so REQ-02 needs no amendment.",
+    "lead_ruling_smoke": "Restored arms predate the zero-window validation position and refuse the runner smoke; accepted (option a): their receipts establish the wire contract and the series identity check refuses differing bytes. An in-session one-window diagnostic is a timed run and is not permitted.",
+    "provenance_gap": "wide-polynomial-competitiveness receipt records rustflags null; gf2-long-product digest reproduces only with -C target-cpu=native. Follow-up outside the epic.",
+    "cargo_ci": "Worker run failed test (host load timeout) and survey-test_record_confirmatory_bound.py on the branch base (stale 31727c57 confirmatory-bound.json names, renamed on main); the test passes on main. Full cargo-ci runs at gating.",
+    "queued": "nr-encode, byte-field and polynomial series appended to bench-window/queue.tsv for the 2026-10-28 window."
+   }
   }
  }
 }
