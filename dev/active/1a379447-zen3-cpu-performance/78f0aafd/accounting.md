@@ -8,48 +8,51 @@ sample counts, stage probes and assembly context. Untimed smoke outputs are excl
 A consumed receipt retains its production-drift class. A matching historical build
 covers the code that receipt measures, regardless of its difference from the current tree.
 
+Profiled code is `historical` when the profile runs the measured executable bytes and
+`integrated` when it runs the current integrated build of the cell's route.
+
 ## Primary material gaps
 
-| Family | Cell | Drift | Coverage |
-|---|---|---|---|
-| byte-field-matrix-product | encode-k10r4-64k-element-vs-isal | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| byte-field-matrix-product | encode-k10r4-64k-wide-vs-isal | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| byte-field-matrix-product | matmul-n256-element-vs-m4rie | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| byte-field-matrix-product | matmul-n256-whole-element-vs-m4rie | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| byte-field-matrix-product | matmul-n256-whole-wide-vs-m4rie | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| byte-field-matrix-product | matmul-n256-wide-vs-m4rie | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| byte-field-region-axpy | axpy-128k-element-vs-isal | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| byte-field-region-axpy | axpy-128k-whole-element-vs-isal | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| byte-field-region-axpy | axpy-128k-whole-wide-vs-isal | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| byte-field-region-axpy | axpy-128k-wide-vs-isal | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| byte-field-region-axpy | axpy-4k-element-vs-isal | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| byte-field-region-axpy | axpy-8m-element-vs-isal | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
-| ldpc-batch-aff3ct-matched-v1 | dvb-t2-r12-matched-p12-b8 | unresolvable | profile-cited: `dev/bench_results/f434ddd3/profile/profile-summary.json` |
-| ldpc-batch-aff3ct-matched-v1 | dvb-t2-r12-matched-w1-b1 | unresolvable | profile-cited: `dev/bench_results/f434ddd3/profile/profile-summary.json` |
-| ldpc-batch-aff3ct-matched-v1 | nr-bg1-z384-matched-w1-b1 | unresolvable | profile-cited: `dev/bench_results/f434ddd3/profile/profile-summary.json` |
-| ldpc-steady-matched-multicore-v1 | dvb-t2-r12-matched-l24 | code-differs | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
-| ldpc-steady-matched-multicore-v1 | dvb-t2-r12-matched-p12 | code-differs | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
-| ldpc-steady-matched-multicore-v1 | dvb-t2-r12-matched-p6 | code-differs | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
-| ldpc-steady-matched-multicore-v1 | nr-bg1-z384-matched-l24 | code-differs | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
-| ldpc-steady-matched-multicore-v1 | nr-bg1-z384-matched-p12 | code-differs | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
-| ldpc-steady-matched-multicore-v1 | nr-bg1-z384-matched-p6 | code-differs | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
-| ldpc-steady-matched-single-worker-v1 | dvb-t2-r12-matched-w1 | code-differs | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
-| ldpc-steady-matched-single-worker-v1 | nr-bg1-z384-matched-w1 | code-differs | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
-| ldpc-update-checknode-v1 | dvb-t2-r12-checknode-w1 | code-differs | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
-| ldpc-update-checknode-v1 | nr-bg1-z384-checknode-w1 | code-differs | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
-| ldpc-update-comparator-single-worker-v1 | dvb-t2-r12-update-w1 | code-differs | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
-| ldpc-update-comparator-single-worker-v1 | nr-bg1-z384-update-w1 | code-differs | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
-| ldpc-update-fixed-iteration-v1 | dvb-t2-r12-fixed-iteration-w1 | code-differs | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
-| ldpc-update-fixed-iteration-v1 | nr-bg1-z384-fixed-iteration-w1 | code-differs | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
-| nr-rate-matched-encode-baselines-v1 | nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh nr-encode` |
-| nr-rate-matched-encode-baselines-v1 | nr-enc-bg1-n2560-k2048-gap-native-vs-srsran | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh nr-encode` |
-| nr-rate-matched-encode-baselines-v1 | nr-enc-bg1-n8448-k4224-gap-native-vs-srsran | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh nr-encode` |
-| nr-rate-matched-encode-baselines-v1 | nr-enc-bg2-n1440-k720-gap-native-vs-srsran | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh nr-encode` |
-| nr-rate-matched-encode-baselines-v1 | nr-enc-bg2-n256-k121-gap-native-vs-srsran | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh nr-encode` |
-| polynomial-host-targeting | poly-mul-256w-conservative-1core | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh polynomial` |
-| polynomial-host-targeting | poly-mul-256w-tuned-1core | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh polynomial` |
-| wide-polynomial-competitiveness | poly-16w | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh polynomial` |
-| wide-polynomial-competitiveness | wide-field-256-composed | code-differs | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh polynomial` |
+| Family | Cell | Drift | Profiled code | Coverage |
+|---|---|---|---|---|
+| byte-field-matrix-product | encode-k10r4-64k-element-vs-isal | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| byte-field-matrix-product | encode-k10r4-64k-wide-vs-isal | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| byte-field-matrix-product | matmul-n256-element-vs-m4rie | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| byte-field-matrix-product | matmul-n256-whole-element-vs-m4rie | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| byte-field-matrix-product | matmul-n256-whole-wide-vs-m4rie | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| byte-field-matrix-product | matmul-n256-wide-vs-m4rie | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| byte-field-region-axpy | axpy-128k-element-vs-isal | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| byte-field-region-axpy | axpy-128k-whole-element-vs-isal | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| byte-field-region-axpy | axpy-128k-whole-wide-vs-isal | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| byte-field-region-axpy | axpy-128k-wide-vs-isal | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| byte-field-region-axpy | axpy-4k-element-vs-isal | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| byte-field-region-axpy | axpy-8m-element-vs-isal | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh byte-field` |
+| ldpc-batch-aff3ct-matched-v1 | dvb-t2-r12-matched-p12-b8 | unresolvable | historical | profile-cited: `dev/bench_results/f434ddd3/profile/profile-summary.json` |
+| ldpc-batch-aff3ct-matched-v1 | dvb-t2-r12-matched-w1-b1 | unresolvable | historical | profile-cited: `dev/bench_results/f434ddd3/profile/profile-summary.json` |
+| ldpc-batch-aff3ct-matched-v1 | nr-bg1-z384-matched-w1-b1 | unresolvable | historical | profile-cited: `dev/bench_results/f434ddd3/profile/profile-summary.json` |
+| ldpc-steady-matched-multicore-v1 | dvb-t2-r12-matched-l24 | code-differs | historical | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
+| ldpc-steady-matched-multicore-v1 | dvb-t2-r12-matched-p12 | code-differs | historical | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
+| ldpc-steady-matched-multicore-v1 | dvb-t2-r12-matched-p6 | code-differs | historical | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
+| ldpc-steady-matched-multicore-v1 | nr-bg1-z384-matched-l24 | code-differs | historical | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
+| ldpc-steady-matched-multicore-v1 | nr-bg1-z384-matched-p12 | code-differs | historical | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
+| ldpc-steady-matched-multicore-v1 | nr-bg1-z384-matched-p6 | code-differs | historical | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
+| ldpc-steady-matched-single-worker-v1 | dvb-t2-r12-matched-w1 | code-differs | historical | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
+| ldpc-steady-matched-single-worker-v1 | nr-bg1-z384-matched-w1 | code-differs | historical | profile-cited: `dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json` |
+| ldpc-update-checknode-v1 | dvb-t2-r12-checknode-w1 | code-differs | historical | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
+| ldpc-update-checknode-v1 | nr-bg1-z384-checknode-w1 | code-differs | historical | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
+| ldpc-update-comparator-single-worker-v1 | dvb-t2-r12-update-w1 | code-differs | historical | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
+| ldpc-update-comparator-single-worker-v1 | nr-bg1-z384-update-w1 | code-differs | historical | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
+| ldpc-update-fixed-iteration-v1 | dvb-t2-r12-fixed-iteration-w1 | code-differs | historical | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
+| ldpc-update-fixed-iteration-v1 | nr-bg1-z384-fixed-iteration-w1 | code-differs | historical | profile-cited: `dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json` |
+| nr-rate-matched-encode-baselines-v1 | nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh nr-encode` |
+| nr-rate-matched-encode-baselines-v1 | nr-enc-bg1-n2560-k2048-gap-native-vs-srsran | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh nr-encode` |
+| nr-rate-matched-encode-baselines-v1 | nr-enc-bg1-n8448-k4224-gap-native-vs-srsran | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh nr-encode` |
+| nr-rate-matched-encode-baselines-v1 | nr-enc-bg2-n1440-k720-gap-native-vs-srsran | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh nr-encode` |
+| nr-rate-matched-encode-baselines-v1 | nr-enc-bg2-n256-k121-gap-native-vs-srsran | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh nr-encode` |
+| polynomial-host-targeting | poly-mul-256w-conservative-1core | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh polynomial` |
+| polynomial-host-targeting | poly-mul-256w-tuned-1core | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh polynomial` |
+| wide-polynomial-competitiveness | poly-16w | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh polynomial` |
+| wide-polynomial-competitiveness | wide-field-256-composed | code-differs | historical | awaiting-window: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/subject-window.sh polynomial` |
 
 ## Per-profile mechanism accounting
 

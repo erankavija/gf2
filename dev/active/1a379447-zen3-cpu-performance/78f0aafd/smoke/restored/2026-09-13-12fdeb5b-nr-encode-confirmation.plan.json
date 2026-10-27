@@ -1,0 +1,94 @@
+{
+ "addendum": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/inputs/family-addendum.json",
+ "arms": {
+  "aff3ct-external": {
+   "arguments": [],
+   "build": "external",
+   "description": "restored gf2-native in the candidate position",
+   "environment": {},
+   "executable": ".agents/ext/78f0aafd/restored/b603be52a6c6d9f966c835ccdd439a294fe9bf6ced1c8f242e7447f6d7b1b624/gf2-nr-encode-arm",
+   "rustflags": "-C target-cpu=native",
+   "tuning_profile": null
+  },
+  "gf2-native": {
+   "arguments": [],
+   "build": "native",
+   "description": "gf2 <Nr5gRateMatchedCode as BlockEncoder>::encode on a target_k-bit BitVec, built with -C target-cpu=native",
+   "environment": {},
+   "executable": ".agents/ext/78f0aafd/restored/b603be52a6c6d9f966c835ccdd439a294fe9bf6ced1c8f242e7447f6d7b1b624/gf2-nr-encode-arm",
+   "rustflags": "-C target-cpu=native",
+   "tuning_profile": null
+  },
+  "srsran-external": {
+   "arguments": [],
+   "build": "external",
+   "description": "restored gf2-native in the candidate position",
+   "environment": {},
+   "executable": ".agents/ext/78f0aafd/restored/b603be52a6c6d9f966c835ccdd439a294fe9bf6ced1c8f242e7447f6d7b1b624/gf2-nr-encode-arm",
+   "rustflags": "-C target-cpu=native",
+   "tuning_profile": null
+  }
+ },
+ "campaign_id": "nr-encode-confirmation-12fdeb5b-20260913t065640z",
+ "campaign_seed": 20260912,
+ "cells": [
+  {
+   "baseline_arm": "gf2-native",
+   "candidate_arm": "aff3ct-external",
+   "case": {
+    "configuration": "bg1-n2560-k2048",
+    "seed": 404
+   },
+   "cell_id": "nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct",
+   "pilot_pairs": null
+  },
+  {
+   "baseline_arm": "gf2-native",
+   "candidate_arm": "srsran-external",
+   "case": {
+    "configuration": "bg1-n2560-k2048",
+    "seed": 404
+   },
+   "cell_id": "nr-enc-bg1-n2560-k2048-gap-native-vs-srsran",
+   "pilot_pairs": null
+  },
+  {
+   "baseline_arm": "gf2-native",
+   "candidate_arm": "srsran-external",
+   "case": {
+    "configuration": "bg1-n8448-k4224",
+    "seed": 403
+   },
+   "cell_id": "nr-enc-bg1-n8448-k4224-gap-native-vs-srsran",
+   "pilot_pairs": null
+  },
+  {
+   "baseline_arm": "gf2-native",
+   "candidate_arm": "srsran-external",
+   "case": {
+    "configuration": "bg2-n1440-k720",
+    "seed": 405
+   },
+   "cell_id": "nr-enc-bg2-n1440-k720-gap-native-vs-srsran",
+   "pilot_pairs": null
+  },
+  {
+   "baseline_arm": "gf2-native",
+   "candidate_arm": "srsran-external",
+   "case": {
+    "configuration": "bg2-n256-k121",
+    "seed": 402
+   },
+   "cell_id": "nr-enc-bg2-n256-k121-gap-native-vs-srsran",
+   "pilot_pairs": null
+  }
+ ],
+ "issue": "12fdeb5b",
+ "label": "confirmation",
+ "lock_path": "/tmp/gf2-ccx1.lock",
+ "max_cells_per_session": 2,
+ "producing_manifest": "dev/active/12fdeb5b/producing-inputs.json",
+ "schema": "zen3-benchmark-plan-v1",
+ "timing_override": null,
+ "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host"
+}

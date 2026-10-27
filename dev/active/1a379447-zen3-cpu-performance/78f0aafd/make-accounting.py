@@ -86,7 +86,7 @@ def available_profile(receipt, planned):
             if not (has_digest(kernel, profiled_sha) and
                     pointer['sha256'] == cited(build_path)['sha256']):
                 continue
-        return {'status': 'profile-cited', 'profile': cited(profile_path),
+        return {'status': 'profile-cited', 'profile': cited(profile_path), 'code': 'historical',
                 'basis': 'the build record pins the measured arm and profile executable',
                 'build_record': cited(build_path), 'measured_arm_sha256': sha,
                 'profile_executable_sha256': profiled_sha,
@@ -117,10 +117,19 @@ def prepared_profile(subject, cell, receipt, planned):
     for line in expanded.read_text().splitlines():
         row = json.loads(line)
         if row['cell'] == cell['cell'] and row['sha256'] == sha and row['request']['case'] == planned['case']:
-            return {'status': 'profile-cited', 'profile': cited(expanded),
+            return {'status': 'profile-cited', 'profile': cited(expanded), 'code': 'historical',
                     'basis': 'same measured executable digest and case',
                     'measured_arm_sha256': sha}
     return None
+
+
+def restoration(sha):
+    """The rebuild attempt that restored the measured bytes the series profiles."""
+    record = HERE/'restoration.json'
+    attempts = read(record)['attempts'] if record.is_file() else []
+    if any(row['expected_sha256'] == sha and row['verdict'] == 'restored' for row in attempts):
+        return {'code': 'historical', 'restoration': cited(record)}
+    return {'code': 'unrestored'}
 
 
 def inventory():
@@ -132,6 +141,7 @@ def inventory():
         if profile is None and cell['family'] == '1362381c-ldpc-aff3ct-integration':
             integrated = HERE/'decoder-profile/profile-summary.json'
             profile = {'status': 'profile-cited' if integrated.is_file() else 'awaiting-window',
+                       'code': 'integrated',
                        'launcher': relative(HERE/'decoder-window.sh'),
                        'basis': 'integrated production route; awaiting measured producing-input comparison'}
             if integrated.is_file():
@@ -153,6 +163,8 @@ def inventory():
             existing = prepared_profile(subject, cell, receipt, planned) if subject else None
             if existing:
                 profile = existing
+            if subject in arms.SUBJECTS:
+                profile.update(restoration(receipt['arms'][planned['baseline_arm']]['executable_sha256']))
             if subject in CONTEXT and not existing:
                 profile['related_context'] = cited(live(CONTEXT[subject]))
                 profile['basis'] = 'related profile; equality with the producing inputs is not established'
@@ -341,11 +353,15 @@ def markdown(record):
              'sample counts, stage probes and assembly context. Untimed smoke outputs are excluded.', '',
              'A consumed receipt retains its production-drift class. A matching historical build',
              'covers the code that receipt measures, regardless of its difference from the current tree.', '',
-             '## Primary material gaps', '', '| Family | Cell | Drift | Coverage |', '|---|---|---|---|']
+             'Profiled code is `historical` when the profile runs the measured executable bytes and',
+             '`integrated` when it runs the current integrated build of the cell\'s route.', '',
+             '## Primary material gaps', '', '| Family | Cell | Drift | Profiled code | Coverage |',
+             '|---|---|---|---|---|']
     for row in record['material_gaps']:
         coverage = row['coverage']
         source = coverage.get('profile', {}).get('path', coverage.get('launcher') or 'unresolved')
-        lines.append(f"| {row['family']} | {row['cell']} | {row['drift_class']} | {coverage['status']}: `{source}` |")
+        lines.append(f"| {row['family']} | {row['cell']} | {row['drift_class']} | "
+                     f"{coverage.get('code', 'unresolved')} | {coverage['status']}: `{source}` |")
     lines += ['', '## Per-profile mechanism accounting', '',
               'IPC and cache counter ratios are observations, not hardware limits. Static stack',
               'references include ordinary stack locals; compiler spill attribution and dynamic cost',
