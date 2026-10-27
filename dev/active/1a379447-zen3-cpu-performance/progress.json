@@ -3668,7 +3668,7 @@
   "note": "Invoker approved arming 2026-10-24. 2026-10-23 window: pilot complete, confirmation refused before timing (absolute resolution_evidence path), fixed in c3ebd86d6."
  },
  "session_scope": {
-  "session": 47,
+  "session": 48,
   "date": "2026-10-27",
   "instruction": "Invoker 2026-10-27 (session 47): drive epic 1a379447; subagent model by task difficulty; no Fable; alternate Claude and Codex sub-agents per implementation dispatch (gpt-6-luna xhigh narrow, gpt-6.1-sol high moderate).",
   "order": "Serialized on shared files: 316150fd before dd359005 and before 6605cac2 (kernel tests) and bfc2ceab source edits; 54e70918 before the 63bad95d producer sweep (both edit crates/gf2-core/benches/tuning_calibration.rs); 4337c02e outcome before 63bad95d freezes; dcfe8386 after dd359005. These orders are held by the lead, not by DAG edges (an edge would drop the direct epic edge under transitive reduction). Session 29: dcfe8386 after both dd359005 and 6605cac2 (all three regenerate or depend on the 54e70918 search record); bfc2ceab stage 2 merges main after its confirmation. Session 46: sibling edges for the 1362381c work packages are refused under transitive reduction and held by the lead: 31727c57 after eb07aa88 and e5f8b3ae; 1358d6ab after eb07aa88, ecad1724 and e5f8b3ae; 78f0aafd after 31727c57 and 1358d6ab; 1362381c after all five.",
@@ -3706,6 +3706,15 @@
   "session_45": "Done: d06a99ed (invoker adoption ruling A), ed3d490e (all seven gates pass at 20f9652da).",
   "session_46": "Resumed from session 45 state without a handoff. e5f8b3ae Codex output reviewed and committed (cc8f8af69, branch worktree-agent-e5f8b3ae, lead doc fixes); canonical build and validation records run in agent-ed3d490e-run on branch worktree-agent-e5f8b3ae-run. 1362381c design rulings D-1..D-6 recorded; work packages created: eb07aa88 WP-1, ecad1724 WP-2, 31727c57 WP-3, 1358d6ab WP-4, 78f0aafd WP-5; 1362381c is WP-6. ecad1724 finished by the lead after rework 2 under two invoker rulings (unresolvable class; package-level measured content, no test-code separation); gates pending at d1748dd39. Bug 94213540 filed (fast-tier budget). Briefs for 31727c57 and 1358d6ab under 1362381c/dispatch/. Handoff: handoff-40.md.",
   "rulings_session_47": "Lead: (1) brief constraint 'no ledger/addendum changes' means existing ones; new family inputs are required. (2) P-20 counts confirmatory plus holdout cells only; pilots may measure every named configuration as exploratory cells and the freeze selects at most six (design P-20 section). (3) Ledger genesis at the first timed run accepted (1358d6ab). (4) Bchlib2026 added to .jit/references.toml.",
-  "session_47_end": "Session 47 ended 2026-10-27 with handoff-41.md: all remaining epic work waits on the benchmark window (Q1) and Q2."
+  "session_47_end": "Session 47 ended 2026-10-27 with handoff-41.md: all remaining epic work waits on the benchmark window (Q1) and Q2.",
+  "session_48": {
+   "date": "2026-10-27",
+   "invoker_rulings": {
+    "Q1": "Arm a window tonight. Armed gf2-bench-window-20261028.timer, 2026-10-28 04:00 Europe/Helsinki, running bench-window/run-window.sh.",
+    "Q2": "78f0aafd REQ-02: (a) rebuild each historical NR-encoder, byte-field and polynomial executable from its receipt snapshot and profile it only on digest match; (b) for a cell whose digest cannot be reproduced, profile the integrated code labelled integrated, with its drift class, under an amended REQ-02 wording.",
+    "Q3": "Follow-ups 53f5b940 and ff10cb51 stay outside the epic."
+   },
+   "dispatch_policy": "Model by task difficulty; no Fable; alternate Claude and Codex workers."
+  }
  }
 }
