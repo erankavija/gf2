@@ -22,8 +22,8 @@ chain. Session 45 wrote no handoff; its state is recovered below.
   committed (`649974f86`) with six open decisions. Recovered both.
 - e5f8b3ae: lead doc fixes on the Codex diff (`cc8f8af69`); canonical build,
   smoke and validation records in the story build tree, made live with
-  `--supersedes` ([native](../../../bench_results/e5f8b3ae/native/),
-  [portable](../../../bench_results/e5f8b3ae/portable/)); intra replay test
+  `--supersedes` ([native](../../bench_results/e5f8b3ae/native/),
+  [portable](../../bench_results/e5f8b3ae/portable/)); intra replay test
   skips on a rebuilt executable (`b3c903949`). Gates pass, zero findings.
   [Review](reviews/e5f8b3ae-r1.md).
 - 1362381c design rulings (invoker): D-1, D-2, D-3, D-6 as recommended; lead

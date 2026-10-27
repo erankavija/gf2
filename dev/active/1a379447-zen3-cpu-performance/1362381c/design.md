@@ -112,7 +112,7 @@ post-integration reprofile and a disposition for every material residual gap.
 
 ## Success criteria (verbatim from the issue)
 
-- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](dev/active/1a379447-zen3-cpu-performance/measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.
+- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](../measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.
 
 - [hard] REQ-07: Publish raw samples, a per-cell scorecard and reproducible report for the complete frozen workload set. Identify source/input/toolchain/hardware provenance, selected paths, latency, throughput, memory, scaling and uncertainty. Consume completed canonical BCH evidence by identity, then remeasure affected integrated BCH cells under this protocol; preserve historical evidence and invalidate it only for producing measurement-behavior changes.
 
