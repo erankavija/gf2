@@ -1,0 +1,212 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "1362381c-bch-integration",
+    "issue": "1358d6ab",
+    "purpose": "consumer-family",
+    "description": "Confirmation of the integrated comparison of gf2's production binary BCH encode against the external encoders of the 4e732b56 survey, AFF3CT [Cassagne2019] and bchlib [Bchlib2026], on the code classes whose encoder the 8e53235b word-wise codeword assembly changed: the GF(2^14) mother code of the DVB-T2 short frame (length 16383, designed distance 25) and the DVB-T2 rate-1/2 outer BCH codes of the short frame (7200, 7032) and the normal frame (32400, 32208) [Etsi2015]. The baseline arm is consumer-arm of the bit-storage consumer harness, a conservative-portable release build of the current tree, on the route the production dispatcher selects: BchCode::encode_batch_into on the mother code, and the DVB-T2 code's encode per message of the batch on the shortened codes. The candidate arm is bch-external-arm, whose environment selects one external encoder: AFF3CT's Encoder_BCH (one frame per LFSR call) or Encoder_BCH_inter (one SIMD wave of frames per call), or bchlib's bch_encode, the Linux kernel's table-driven remainder; the external sources are compiled with the survey's -O3 -march=native flags, so the candidate build is external. bchlib takes whole message bytes and does not serve the mother code, whose dimension 16215 is no whole number of bytes. AFF3CT's interleaved encoder serves whole SIMD waves only, so a one-message batch takes its scalar encoder. Both arms of a cell encode the same messages, BitVec::random_seeded(k, seed + i + 1) for message i of the cell's batch, and each external dispatch requires, before timing, its codewords mapped into gf2's user coordinates to equal gf2's bit for bit. A timed call is each arm's batch encode on messages already in its library's representation (packed words for gf2, one int per bit for AFF3CT, packed bytes for bchlib) into codewords in that representation; the external arm reports its conversions from and to packed BitVec as pack and unpack costs measured outside the timed call. Every cell is single-core and warm: neither external encoder exposes workers. A comparator-gap outcome improved records a material gap in the external encoder's favour. The confirmatory cells are the selection the pilot addendum froze, recorded in the derivation record beside this addendum. The measurement resolution is frozen from the family's whole pilot receipt with the margins this family fixed before its pilot; every outcome is reported as evaluated."
+  },
+  "frozen": {
+    "frozen_utc": "2026-10-28T21:44:34Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "The family publishes the comparator gap and adopts nothing, so it declares no worthwhile speedup.",
+    "measurement_resolution": 0.13,
+    "resolution_evidence": {
+      "receipt": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-pilot/receipt.json",
+      "sha256": "6877f32770be24621a5924dd37730ab772781690b33821483047130aa6b4ef63"
+    },
+    "equivalence_margin": 1.14,
+    "equivalence_rationale": "Invoker ruling of 2026-10-28, made before any confirmation sample: the pilot resolution invalidates the pre-pilot margin, so the margin becomes the smallest two-decimal value that strictly exceeds one plus the resolution. Pilot resolution 0.13; pre-pilot equivalence margin 1.1.",
+    "material_gap_threshold": 1.25,
+    "material_gap_rationale": "A gap of a quarter of a consumer's batch encode time outweighs the integration and maintenance cost of a second encoder dependency, so it changes which encoder a consumer deploys and needs attribution; it lies outside the equivalence margin. Fixed before this pilot; the canonical freezer stops when pilot resolution reaches it and never widens it from results."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": null,
+    "maintenance_rationale": "The family selects nothing and adds no production code."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "prior_trials": [],
+    "ledger_path": "dev/bench_results/1358d6ab/bch-integration/ledger.jsonl"
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "m14-b1-aff3ct-lfsr-scalar",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 1
+        },
+        "seed": 13581
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "m14-b256-aff3ct-lfsr-simd-inter",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "bch-encode-batch",
+        "size": {
+          "degree": 14,
+          "batch": 256
+        },
+        "seed": 13583
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "t2s-b1-bchlib-table-remainder",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "dvb-bch-encode",
+        "size": {
+          "n": 7200,
+          "batch": 1
+        },
+        "seed": 13589
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "t2s-b256-bchlib-table-remainder",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "dvb-bch-encode",
+        "size": {
+          "n": 7200,
+          "batch": 256
+        },
+        "seed": 13591
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "t2n-b1-bchlib-table-remainder",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "dvb-bch-encode",
+        "size": {
+          "n": 32400,
+          "batch": 1
+        },
+        "seed": 13597
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "t2n-b256-bchlib-table-remainder",
+      "objective": "comparator-gap",
+      "role": "confirmatory",
+      "workload": {
+        "identity": "dvb-bch-encode",
+        "size": {
+          "n": 32400,
+          "batch": 256
+        },
+        "seed": 13599
+      },
+      "metric_kind": "kernel-isolated",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "conservative-portable",
+        "candidate": "external"
+      },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}
