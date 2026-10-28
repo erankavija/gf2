@@ -1,0 +1,19 @@
+pilot receipt  dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-pilot/receipt.json
+receipt sha256 b3172409dfdbbaa820f677444358c4d6fcc59f27398250c68de496e57e5a9b48
+campaign       1358d6ab-ldpc-aff3ct-integration-pilot
+verdict        accepted (label pilot)
+family         1362381c-ldpc-aff3ct-integration: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+dvb-t2-r12-integrated-w1-b8             12     0.37535     0.36833     0.37626    0.0187
+dvb-t2-r12-integrated-w1-b1             12      1.9196      1.9062      1.9793    0.0311
+dvb-t2-r12-integrated-p12-b8            12      1.8156      1.7889       1.825    0.0148
+nr-bg1-z384-integrated-w1-b8            12     0.32433     0.31168     0.32552    0.0390
+nr-bg1-z384-integrated-w1-b1            12      1.7825      1.7749      1.7884    0.0043
+nr-bg1-z384-integrated-p12-b8           12      1.5461      1.5301       1.602    0.0362
+
+widest relative half-width   0.039013
+frozen measurement resolution 0.04
+restated the family description for the confirmatory stage
+margins: equivalence 1.1, material gap 1.25
+confirmation addendum /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-1358d6ab/dev/active/1a379447-zen3-cpu-performance/1358d6ab/ldpc-aff3ct/confirmation/addendum.json
