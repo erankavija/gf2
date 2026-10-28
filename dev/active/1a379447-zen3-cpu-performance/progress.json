@@ -3666,7 +3666,8 @@
     "confirmation only; pilot complete and accepted (receipt sha256 75005fda...); queue line unchanged, no done marker; 20min estimate; main checkout"
    ]
   },
-  "note": "Invoker approved arming 2026-10-24. 2026-10-23 window: pilot complete, confirmation refused before timing (absolute resolution_evidence path), fixed in c3ebd86d6."
+  "note": "Invoker approved arming 2026-10-24. 2026-10-23 window: pilot complete, confirmation refused before timing (absolute resolution_evidence path), fixed in c3ebd86d6.",
+  "next": "gf2-bench-window-20261029.timer, 2026-10-29 04:00 Europe/Helsinki: 31727c57 core and decoder, 1358d6ab BCH confirmations."
  },
  "session_scope": {
   "session": 48,
@@ -3725,6 +3726,22 @@
     "queued": "nr-encode, byte-field and polynomial series appended to bench-window/queue.tsv for the 2026-10-28 window."
    },
    "end": "Handoff-42 written; window armed for 2026-10-28 04:00; no worker running."
+  },
+  "session_49": {
+   "date": "2026-10-28",
+   "window_20261028": {
+    "collected": "Nine jobs ran 02:00-04:11Z. Six verified complete from their own logs: 1358d6ab ldpc-aff3ct pilot and confirmation (6 cells each, terminal complete, Accepted); 78f0aafd decoder, BCH, NR-encode, byte-field and polynomial profile series (coverage profile-cited 38 of 38 material gaps). The decoder series' 'nice: cannot set niceness' lines are ccx1-bench-flock.sh's documented best-effort nice -n -5.",
+    "refused_freezes": "31727c57 core (resolution 0.07; worthwhile 1.05 and equivalence 1.05), 31727c57 decoder (resolution 0.06; equivalence 1.05), 1358d6ab BCH (resolution 0.13; equivalence 1.1): pilots complete and accepted, freeze refused because margins did not exceed one plus the resolution; no confirmation sample was taken."
+   },
+   "invoker_rulings": {
+    "Q1": "Widen only the refused margins to the smallest two-decimal value strictly above one plus the pilot resolution, through freeze-confirmation.py's margin options, and run the confirmations in the reserve window. Core worthwhile 1.08 and equivalence 1.08; decoder equivalence 1.07; BCH equivalence 1.14."
+   },
+   "actions": [
+    "Froze in session with the replaced margins and committed the freeze outputs: 841c15255 (core), f152616fd (decoder) on agent-31727c57; 5948b47aa (BCH) on agent-1358d6ab. Each derivation record names the replaced values.",
+    "Committed 72e6671e8 (LDPC AFF3CT receipts, nested Cargo.lock snapshots force-added; snapshot check passes) on agent-1358d6ab and 32dc920da (five profile series) on agent-78f0aafd.",
+    "Armed gf2-bench-window-20261029.timer (2026-10-29 04:00 Europe/Helsinki) over the unchanged queue: the three refused jobs have no .done marker and rerun; their pilots resume as complete (trial_ledger::reserve never appends on resumption) and the committed freezes are reused."
+   ],
+   "dispatch_policy": "Model by task difficulty; no Fable; alternate Claude and Codex workers. Next worker: Codex."
   }
  }
 }
