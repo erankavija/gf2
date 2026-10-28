@@ -1,0 +1,18 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 692  of event 'cycles:u'
+# Event count (approx.): 2768025604
+#
+# Overhead       Samples  Shared Object     Symbol                                         
+# ........  ............  ................  ...............................................
+#
+    99.86%           691  gf2-poly-arm      [.] poly_baseline_arms::gf2_backend::schoolbook
+     0.14%             1  [unknown]         [k] 0xffffffffafa015f4
+
+
+#
+# (Tip: For tracepoint events, try: perf report -s trace_fields)
+#

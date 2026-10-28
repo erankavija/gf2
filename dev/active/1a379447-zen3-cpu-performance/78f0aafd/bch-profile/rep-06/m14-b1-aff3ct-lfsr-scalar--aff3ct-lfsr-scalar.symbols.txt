@@ -1,0 +1,23 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 698  of event 'cycles:u'
+# Event count (approx.): 2792025826
+#
+# Overhead       Samples  Shared Object     Symbol                                                                
+# ........  ............  ................  ......................................................................
+#
+    93.70%           654  bch-external-arm  [.] aff3ct::module::Encoder_BCH<int>::__encode(int const*, int*)
+     5.59%            39  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+     0.14%             1  bch-external-arm  [.] aff3ct::tools::Galois<int>::generate_gf()
+     0.14%             1  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     0.14%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.14%             1  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     0.14%             1  libc.so.6         [.] 0x0000000000176524
+
+
+#
+# (Tip: To compare hot regions in two workloads use perf record -b -o file ... ; perf diff --stream file1 file2)
+#

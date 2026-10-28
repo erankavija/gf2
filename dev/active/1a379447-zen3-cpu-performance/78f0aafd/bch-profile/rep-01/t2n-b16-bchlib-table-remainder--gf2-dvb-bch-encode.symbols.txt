@@ -1,0 +1,27 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 618  of event 'cycles:u'
+# Event count (approx.): 2472022866
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    48.38%           299  consumer-arm      [.] gf2_core::bitvec::BitVec::set
+    40.61%           251  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     6.80%            42  consumer-arm      [.] consumer_profile_gf2_side::Prepared::run
+     1.78%            11  consumer-arm      [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.81%             5  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.65%             4  consumer-arm      [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.32%             2  consumer-arm      [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.16%             1  consumer-arm      [.] gf2_core::field::extension::cyclotomic_cosets_mod
+     0.16%             1  consumer-arm      [.] gf2_core::field::poly::mul_schoolbook_impl
+     0.16%             1  libc.so.6         [.] 0x00000000000a4fbe
+     0.16%             1  libc.so.6         [.] 0x0000000000176e13
+
+
+#
+# (Tip: To trace calls using Processor Trace use perf record -e intel_pt// ... ; perf script --call-trace. Then use perf script --time A-B --insn-trace to look at region of interest.)
+#

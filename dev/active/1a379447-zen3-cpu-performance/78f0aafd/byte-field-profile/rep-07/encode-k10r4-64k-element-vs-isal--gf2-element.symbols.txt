@@ -1,0 +1,32 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 624  of event 'cycles:u'
+# Event count (approx.): 2496023088
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                        
+# ........  ............  ................  ..............................................................................................................
+#
+    33.81%           211  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+    27.72%           173  gf2-arm           [.] gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4
+    18.75%           117  gf2-arm           [.] gf2_core::gf2m::batch::batch_mul_raw
+     9.62%            60  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     5.45%            34  gf2-arm           [.] core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>
+     2.40%            15  gf2-arm           [.] gf2_arm::build_product::{{closure}}
+     0.32%             2  gf2-arm           [.] core::ptr::drop_in_place<gf2_arm::build_product<byte_field_gf2_side::workload::RuntimeGf256>::{{closure}}>
+     0.32%             2  gf2-arm           [.] gf2_arm::build_product
+     0.32%             2  gf2-arm           [.] gf2_kernels_simd::gf2m_batch::gf2m_batch_mul_ymm_unroll4_safe
+     0.32%             2  libc.so.6         [.] 0x0000000000176dcd
+     0.16%             1  gf2-arm           [.] byte_field_gf2_side::workload::pack_matrix
+     0.16%             1  [unknown]         [k] 0xffffffffafe66848
+     0.16%             1  [unknown]         [k] 0xffffffffafe988c6
+     0.16%             1  [unknown]         [k] 0xffffffffb01162b3
+     0.16%             1  [unknown]         [k] 0xffffffffb0197fa0
+     0.16%             1  [unknown]         [k] 0xffffffffb019dec2
+
+
+#
+# (Tip: When collecting LBR backtraces use --stitch-lbr to handle more than 32 deep entries: perf record --call-graph lbr ; perf report --stitch-lbr)
+#

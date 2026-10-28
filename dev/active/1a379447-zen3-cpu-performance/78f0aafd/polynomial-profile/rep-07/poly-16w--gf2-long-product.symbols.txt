@@ -1,0 +1,17 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 684  of event 'cycles:u'
+# Event count (approx.): 2736025308
+#
+# Overhead       Samples  Shared Object  Symbol                                              
+# ........  ............  .............  ....................................................
+#
+   100.00%           684  poly-arm       [.] clmul_crossover_arms::gf2_backend::owned_product
+
+
+#
+# (Tip: To trace only single function with Processor Trace use perf record --filter 'filter func @ program' -e intel_pt//u ./program ; perf script --insn-trace)
+#

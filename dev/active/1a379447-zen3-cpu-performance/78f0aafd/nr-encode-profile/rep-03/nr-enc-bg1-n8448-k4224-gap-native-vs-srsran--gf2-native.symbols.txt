@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 934  of event 'cycles:u'
+# Event count (approx.): 3736034558
+#
+# Overhead       Samples  Shared Object      Symbol                                                                                                           
+# ........  ............  .................  .................................................................................................................
+#
+    72.91%           681  gf2-nr-encode-arm  [.] <gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+    26.77%           250  gf2-nr-encode-arm  [.] gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched
+     0.11%             1  gf2-nr-encode-arm  [.] gf2_core::matrix::BitMatrix::swap_rows
+     0.11%             1  gf2-nr-encode-arm  [.] gf2_kernels_simd::x86::avx2::fns::xor_fn
+     0.11%             1  [unknown]          [k] 0xffffffffafa015f0
+
+
+#
+# (Tip: To show time in nanoseconds in record/report add --ns)
+#

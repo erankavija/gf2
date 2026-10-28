@@ -1,0 +1,61 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 10K of event 'cycles:u'
+# Event count (approx.): 41464383542
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    51.54%          5343  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+    26.38%          2735  bch-external-arm  [.] bch_external_arms::Engine::prepare
+    14.20%          1472  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     5.46%           566  bch-external-arm  [.] bch_encode
+     1.67%           173  bch-external-arm  [.] consumer_profile_gf2_side::bch_reference
+     0.16%            17  bch-external-arm  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.06%             6  [unknown]         [k] 0xffffffffafa015f0
+     0.05%             5  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.04%             4  [unknown]         [k] 0xffffffffb01162b3
+     0.03%             3  libc.so.6         [.] 0x0000000000176e04
+     0.03%             3  libc.so.6         [.] 0x0000000000176e0e
+     0.03%             3  [unknown]         [k] 0xffffffffb011cc8a
+     0.02%             2  bch-external-arm  [.] bch_encode_unaligned
+     0.02%             2  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.02%             2  bch-external-arm  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.01%             1  bch-external-arm  [.] <[u64] as rand::rng::Fill>::try_fill
+     0.01%             1  bch-external-arm  [.] gf2_core::field::poly::mul_schoolbook_impl
+     0.01%             1  bch-external-arm  [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.01%             1  libc.so.6         [.] 0x0000000000175da5
+     0.01%             1  libc.so.6         [.] 0x0000000000176e09
+     0.01%             1  [unknown]         [k] 0xffffffffafd29b1c
+     0.01%             1  [unknown]         [k] 0xffffffffafd4852e
+     0.01%             1  [unknown]         [k] 0xffffffffafd4939f
+     0.01%             1  [unknown]         [k] 0xffffffffafe931b4
+     0.01%             1  [unknown]         [k] 0xffffffffafe96ebb
+     0.01%             1  [unknown]         [k] 0xffffffffafe98c8a
+     0.01%             1  [unknown]         [k] 0xffffffffb00b55d4
+     0.01%             1  [unknown]         [k] 0xffffffffb00b55d8
+     0.01%             1  [unknown]         [k] 0xffffffffb00e7e48
+     0.01%             1  [unknown]         [k] 0xffffffffb00e9716
+     0.01%             1  [unknown]         [k] 0xffffffffb00e98f4
+     0.01%             1  [unknown]         [k] 0xffffffffb00e9910
+     0.01%             1  [unknown]         [k] 0xffffffffb00e9970
+     0.01%             1  [unknown]         [k] 0xffffffffb00fd35e
+     0.01%             1  [unknown]         [k] 0xffffffffb00fd391
+     0.01%             1  [unknown]         [k] 0xffffffffb01001b9
+     0.01%             1  [unknown]         [k] 0xffffffffb0162f92
+     0.01%             1  [unknown]         [k] 0xffffffffb019c600
+     0.01%             1  [unknown]         [k] 0xffffffffb019dede
+     0.01%             1  [unknown]         [k] 0xffffffffb0f6e564
+     0.01%             1  [unknown]         [k] 0xffffffffb0f7c3d7
+     0.01%             1  [unknown]         [k] 0xffffffffb0f7c55e
+     0.01%             1  [unknown]         [k] 0xffffffffb0f965cc
+     0.01%             1  [unknown]         [k] 0xffffffffb0f97958
+     0.01%             1  [unknown]         [k] 0xffffffffb0f9ab4d
+
+
+#
+# (Tip: To trace calls using Processor Trace use perf record -e intel_pt// ... ; perf script --call-trace. Then use perf script --time A-B --insn-trace to look at region of interest.)
+#

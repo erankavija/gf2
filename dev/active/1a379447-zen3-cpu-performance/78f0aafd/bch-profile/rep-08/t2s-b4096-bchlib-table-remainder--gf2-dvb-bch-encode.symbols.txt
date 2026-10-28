@@ -1,0 +1,38 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cycles:u'
+# Event count (approx.): 22504208162
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    50.12%          2820  consumer-arm      [.] gf2_core::bitvec::BitVec::set
+    43.17%          2429  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     6.27%           353  consumer-arm      [.] consumer_profile_gf2_side::Prepared::run
+     0.05%             3  consumer-arm      [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.05%             3  consumer-arm      [.] gf2_core::bitvec::BitVec::write_bits
+     0.04%             2  [unknown]         [k] 0xffffffffafa015f0
+     0.02%             1  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::reset_registers
+     0.02%             1  consumer-arm      [.] alloc::sync::Arc<T,A>::drop_slow
+     0.02%             1  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.02%             1  consumer-arm      [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.02%             1  libc.so.6         [.] __libc_calloc
+     0.02%             1  libc.so.6         [.] 0x0000000000176384
+     0.02%             1  [unknown]         [k] 0xffffffffafe9160a
+     0.02%             1  [unknown]         [k] 0xffffffffafe96ebb
+     0.02%             1  [unknown]         [k] 0xffffffffafed5b25
+     0.02%             1  [unknown]         [k] 0xffffffffb00e7a3b
+     0.02%             1  [unknown]         [k] 0xffffffffb011ef3c
+     0.02%             1  [unknown]         [k] 0xffffffffb0197c03
+     0.02%             1  [unknown]         [k] 0xffffffffb07933fb
+     0.02%             1  [unknown]         [k] 0xffffffffb0f69dd0
+     0.02%             1  [unknown]         [k] 0xffffffffb0f9ab55
+     0.02%             1  [unknown]         [k] 0xffffffffb0fac76b
+
+
+#
+# (Tip: When collecting LBR backtraces use --stitch-lbr to handle more than 32 deep entries: perf record --call-graph lbr ; perf report --stitch-lbr)
+#

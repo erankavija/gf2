@@ -1,0 +1,22 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 739  of event 'cycles:u'
+# Event count (approx.): 2956027343
+#
+# Overhead       Samples  Shared Object     Symbol                                                                
+# ........  ............  ................  ......................................................................
+#
+    93.64%           692  bch-external-arm  [.] aff3ct::module::Encoder_BCH<int>::__encode(int const*, int*)
+     5.68%            42  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+     0.27%             2  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.14%             1  bch-external-arm  [.] gf2_aff3ct_bch_encode
+     0.14%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.14%             1  [unknown]         [k] 0xffffffffafe98cc2
+
+
+#
+# (Tip: To trace only single function with Processor Trace use perf record --filter 'filter func @ program' -e intel_pt//u ./program ; perf script --insn-trace)
+#

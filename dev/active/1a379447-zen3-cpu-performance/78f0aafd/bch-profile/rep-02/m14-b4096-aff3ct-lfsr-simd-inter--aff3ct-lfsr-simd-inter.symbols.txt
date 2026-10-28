@@ -1,0 +1,66 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 9K of event 'cycles:u'
+# Event count (approx.): 37636348133
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    62.63%          5893  bch-external-arm  [.] aff3ct::module::Encoder_BCH_inter<int>::__encode(int const*, int*)
+    20.32%          1912  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     9.11%           857  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     5.31%           500  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.77%            72  bch-external-arm  [.] aff3ct::tools::Reorderer_static<int, 8>::apply(std::vector<int const*, std::allocator<int const*> > const&, int*, int)
+     0.46%            43  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+     0.19%            18  libc.so.6         [.] 0x000000000017653b
+     0.19%            18  libc.so.6         [.] 0x0000000000176540
+     0.19%            18  libc.so.6         [.] 0x000000000017654a
+     0.18%            17  libc.so.6         [.] 0x0000000000176545
+     0.05%             5  bch-external-arm  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.04%             4  libc.so.6         [.] 0x00000000001765c6
+     0.04%             4  [unknown]         [k] 0xffffffffb01162b3
+     0.03%             3  libc.so.6         [.] 0x0000000000176524
+     0.03%             3  libc.so.6         [.] 0x0000000000176533
+     0.03%             3  [unknown]         [k] 0xffffffffafa015f0
+     0.02%             2  bch-external-arm  [.] aff3ct::tools::Reorderer_static<int, 8>::apply_rev(int const*, std::vector<int*, std::allocator<int*> >&, int)
+     0.02%             2  libc.so.6         [.] 0x0000000000176529
+     0.02%             2  libc.so.6         [.] 0x000000000017652e
+     0.02%             2  libc.so.6         [.] 0x00000000001765ca
+     0.02%             2  libc.so.6         [.] 0x0000000000176e04
+     0.01%             1  bch-external-arm  [.] aff3ct::module::Encoder_BCH_inter<int>::_encode(int const*, int*, unsigned long)
+     0.01%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.01%             1  libc.so.6         [.] cfree
+     0.01%             1  libc.so.6         [.] 0x00000000000a4fbe
+     0.01%             1  libc.so.6         [.] 0x0000000000175daf
+     0.01%             1  libc.so.6         [.] 0x0000000000176380
+     0.01%             1  libc.so.6         [.] 0x0000000000176474
+     0.01%             1  libc.so.6         [.] 0x00000000001764f1
+     0.01%             1  libc.so.6         [.] 0x00000000001765aa
+     0.01%             1  libc.so.6         [.] 0x00000000001765bc
+     0.01%             1  libc.so.6         [.] 0x0000000000176e13
+     0.01%             1  [unknown]         [k] 0xffffffffafa015f4
+     0.01%             1  [unknown]         [k] 0xffffffffafa015f7
+     0.01%             1  [unknown]         [k] 0xffffffffafa015f8
+     0.01%             1  [unknown]         [k] 0xffffffffafa01d22
+     0.01%             1  [unknown]         [k] 0xffffffffafd29b1c
+     0.01%             1  [unknown]         [k] 0xffffffffafd3d478
+     0.01%             1  [unknown]         [k] 0xffffffffafdfb177
+     0.01%             1  [unknown]         [k] 0xffffffffafe1bde6
+     0.01%             1  [unknown]         [k] 0xffffffffafe92fa4
+     0.01%             1  [unknown]         [k] 0xffffffffb00e9733
+     0.01%             1  [unknown]         [k] 0xffffffffb011cc8a
+     0.01%             1  [unknown]         [k] 0xffffffffb019810b
+     0.01%             1  [unknown]         [k] 0xffffffffb019bf5e
+     0.01%             1  [unknown]         [k] 0xffffffffb019c62a
+     0.01%             1  [unknown]         [k] 0xffffffffb019deb2
+     0.01%             1  [unknown]         [k] 0xffffffffb0f69d18
+     0.01%             1  [unknown]         [k] 0xffffffffb0f9ab96
+     0.01%             1  [unknown]         [k] 0xffffffffb0fac134
+
+
+#
+# (Tip: See assembly instructions with percentage: perf annotate <symbol>)
+#

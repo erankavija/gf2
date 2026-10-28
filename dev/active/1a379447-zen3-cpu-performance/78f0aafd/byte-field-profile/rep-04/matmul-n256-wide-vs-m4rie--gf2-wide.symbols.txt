@@ -1,0 +1,30 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 663  of event 'cycles:u'
+# Event count (approx.): 2652024531
+#
+# Overhead       Samples  Shared Object     Symbol                                                   
+# ........  ............  ................  .........................................................
+#
+    96.83%           642  gf2-arm           [.] gf2_kernels_simd::gf2m_gemm::gf2m_gemm_panelized_safe
+     1.21%             8  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+     0.30%             2  [unknown]         [k] 0xffffffffafa018d9
+     0.15%             1  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     0.15%             1  [unknown]         [k] 0xffffffffafa01280
+     0.15%             1  [unknown]         [k] 0xffffffffafd493af
+     0.15%             1  [unknown]         [k] 0xffffffffb00e9fe8
+     0.15%             1  [unknown]         [k] 0xffffffffb00ea212
+     0.15%             1  [unknown]         [k] 0xffffffffb00fd25f
+     0.15%             1  [unknown]         [k] 0xffffffffb0122393
+     0.15%             1  [unknown]         [k] 0xffffffffb01953d4
+     0.15%             1  [unknown]         [k] 0xffffffffb0196f2e
+     0.15%             1  [unknown]         [k] 0xffffffffb0197fa9
+     0.15%             1  [unknown]         [k] 0xffffffffb0f9abfc
+
+
+#
+# (Tip: See assembly instructions with percentage: perf annotate <symbol>)
+#

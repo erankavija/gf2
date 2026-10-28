@@ -1,0 +1,24 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 11328104784
+#
+# Overhead       Samples  Shared Object       Symbol                                                       
+# ........  ............  ..................  .............................................................
+#
+    98.34%          2785  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.31%            37  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.18%             5  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.04%             1  libc.so.6           [.] 0x0000000000176e09
+     0.04%             1  [unknown]           [k] 0xffffffffafa015f0
+     0.04%             1  [unknown]           [k] 0xffffffffafe98cc2
+     0.04%             1  [unknown]           [k] 0xffffffffafeaaeac
+     0.04%             1  [unknown]           [k] 0xffffffffafeab0a5
+
+
+#
+# (Tip: To show inline functions in call traces add --inline to perf report)
+#

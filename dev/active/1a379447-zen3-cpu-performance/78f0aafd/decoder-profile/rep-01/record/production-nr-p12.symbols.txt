@@ -1,0 +1,26 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 10548097569
+#
+# Overhead       Samples  Shared Object       Symbol                                                       
+# ........  ............  ..................  .............................................................
+#
+    98.14%          2588  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.10%            29  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.46%            12  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.08%             2  ldpc-batch-profile  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.04%             1  libc.so.6           [.] 0x0000000000176e04
+     0.04%             1  [unknown]           [k] 0xffffffffafd796b3
+     0.04%             1  [unknown]           [k] 0xffffffffafe98c84
+     0.04%             1  [unknown]           [k] 0xffffffffafe98cc2
+     0.04%             1  [unknown]           [k] 0xffffffffb0f7c3d7
+     0.04%             1  [unknown]           [k] 0xffffffffb0f965cc
+
+
+#
+# (Tip: Create an archive with symtabs to analyse on other machine: perf archive)
+#

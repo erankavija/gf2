@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 689  of event 'cycles:u'
+# Event count (approx.): 2756025493
+#
+# Overhead       Samples  Shared Object      Symbol                                                                                                           
+# ........  ............  .................  .................................................................................................................
+#
+    99.42%           685  gf2-nr-encode-arm  [.] <gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+     0.15%             1  gf2-nr-encode-arm  [.] gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched
+     0.15%             1  libc.so.6          [.] __libc_calloc
+     0.15%             1  libc.so.6          [.] malloc
+     0.15%             1  libc.so.6          [.] 0x00000000000a7566
+
+
+#
+# (Tip: Limit to show entries above 5% only: perf report --percent-limit 5)
+#

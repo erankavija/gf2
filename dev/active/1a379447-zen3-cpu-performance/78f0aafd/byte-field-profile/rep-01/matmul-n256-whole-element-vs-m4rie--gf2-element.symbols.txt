@@ -1,0 +1,39 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 786  of event 'cycles:u'
+# Event count (approx.): 3144029082
+#
+# Overhead       Samples  Shared Object     Symbol                                                                            
+# ........  ............  ................  ..................................................................................
+#
+    54.20%           426  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+    35.11%           276  gf2-arm           [.] gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4
+     3.31%            26  gf2-arm           [.] gf2_core::gf2m::batch::batch_mul_raw
+     2.93%            23  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     0.89%             7  libc.so.6         [.] 0x0000000000176e0e
+     0.51%             4  libc.so.6         [.] 0x0000000000176e13
+     0.38%             3  gf2-arm           [.] core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>
+     0.38%             3  libc.so.6         [.] 0x0000000000176e04
+     0.38%             3  libc.so.6         [.] 0x0000000000176e09
+     0.25%             2  gf2-arm           [.] gf2_arm::build_product::{{closure}}
+     0.13%             1  gf2-arm           [.] gf2_kernels_simd::gf2m_batch::gf2m_batch_mul_ymm_unroll4_safe
+     0.13%             1  libc.so.6         [.] 0x0000000000176d80
+     0.13%             1  libc.so.6         [.] 0x0000000000176dd2
+     0.13%             1  libc.so.6         [.] 0x0000000000176de3
+     0.13%             1  libc.so.6         [.] 0x0000000000176e17
+     0.13%             1  libc.so.6         [.] 0x0000000000176e33
+     0.13%             1  [unknown]         [k] 0xffffffffb00b55d8
+     0.13%             1  [unknown]         [k] 0xffffffffb00d8e67
+     0.13%             1  [unknown]         [k] 0xffffffffb00e7a70
+     0.13%             1  [unknown]         [k] 0xffffffffb011cc8a
+     0.13%             1  [unknown]         [k] 0xffffffffb0196f00
+     0.13%             1  [unknown]         [k] 0xffffffffb0197b56
+     0.13%             1  [unknown]         [k] 0xffffffffb0197fa9
+
+
+#
+# (Tip: To see callchains in a more compact form: perf report -g folded)
+#

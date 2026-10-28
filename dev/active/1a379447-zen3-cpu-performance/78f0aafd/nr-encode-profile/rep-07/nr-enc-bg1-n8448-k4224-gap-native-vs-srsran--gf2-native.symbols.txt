@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 933  of event 'cycles:u'
+# Event count (approx.): 3732034521
+#
+# Overhead       Samples  Shared Object      Symbol                                                                                                           
+# ........  ............  .................  .................................................................................................................
+#
+    73.10%           682  gf2-nr-encode-arm  [.] <gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+    26.47%           247  gf2-nr-encode-arm  [.] gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched
+     0.21%             2  gf2-nr-encode-arm  [.] gf2_core::matrix::BitMatrix::swap_rows
+     0.11%             1  gf2-nr-encode-arm  [.] gf2_kernels_simd::x86::avx2::fns::xor_fn
+     0.11%             1  [unknown]          [k] 0xffffffffb0f965f5
+
+
+#
+# (Tip: When collecting LBR backtraces use --stitch-lbr to handle more than 32 deep entries: perf record --call-graph lbr ; perf report --stitch-lbr)
+#

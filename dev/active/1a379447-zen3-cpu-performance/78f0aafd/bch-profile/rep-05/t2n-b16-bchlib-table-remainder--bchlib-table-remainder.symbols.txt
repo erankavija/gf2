@@ -1,0 +1,29 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 717  of event 'cycles:u'
+# Event count (approx.): 2868026529
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    92.61%           664  bch-external-arm  [.] bch_encode
+     2.79%            20  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     1.67%            12  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     0.70%             5  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.56%             4  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.28%             2  bch-external-arm  [.] bch_encode_unaligned
+     0.28%             2  bch-external-arm  [.] consumer_profile_gf2_side::bch_reference
+     0.28%             2  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.28%             2  bch-external-arm  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.14%             1  bch-external-arm  [.] gf2_core::field::extension::cyclotomic_cosets_mod
+     0.14%             1  bch-external-arm  [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.14%             1  libc.so.6         [.] 0x00000000001763d9
+     0.14%             1  [unknown]         [k] 0xffffffffb00e7ec1
+
+
+#
+# (Tip: For a higher level overview, try: perf report --sort comm,dso)
+#

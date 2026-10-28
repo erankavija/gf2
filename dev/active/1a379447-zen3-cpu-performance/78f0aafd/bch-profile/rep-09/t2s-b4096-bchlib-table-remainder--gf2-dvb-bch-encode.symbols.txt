@@ -1,0 +1,33 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cycles:u'
+# Event count (approx.): 22160204980
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    49.66%          2751  consumer-arm      [.] gf2_core::bitvec::BitVec::set
+    44.57%          2469  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     5.31%           294  consumer-arm      [.] consumer_profile_gf2_side::Prepared::run
+     0.09%             5  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::reset_registers
+     0.09%             5  consumer-arm      [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.05%             3  consumer-arm      [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.05%             3  consumer-arm      [.] gf2_core::bitvec::BitVec::write_bits
+     0.02%             1  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.02%             1  consumer-arm      [.] gf2_core::field::poly::mul_schoolbook_impl
+     0.02%             1  libc.so.6         [.] 0x0000000000176e04
+     0.02%             1  [unknown]         [k] 0xffffffffafe91646
+     0.02%             1  [unknown]         [k] 0xffffffffafe98cc2
+     0.02%             1  [unknown]         [k] 0xffffffffafeaaeac
+     0.02%             1  [unknown]         [k] 0xffffffffafeb0ee0
+     0.02%             1  [unknown]         [k] 0xffffffffb00da33a
+     0.02%             1  [unknown]         [k] 0xffffffffb00e7770
+     0.02%             1  [unknown]         [k] 0xffffffffb00e799a
+
+
+#
+# (Tip: Skip collecting build-id when recording: perf record -B)
+#

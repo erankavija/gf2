@@ -1,0 +1,20 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 650  of event 'cycles:u'
+# Event count (approx.): 2600024050
+#
+# Overhead       Samples  Shared Object  Symbol                                                                                                                       
+# ........  ............  .............  .............................................................................................................................
+#
+    99.54%           647  consumer-arm   [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.15%             1  consumer-arm   [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.15%             1  consumer-arm   [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.15%             1  consumer-arm   [.] gf2_kernels_simd::bch_encode::fold_barrett_constant
+
+
+#
+# (Tip: Order by the overhead of source file name and line number: perf report -s srcline)
+#

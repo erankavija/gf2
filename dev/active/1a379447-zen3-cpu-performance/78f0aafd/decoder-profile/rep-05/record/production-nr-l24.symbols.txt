@@ -1,0 +1,24 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 7K of event 'cycles:u'
+# Event count (approx.): 28680265290
+#
+# Overhead       Samples  Shared Object       Symbol                                                       
+# ........  ............  ..................  .............................................................
+#
+    98.40%          7055  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.24%            89  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.25%            18  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.06%             4  ldpc-batch-profile  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.01%             1  libc.so.6           [.] 0x0000000000176e09
+     0.01%             1  [unknown]           [k] 0xffffffffafa01ca6
+     0.01%             1  [unknown]           [k] 0xffffffffafe915f0
+     0.01%             1  [unknown]           [k] 0xffffffffafe98cc2
+
+
+#
+# (Tip: To show IPC for sampling periods use perf record -e '{cycles,instructions}:S' and then browse context)
+#

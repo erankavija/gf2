@@ -1,0 +1,30 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 797  of event 'cycles:u'
+# Event count (approx.): 3188029489
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    79.92%           637  bch-external-arm  [.] bch_encode
+     9.41%            75  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     4.77%            38  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     2.63%            21  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     1.25%            10  bch-external-arm  [.] bch_encode_unaligned
+     0.50%             4  bch-external-arm  [.] load_ecc8
+     0.38%             3  libc.so.6         [.] 0x00000000001763ec
+     0.25%             2  bch-external-arm  [.] consumer_profile_gf2_side::bch_reference
+     0.25%             2  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.13%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.13%             1  bch-external-arm  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.13%             1  libc.so.6         [.] 0x00000000000a5058
+     0.13%             1  libc.so.6         [.] 0x00000000001763c6
+     0.13%             1  libc.so.6         [.] 0x00000000001763f6
+
+
+#
+# (Tip: List events using substring match: perf list <keyword>)
+#

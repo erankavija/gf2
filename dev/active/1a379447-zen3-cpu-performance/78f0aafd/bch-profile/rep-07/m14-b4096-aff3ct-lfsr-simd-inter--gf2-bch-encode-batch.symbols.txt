@@ -1,0 +1,37 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 13804127687
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    99.36%          3429  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.09%             3  consumer-arm      [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.03%             1  consumer-arm      [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  consumer-arm      [.] rand_chacha::guts::refill_wide
+     0.03%             1  libc.so.6         [.] 0x0000000000176380
+     0.03%             1  libc.so.6         [.] 0x000000000017652e
+     0.03%             1  libc.so.6         [.] 0x000000000017653b
+     0.03%             1  [unknown]         [k] 0xffffffffafa015f0
+     0.03%             1  [unknown]         [k] 0xffffffffafa015f7
+     0.03%             1  [unknown]         [k] 0xffffffffafd48535
+     0.03%             1  [unknown]         [k] 0xffffffffafe940d6
+     0.03%             1  [unknown]         [k] 0xffffffffb00dffdc
+     0.03%             1  [unknown]         [k] 0xffffffffb00fd244
+     0.03%             1  [unknown]         [k] 0xffffffffb00fd3a1
+     0.03%             1  [unknown]         [k] 0xffffffffb01162b3
+     0.03%             1  [unknown]         [k] 0xffffffffb011cc8a
+     0.03%             1  [unknown]         [k] 0xffffffffb0197b6f
+     0.03%             1  [unknown]         [k] 0xffffffffb01980d7
+     0.03%             1  [unknown]         [k] 0xffffffffb0617087
+     0.03%             1  [unknown]         [k] 0xffffffffb0f69c26
+
+
+#
+# (Tip: To compare scalability of two workload samples use perf diff -c ratio file1 file2)
+#

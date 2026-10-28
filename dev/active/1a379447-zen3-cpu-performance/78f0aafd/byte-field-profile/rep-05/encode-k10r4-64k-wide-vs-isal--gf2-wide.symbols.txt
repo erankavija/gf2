@@ -1,0 +1,65 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 428  of event 'cycles:u'
+# Event count (approx.): 1712015836
+#
+# Overhead       Samples  Shared Object     Symbol                                                   
+# ........  ............  ................  .........................................................
+#
+    53.50%           229  gf2-arm           [.] gf2_kernels_simd::gf2m_gemm::gf2m_gemm_panelized_safe
+    32.01%           137  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+     0.93%             4  [unknown]         [k] 0xffffffffafa01280
+     0.70%             3  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     0.70%             3  [unknown]         [k] 0xffffffffafa018d9
+     0.70%             3  [unknown]         [k] 0xffffffffb011cc8a
+     0.47%             2  libc.so.6         [.] 0x0000000000176e0e
+     0.47%             2  [unknown]         [k] 0xffffffffb00fd07b
+     0.47%             2  [unknown]         [k] 0xffffffffb01162b3
+     0.47%             2  [unknown]         [k] 0xffffffffb06170b2
+     0.47%             2  [unknown]         [k] 0xffffffffb0f69c26
+     0.47%             2  [unknown]         [k] 0xffffffffb0f9ab85
+     0.23%             1  gf2-arm           [.] byte_field_gf2_side::workload::pack_matrix
+     0.23%             1  gf2-arm           [.] gf2_arm::build_product
+     0.23%             1  [unknown]         [k] 0xffffffffafa00005
+     0.23%             1  [unknown]         [k] 0xffffffffafd484e0
+     0.23%             1  [unknown]         [k] 0xffffffffafd4939f
+     0.23%             1  [unknown]         [k] 0xffffffffafd4d5cb
+     0.23%             1  [unknown]         [k] 0xffffffffafd4d75b
+     0.23%             1  [unknown]         [k] 0xffffffffafd4dd80
+     0.23%             1  [unknown]         [k] 0xffffffffafe66830
+     0.23%             1  [unknown]         [k] 0xffffffffafed5227
+     0.23%             1  [unknown]         [k] 0xffffffffb00906c2
+     0.23%             1  [unknown]         [k] 0xffffffffb00b55d8
+     0.23%             1  [unknown]         [k] 0xffffffffb00e0758
+     0.23%             1  [unknown]         [k] 0xffffffffb00e0823
+     0.23%             1  [unknown]         [k] 0xffffffffb00e0ccb
+     0.23%             1  [unknown]         [k] 0xffffffffb00e141e
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7732
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7750
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7d4f
+     0.23%             1  [unknown]         [k] 0xffffffffb00e98ae
+     0.23%             1  [unknown]         [k] 0xffffffffb00ea6e3
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd07f
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd330
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd391
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd39d
+     0.23%             1  [unknown]         [k] 0xffffffffb01162ba
+     0.23%             1  [unknown]         [k] 0xffffffffb011ed00
+     0.23%             1  [unknown]         [k] 0xffffffffb01953e9
+     0.23%             1  [unknown]         [k] 0xffffffffb0197b56
+     0.23%             1  [unknown]         [k] 0xffffffffb019810b
+     0.23%             1  [unknown]         [k] 0xffffffffb019ab62
+     0.23%             1  [unknown]         [k] 0xffffffffb019ab94
+     0.23%             1  [unknown]         [k] 0xffffffffb019ac65
+     0.23%             1  [unknown]         [k] 0xffffffffb019bee7
+     0.23%             1  [unknown]         [k] 0xffffffffb019bf55
+     0.23%             1  [unknown]         [k] 0xffffffffb0793418
+     0.23%             1  [unknown]         [k] 0xffffffffb0fac76b
+
+
+#
+# (Tip: See assembly instructions with percentage: perf annotate <symbol>)
+#

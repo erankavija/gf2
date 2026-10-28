@@ -1,0 +1,30 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 712  of event 'cycles:u'
+# Event count (approx.): 2848026344
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    90.03%           641  bch-external-arm  [.] aff3ct::module::Encoder_BCH_inter<int>::__encode(int const*, int*)
+     6.32%            45  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+     0.70%             5  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     0.70%             5  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     0.42%             3  bch-external-arm  [.] aff3ct::tools::Reorderer_static<int, 8>::apply(std::vector<int const*, std::allocator<int const*> > const&, int*, int)
+     0.28%             2  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.28%             2  libc.so.6         [.] 0x0000000000176524
+     0.28%             2  libc.so.6         [.] 0x0000000000176529
+     0.28%             2  libc.so.6         [.] 0x000000000017653b
+     0.14%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.14%             1  libc.so.6         [.] 0x000000000017652e
+     0.14%             1  [unknown]         [k] 0xffffffffafd83aaa
+     0.14%             1  [unknown]         [k] 0xffffffffafeaaeac
+     0.14%             1  [unknown]         [k] 0xffffffffb06170b2
+
+
+#
+# (Tip: Limit to show entries above 5% only: perf report --percent-limit 5)
+#

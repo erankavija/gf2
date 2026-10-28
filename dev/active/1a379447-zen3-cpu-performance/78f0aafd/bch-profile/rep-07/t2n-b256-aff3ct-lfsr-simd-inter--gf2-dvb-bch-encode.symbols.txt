@@ -1,0 +1,28 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 6344058682
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    51.70%           820  consumer-arm      [.] gf2_core::bitvec::BitVec::set
+    40.67%           645  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     5.93%            94  consumer-arm      [.] consumer_profile_gf2_side::Prepared::run
+     0.69%            11  consumer-arm      [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.32%             5  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.25%             4  consumer-arm      [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.13%             2  consumer-arm      [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.06%             1  consumer-arm      [.] gf2_core::field::extension::cyclotomic_cosets_mod
+     0.06%             1  consumer-arm      [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.06%             1  libc.so.6         [.] __libc_calloc
+     0.06%             1  libc.so.6         [.] 0x00000000001765aa
+     0.06%             1  libc.so.6         [.] 0x0000000000176d80
+
+
+#
+# (Tip: Profiling branch (mis)predictions with: perf record -b / perf report)
+#

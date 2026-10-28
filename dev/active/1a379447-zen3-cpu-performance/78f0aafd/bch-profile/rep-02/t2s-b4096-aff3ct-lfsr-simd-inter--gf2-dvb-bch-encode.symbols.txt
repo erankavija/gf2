@@ -1,0 +1,30 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cycles:u'
+# Event count (approx.): 22108204499
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    49.01%          2709  consumer-arm      [.] gf2_core::bitvec::BitVec::set
+    44.09%          2437  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     6.57%           363  consumer-arm      [.] consumer_profile_gf2_side::Prepared::run
+     0.07%             4  consumer-arm      [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.05%             3  consumer-arm      [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.05%             3  consumer-arm      [.] gf2_core::bitvec::BitVec::write_bits
+     0.02%             1  consumer-arm      [.] alloc::sync::Arc<T,A>::drop_slow
+     0.02%             1  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.02%             1  [unknown]         [k] 0xffffffffafe96ebb
+     0.02%             1  [unknown]         [k] 0xffffffffb00fd0d7
+     0.02%             1  [unknown]         [k] 0xffffffffb0196f1e
+     0.02%             1  [unknown]         [k] 0xffffffffb01980e5
+     0.02%             1  [unknown]         [k] 0xffffffffb06170b2
+     0.02%             1  [unknown]         [k] 0xffffffffb0f6c274
+
+
+#
+# (Tip: To change sampling frequency to 100 Hz: perf record -F 100)
+#

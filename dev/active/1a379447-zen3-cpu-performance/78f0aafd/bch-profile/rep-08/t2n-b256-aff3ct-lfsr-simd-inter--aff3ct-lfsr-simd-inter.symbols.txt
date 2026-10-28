@@ -1,0 +1,36 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 8436078033
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    40.11%           846  bch-external-arm  [.] aff3ct::module::Encoder_BCH_inter<int>::__encode(int const*, int*)
+    35.94%           758  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+    15.36%           324  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     4.46%            94  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     1.75%            37  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     0.66%            14  bch-external-arm  [.] consumer_profile_gf2_side::bch_reference
+     0.47%            10  bch-external-arm  [.] aff3ct::tools::Reorderer_static<int, 8>::apply(std::vector<int const*, std::allocator<int const*> > const&, int*, int)
+     0.24%             5  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.24%             5  libc.so.6         [.] 0x0000000000176540
+     0.19%             4  libc.so.6         [.] 0x000000000017654a
+     0.09%             2  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.09%             2  bch-external-arm  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.05%             1  bch-external-arm  [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.05%             1  bch-external-arm  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.05%             1  libc.so.6         [.] 0x000000000017653b
+     0.05%             1  [unknown]         [k] 0xffffffffaff0a118
+     0.05%             1  [unknown]         [k] 0xffffffffb011eecc
+     0.05%             1  [unknown]         [k] 0xffffffffb0197b5c
+     0.05%             1  [unknown]         [k] 0xffffffffb01980d7
+     0.05%             1  [unknown]         [k] 0xffffffffb019dea9
+
+
+#
+# (Tip: To record every process run by a user: perf record -u <user>)
+#

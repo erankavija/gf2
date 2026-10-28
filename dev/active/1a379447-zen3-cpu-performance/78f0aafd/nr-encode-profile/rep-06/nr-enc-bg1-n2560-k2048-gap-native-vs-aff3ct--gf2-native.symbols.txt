@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 718  of event 'cycles:u'
+# Event count (approx.): 2872026566
+#
+# Overhead       Samples  Shared Object      Symbol                                                                                                           
+# ........  ............  .................  .................................................................................................................
+#
+    93.04%           668  gf2-nr-encode-arm  [.] <gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+     6.55%            47  gf2-nr-encode-arm  [.] gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched
+     0.14%             1  gf2-nr-encode-arm  [.] gf2_core::matrix::BitMatrix::swap_rows
+     0.14%             1  [unknown]          [k] 0xffffffffafa015f0
+     0.14%             1  [unknown]          [k] 0xffffffffafe947b5
+
+
+#
+# (Tip: Print event counts in machine readable CSV format with: perf stat -x\;)
+#

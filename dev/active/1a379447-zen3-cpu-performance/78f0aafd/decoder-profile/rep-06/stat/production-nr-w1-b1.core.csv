@@ -1,0 +1,7 @@
+# started on Wed Oct 28 05:09:48 2026
+
+126697176,,cycles:u,26935517,100.00,,
+280226170,,instructions:u,26935517,100.00,,
+72093710,,branches:u,26935517,100.00,,
+2114863,,branch-misses:u,26935517,100.00,,
+7775412,,stalled-cycles-frontend:u,26935517,100.00,,

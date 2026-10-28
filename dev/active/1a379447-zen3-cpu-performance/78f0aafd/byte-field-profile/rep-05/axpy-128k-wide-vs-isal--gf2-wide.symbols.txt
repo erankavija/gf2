@@ -1,0 +1,23 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 619  of event 'cycles:u'
+# Event count (approx.): 2476022903
+#
+# Overhead       Samples  Shared Object  Symbol                                                             
+# ........  ............  .............  ...................................................................
+#
+    49.60%           307  gf2-arm        [.] gf2_core::field::vec::FieldVec<F>::axpy
+    17.45%           108  gf2-arm        [.] core::hash::BuildHasher::hash_one
+    14.54%            90  gf2-arm        [.] <std::hash::random::DefaultHasher as core::hash::Hasher>::write
+    11.15%            69  libc.so.6      [.] __libc_calloc
+     5.49%            34  libc.so.6      [.] cfree
+     1.62%            10  gf2-arm        [.] <T as core::any::Any>::type_id
+     0.16%             1  gf2-arm        [.] gf2_arm::build
+
+
+#
+# (Tip: To count events every 1000 msec: perf stat -I 1000)
+#

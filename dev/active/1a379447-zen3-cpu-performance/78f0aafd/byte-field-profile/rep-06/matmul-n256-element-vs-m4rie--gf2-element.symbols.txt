@@ -1,0 +1,36 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 767  of event 'cycles:u'
+# Event count (approx.): 3068028379
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                        
+# ........  ............  ................  ..............................................................................................................
+#
+    55.02%           422  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+    36.64%           281  gf2-arm           [.] gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4
+     2.22%            17  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     1.96%            15  gf2-arm           [.] gf2_core::gf2m::batch::batch_mul_raw
+     0.78%             6  libc.so.6         [.] 0x0000000000176e09
+     0.65%             5  libc.so.6         [.] 0x0000000000176e0e
+     0.52%             4  libc.so.6         [.] 0x0000000000176e04
+     0.39%             3  libc.so.6         [.] 0x0000000000176e13
+     0.26%             2  gf2-arm           [.] gf2_arm::build_product::{{closure}}
+     0.26%             2  gf2-arm           [.] gf2_kernels_simd::gf2m_batch::gf2m_batch_mul_ymm_unroll4_safe
+     0.13%             1  gf2-arm           [.] core::ptr::drop_in_place<gf2_arm::build_product<byte_field_gf2_side::workload::RuntimeGf256>::{{closure}}>
+     0.13%             1  libc.so.6         [.] 0x0000000000176e1a
+     0.13%             1  libc.so.6         [.] 0x0000000000176e33
+     0.13%             1  [unknown]         [k] 0xffffffffafe5dc80
+     0.13%             1  [unknown]         [k] 0xffffffffb00e7770
+     0.13%             1  [unknown]         [k] 0xffffffffb00e7a70
+     0.13%             1  [unknown]         [k] 0xffffffffb00e9ffc
+     0.13%             1  [unknown]         [k] 0xffffffffb00ea212
+     0.13%             1  [unknown]         [k] 0xffffffffb0162fae
+     0.13%             1  [unknown]         [k] 0xffffffffb0f69d76
+
+
+#
+# (Tip: To adjust path to source files to local file system use perf report --prefix=... --prefix-strip=...)
+#

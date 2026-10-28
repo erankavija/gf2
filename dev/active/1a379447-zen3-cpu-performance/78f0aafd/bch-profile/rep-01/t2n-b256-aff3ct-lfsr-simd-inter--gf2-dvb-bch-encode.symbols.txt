@@ -1,0 +1,31 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 6236057683
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    50.74%           791  consumer-arm      [.] gf2_core::bitvec::BitVec::set
+    40.73%           635  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     6.61%           103  consumer-arm      [.] consumer_profile_gf2_side::Prepared::run
+     0.71%            11  consumer-arm      [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.32%             5  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.26%             4  consumer-arm      [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.13%             2  consumer-arm      [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.06%             1  consumer-arm      [.] __umodti3
+     0.06%             1  consumer-arm      [.] gf2_coding::bch::encode::packed_place_codeword
+     0.06%             1  consumer-arm      [.] gf2_core::field::poly::mul_schoolbook_impl
+     0.06%             1  libc.so.6         [.] 0x0000000000176529
+     0.06%             1  [unknown]         [k] 0xffffffffafdb2bc4
+     0.06%             1  [unknown]         [k] 0xffffffffafe1bde6
+     0.06%             1  [unknown]         [k] 0xffffffffafe96ebb
+     0.06%             1  [unknown]         [k] 0xffffffffb0f9ab4d
+
+
+#
+# (Tip: To show time in nanoseconds in record/report add --ns)
+#

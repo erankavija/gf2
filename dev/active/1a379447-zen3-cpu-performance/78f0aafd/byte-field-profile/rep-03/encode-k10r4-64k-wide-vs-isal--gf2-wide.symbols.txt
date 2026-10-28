@@ -1,0 +1,77 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 427  of event 'cycles:u'
+# Event count (approx.): 1708015799
+#
+# Overhead       Samples  Shared Object     Symbol                                                   
+# ........  ............  ................  .........................................................
+#
+    52.22%           223  gf2-arm           [.] gf2_kernels_simd::gf2m_gemm::gf2m_gemm_panelized_safe
+    29.98%           128  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+     1.64%             7  [unknown]         [k] 0xffffffffafa01280
+     1.64%             7  [unknown]         [k] 0xffffffffafa018d9
+     0.47%             2  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     0.47%             2  [unknown]         [k] 0xffffffffafd4dc8d
+     0.47%             2  [unknown]         [k] 0xffffffffb00e9b52
+     0.47%             2  [unknown]         [k] 0xffffffffb00fd330
+     0.47%             2  [unknown]         [k] 0xffffffffb00fe2c1
+     0.23%             1  gf2-arm           [.] byte_field_gf2_side::workload::pack_matrix
+     0.23%             1  gf2-arm           [.] gf2_arm::build_product
+     0.23%             1  libc.so.6         [.] 0x0000000000176e04
+     0.23%             1  [unknown]         [k] 0xffffffffafa01284
+     0.23%             1  [unknown]         [k] 0xffffffffafd493b8
+     0.23%             1  [unknown]         [k] 0xffffffffafd494fa
+     0.23%             1  [unknown]         [k] 0xffffffffafe5dc80
+     0.23%             1  [unknown]         [k] 0xffffffffafe66830
+     0.23%             1  [unknown]         [k] 0xffffffffafe66834
+     0.23%             1  [unknown]         [k] 0xffffffffafe988c6
+     0.23%             1  [unknown]         [k] 0xffffffffb00b55d4
+     0.23%             1  [unknown]         [k] 0xffffffffb00e0764
+     0.23%             1  [unknown]         [k] 0xffffffffb00e0ecf
+     0.23%             1  [unknown]         [k] 0xffffffffb00e1381
+     0.23%             1  [unknown]         [k] 0xffffffffb00e1384
+     0.23%             1  [unknown]         [k] 0xffffffffb00e138f
+     0.23%             1  [unknown]         [k] 0xffffffffb00e1410
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7640
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7737
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7746
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7998
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7d7f
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7e48
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7ec1
+     0.23%             1  [unknown]         [k] 0xffffffffb00e9797
+     0.23%             1  [unknown]         [k] 0xffffffffb00e98be
+     0.23%             1  [unknown]         [k] 0xffffffffb00e9936
+     0.23%             1  [unknown]         [k] 0xffffffffb00e9963
+     0.23%             1  [unknown]         [k] 0xffffffffb00e9b0f
+     0.23%             1  [unknown]         [k] 0xffffffffb00ea66c
+     0.23%             1  [unknown]         [k] 0xffffffffb00ea720
+     0.23%             1  [unknown]         [k] 0xffffffffb00ea7e6
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd0c3
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd262
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd280
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd2b9
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd2fa
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd3d2
+     0.23%             1  [unknown]         [k] 0xffffffffb01001ea
+     0.23%             1  [unknown]         [k] 0xffffffffb01162b3
+     0.23%             1  [unknown]         [k] 0xffffffffb011cc8a
+     0.23%             1  [unknown]         [k] 0xffffffffb011cd06
+     0.23%             1  [unknown]         [k] 0xffffffffb0196f00
+     0.23%             1  [unknown]         [k] 0xffffffffb0197b5c
+     0.23%             1  [unknown]         [k] 0xffffffffb01980d7
+     0.23%             1  [unknown]         [k] 0xffffffffb019810b
+     0.23%             1  [unknown]         [k] 0xffffffffb019813a
+     0.23%             1  [unknown]         [k] 0xffffffffb0198154
+     0.23%             1  [unknown]         [k] 0xffffffffb019ac19
+     0.23%             1  [unknown]         [k] 0xffffffffb06b1b90
+     0.23%             1  [unknown]         [k] 0xffffffffb0f965cc
+     0.23%             1  [unknown]         [k] 0xffffffffb0f9b18f
+
+
+#
+# (Tip: To set sampling period of individual events use perf record -e cpu/cpu-cycles,period=100001/,cpu/branches,period=10001/ ...)
+#

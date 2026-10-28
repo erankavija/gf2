@@ -1,0 +1,37 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cycles:u'
+# Event count (approx.): 11276104303
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    41.29%          1164  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+    22.63%           638  bch-external-arm  [.] bch_encode
+    20.82%           587  bch-external-arm  [.] bch_external_arms::Engine::prepare
+    12.42%           350  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     1.56%            44  bch-external-arm  [.] consumer_profile_gf2_side::bch_reference
+     0.39%            11  bch-external-arm  [.] bch_encode_unaligned
+     0.18%             5  bch-external-arm  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.14%             4  libc.so.6         [.] 0x00000000001763ec
+     0.07%             2  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.07%             2  bch-external-arm  [.] load_ecc8
+     0.07%             2  [unknown]         [k] 0xffffffffb011cc8a
+     0.04%             1  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::reset_registers
+     0.04%             1  bch-external-arm  [.] bch_init
+     0.04%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.04%             1  bch-external-arm  [.] gf2_core::bitvec::BitVec::random_seeded
+     0.04%             1  libc.so.6         [.] 0x0000000000176469
+     0.04%             1  [unknown]         [k] 0xffffffffafa015f0
+     0.04%             1  [unknown]         [k] 0xffffffffafe1bdd4
+     0.04%             1  [unknown]         [k] 0xffffffffafe98cc2
+     0.04%             1  [unknown]         [k] 0xffffffffb01162b3
+     0.04%             1  [unknown]         [k] 0xffffffffb01600d6
+
+
+#
+# (Tip: Create an archive with symtabs to analyse on other machine: perf archive)
+#

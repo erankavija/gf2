@@ -1,0 +1,36 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cycles:u'
+# Event count (approx.): 22212205461
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    49.72%          2761  consumer-arm      [.] gf2_core::bitvec::BitVec::set
+    44.17%          2453  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     5.73%           318  consumer-arm      [.] consumer_profile_gf2_side::Prepared::run
+     0.05%             3  consumer-arm      [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.04%             2  consumer-arm      [.] gf2_core::bitvec::BitVec::write_bits
+     0.04%             2  [unknown]         [k] 0xffffffffb00e9b20
+     0.02%             1  consumer-arm      [.] <&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+     0.02%             1  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::reset_registers
+     0.02%             1  consumer-arm      [.] gf2_coding::bch::encode::packed_place_codeword
+     0.02%             1  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.02%             1  consumer-arm      [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.02%             1  libc.so.6         [.] cfree
+     0.02%             1  libc.so.6         [.] malloc
+     0.02%             1  [unknown]         [k] 0xffffffffafa01284
+     0.02%             1  [unknown]         [k] 0xffffffffafa015f4
+     0.02%             1  [unknown]         [k] 0xffffffffafe5dc80
+     0.02%             1  [unknown]         [k] 0xffffffffafe98cc2
+     0.02%             1  [unknown]         [k] 0xffffffffb00fd07f
+     0.02%             1  [unknown]         [k] 0xffffffffb011ee2d
+     0.02%             1  [unknown]         [k] 0xffffffffb01980d7
+
+
+#
+# (Tip: Order by the overhead of source file name and line number: perf report -s srcline)
+#

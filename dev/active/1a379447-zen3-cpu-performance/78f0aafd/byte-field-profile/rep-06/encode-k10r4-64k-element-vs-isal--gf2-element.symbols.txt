@@ -1,0 +1,33 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 634  of event 'cycles:u'
+# Event count (approx.): 2536023458
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                        
+# ........  ............  ................  ..............................................................................................................
+#
+    32.18%           204  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+    26.66%           169  gf2-arm           [.] gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4
+    20.50%           130  gf2-arm           [.] gf2_core::gf2m::batch::batch_mul_raw
+     9.62%            61  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     5.68%            36  gf2-arm           [.] core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>
+     2.05%            13  gf2-arm           [.] gf2_arm::build_product::{{closure}}
+     1.26%             8  gf2-arm           [.] gf2_kernels_simd::gf2m_batch::gf2m_batch_mul_ymm_unroll4_safe
+     0.47%             3  gf2-arm           [.] gf2_arm::build_product
+     0.32%             2  gf2-arm           [.] core::ptr::drop_in_place<gf2_arm::build_product<byte_field_gf2_side::workload::RuntimeGf256>::{{closure}}>
+     0.16%             1  gf2-arm           [.] byte_field_gf2_side::workload::pack_matrix
+     0.16%             1  libc.so.6         [.] 0x0000000000176d80
+     0.16%             1  libc.so.6         [.] 0x0000000000176d84
+     0.16%             1  [unknown]         [k] 0xffffffffafa01280
+     0.16%             1  [unknown]         [k] 0xffffffffafeaaeac
+     0.16%             1  [unknown]         [k] 0xffffffffb00d8ec9
+     0.16%             1  [unknown]         [k] 0xffffffffb00e7750
+     0.16%             1  [unknown]         [k] 0xffffffffb011cc8a
+
+
+#
+# (Tip: To trace only single function with Processor Trace use perf record --filter 'filter func @ program' -e intel_pt//u ./program ; perf script --insn-trace)
+#

@@ -1,0 +1,25 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 623  of event 'cycles:u'
+# Event count (approx.): 2492023051
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    53.13%           331  consumer-arm      [.] gf2_core::bitvec::BitVec::set
+    35.63%           222  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     7.38%            46  consumer-arm      [.] consumer_profile_gf2_side::Prepared::run
+     1.77%            11  consumer-arm      [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.80%             5  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.64%             4  consumer-arm      [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.32%             2  consumer-arm      [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.16%             1  consumer-arm      [.] gf2_core::field::extension::cyclotomic_cosets_mod
+     0.16%             1  [unknown]         [k] 0xffffffffb00fd0cc
+
+
+#
+# (Tip: List events using substring match: perf list <keyword>)
+#

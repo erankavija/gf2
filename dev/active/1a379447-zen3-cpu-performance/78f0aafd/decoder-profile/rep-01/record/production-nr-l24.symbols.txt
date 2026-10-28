@@ -1,0 +1,25 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 7K of event 'cycles:u'
+# Event count (approx.): 28632264846
+#
+# Overhead       Samples  Shared Object       Symbol                                                       
+# ........  ............  ..................  .............................................................
+#
+    98.24%          7032  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.29%            92  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.38%            27  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.03%             2  [unknown]           [k] 0xffffffffafa015f0
+     0.01%             1  ldpc-batch-profile  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.01%             1  libc.so.6           [.] 0x0000000000176e04
+     0.01%             1  [unknown]           [k] 0xffffffffafe9221f
+     0.01%             1  [unknown]           [k] 0xffffffffafeab0a5
+     0.01%             1  [unknown]           [k] 0xffffffffb0f965cc
+
+
+#
+# (Tip: To measure approximate function latency with Processor Trace use perf record -e intel_pt// ... ; perf script --call-ret-trace)
+#

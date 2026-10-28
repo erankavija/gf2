@@ -1,0 +1,22 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 646  of event 'cycles:u'
+# Event count (approx.): 2584023902
+#
+# Overhead       Samples  Shared Object  Symbol                                                                                                                       
+# ........  ............  .............  .............................................................................................................................
+#
+    50.31%           325  consumer-arm   [.] gf2_core::bitvec::BitVec::set
+    42.11%           272  consumer-arm   [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     6.50%            42  consumer-arm   [.] consumer_profile_gf2_side::Prepared::run
+     0.46%             3  consumer-arm   [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.31%             2  consumer-arm   [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::reset_registers
+     0.31%             2  consumer-arm   [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+
+
+#
+# (Tip: To trace calls using Processor Trace use perf record -e intel_pt// ... ; perf script --call-trace. Then use perf script --time A-B --insn-trace to look at region of interest.)
+#

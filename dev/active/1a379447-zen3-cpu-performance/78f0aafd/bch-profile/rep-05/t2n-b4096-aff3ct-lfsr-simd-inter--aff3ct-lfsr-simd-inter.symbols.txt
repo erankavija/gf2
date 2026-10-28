@@ -1,0 +1,81 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 26K of event 'cycles:u'
+# Event count (approx.): 106964989417
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    67.04%         17926  bch-external-arm  [.] aff3ct::module::Encoder_BCH_inter<int>::__encode(int const*, int*)
+    20.02%          5353  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     5.56%          1486  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     2.87%           767  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+     2.30%           615  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     0.72%           193  bch-external-arm  [.] consumer_profile_gf2_side::bch_reference
+     0.56%           150  bch-external-arm  [.] aff3ct::tools::Reorderer_static<int, 8>::apply(std::vector<int const*, std::allocator<int const*> > const&, int*, int)
+     0.26%            69  libc.so.6         [.] 0x000000000017654a
+     0.23%            61  libc.so.6         [.] 0x0000000000176540
+     0.06%            16  bch-external-arm  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.06%            16  libc.so.6         [.] 0x0000000000176533
+     0.03%             7  [unknown]         [k] 0xffffffffafa015f0
+     0.02%             5  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.02%             5  libc.so.6         [.] 0x00000000001765bc
+     0.01%             4  libc.so.6         [.] 0x000000000017653b
+     0.01%             3  libc.so.6         [.] 0x0000000000176529
+     0.01%             3  libc.so.6         [.] 0x000000000017652e
+     0.01%             3  libc.so.6         [.] 0x0000000000176545
+     0.01%             3  libc.so.6         [.] 0x00000000001765c6
+     0.01%             3  [unknown]         [k] 0xffffffffafe96ebb
+     0.01%             2  bch-external-arm  [.] <[u64] as rand::rng::Fill>::try_fill
+     0.01%             2  bch-external-arm  [.] aff3ct::tools::Reorderer_static<int, 8>::apply_rev(int const*, std::vector<int*, std::allocator<int*> >&, int)
+     0.01%             2  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.01%             2  bch-external-arm  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.01%             2  libc.so.6         [.] 0x0000000000176537
+     0.01%             2  [unknown]         [k] 0xffffffffb01162b3
+     0.01%             2  [unknown]         [k] 0xffffffffb011cc8a
+     0.01%             2  [unknown]         [k] 0xffffffffb0f97958
+     0.00%             1  bch-external-arm  [.] aff3ct::tools::Galois<int>::generate_gf()
+     0.00%             1  bch-external-arm  [.] gf2_core::bitvec::BitVec::write_bits
+     0.00%             1  bch-external-arm  [.] gf2_core::field::extension::cyclotomic_cosets_mod
+     0.00%             1  bch-external-arm  [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.00%             1  bch-external-arm  [.] rand_chacha::guts::refill_wide
+     0.00%             1  libc.so.6         [.] 0x00000000000a77b7
+     0.00%             1  libc.so.6         [.] 0x0000000000175dba
+     0.00%             1  libc.so.6         [.] 0x0000000000176380
+     0.00%             1  libc.so.6         [.] 0x0000000000176391
+     0.00%             1  libc.so.6         [.] 0x0000000000176551
+     0.00%             1  libc.so.6         [.] 0x0000000000176e0e
+     0.00%             1  [unknown]         [k] 0xffffffffafa01280
+     0.00%             1  [unknown]         [k] 0xffffffffafa01d22
+     0.00%             1  [unknown]         [k] 0xffffffffafd29b1c
+     0.00%             1  [unknown]         [k] 0xffffffffafd3d478
+     0.00%             1  [unknown]         [k] 0xffffffffafd4c90d
+     0.00%             1  [unknown]         [k] 0xffffffffafda96e0
+     0.00%             1  [unknown]         [k] 0xffffffffafdca8c0
+     0.00%             1  [unknown]         [k] 0xffffffffafdfb813
+     0.00%             1  [unknown]         [k] 0xffffffffafe9160a
+     0.00%             1  [unknown]         [k] 0xffffffffafe92139
+     0.00%             1  [unknown]         [k] 0xffffffffafe9482c
+     0.00%             1  [unknown]         [k] 0xffffffffafe96ea1
+     0.00%             1  [unknown]         [k] 0xffffffffafeaaeac
+     0.00%             1  [unknown]         [k] 0xffffffffb00d8dc9
+     0.00%             1  [unknown]         [k] 0xffffffffb00e9963
+     0.00%             1  [unknown]         [k] 0xffffffffb00fd3ba
+     0.00%             1  [unknown]         [k] 0xffffffffb011629c
+     0.00%             1  [unknown]         [k] 0xffffffffb011cc4a
+     0.00%             1  [unknown]         [k] 0xffffffffb011efc3
+     0.00%             1  [unknown]         [k] 0xffffffffb011f055
+     0.00%             1  [unknown]         [k] 0xffffffffb0122202
+     0.00%             1  [unknown]         [k] 0xffffffffb014b392
+     0.00%             1  [unknown]         [k] 0xffffffffb0f69e78
+     0.00%             1  [unknown]         [k] 0xffffffffb0f7c3d7
+     0.00%             1  [unknown]         [k] 0xffffffffb0f7c56c
+     0.00%             1  [unknown]         [k] 0xffffffffb0f7c584
+
+
+#
+# (Tip: To show information about system the samples were collected on use perf report --header)
+#

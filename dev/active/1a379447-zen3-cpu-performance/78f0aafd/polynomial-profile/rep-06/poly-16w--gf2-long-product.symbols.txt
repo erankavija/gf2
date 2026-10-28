@@ -1,0 +1,18 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 679  of event 'cycles:u'
+# Event count (approx.): 2716025123
+#
+# Overhead       Samples  Shared Object  Symbol                                                                                   
+# ........  ............  .............  .........................................................................................
+#
+    99.85%           678  poly-arm       [.] clmul_crossover_arms::gf2_backend::owned_product
+     0.15%             1  poly-arm       [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run
+
+
+#
+# (Tip: Customize output of perf script with: perf script -F event,ip,sym)
+#
