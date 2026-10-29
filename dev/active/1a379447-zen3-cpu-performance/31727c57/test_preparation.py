@@ -22,11 +22,29 @@ class Preparation(unittest.TestCase):
         self.assertEqual(builder.document(False),
                          prepare.read(prepare.HERE / "core/arm-builds.json"))
 
+    def test_batch_fill_plan_repeats_each_confirmation_cell_on_the_probed_arm(self):
+        import batch_fill
+        confirmation = prepare.read(batch_fill.CONFIRMATION / "plan.json")
+        plan = prepare.read(batch_fill.DIRECTORY / "plan.json")
+        probed = prepare.read(batch_fill.BUILD_RECORD)["arms"][batch_fill.ARM]
+        self.assertTrue(batch_fill.executable_matches())
+        self.assertEqual({arm["executable"] for arm in plan["arms"].values()}, {probed["path"]})
+        for cell in confirmation["cells"]:
+            copies = [entry for entry in plan["cells"]
+                      if entry["cell_id"].startswith(cell["cell_id"] + "-r")]
+            with self.subTest(cell=cell["cell_id"]):
+                self.assertEqual(len(copies), batch_fill.REPLICATES)
+                for entry in copies:
+                    self.assertEqual(entry["case"], cell["case"])
+                    self.assertEqual(entry["baseline_arm"], entry["candidate_arm"])
+                    self.assertEqual(plan["arms"][entry["candidate_arm"]]["environment"],
+                                     confirmation["arms"][cell["candidate_arm"]]["environment"])
+
     def test_launchers_require_window(self):
         environment = dict(os.environ)
         environment.pop("GF2_BENCH_WINDOW", None)
-        for family in ("core", "decoder"):
-            command = ["bash", str((prepare.HERE / family / "window.sh").relative_to(prepare.ROOT))]
+        for launcher in ("core", "decoder", "decoder/batch-fill"):
+            command = ["bash", str((prepare.HERE / launcher / "window.sh").relative_to(prepare.ROOT))]
             result = subprocess.run(command, env=environment, capture_output=True, text=True)
             self.assertEqual(result.returncode, 2)
             self.assertIn("timed runs require the overnight benchmark window", result.stderr)

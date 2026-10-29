@@ -1,0 +1,111 @@
+{
+  "build_root": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-31727c57",
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
+  "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
+  "cxx": "c++ (GCC) 16.2.1 20260810",
+  "linker": {
+    "driver": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/link-inputs-cc.sh",
+    "sha256": "e8d78e58a493ba924d3af494e5a49bde7a9747c42014e5f4f7c944695e7e7846",
+    "cc": "cc (GCC) 16.2.1 20260810"
+  },
+  "cargo_configuration": [
+    {
+      "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-31727c57/.cargo/config.toml",
+      "sha256": "5531072b1f017dc9124317782bbd7c1198935e7e931119840e3db1690420768c",
+      "env": {
+        "RAYON_NUM_THREADS": "4"
+      }
+    },
+    {
+      "path": "/home/vkaskivuo/Projects/gf2/.cargo/config.toml",
+      "sha256": "5531072b1f017dc9124317782bbd7c1198935e7e931119840e3db1690420768c",
+      "env": {
+        "RAYON_NUM_THREADS": "4"
+      }
+    }
+  ],
+  "build_commands": [
+    {
+      "environment": {
+        "CARGO_CI_NO_SCCACHE": "1",
+        "CXX": "c++"
+      },
+      "argv": [
+        "./scripts/cargo-budget.sh",
+        "cargo",
+        "+1.95",
+        "build",
+        "--offline",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/Cargo.toml",
+        "--config",
+        "target.x86_64-unknown-linux-gnu.linker=\"dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/link-inputs-cc.sh\"",
+        "--config",
+        "build.target-dir=\"dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/batch-fill/target\"",
+        "--package",
+        "ldpc-batch-tuned-arm"
+      ]
+    }
+  ],
+  "release_profile": {
+    "opt-level": 3,
+    "lto": true,
+    "codegen-units": 1,
+    "debug": "line-tables-only"
+  },
+  "executables": {
+    "gf2-batch-tuned-arm": {
+      "sha256": "00fcd68cfd737b47d9c080b09c5264e74d6176fda0b0ee6a97e199b96b45aee4",
+      "written_by": [
+        "rustc version 1.95.0 (59807616e 2026-04-14)",
+        "Linker: LLD 22.1.2 (/checkout/src/llvm-project/llvm 1cb4e3833c1919c2e6fb579a23ac0e2b22587b7e)",
+        "GCC: (GNU) 16.2.1 20260810"
+      ],
+      "compiler_options": [],
+      "inputs": {
+        "repository_files_sha256": "ccf78619bd0077e4c6787fafcb98ea1f2561955f002d4f3b74b89d8759c6c1c2",
+        "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "linked": {
+          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
+          "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
+          "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o": "557581ba917a932911a5269f36d1c2f7f6924c88052a4cdd911c862b980678df",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o": "bcbcd1dcbc7b235c96ab3ff1f06e5b7f44677fed502fa22c2a0b2f8360db71fd",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a": "c70c91346f314b52a3e709b1dad72f37c126c843e90664b475f15c3e63cde47d",
+          "/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so": "69a56a9993b7729b29b274e65016031c81f2397f176ed5ad44d59bd50425e0bd",
+          "/usr/lib/ld-linux-x86-64.so.2": "f5e11cc62f8f2c24dff532982559f4303dba3b17e7450551372a88c8e7ea8757",
+          "/usr/lib/libc.so": "362665345c2d0149815700776a1e3e1a7fff45ab16f32352dbe224c55d12c964",
+          "/usr/lib/libc.so.6": "02c8c3d06180beee9c7d0392aa85736c7d19f274a81e7f8f0b3d9e28e0641524",
+          "/usr/lib/libc_nonshared.a": "de2e822b005fc8ab5a2e6c99ad5067ff9e548f495f9e54c6a027506125507430",
+          "/usr/lib/libdl.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libgcc_s.so.1": "e618cb9c90c2eb3a1dad1cfea5b6c1eebcf2e799ad805976f4ae47bdd61c716a",
+          "/usr/lib/libm.so": "258e8802b225f70a439bbe23d6ecd468a33ce8875a02a52846a7bb5d21ff34c3",
+          "/usr/lib/libm.so.6": "965106704753eefe8c31ae7da6daba3ead3d18c52b19b5fcc41178bcc4aa999d",
+          "/usr/lib/libmvec.so.1": "c807927adfba7c54714a232b348c9afef8b0ad91799eae3a353f1911734b6834",
+          "/usr/lib/libpthread.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5",
+          "/usr/lib/libutil.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
+        }
+      }
+    }
+  },
+  "arms": {
+    "gf2-batch-tuned-probed-portable": {
+      "source": "workspace",
+      "executable": "gf2-batch-tuned-arm",
+      "environment": {},
+      "package": "ldpc-batch-tuned-arm",
+      "path": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/batch-fill/target/release/gf2-batch-tuned-arm",
+      "executable_sha256": "00fcd68cfd737b47d9c080b09c5264e74d6176fda0b0ee6a97e199b96b45aee4"
+    }
+  },
+  "confirmed_arm": {
+    "record": "dev/bench_results/e5f8b3ae/portable/build-identity.json",
+    "record_sha256": "319cd2fbc8a4e0e71cb8ef74b584dec7f155451ab8bf7daebab3f6518b316300",
+    "arm": "gf2-batch-tuned-portable",
+    "executable_sha256": "340ed845fce2280996f3aec370df33a5967ab3a1125094ad44177c38ec9300fb"
+  }
+}
