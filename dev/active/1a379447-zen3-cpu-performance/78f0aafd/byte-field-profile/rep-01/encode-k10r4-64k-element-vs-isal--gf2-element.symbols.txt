@@ -1,0 +1,34 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 623  of event 'cycles:u'
+# Event count (approx.): 2492023051
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                        
+# ........  ............  ................  ..............................................................................................................
+#
+    33.23%           207  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+    25.20%           157  gf2-arm           [.] gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4
+    21.03%           131  gf2-arm           [.] gf2_core::gf2m::batch::batch_mul_raw
+     9.63%            60  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     5.78%            36  gf2-arm           [.] core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>
+     2.09%            13  gf2-arm           [.] gf2_arm::build_product::{{closure}}
+     0.96%             6  gf2-arm           [.] gf2_kernels_simd::gf2m_batch::gf2m_batch_mul_ymm_unroll4_safe
+     0.48%             3  gf2-arm           [.] gf2_arm::build_product
+     0.16%             1  gf2-arm           [.] byte_field_gf2_side::workload::pack_matrix
+     0.16%             1  gf2-arm           [.] core::ptr::drop_in_place<gf2_arm::build_product<byte_field_gf2_side::workload::RuntimeGf256>::{{closure}}>
+     0.16%             1  libc.so.6         [.] 0x0000000000176d80
+     0.16%             1  libc.so.6         [.] 0x0000000000176d84
+     0.16%             1  libc.so.6         [.] 0x0000000000176dcd
+     0.16%             1  [unknown]         [k] 0xffffffffafa015f0
+     0.16%             1  [unknown]         [k] 0xffffffffb00e133f
+     0.16%             1  [unknown]         [k] 0xffffffffb00fd13a
+     0.16%             1  [unknown]         [k] 0xffffffffb011ccdf
+     0.16%             1  [unknown]         [k] 0xffffffffb01601d6
+
+
+#
+# (Tip: Create an archive with symtabs to analyse on other machine: perf archive)
+#

@@ -1,0 +1,29 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 691  of event 'cycles:u'
+# Event count (approx.): 2764025567
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                   
+# ........  ............  ................  .........................................................................................
+#
+    29.96%           207  poly-arm          [.] gf2_kernels_simd::gf2m_wide::clmul_wide4_ymm_safe
+    22.58%           156  poly-arm          [.] clmul_crossover_arms::gf2_backend::wide_field_product
+     9.26%            64  poly-arm          [.] core::hash::BuildHasher::hash_one
+     7.38%            51  poly-arm          [.] gf2_core::gf2m::barrett::BarrettReducerWide<_>::reduce_slice
+     6.80%            47  poly-arm          [.] gf2_core::gf2m::barrett::slice_clmul_wide_with_implicit_high
+     5.79%            40  libc.so.6         [.] __libc_calloc
+     5.07%            35  poly-arm          [.] gf2_core::gf2m::barrett::slice_wide_shr_2n_to_n
+     4.78%            33  poly-arm          [.] <std::hash::random::DefaultHasher as core::hash::Hasher>::write
+     2.89%            20  libc.so.6         [.] cfree
+     2.03%            14  poly-arm          [.] <T as core::any::Any>::type_id
+     2.03%            14  poly-arm          [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run
+     1.30%             9  poly-arm          [.] gf2_core::gf2m::wide::clmul_wide_dispatch
+     0.14%             1  [unknown]         [k] 0xffffffffafd796b3
+
+
+#
+# (Tip: To set sample time separation other than 100ms with --sort time use --time-quantum)
+#

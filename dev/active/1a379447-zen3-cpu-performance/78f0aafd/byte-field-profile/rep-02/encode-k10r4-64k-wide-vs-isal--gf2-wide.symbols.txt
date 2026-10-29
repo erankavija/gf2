@@ -1,0 +1,93 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 427  of event 'cycles:u'
+# Event count (approx.): 1708015799
+#
+# Overhead       Samples  Shared Object     Symbol                                                   
+# ........  ............  ................  .........................................................
+#
+    52.93%           226  gf2-arm           [.] gf2_kernels_simd::gf2m_gemm::gf2m_gemm_panelized_safe
+    25.53%           109  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+     1.41%             6  [unknown]         [k] 0xffffffffb01162b3
+     0.94%             4  [unknown]         [k] 0xffffffffafa01280
+     0.70%             3  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     0.70%             3  [unknown]         [k] 0xffffffffafa018d9
+     0.47%             2  libc.so.6         [.] 0x0000000000176e1a
+     0.47%             2  [unknown]         [k] 0xffffffffb00e138f
+     0.47%             2  [unknown]         [k] 0xffffffffb00fd262
+     0.47%             2  [unknown]         [k] 0xffffffffb019c609
+     0.47%             2  [unknown]         [k] 0xffffffffb019dec2
+     0.23%             1  gf2-arm           [.] byte_field_gf2_side::workload::pack_matrix
+     0.23%             1  gf2-arm           [.] gf2_arm::build_product
+     0.23%             1  [unknown]         [k] 0xffffffffafa01d22
+     0.23%             1  [unknown]         [k] 0xffffffffafd493b8
+     0.23%             1  [unknown]         [k] 0xffffffffafd494fa
+     0.23%             1  [unknown]         [k] 0xffffffffafda96f7
+     0.23%             1  [unknown]         [k] 0xffffffffafe66830
+     0.23%             1  [unknown]         [k] 0xffffffffafe66848
+     0.23%             1  [unknown]         [k] 0xffffffffb00906c2
+     0.23%             1  [unknown]         [k] 0xffffffffb0090d9b
+     0.23%             1  [unknown]         [k] 0xffffffffb00b55d8
+     0.23%             1  [unknown]         [k] 0xffffffffb00d8ec3
+     0.23%             1  [unknown]         [k] 0xffffffffb00da33e
+     0.23%             1  [unknown]         [k] 0xffffffffb00da350
+     0.23%             1  [unknown]         [k] 0xffffffffb00e0758
+     0.23%             1  [unknown]         [k] 0xffffffffb00e0828
+     0.23%             1  [unknown]         [k] 0xffffffffb00e132a
+     0.23%             1  [unknown]         [k] 0xffffffffb00e1384
+     0.23%             1  [unknown]         [k] 0xffffffffb00e76cd
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7ac1
+     0.23%             1  [unknown]         [k] 0xffffffffb00e7d7f
+     0.23%             1  [unknown]         [k] 0xffffffffb00e98f1
+     0.23%             1  [unknown]         [k] 0xffffffffb00e9909
+     0.23%             1  [unknown]         [k] 0xffffffffb00e9910
+     0.23%             1  [unknown]         [k] 0xffffffffb00e9999
+     0.23%             1  [unknown]         [k] 0xffffffffb00ea212
+     0.23%             1  [unknown]         [k] 0xffffffffb00ea66c
+     0.23%             1  [unknown]         [k] 0xffffffffb00ea818
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd07f
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd0cc
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd13a
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd24a
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd302
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd351
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd380
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd383
+     0.23%             1  [unknown]         [k] 0xffffffffb00fd3a1
+     0.23%             1  [unknown]         [k] 0xffffffffb00fe2c1
+     0.23%             1  [unknown]         [k] 0xffffffffb01001ea
+     0.23%             1  [unknown]         [k] 0xffffffffb011cc75
+     0.23%             1  [unknown]         [k] 0xffffffffb011cc80
+     0.23%             1  [unknown]         [k] 0xffffffffb011cc8a
+     0.23%             1  [unknown]         [k] 0xffffffffb011cd2c
+     0.23%             1  [unknown]         [k] 0xffffffffb014b389
+     0.23%             1  [unknown]         [k] 0xffffffffb014b392
+     0.23%             1  [unknown]         [k] 0xffffffffb01601cc
+     0.23%             1  [unknown]         [k] 0xffffffffb01601d1
+     0.23%             1  [unknown]         [k] 0xffffffffb0162f10
+     0.23%             1  [unknown]         [k] 0xffffffffb0162f7e
+     0.23%             1  [unknown]         [k] 0xffffffffb01953e9
+     0.23%             1  [unknown]         [k] 0xffffffffb0196f1e
+     0.23%             1  [unknown]         [k] 0xffffffffb0196f52
+     0.23%             1  [unknown]         [k] 0xffffffffb0197fd6
+     0.23%             1  [unknown]         [k] 0xffffffffb01980d7
+     0.23%             1  [unknown]         [k] 0xffffffffb0198159
+     0.23%             1  [unknown]         [k] 0xffffffffb019c5d5
+     0.23%             1  [unknown]         [k] 0xffffffffb019c600
+     0.23%             1  [unknown]         [k] 0xffffffffb019dec0
+     0.23%             1  [unknown]         [k] 0xffffffffb019deee
+     0.23%             1  [unknown]         [k] 0xffffffffb0793401
+     0.23%             1  [unknown]         [k] 0xffffffffb0f69c0f
+     0.23%             1  [unknown]         [k] 0xffffffffb0f69c31
+     0.23%             1  [unknown]         [k] 0xffffffffb0f69d18
+     0.23%             1  [unknown]         [k] 0xffffffffb0f965f5
+     0.23%             1  [unknown]         [k] 0xffffffffb0f96604
+     0.23%             1  [unknown]         [k] 0xffffffffb0f9ab4d
+
+
+#
+# (Tip: Boolean options have negative forms, e.g.: perf report --no-children)
+#

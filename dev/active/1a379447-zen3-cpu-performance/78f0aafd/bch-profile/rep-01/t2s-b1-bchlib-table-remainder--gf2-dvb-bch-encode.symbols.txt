@@ -1,0 +1,22 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 637  of event 'cycles:u'
+# Event count (approx.): 2548023569
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    49.14%           313  consumer-arm      [.] gf2_core::bitvec::BitVec::set
+    43.96%           280  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     6.12%            39  consumer-arm      [.] consumer_profile_gf2_side::Prepared::run
+     0.47%             3  consumer-arm      [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.16%             1  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.16%             1  [unknown]         [k] 0xffffffffb01162b3
+
+
+#
+# (Tip: If you prefer Intel style assembly, try: perf annotate -M intel)
+#

@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 740  of event 'cycles:u'
+# Event count (approx.): 2960027380
+#
+# Overhead       Samples  Shared Object     Symbol                                                                
+# ........  ............  ................  ......................................................................
+#
+    93.11%           689  bch-external-arm  [.] aff3ct::module::Encoder_BCH<int>::__encode(int const*, int*)
+     6.35%            47  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+     0.27%             2  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.14%             1  bch-external-arm  [.] gf2_aff3ct_bch_frames_per_wave
+     0.14%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+
+
+#
+# (Tip: To show IPC for sampling periods use perf record -e '{cycles,instructions}:S' and then browse context)
+#

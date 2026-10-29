@@ -1,0 +1,22 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 931  of event 'cycles:u'
+# Event count (approx.): 3724034447
+#
+# Overhead       Samples  Shared Object      Symbol                                                                                                           
+# ........  ............  .................  .................................................................................................................
+#
+    72.72%           677  gf2-nr-encode-arm  [.] <gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+    26.85%           250  gf2-nr-encode-arm  [.] gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched
+     0.11%             1  gf2-nr-encode-arm  [.] gf2_core::matrix::BitMatrix::swap_rows
+     0.11%             1  gf2-nr-encode-arm  [.] gf2_core::sparse::SpBitMatrix::row_iter
+     0.11%             1  libc.so.6          [.] 0x0000000000176e13
+     0.11%             1  [unknown]          [k] 0xffffffffb0f97958
+
+
+#
+# (Tip: Show estimate cycles per function and IPC in annotate use perf record -b ... ; perf report --total-cycles)
+#

@@ -1,0 +1,72 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 24K of event 'cycles:u'
+# Event count (approx.): 98360909830
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    52.40%         12884  consumer-arm      [.] gf2_core::bitvec::BitVec::set
+    41.35%         10167  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     5.92%          1456  consumer-arm      [.] consumer_profile_gf2_side::Prepared::run
+     0.04%            11  consumer-arm      [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.03%             7  consumer-arm      [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.02%             5  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.02%             4  consumer-arm      [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.01%             2  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::reset_registers
+     0.01%             2  consumer-arm      [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.01%             2  libc.so.6         [.] 0x0000000000176e09
+     0.01%             2  [unknown]         [k] 0xffffffffafa015f0
+     0.01%             2  [unknown]         [k] 0xffffffffafe931c1
+     0.01%             2  [unknown]         [k] 0xffffffffafe98cc2
+     0.01%             2  [unknown]         [k] 0xffffffffb00fd262
+     0.00%             1  consumer-arm      [.] __umodti3
+     0.00%             1  consumer-arm      [.] gf2_core::bitvec::BitVec::write_bits
+     0.00%             1  consumer-arm      [.] rand_chacha::guts::init_chacha::impl_avx
+     0.00%             1  libc.so.6         [.] malloc
+     0.00%             1  libc.so.6         [.] 0x00000000000a6fdb
+     0.00%             1  libc.so.6         [.] 0x0000000000176469
+     0.00%             1  libc.so.6         [.] 0x000000000017647a
+     0.00%             1  libc.so.6         [.] 0x0000000000176533
+     0.00%             1  libc.so.6         [.] 0x0000000000176545
+     0.00%             1  [unknown]         [k] 0xffffffffafa00005
+     0.00%             1  [unknown]         [k] 0xffffffffafa01280
+     0.00%             1  [unknown]         [k] 0xffffffffafa01284
+     0.00%             1  [unknown]         [k] 0xffffffffafa01ca0
+     0.00%             1  [unknown]         [k] 0xffffffffafd29ae0
+     0.00%             1  [unknown]         [k] 0xffffffffafd3d478
+     0.00%             1  [unknown]         [k] 0xffffffffafdca8c4
+     0.00%             1  [unknown]         [k] 0xffffffffafdfa77d
+     0.00%             1  [unknown]         [k] 0xffffffffafdfb813
+     0.00%             1  [unknown]         [k] 0xffffffffafe90693
+     0.00%             1  [unknown]         [k] 0xffffffffafe94780
+     0.00%             1  [unknown]         [k] 0xffffffffafe947b5
+     0.00%             1  [unknown]         [k] 0xffffffffafe9530f
+     0.00%             1  [unknown]         [k] 0xffffffffafe96e56
+     0.00%             1  [unknown]         [k] 0xffffffffafe96ebb
+     0.00%             1  [unknown]         [k] 0xffffffffafe98d07
+     0.00%             1  [unknown]         [k] 0xffffffffafeab064
+     0.00%             1  [unknown]         [k] 0xffffffffafeb0729
+     0.00%             1  [unknown]         [k] 0xffffffffb00e1384
+     0.00%             1  [unknown]         [k] 0xffffffffb00e9802
+     0.00%             1  [unknown]         [k] 0xffffffffb00e9b02
+     0.00%             1  [unknown]         [k] 0xffffffffb00ea212
+     0.00%             1  [unknown]         [k] 0xffffffffb00fd32d
+     0.00%             1  [unknown]         [k] 0xffffffffb010f046
+     0.00%             1  [unknown]         [k] 0xffffffffb01162b3
+     0.00%             1  [unknown]         [k] 0xffffffffb011cc75
+     0.00%             1  [unknown]         [k] 0xffffffffb011efd4
+     0.00%             1  [unknown]         [k] 0xffffffffb0197b5c
+     0.00%             1  [unknown]         [k] 0xffffffffb019c5f5
+     0.00%             1  [unknown]         [k] 0xffffffffb0f69c31
+     0.00%             1  [unknown]         [k] 0xffffffffb0f9ab4d
+     0.00%             1  [unknown]         [k] 0xffffffffb0f9c4c0
+     0.00%             1  [unknown]         [k] 0xffffffffb0fac76b
+
+
+#
+# (Tip: Compare performance results with: perf diff [<old file> <new file>])
+#

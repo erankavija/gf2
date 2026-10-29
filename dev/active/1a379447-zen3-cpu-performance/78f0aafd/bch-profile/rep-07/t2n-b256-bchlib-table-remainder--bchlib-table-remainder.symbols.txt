@@ -1,0 +1,32 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 5108047249
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    51.76%           661  bch-external-arm  [.] bch_encode
+    25.53%           326  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+    13.16%           168  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     7.20%            92  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.94%            12  bch-external-arm  [.] consumer_profile_gf2_side::bch_reference
+     0.39%             5  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.16%             2  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.16%             2  bch-external-arm  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.16%             2  bch-external-arm  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.08%             1  bch-external-arm  [.] gf2_core::field::extension::cyclotomic_cosets_mod
+     0.08%             1  bch-external-arm  [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.08%             1  libc.so.6         [.] 0x00000000001763f6
+     0.08%             1  [unknown]         [k] 0xffffffffafda96e0
+     0.08%             1  [unknown]         [k] 0xffffffffb00ea634
+     0.08%             1  [unknown]         [k] 0xffffffffb0197c35
+     0.08%             1  [unknown]         [k] 0xffffffffb019c5f5
+
+
+#
+# (Tip: To see how parallelism changes over time, try: perf report -F time,latency,parallelism --time-quantum=1s)
+#

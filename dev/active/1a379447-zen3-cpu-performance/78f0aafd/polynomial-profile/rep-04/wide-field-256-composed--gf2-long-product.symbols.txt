@@ -1,0 +1,30 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 683  of event 'cycles:u'
+# Event count (approx.): 2732025271
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                   
+# ........  ............  ................  .........................................................................................
+#
+    29.72%           203  poly-arm          [.] gf2_kernels_simd::gf2m_wide::clmul_wide4_ymm_safe
+    23.13%           158  poly-arm          [.] clmul_crossover_arms::gf2_backend::wide_field_product
+     9.08%            62  poly-arm          [.] gf2_core::gf2m::barrett::BarrettReducerWide<_>::reduce_slice
+     7.47%            51  poly-arm          [.] core::hash::BuildHasher::hash_one
+     6.59%            45  poly-arm          [.] gf2_core::gf2m::barrett::slice_wide_shr_2n_to_n
+     5.71%            39  libc.so.6         [.] __libc_calloc
+     5.56%            38  poly-arm          [.] gf2_core::gf2m::barrett::slice_clmul_wide_with_implicit_high
+     3.95%            27  libc.so.6         [.] cfree
+     3.07%            21  poly-arm          [.] <std::hash::random::DefaultHasher as core::hash::Hasher>::write
+     2.20%            15  poly-arm          [.] gf2_core::gf2m::wide::clmul_wide_dispatch
+     2.05%            14  poly-arm          [.] <T as core::any::Any>::type_id
+     1.17%             8  poly-arm          [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run
+     0.15%             1  [unknown]         [k] 0xffffffffafe9530f
+     0.15%             1  [unknown]         [k] 0xffffffffb0f9c4c4
+
+
+#
+# (Tip: To only collect call graph on one event use perf record -e cpu/cpu-cycles,callgraph=1/,branches ; perf report --show-ref-call-graph)
+#

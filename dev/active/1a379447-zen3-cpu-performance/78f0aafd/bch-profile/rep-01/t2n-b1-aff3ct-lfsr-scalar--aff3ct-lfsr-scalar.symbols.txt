@@ -1,0 +1,27 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:u'
+# Event count (approx.): 5520051060
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    51.16%           706  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+    47.75%           659  bch-external-arm  [.] aff3ct::module::Encoder_BCH<int>::__encode(int const*, int*)
+     0.36%             5  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.14%             2  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.14%             2  bch-external-arm  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.07%             1  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.07%             1  bch-external-arm  [.] <gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+     0.07%             1  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     0.07%             1  bch-external-arm  [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.07%             1  libc.so.6         [.] 0x0000000000176545
+     0.07%             1  [unknown]         [k] 0xffffffffb00e1413
+
+
+#
+# (Tip: To show context switches in perf report sample context add --switch-events to perf record.)
+#

@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 699  of event 'cycles:u'
+# Event count (approx.): 2796025863
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    92.99%           650  bch-external-arm  [.] aff3ct::module::Encoder_BCH<int>::__encode(int const*, int*)
+     6.58%            46  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+     0.14%             1  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.14%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.14%             1  [unknown]         [k] 0xffffffffafeaaed5
+
+
+#
+# (Tip: To separate samples by time use perf report --sort time,overhead,sym)
+#

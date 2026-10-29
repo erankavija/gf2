@@ -1,0 +1,206 @@
+{
+ "attempts": [
+  {
+   "build": {
+    "build_root": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-6c6b09b1",
+    "command": [
+     "./scripts/cargo-budget.sh",
+     "cargo",
+     "build",
+     "--release",
+     "--locked",
+     "--manifest-path",
+     "dev/active/6c6b09b1/survey/gf2-side/Cargo.toml",
+     "--bin",
+     "gf2-arm"
+    ],
+    "environment": {},
+    "exit_status": 0,
+    "manifest": "dev/active/6c6b09b1/survey/gf2-side/Cargo.toml",
+    "observed_toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "receipt_rustflags": "-C target-cpu=native",
+    "receipt_toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "recipe_script": "dev/bench_results/6c6b09b1/run-byte-field-v4.sh",
+    "recorded_inputs_matching": 201,
+    "revision": "6e9074604489ecaa860b5142281ec7c5ddd17251",
+    "revision_source": "dev/bench_results/6c6b09b1/v4-r1-matrix-product-confirmation/launcher.log",
+    "rustflags": "-C target-cpu=native",
+    "stderr_tail": [],
+    "target_directory": "target/6c6b09b1-survey"
+   },
+   "executable": "gf2-arm",
+   "expected_sha256": "17fded39f3d04f55e6090464a43c5e80ac6cefa53674fb808121ebd0ecd05103",
+   "measured_by": [
+    "dev/bench_results/6c6b09b1/v4-r1-matrix-product-confirmation/receipt.json#gf2-element",
+    "dev/bench_results/6c6b09b1/v4-r1-matrix-product-confirmation/receipt.json#gf2-wide",
+    "dev/bench_results/6c6b09b1/v4-r1-region-axpy-confirmation/receipt.json#gf2-element",
+    "dev/bench_results/6c6b09b1/v4-r1-region-axpy-confirmation/receipt.json#gf2-wide"
+   ],
+   "obtained_sha256": "17fded39f3d04f55e6090464a43c5e80ac6cefa53674fb808121ebd0ecd05103",
+   "restored_path": ".agents/ext/78f0aafd/restored/17fded39f3d04f55e6090464a43c5e80ac6cefa53674fb808121ebd0ecd05103/gf2-arm",
+   "verdict": "restored"
+  },
+  {
+   "build": {
+    "build_root": "/home/vkaskivuo/Projects/gf2/.worktrees-local/agent-eda07788-v3",
+    "command": [
+     "./scripts/cargo-budget.sh",
+     "cargo",
+     "build",
+     "--release",
+     "--locked",
+     "--manifest-path",
+     "dev/active/12fdeb5b/survey/nr-encode/Cargo.toml",
+     "--bin",
+     "gf2-nr-encode-arm",
+     "--features",
+     "aff3ct,srsran"
+    ],
+    "environment": {
+     "GF2_AFF3CT_ROOT": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/aff3ct",
+     "GF2_SRSRAN_ROOT": "/home/vkaskivuo/Projects/gf2/.agents/ext/c077a88b/srsran"
+    },
+    "exit_status": 0,
+    "manifest": "dev/active/12fdeb5b/survey/nr-encode/Cargo.toml",
+    "observed_toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "receipt_rustflags": "-C target-cpu=native",
+    "receipt_toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "recipe_script": "dev/active/12fdeb5b/survey/nr-encode-build.sh",
+    "recorded_inputs_matching": 261,
+    "revision": "6ac2af60608f9e0bd7be6921b1e3de88ce1eda29",
+    "revision_source": "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/launcher.log",
+    "rustflags": "-C target-cpu=native",
+    "stderr_tail": [],
+    "target_directory": ".agents/ext/12fdeb5b/target-nr-encode-native"
+   },
+   "executable": "gf2-nr-encode-arm",
+   "expected_sha256": "b603be52a6c6d9f966c835ccdd439a294fe9bf6ced1c8f242e7447f6d7b1b624",
+   "measured_by": [
+    "dev/bench_results/12fdeb5b/2026-09-13-12fdeb5b-nr-encode-confirmation/receipt.json#gf2-native"
+   ],
+   "obtained_sha256": "b603be52a6c6d9f966c835ccdd439a294fe9bf6ced1c8f242e7447f6d7b1b624",
+   "restored_path": ".agents/ext/78f0aafd/restored/b603be52a6c6d9f966c835ccdd439a294fe9bf6ced1c8f242e7447f6d7b1b624/gf2-nr-encode-arm",
+   "verdict": "restored"
+  },
+  {
+   "build": {
+    "build_root": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3",
+    "command": [
+     "./scripts/cargo-budget.sh",
+     "cargo",
+     "build",
+     "--release",
+     "--locked",
+     "--manifest-path",
+     "dev/active/c7113c5a/survey/gf2-side/Cargo.toml",
+     "--bin",
+     "gf2-poly-arm"
+    ],
+    "environment": {
+     "GF2X_CFLAGS": "-O2",
+     "GF2X_PREFIX": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/prefix-conservative"
+    },
+    "exit_status": 0,
+    "manifest": "dev/active/c7113c5a/survey/gf2-side/Cargo.toml",
+    "observed_toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "receipt_rustflags": null,
+    "receipt_toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "recipe_script": "dev/active/c7113c5a/survey/fetch-build.sh",
+    "recorded_inputs_matching": 184,
+    "revision": "021165d3e06d04930cdef20bb0b527a12baa0112",
+    "revision_source": "dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation/launcher.log",
+    "rustflags": "",
+    "stderr_tail": [],
+    "target_directory": "target/c7113c5a-ext/arms-conservative"
+   },
+   "executable": "gf2-poly-arm",
+   "expected_sha256": "259240d180a81390b4d7b3befaa5af304ecb08732963eb7a29391e88d7533ae7",
+   "measured_by": [
+    "dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation/receipt.json#gf2-conservative"
+   ],
+   "obtained_sha256": "259240d180a81390b4d7b3befaa5af304ecb08732963eb7a29391e88d7533ae7",
+   "restored_path": ".agents/ext/78f0aafd/restored/259240d180a81390b4d7b3befaa5af304ecb08732963eb7a29391e88d7533ae7/gf2-poly-arm",
+   "verdict": "restored"
+  },
+  {
+   "build": {
+    "build_root": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3",
+    "command": [
+     "./scripts/cargo-budget.sh",
+     "cargo",
+     "build",
+     "--release",
+     "--locked",
+     "--manifest-path",
+     "dev/active/c7113c5a/survey/gf2-side/Cargo.toml",
+     "--bin",
+     "gf2-poly-arm"
+    ],
+    "environment": {
+     "GF2X_CFLAGS": "-O3 -march=x86-64-v3",
+     "GF2X_PREFIX": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-c7113c5a-v3/target/c7113c5a-ext/prefix-tuned"
+    },
+    "exit_status": 0,
+    "manifest": "dev/active/c7113c5a/survey/gf2-side/Cargo.toml",
+    "observed_toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "receipt_rustflags": "-C target-cpu=x86-64-v3",
+    "receipt_toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "recipe_script": "dev/active/c7113c5a/survey/fetch-build.sh",
+    "recorded_inputs_matching": 184,
+    "revision": "021165d3e06d04930cdef20bb0b527a12baa0112",
+    "revision_source": "dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation/launcher.log",
+    "rustflags": "-C target-cpu=x86-64-v3",
+    "stderr_tail": [],
+    "target_directory": "target/c7113c5a-ext/arms-tuned"
+   },
+   "executable": "gf2-poly-arm",
+   "expected_sha256": "433764a9ca8f86afc2f95fd847234e4b5c0c897f4e6af65f8fc183ef00810e53",
+   "measured_by": [
+    "dev/bench_results/c7113c5a/v3-r1-host-targeting-confirmation/receipt.json#gf2-tuned"
+   ],
+   "obtained_sha256": "433764a9ca8f86afc2f95fd847234e4b5c0c897f4e6af65f8fc183ef00810e53",
+   "restored_path": ".agents/ext/78f0aafd/restored/433764a9ca8f86afc2f95fd847234e4b5c0c897f4e6af65f8fc183ef00810e53/gf2-poly-arm",
+   "verdict": "restored"
+  },
+  {
+   "build": {
+    "build_root": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-53c5a8c0",
+    "command": [
+     "./scripts/cargo-budget.sh",
+     "cargo",
+     "build",
+     "--release",
+     "--locked",
+     "--manifest-path",
+     "dev/active/53c5a8c0/survey/arms/Cargo.toml",
+     "--bin",
+     "poly-arm"
+    ],
+    "environment": {
+     "GF2X_CFLAGS": "-O3 -march=native -Wall -W -msse2 -msse3 -mssse3 -msse4.1 -mpclmul",
+     "GF2X_PREFIX": "/home/vkaskivuo/Projects/gf2/.agents/ext/c7113c5a/prefix-native"
+    },
+    "exit_status": 0,
+    "manifest": "dev/active/53c5a8c0/survey/arms/Cargo.toml",
+    "observed_toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "receipt_rustflags": null,
+    "receipt_toolchain": "rustc 1.95.0 (59807616e 2026-04-14)",
+    "recipe_script": "dev/active/53c5a8c0/survey/build-arms.sh",
+    "recorded_inputs_matching": 184,
+    "revision": "b4165ff773b594c168a50b0988500112d04cd37b",
+    "revision_source": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/launcher.log",
+    "rustflags": "-C target-cpu=native",
+    "stderr_tail": [],
+    "target_directory": "target/53c5a8c0-arms-native"
+   },
+   "executable": "poly-arm",
+   "expected_sha256": "5d66284d85896ee2c238f128c199c3ffd9c0ffc7ab10aec82f482f0b094e5602",
+   "measured_by": [
+    "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/receipt.json#gf2-long-product"
+   ],
+   "obtained_sha256": "5d66284d85896ee2c238f128c199c3ffd9c0ffc7ab10aec82f482f0b094e5602",
+   "restored_path": ".agents/ext/78f0aafd/restored/5d66284d85896ee2c238f128c199c3ffd9c0ffc7ab10aec82f482f0b094e5602/poly-arm",
+   "verdict": "restored"
+  }
+ ]
+}

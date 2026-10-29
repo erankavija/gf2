@@ -1,0 +1,28 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 680  of event 'cycles:u'
+# Event count (approx.): 2720025160
+#
+# Overhead       Samples  Shared Object     Symbol                                              
+# ........  ............  ................  ....................................................
+#
+    97.35%           662  bch-external-arm  [.] bch_encode
+     0.74%             5  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.29%             2  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.29%             2  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     0.29%             2  bch-external-arm  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.15%             1  bch-external-arm  [.] bch_external_arms::serve
+     0.15%             1  bch-external-arm  [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.15%             1  bch-external-arm  [.] load_ecc8
+     0.15%             1  libc.so.6         [.] 0x00000000001763d9
+     0.15%             1  libc.so.6         [.] 0x00000000001763ec
+     0.15%             1  [unknown]         [k] 0xffffffffafa01280
+     0.15%             1  [unknown]         [k] 0xffffffffb0617087
+
+
+#
+# (Tip: To measure approximate function latency with Processor Trace use perf record -e intel_pt// ... ; perf script --call-ret-trace)
+#

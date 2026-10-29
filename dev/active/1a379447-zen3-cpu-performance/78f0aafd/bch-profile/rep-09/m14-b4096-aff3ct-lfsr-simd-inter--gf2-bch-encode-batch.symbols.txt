@@ -1,0 +1,34 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 13824127872
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    99.42%          3436  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.12%             4  consumer-arm      [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.03%             1  consumer-arm      [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  libc.so.6         [.] 0x000000000017645b
+     0.03%             1  [unknown]         [k] 0xffffffffafa01280
+     0.03%             1  [unknown]         [k] 0xffffffffafa015f0
+     0.03%             1  [unknown]         [k] 0xffffffffafa01d22
+     0.03%             1  [unknown]         [k] 0xffffffffafeaaeac
+     0.03%             1  [unknown]         [k] 0xffffffffb00e1322
+     0.03%             1  [unknown]         [k] 0xffffffffb00e799a
+     0.03%             1  [unknown]         [k] 0xffffffffb00e9fe8
+     0.03%             1  [unknown]         [k] 0xffffffffb00ea63b
+     0.03%             1  [unknown]         [k] 0xffffffffb00fd2bd
+     0.03%             1  [unknown]         [k] 0xffffffffb01162b3
+     0.03%             1  [unknown]         [k] 0xffffffffb011ee9d
+     0.03%             1  [unknown]         [k] 0xffffffffb0f965cc
+     0.03%             1  [unknown]         [k] 0xffffffffb0f9ab85
+
+
+#
+# (Tip: To show context switches in perf report sample context add --switch-events to perf record.)
+#

@@ -1,0 +1,25 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 662  of event 'cycles:u'
+# Event count (approx.): 2648024494
+#
+# Overhead       Samples  Shared Object     Symbol                                              
+# ........  ............  ................  ....................................................
+#
+    97.73%           647  bch-external-arm  [.] bch_encode
+     1.06%             7  bch-external-arm  [.] bch_encode_unaligned
+     0.30%             2  libc.so.6         [.] 0x00000000001763ec
+     0.15%             1  bch-external-arm  [.] bch_external_arms::serve
+     0.15%             1  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.15%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.15%             1  libc.so.6         [.] 0x00000000000a4fd1
+     0.15%             1  libc.so.6         [.] 0x00000000001763e6
+     0.15%             1  libc.so.6         [.] 0x00000000001763f6
+
+
+#
+# (Tip: Generate a script for your data: perf script -g <lang>)
+#

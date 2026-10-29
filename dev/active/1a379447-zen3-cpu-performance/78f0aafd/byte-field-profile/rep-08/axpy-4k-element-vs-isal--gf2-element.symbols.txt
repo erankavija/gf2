@@ -1,0 +1,20 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 643  of event 'cycles:u'
+# Event count (approx.): 2572023791
+#
+# Overhead       Samples  Shared Object  Symbol                                                                     
+# ........  ............  .............  ...........................................................................
+#
+    51.48%           331  gf2-arm        [.] gf2_core::field::vec::FieldVec<F>::axpy
+    28.30%           182  gf2-arm        [.] gf2_kernels_simd::gf2m::clmul_barrett_reduce_safe
+    20.06%           129  gf2-arm        [.] <&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+     0.16%             1  gf2-arm        [.] gf2_arm::build
+
+
+#
+# (Tip: If you prefer Intel style assembly, try: perf annotate -M intel)
+#

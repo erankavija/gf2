@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 935  of event 'cycles:u'
+# Event count (approx.): 3740034595
+#
+# Overhead       Samples  Shared Object      Symbol                                                                                                           
+# ........  ............  .................  .................................................................................................................
+#
+    72.94%           682  gf2-nr-encode-arm  [.] <gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+    26.52%           248  gf2-nr-encode-arm  [.] gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched
+     0.32%             3  gf2-nr-encode-arm  [.] gf2_core::matrix::BitMatrix::swap_rows
+     0.11%             1  libc.so.6          [.] 0x00000000000a6254
+     0.11%             1  [unknown]          [k] 0xffffffffb0f9c4c4
+
+
+#
+# (Tip: Create an archive with symtabs to analyse on other machine: perf archive)
+#

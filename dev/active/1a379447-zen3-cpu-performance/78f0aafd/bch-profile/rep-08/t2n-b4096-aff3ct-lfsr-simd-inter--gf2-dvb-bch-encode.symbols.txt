@@ -1,0 +1,66 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 24K of event 'cycles:u'
+# Event count (approx.): 98368909904
+#
+# Overhead       Samples  Shared Object         Symbol                                                                                                                       
+# ........  ............  ....................  .............................................................................................................................
+#
+    51.94%         12773  consumer-arm          [.] gf2_core::bitvec::BitVec::set
+    41.89%         10301  consumer-arm          [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     5.84%          1437  consumer-arm          [.] consumer_profile_gf2_side::Prepared::run
+     0.04%            11  consumer-arm          [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.04%            10  consumer-arm          [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.02%             5  consumer-arm          [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::reset_registers
+     0.02%             5  consumer-arm          [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.01%             3  consumer-arm          [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.01%             2  consumer-arm          [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.01%             2  libc.so.6             [.] 0x0000000000176e09
+     0.01%             2  [unknown]             [k] 0xffffffffafa01d22
+     0.01%             2  [unknown]             [k] 0xffffffffafe96ebb
+     0.01%             2  [unknown]             [k] 0xffffffffb01162b3
+     0.00%             1  consumer-arm          [.] gf2_coding::bch::encode::packed_place_codeword
+     0.00%             1  consumer-arm          [.] gf2_core::bitvec::BitVec::random_seeded
+     0.00%             1  consumer-arm          [.] gf2_core::bitvec::BitVec::write_bits
+     0.00%             1  ld-linux-x86-64.so.2  [.] 0x0000000000005ec6
+     0.00%             1  libc.so.6             [.] cfree
+     0.00%             1  libc.so.6             [.] 0x00000000000a620e
+     0.00%             1  libc.so.6             [.] 0x00000000000a6212
+     0.00%             1  libc.so.6             [.] 0x0000000000176533
+     0.00%             1  libc.so.6             [.] 0x0000000000176e04
+     0.00%             1  libc.so.6             [.] 0x0000000000176e0e
+     0.00%             1  [unknown]             [k] 0xffffffffafa01280
+     0.00%             1  [unknown]             [k] 0xffffffffafa015f0
+     0.00%             1  [unknown]             [k] 0xffffffffafa015f4
+     0.00%             1  [unknown]             [k] 0xffffffffafd493af
+     0.00%             1  [unknown]             [k] 0xffffffffafdb2ce4
+     0.00%             1  [unknown]             [k] 0xffffffffafddb374
+     0.00%             1  [unknown]             [k] 0xffffffffafe92fb8
+     0.00%             1  [unknown]             [k] 0xffffffffafe94715
+     0.00%             1  [unknown]             [k] 0xffffffffafe96f7d
+     0.00%             1  [unknown]             [k] 0xffffffffafe97085
+     0.00%             1  [unknown]             [k] 0xffffffffafe9714b
+     0.00%             1  [unknown]             [k] 0xffffffffafe98ca2
+     0.00%             1  [unknown]             [k] 0xffffffffafeaaeac
+     0.00%             1  [unknown]             [k] 0xffffffffafeb0ee3
+     0.00%             1  [unknown]             [k] 0xffffffffb0051008
+     0.00%             1  [unknown]             [k] 0xffffffffb00d8dc9
+     0.00%             1  [unknown]             [k] 0xffffffffb00dffe5
+     0.00%             1  [unknown]             [k] 0xffffffffb00e799a
+     0.00%             1  [unknown]             [k] 0xffffffffb00e79de
+     0.00%             1  [unknown]             [k] 0xffffffffb00e96e8
+     0.00%             1  [unknown]             [k] 0xffffffffb00e9fe8
+     0.00%             1  [unknown]             [k] 0xffffffffb0122263
+     0.00%             1  [unknown]             [k] 0xffffffffb0122393
+     0.00%             1  [unknown]             [k] 0xffffffffb01630cf
+     0.00%             1  [unknown]             [k] 0xffffffffb0f69d76
+     0.00%             1  [unknown]             [k] 0xffffffffb0f965f5
+     0.00%             1  [unknown]             [k] 0xffffffffb0f9a196
+
+
+#
+# (Tip: To not accumulate CPU time of children symbols add --no-children)
+#

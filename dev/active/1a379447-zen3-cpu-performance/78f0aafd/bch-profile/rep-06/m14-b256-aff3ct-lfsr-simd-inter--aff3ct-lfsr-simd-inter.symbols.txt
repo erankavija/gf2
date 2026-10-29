@@ -1,0 +1,30 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 811  of event 'cycles:u'
+# Event count (approx.): 3244030007
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                                                                                                 
+# ........  ............  ................  .......................................................................................................................................................................................................
+#
+    68.31%           554  bch-external-arm  [.] aff3ct::module::Encoder_BCH_inter<int>::__encode(int const*, int*)
+    14.92%           121  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     6.17%            50  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     5.30%            43  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+     3.82%            31  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.37%             3  bch-external-arm  [.] aff3ct::tools::Reorderer_static<int, 8>::apply(std::vector<int const*, std::allocator<int const*> > const&, int*, int)
+     0.25%             2  libc.so.6         [.] 0x0000000000176540
+     0.12%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.12%             1  bch-external-arm  [.] std::unordered_map<std::type_index, unsigned char, std::hash<std::type_index>, std::equal_to<std::type_index>, std::allocator<std::pair<std::type_index const, unsigned char> > >::~unordered_map()
+     0.12%             1  libc.so.6         [.] 0x000000000017653b
+     0.12%             1  [unknown]         [k] 0xffffffffafe679a6
+     0.12%             1  [unknown]         [k] 0xffffffffafe98ca6
+     0.12%             1  [unknown]         [k] 0xffffffffb00e977f
+     0.12%             1  [unknown]         [k] 0xffffffffb06170b2
+
+
+#
+# (Tip: List events using substring match: perf list <keyword>)
+#

@@ -1,0 +1,23 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 742  of event 'cycles:u'
+# Event count (approx.): 2968027454
+#
+# Overhead       Samples  Shared Object     Symbol                                                                
+# ........  ............  ................  ......................................................................
+#
+    92.72%           688  bch-external-arm  [.] aff3ct::module::Encoder_BCH<int>::__encode(int const*, int*)
+     6.47%            48  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+     0.27%             2  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.13%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.13%             1  libc.so.6         [.] 0x0000000000176524
+     0.13%             1  libc.so.6         [.] 0x0000000000176529
+     0.13%             1  libgcc_s.so.1     [.] _Unwind_Find_FDE
+
+
+#
+# (Tip: Add -I to perf record to sample register values, which will be visible in perf report sample context.)
+#

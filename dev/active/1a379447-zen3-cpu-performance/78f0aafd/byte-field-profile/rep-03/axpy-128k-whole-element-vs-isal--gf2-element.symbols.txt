@@ -1,0 +1,22 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 727  of event 'cycles:u'
+# Event count (approx.): 2908026899
+#
+# Overhead       Samples  Shared Object  Symbol                                                                                                     
+# ........  ............  .............  ...........................................................................................................
+#
+    39.89%           290  gf2-arm        [.] gf2_arm::build_axpy::{{closure}}
+    29.30%           213  gf2-arm        [.] gf2_core::field::vec::FieldVec<F>::axpy
+    14.99%           109  gf2-arm        [.] gf2_kernels_simd::gf2m::clmul_barrett_reduce_safe
+    10.04%            73  gf2-arm        [.] <&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+     5.64%            41  gf2-arm        [.] gf2_arm::build
+     0.14%             1  gf2-arm        [.] core::ptr::drop_in_place<gf2_arm::build_axpy<byte_field_gf2_side::workload::RuntimeGf256>::{{closure}}>
+
+
+#
+# (Tip: To collect Processor Trace with samples use perf record -e '{intel_pt//,cycles}' ; perf script --call-trace or --insn-trace --xed -F +ipc (remove --xed if no xed))
+#

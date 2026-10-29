@@ -1,0 +1,63 @@
+{
+ "addendum": "dev/bench_results/53c5a8c0/2026-09-13-53c5a8c0-polynomial-confirmation/inputs/family-addendum.json",
+ "arms": {
+  "gf2-long-product": {
+   "arguments": [],
+   "build": "native",
+   "description": "gf2 host-targeted build timing the public clmul_wide owned long product, the whole-consumer Gf2mWide::mul_ref field product, and the dispatched raw carry-less batch, which is the production default path for independent products.",
+   "environment": {
+    "GF2_CROSSOVER_PATH": "batch"
+   },
+   "executable": ".agents/ext/78f0aafd/restored/5d66284d85896ee2c238f128c199c3ffd9c0ffc7ab10aec82f482f0b094e5602/poly-arm",
+   "rustflags": null,
+   "tuning_profile": null
+  },
+  "gf2x-long-product": {
+   "arguments": [],
+   "build": "external",
+   "description": "restored gf2-long-product in the candidate position",
+   "environment": {
+    "GF2_CROSSOVER_PATH": "batch"
+   },
+   "executable": ".agents/ext/78f0aafd/restored/5d66284d85896ee2c238f128c199c3ffd9c0ffc7ab10aec82f482f0b094e5602/poly-arm",
+   "rustflags": null,
+   "tuning_profile": null
+  }
+ },
+ "campaign_id": "confirmation-polynomial-53c5a8c0-20260913t131633z",
+ "campaign_seed": 20260913401,
+ "cells": [
+  {
+   "baseline_arm": "gf2-long-product",
+   "candidate_arm": "gf2x-long-product",
+   "case": {
+    "inner": 16,
+    "kind": "poly-mul",
+    "seed": 5413,
+    "words": 16
+   },
+   "cell_id": "poly-16w",
+   "pilot_pairs": null
+  },
+  {
+   "baseline_arm": "gf2-long-product",
+   "candidate_arm": "gf2x-long-product",
+   "case": {
+    "inner": 64,
+    "kind": "wide-field-mul",
+    "seed": 5401,
+    "words": 4
+   },
+   "cell_id": "wide-field-256-composed",
+   "pilot_pairs": null
+  }
+ ],
+ "issue": "53c5a8c0",
+ "label": "confirmation",
+ "lock_path": "/tmp/gf2-ccx1.lock",
+ "max_cells_per_session": 4,
+ "producing_manifest": "dev/active/53c5a8c0/survey/producing-inputs.json",
+ "schema": "zen3-benchmark-plan-v1",
+ "timing_override": null,
+ "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host"
+}

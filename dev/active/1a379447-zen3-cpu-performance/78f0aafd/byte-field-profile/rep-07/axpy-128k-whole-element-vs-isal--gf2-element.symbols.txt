@@ -1,0 +1,22 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 726  of event 'cycles:u'
+# Event count (approx.): 2904026862
+#
+# Overhead       Samples  Shared Object     Symbol                                                                     
+# ........  ............  ................  ...........................................................................
+#
+    39.39%           286  gf2-arm           [.] gf2_arm::build_axpy::{{closure}}
+    29.75%           216  gf2-arm           [.] gf2_core::field::vec::FieldVec<F>::axpy
+    13.36%            97  gf2-arm           [.] gf2_kernels_simd::gf2m::clmul_barrett_reduce_safe
+    11.71%            85  gf2-arm           [.] <&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+     5.65%            41  gf2-arm           [.] gf2_arm::build
+     0.14%             1  [unknown]         [k] 0xffffffffafe9220e
+
+
+#
+# (Tip: To record callchains for each sample: perf record -g)
+#

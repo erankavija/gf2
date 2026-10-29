@@ -1,0 +1,27 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cycles:u'
+# Event count (approx.): 22660209605
+#
+# Overhead       Samples  Shared Object       Symbol                                                       
+# ........  ............  ..................  .............................................................
+#
+    98.22%          5564  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.31%            74  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.26%            15  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.05%             3  ldpc-batch-profile  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.05%             3  libc.so.6           [.] 0x0000000000176e09
+     0.02%             1  libc.so.6           [.] 0x000000000017652e
+     0.02%             1  libc.so.6           [.] 0x0000000000176e13
+     0.02%             1  [unknown]           [k] 0xffffffffafdfb1ce
+     0.02%             1  [unknown]           [k] 0xffffffffafe915e9
+     0.02%             1  [unknown]           [k] 0xffffffffafe91646
+     0.02%             1  [unknown]           [k] 0xffffffffafeab0a5
+
+
+#
+# (Tip: To show context switches in perf report sample context add --switch-events to perf record.)
+#

@@ -1,0 +1,55 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 11K of event 'cycles:u'
+# Event count (approx.): 46724432197
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    70.00%          8177  bch-external-arm  [.] aff3ct::module::Encoder_BCH_inter<int>::__encode(int const*, int*)
+    16.39%          1915  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     6.97%           814  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     4.28%           500  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.89%           104  bch-external-arm  [.] aff3ct::tools::Reorderer_static<int, 8>::apply(std::vector<int const*, std::allocator<int const*> > const&, int*, int)
+     0.37%            43  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+     0.20%            23  libc.so.6         [.] 0x000000000017654a
+     0.18%            21  libc.so.6         [.] 0x0000000000176540
+     0.17%            20  libc.so.6         [.] 0x000000000017653b
+     0.15%            18  libc.so.6         [.] 0x0000000000176545
+     0.09%            11  bch-external-arm  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.03%             3  libc.so.6         [.] 0x0000000000176529
+     0.03%             3  libc.so.6         [.] 0x0000000000176e0e
+     0.02%             2  libc.so.6         [.] 0x0000000000176533
+     0.02%             2  libc.so.6         [.] 0x00000000001765bc
+     0.02%             2  libc.so.6         [.] 0x00000000001765c6
+     0.01%             1  bch-external-arm  [.] gf2_aff3ct_bch_encode
+     0.01%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.01%             1  libc.so.6         [.] 0x00000000000a4fbe
+     0.01%             1  libc.so.6         [.] 0x0000000000175dbf
+     0.01%             1  libc.so.6         [.] 0x0000000000176391
+     0.01%             1  libc.so.6         [.] 0x0000000000176524
+     0.01%             1  libc.so.6         [.] 0x0000000000176551
+     0.01%             1  libc.so.6         [.] 0x00000000001765ca
+     0.01%             1  [unknown]         [k] 0xffffffffafa00005
+     0.01%             1  [unknown]         [k] 0xffffffffafa015f0
+     0.01%             1  [unknown]         [k] 0xffffffffafd796b3
+     0.01%             1  [unknown]         [k] 0xffffffffafe921e4
+     0.01%             1  [unknown]         [k] 0xffffffffafe92fa4
+     0.01%             1  [unknown]         [k] 0xffffffffafe94706
+     0.01%             1  [unknown]         [k] 0xffffffffafe988b6
+     0.01%             1  [unknown]         [k] 0xffffffffafe98ca2
+     0.01%             1  [unknown]         [k] 0xffffffffafe98cc2
+     0.01%             1  [unknown]         [k] 0xffffffffb01162b3
+     0.01%             1  [unknown]         [k] 0xffffffffb011f001
+     0.01%             1  [unknown]         [k] 0xffffffffb01222b0
+     0.01%             1  [unknown]         [k] 0xffffffffb014b392
+     0.01%             1  [unknown]         [k] 0xffffffffb019bf05
+     0.01%             1  [unknown]         [k] 0xffffffffb0fac76b
+
+
+#
+# (Tip: Treat branches as callchains: perf record -b ... ; perf report --branch-history)
+#

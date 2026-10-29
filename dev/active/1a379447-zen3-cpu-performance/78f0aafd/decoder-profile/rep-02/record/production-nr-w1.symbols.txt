@@ -1,0 +1,20 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 40  of event 'cycles:u'
+# Event count (approx.): 160001480
+#
+# Overhead       Samples  Shared Object       Symbol                                                        
+# ........  ............  ..................  ..............................................................
+#
+    70.00%            28  ldpc-batch-profile  [.] gf2_kernels_simd::x86::ldpc_lanes::lane_variable_step_avx2
+    20.00%             8  ldpc-batch-profile  [.] gf2_kernels_simd::x86::ldpc_lanes::lane_check_step_avx2
+     7.50%             3  ldpc-batch-profile  [.] gf2_kernels_simd::ldpc_lanes::assert_prefix_offsets
+     2.50%             1  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+
+
+#
+# (Tip: Print event counts in machine readable CSV format with: perf stat -x\;)
+#

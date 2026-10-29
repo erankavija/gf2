@@ -1,0 +1,30 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 677  of event 'cycles:u'
+# Event count (approx.): 2708025049
+#
+# Overhead       Samples  Shared Object     Symbol                                              
+# ........  ............  ................  ....................................................
+#
+    96.75%           655  bch-external-arm  [.] bch_encode
+     0.59%             4  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.44%             3  bch-external-arm  [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.30%             2  bch-external-arm  [.] bch_external_arms::serve
+     0.30%             2  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.30%             2  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     0.30%             2  libc.so.6         [.] 0x00000000001763ec
+     0.15%             1  bch-external-arm  [.] <std::sys::sync::once::futex::Once>::call
+     0.15%             1  bch-external-arm  [.] __umodti3
+     0.15%             1  bch-external-arm  [.] bch_encode_unaligned
+     0.15%             1  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     0.15%             1  bch-external-arm  [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.15%             1  libc.so.6         [.] 0x00000000001763d9
+     0.15%             1  [unknown]         [k] 0xffffffffb0090da8
+
+
+#
+# (Tip: To compare hot regions in two workloads use perf record -b -o file ... ; perf diff --stream file1 file2)
+#

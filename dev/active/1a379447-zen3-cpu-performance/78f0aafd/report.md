@@ -3,7 +3,6 @@
 > **Diátaxis Type:** Reference
 
 Preparation of `@/issue/78f0aafd`; measurements await the benchmark window.
-The ordered changed-file list is in root `COMMIT-PLAN.md`.
 
 Decoder: `decoder-cases.tsv`, `preparation/build-identity.json`,
 `decoder-window.sh`, and `smoke/`. The build uses Rust 1.95 release,
@@ -29,25 +28,44 @@ hardware limit is claimed. `allocation-witness.json` and its logs record the
 integrated allocation tests, with applicability limited to their workloads.
 `verification.md` records commands and check limitations.
 
+## Restored executables
+
+`restore-arms.py build <subject>` rebuilds each distinct measured executable of
+the NR encoder, byte-field and polynomial gap cells at its receipt's recorded
+build root, from the revision its launcher log names, after checking that
+revision against every recorded build-input digest. `restoration.json` records
+each attempt with its expected and obtained digests, build inputs and verdict;
+every attempt there restored the measured bytes, so all three series profile
+historical code, as the accounting's profiled-code column states. The bytes live under
+`.agents/ext/78f0aafd/restored`, which the queue lines export as
+`GF2_PROFILE_ARM_ROOT`; the temporary build roots are removed.
+
+The `wide-polynomial-competitiveness` receipt declares no RUSTFLAGS for
+`gf2-long-product`; its digest reproduces only with the launcher's
+`-C target-cpu=native` build, which `restoration.json` records beside the
+receipt's declared value.
+
+`restore-arms.py smoke <subject> <runner>` drives each restored arm through
+`benchmark-ab-runner smoke` on throwaway plans in `smoke/restored/`. Every
+smoke exits non-zero: these arms predate the zero-window validation position
+and refuse it after decoding the request. The profile session requests the
+receipt's window count, which they implement.
+
 ## Queue lines
 
 Estimates only; enqueue decoder and BCH after committing their inputs.
-The other series require restoration of their measured executables first.
 
 ```tsv
 78f0aafd	.agents/worktrees/agent-78f0aafd	25	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-window.sh
-78f0aafd	.agents/worktrees/agent-78f0aafd	12	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/nr-encode-window.sh
+78f0aafd	.agents/worktrees/agent-78f0aafd	12	GF2_PROFILE_ARM_ROOT="$PWD/.agents/ext/78f0aafd/restored" bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/nr-encode-window.sh
 78f0aafd	.agents/worktrees/agent-78f0aafd	20	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-window.sh
-78f0aafd	.agents/worktrees/agent-78f0aafd	25	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/byte-field-window.sh
-78f0aafd	.agents/worktrees/agent-78f0aafd	12	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/polynomial-window.sh
+78f0aafd	.agents/worktrees/agent-78f0aafd	25	GF2_PROFILE_ARM_ROOT="$PWD/.agents/ext/78f0aafd/restored" bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/byte-field-window.sh
+78f0aafd	.agents/worktrees/agent-78f0aafd	12	GF2_PROFILE_ARM_ROOT="$PWD/.agents/ext/78f0aafd/restored" bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/polynomial-window.sh
 ```
 
 ## Open issues
 
-The NR encoder, byte-field and polynomial series cannot find the historical
-executable digests at their recorded paths. Shared binaries also differ. Restore the measured bytes under `GF2_PROFILE_ARM_ROOT`
-(recommended); substituting current builds does not profile the historical
-cells' code. Their launchers refuse unavailable or different bytes.
+The restored arms have no passing untimed runner smoke; see Restored executables.
 
 `python3 -B dev/bench_results/ed3d490e/test_run_profile.py` fails
 `test_refuses_to_resume_over_a_differing_quality_file` with

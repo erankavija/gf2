@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 925  of event 'cycles:u'
+# Event count (approx.): 3700034225
+#
+# Overhead       Samples  Shared Object      Symbol                                                                                                           
+# ........  ............  .................  .................................................................................................................
+#
+    72.86%           674  gf2-nr-encode-arm  [.] <gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode as gf2_coding::traits::compat::binary_v1::BlockEncoder>::encode
+    26.70%           247  gf2-nr-encode-arm  [.] gf2_coding::ldpc::nr_5g::<impl gf2_coding::ldpc::core::QuasiCyclicLdpc>::nr_5g_rate_matched
+     0.22%             2  gf2-nr-encode-arm  [.] gf2_kernels_simd::x86::avx2::fns::xor_fn
+     0.11%             1  [unknown]          [k] 0xffffffffafa015f0
+     0.11%             1  [unknown]          [k] 0xffffffffb011cc8a
+
+
+#
+# (Tip: To only collect call graph on one event use perf record -e cpu/cpu-cycles,callgraph=1/,branches ; perf report --show-ref-call-graph)
+#

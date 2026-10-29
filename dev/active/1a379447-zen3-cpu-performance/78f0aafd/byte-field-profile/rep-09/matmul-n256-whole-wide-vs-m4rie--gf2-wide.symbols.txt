@@ -1,0 +1,32 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 652  of event 'cycles:u'
+# Event count (approx.): 2608024124
+#
+# Overhead       Samples  Shared Object     Symbol                                                   
+# ........  ............  ................  .........................................................
+#
+    97.09%           633  gf2-arm           [.] gf2_kernels_simd::gf2m_gemm::gf2m_gemm_panelized_safe
+     0.77%             5  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+     0.15%             1  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     0.15%             1  libc.so.6         [.] 0x0000000000176e13
+     0.15%             1  [unknown]         [k] 0xffffffffafa01280
+     0.15%             1  [unknown]         [k] 0xffffffffafa015f0
+     0.15%             1  [unknown]         [k] 0xffffffffafa018d9
+     0.15%             1  [unknown]         [k] 0xffffffffafd493b8
+     0.15%             1  [unknown]         [k] 0xffffffffb00da384
+     0.15%             1  [unknown]         [k] 0xffffffffb00e13e8
+     0.15%             1  [unknown]         [k] 0xffffffffb00e7d55
+     0.15%             1  [unknown]         [k] 0xffffffffb00e97c0
+     0.15%             1  [unknown]         [k] 0xffffffffb00fd0c3
+     0.15%             1  [unknown]         [k] 0xffffffffb019810b
+     0.15%             1  [unknown]         [k] 0xffffffffb019c62a
+     0.15%             1  [unknown]         [k] 0xffffffffb06170db
+
+
+#
+# (Tip: Profiling branch (mis)predictions with: perf record -b / perf report)
+#

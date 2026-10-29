@@ -1,0 +1,21 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 645  of event 'cycles:u'
+# Event count (approx.): 2580023865
+#
+# Overhead       Samples  Shared Object     Symbol                                                                     
+# ........  ............  ................  ...........................................................................
+#
+    51.63%           333  gf2-arm           [.] gf2_core::field::vec::FieldVec<F>::axpy
+    28.99%           187  gf2-arm           [.] gf2_kernels_simd::gf2m::clmul_barrett_reduce_safe
+    19.07%           123  gf2-arm           [.] <&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+     0.16%             1  gf2-arm           [.] gf2_arm::build
+     0.16%             1  [unknown]         [k] 0xffffffffafa015f0
+
+
+#
+# (Tip: When collecting LBR backtraces use --stitch-lbr to handle more than 32 deep entries: perf record --call-graph lbr ; perf report --stitch-lbr)
+#

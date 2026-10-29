@@ -1,0 +1,75 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 24K of event 'cycles:u'
+# Event count (approx.): 98212908461
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    51.79%         12717  consumer-arm      [.] gf2_core::bitvec::BitVec::set
+    41.87%         10280  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     5.93%          1456  consumer-arm      [.] consumer_profile_gf2_side::Prepared::run
+     0.04%            11  consumer-arm      [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.03%             8  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::reset_registers
+     0.03%             7  consumer-arm      [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.02%             5  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.02%             5  libc.so.6         [.] 0x0000000000176e09
+     0.02%             4  consumer-arm      [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.01%             3  [unknown]         [k] 0xffffffffafa015f0
+     0.01%             3  [unknown]         [k] 0xffffffffb01162b3
+     0.01%             2  consumer-arm      [.] hashbrown::map::HashMap<K,V,S,A>::insert
+     0.01%             2  libc.so.6         [.] 0x0000000000176e0e
+     0.01%             2  [unknown]         [k] 0xffffffffafa01280
+     0.01%             2  [unknown]         [k] 0xffffffffafe96ebb
+     0.01%             2  [unknown]         [k] 0xffffffffafe98cc2
+     0.01%             2  [unknown]         [k] 0xffffffffafeab064
+     0.00%             1  consumer-arm      [.] <&gf2_core::gf2m::field::Gf2mElement_<V> as core::ops::arith::Mul>::mul
+     0.00%             1  consumer-arm      [.] consumer_profile_gf2_side::per_call_ns
+     0.00%             1  consumer-arm      [.] gf2_coding::bch::encode::packed_place_codeword
+     0.00%             1  consumer-arm      [.] gf2_core::field::extension::cyclotomic_cosets_mod
+     0.00%             1  consumer-arm      [.] rand_chacha::guts::refill_wide
+     0.00%             1  libc.so.6         [.] 0x00000000000a5093
+     0.00%             1  libc.so.6         [.] 0x00000000000a5cc1
+     0.00%             1  libc.so.6         [.] 0x00000000000a5cdc
+     0.00%             1  libc.so.6         [.] 0x0000000000176e04
+     0.00%             1  libc.so.6         [.] 0x0000000000176e13
+     0.00%             1  [unknown]         [k] 0xffffffffafa015f4
+     0.00%             1  [unknown]         [k] 0xffffffffafd3d478
+     0.00%             1  [unknown]         [k] 0xffffffffafd493b8
+     0.00%             1  [unknown]         [k] 0xffffffffafdb2ce0
+     0.00%             1  [unknown]         [k] 0xffffffffafdfb804
+     0.00%             1  [unknown]         [k] 0xffffffffafe210e8
+     0.00%             1  [unknown]         [k] 0xffffffffafe9160e
+     0.00%             1  [unknown]         [k] 0xffffffffafe92fa4
+     0.00%             1  [unknown]         [k] 0xffffffffafe94098
+     0.00%             1  [unknown]         [k] 0xffffffffafe9482a
+     0.00%             1  [unknown]         [k] 0xffffffffafe971f2
+     0.00%             1  [unknown]         [k] 0xffffffffafe98ca2
+     0.00%             1  [unknown]         [k] 0xffffffffafe99141
+     0.00%             1  [unknown]         [k] 0xffffffffafeaaeac
+     0.00%             1  [unknown]         [k] 0xffffffffafed5243
+     0.00%             1  [unknown]         [k] 0xffffffffb00d84b2
+     0.00%             1  [unknown]         [k] 0xffffffffb00e1314
+     0.00%             1  [unknown]         [k] 0xffffffffb00e138f
+     0.00%             1  [unknown]         [k] 0xffffffffb00e79de
+     0.00%             1  [unknown]         [k] 0xffffffffb00e7e48
+     0.00%             1  [unknown]         [k] 0xffffffffb011eecc
+     0.00%             1  [unknown]         [k] 0xffffffffb011f0ec
+     0.00%             1  [unknown]         [k] 0xffffffffb01601d6
+     0.00%             1  [unknown]         [k] 0xffffffffb0196f2e
+     0.00%             1  [unknown]         [k] 0xffffffffb019bf55
+     0.00%             1  [unknown]         [k] 0xffffffffb0f69c8c
+     0.00%             1  [unknown]         [k] 0xffffffffb0f69e78
+     0.00%             1  [unknown]         [k] 0xffffffffb0f74d97
+     0.00%             1  [unknown]         [k] 0xffffffffb0f965f5
+     0.00%             1  [unknown]         [k] 0xffffffffb0f96604
+     0.00%             1  [unknown]         [k] 0xffffffffb0fac09b
+     0.00%             1  [unknown]         [k] 0xffffffffb0fac76b
+
+
+#
+# (Tip: Limit to show entries above 5% only: perf report --percent-limit 5)
+#

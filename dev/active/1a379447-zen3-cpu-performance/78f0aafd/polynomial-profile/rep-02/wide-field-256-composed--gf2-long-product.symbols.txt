@@ -1,0 +1,29 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 680  of event 'cycles:u'
+# Event count (approx.): 2720025160
+#
+# Overhead       Samples  Shared Object  Symbol                                                                                   
+# ........  ............  .............  .........................................................................................
+#
+    33.82%           230  poly-arm       [.] gf2_kernels_simd::gf2m_wide::clmul_wide4_ymm_safe
+    17.65%           120  poly-arm       [.] clmul_crossover_arms::gf2_backend::wide_field_product
+     8.97%            61  poly-arm       [.] core::hash::BuildHasher::hash_one
+     8.38%            57  poly-arm       [.] gf2_core::gf2m::barrett::BarrettReducerWide<_>::reduce_slice
+     8.24%            56  poly-arm       [.] gf2_core::gf2m::barrett::slice_clmul_wide_with_implicit_high
+     5.44%            37  libc.so.6      [.] __libc_calloc
+     4.41%            30  poly-arm       [.] gf2_core::gf2m::barrett::slice_wide_shr_2n_to_n
+     3.97%            27  poly-arm       [.] <std::hash::random::DefaultHasher as core::hash::Hasher>::write
+     3.53%            24  libc.so.6      [.] cfree
+     2.94%            20  poly-arm       [.] gf2_core::gf2m::wide::clmul_wide_dispatch
+     1.47%            10  poly-arm       [.] <T as core::any::Any>::type_id
+     1.03%             7  poly-arm       [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run
+     0.15%             1  poly-arm       [.] tuning_campaign_support::timing::time_calls
+
+
+#
+# (Tip: To compare scalability of two workload samples use perf diff -c ratio file1 file2)
+#

@@ -1,0 +1,29 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 677  of event 'cycles:u'
+# Event count (approx.): 2708025049
+#
+# Overhead       Samples  Shared Object  Symbol                                                                                   
+# ........  ............  .............  .........................................................................................
+#
+    31.02%           210  poly-arm       [.] gf2_kernels_simd::gf2m_wide::clmul_wide4_ymm_safe
+    21.71%           147  poly-arm       [.] clmul_crossover_arms::gf2_backend::wide_field_product
+    10.04%            68  poly-arm       [.] gf2_core::gf2m::barrett::BarrettReducerWide<_>::reduce_slice
+     7.39%            50  poly-arm       [.] core::hash::BuildHasher::hash_one
+     6.35%            43  poly-arm       [.] gf2_core::gf2m::barrett::slice_clmul_wide_with_implicit_high
+     5.61%            38  libc.so.6      [.] __libc_calloc
+     5.02%            34  poly-arm       [.] <std::hash::random::DefaultHasher as core::hash::Hasher>::write
+     4.14%            28  poly-arm       [.] gf2_core::gf2m::barrett::slice_wide_shr_2n_to_n
+     3.25%            22  poly-arm       [.] gf2_core::gf2m::wide::clmul_wide_dispatch
+     2.22%            15  libc.so.6      [.] cfree
+     1.77%            12  poly-arm       [.] <clmul_crossover_arms::gf2_backend::Gf2Backend as clmul_crossover_arms::Backend>::run
+     1.33%             9  poly-arm       [.] <T as core::any::Any>::type_id
+     0.15%             1  poly-arm       [.] tuning_campaign_support::timing::time_calls
+
+
+#
+# (Tip: Profiling branch (mis)predictions with: perf record -b / perf report)
+#

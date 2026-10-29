@@ -1,0 +1,7 @@
+# started on Wed Oct 28 06:10:49 2026
+
+2770641729,,cycles:u,573177025,100.00,,
+55922049,,L1-dcache-loads:u,573177025,100.00,,
+79124,,L1-dcache-load-misses:u,573177025,100.00,,
+115362,,cache-references:u,573177025,100.00,,
+12063,,cache-misses:u,573177025,100.00,,

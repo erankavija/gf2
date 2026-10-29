@@ -29,6 +29,11 @@ Timings printed by builds, tests and smoke are diagnostic, not performance evide
 - `python3 -B dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/test_record_gf2_arms_build.py`:
   `recorder-tests.log`; its build-record-dependent tests retain their own skip conditions.
 - `python3 -B dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/summarize-profile.py --self-test`.
+- `python3 -B dev/active/1a379447-zen3-cpu-performance/78f0aafd/restore-arms.py build <subject>`
+  for `byte-field`, `polynomial` and `nr-encode`: `restoration.json`. These builds
+  use the installed Cargo home and sccache, because the build roots reproduce the receipts' paths.
+- `python3 -B dev/active/1a379447-zen3-cpu-performance/78f0aafd/restore-arms.py smoke <subject> target/release/benchmark-ab-runner`:
+  `smoke/restored/`.
 - The launcher `--smoke` command uses the new `--record`, the live e5f8b3ae native
   `--arms-record`, `decoder-cases.tsv` and `smoke/`. `smoke/identity.txt` pins the
   executable and expanded input identities. Each diagnostic JSON has
@@ -49,7 +54,7 @@ then `profile ci-test is not defined`; the explicit canonical profile projection
 and nextest's forwarded Cargo `--config` options resolve these configuration errors.
 
 No CI contract or timed series runs in this dispatch. REQ-01 window profiles,
-REQ-02 profiles without available historical executables, and their resulting
+the restored series' REQ-02 profiles, and their resulting
 REQ-03 mechanism observations remain unmeasured.
 
 ## Reproduction checks

@@ -32,6 +32,19 @@ class Preparation(unittest.TestCase):
             actual = actual or build.get('kernel', {}).get('executables', {})
             self.assertTrue(accounting.has_digest(actual, joined['measured_arm_sha256']))
 
+    def test_restored_series_profile_the_measured_bytes(self):
+        attempts = accounting.read(HERE/'restoration.json')['attempts']
+        restored = {row['expected_sha256'] for row in attempts if row['verdict'] == 'restored'}
+        self.assertTrue(all(row['obtained_sha256'] == row['expected_sha256'] for row in attempts
+                            if row['verdict'] == 'restored'))
+        for cell, receipt, _, planned, _, _ in accounting.arms.gaps():
+            if not any(cell['family'] in families for families in accounting.arms.SUBJECTS.values()):
+                continue
+            sha = receipt['arms'][planned['baseline_arm']]['executable_sha256']
+            expected = 'historical' if sha in restored else 'unrestored'
+            self.assertEqual(accounting.restoration(sha)['code'], expected)
+        self.assertEqual(accounting.restoration('0'*64)['code'], 'unrestored')
+
     def test_new_executable_has_source_span_rules(self):
         summary = load('3be770d5/survey/summarize-profile.py', 'summary_under_test')
         record = accounting.read(HERE/'preparation/build-identity.json')

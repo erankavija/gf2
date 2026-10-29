@@ -1,0 +1,32 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 764  of event 'cycles:u'
+# Event count (approx.): 3056028268
+#
+# Overhead       Samples  Shared Object     Symbol                                                                            
+# ........  ............  ................  ..................................................................................
+#
+    54.58%           417  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+    37.57%           287  gf2-arm           [.] gf2_kernels_simd::x86::gf2m_batch::gf2m_batch_mul_ymm_unroll4
+     2.23%            17  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     1.83%            14  gf2-arm           [.] gf2_core::gf2m::batch::batch_mul_raw
+     0.79%             6  libc.so.6         [.] 0x0000000000176e04
+     0.79%             6  libc.so.6         [.] 0x0000000000176e09
+     0.39%             3  gf2-arm           [.] gf2_arm::build_product::{{closure}}
+     0.39%             3  libc.so.6         [.] 0x0000000000176e0e
+     0.39%             3  libc.so.6         [.] 0x0000000000176e13
+     0.26%             2  gf2-arm           [.] core::ptr::drop_in_place<alloc::vec::Vec<gf2_core::gf2m::field::Gf2mElement_>>
+     0.13%             1  libc.so.6         [.] 0x0000000000176d80
+     0.13%             1  libc.so.6         [.] 0x0000000000176de3
+     0.13%             1  [unknown]         [k] 0xffffffffb0160252
+     0.13%             1  [unknown]         [k] 0xffffffffb01980d7
+     0.13%             1  [unknown]         [k] 0xffffffffb019dec2
+     0.13%             1  [unknown]         [k] 0xffffffffb0f965f5
+
+
+#
+# (Tip: Treat branches as callchains: perf record -b ... ; perf report --branch-history)
+#

@@ -1,0 +1,25 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 670  of event 'cycles:u'
+# Event count (approx.): 2680024790
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    96.12%           644  bch-external-arm  [.] bch_encode
+     1.19%             8  bch-external-arm  [.] bch_encode_unaligned
+     0.60%             4  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     0.60%             4  libc.so.6         [.] 0x00000000001763ec
+     0.45%             3  bch-external-arm  [.] load_ecc8
+     0.30%             2  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.30%             2  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     0.30%             2  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.15%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+
+
+#
+# (Tip: To change sampling frequency to 100 Hz: perf record -F 100)
+#

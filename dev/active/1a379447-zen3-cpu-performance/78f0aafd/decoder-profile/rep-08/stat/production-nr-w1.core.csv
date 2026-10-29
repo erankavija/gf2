@@ -1,0 +1,7 @@
+# started on Wed Oct 28 05:10:21 2026
+
+161791481,,cycles:u,34225449,100.00,,
+321935040,,instructions:u,34225449,100.00,,
+43105996,,branches:u,34225449,100.00,,
+59909,,branch-misses:u,34225449,100.00,,
+1301911,,stalled-cycles-frontend:u,34225449,100.00,,

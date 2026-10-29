@@ -1,0 +1,36 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cycles:u'
+# Event count (approx.): 13816127798
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    99.28%          3429  consumer-arm      [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     0.14%             5  consumer-arm      [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.06%             2  [unknown]         [k] 0xffffffffafa01280
+     0.06%             2  [unknown]         [k] 0xffffffffb01162b3
+     0.03%             1  consumer-arm      [.] gf2_coding::bch::encode::<impl gf2_coding::bch::spec::BchCode<X,S,M>>::encode_batch_family_into
+     0.03%             1  consumer-arm      [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.03%             1  consumer-arm      [.] gf2_core::field::poly::FieldPoly<F>::div_rem
+     0.03%             1  libc.so.6         [.] 0x0000000000176540
+     0.03%             1  libc.so.6         [.] 0x0000000000176545
+     0.03%             1  libc.so.6         [.] 0x000000000017654a
+     0.03%             1  libc.so.6         [.] 0x0000000000176558
+     0.03%             1  libc.so.6         [.] 0x00000000001765c6
+     0.03%             1  [unknown]         [k] 0xffffffffb00d8e2d
+     0.03%             1  [unknown]         [k] 0xffffffffb00e132f
+     0.03%             1  [unknown]         [k] 0xffffffffb00e141b
+     0.03%             1  [unknown]         [k] 0xffffffffb00fd13a
+     0.03%             1  [unknown]         [k] 0xffffffffb011cc8a
+     0.03%             1  [unknown]         [k] 0xffffffffb0196f1e
+     0.03%             1  [unknown]         [k] 0xffffffffb019bf57
+     0.03%             1  [unknown]         [k] 0xffffffffb0fac134
+
+
+#
+# (Tip: Show estimate cycles per function and IPC in annotate use perf record -b ... ; perf report --total-cycles)
+#

@@ -1,0 +1,26 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 624  of event 'cycles:u'
+# Event count (approx.): 2496023088
+#
+# Overhead       Samples  Shared Object     Symbol                                                             
+# ........  ............  ................  ...................................................................
+#
+    51.28%           320  gf2-arm           [.] gf2_core::field::vec::FieldVec<F>::axpy
+    14.74%            92  gf2-arm           [.] <std::hash::random::DefaultHasher as core::hash::Hasher>::write
+    14.26%            89  gf2-arm           [.] core::hash::BuildHasher::hash_one
+     9.29%            58  libc.so.6         [.] __libc_calloc
+     7.05%            44  libc.so.6         [.] cfree
+     2.08%            13  gf2-arm           [.] <T as core::any::Any>::type_id
+     0.80%             5  gf2-arm           [.] gf2_arm::build_axpy::{{closure}}
+     0.16%             1  gf2-arm           [.] gf2_arm::build
+     0.16%             1  [unknown]         [k] 0xffffffffafe9220e
+     0.16%             1  [unknown]         [k] 0xffffffffafe94792
+
+
+#
+# (Tip: For parallelism histogram, try: perf report --hierarchy --sort latency,parallelism,comm,symbol)
+#

@@ -1,0 +1,50 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 5K of event 'cycles:u'
+# Event count (approx.): 20560190180
+#
+# Overhead       Samples  Shared Object     Symbol                                                                                                                       
+# ........  ............  ................  .............................................................................................................................
+#
+    64.28%          3304  bch-external-arm  [.] aff3ct::module::Encoder_BCH_inter<int>::__encode(int const*, int*)
+    22.57%          1160  bch-external-arm  [.] gf2_core::bitvec::BitVec::set
+     6.71%           345  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::encode_systematic_with
+     2.67%           137  bch-external-arm  [.] bch_external_arms::Engine::prepare
+     1.03%            53  bch-external-arm  [.] consumer_profile_gf2_side::bch_reference
+     0.88%            45  bch-external-arm  [.] aff3ct::tools::Reorderer_static<int, 8>::apply(std::vector<int const*, std::allocator<int const*> > const&, int*, int)
+     0.74%            38  bch-external-arm  [.] aff3ct::tools::BCH_polynomial_generator<int>::compute_polynomial()
+     0.33%            17  libc.so.6         [.] 0x0000000000176545
+     0.14%             7  libc.so.6         [.] 0x000000000017653b
+     0.10%             5  bch-external-arm  [.] rand_chacha::guts::refill_wide::impl_avx2
+     0.04%             2  bch-external-arm  [.] aff3ct::tools::Reorderer_static<int, 8>::apply_rev(int const*, std::vector<int*, std::allocator<int*> >&, int)
+     0.04%             2  bch-external-arm  [.] gf2_coding::bch::dvb_t2::dvb_t2_bch_code
+     0.04%             2  libc.so.6         [.] 0x00000000001765c6
+     0.04%             2  [unknown]         [k] 0xffffffffafa015f4
+     0.04%             2  [unknown]         [k] 0xffffffffb01162b3
+     0.02%             1  bch-external-arm  [.] <gf2_core::bitvec::BitVec as gf2_coding::bch::encode::SystematicKernel<gf2_core::gfp::Fp<2_u64>>>::reset_registers
+     0.02%             1  bch-external-arm  [.] aff3ct::tools::Galois<int>::generate_gf()
+     0.02%             1  bch-external-arm  [.] gf2_coding::bch::spec::BchCode<X,S,M>::construct
+     0.02%             1  libc.so.6         [.] 0x0000000000176524
+     0.02%             1  libc.so.6         [.] 0x0000000000176540
+     0.02%             1  libc.so.6         [.] 0x000000000017654a
+     0.02%             1  libc.so.6         [.] 0x00000000001765af
+     0.02%             1  libc.so.6         [.] 0x00000000001765c1
+     0.02%             1  libc.so.6         [.] 0x0000000000176e0e
+     0.02%             1  [unknown]         [k] 0xffffffffafa015f0
+     0.02%             1  [unknown]         [k] 0xffffffffafe90624
+     0.02%             1  [unknown]         [k] 0xffffffffafe92183
+     0.02%             1  [unknown]         [k] 0xffffffffafe95354
+     0.02%             1  [unknown]         [k] 0xffffffffafe98ca2
+     0.02%             1  [unknown]         [k] 0xffffffffb00fd07b
+     0.02%             1  [unknown]         [k] 0xffffffffb01980d7
+     0.02%             1  [unknown]         [k] 0xffffffffb019bf46
+     0.02%             1  [unknown]         [k] 0xffffffffb019c609
+     0.02%             1  [unknown]         [k] 0xffffffffb0f9a1b0
+
+
+#
+# (Tip: To set sampling period of individual events use perf record -e cpu/cpu-cycles,period=100001/,cpu/branches,period=10001/ ...)
+#

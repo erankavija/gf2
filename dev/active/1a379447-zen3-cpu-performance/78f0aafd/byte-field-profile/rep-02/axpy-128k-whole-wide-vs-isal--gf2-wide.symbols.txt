@@ -1,0 +1,25 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 624  of event 'cycles:u'
+# Event count (approx.): 2496023088
+#
+# Overhead       Samples  Shared Object     Symbol                                                             
+# ........  ............  ................  ...................................................................
+#
+    50.48%           315  gf2-arm           [.] gf2_core::field::vec::FieldVec<F>::axpy
+    17.95%           112  gf2-arm           [.] core::hash::BuildHasher::hash_one
+    12.82%            80  libc.so.6         [.] __libc_calloc
+     9.78%            61  gf2-arm           [.] <std::hash::random::DefaultHasher as core::hash::Hasher>::write
+     6.73%            42  libc.so.6         [.] cfree
+     0.96%             6  gf2-arm           [.] <T as core::any::Any>::type_id
+     0.96%             6  gf2-arm           [.] gf2_arm::build_axpy::{{closure}}
+     0.16%             1  gf2-arm           [.] gf2_arm::build
+     0.16%             1  [unknown]         [k] 0xffffffffafa015f0
+
+
+#
+# (Tip: For memory address profiling, try: perf mem record / perf mem report)
+#

@@ -1,0 +1,28 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 7K of event 'cycles:u'
+# Event count (approx.): 28580264365
+#
+# Overhead       Samples  Shared Object       Symbol                                                       
+# ........  ............  ..................  .............................................................
+#
+    98.11%          7010  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.48%           106  ldpc-batch-profile  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.28%            20  ldpc-batch-profile  [.] gf2_core::bitvec::BitVec::push_bit
+     0.01%             1  libc.so.6           [.] 0x0000000000176e04
+     0.01%             1  libc.so.6           [.] 0x0000000000176e0e
+     0.01%             1  [unknown]           [k] 0xffffffffafa015f0
+     0.01%             1  [unknown]           [k] 0xffffffffafa01d22
+     0.01%             1  [unknown]           [k] 0xffffffffafdfb1c7
+     0.01%             1  [unknown]           [k] 0xffffffffafeab0a5
+     0.01%             1  [unknown]           [k] 0xffffffffb0f7c3d7
+     0.01%             1  [unknown]           [k] 0xffffffffb0f965f5
+     0.01%             1  [unknown]           [k] 0xffffffffb0f979e4
+
+
+#
+# (Tip: To show assembler sample context control flow use perf record -b / perf report --samples 10 and then browse context)
+#

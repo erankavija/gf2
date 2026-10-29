@@ -1,0 +1,25 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 664  of event 'cycles:u'
+# Event count (approx.): 2656024568
+#
+# Overhead       Samples  Shared Object     Symbol                                                   
+# ........  ............  ................  .........................................................
+#
+    98.34%           653  gf2-arm           [.] gf2_kernels_simd::gf2m_gemm::gf2m_gemm_panelized_safe
+     0.60%             4  gf2-arm           [.] gf2_core::field::matrix::gemm_tiled
+     0.15%             1  gf2-arm           [.] byte_field_gf2_side::workload::pack_into_matrix
+     0.15%             1  [unknown]         [k] 0xffffffffafd4dd88
+     0.15%             1  [unknown]         [k] 0xffffffffb00da0c0
+     0.15%             1  [unknown]         [k] 0xffffffffb00fd0cc
+     0.15%             1  [unknown]         [k] 0xffffffffb011cc75
+     0.15%             1  [unknown]         [k] 0xffffffffb019c5d5
+     0.15%             1  [unknown]         [k] 0xffffffffb0f69ddd
+
+
+#
+# (Tip: To see list of saved events and attributes: perf evlist -v)
+#
