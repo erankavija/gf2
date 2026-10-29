@@ -23,7 +23,7 @@ class Preparation(unittest.TestCase):
 
     def test_historical_profiles_join_their_own_builds(self):
         for cell, receipt, _, planned, _, _ in accounting.arms.gaps():
-            if cell['domain'] != 'LDPC decode':
+            if cell['domain'] != 'LDPC decode' or cell['family'] == '1362381c-ldpc-aff3ct-integration':
                 continue
             joined = accounting.available_profile(receipt, planned)
             self.assertIsNotNone(joined)
@@ -31,6 +31,18 @@ class Preparation(unittest.TestCase):
             actual = build.get('executables', build.get('generations', {}).get('after', {}).get('executables', {}))
             actual = actual or build.get('kernel', {}).get('executables', {})
             self.assertTrue(accounting.has_digest(actual, joined['measured_arm_sha256']))
+
+    def test_integrated_profile_does_not_claim_an_unproved_code_join(self):
+        rows = [row for row in accounting.inventory()
+                if row['family'] == '1362381c-ldpc-aff3ct-integration']
+        self.assertTrue(rows)
+        profile = accounting.cited(HERE/'decoder-profile/profile-summary.json')
+        for row in rows:
+            self.assertEqual(row['coverage']['code'], 'integrated')
+            self.assertEqual(row['coverage']['profile'], profile)
+            self.assertIn(row['coverage']['status'], ('profile-cited', 'identity-unresolved'))
+            if row['coverage']['status'] == 'identity-unresolved':
+                self.assertIn('unpinned', row['coverage']['basis'])
 
     def test_restored_series_profile_the_measured_bytes(self):
         attempts = accounting.read(HERE/'restoration.json')['attempts']

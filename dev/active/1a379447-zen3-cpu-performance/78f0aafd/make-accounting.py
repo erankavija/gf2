@@ -316,12 +316,23 @@ def build():
     for subject in (*arms.SUBJECTS, 'bch'):
         profiles.extend(subject_rows(subject))
     workload = read(live('1362381c/workload-set.json'))
+    registry = read(live('1362381c/survey/family-registry.json'))
+    integrated_families = {'FI-3', 'FI-4'}
+    integrated_by_pattern = {row['pattern']: row['integrated_family']
+                             for row in registry['families']
+                             if row.get('integrated_family') in integrated_families}
+    selected_integrated = [row | {'integrated_family': integrated_by_pattern[row['registry_pattern']]}
+                           for row in workload['families']
+                           if row['registry_pattern'] in integrated_by_pattern]
+    pending_integrated = [row for row in workload['pending']
+                          if row.get('integrated_family') in integrated_families]
     return {'decoder_build': cited(HERE/'preparation/build-identity.json'),
             'source': cited(live('1362381c/workload-set.json')),
             'drift': cited(live('1362381c/production-drift.json')),
             'material_gap_rule': 'comparator-gap pass with the external arm as candidate; canonical INTERPRETATION',
             'material_gaps': gaps,
-            'integrated_families': [row for row in workload['pending'] if row.get('integrated_family') in ('FI-3','FI-4')],
+            'integrated_families': selected_integrated,
+            'pending_integrated_families': pending_integrated,
             'profiles': profiles, 'stage_probes': stages(gaps), 'assembly': assembly(),
             'allocation_witness': cited(HERE/'allocation-witness.json'),
             'context_profiles': {key: cited(live(suffix)) for key, suffix in CONTEXT.items()},
@@ -388,9 +399,16 @@ def markdown(record):
     lines += ['', 'Adapter stage probes are projected separately per receipt cell and arm in',
               '`accounting.json` as descriptive ranges with their execution count. They include',
               'whole-consumer conversion costs and do not isolate dependency latency.', '',
-              'FI-3 and FI-4 have structural pending entries until the workload-set generator',
-              'selects their window receipts. The inventory then reads their actual recorded outcomes.', '',
-              record['hardware_limit']+'.', '']
+              '## Integrated family selections', '',
+              '| Family | Registry pattern | Receipt | Receipt SHA-256 |', '|---|---|---|---|']
+    for family in record['integrated_families']:
+        lines.append(f"| {family['integrated_family']} | `{family['registry_pattern']}` | "
+                     f"`{family['receipt']}` | `{family['receipt_sha256']}` |")
+    if record['pending_integrated_families']:
+        lines += ['', 'Pending integrated families are listed in `accounting.json`.']
+    else:
+        lines += ['', 'The canonical workload set has selected receipts for FI-3 and FI-4.']
+    lines += ['', record['hardware_limit']+'.', '']
     return '\n'.join(lines)
 
 
