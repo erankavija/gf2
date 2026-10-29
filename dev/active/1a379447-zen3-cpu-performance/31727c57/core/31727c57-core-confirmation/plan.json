@@ -1,0 +1,127 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "31727c57-core-confirmation",
+  "issue": "31727c57",
+  "label": "confirmation",
+  "campaign_seed": 3172712,
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/confirmation/addendum.json",
+  "producing_manifest": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "tuned-portable": {
+      "build": "tuned-portable",
+      "description": "profile-arm, tuned-portable: candidate profile: baked constants and the installed envelope, pinned as the arm's tuning profile",
+      "executable": "target/31727c57-core-tuned-portable/release/profile-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_PROFILE_BUILD": "tuned-portable",
+        "GF2_PROFILE_OWNER": "crates/gf2-core/data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json",
+        "GF2_PROFILE_OWNER_SHA256": "1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33"
+      },
+      "rustflags": "--cfg gf2_tuning_baked",
+      "tuning_profile": {
+        "id": "gf2-63bad95d-20261006t230547z-2073085",
+        "sha256": "1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33"
+      }
+    },
+    "native": {
+      "build": "native",
+      "description": "profile-arm, native: candidate profile",
+      "executable": "target/31727c57-core-native/release/profile-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_PROFILE_BUILD": "native",
+        "GF2_PROFILE_OWNER": "crates/gf2-core/data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json",
+        "GF2_PROFILE_OWNER_SHA256": "1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33"
+      },
+      "rustflags": "-C target-cpu=native --cfg gf2_tuning_baked",
+      "tuning_profile": {
+        "id": "gf2-63bad95d-20261006t230547z-2073085",
+        "sha256": "1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33"
+      }
+    },
+    "conservative-portable": {
+      "build": "conservative-portable",
+      "description": "profile-arm, conservative-portable: conservative table, no profile installed",
+      "executable": "target/31727c57-core-conservative-portable/release/profile-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_PROFILE_BUILD": "conservative-portable"
+      },
+      "rustflags": null,
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "matvec-r1024-24w-native",
+      "baseline_arm": "tuned-portable",
+      "candidate_arm": "native",
+      "case": {
+        "operation": "matvec",
+        "rows": 1024,
+        "columns": 1536,
+        "seed": 632411
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "popcount-1024w-native",
+      "baseline_arm": "tuned-portable",
+      "candidate_arm": "native",
+      "case": {
+        "operation": "popcount",
+        "words": 1024,
+        "seed": 631011
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "clmul-wide-9w-native",
+      "baseline_arm": "tuned-portable",
+      "candidate_arm": "native",
+      "case": {
+        "operation": "clmul-wide",
+        "words": 9,
+        "seed": 630911
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "xor-inplace-5w",
+      "baseline_arm": "conservative-portable",
+      "candidate_arm": "tuned-portable",
+      "case": {
+        "operation": "xor-inplace",
+        "words": 5,
+        "seed": 630501
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "popcount-6w",
+      "baseline_arm": "conservative-portable",
+      "candidate_arm": "tuned-portable",
+      "case": {
+        "operation": "popcount",
+        "words": 6,
+        "seed": 630601
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "xor-inplace-3w",
+      "baseline_arm": "conservative-portable",
+      "candidate_arm": "tuned-portable",
+      "case": {
+        "operation": "xor-inplace",
+        "words": 3,
+        "seed": 630301
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 1
+}
