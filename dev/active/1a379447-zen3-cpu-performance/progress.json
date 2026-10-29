@@ -3734,14 +3734,61 @@
     "refused_freezes": "31727c57 core (resolution 0.07; worthwhile 1.05 and equivalence 1.05), 31727c57 decoder (resolution 0.06; equivalence 1.05), 1358d6ab BCH (resolution 0.13; equivalence 1.1): pilots complete and accepted, freeze refused because margins did not exceed one plus the resolution; no confirmation sample was taken."
    },
    "invoker_rulings": {
-    "Q1": "Widen only the refused margins to the smallest two-decimal value strictly above one plus the pilot resolution, through freeze-confirmation.py's margin options, and run the confirmations in the reserve window. Core worthwhile 1.08 and equivalence 1.08; decoder equivalence 1.07; BCH equivalence 1.14."
+    "Q1": "Widen only the refused margins to the smallest two-decimal value strictly above one plus the pilot resolution, through freeze-confirmation.py's margin options, and run the confirmations in the reserve window. Core worthwhile 1.08 and equivalence 1.08; decoder equivalence 1.07; BCH equivalence 1.14.",
+    "Q2": "31727c57 REQ-04: the tuned decoder arm's report never runs probe_stages, so its batch_fill_ns is an unset 0. Add the probe with a test and measure tuned-arm batch fill alone on the FI-2 cells in the next window as a descriptive record (no comparison, no ledger reservation, confirmation verdicts stand, record pins the probed arm's own digest)."
    },
    "actions": [
     "Froze in session with the replaced margins and committed the freeze outputs: 841c15255 (core), f152616fd (decoder) on agent-31727c57; 5948b47aa (BCH) on agent-1358d6ab. Each derivation record names the replaced values.",
     "Committed 72e6671e8 (LDPC AFF3CT receipts, nested Cargo.lock snapshots force-added; snapshot check passes) on agent-1358d6ab and 32dc920da (five profile series) on agent-78f0aafd.",
     "Armed gf2-bench-window-20261029.timer (2026-10-29 04:00 Europe/Helsinki) over the unchanged queue: the three refused jobs have no .done marker and rerun; their pilots resume as complete (trial_ledger::reserve never appends on resumption) and the committed freezes are reused."
    ],
-   "dispatch_policy": "Model by task difficulty; no Fable; alternate Claude and Codex workers. Next worker: Codex."
+   "dispatch_policy": "Model by task difficulty; no Fable; alternate Claude and Codex workers. Next worker: Claude.",
+   "window_20261029": "Three jobs ran 02:00-02:16Z: 31727c57 core and decoder, 1358d6ab BCH. Pilots resumed as complete without a new reservation; the committed freezes were reused; each confirmation logged 6 cells started, checkpointed and completed once, terminal complete, Accepted (core and decoder qualifies=true, BCH qualifies=false). Receipts committed d9cbcfcdd (31727c57) and ce0bfdccb (1358d6ab), nested Cargo.lock snapshots force-added, snapshot check passes.",
+   "lead_decisions": [
+    "78f0aafd REQ-02: four FI-3 material-gap cells measured the portable tuned arm 9af28c77 while the decoder series profiled a native build; profile exactly 9af28c77 on those cells in the next window, joined by measured executable digest (pattern of the restored series). Routine: the criterion requires it and it adds window time only.",
+    "1358d6ab FI-4 bchlib cells record about 105x in bchlib's favour; accepted as recorded, left to research-review."
+   ],
+   "merges": "4f89fa975 (31727c57), b8d155bfd (1358d6ab), 5696e9450 (78f0aafd) receipt-bearing merges; schema index regenerated; 781d51429 merges the 1358d6ab outcome.",
+   "dispatches": [
+    {
+     "issue": "31727c57",
+     "vendor": "codex",
+     "model": "gpt-6.1-sol",
+     "effort": "high",
+     "task": "outcome record",
+     "result": "partial: REQ-04 tuned batch fill unmeasured; committed 1b6fb32ab on worktree-agent-31727c57"
+    },
+    {
+     "issue": "1358d6ab",
+     "vendor": "claude",
+     "model": "opus",
+     "task": "outcome record",
+     "result": "done e0d52a422, merged 781d51429"
+    },
+    {
+     "issue": "78f0aafd",
+     "vendor": "codex",
+     "model": "gpt-6-luna",
+     "effort": "xhigh",
+     "task": "workload set and accounting regeneration",
+     "result": "partial: 42/46 gaps profile-cited, 4 FI-3 identity-unresolved; committed d7779b699 on worktree-agent-78f0aafd"
+    },
+    {
+     "issue": "31727c57",
+     "vendor": "claude",
+     "model": "opus",
+     "task": "tuned-arm stage probe and descriptive batch-fill launcher",
+     "result": "running"
+    },
+    {
+     "issue": "78f0aafd",
+     "vendor": "codex",
+     "model": "gpt-6.1-sol",
+     "effort": "high",
+     "task": "FI-3 exact-arm profile series",
+     "result": "running"
+    }
+   ]
   }
  }
 }
