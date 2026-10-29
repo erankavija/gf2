@@ -1,0 +1,230 @@
+{
+  "schema": "zen3-benchmark-acceptance-v2",
+  "receipt_sha256": "6aceec7fa2edd87f4ec43b32ebfb07c040bc9f46f1ce9eabe2ba20727a4b89e3",
+  "campaign_id": "1358d6ab-ldpc-aff3ct-integration-confirmation",
+  "label": "confirmation",
+  "verdict": "accepted",
+  "qualifies": false,
+  "family": {
+    "family_id": "1362381c-ldpc-aff3ct-integration",
+    "comparisons": 6,
+    "family_alpha": 0.05,
+    "attempt_alpha": 0.025,
+    "corrected_alpha": 0.004166666666666667,
+    "per_comparison_confidence": 0.9958333333333333,
+    "bootstrap_resamples": 10000
+  },
+  "sessions": 6,
+  "resumed": true,
+  "findings": [],
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-integrated-w1-b8",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.37586941034995797,
+        "lower": 0.369205017324381,
+        "upper": 0.3772845227882146,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 3489176701661406401,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w1-b1",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.9720464945480938,
+        "lower": 1.9689739797107766,
+        "upper": 1.9764915462076618,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 8903576037973550100,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-p12-b8",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "physical-cores-12",
+      "resolved_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.8194664113927548,
+        "lower": 1.772619810876386,
+        "upper": 1.8412061442939385,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 12076057545711427923,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w1-b8",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "fail",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 0.3249359756907483,
+        "lower": 0.31269149777776745,
+        "upper": 0.32632428514852485,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 633482130837374937,
+        "pairs": 24
+      },
+      "decision": "regressed",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w1-b1",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "single-core",
+      "resolved_cpus": [
+        0
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.776189669526662,
+        "lower": 1.7696129677712396,
+        "upper": 1.7823501616241377,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 4614548586986460126,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-p12-b8",
+      "role": "confirmatory",
+      "objective": "comparator-gap",
+      "core_arm": "physical-cores-12",
+      "resolved_cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "measured",
+      "outcome": "pass",
+      "pairs": 24,
+      "flagged_windows": 0,
+      "total_windows": 240,
+      "interval": {
+        "estimate": 1.5427696773847783,
+        "lower": 1.503998936270867,
+        "upper": 1.560278956652574,
+        "confidence": 0.9958333333333333,
+        "alpha": 0.004166666666666667,
+        "resamples": 10000,
+        "seed": 7754231850724124260,
+        "pairs": 24
+      },
+      "decision": "improved",
+      "margins": {
+        "improvement": 1.25,
+        "equivalence": 1.1
+      },
+      "unresolved_settings": [],
+      "reason": null
+    }
+  ]
+}
