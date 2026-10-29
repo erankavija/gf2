@@ -12,9 +12,9 @@
   },
   "counts_by_domain": {
     "BCH": {
-      "cells": 13,
-      "primary": 3,
-      "confirmatory": 13,
+      "cells": 19,
+      "primary": 9,
+      "confirmatory": 19,
       "holdout": 0,
       "exploratory": 0
     },
@@ -40,9 +40,9 @@
       "exploratory": 3
     },
     "LDPC decode": {
-      "cells": 91,
-      "primary": 24,
-      "confirmatory": 51,
+      "cells": 97,
+      "primary": 30,
+      "confirmatory": 57,
       "holdout": 4,
       "exploratory": 36
     },
@@ -83,6 +83,34 @@
     }
   },
   "families": [
+    {
+      "family": "1362381c-bch-integration",
+      "registry_pattern": "1362381c-bch-integration",
+      "issues": [
+        "1362381c"
+      ],
+      "label": "confirmation",
+      "protocol_version": 4,
+      "ledger_sequence": 1,
+      "receipt": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/receipt.json",
+      "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9",
+      "addendum": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/inputs/family-addendum.json",
+      "rejected_confirmations": []
+    },
+    {
+      "family": "1362381c-ldpc-aff3ct-integration",
+      "registry_pattern": "1362381c-ldpc-aff3ct-integration",
+      "issues": [
+        "1362381c"
+      ],
+      "label": "confirmation",
+      "protocol_version": 4,
+      "ledger_sequence": 1,
+      "receipt": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/receipt.json",
+      "receipt_sha256": "6aceec7fa2edd87f4ec43b32ebfb07c040bc9f46f1ce9eabe2ba20727a4b89e3",
+      "addendum": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/inputs/family-addendum.json",
+      "rejected_confirmations": []
+    },
     {
       "family": "2037941f-dense-allocated-matvec",
       "registry_pattern": "2037941f-*",
@@ -1081,22 +1109,6 @@
       "integrated_family": "FI-2"
     },
     {
-      "domain": "LDPC decode",
-      "pattern": "1362381c-ldpc-aff3ct-integration",
-      "issues": [
-        "1362381c"
-      ],
-      "integrated_family": "FI-3"
-    },
-    {
-      "domain": "BCH",
-      "pattern": "1362381c-bch-integration",
-      "issues": [
-        "1362381c"
-      ],
-      "integrated_family": "FI-4"
-    },
-    {
       "domain": "Integrated affected domains",
       "pattern": "1362381c-*-integration",
       "issues": [
@@ -1112,6 +1124,78 @@
     }
   ],
   "cells": [
+    {
+      "domain": "BCH",
+      "family": "1362381c-bch-integration",
+      "cell": "m14-b1-aff3ct-lfsr-scalar",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "aff3ct-lfsr-scalar"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/receipt.json",
+      "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9"
+    },
+    {
+      "domain": "BCH",
+      "family": "1362381c-bch-integration",
+      "cell": "m14-b256-aff3ct-lfsr-simd-inter",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "aff3ct-lfsr-simd-inter"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/receipt.json",
+      "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9"
+    },
+    {
+      "domain": "BCH",
+      "family": "1362381c-bch-integration",
+      "cell": "t2n-b1-bchlib-table-remainder",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "bchlib-table-remainder"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/receipt.json",
+      "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9"
+    },
+    {
+      "domain": "BCH",
+      "family": "1362381c-bch-integration",
+      "cell": "t2n-b256-bchlib-table-remainder",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "bchlib-table-remainder"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/receipt.json",
+      "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9"
+    },
+    {
+      "domain": "BCH",
+      "family": "1362381c-bch-integration",
+      "cell": "t2s-b1-bchlib-table-remainder",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "bchlib-table-remainder"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/receipt.json",
+      "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9"
+    },
+    {
+      "domain": "BCH",
+      "family": "1362381c-bch-integration",
+      "cell": "t2s-b256-bchlib-table-remainder",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "bchlib-table-remainder"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/receipt.json",
+      "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9"
+    },
     {
       "domain": "BCH",
       "family": "8e53235b-bch-codeword-assembly",
@@ -2247,6 +2331,78 @@
       "external_arms": [],
       "receipt": "dev/bench_results/4c1e441f/r1-dense-product-confirmation/receipt.json",
       "receipt_sha256": "a1f53ad3e194915bd3c31410515dff71df2897539a587c908a0bee98b51396e6"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-ldpc-aff3ct-integration",
+      "cell": "dvb-t2-r12-integrated-p12-b8",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "aff3ct-flooding-nms-f32-dvb-t2-r12"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/receipt.json",
+      "receipt_sha256": "6aceec7fa2edd87f4ec43b32ebfb07c040bc9f46f1ce9eabe2ba20727a4b89e3"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-ldpc-aff3ct-integration",
+      "cell": "dvb-t2-r12-integrated-w1-b1",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "aff3ct-flooding-nms-f32-dvb-t2-r12"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/receipt.json",
+      "receipt_sha256": "6aceec7fa2edd87f4ec43b32ebfb07c040bc9f46f1ce9eabe2ba20727a4b89e3"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-ldpc-aff3ct-integration",
+      "cell": "dvb-t2-r12-integrated-w1-b8",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "aff3ct-flooding-nms-f32-dvb-t2-r12"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/receipt.json",
+      "receipt_sha256": "6aceec7fa2edd87f4ec43b32ebfb07c040bc9f46f1ce9eabe2ba20727a4b89e3"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-ldpc-aff3ct-integration",
+      "cell": "nr-bg1-z384-integrated-p12-b8",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "aff3ct-flooding-nms-f32-nr-bg1-z384"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/receipt.json",
+      "receipt_sha256": "6aceec7fa2edd87f4ec43b32ebfb07c040bc9f46f1ce9eabe2ba20727a4b89e3"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-ldpc-aff3ct-integration",
+      "cell": "nr-bg1-z384-integrated-w1-b1",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "aff3ct-flooding-nms-f32-nr-bg1-z384"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/receipt.json",
+      "receipt_sha256": "6aceec7fa2edd87f4ec43b32ebfb07c040bc9f46f1ce9eabe2ba20727a4b89e3"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-ldpc-aff3ct-integration",
+      "cell": "nr-bg1-z384-integrated-w1-b8",
+      "role": "confirmatory",
+      "primary": true,
+      "external_arms": [
+        "aff3ct-flooding-nms-f32-nr-bg1-z384"
+      ],
+      "receipt": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/receipt.json",
+      "receipt_sha256": "6aceec7fa2edd87f4ec43b32ebfb07c040bc9f46f1ce9eabe2ba20727a4b89e3"
     },
     {
       "domain": "LDPC decode",

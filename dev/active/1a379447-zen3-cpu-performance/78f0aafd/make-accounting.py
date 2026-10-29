@@ -113,12 +113,27 @@ def prepared_profile(subject, cell, receipt, planned):
     log = directory/'repetitions.log'
     if not expanded.is_file() or not log.is_file() or 'series done ' not in log.read_text():
         return None
+    summary_path = directory/'profile-summary.json'
+    summary = None
+    if subject == 'fi3-arm':
+        if not summary_path.is_file():
+            return None
+        summary = read(summary_path)
+        if summary['cases'] != cited(expanded):
+            return None
     sha = receipt['arms'][planned['baseline_arm']]['executable_sha256']
     for line in expanded.read_text().splitlines():
         row = json.loads(line)
         if row['cell'] == cell['cell'] and row['sha256'] == sha and row['request']['case'] == planned['case']:
-            return {'status': 'profile-cited', 'profile': cited(expanded), 'code': 'historical',
-                    'basis': 'same measured executable digest and case',
+            if summary is not None:
+                measured = next(row for row in receipt['cells'] if row['cell_id'] == cell['cell'])
+                if (row['request']['cpus'] != measured['resolved_cpus'] or
+                        row['request']['workers_declared'] != len(measured['resolved_cpus']) or
+                        not any(profile['cell'] == row['label'] and profile['status'] == 'profiled'
+                                for profile in summary['profiles'])):
+                    continue
+            return {'status': 'profile-cited', 'profile': cited(summary_path if summary else expanded), 'code': 'historical',
+                    'basis': 'same measured executable digest and case'+('; recorded worker CPUs agree' if summary else ''),
                     'measured_arm_sha256': sha}
     return None
 
@@ -139,10 +154,11 @@ def inventory():
         interpretation = outcomes.INTERPRETATION[(declared['objective'], result['outcome'])]
         profile = available_profile(receipt, planned) if cell['domain'] == 'LDPC decode' else None
         if profile is None and cell['family'] == '1362381c-ldpc-aff3ct-integration':
+            exact = prepared_profile('fi3-arm', cell, receipt, planned)
             integrated = HERE/'decoder-profile/profile-summary.json'
             profile = {'status': 'profile-cited' if integrated.is_file() else 'awaiting-window',
                        'code': 'integrated',
-                       'launcher': relative(HERE/'decoder-window.sh'),
+                       'launcher': relative(HERE/'fi3-arm-window.sh'),
                        'basis': 'integrated production route; awaiting measured producing-input comparison'}
             if integrated.is_file():
                 build = read(HERE/'preparation/build-identity.json')
@@ -153,6 +169,8 @@ def inventory():
                 profile['profile'] = cited(integrated)
                 profile['status'] = 'profile-cited' if same_inputs else 'identity-unresolved'
                 profile['basis'] = 'compiled production inputs equal by digest and target flags agree' if same_inputs else 'producing inputs or target flags differ or are unpinned'
+            if exact:
+                profile = exact
         if profile is None:
             subject = next((key for key, families in arms.SUBJECTS.items()
                             if cell['family'] in families), None)
@@ -316,12 +334,23 @@ def build():
     for subject in (*arms.SUBJECTS, 'bch'):
         profiles.extend(subject_rows(subject))
     workload = read(live('1362381c/workload-set.json'))
+    registry = read(live('1362381c/survey/family-registry.json'))
+    integrated_families = {'FI-3', 'FI-4'}
+    integrated_by_pattern = {row['pattern']: row['integrated_family']
+                             for row in registry['families']
+                             if row.get('integrated_family') in integrated_families}
+    selected_integrated = [row | {'integrated_family': integrated_by_pattern[row['registry_pattern']]}
+                           for row in workload['families']
+                           if row['registry_pattern'] in integrated_by_pattern]
+    pending_integrated = [row for row in workload['pending']
+                          if row.get('integrated_family') in integrated_families]
     return {'decoder_build': cited(HERE/'preparation/build-identity.json'),
             'source': cited(live('1362381c/workload-set.json')),
             'drift': cited(live('1362381c/production-drift.json')),
             'material_gap_rule': 'comparator-gap pass with the external arm as candidate; canonical INTERPRETATION',
             'material_gaps': gaps,
-            'integrated_families': [row for row in workload['pending'] if row.get('integrated_family') in ('FI-3','FI-4')],
+            'integrated_families': selected_integrated,
+            'pending_integrated_families': pending_integrated,
             'profiles': profiles, 'stage_probes': stages(gaps), 'assembly': assembly(),
             'allocation_witness': cited(HERE/'allocation-witness.json'),
             'context_profiles': {key: cited(live(suffix)) for key, suffix in CONTEXT.items()},
@@ -360,8 +389,10 @@ def markdown(record):
     for row in record['material_gaps']:
         coverage = row['coverage']
         source = coverage.get('profile', {}).get('path', coverage.get('launcher') or 'unresolved')
+        prepared = ('; prepared launcher: `'+coverage['launcher']+'`'
+                    if coverage['status'] == 'identity-unresolved' and coverage.get('launcher') else '')
         lines.append(f"| {row['family']} | {row['cell']} | {row['drift_class']} | "
-                     f"{coverage.get('code', 'unresolved')} | {coverage['status']}: `{source}` |")
+                     f"{coverage.get('code', 'unresolved')} | {coverage['status']}: `{source}`{prepared} |")
     lines += ['', '## Per-profile mechanism accounting', '',
               'IPC and cache counter ratios are observations, not hardware limits. Static stack',
               'references include ordinary stack locals; compiler spill attribution and dynamic cost',
@@ -388,16 +419,31 @@ def markdown(record):
     lines += ['', 'Adapter stage probes are projected separately per receipt cell and arm in',
               '`accounting.json` as descriptive ranges with their execution count. They include',
               'whole-consumer conversion costs and do not isolate dependency latency.', '',
-              'FI-3 and FI-4 have structural pending entries until the workload-set generator',
-              'selects their window receipts. The inventory then reads their actual recorded outcomes.', '',
-              record['hardware_limit']+'.', '']
+              '## Integrated family selections', '',
+              '| Family | Registry pattern | Receipt | Receipt SHA-256 |', '|---|---|---|---|']
+    for family in record['integrated_families']:
+        lines.append(f"| {family['integrated_family']} | `{family['registry_pattern']}` | "
+                     f"`{family['receipt']}` | `{family['receipt_sha256']}` |")
+    if record['pending_integrated_families']:
+        lines += ['', 'Pending integrated families are listed in `accounting.json`.']
+    else:
+        lines += ['', 'The canonical workload set has selected receipts for FI-3 and FI-4.']
+    lines += ['', record['hardware_limit']+'.', '']
     return '\n'.join(lines)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true')
+    parser.add_argument('--summarize-subject', choices=(*arms.SUBJECTS, 'bch'))
     args = parser.parse_args()
+    if args.summarize_subject:
+        subject = args.summarize_subject
+        directory = HERE/f'{subject}-profile'
+        summary = {'cases': cited(directory/'cases.expanded.tsv'),
+                   'profiles': subject_rows(subject)}
+        (directory/'profile-summary.json').write_text(json.dumps(summary, indent=2)+'\n')
+        return
     record = build()
     outputs = {HERE/'accounting.json': json.dumps(record, indent=2)+'\n',
                HERE/'accounting.md': markdown(record)}
