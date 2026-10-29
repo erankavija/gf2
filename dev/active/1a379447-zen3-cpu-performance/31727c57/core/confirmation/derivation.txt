@@ -1,0 +1,44 @@
+pilot receipt  dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-pilot/receipt.json
+receipt sha256 cb2b2998fe7c52194d1a3e494231384d52c895d0aea07a9fcd2a10c7fa3e2e22
+campaign       31727c57-core-pilot
+verdict        accepted (label pilot)
+family         1362381c-core-route-integration: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+xor-inplace-4w                          12      1.2848      1.2803      1.2904    0.0044
+and-popcount-7w                         12      0.9898     0.98584     0.99214    0.0040
+xor-inplace-8w                          12      0.9887     0.98502     0.99152    0.0037
+matvec-r1024-24w-native                 12      1.3376      1.2791      1.3521    0.0438
+bitmatrix-transpose-8192x2048-native    12      1.0101     0.94401      1.0351    0.0655
+popcount-1024w-native                   12      1.0238      1.0224      1.0242    0.0014
+and-popcount-1024w-native               12       1.036      1.0306      1.0455    0.0091
+xor-inplace-8w-native                   12      1.0185     0.95676      1.0295    0.0607
+clmul-wide-9w-native                    12      1.0728      1.0711      1.0749    0.0019
+
+widest relative half-width   0.065473
+frozen measurement resolution 0.07
+replaced worthwhile_speedup 1.05 -> 1.08
+replaced equivalence_margin 1.05 -> 1.08
+restated the family description for the confirmatory stage
+
+selection      3 of 9 pilot cells become confirmatory
+rationale      The predeclared subset spans build levels or worker counts; holdouts consume the remaining first-attempt comparisons. Resolution uses every pilot cell.
+retained       matvec-r1024-24w-native
+retained       popcount-1024w-native
+retained       clmul-wide-9w-native
+dropped        xor-inplace-4w
+dropped        and-popcount-7w
+dropped        xor-inplace-8w
+dropped        bitmatrix-transpose-8192x2048-native
+dropped        and-popcount-1024w-native
+dropped        xor-inplace-8w-native
+restated purpose kernel-family -> final-integration
+
+holdout declaration dev/active/1a379447-zen3-cpu-performance/31727c57/core/holdout-cells.json
+declaration sha256  acf9b4584bd67c913db82381ac00a73f48eafe8cb4664ca361816a294daf66db
+holdout cell        xor-inplace-5w
+holdout cell        popcount-6w
+holdout cell        xor-inplace-3w
+holdout rationale   The declared cells are measured by no pilot of this family, and the offline producer's bit-backend sweep times none of these operation and length pairs, so no sample of a held-out workload takes part in selecting the threshold or in sizing the confirmation's resolution. Each cell is a non-regression cell of the profile build against the conservative build.
+margins: equivalence 1.08, material gap None
+confirmation addendum dev/active/1a379447-zen3-cpu-performance/31727c57/core/confirmation/addendum.json

@@ -1,0 +1,44 @@
+pilot receipt  dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-pilot/receipt.json
+receipt sha256 7d1805834941715300af93fd88b9c935f7be82a7a80acbad2fcff6f802ab2c0b
+campaign       31727c57-decoder-pilot
+verdict        accepted (label pilot)
+family         1362381c-decoder-route-integration: 1 ledger comparisons, family-wise alpha 0.05, attempt alpha 0.025, corrected alpha 0.025, per-comparison confidence 0.975
+
+cell                                 pairs    estimate       lower       upper  rel_half
+dvb-t2-r12-integrated-w1-b1              6      1.0058       1.004      1.0064    0.0018
+dvb-t2-r12-integrated-w1-b8              6      5.4027      5.3929      5.4227    0.0037
+dvb-t2-r12-integrated-w6-b8              6      1.0088      1.0036      1.0099    0.0051
+dvb-t2-r12-integrated-w12-b8             6     0.99912     0.98662      1.0073    0.0125
+dvb-t2-r12-integrated-w24-b8             6     0.99298      0.9848      1.0151    0.0223
+nr-bg1-z384-integrated-w1-b1             6      1.0073      1.0055      1.0103    0.0030
+nr-bg1-z384-integrated-w1-b8             6      5.8012      5.7803      5.8133    0.0036
+nr-bg1-z384-integrated-w6-b8             6      1.0035      1.0001      1.0113    0.0078
+nr-bg1-z384-integrated-w12-b8            6      1.0052     0.99666      1.0111    0.0085
+nr-bg1-z384-integrated-w24-b8            6      1.0093     0.99422       1.062    0.0522
+
+widest relative half-width   0.052212
+frozen measurement resolution 0.06
+replaced equivalence_margin 1.05 -> 1.07
+restated the family description for the confirmatory stage
+
+selection      4 of 10 pilot cells become confirmatory
+rationale      The predeclared subset spans build levels or worker counts; holdouts consume the remaining first-attempt comparisons. Resolution uses every pilot cell.
+retained       dvb-t2-r12-integrated-w1-b1
+retained       dvb-t2-r12-integrated-w6-b8
+retained       nr-bg1-z384-integrated-w12-b8
+retained       nr-bg1-z384-integrated-w24-b8
+dropped        dvb-t2-r12-integrated-w1-b8
+dropped        dvb-t2-r12-integrated-w12-b8
+dropped        dvb-t2-r12-integrated-w24-b8
+dropped        nr-bg1-z384-integrated-w1-b1
+dropped        nr-bg1-z384-integrated-w1-b8
+dropped        nr-bg1-z384-integrated-w6-b8
+restated purpose decoder-family -> final-integration
+
+holdout declaration dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/holdout-cells.json
+declaration sha256  cec56691bf4cd775fc600e62506722dcc2b7f88a277995c34eb7a1fda27ac159
+holdout cell        nr-bg1-z384-integrated-holdout-w1-b5
+holdout cell        nr-bg1-z384-integrated-holdout-w1-b13
+holdout rationale   NR code, recorded-input seed and per-worker batch sizes are absent from the pinned calibration inventory. Neither cell appears in this family pilot. Both compare the integrated tuned envelope against conservative selectors on partial waves.
+margins: equivalence 1.07, material gap None
+confirmation addendum dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/confirmation/addendum.json
