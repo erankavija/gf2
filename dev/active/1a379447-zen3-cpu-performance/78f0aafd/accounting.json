@@ -478,7 +478,7 @@
       "coverage": {
         "status": "identity-unresolved",
         "code": "integrated",
-        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-window.sh",
+        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-window.sh",
         "basis": "producing inputs or target flags differ or are unpinned",
         "profile": {
           "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
@@ -503,7 +503,7 @@
       "coverage": {
         "status": "identity-unresolved",
         "code": "integrated",
-        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-window.sh",
+        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-window.sh",
         "basis": "producing inputs or target flags differ or are unpinned",
         "profile": {
           "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
@@ -528,7 +528,7 @@
       "coverage": {
         "status": "identity-unresolved",
         "code": "integrated",
-        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-window.sh",
+        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-window.sh",
         "basis": "producing inputs or target flags differ or are unpinned",
         "profile": {
           "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
@@ -553,7 +553,7 @@
       "coverage": {
         "status": "identity-unresolved",
         "code": "integrated",
-        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-window.sh",
+        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-window.sh",
         "basis": "producing inputs or target flags differ or are unpinned",
         "profile": {
           "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
@@ -10241,6 +10241,142 @@
           },
           "scope": "whole process, including setup and warm-up",
           "source": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/polynomial-profile"
+        },
+        "bandwidth": {
+          "status": "unmeasured"
+        },
+        "orchestration": {
+          "status": "unmeasured"
+        },
+        "hardware_limit": {
+          "status": "unmeasured"
+        }
+      }
+    },
+    {
+      "profile": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile",
+      "cell": "dvb-t2-r12-integrated-p12-b8--gf2-batch-tuned-dvb-t2-r12",
+      "status": "awaiting-window",
+      "mechanisms": {
+        "allocation": {
+          "status": "unmeasured"
+        },
+        "instructions": {
+          "status": "unmeasured"
+        },
+        "dependencies": {
+          "status": "unmeasured"
+        },
+        "compiler_spills": {
+          "status": "unmeasured"
+        },
+        "packing": {
+          "status": "unmeasured"
+        },
+        "cache_traffic": {
+          "status": "unmeasured"
+        },
+        "bandwidth": {
+          "status": "unmeasured"
+        },
+        "orchestration": {
+          "status": "unmeasured"
+        },
+        "hardware_limit": {
+          "status": "unmeasured"
+        }
+      }
+    },
+    {
+      "profile": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile",
+      "cell": "dvb-t2-r12-integrated-w1-b1--gf2-batch-tuned-dvb-t2-r12",
+      "status": "awaiting-window",
+      "mechanisms": {
+        "allocation": {
+          "status": "unmeasured"
+        },
+        "instructions": {
+          "status": "unmeasured"
+        },
+        "dependencies": {
+          "status": "unmeasured"
+        },
+        "compiler_spills": {
+          "status": "unmeasured"
+        },
+        "packing": {
+          "status": "unmeasured"
+        },
+        "cache_traffic": {
+          "status": "unmeasured"
+        },
+        "bandwidth": {
+          "status": "unmeasured"
+        },
+        "orchestration": {
+          "status": "unmeasured"
+        },
+        "hardware_limit": {
+          "status": "unmeasured"
+        }
+      }
+    },
+    {
+      "profile": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile",
+      "cell": "nr-bg1-z384-integrated-p12-b8--gf2-batch-tuned-nr-bg1-z384",
+      "status": "awaiting-window",
+      "mechanisms": {
+        "allocation": {
+          "status": "unmeasured"
+        },
+        "instructions": {
+          "status": "unmeasured"
+        },
+        "dependencies": {
+          "status": "unmeasured"
+        },
+        "compiler_spills": {
+          "status": "unmeasured"
+        },
+        "packing": {
+          "status": "unmeasured"
+        },
+        "cache_traffic": {
+          "status": "unmeasured"
+        },
+        "bandwidth": {
+          "status": "unmeasured"
+        },
+        "orchestration": {
+          "status": "unmeasured"
+        },
+        "hardware_limit": {
+          "status": "unmeasured"
+        }
+      }
+    },
+    {
+      "profile": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile",
+      "cell": "nr-bg1-z384-integrated-w1-b1--gf2-batch-tuned-nr-bg1-z384",
+      "status": "awaiting-window",
+      "mechanisms": {
+        "allocation": {
+          "status": "unmeasured"
+        },
+        "instructions": {
+          "status": "unmeasured"
+        },
+        "dependencies": {
+          "status": "unmeasured"
+        },
+        "compiler_spills": {
+          "status": "unmeasured"
+        },
+        "packing": {
+          "status": "unmeasured"
+        },
+        "cache_traffic": {
+          "status": "unmeasured"
         },
         "bandwidth": {
           "status": "unmeasured"

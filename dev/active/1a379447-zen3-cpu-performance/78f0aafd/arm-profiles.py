@@ -15,6 +15,7 @@ SUBJECTS = {
     'nr-encode': ['nr-rate-matched-encode-baselines-v1'],
     'byte-field': ['byte-field-matrix-product', 'byte-field-region-axpy'],
     'polynomial': ['polynomial-host-targeting', 'wide-polynomial-competitiveness'],
+    'fi3-arm': ['1362381c-ldpc-aff3ct-integration'],
 }
 
 
@@ -85,8 +86,12 @@ def cases(subject):
             continue
         for name in (planned['baseline_arm'],):
             arm = receipt['arms'][name]
-            yield expanded(plan, planned, declared, name, executable(arm),
+            row = expanded(plan, planned, declared, name, executable(arm),
                            arm['executable_sha256'], receipt['settings'])
+            if subject == 'fi3-arm':
+                measured = next(row for row in receipt['cells'] if row['cell_id'] == cell['cell'])
+                row['request']['cpus'] = measured['resolved_cpus']
+            yield row
 
 
 def expanded(plan, cell, declared, name, binary, sha, settings):
@@ -114,8 +119,22 @@ def identity(path):
           ' driver='+digest(Path(__file__))+' perf-settings='+digest(live('3be770d5/survey/profile-session.sh')))
 
 
-def session(out, path):
-    if os.environ.get('GF2_BENCH_WINDOW') != '1':
+def wire_request(row):
+    order = ('schema', 'cell_id', 'arm', 'role', 'pair', 'case', 'cache_state',
+             'windows', 'window_target_ms', 'cpus', 'workers_declared')
+    request = {key: row['request'][key] for key in order}
+    if not request['cpus'] and request['workers_declared'] == 1:
+        request['cpus'] = [min(os.sched_getaffinity(0))]
+    if (len(request['cpus']) != request['workers_declared'] or
+            not set(request['cpus']) <= os.sched_getaffinity(0)):
+        raise SystemExit('recorded worker CPUs unavailable: '+row['label'])
+    # serde_json::Value uses ordered object keys inside the case.
+    request['case'] = json.loads(json.dumps(request['case'], sort_keys=True))
+    return request
+
+
+def session(out, path, dry_run=False):
+    if not dry_run and os.environ.get('GF2_BENCH_WINDOW') != '1':
         raise SystemExit('profiles require GF2_BENCH_WINDOW=1')
     identity(path)
     directory = Path(out)
@@ -124,22 +143,22 @@ def session(out, path):
     constants = dict(re.findall(r'^(GROUP_CORE|GROUP_MEMORY|SAMPLE_PERIOD)=(.+)$', session_source, re.M))
     for row in map(json.loads, Path(path).read_text().splitlines()):
         stem = directory / row['label']
-        order = ('schema', 'cell_id', 'arm', 'role', 'pair', 'case', 'cache_state',
-                 'windows', 'window_target_ms', 'cpus', 'workers_declared')
-        request = {key: row['request'][key] for key in order}
-        # Resolve the campaign's single physical CPU from Linux affinity.
-        # All prepared nondecoder subjects declare one worker.
-        if request['workers_declared'] != 1:
-            raise SystemExit('subject needs a worker-aware session: '+row['label'])
-        request['cpus'] = [min(os.sched_getaffinity(0))]
+        request = wire_request(row)
+        placement = ['taskset', '-c', ','.join(map(str, request['cpus']))]
         inherited = {k: v for k, v in os.environ.items() if not k.startswith(('GF2_', 'RAYON_'))}
         env = {**inherited, **row['environment'], 'GF2_TUNING_FRESH_CASE': 'child-v2'}
-        # serde_json::Value uses ordered object keys inside the case.
-        request['case'] = json.loads(json.dumps(request['case'], sort_keys=True))
         wire = json.dumps(request, separators=(',', ':'))
+        if dry_run:
+            Path(str(stem)+'.dry-run.json').write_text(json.dumps({
+                'scope': 'untimed command preparation; no executable or perf invocation',
+                'placement': placement, 'executable': row['executable'],
+                'sha256': row['sha256'], 'request': request,
+                'environment': row['environment'],
+                'counter_groups': constants}, indent=2)+'\n')
+            continue
         for group, events in [('core', constants['GROUP_CORE']),
                               ('memory', constants['GROUP_MEMORY'])]:
-            result = subprocess.run(['taskset', '-c', str(request['cpus'][0]),
+            result = subprocess.run(placement+[
                                      'perf', 'stat', '-x', ',', '-o', str(stem)+'.'+group+'.csv',
                                      '-e', events, '--', row['executable']],
                                     input=wire, text=True, capture_output=True, env=env)
@@ -150,7 +169,7 @@ def session(out, path):
             if result.returncode:
                 raise SystemExit('profile arm failed: '+row['label']+'; '+result.stderr[:200])
         data = str(stem)+'.data'
-        result = subprocess.run(['taskset', '-c', str(request['cpus'][0]), 'perf', 'record', '-q',
+        result = subprocess.run(placement+['perf', 'record', '-q',
                                  '-e', 'cycles:u', '-c', constants['SAMPLE_PERIOD'], '-o', data, '--',
                                  row['executable']], input=wire, text=True, capture_output=True, env=env)
         Path(str(stem)+'.record.jsonl').write_text(result.stdout)
@@ -172,6 +191,8 @@ def main():
         identity(sys.argv[2])
     elif sys.argv[1] == 'session':
         session(*sys.argv[2:])
+    elif sys.argv[1] == 'dry-run':
+        session(*sys.argv[2:], dry_run=True)
     else:
         raise SystemExit(__doc__)
 

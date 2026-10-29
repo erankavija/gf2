@@ -10,4 +10,5 @@ source "$(locate 3be770d5/survey/profile-series.sh)"
 series_cases() { python3 -B "$here/arm-profiles.py" cases "$subject"; }
 series_identity() { python3 -B "$here/arm-profiles.py" identity "$1"; }
 profile_series "$here/$subject-profile" "$here" "$here/arm-session.sh" 9 "$subject whole-process profile"
+python3 -B "$here/make-accounting.py" --summarize-subject "$subject"
 python3 -B "$here/make-accounting.py"
