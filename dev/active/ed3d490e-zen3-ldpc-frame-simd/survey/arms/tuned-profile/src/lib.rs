@@ -4,17 +4,19 @@
 //! The shared cell of `ldpc_batch_arms`, with each worker's decoder built by
 //! [`LdpcBatchDecoder::new`] after [`ENVELOPE`] is installed, so every wave
 //! takes the route the envelope's decode selectors decide on the detected lane
-//! backend. The envelope identity and the observed routes are untimed
-//! diagnostics. Needs the `tuning-profile` cargo feature of `gf2-coding`.
+//! backend. The envelope identity, the observed routes and the stage costs
+//! [`probe_stages`] measures on the observed route after the timed windows are
+//! untimed diagnostics. Needs the `tuning-profile` cargo feature of
+//! `gf2-coding`.
 
-use gf2_coding::ldpc::{DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode};
+use gf2_coding::ldpc::{BatchRoute, DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode};
 use gf2_coding::tuning::{self, CodingTuning, CodingTuningCodec};
 use gf2_core::tuning::{ProfileRegistryBuilder, SectionResolution};
 use gf2_kernels_simd::ldpc_lanes::LANES;
-use ldpc_batch_arms::{run_with_policy, ArmPolicy, CellContext};
+use ldpc_batch_arms::{probe_stages, run_with_policy, ArmPolicy, CellContext, STAGE_PROBES};
 use ldpc_survey::arm;
 use ldpc_throughput::driver::CellRun;
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use std::num::NonZeroUsize;
 use tuning_campaign_support::protocol::sha256_hex;
 
@@ -67,7 +69,7 @@ fn wave_routes(decoder: &LdpcBatchDecoder, batch: usize, workers: NonZeroUsize) 
         .chain((batch > LANES && last > 0).then_some(last))
         .map(|frames| WaveRoute {
             frames,
-            route: format!("{:?}", decoder.batch_route_with_workers(frames, workers)),
+            route: decoder.batch_route_with_workers(frames, workers),
         })
         .collect()
 }
@@ -75,7 +77,12 @@ fn wave_routes(decoder: &LdpcBatchDecoder, batch: usize, workers: NonZeroUsize) 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 struct WaveRoute {
     frames: usize,
-    route: String,
+    #[serde(serialize_with = "debug_name")]
+    route: BatchRoute,
+}
+
+fn debug_name<S: Serializer>(route: &BatchRoute, serializer: S) -> Result<S::Ok, S::Error> {
+    serializer.collect_str(&format_args!("{route:?}"))
 }
 
 /// Untimed diagnostics, journalled by the runner as a child diagnostic.
@@ -94,6 +101,10 @@ struct Diagnostics<'a> {
     wave_frames: usize,
     /// Lane workspace bytes each worker's decoder reports, in worker order.
     workspace_bytes: Vec<usize>,
+    /// Probes behind each of `pack_ns`, `batch_fill_ns` and `unpack_ns`.
+    stage_probes: usize,
+    stage_statistic: &'static str,
+    /// `batch_fill_ns` is the decoder call of [`probe_stages`].
     conversion: arm::ConversionCosts,
 }
 
@@ -135,9 +146,29 @@ impl ArmPolicy for TunedProfile {
         workspace_bytes: Vec<usize>,
         cell: &mut CellRun,
     ) -> Result<String, String> {
-        let batch = context.batch;
+        let CellContext {
+            code,
+            decoder_config,
+            batch,
+            llrs,
+            ..
+        } = context;
         let selectors = tuning::active().section.decode().clone();
         let routes = observations.into_iter().next().expect("first worker");
+        // The probe decodes on one worker, so it takes the route the cell's
+        // worker count selects rather than the envelope's one-worker route.
+        let route = match routes.as_slice() {
+            [first, rest @ ..] if rest.iter().all(|wave| wave.route == first.route) => first.route,
+            _ => {
+                return Err(format!(
+                    "the waves decode on several routes {routes:?}; the stage probe takes one"
+                ))
+            }
+        };
+        let stages = probe_stages(code, decoder_config, batch, route, llrs)?;
+        cell.conversion.pack_ns = stages.pack_ns;
+        cell.conversion.batch_fill_ns = stages.decode_ns;
+        cell.conversion.unpack_ns = stages.extract_ns;
         let selected_path = format!(
             "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction \
          under tuning profile {} (lane_min_frames {} lane_max_edges {}), wave routes {}, \
@@ -148,7 +179,7 @@ impl ArmPolicy for TunedProfile {
             selectors.lane_max_edges(),
             routes
                 .iter()
-                .map(|wave| format!("{} frames {}", wave.frames, wave.route))
+                .map(|wave| format!("{} frames {:?}", wave.frames, wave.route))
                 .collect::<Vec<_>>()
                 .join(", "),
             workspace_bytes.first().copied().unwrap_or_default(),
@@ -167,6 +198,8 @@ impl ArmPolicy for TunedProfile {
             batch_frames: batch,
             wave_frames: LANES,
             workspace_bytes,
+            stage_probes: STAGE_PROBES,
+            stage_statistic: "median",
             conversion: cell.conversion,
         };
         eprintln!(
@@ -191,7 +224,8 @@ pub fn profile_routes(decoder: &LdpcBatchDecoder, batch: usize, workers: NonZero
 /// Runs the production decoder arm.
 ///
 /// # Errors
-/// Returns envelope installation or shared arm errors.
+/// Returns envelope installation or shared arm errors, and an error when the
+/// waves of a batch decode on several routes, which the stage probe refuses.
 pub fn run() -> Result<(), String> {
     let envelope = install_envelope()?;
     run_with_policy(ARM, TunedProfile { envelope })
@@ -206,7 +240,11 @@ mod tests {
     use gf2_coding::tuning::{self, DecodeSelectors};
     use gf2_coding::tuning::{CodingTuning, CodingTuningCodec};
     use gf2_core::tuning::ProfileRegistryBuilder;
+    use ldpc_batch_arms::CellContext;
+    use ldpc_survey::arm::ConversionCosts;
+    use ldpc_throughput::driver::CellRun;
     use ldpc_throughput::gf2::{config, Gf2Worker};
+    use ldpc_throughput::workload::Threads;
 
     #[test]
     fn committed_profile_routes_multicore_cells_to_single_frame() {
@@ -228,7 +266,7 @@ mod tests {
             assert!(
                 wave_routes(&decoder, LANES + 1, NonZeroUsize::new(workers).unwrap())
                     .iter()
-                    .all(|wave| wave.route == format!("{:?}", BatchRoute::SingleFrame))
+                    .all(|wave| wave.route == BatchRoute::SingleFrame)
             );
         }
     }
@@ -272,6 +310,60 @@ mod tests {
     }
 
     #[test]
+    fn the_report_probes_the_stages_of_the_observed_route() {
+        let envelope = install_envelope().expect("install");
+        let policy = TunedProfile { envelope };
+        let code = ldpc_batch_code();
+        let frames = ldpc_batch_frames();
+        let llrs: Vec<f32> = frames.iter().flatten().map(|llr| llr.value()).collect();
+        let decoder_config = config(0.75, true);
+        let decoder = policy
+            .build_decoder(&code, decoder_config, LDPC_BATCH_CAP, LANES)
+            .unwrap();
+        let report = |batch: usize, workers: usize| {
+            let workers = NonZeroUsize::new(workers).unwrap();
+            let mut cell = CellRun {
+                windows: Vec::new(),
+                conversion: ConversionCosts {
+                    setup_ns: 0,
+                    pack_ns: 0,
+                    unpack_ns: 0,
+                    batch_fill_ns: 0,
+                    dispatch_ns: 0,
+                },
+                workers_observed: workers.get() as u32,
+                threads: Threads { ready: 1, after: 1 },
+            };
+            let context = CellContext {
+                arm_name: "probe",
+                code: &code,
+                decoder_config,
+                batch,
+                llrs: &llrs[..batch * code.n()],
+            };
+            policy
+                .report(
+                    context,
+                    vec![wave_routes(&decoder, batch, workers)],
+                    vec![0],
+                    &mut cell,
+                )
+                .map(|_| cell.conversion)
+        };
+        // One frame, full waves on the lane route, and full waves the six
+        // workers route to the single-frame decoder.
+        for (batch, workers) in [(1, 1), (2 * LANES, 1), (LANES, 6)] {
+            let conversion = report(batch, workers).expect("probed");
+            assert!(
+                conversion.batch_fill_ns > 0,
+                "batch {batch} workers {workers}"
+            );
+        }
+        let mixed = report(LANES + 1, 1).expect_err("a lane wave and a single-frame wave");
+        assert!(mixed.contains("routes"), "{mixed}");
+    }
+
+    #[test]
     fn the_route_report_names_each_wave_size_once() {
         let decoder = LdpcBatchDecoder::with_selectors(
             ldpc_batch_code(),
@@ -290,9 +382,8 @@ mod tests {
         assert_eq!(sizes(LANES), [LANES]);
         assert_eq!(sizes(2 * LANES), [LANES]);
         assert_eq!(sizes(2 * LANES + 3), [LANES, 3]);
-        let route = format!("{:?}", BatchRoute::SingleFrame);
         assert!(wave_routes(&decoder, LANES + 1, NonZeroUsize::MIN)
             .iter()
-            .all(|wave| wave.route == route));
+            .all(|wave| wave.route == BatchRoute::SingleFrame));
     }
 }

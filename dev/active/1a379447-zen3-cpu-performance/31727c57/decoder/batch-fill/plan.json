@@ -1,0 +1,495 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "31727c57-decoder-batch-fill",
+  "issue": "31727c57",
+  "label": "pilot",
+  "campaign_seed": 3172702,
+  "addendum": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/batch-fill/addendum.json",
+  "producing_manifest": "dev/active/1a379447-zen3-cpu-performance/f547c394/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh",
+  "timing_override": null,
+  "arms": {
+    "gf2-batch-tuned-probed-portable-dvb-t2-r12": {
+      "build": "tuned-portable",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope, portable build, with the stage probe",
+      "executable": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/batch-fill/target/release/gf2-batch-tuned-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": null,
+      "tuning_profile": {
+        "id": "gf2-0a77ecfc-20261013t011147z-815998",
+        "sha256": "05782eedfc58da8d7860f7a2306363443a36f05bd7a20efa3a3841ec8c59f4f5"
+      }
+    },
+    "gf2-batch-tuned-probed-portable-nr-bg1-z384": {
+      "build": "tuned-portable",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope, portable build, with the stage probe",
+      "executable": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/batch-fill/target/release/gf2-batch-tuned-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "dev/bench_results/c077a88b/v3-preparation/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": null,
+      "tuning_profile": {
+        "id": "gf2-0a77ecfc-20261013t011147z-815998",
+        "sha256": "05782eedfc58da8d7860f7a2306363443a36f05bd7a20efa3a3841ec8c59f4f5"
+      }
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-integrated-w1-b1-r1",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w6-b8-r1",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w12-b8-r1",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w24-b8-r1",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-holdout-w1-b5-r1",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 5,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-holdout-w1-b13-r1",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 13,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w1-b1-r2",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w6-b8-r2",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w12-b8-r2",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w24-b8-r2",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-holdout-w1-b5-r2",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 5,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-holdout-w1-b13-r2",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 13,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w1-b1-r3",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w6-b8-r3",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w12-b8-r3",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w24-b8-r3",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-holdout-w1-b5-r3",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 5,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-holdout-w1-b13-r3",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 13,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w1-b1-r4",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w6-b8-r4",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w12-b8-r4",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w24-b8-r4",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-holdout-w1-b5-r4",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 5,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-holdout-w1-b13-r4",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 13,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w1-b1-r5",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "dvb-t2-r12-integrated-w6-b8-r5",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-dvb-t2-r12",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w12-b8-r5",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-w24-b8-r5",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-holdout-w1-b5-r5",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 5,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    },
+    {
+      "cell_id": "nr-bg1-z384-integrated-holdout-w1-b13-r5",
+      "baseline_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-tuned-probed-portable-nr-bg1-z384",
+      "case": {
+        "bundle": "target/31727c57-decoder-inputs/inputs/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 13,
+        "quality_frames": 128
+      },
+      "pilot_pairs": null
+    }
+  ],
+  "max_cells_per_session": 6
+}
