@@ -2,6 +2,9 @@
 """Check the outcome projection and preserve unavailable and adverse evidence."""
 
 import copy
+from pathlib import Path
+import shutil
+import tempfile
 import unittest
 
 import make_outcome as outcome
@@ -53,6 +56,38 @@ class Outcome(unittest.TestCase):
                         self.assertEqual(row[-1], "unmeasured; recorded 0")
                     else:
                         self.assertEqual(row[-1], outcome.tables.spread(side["batch_fill"])[0])
+
+    def test_absent_batch_fill_record_keeps_the_unmeasured_rows(self):
+        with tempfile.TemporaryDirectory() as empty:
+            self.assertIsNone(outcome.batch_fill_record(Path(empty)))
+        text = outcome.render(self.campaigns)
+        self.assertIn("REQ-04 has that evidence gap", text)
+        self.assertNotIn("### Tuned-arm batch fill", text)
+
+    def test_batch_fill_record_reports_every_confirmation_cell(self):
+        # The untimed smoke's log has the record's shape; its values are no measurement.
+        with tempfile.TemporaryDirectory() as stage:
+            stage = Path(stage)
+            shutil.copy(outcome.batch_fill.DIRECTORY / "untimed-execution.log",
+                        stage / "execution.log")
+            record = outcome.batch_fill_record(stage)
+        confirmation = self.campaigns["decoder", "confirmation"]
+        rows = outcome.batch_fill_rows(record, confirmation)
+        self.assertEqual(len(rows), len(confirmation["plan"]["cells"]))
+        build = outcome.batch_fill.read(outcome.batch_fill.BUILD_RECORD)
+        probed = build["arms"][outcome.batch_fill.ARM]["executable_sha256"]
+        for row, planned in zip(rows, confirmation["plan"]["cells"]):
+            cell = record["cells"][planned["cell_id"]]
+            with self.subTest(cell=planned["cell_id"]):
+                self.assertTrue(all(value > 0 for value in cell["fill"]))
+                self.assertEqual(row[5], str(2 * outcome.batch_fill.REPLICATES))
+                self.assertEqual(row[8], outcome.tables.spread(cell["fill"])[0])
+                self.assertEqual(row[-1], f"`{probed}`")
+        text = outcome.render(self.campaigns, record)
+        self.assertIn("### Tuned-arm batch fill", text)
+        self.assertIn(build["confirmed_arm"]["executable_sha256"], text)
+        self.assertIn(outcome.batch_fill.RULING, text)
+        self.assertNotIn("REQ-04 has that evidence gap", text)
 
     def test_confirmation_count_comes_from_roles(self):
         for route in ("core", "decoder"):

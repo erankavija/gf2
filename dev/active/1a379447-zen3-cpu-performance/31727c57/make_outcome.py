@@ -5,13 +5,17 @@ Invoke from the worktree root with python3 -B; --check checks the saved report.
 """
 
 import argparse
+import json
 from pathlib import Path
+import re
 
 from locate import HERE, ROOT, load
+import batch_fill
 
 tables = load("survey/make-outcome-tables.py", "route_outcome_tables")
 shared = tables.outcome
 OUTPUT = HERE / "outcome.md"
+REPLICATE = re.compile(r"-r[0-9]+$")
 
 
 def link(path, label):
@@ -83,6 +87,81 @@ def measurement_rows(campaign):
     return rows
 
 
+def batch_fill_record(stage=batch_fill.DIRECTORY / batch_fill.CAMPAIGN):
+    """The probed tuned arm's batch fill per confirmation cell, once the record's stage is
+    complete; None before."""
+    log = stage / "execution.log"
+    if not tables.verifier.stage_complete(str(log)):
+        return None
+    with log.open() as handle:
+        arms = json.loads(handle.readline())["details"]["arms"]
+    cells = {}
+    for event in tables.smoke.child_diagnostics(stage):
+        reports = {}
+        for text in event["details"]["stderr"].splitlines():
+            try:
+                report = json.loads(text)
+            except ValueError:
+                continue
+            if isinstance(report, dict):
+                reports[report.get("kind")] = report
+        decoder = reports[tables.DECODER_REPORT]
+        cell = cells.setdefault(REPLICATE.sub("", event["case"]["cell_id"]), {
+            "workers": len(reports["worker-placement"]["workers"]),
+            "batch": decoder["batch_frames"],
+            "routes": ", ".join(f"{wave['frames']} {wave['route']}"
+                                for wave in decoder["wave_routes"]),
+            "executables": set(), "probes": set(), "statistics": set(), "fill": []})
+        cell["executables"].add(arms[event["case"]["arm"]]["executable_sha256"])
+        cell["probes"].add(decoder["stage_probes"])
+        cell["statistics"].add(decoder["stage_statistic"])
+        cell["fill"].append(decoder["conversion"]["batch_fill_ns"])
+    return {"stage": stage, "cells": cells}
+
+
+def batch_fill_rows(record, confirmation):
+    rows = []
+    for planned in confirmation["plan"]["cells"]:
+        identifier = planned["cell_id"]
+        cell = record["cells"][identifier]
+        role = next(summary["role"] for summary in confirmation["summary"]["cells"]
+                    if summary["cell_id"] == identifier)
+        text, coverage = tables.spread(cell["fill"])
+        rows.append([
+            f"`{identifier}`", role, str(cell["workers"]), str(cell["batch"]), cell["routes"],
+            str(len(cell["fill"])), ", ".join(str(probes) for probes in sorted(cell["probes"])),
+            ", ".join(sorted(cell["statistics"])), text, f"{coverage:.3f}",
+            ", ".join(f"`{digest}`" for digest in sorted(cell["executables"])),
+        ])
+    return rows
+
+
+def batch_fill_section(record, confirmation):
+    build = batch_fill.read(batch_fill.BUILD_RECORD)
+    stage = record["stage"]
+    return [
+        "### Tuned-arm batch fill", "",
+        f"{batch_fill.RULING} The probed arm is built by "
+        f"{link(HERE / 'batch_fill.py', 'batch_fill.py')} with the confirmed portable arms' "
+        f"build tooling; its {link(batch_fill.BUILD_RECORD, 'build record')} pins executable "
+        f"SHA-256 `{build['arms'][batch_fill.ARM]['executable_sha256']}`, which differs from "
+        f"the confirmed tuned arm's `{build['confirmed_arm']['executable_sha256']}`. Its decode "
+        "path is the confirmed arm's apart from the stage probe, which runs after the timed "
+        "call on the route the cell's waves take at the cell's worker count.", "",
+        f"Sources: {link(stage / 'execution.log', 'execution log')}, "
+        f"{link(stage / 'plan.json', 'executed plan')}, "
+        f"{link(batch_fill.DIRECTORY / 'addendum.json', 'descriptive addendum')}. "
+        "Each execution is one validation dispatch of the shared runner under the canonical "
+        "lock; batch fill is that execution's `conversion.batch_fill_ns`, the stated statistic "
+        "over the stated stage probes. Values are nanoseconds: median [order-statistic "
+        "interval] over the executions, with the coverage shown.", "",
+        *shared.table(["Cell", "Confirmation role", "Workers", "Batch per worker",
+                       "Wave routes", "Executions", "Stage probes", "Statistic",
+                       "Batch fill, ns", "Coverage", "Executable SHA-256"],
+                      batch_fill_rows(record, confirmation)), "",
+    ]
+
+
 def stage_record(campaign, stage):
     summary, directory = campaign["summary"], campaign["directory"]
     family = summary["family"]
@@ -134,7 +213,11 @@ def margin_record(route, pilot, confirmation):
     ]
 
 
-def render(records):
+def render(records, fill=None):
+    gap = ("The tuned decoder arm's separate batch-fill latency is unmeasured in the committed "
+           "evidence; REQ-04 has that evidence gap." if fill is None else
+           "The confirmation receipts record no tuned-arm batch fill; a separate descriptive "
+           "record of the probed tuned arm reports it.")
     lines = [
         "# Integrated core and decoder route outcome", "",
         "> **Diátaxis Type:** Reference", "",
@@ -142,9 +225,7 @@ def render(records):
         f"{link(HERE.parent / '1362381c/design.md', 'integrated scorecard design')}. "
         "Both families have completed pilot, canonical freeze and independent confirmation "
         "under frozen protocol v4 on the integrated release builds. "
-        "The confirmation acceptance verdicts are recorded below. "
-        "The tuned decoder arm's separate batch-fill latency is unmeasured in the committed "
-        "evidence; REQ-04 has that evidence gap.", "",
+        f"The confirmation acceptance verdicts are recorded below. {gap}", "",
         f"Generated by {link(HERE / 'make_outcome.py', 'make_outcome.py')} using the shared "
         f"{link(Path(tables.__file__), 'outcome table reader')} "
         "and its collection outcome reader and median intervals. From the worktree root:", "",
@@ -216,9 +297,11 @@ def render(records):
                 "waiting for frames to arrive. Tuned-arm diagnostics declare no stage probes; "
                 "every recorded batch-fill field is zero. Under the shared reader's rule "
                 "those entries are unmeasured, and the recorded zeros provide no latency "
-                "estimate or confidence interval. REQ-04 therefore lacks a measured "
-                "tuned-arm batch-fill result in every decoder cell despite accepted "
-                "throughput outcomes.", "",
+                "estimate or confidence interval. "
+                + ("REQ-04 therefore lacks a measured tuned-arm batch-fill result in every "
+                   "decoder cell despite accepted throughput outcomes." if fill is None else
+                   "The tuned-arm batch fill section below reports the probed arm's values."),
+                "",
             ]
             for stage, campaign in (("Pilot", pilot), ("Confirmation", confirmation)):
                 lines += [f"{stage} arm measurements (basis: its receipt and execution log above):", "",
@@ -226,6 +309,8 @@ def render(records):
                                          "Frames per call", "Executions", "Coverage", "Time per call, ns",
                                          "Throughput, frames/s", "Batch fill, ns"],
                                         measurement_rows(campaign)), ""]
+            if fill is not None:
+                lines += batch_fill_section(fill, confirmation)
     return "\n".join(lines)
 
 
@@ -233,7 +318,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    text = render(campaigns())
+    text = render(campaigns(), batch_fill_record())
     if args.check:
         if OUTPUT.read_text() != text:
             parser.exit(1, "outcome.md differs from its evidence projection\n")
