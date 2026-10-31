@@ -6,7 +6,7 @@ Six profile series for `@/issue/78f0aafd` have nine completed sessions each. The
 
 ## REQ-01: integrated decoder route
 
-The decoder profile uses the production route under the committed coding envelope with Rust 1.95, a release build and `-C target-cpu=native`. Its [case declaration](decoder-cases.tsv) profiles DVB-T2 R12 and NR BG1 Z=384 at one, six and twelve physical cores and twenty-four logical CPUs, with one-frame cases at one core. The [profile summary](decoder-profile/profile-summary.json) has ten production cells across the two codes. The [build record](preparation/build-identity.json) pins the profiled `ldpc-batch-profile` executable, compiled production inputs and build environment; its executable SHA-256 is `805bdcb457c22d3f713763a29f909bad152fd28bf75eca6d0f1532bbde2eacfa`.
+The decoder profile uses the production route under the committed coding envelope with Rust 1.95, a release build and `-C target-cpu=native`. Its [case declaration](decoder-cases.tsv) profiles DVB-T2 R12 and NR BG1 Z=384 at one, six and twelve physical cores and twenty-four logical CPUs, with one-frame cases at one core. The [profile summary](decoder-profile/profile-summary.json) has ten production cells across the two codes. Per-worker slowdown ratios compare a multicore cell with the one-core cell of the same code, batch and pass count; the one-frame cells have no multicore counterpart and state orchestration scaling as unmeasured. The [build record](preparation/build-identity.json) pins the profiled `ldpc-batch-profile` executable, compiled production inputs and build environment; its executable SHA-256 is `805bdcb457c22d3f713763a29f909bad152fd28bf75eca6d0f1532bbde2eacfa`.
 
 ## REQ-02: material-gap coverage
 

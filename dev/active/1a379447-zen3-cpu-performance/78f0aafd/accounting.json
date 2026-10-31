@@ -7816,7 +7816,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "ipc": {
@@ -7853,7 +7853,7 @@
           "status": "sampled",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "samples": 823,
           "categories": [
@@ -7872,7 +7872,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "l1d_miss_fraction": {
@@ -7895,7 +7895,44 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "unmeasured"
+          "status": "measured scaling, attribution unmeasured",
+          "source": {
+            "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
+          },
+          "ratios": [
+            {
+              "id": "slowdown:production-dvb-l24",
+              "kind": "per-worker slowdown against one worker",
+              "numerator": "production-dvb-l24",
+              "denominator": "production-dvb-w1",
+              "estimate": 8.863783631209495,
+              "lower": 8.788279152329038,
+              "upper": 8.941889999736249,
+              "seed": 1816392191
+            },
+            {
+              "id": "slowdown:production-dvb-p12",
+              "kind": "per-worker slowdown against one worker",
+              "numerator": "production-dvb-p12",
+              "denominator": "production-dvb-w1",
+              "estimate": 5.929937164372124,
+              "lower": 5.905080396580793,
+              "upper": 6.1975125531380435,
+              "seed": 2834550725
+            },
+            {
+              "id": "slowdown:production-dvb-p6",
+              "kind": "per-worker slowdown against one worker",
+              "numerator": "production-dvb-p6",
+              "denominator": "production-dvb-w1",
+              "estimate": 5.324360927516419,
+              "lower": 5.283472816545401,
+              "upper": 5.390573911489693,
+              "seed": 3708193241
+            }
+          ],
+          "sessions": 9
         },
         "hardware_limit": {
           "status": "unmeasured"
@@ -7916,7 +7953,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "ipc": {
@@ -7953,7 +7990,7 @@
           "status": "sampled",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "samples": 25538,
           "categories": [
@@ -7972,7 +8009,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "l1d_miss_fraction": {
@@ -7998,17 +8035,17 @@
           "status": "measured scaling, attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "ratios": [
             {
               "id": "slowdown:production-dvb-p6",
               "kind": "per-worker slowdown against one worker",
               "numerator": "production-dvb-p6",
-              "denominator": "production-dvb-w1-b1",
-              "estimate": 1.4489413783653189,
-              "lower": 1.4381700463929714,
-              "upper": 1.4658445126471429,
+              "denominator": "production-dvb-w1",
+              "estimate": 5.324360927516419,
+              "lower": 5.283472816545401,
+              "upper": 5.390573911489693,
               "seed": 3708193241
             }
           ],
@@ -8033,7 +8070,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "ipc": {
@@ -8070,7 +8107,7 @@
           "status": "sampled",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "samples": 51021,
           "categories": [
@@ -8089,7 +8126,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "l1d_miss_fraction": {
@@ -8115,17 +8152,17 @@
           "status": "measured scaling, attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "ratios": [
             {
               "id": "slowdown:production-dvb-p12",
               "kind": "per-worker slowdown against one worker",
               "numerator": "production-dvb-p12",
-              "denominator": "production-dvb-w1-b1",
-              "estimate": 1.6137394601032296,
-              "lower": 1.606896317507014,
-              "upper": 1.6847769441150142,
+              "denominator": "production-dvb-w1",
+              "estimate": 5.929937164372124,
+              "lower": 5.905080396580793,
+              "upper": 6.1975125531380435,
               "seed": 2834550725
             }
           ],
@@ -8150,7 +8187,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "ipc": {
@@ -8187,7 +8224,7 @@
           "status": "sampled",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "samples": 141919,
           "categories": [
@@ -8206,7 +8243,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "l1d_miss_fraction": {
@@ -8232,17 +8269,17 @@
           "status": "measured scaling, attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "ratios": [
             {
               "id": "slowdown:production-dvb-l24",
               "kind": "per-worker slowdown against one worker",
               "numerator": "production-dvb-l24",
-              "denominator": "production-dvb-w1-b1",
-              "estimate": 2.4121397942358094,
-              "lower": 2.388859426265524,
-              "upper": 2.4337980387006453,
+              "denominator": "production-dvb-w1",
+              "estimate": 8.863783631209495,
+              "lower": 8.788279152329038,
+              "upper": 8.941889999736249,
               "seed": 1816392191
             }
           ],
@@ -8267,7 +8304,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "ipc": {
@@ -8307,7 +8344,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "l1d_miss_fraction": {
@@ -8330,44 +8367,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
-          "source": {
-            "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
-          },
-          "ratios": [
-            {
-              "id": "slowdown:production-dvb-l24",
-              "kind": "per-worker slowdown against one worker",
-              "numerator": "production-dvb-l24",
-              "denominator": "production-dvb-w1-b1",
-              "estimate": 2.4121397942358094,
-              "lower": 2.388859426265524,
-              "upper": 2.4337980387006453,
-              "seed": 1816392191
-            },
-            {
-              "id": "slowdown:production-dvb-p12",
-              "kind": "per-worker slowdown against one worker",
-              "numerator": "production-dvb-p12",
-              "denominator": "production-dvb-w1-b1",
-              "estimate": 1.6137394601032296,
-              "lower": 1.606896317507014,
-              "upper": 1.6847769441150142,
-              "seed": 2834550725
-            },
-            {
-              "id": "slowdown:production-dvb-p6",
-              "kind": "per-worker slowdown against one worker",
-              "numerator": "production-dvb-p6",
-              "denominator": "production-dvb-w1-b1",
-              "estimate": 1.4489413783653189,
-              "lower": 1.4381700463929714,
-              "upper": 1.4658445126471429,
-              "seed": 3708193241
-            }
-          ],
-          "sessions": 9
+          "status": "unmeasured"
         },
         "hardware_limit": {
           "status": "unmeasured"
@@ -8388,7 +8388,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "ipc": {
@@ -8428,7 +8428,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "l1d_miss_fraction": {
@@ -8451,7 +8451,44 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "unmeasured"
+          "status": "measured scaling, attribution unmeasured",
+          "source": {
+            "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
+          },
+          "ratios": [
+            {
+              "id": "slowdown:production-nr-l24",
+              "kind": "per-worker slowdown against one worker",
+              "numerator": "production-nr-l24",
+              "denominator": "production-nr-w1",
+              "estimate": 9.313272946481854,
+              "lower": 8.979561209298831,
+              "upper": 9.881670885844875,
+              "seed": 1870367532
+            },
+            {
+              "id": "slowdown:production-nr-p12",
+              "kind": "per-worker slowdown against one worker",
+              "numerator": "production-nr-p12",
+              "denominator": "production-nr-w1",
+              "estimate": 6.226916136628503,
+              "lower": 6.1923580383453976,
+              "upper": 6.4971760125397084,
+              "seed": 1947578342
+            },
+            {
+              "id": "slowdown:production-nr-p6",
+              "kind": "per-worker slowdown against one worker",
+              "numerator": "production-nr-p6",
+              "denominator": "production-nr-w1",
+              "estimate": 5.574306470423118,
+              "lower": 5.549470721314426,
+              "upper": 5.809060826692783,
+              "seed": 1837463833
+            }
+          ],
+          "sessions": 9
         },
         "hardware_limit": {
           "status": "unmeasured"
@@ -8472,7 +8509,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "ipc": {
@@ -8509,7 +8546,7 @@
           "status": "sampled",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "samples": 11839,
           "categories": [
@@ -8528,7 +8565,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "l1d_miss_fraction": {
@@ -8554,17 +8591,17 @@
           "status": "measured scaling, attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "ratios": [
             {
               "id": "slowdown:production-nr-p6",
               "kind": "per-worker slowdown against one worker",
               "numerator": "production-nr-p6",
-              "denominator": "production-nr-w1-b1",
-              "estimate": 0.8842366504946687,
-              "lower": 0.8827232775664962,
-              "upper": 0.9239026707776817,
+              "denominator": "production-nr-w1",
+              "estimate": 5.574306470423118,
+              "lower": 5.549470721314426,
+              "upper": 5.809060826692783,
               "seed": 1837463833
             }
           ],
@@ -8589,7 +8626,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "ipc": {
@@ -8626,7 +8663,7 @@
           "status": "sampled",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "samples": 23702,
           "categories": [
@@ -8645,7 +8682,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "l1d_miss_fraction": {
@@ -8671,17 +8708,17 @@
           "status": "measured scaling, attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "ratios": [
             {
               "id": "slowdown:production-nr-p12",
               "kind": "per-worker slowdown against one worker",
               "numerator": "production-nr-p12",
-              "denominator": "production-nr-w1-b1",
-              "estimate": 0.9877582972479897,
-              "lower": 0.9840243337426702,
-              "upper": 1.032409521520884,
+              "denominator": "production-nr-w1",
+              "estimate": 6.226916136628503,
+              "lower": 6.1923580383453976,
+              "upper": 6.4971760125397084,
               "seed": 1947578342
             }
           ],
@@ -8706,7 +8743,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "ipc": {
@@ -8743,7 +8780,7 @@
           "status": "sampled",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "samples": 64401,
           "categories": [
@@ -8762,7 +8799,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "l1d_miss_fraction": {
@@ -8788,17 +8825,17 @@
           "status": "measured scaling, attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "ratios": [
             {
               "id": "slowdown:production-nr-l24",
               "kind": "per-worker slowdown against one worker",
               "numerator": "production-nr-l24",
-              "denominator": "production-nr-w1-b1",
-              "estimate": 1.4773384490133066,
-              "lower": 1.4257038837515934,
-              "upper": 1.5716313523912375,
+              "denominator": "production-nr-w1",
+              "estimate": 9.313272946481854,
+              "lower": 8.979561209298831,
+              "upper": 9.881670885844875,
               "seed": 1870367532
             }
           ],
@@ -8823,7 +8860,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "ipc": {
@@ -8863,7 +8900,7 @@
           "status": "measured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
+            "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
           },
           "metrics": {
             "l1d_miss_fraction": {
@@ -8886,44 +8923,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
-          "source": {
-            "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-            "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
-          },
-          "ratios": [
-            {
-              "id": "slowdown:production-nr-l24",
-              "kind": "per-worker slowdown against one worker",
-              "numerator": "production-nr-l24",
-              "denominator": "production-nr-w1-b1",
-              "estimate": 1.4773384490133066,
-              "lower": 1.4257038837515934,
-              "upper": 1.5716313523912375,
-              "seed": 1870367532
-            },
-            {
-              "id": "slowdown:production-nr-p12",
-              "kind": "per-worker slowdown against one worker",
-              "numerator": "production-nr-p12",
-              "denominator": "production-nr-w1-b1",
-              "estimate": 0.9877582972479897,
-              "lower": 0.9840243337426702,
-              "upper": 1.032409521520884,
-              "seed": 1947578342
-            },
-            {
-              "id": "slowdown:production-nr-p6",
-              "kind": "per-worker slowdown against one worker",
-              "numerator": "production-nr-p6",
-              "denominator": "production-nr-w1-b1",
-              "estimate": 0.8842366504946687,
-              "lower": 0.8827232775664962,
-              "upper": 0.9239026707776817,
-              "seed": 1837463833
-            }
-          ],
-          "sessions": 9
+          "status": "unmeasured"
         },
         "hardware_limit": {
           "status": "unmeasured"
