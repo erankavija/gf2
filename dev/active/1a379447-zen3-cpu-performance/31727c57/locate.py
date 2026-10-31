@@ -11,7 +11,7 @@ ROOT = Path(subprocess.check_output(
     ["git", "rev-parse", "--show-toplevel"], text=True).strip())
 listing = subprocess.check_output([
     "git", "ls-files", "--", ":(glob)**/repository_files.py",
-    ":(exclude,glob)**/inputs/**"], text=True).splitlines()
+    ":(exclude,glob)**/inputs/**"], text=True, cwd=ROOT).splitlines()
 sys.path.insert(0, str((ROOT / min(listing, key=len)).parent))
 import repository_files  # noqa: E402
 
