@@ -1,0 +1,69 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 40K of event 'cycles:u'
+# Event count (approx.): 162525503347
+#
+# Overhead       Samples  Shared Object        Symbol                                                       
+# ........  ............  ...................  .............................................................
+#
+    97.91%         39781  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.06%           431  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.37%           150  gf2-batch-tuned-arm  [.] gf2_core::bitvec::BitVec::push_bit
+     0.22%            88  gf2-batch-tuned-arm  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.05%            22  gf2-batch-tuned-arm  [.] ldpc_survey::sha256_hex
+     0.05%            19  libc.so.6            [.] 0x0000000000176540
+     0.03%            14  libc.so.6            [.] 0x0000000000176e09
+     0.03%            12  libc.so.6            [.] 0x0000000000176533
+     0.03%            12  libc.so.6            [.] 0x000000000017654a
+     0.03%            11  libc.so.6            [.] 0x0000000000176529
+     0.02%            10  [unknown]            [k] 0xffffffffb01162b3
+     0.02%             9  libc.so.6            [.] 0x0000000000176e13
+     0.02%             8  [unknown]            [k] 0xffffffffafa015f0
+     0.01%             5  gf2-batch-tuned-arm  [.] core::iter::traits::iterator::Iterator::try_fold
+     0.01%             5  gf2-batch-tuned-arm  [.] ldpc_survey::read_alist_code
+     0.01%             4  [unknown]            [k] 0xffffffffafa01280
+     0.01%             3  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcCode::from_edges
+     0.01%             3  gf2-batch-tuned-arm  [.] gf2_core::sparse::SpBitMatrix::row_iter
+     0.01%             3  gf2-batch-tuned-arm  [.] ldpc_survey::read_llrs
+     0.01%             3  libc.so.6            [.] 0x0000000000176e0e
+     0.01%             3  [unknown]            [k] 0xffffffffb0fac145
+     0.00%             2  gf2-batch-tuned-arm  [.] ldpc_survey::read_codewords
+     0.00%             2  [unknown]            [k] 0xffffffffafa015f4
+     0.00%             2  [unknown]            [k] 0xffffffffafeab0a5
+     0.00%             1  libc.so.6            [.] malloc
+     0.00%             1  libc.so.6            [.] 0x00000000000a724d
+     0.00%             1  libc.so.6            [.] 0x00000000000a7f9c
+     0.00%             1  libc.so.6            [.] 0x000000000017652e
+     0.00%             1  libc.so.6            [.] 0x0000000000176537
+     0.00%             1  libc.so.6            [.] 0x0000000000176e04
+     0.00%             1  [unknown]            [k] 0xffffffffafd29ae4
+     0.00%             1  [unknown]            [k] 0xffffffffafd29b1c
+     0.00%             1  [unknown]            [k] 0xffffffffafd79694
+     0.00%             1  [unknown]            [k] 0xffffffffafd796b3
+     0.00%             1  [unknown]            [k] 0xffffffffafdfb177
+     0.00%             1  [unknown]            [k] 0xffffffffafe90648
+     0.00%             1  [unknown]            [k] 0xffffffffafe92135
+     0.00%             1  [unknown]            [k] 0xffffffffafe9213c
+     0.00%             1  [unknown]            [k] 0xffffffffafe921e4
+     0.00%             1  [unknown]            [k] 0xffffffffafe9220e
+     0.00%             1  [unknown]            [k] 0xffffffffafe92fa4
+     0.00%             1  [unknown]            [k] 0xffffffffafe952e3
+     0.00%             1  [unknown]            [k] 0xffffffffafe98c84
+     0.00%             1  [unknown]            [k] 0xffffffffafe98cc2
+     0.00%             1  [unknown]            [k] 0xffffffffafeabfaa
+     0.00%             1  [unknown]            [k] 0xffffffffaff0a0d2
+     0.00%             1  [unknown]            [k] 0xffffffffb011cc8a
+     0.00%             1  [unknown]            [k] 0xffffffffb0f7c3d7
+     0.00%             1  [unknown]            [k] 0xffffffffb0f965cc
+     0.00%             1  [unknown]            [k] 0xffffffffb0f965fa
+     0.00%             1  [unknown]            [k] 0xffffffffb0fac76b
+     0.00%             1  [unknown]            [k] 0xffffffffb0fadbc6
+     0.00%             1  [unknown]            [k] 0xffffffffb0fadd66
+
+
+#
+# (Tip: To measure approximate function latency with Processor Trace use perf record -e intel_pt// ... ; perf script --call-ret-trace)
+#

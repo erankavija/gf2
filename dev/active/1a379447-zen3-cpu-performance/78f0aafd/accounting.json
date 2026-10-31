@@ -476,14 +476,14 @@
       "interpretation": "candidate faster by a material gap",
       "drift_class": "unresolvable",
       "coverage": {
-        "status": "identity-unresolved",
-        "code": "integrated",
-        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-window.sh",
-        "basis": "producing inputs or target flags differ or are unpinned",
+        "status": "profile-cited",
         "profile": {
-          "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-          "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
-        }
+          "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile/profile-summary.json",
+          "sha256": "dcb5a056663577a528d0a8380f40e0997c7d0e485820dc344564c091ea67d0f4"
+        },
+        "code": "historical",
+        "basis": "same measured executable digest and case; recorded worker CPUs agree",
+        "measured_arm_sha256": "9af28c77634560523da233de28d713cd03c3a8e43b98b6e0fa254240d6a2ac26"
       }
     },
     {
@@ -501,14 +501,14 @@
       "interpretation": "candidate faster by a material gap",
       "drift_class": "unresolvable",
       "coverage": {
-        "status": "identity-unresolved",
-        "code": "integrated",
-        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-window.sh",
-        "basis": "producing inputs or target flags differ or are unpinned",
+        "status": "profile-cited",
         "profile": {
-          "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-          "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
-        }
+          "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile/profile-summary.json",
+          "sha256": "dcb5a056663577a528d0a8380f40e0997c7d0e485820dc344564c091ea67d0f4"
+        },
+        "code": "historical",
+        "basis": "same measured executable digest and case; recorded worker CPUs agree",
+        "measured_arm_sha256": "9af28c77634560523da233de28d713cd03c3a8e43b98b6e0fa254240d6a2ac26"
       }
     },
     {
@@ -526,14 +526,14 @@
       "interpretation": "candidate faster by a material gap",
       "drift_class": "unresolvable",
       "coverage": {
-        "status": "identity-unresolved",
-        "code": "integrated",
-        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-window.sh",
-        "basis": "producing inputs or target flags differ or are unpinned",
+        "status": "profile-cited",
         "profile": {
-          "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-          "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
-        }
+          "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile/profile-summary.json",
+          "sha256": "dcb5a056663577a528d0a8380f40e0997c7d0e485820dc344564c091ea67d0f4"
+        },
+        "code": "historical",
+        "basis": "same measured executable digest and case; recorded worker CPUs agree",
+        "measured_arm_sha256": "9af28c77634560523da233de28d713cd03c3a8e43b98b6e0fa254240d6a2ac26"
       }
     },
     {
@@ -551,14 +551,14 @@
       "interpretation": "candidate faster by a material gap",
       "drift_class": "unresolvable",
       "coverage": {
-        "status": "identity-unresolved",
-        "code": "integrated",
-        "launcher": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-window.sh",
-        "basis": "producing inputs or target flags differ or are unpinned",
+        "status": "profile-cited",
         "profile": {
-          "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
-          "sha256": "119bef96cabffee3b06ce80573e61aafa52813d0fd2f98b96289220139228344"
-        }
+          "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile/profile-summary.json",
+          "sha256": "dcb5a056663577a528d0a8380f40e0997c7d0e485820dc344564c091ea67d0f4"
+        },
+        "code": "historical",
+        "basis": "same measured executable digest and case; recorded worker CPUs agree",
+        "measured_arm_sha256": "9af28c77634560523da233de28d713cd03c3a8e43b98b6e0fa254240d6a2ac26"
       }
     },
     {
@@ -10256,13 +10256,24 @@
     {
       "profile": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile",
       "cell": "dvb-t2-r12-integrated-p12-b8--gf2-batch-tuned-dvb-t2-r12",
-      "status": "awaiting-window",
+      "status": "profiled",
       "mechanisms": {
         "allocation": {
           "status": "unmeasured"
         },
         "instructions": {
-          "status": "unmeasured"
+          "status": "whole-process counters",
+          "metrics": {
+            "ipc": {
+              "median": 1.889454289909662,
+              "lower": 1.8880510003068125,
+              "upper": 1.8919967625683436,
+              "coverage": 0.9609375,
+              "n": 9
+            }
+          },
+          "scope": "whole process, including setup and warm-up",
+          "source": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile"
         },
         "dependencies": {
           "status": "unmeasured"
@@ -10274,7 +10285,25 @@
           "status": "unmeasured"
         },
         "cache_traffic": {
-          "status": "unmeasured"
+          "status": "whole-process counters",
+          "metrics": {
+            "l1d_miss_fraction": {
+              "median": 0.0866666397620657,
+              "lower": 0.08659891043587528,
+              "upper": 0.08666732680584564,
+              "coverage": 0.9609375,
+              "n": 9
+            },
+            "cache_miss_fraction": {
+              "median": 0.4528020472695883,
+              "lower": 0.45244117750876717,
+              "upper": 0.45304860248214035,
+              "coverage": 0.9609375,
+              "n": 9
+            }
+          },
+          "scope": "whole process, including setup and warm-up",
+          "source": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile"
         },
         "bandwidth": {
           "status": "unmeasured"
@@ -10290,13 +10319,24 @@
     {
       "profile": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile",
       "cell": "dvb-t2-r12-integrated-w1-b1--gf2-batch-tuned-dvb-t2-r12",
-      "status": "awaiting-window",
+      "status": "profiled",
       "mechanisms": {
         "allocation": {
           "status": "unmeasured"
         },
         "instructions": {
-          "status": "unmeasured"
+          "status": "whole-process counters",
+          "metrics": {
+            "ipc": {
+              "median": 1.9239433707579359,
+              "lower": 1.9215351416967097,
+              "upper": 1.9244321428892366,
+              "coverage": 0.9609375,
+              "n": 9
+            }
+          },
+          "scope": "whole process, including setup and warm-up",
+          "source": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile"
         },
         "dependencies": {
           "status": "unmeasured"
@@ -10308,7 +10348,25 @@
           "status": "unmeasured"
         },
         "cache_traffic": {
-          "status": "unmeasured"
+          "status": "whole-process counters",
+          "metrics": {
+            "l1d_miss_fraction": {
+              "median": 0.08473444760448041,
+              "lower": 0.08469116408300738,
+              "upper": 0.08480818245377499,
+              "coverage": 0.9609375,
+              "n": 9
+            },
+            "cache_miss_fraction": {
+              "median": 0.42536350704910847,
+              "lower": 0.42451833831515795,
+              "upper": 0.42659219279166777,
+              "coverage": 0.9609375,
+              "n": 9
+            }
+          },
+          "scope": "whole process, including setup and warm-up",
+          "source": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile"
         },
         "bandwidth": {
           "status": "unmeasured"
@@ -10324,13 +10382,24 @@
     {
       "profile": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile",
       "cell": "nr-bg1-z384-integrated-p12-b8--gf2-batch-tuned-nr-bg1-z384",
-      "status": "awaiting-window",
+      "status": "profiled",
       "mechanisms": {
         "allocation": {
           "status": "unmeasured"
         },
         "instructions": {
-          "status": "unmeasured"
+          "status": "whole-process counters",
+          "metrics": {
+            "ipc": {
+              "median": 2.1705297228726077,
+              "lower": 2.1667914003137345,
+              "upper": 2.1727084504085084,
+              "coverage": 0.9609375,
+              "n": 9
+            }
+          },
+          "scope": "whole process, including setup and warm-up",
+          "source": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile"
         },
         "dependencies": {
           "status": "unmeasured"
@@ -10342,7 +10411,25 @@
           "status": "unmeasured"
         },
         "cache_traffic": {
-          "status": "unmeasured"
+          "status": "whole-process counters",
+          "metrics": {
+            "l1d_miss_fraction": {
+              "median": 0.07723199988293192,
+              "lower": 0.07721562914348033,
+              "upper": 0.07725014275097263,
+              "coverage": 0.9609375,
+              "n": 9
+            },
+            "cache_miss_fraction": {
+              "median": 0.0735194346299647,
+              "lower": 0.07283067935386915,
+              "upper": 0.07364741953848399,
+              "coverage": 0.9609375,
+              "n": 9
+            }
+          },
+          "scope": "whole process, including setup and warm-up",
+          "source": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile"
         },
         "bandwidth": {
           "status": "unmeasured"
@@ -10358,13 +10445,24 @@
     {
       "profile": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile",
       "cell": "nr-bg1-z384-integrated-w1-b1--gf2-batch-tuned-nr-bg1-z384",
-      "status": "awaiting-window",
+      "status": "profiled",
       "mechanisms": {
         "allocation": {
           "status": "unmeasured"
         },
         "instructions": {
-          "status": "unmeasured"
+          "status": "whole-process counters",
+          "metrics": {
+            "ipc": {
+              "median": 2.204680134601992,
+              "lower": 2.191100470773116,
+              "upper": 2.2095258249102443,
+              "coverage": 0.9609375,
+              "n": 9
+            }
+          },
+          "scope": "whole process, including setup and warm-up",
+          "source": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile"
         },
         "dependencies": {
           "status": "unmeasured"
@@ -10376,7 +10474,25 @@
           "status": "unmeasured"
         },
         "cache_traffic": {
-          "status": "unmeasured"
+          "status": "whole-process counters",
+          "metrics": {
+            "l1d_miss_fraction": {
+              "median": 0.07582119755238217,
+              "lower": 0.07579641748840418,
+              "upper": 0.07586885148559896,
+              "coverage": 0.9609375,
+              "n": 9
+            },
+            "cache_miss_fraction": {
+              "median": 0.07601043270483418,
+              "lower": 0.07498894846933263,
+              "upper": 0.07616075297162833,
+              "coverage": 0.9609375,
+              "n": 9
+            }
+          },
+          "scope": "whole process, including setup and warm-up",
+          "source": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-profile"
         },
         "bandwidth": {
           "status": "unmeasured"

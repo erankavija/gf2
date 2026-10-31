@@ -1,0 +1,34 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 563  of event 'cycles:u'
+# Event count (approx.): 2252020831
+#
+# Overhead       Samples  Shared Object        Symbol                                                                                       
+# ........  ............  ...................  .............................................................................................
+#
+    89.70%           505  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     3.91%            22  gf2-batch-tuned-arm  [.] ldpc_survey::sha256_hex
+     1.78%            10  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.89%             5  gf2-batch-tuned-arm  [.] ldpc_survey::read_alist_code
+     0.53%             3  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcCode::from_edges
+     0.53%             3  gf2-batch-tuned-arm  [.] ldpc_survey::read_llrs
+     0.36%             2  gf2-batch-tuned-arm  [.] core::iter::traits::iterator::Iterator::try_fold
+     0.36%             2  gf2-batch-tuned-arm  [.] ldpc_survey::parse_alist_code::{{closure}}
+     0.36%             2  gf2-batch-tuned-arm  [.] ldpc_survey::read_codewords
+     0.18%             1  gf2-batch-tuned-arm  [.] <core::iter::adapters::GenericShunt<I,R> as core::iter::traits::iterator::Iterator>::next
+     0.18%             1  gf2-batch-tuned-arm  [.] alloc::raw_vec::RawVecInner<A>::grow_amortized
+     0.18%             1  libc.so.6            [.] cfree
+     0.18%             1  libc.so.6            [.] 0x00000000000a4fb8
+     0.18%             1  libc.so.6            [.] 0x00000000000a7597
+     0.18%             1  [unknown]            [k] 0xffffffffafa015f4
+     0.18%             1  [unknown]            [k] 0xffffffffafda96e0
+     0.18%             1  [unknown]            [k] 0xffffffffb010023e
+     0.18%             1  [unknown]            [k] 0xffffffffb01162b3
+
+
+#
+# (Tip: If call chains don't work try perf record --call-graph dwarf or --call-graph lbr)
+#

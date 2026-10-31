@@ -1,0 +1,51 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 18K of event 'cycles:u'
+# Event count (approx.): 75204695637
+#
+# Overhead       Samples  Shared Object        Symbol                                                       
+# ........  ............  ...................  .............................................................
+#
+    98.49%         18518  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     0.73%           137  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.33%            62  gf2-batch-tuned-arm  [.] gf2_core::bitvec::BitVec::push_bit
+     0.07%            13  gf2-batch-tuned-arm  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.05%             9  gf2-batch-tuned-arm  [.] ldpc_survey::sha256_hex
+     0.04%             8  [unknown]            [k] 0xffffffffb01162b3
+     0.04%             7  [unknown]            [k] 0xffffffffafa015f0
+     0.03%             5  libc.so.6            [.] 0x000000000017653b
+     0.03%             5  libc.so.6            [.] 0x0000000000176e04
+     0.02%             4  gf2-batch-tuned-arm  [.] core::iter::traits::iterator::Iterator::try_fold
+     0.02%             4  gf2-batch-tuned-arm  [.] ldpc_survey::read_alist_code
+     0.01%             2  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcCode::from_edges
+     0.01%             2  libc.so.6            [.] 0x000000000017652e
+     0.01%             2  libc.so.6            [.] 0x0000000000176545
+     0.01%             2  libc.so.6            [.] 0x0000000000176e0e
+     0.01%             2  [unknown]            [k] 0xffffffffafa015f4
+     0.01%             1  gf2-batch-tuned-arm  [.] alloc::raw_vec::RawVecInner<A>::finish_grow
+     0.01%             1  gf2-batch-tuned-arm  [.] ldpc_survey::parse_alist_code::{{closure}}
+     0.01%             1  gf2-batch-tuned-arm  [.] ldpc_survey::read_codewords
+     0.01%             1  gf2-batch-tuned-arm  [.] ldpc_survey::read_llrs
+     0.01%             1  libc.so.6            [.] malloc
+     0.01%             1  libc.so.6            [.] 0x0000000000176e13
+     0.01%             1  [unknown]            [k] 0xffffffffafa015f7
+     0.01%             1  [unknown]            [k] 0xffffffffafcf7c17
+     0.01%             1  [unknown]            [k] 0xffffffffafe1bdd4
+     0.01%             1  [unknown]            [k] 0xffffffffafe5dc80
+     0.01%             1  [unknown]            [k] 0xffffffffafe915f0
+     0.01%             1  [unknown]            [k] 0xffffffffafe92fa4
+     0.01%             1  [unknown]            [k] 0xffffffffafe98c84
+     0.01%             1  [unknown]            [k] 0xffffffffb00e7640
+     0.01%             1  [unknown]            [k] 0xffffffffb0196f1e
+     0.01%             1  [unknown]            [k] 0xffffffffb0f69d18
+     0.01%             1  [unknown]            [k] 0xffffffffb0f7c55e
+     0.01%             1  [unknown]            [k] 0xffffffffb0fac134
+     0.01%             1  [unknown]            [k] 0xffffffffb0facbd6
+
+
+#
+# (Tip: To add Node.js USDT(User-Level Statically Defined Tracing): perf buildid-cache --add `which node`)
+#

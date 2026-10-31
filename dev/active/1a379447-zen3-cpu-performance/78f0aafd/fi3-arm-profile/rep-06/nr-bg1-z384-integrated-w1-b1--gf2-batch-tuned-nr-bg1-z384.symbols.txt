@@ -1,0 +1,28 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 572  of event 'cycles:u'
+# Event count (approx.): 2288021164
+#
+# Overhead       Samples  Shared Object        Symbol                                                       
+# ........  ............  ...................  .............................................................
+#
+    94.58%           541  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.75%            10  gf2-batch-tuned-arm  [.] ldpc_survey::sha256_hex
+     0.87%             5  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.70%             4  gf2-batch-tuned-arm  [.] ldpc_survey::read_alist_code
+     0.52%             3  gf2-batch-tuned-arm  [.] core::iter::traits::iterator::Iterator::try_fold
+     0.35%             2  gf2-batch-tuned-arm  [.] alloc::raw_vec::RawVec<T,A>::grow_one
+     0.35%             2  gf2-batch-tuned-arm  [.] ldpc_survey::parse_alist_code::{{closure}}
+     0.17%             1  gf2-batch-tuned-arm  [.] alloc::raw_vec::RawVecInner<A>::grow_amortized
+     0.17%             1  gf2-batch-tuned-arm  [.] ldpc_survey::read_llrs
+     0.17%             1  libc.so.6            [.] 0x00000000000a4ed5
+     0.17%             1  libc.so.6            [.] 0x00000000000a7f8f
+     0.17%             1  [unknown]            [k] 0xffffffffb00fd3a1
+
+
+#
+# (Tip: To collect Processor Trace with samples use perf record -e '{intel_pt//,cycles}' ; perf script --call-trace or --insn-trace --xed -F +ipc (remove --xed if no xed))
+#
