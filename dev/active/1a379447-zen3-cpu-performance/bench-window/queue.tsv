@@ -120,3 +120,6 @@ d06a99ed	.	20	bash dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement
 78f0aafd	.agents/worktrees/agent-78f0aafd	12	GF2_PROFILE_ARM_ROOT="$PWD/.agents/ext/78f0aafd/restored" bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/polynomial-window.sh
 31727c57	.agents/worktrees/agent-31727c57	5	bash dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/batch-fill/window.sh
 78f0aafd	.agents/worktrees/agent-78f0aafd	12	GF2_PROFILE_ARM_ROOT="/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release" bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-window.sh
+
+# 31727c57 tuned-arm batch fill on the pilot-only FI-2 cells; est_minutes is an estimate, the prior record of the same 60 dispatches took under one minute
+31727c57	.agents/worktrees/agent-31727c57	2	bash dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/batch-fill/pilot-cells/window.sh
