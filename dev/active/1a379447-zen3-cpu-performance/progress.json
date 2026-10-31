@@ -3843,6 +3843,15 @@
      "task": "scaling baseline matched by batch",
      "reason": "narrow fix in a shared summarizer",
      "result": "done a10c139a9; merged 7c3ea552e"
+    },
+    {
+     "issue": "1362381c",
+     "vendor": "codex",
+     "model": "gpt-6-astra",
+     "effort": "high",
+     "task": "read-only investigation of closing the AFF3CT gaps",
+     "reason": "invoker request",
+     "result": "done; 1362381c/aff3ct-gap-investigation.md; no plan adopted"
     }
    ],
    "lead_fixes": [
