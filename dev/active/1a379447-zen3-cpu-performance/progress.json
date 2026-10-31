@@ -3865,7 +3865,12 @@
     "job": "31727c57 pilot-cells batch fill, one new queue line",
     "arming_note": "systemd-run --user needs XDG_RUNTIME_DIR=/run/user/$(id -u) from this shell"
    },
-   "open_observation": "31727c57/test_preparation test_core_build_bytes and the batch-fill plan test need built arms; they fail on the main checkout where target/ lacks them and pass in agent-31727c57. They are not CI steps."
+   "open_observation": "31727c57/test_preparation test_core_build_bytes and the batch-fill plan test need built arms; they fail on the main checkout where target/ lacks them and pass in agent-31727c57. They are not CI steps.",
+   "follow_up_epic": {
+    "id": "55c3e433",
+    "reason": "Invoker request 2026-11-01; outside 1a379447 and outside the 1.0 milestone, with no dependency edge either way. Plan bracket scaffolded; breakdown not done."
+   },
+   "open_question": "docs-mechanical: exclude **/inputs/** or baseline the snapshot findings; gate change, invoker ruling needed."
   }
  }
 }

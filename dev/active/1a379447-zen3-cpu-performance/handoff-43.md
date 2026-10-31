@@ -10,7 +10,7 @@
 - 31727c57: code-review F1 remains open until the pilot-cell batch-fill record lands. cargo-ci passed; research-review has not run.
 - Window: `gf2-bench-window-20261101.timer`, 2026-11-01 04:00 Europe/Helsinki, invoker approved. The one new job is `decoder/batch-fill/pilot-cells/window.sh`, committed in worktree `agent-31727c57`.
 - 1362381c: not started. Its dependency edges omit WP-3..WP-5, so `jit` shows it `ready`; it still waits on 31727c57.
-- Open escalations: none.
+- Open escalations: none. Awaiting an invoker ruling on the docs-mechanical findings in frozen `inputs/protocol.md` snapshots (17 outside the baseline); changing its exclusions or baseline is a gate change.
 
 ## What just happened
 
@@ -23,7 +23,7 @@
 - [ ] After the window, read `.agents/bench-window/window.log`, the job's `.out` and `decoder/batch-fill/pilot-cells/31727c57-decoder-batch-fill-pilot-cells/execution.log`. Verify a terminal `complete` and nonzero batch fill.
 - [ ] Commit the stage on `worktree-agent-31727c57` with its nested `Cargo.lock` force-added, regenerate `31727c57/outcome.md`, merge, link, then run cargo-ci, code-review and research-review.
 - [ ] Start 1362381c with a Claude worker on the strongest allowed tier below Fable. The last two dispatches were Codex (31727c57) and Claude (78f0aafd).
-- [ ] In the 1362381c gap register, give the FI-3 twelve-core losses a tracked follow-up whose next experiment varies the lane workspace at a fixed worker count: the bandwidth explanation in `6230e0b6/findings.md` R-01 is an interpretation. The one-frame losses cite the preserved 07ca8585 and f63a2464 experiments.
+- [ ] In the 1362381c gap register, give the four FI-3 losing cells the tracked follow-up `@/issue/55c3e433` (invoker-requested epic, created 2026-11-01; its plan bracket is scaffolded and not yet planned). Its first experiment, the REQ-01 pilot, is the next falsifiable experiment. All four cells take the single-frame route, so lane stall does not explain them. The one-frame cells also cite the preserved 07ca8585 and f63a2464 experiments.
 
 ## Traps — do not repeat these
 
@@ -38,7 +38,7 @@
 
 ## Open questions needing invoker input
 
-None.
+Whether to exclude `**/inputs/**` from docs-mechanical, or baseline the snapshot findings.
 
 ## Reference artefacts
 
