@@ -5,15 +5,12 @@ Usage (from the worktree root):
   batch_fill.py build             build the probed tuned arm and write its build record
   batch_fill.py plan              write the descriptive plan and addendum
   batch_fill.py run [--untimed]   run or resume the record; --untimed writes a smoke
+  Append --pilot-cells to plan or run for the pilot configurations outside confirmation.
 
-Under the invoker ruling of 2026-10-29 the record measures `conversion.batch_fill_ns` of the
-probed tuned arm alone on every FI-2 confirmation cell. It compares nothing, opens no ledger and
-leaves the confirmation verdicts as recorded. Each execution is one validation dispatch of the
-shared runner's staged smoke, which journals the arm's stage probe in the execution log and
-resumes without repeating a completed cell. Every replicate cell dispatches the arm twice, so
-each confirmation cell has `2 * REPLICATES` executions: ten give the shared median interval
-[x(2), x(9)] with coverage 0.979. The decode path is the confirmed tuned arm's apart from the
-probe, which runs after the timed call.
+Each campaign records only the probed tuned arm's `conversion.batch_fill_ns` through the shared
+runner's resumable validation stage. Each replicate dispatches the arm twice and journals its
+stage probe after the decode call. The records make no comparison or ledger reservation and
+leave confirmation verdicts intact; the invoker rulings are stated in their addenda.
 """
 
 import argparse
@@ -33,7 +30,10 @@ DIRECTORY = HERE / "decoder/batch-fill"
 TARGET = DIRECTORY / "target"
 BUILD_RECORD = DIRECTORY / "arm-build.json"
 CONFIRMATION = HERE / "decoder/confirmation"
+PILOT = HERE / "decoder/pilot"
 CAMPAIGN = "31727c57-decoder-batch-fill"
+PILOT_DIRECTORY = DIRECTORY / "pilot-cells"
+PILOT_CAMPAIGN = f"{CAMPAIGN}-pilot-cells"
 REPLICATES = 5
 PACKAGE = "ldpc-batch-tuned-arm"
 EXECUTABLE = "gf2-batch-tuned-arm"
@@ -46,6 +46,9 @@ RULING = ("Invoker ruling of 2026-10-29: the tuned arm's report gains the shared
           "and the probed arm alone records batch fill on the FI-2 confirmation cells as a "
           "descriptive record. It compares nothing, makes no ledger reservation and neither "
           "repeats nor alters the confirmation, whose verdicts stand.")
+PILOT_RULING = ("Invoker ruling of 2026-10-28: the probed tuned arm alone records batch fill "
+                "as descriptive evidence, with no comparison or ledger reservation; "
+                "confirmation verdicts stand and the record pins the probed arm's own digest.")
 
 
 def read(path):
@@ -112,10 +115,20 @@ def build():
     print(BUILD_RECORD.relative_to(ROOT))
 
 
-def plan(out, campaign, frozen_utc):
-    """The confirmation plan and addendum with the probed arm on both sides of `REPLICATES`
+def source_plan(pilot_cells=False):
+    """The source plan and addendum, restricted to pilot minus confirmation when requested."""
+    directory = PILOT if pilot_cells else CONFIRMATION
+    source, declared = read(directory / "plan.json"), read(directory / "addendum.json")
+    if pilot_cells:
+        confirmed = {cell["cell_id"] for cell in read(CONFIRMATION / "plan.json")["cells"]}
+        source["cells"] = [cell for cell in source["cells"] if cell["cell_id"] not in confirmed]
+    return source, declared
+
+
+def plan(out, campaign, frozen_utc, pilot_cells=False):
+    """The selected source cells with the probed arm on both sides of `REPLICATES`
     exploratory copies of each cell, replicate-major so each round spans every cell."""
-    source, declared = read(CONFIRMATION / "plan.json"), read(CONFIRMATION / "addendum.json")
+    source, declared = source_plan(pilot_cells)
     executable = read(BUILD_RECORD)["arms"][ARM]["path"]
     names = {name: name.replace(CONFIRMED, ARM) for name, arm in source["arms"].items()
              if arm["build"] == BUILD}
@@ -134,9 +147,12 @@ def plan(out, campaign, frozen_utc):
                                  "role": "exploratory",
                                  "builds": {"baseline": BUILD, "candidate": BUILD}})
     addendum = copy.deepcopy(declared)
+    description = (f"{PILOT_RULING} Each cell of the frozen FI-2 pilot plan absent from the "
+                   "confirmation plan runs as " if pilot_cells else
+                   f"{RULING} Each cell of the frozen FI-2 confirmation plan runs as ")
     addendum["family"].update(
         id=campaign, purpose="decoder-family",
-        description=f"{RULING} Each cell of the frozen FI-2 confirmation plan runs as "
+        description=description +
         f"{REPLICATES} replicate cells whose baseline and candidate are the probed tuned arm, "
         "each dispatched once in the runner's validation position; every execution reports "
         "conversion.batch_fill_ns from the arm's zero-iteration stage probe. Validation "
@@ -159,26 +175,29 @@ def executable_matches():
     return path.is_file() and builder().digest(path) == record["executable_sha256"]
 
 
-def run(untimed):
+def run(untimed, pilot_cells=False):
     """Runs the record's sessions until the stage completes; each timed session holds the
     canonical lock through the plan's wrapper."""
     runner_module = load("survey/run-family-campaign.py", "family_runner")
     validation, smoke = runner_module.validation, runner_module.smoke
+    directory = PILOT_DIRECTORY if pilot_cells else DIRECTORY
+    campaign = PILOT_CAMPAIGN if pilot_cells else CAMPAIGN
+    untimed_directory = directory / "target/untimed" if pilot_cells else UNTIMED
     if not executable_matches():
         sys.exit(f"the probed arm differs from {BUILD_RECORD.relative_to(ROOT)}; run build")
     prepare.decoder_inputs()
     runner, environment = smoke.build_runner()
     if untimed:
         stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        if not (UNTIMED / "plan.json").exists():
-            plan(UNTIMED, f"{CAMPAIGN}-untimed", stamp)
-        plan_path, stage, record = (UNTIMED / "plan.json", UNTIMED / "stage",
-                                    UNTIMED / "smoke.json")
+        if not (untimed_directory / "plan.json").exists():
+            plan(untimed_directory, f"{campaign}-untimed", stamp, pilot_cells)
+        plan_path, stage, record = (untimed_directory / "plan.json", untimed_directory / "stage",
+                                    untimed_directory / "smoke.json")
         command = [runner]
     else:
-        plan_path, stage, record = (DIRECTORY / "plan.json", DIRECTORY / CAMPAIGN,
-                                    DIRECTORY / "smoke.json")
-        for path in (plan_path, DIRECTORY / "addendum.json", BUILD_RECORD):
+        plan_path, stage, record = (directory / "plan.json", directory / campaign,
+                                    directory / "smoke.json")
+        for path in (plan_path, directory / "addendum.json", BUILD_RECORD):
             if not runner_module.committed(path):
                 sys.exit(f"{path.relative_to(ROOT)} is uncommitted or differs from HEAD")
         wrapper, *flags = read(plan_path)["wrapper"].split()
@@ -192,13 +211,13 @@ def run(untimed):
     if status != 0:
         sys.exit(f"{plan_path}: the staged record exited {status}; the same command resumes it")
     if untimed:
-        write(DIRECTORY / "untimed-smoke.json", {
+        write(directory / "untimed-smoke.json", {
             "evidence": False,
             "reason": "untimed validation of the launcher on an unlocked host outside the "
                       "benchmark window; its batch-fill values are not measurements",
             "record": read(ROOT / record)})
-        (DIRECTORY / "untimed-execution.log").write_bytes((ROOT / stage / "execution.log").read_bytes())
-        record = (DIRECTORY / "untimed-smoke.json").relative_to(ROOT)
+        (directory / "untimed-execution.log").write_bytes((ROOT / stage / "execution.log").read_bytes())
+        record = (directory / "untimed-smoke.json").relative_to(ROOT)
     print(record)
 
 
@@ -207,20 +226,25 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("action", choices=("build", "plan", "run"))
     parser.add_argument("--untimed", action="store_true")
+    parser.add_argument("--pilot-cells", action="store_true")
     args = parser.parse_args()
     if Path.cwd() != ROOT:
         parser.error("invoke from the worktree root")
     os.environ.update(CARGO_NET_OFFLINE="true", CARGO_CI_NO_SCCACHE="1")
     os.environ["PATH"] = f"{Path.home() / '.cargo/bin'}{os.pathsep}{os.environ['PATH']}"
     if args.action == "build":
+        if args.pilot_cells:
+            parser.error("pilot cells reuse the existing probed-arm build record")
         build()
     elif args.action == "plan":
         stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        print(plan(DIRECTORY, CAMPAIGN, stamp).relative_to(ROOT))
+        directory = PILOT_DIRECTORY if args.pilot_cells else DIRECTORY
+        campaign = PILOT_CAMPAIGN if args.pilot_cells else CAMPAIGN
+        print(plan(directory, campaign, stamp, args.pilot_cells).relative_to(ROOT))
     else:
         if not args.untimed and os.environ.get(WINDOW) != "1":
             parser.error("timed runs require the overnight benchmark window")
-        run(args.untimed)
+        run(args.untimed, args.pilot_cells)
 
 
 if __name__ == "__main__":

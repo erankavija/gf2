@@ -2,6 +2,7 @@
 """Check the outcome projection and preserve unavailable and adverse evidence."""
 
 import copy
+import json
 from pathlib import Path
 import shutil
 import tempfile
@@ -15,9 +16,58 @@ class Outcome(unittest.TestCase):
     def setUpClass(cls):
         cls.campaigns = outcome.campaigns()
         cls.fill = outcome.batch_fill_record()
+        cls.pilot_fill = outcome.batch_fill_record(
+            outcome.batch_fill.PILOT_DIRECTORY / outcome.batch_fill.PILOT_CAMPAIGN)
 
     def test_document_regenerates(self):
-        self.assertEqual(outcome.render(self.campaigns, self.fill), outcome.OUTPUT.read_text())
+        self.assertEqual(outcome.render(self.campaigns, self.fill, self.pilot_fill),
+                         outcome.OUTPUT.read_text())
+
+    def test_pilot_batch_fill_absent_and_complete_states(self):
+        pilot = self.campaigns["decoder", "pilot"]
+        confirmation = self.campaigns["decoder", "confirmation"]
+        confirmed = {cell["cell_id"] for cell in confirmation["plan"]["cells"]}
+        expected = [cell["cell_id"] for cell in pilot["plan"]["cells"]
+                    if cell["cell_id"] not in confirmed]
+        # Re-label the existing smoke fixture to exercise projection, never as evidence.
+        replacements = dict(zip((cell["cell_id"] for cell in confirmation["plan"]["cells"]), expected))
+        events = [json.loads(line) for line in
+                  (outcome.batch_fill.DIRECTORY / "untimed-execution.log").read_text().splitlines()]
+        for event in events:
+            case = event.get("case") or {}
+            identifier = outcome.REPLICATE.sub("", case.get("cell_id", ""))
+            if identifier in replacements:
+                case["cell_id"] = case["cell_id"].replace(identifier, replacements[identifier])
+        with tempfile.TemporaryDirectory() as temporary:
+            stage = Path(temporary)
+            log = stage / "execution.log"
+            log.write_text("".join(json.dumps(event) + "\n" for event in events
+                                   if event["event"] != "complete"))
+            self.assertIsNone(outcome.batch_fill_record(stage))
+            absent = outcome.render(self.campaigns, self.fill, None)
+            self.assertIn(f"{len(expected)} pilot-only cells", absent)
+            for identifier in expected:
+                self.assertIn(f"| `{identifier}` | not yet recorded |", absent)
+            log.write_text("".join(json.dumps(event) + "\n" for event in events))
+            record = outcome.batch_fill_record(stage)
+            self.assertEqual(set(record["cells"]), set(expected))
+            complete = outcome.render(self.campaigns, self.fill, record)
+        self.assertNotIn("not yet recorded", complete)
+        selected = copy.deepcopy(pilot)
+        selected["plan"]["cells"] = [cell for cell in pilot["plan"]["cells"]
+                                      if cell["cell_id"] in expected]
+        for row in outcome.batch_fill_rows(record, selected):
+            self.assertIn(" | ".join(row), complete)
+            self.assertEqual(row[1], "exploratory")
+            self.assertEqual(row[5], str(2 * outcome.batch_fill.REPLICATES))
+        # Adding descriptive pilot values preserves all confirmation projections.
+        confirmation_section = "\n".join(outcome.batch_fill_section(self.fill, confirmation))
+        self.assertIn(confirmation_section, absent)
+        self.assertIn(confirmation_section, complete)
+        for campaign in self.campaigns.values():
+            for row in outcome.result_rows(campaign):
+                self.assertIn(" | ".join(row), absent)
+                self.assertIn(" | ".join(row), complete)
 
     def test_every_recorded_cell_keeps_its_interval_pairs_and_verdict(self):
         for (route, stage), campaign in self.campaigns.items():
@@ -61,6 +111,29 @@ class Outcome(unittest.TestCase):
     def test_incomplete_batch_fill_stage_yields_no_record(self):
         with tempfile.TemporaryDirectory() as empty:
             self.assertIsNone(outcome.batch_fill_record(Path(empty)))
+
+    def test_pilot_smoke_covers_the_remaining_cells_without_timing(self):
+        directory = outcome.batch_fill.PILOT_DIRECTORY
+        smoke = outcome.shared.read(directory / "untimed-smoke.json")
+        self.assertFalse(smoke["evidence"])
+        self.assertTrue(all(arm["role"] == "validation" and arm["windows"] == 0
+                            for cell in smoke["record"]["cells"] for arm in cell["arms"]))
+        with tempfile.TemporaryDirectory() as stage:
+            stage = Path(stage)
+            shutil.copy(directory / "untimed-execution.log", stage / "execution.log")
+            record = outcome.batch_fill_record(stage)
+        pilot = self.campaigns["decoder", "pilot"]
+        confirmation = self.campaigns["decoder", "confirmation"]
+        pilot_ids = {cell["cell_id"] for cell in pilot["plan"]["cells"]}
+        confirmed_ids = {cell["cell_id"] for cell in confirmation["plan"]["cells"]}
+        self.assertEqual(set(record["cells"]), pilot_ids - confirmed_ids)
+        self.assertEqual(set(record["cells"]) | set(self.fill["cells"]), pilot_ids | confirmed_ids)
+        probed = outcome.batch_fill.read(outcome.batch_fill.BUILD_RECORD)["arms"][outcome.batch_fill.ARM]
+        for cell in record["cells"].values():
+            self.assertEqual(len(cell["fill"]), 2 * outcome.batch_fill.REPLICATES)
+            self.assertTrue(all(value > 0 for value in cell["fill"]))
+            self.assertNotIn(0, cell["probes"])
+            self.assertEqual(cell["executables"], {probed["executable_sha256"]})
 
     def test_committed_batch_fill_record_is_complete_and_probed(self):
         confirmation = self.campaigns["decoder", "confirmation"]

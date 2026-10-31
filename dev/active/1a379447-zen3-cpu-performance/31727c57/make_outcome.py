@@ -88,8 +88,7 @@ def measurement_rows(campaign):
 
 
 def batch_fill_record(stage=batch_fill.DIRECTORY / batch_fill.CAMPAIGN):
-    """The probed tuned arm's batch fill per confirmation cell, once the record's stage is
-    complete; None before."""
+    """The probed tuned arm's batch fill per cell of a complete stage; None before."""
     log = stage / "execution.log"
     if not tables.verifier.stage_complete(str(log)):
         return None
@@ -119,12 +118,12 @@ def batch_fill_record(stage=batch_fill.DIRECTORY / batch_fill.CAMPAIGN):
     return {"stage": stage, "cells": cells}
 
 
-def batch_fill_rows(record, confirmation):
+def batch_fill_rows(record, campaign):
     rows = []
-    for planned in confirmation["plan"]["cells"]:
+    for planned in campaign["plan"]["cells"]:
         identifier = planned["cell_id"]
         cell = record["cells"][identifier]
-        role = next(summary["role"] for summary in confirmation["summary"]["cells"]
+        role = next(summary["role"] for summary in campaign["summary"]["cells"]
                     if summary["cell_id"] == identifier)
         text, coverage = tables.spread(cell["fill"])
         rows.append([
@@ -134,6 +133,13 @@ def batch_fill_rows(record, confirmation):
             ", ".join(f"`{digest}`" for digest in sorted(cell["executables"])),
         ])
     return rows
+
+
+def batch_fill_table(record, campaign):
+    return shared.table(["Cell", "Role", "Workers", "Batch per worker",
+                         "Wave routes", "Executions", "Stage probes", "Statistic",
+                         "Batch fill, ns", "Coverage", "Executable SHA-256"],
+                        batch_fill_rows(record, campaign))
 
 
 def batch_fill_section(record, confirmation):
@@ -155,11 +161,38 @@ def batch_fill_section(record, confirmation):
         "lock; batch fill is that execution's `conversion.batch_fill_ns`, the stated statistic "
         "over the stated stage probes. Values are nanoseconds: median [order-statistic "
         "interval] over the executions, with the coverage shown.", "",
-        *shared.table(["Cell", "Confirmation role", "Workers", "Batch per worker",
-                       "Wave routes", "Executions", "Stage probes", "Statistic",
-                       "Batch fill, ns", "Coverage", "Executable SHA-256"],
-                      batch_fill_rows(record, confirmation)), "",
+        *batch_fill_table(record, confirmation), "",
     ]
+
+
+def pilot_batch_fill_campaign(pilot):
+    source, _ = batch_fill.source_plan(pilot_cells=True)
+    identifiers = {cell["cell_id"] for cell in source["cells"]}
+    return {**pilot, "plan": {**pilot["plan"], "cells": [
+        cell for cell in pilot["plan"]["cells"] if cell["cell_id"] in identifiers]}}
+
+
+def pilot_batch_fill_section(record, campaign):
+    lines = ["### Tuned-arm batch fill for pilot-only cells", "", batch_fill.PILOT_RULING, ""]
+    if record is None:
+        return lines + [
+            f"Tuned-arm batch fill for these {len(campaign['plan']['cells'])} pilot-only cells "
+            "is not yet recorded. The descriptive campaign uses the same probed executable, "
+            "replicate count and validation dispatch mode as the confirmation-cell record. "
+            "Its cells are the pilot plan minus the confirmation plan.", "",
+            f"Sources: {link(batch_fill.PILOT_DIRECTORY / 'plan.json', 'descriptive plan')}, "
+            f"{link(batch_fill.PILOT_DIRECTORY / 'addendum.json', 'descriptive addendum')}.", "",
+            *shared.table(["Cell", "Batch fill, ns"], [
+                [f"`{cell['cell_id']}`", "not yet recorded"] for cell in campaign["plan"]["cells"]]), ""]
+    stage = record["stage"]
+    return lines + [
+        f"Sources: {link(stage / 'execution.log', 'execution log')}, "
+        f"{link(stage / 'plan.json', 'executed plan')}, "
+        f"{link(batch_fill.PILOT_DIRECTORY / 'addendum.json', 'descriptive addendum')}. "
+        "The build identity, stage probe and interval definitions are those of the tuned-arm "
+        "batch-fill section above. These descriptive values leave pilot classification and "
+        "confirmation verdicts intact.", "",
+        *batch_fill_table(record, campaign), ""]
 
 
 def stage_record(campaign, stage):
@@ -248,7 +281,13 @@ def coverage_section(pilot, confirmation):
     ]
 
 
-def render(records, fill):
+def render(records, fill, pilot_fill=None):
+    pilot_fill_campaign = pilot_batch_fill_campaign(records["decoder", "pilot"])
+    pilot_fill_count = len(pilot_fill_campaign["plan"]["cells"])
+    pilot_fill_status = (f"Tuned-arm batch fill for {pilot_fill_count} pilot-only cells is "
+                         "not yet recorded." if pilot_fill is None else
+                         f"A separate descriptive record reports tuned-arm batch fill for "
+                         f"the {pilot_fill_count} pilot-only cells.")
     lines = [
         "# Integrated core and decoder route outcome", "",
         "> **Diátaxis Type:** Reference", "",
@@ -258,8 +297,7 @@ def render(records, fill):
         "under frozen protocol v4 on the integrated release builds. "
         "The confirmation acceptance verdicts are recorded below. The confirmation receipts "
         "record no tuned-arm batch fill; a separate descriptive record of the probed tuned arm "
-        "reports it on the six confirmation cells. Pilot-only cells have no tuned-arm "
-        "batch-fill record.", "",
+        f"reports it on the {len(fill['cells'])} confirmation cells. {pilot_fill_status}", "",
         f"Generated by {link(HERE / 'make_outcome.py', 'make_outcome.py')} using the shared "
         f"{link(Path(tables.__file__), 'outcome table reader')} "
         "and its collection outcome reader and median intervals. From the worktree root:", "",
@@ -332,8 +370,8 @@ def render(records, fill):
                 "confirmation receipts declare no stage probes; every recorded batch-fill "
                 "field is zero. Under the shared reader's rule those entries are unmeasured "
                 "and provide no latency estimate or confidence interval. The tuned-arm batch "
-                "fill section below reports the probed arm's values on the confirmation "
-                "cells.", "",
+                "fill sections below distinguish the probed arm's descriptive values from "
+                "unrecorded latency.", "",
             ]
             for stage, campaign in (("Pilot", pilot), ("Confirmation", confirmation)):
                 lines += [f"{stage} arm measurements (basis: its receipt and execution log above):", "",
@@ -342,6 +380,7 @@ def render(records, fill):
                                          "Throughput, frames/s", "Batch fill, ns"],
                                         measurement_rows(campaign)), ""]
             lines += batch_fill_section(fill, confirmation)
+            lines += pilot_batch_fill_section(pilot_fill, pilot_fill_campaign)
             lines += coverage_section(pilot, confirmation)
     return "\n".join(lines)
 
@@ -353,7 +392,8 @@ def main():
     fill = batch_fill_record()
     if fill is None:
         parser.exit(1, "the batch-fill record is incomplete\n")
-    text = render(campaigns(), fill)
+    pilot_fill = batch_fill_record(batch_fill.PILOT_DIRECTORY / batch_fill.PILOT_CAMPAIGN)
+    text = render(campaigns(), fill, pilot_fill)
     if args.check:
         if OUTPUT.read_text() != text:
             parser.exit(1, "outcome.md differs from its evidence projection\n")
