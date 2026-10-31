@@ -34,18 +34,18 @@ class Preparation(unittest.TestCase):
             actual = actual or build.get('kernel', {}).get('executables', {})
             self.assertTrue(accounting.has_digest(actual, joined['measured_arm_sha256']))
 
-    def test_integrated_profile_does_not_claim_an_unproved_code_join(self):
+    def test_exact_completed_profile_covers_integrated_inventory(self):
         rows = [row for row in accounting.inventory()
                 if row['family'] == '1362381c-ldpc-aff3ct-integration']
         self.assertTrue(rows)
-        profile = accounting.cited(HERE/'decoder-profile/profile-summary.json')
+        profile = accounting.cited(HERE/'fi3-arm-profile/profile-summary.json')
         for row in rows:
-            self.assertEqual(row['coverage']['code'], 'integrated')
-            self.assertEqual(row['coverage']['profile'], profile)
-            self.assertIn(row['coverage']['status'], ('profile-cited', 'identity-unresolved'))
-            if row['coverage']['status'] == 'identity-unresolved':
-                self.assertIn('unpinned', row['coverage']['basis'])
-                self.assertTrue(row['coverage']['launcher'].endswith('/fi3-arm-window.sh'))
+            coverage = row['coverage']
+            self.assertEqual(coverage['status'], 'profile-cited')
+            self.assertEqual(coverage['profile'], profile)
+            self.assertEqual(coverage['code'], 'historical')
+            self.assertIn('same measured executable digest and case', coverage['basis'])
+            self.assertIn('recorded worker CPUs agree', coverage['basis'])
 
     def test_fi3_cases_use_the_receipts_workloads_and_cpus(self):
         cases = list(accounting.arms.cases('fi3-arm'))

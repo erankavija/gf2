@@ -1,0 +1,71 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 40K of event 'cycles:u'
+# Event count (approx.): 162533503421
+#
+# Overhead       Samples  Shared Object        Symbol                                                       
+# ........  ............  ...................  .............................................................
+#
+    97.82%         39747  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.18%           479  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.35%           144  gf2-batch-tuned-arm  [.] gf2_core::bitvec::BitVec::push_bit
+     0.22%            90  gf2-batch-tuned-arm  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.06%            25  libc.so.6            [.] 0x000000000017654a
+     0.05%            22  gf2-batch-tuned-arm  [.] ldpc_survey::sha256_hex
+     0.03%            14  libc.so.6            [.] 0x0000000000176533
+     0.03%            14  libc.so.6            [.] 0x0000000000176540
+     0.03%            13  libc.so.6            [.] 0x0000000000176e13
+     0.02%            10  libc.so.6            [.] 0x0000000000176529
+     0.02%             7  libc.so.6            [.] 0x0000000000176e09
+     0.01%             6  [unknown]            [k] 0xffffffffafa015f0
+     0.01%             5  gf2-batch-tuned-arm  [.] ldpc_survey::read_alist_code
+     0.01%             5  [unknown]            [k] 0xffffffffb01162b3
+     0.01%             4  [unknown]            [k] 0xffffffffafeab064
+     0.01%             3  [unknown]            [k] 0xffffffffafa01280
+     0.00%             2  gf2-batch-tuned-arm  [.] core::iter::traits::iterator::Iterator::try_fold
+     0.00%             2  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcCode::from_edges
+     0.00%             2  gf2-batch-tuned-arm  [.] ldpc_survey::read_codewords
+     0.00%             2  gf2-batch-tuned-arm  [.] ldpc_survey::read_llrs
+     0.00%             2  libc.so.6            [.] 0x0000000000176537
+     0.00%             2  [unknown]            [k] 0xffffffffafd29ae4
+     0.00%             1  gf2-batch-tuned-arm  [.] core::iter::traits::iterator::Iterator::try_fold
+     0.00%             1  gf2-batch-tuned-arm  [.] ldpc_survey::parse_alist_code::{{closure}}
+     0.00%             1  libc.so.6            [.] malloc
+     0.00%             1  libc.so.6            [.] 0x00000000000a4ee3
+     0.00%             1  libc.so.6            [.] 0x00000000000a4efb
+     0.00%             1  libc.so.6            [.] 0x00000000000a6161
+     0.00%             1  libc.so.6            [.] 0x00000000000a73a8
+     0.00%             1  libc.so.6            [.] 0x000000000017652e
+     0.00%             1  libc.so.6            [.] 0x0000000000176e04
+     0.00%             1  libc.so.6            [.] 0x0000000000176e0e
+     0.00%             1  [unknown]            [k] 0xffffffffafa015f4
+     0.00%             1  [unknown]            [k] 0xffffffffafd32984
+     0.00%             1  [unknown]            [k] 0xffffffffafdfb0b2
+     0.00%             1  [unknown]            [k] 0xffffffffafe1d527
+     0.00%             1  [unknown]            [k] 0xffffffffafe9160e
+     0.00%             1  [unknown]            [k] 0xffffffffafe92fa4
+     0.00%             1  [unknown]            [k] 0xffffffffafe931b4
+     0.00%             1  [unknown]            [k] 0xffffffffafe9530f
+     0.00%             1  [unknown]            [k] 0xffffffffafe98c84
+     0.00%             1  [unknown]            [k] 0xffffffffafe98ca2
+     0.00%             1  [unknown]            [k] 0xffffffffafe98cc2
+     0.00%             1  [unknown]            [k] 0xffffffffafeab0a5
+     0.00%             1  [unknown]            [k] 0xffffffffafeabf9f
+     0.00%             1  [unknown]            [k] 0xffffffffafebb4e8
+     0.00%             1  [unknown]            [k] 0xffffffffaff0a0d2
+     0.00%             1  [unknown]            [k] 0xffffffffb00b6caa
+     0.00%             1  [unknown]            [k] 0xffffffffb00e9786
+     0.00%             1  [unknown]            [k] 0xffffffffb00e9963
+     0.00%             1  [unknown]            [k] 0xffffffffb01221f4
+     0.00%             1  [unknown]            [k] 0xffffffffb0196f1e
+     0.00%             1  [unknown]            [k] 0xffffffffb0f965cc
+     0.00%             1  [unknown]            [k] 0xffffffffb0f9a18e
+     0.00%             1  [unknown]            [k] 0xffffffffb0f9abfc
+
+
+#
+# (Tip: To set sampling period of individual events use perf record -e cpu/cpu-cycles,period=100001/,cpu/branches,period=10001/ ...)
+#

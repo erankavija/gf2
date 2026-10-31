@@ -1,0 +1,72 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 40K of event 'cycles:u'
+# Event count (approx.): 162453502681
+#
+# Overhead       Samples  Shared Object        Symbol                                                       
+# ........  ............  ...................  .............................................................
+#
+    97.95%         39782  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.11%           449  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.32%           129  gf2-batch-tuned-arm  [.] gf2_core::bitvec::BitVec::push_bit
+     0.21%            86  gf2-batch-tuned-arm  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.05%            21  gf2-batch-tuned-arm  [.] ldpc_survey::sha256_hex
+     0.04%            15  libc.so.6            [.] 0x000000000017654a
+     0.03%            14  libc.so.6            [.] 0x0000000000176529
+     0.03%            14  libc.so.6            [.] 0x0000000000176540
+     0.03%            11  libc.so.6            [.] 0x0000000000176533
+     0.02%             9  libc.so.6            [.] 0x0000000000176e09
+     0.02%             7  gf2-batch-tuned-arm  [.] core::iter::traits::iterator::Iterator::try_fold
+     0.02%             7  [unknown]            [k] 0xffffffffb01162b3
+     0.01%             5  libc.so.6            [.] 0x0000000000176e13
+     0.01%             5  [unknown]            [k] 0xffffffffafa015f0
+     0.01%             4  [unknown]            [k] 0xffffffffafa01280
+     0.01%             3  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcCode::from_edges
+     0.01%             3  gf2-batch-tuned-arm  [.] ldpc_survey::read_llrs
+     0.01%             3  [unknown]            [k] 0xffffffffafed5b25
+     0.00%             2  gf2-batch-tuned-arm  [.] alloc::raw_vec::RawVecInner<A>::grow_amortized
+     0.00%             2  gf2-batch-tuned-arm  [.] ldpc_survey::read_alist_code
+     0.00%             2  gf2-batch-tuned-arm  [.] ldpc_survey::read_codewords
+     0.00%             2  libc.so.6            [.] 0x0000000000176e0e
+     0.00%             2  [unknown]            [k] 0xffffffffafe1bde6
+     0.00%             2  [unknown]            [k] 0xffffffffafe9160e
+     0.00%             2  [unknown]            [k] 0xffffffffafe98cc2
+     0.00%             2  [unknown]            [k] 0xffffffffb011cc8a
+     0.00%             1  gf2-batch-tuned-arm  [.] gf2_core::sparse::SpBitMatrix::row_iter
+     0.00%             1  libc.so.6            [.] cfree
+     0.00%             1  libc.so.6            [.] 0x00000000000a73a8
+     0.00%             1  libc.so.6            [.] 0x00000000000a7862
+     0.00%             1  libc.so.6            [.] 0x0000000000176537
+     0.00%             1  libc.so.6            [.] 0x000000000017653b
+     0.00%             1  libc.so.6            [.] 0x0000000000176e04
+     0.00%             1  libc.so.6            [.] 0x0000000000176e17
+     0.00%             1  [unknown]            [k] 0xffffffffafa015f4
+     0.00%             1  [unknown]            [k] 0xffffffffafd3d478
+     0.00%             1  [unknown]            [k] 0xffffffffafd796a1
+     0.00%             1  [unknown]            [k] 0xffffffffafd796b3
+     0.00%             1  [unknown]            [k] 0xffffffffafdfb813
+     0.00%             1  [unknown]            [k] 0xffffffffafe67c61
+     0.00%             1  [unknown]            [k] 0xffffffffafe90693
+     0.00%             1  [unknown]            [k] 0xffffffffafe9069a
+     0.00%             1  [unknown]            [k] 0xffffffffafe95363
+     0.00%             1  [unknown]            [k] 0xffffffffafe98ca2
+     0.00%             1  [unknown]            [k] 0xffffffffafe98ca6
+     0.00%             1  [unknown]            [k] 0xffffffffafeaaed5
+     0.00%             1  [unknown]            [k] 0xffffffffafeab0a5
+     0.00%             1  [unknown]            [k] 0xffffffffafeabf9f
+     0.00%             1  [unknown]            [k] 0xffffffffb00e9910
+     0.00%             1  [unknown]            [k] 0xffffffffb00e998f
+     0.00%             1  [unknown]            [k] 0xffffffffb00ea648
+     0.00%             1  [unknown]            [k] 0xffffffffb0f69c31
+     0.00%             1  [unknown]            [k] 0xffffffffb0f965fa
+     0.00%             1  [unknown]            [k] 0xffffffffb0f9abcb
+     0.00%             1  [unknown]            [k] 0xffffffffb0fac074
+     0.00%             1  [unknown]            [k] 0xffffffffb0faca03
+
+
+#
+# (Tip: Search options using a keyword: perf report -h <keyword>)
+#

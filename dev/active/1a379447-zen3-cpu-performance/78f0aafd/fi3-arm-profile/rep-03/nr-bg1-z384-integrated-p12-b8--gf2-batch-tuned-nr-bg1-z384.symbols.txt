@@ -1,0 +1,55 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 18K of event 'cycles:u'
+# Event count (approx.): 75244696007
+#
+# Overhead       Samples  Shared Object        Symbol                                                                                       
+# ........  ............  ...................  .............................................................................................
+#
+    98.42%         18513  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     0.83%           156  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.29%            54  gf2-batch-tuned-arm  [.] gf2_core::bitvec::BitVec::push_bit
+     0.09%            17  gf2-batch-tuned-arm  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.05%            10  gf2-batch-tuned-arm  [.] ldpc_survey::sha256_hex
+     0.05%            10  libc.so.6            [.] 0x0000000000176545
+     0.03%             6  libc.so.6            [.] 0x000000000017653b
+     0.02%             4  libc.so.6            [.] 0x0000000000176e0e
+     0.02%             3  gf2-batch-tuned-arm  [.] core::iter::traits::iterator::Iterator::try_fold
+     0.02%             3  libc.so.6            [.] realloc
+     0.02%             3  libc.so.6            [.] 0x0000000000176e04
+     0.01%             2  gf2-batch-tuned-arm  [.] ldpc_survey::parse_alist_code::{{closure}}
+     0.01%             2  gf2-batch-tuned-arm  [.] ldpc_survey::read_alist_code
+     0.01%             2  [unknown]            [k] 0xffffffffafa01d22
+     0.01%             2  [unknown]            [k] 0xffffffffb01162b3
+     0.01%             1  gf2-batch-tuned-arm  [.] <core::iter::adapters::GenericShunt<I,R> as core::iter::traits::iterator::Iterator>::next
+     0.01%             1  gf2-batch-tuned-arm  [.] core::iter::traits::iterator::Iterator::try_fold
+     0.01%             1  libc.so.6            [.] 0x0000000000176540
+     0.01%             1  libc.so.6            [.] 0x0000000000176e09
+     0.01%             1  libc.so.6            [.] 0x0000000000176e1a
+     0.01%             1  [unknown]            [k] 0xffffffffafa015f0
+     0.01%             1  [unknown]            [k] 0xffffffffafa015f4
+     0.01%             1  [unknown]            [k] 0xffffffffafdfb081
+     0.01%             1  [unknown]            [k] 0xffffffffafe1bde6
+     0.01%             1  [unknown]            [k] 0xffffffffafe92183
+     0.01%             1  [unknown]            [k] 0xffffffffafe92fa4
+     0.01%             1  [unknown]            [k] 0xffffffffafe98ca2
+     0.01%             1  [unknown]            [k] 0xffffffffafe98cc2
+     0.01%             1  [unknown]            [k] 0xffffffffafeab064
+     0.01%             1  [unknown]            [k] 0xffffffffb00dffd0
+     0.01%             1  [unknown]            [k] 0xffffffffb00e999c
+     0.01%             1  [unknown]            [k] 0xffffffffb011cc8a
+     0.01%             1  [unknown]            [k] 0xffffffffb0162f7e
+     0.01%             1  [unknown]            [k] 0xffffffffb0f69be6
+     0.01%             1  [unknown]            [k] 0xffffffffb0f69c16
+     0.01%             1  [unknown]            [k] 0xffffffffb0f965cc
+     0.01%             1  [unknown]            [k] 0xffffffffb0f965f5
+     0.01%             1  [unknown]            [k] 0xffffffffb0f9a1b3
+     0.01%             1  [unknown]            [k] 0xffffffffb0f9b003
+
+
+#
+# (Tip: System-wide collection from all CPUs: perf record -a)
+#

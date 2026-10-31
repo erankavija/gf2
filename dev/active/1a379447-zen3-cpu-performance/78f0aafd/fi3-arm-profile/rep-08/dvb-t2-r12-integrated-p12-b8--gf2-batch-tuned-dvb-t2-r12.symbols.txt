@@ -1,0 +1,77 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 40K of event 'cycles:u'
+# Event count (approx.): 162517503273
+#
+# Overhead       Samples  Shared Object        Symbol                                                       
+# ........  ............  ...................  .............................................................
+#
+    97.91%         39778  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::decode_codeword_into
+     1.16%           471  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcDecoder::syndrome_passes
+     0.32%           129  gf2-batch-tuned-arm  [.] gf2_core::bitvec::BitVec::push_bit
+     0.17%            69  gf2-batch-tuned-arm  [.] std::sys::backtrace::__rust_begin_short_backtrace
+     0.05%            22  gf2-batch-tuned-arm  [.] ldpc_survey::sha256_hex
+     0.05%            20  libc.so.6            [.] 0x0000000000176540
+     0.05%            19  libc.so.6            [.] 0x000000000017654a
+     0.03%            13  libc.so.6            [.] 0x0000000000176533
+     0.03%            11  libc.so.6            [.] 0x0000000000176529
+     0.03%            11  libc.so.6            [.] 0x0000000000176e13
+     0.02%             7  [unknown]            [k] 0xffffffffb01162b3
+     0.01%             5  [unknown]            [k] 0xffffffffafa015f0
+     0.01%             4  gf2-batch-tuned-arm  [.] gf2_core::sparse::SpBitMatrix::row_iter
+     0.01%             4  libc.so.6            [.] 0x0000000000176e09
+     0.01%             3  gf2-batch-tuned-arm  [.] core::iter::traits::iterator::Iterator::try_fold
+     0.01%             3  gf2-batch-tuned-arm  [.] ldpc_survey::read_alist_code
+     0.01%             3  gf2-batch-tuned-arm  [.] ldpc_survey::read_llrs
+     0.01%             3  [unknown]            [k] 0xffffffffafe98cc2
+     0.00%             2  gf2-batch-tuned-arm  [.] gf2_coding::ldpc::core::LdpcCode::from_edges
+     0.00%             2  gf2-batch-tuned-arm  [.] ldpc_survey::read_codewords
+     0.00%             2  libc.so.6            [.] malloc
+     0.00%             2  libc.so.6            [.] 0x0000000000175c32
+     0.00%             2  [unknown]            [k] 0xffffffffafa015f4
+     0.00%             2  [unknown]            [k] 0xffffffffafd29ae4
+     0.00%             2  [unknown]            [k] 0xffffffffafe1d527
+     0.00%             2  [unknown]            [k] 0xffffffffafe9069a
+     0.00%             2  [unknown]            [k] 0xffffffffafe952e3
+     0.00%             2  [unknown]            [k] 0xffffffffafeaaed5
+     0.00%             2  [unknown]            [k] 0xffffffffafeabf9f
+     0.00%             1  gf2-batch-tuned-arm  [.] alloc::raw_vec::RawVecInner<A>::finish_grow
+     0.00%             1  gf2-batch-tuned-arm  [.] alloc::raw_vec::RawVecInner<A>::grow_amortized
+     0.00%             1  libc.so.6            [.] realloc
+     0.00%             1  libc.so.6            [.] 0x00000000000a73ae
+     0.00%             1  libc.so.6            [.] 0x00000000000a787d
+     0.00%             1  libc.so.6            [.] 0x00000000000a7fa8
+     0.00%             1  libc.so.6            [.] 0x0000000000176391
+     0.00%             1  libc.so.6            [.] 0x0000000000176e04
+     0.00%             1  [unknown]            [k] 0xffffffffafa01280
+     0.00%             1  [unknown]            [k] 0xffffffffafa01602
+     0.00%             1  [unknown]            [k] 0xffffffffafd3298d
+     0.00%             1  [unknown]            [k] 0xffffffffafd4939f
+     0.00%             1  [unknown]            [k] 0xffffffffafd796b3
+     0.00%             1  [unknown]            [k] 0xffffffffafe5dc80
+     0.00%             1  [unknown]            [k] 0xffffffffafe915f0
+     0.00%             1  [unknown]            [k] 0xffffffffafe91653
+     0.00%             1  [unknown]            [k] 0xffffffffafe92135
+     0.00%             1  [unknown]            [k] 0xffffffffafe92145
+     0.00%             1  [unknown]            [k] 0xffffffffafe9220e
+     0.00%             1  [unknown]            [k] 0xffffffffafe95337
+     0.00%             1  [unknown]            [k] 0xffffffffafe98ca2
+     0.00%             1  [unknown]            [k] 0xffffffffafe98cea
+     0.00%             1  [unknown]            [k] 0xffffffffafeab064
+     0.00%             1  [unknown]            [k] 0xffffffffafeabf99
+     0.00%             1  [unknown]            [k] 0xffffffffafed5b07
+     0.00%             1  [unknown]            [k] 0xffffffffaff0a0dc
+     0.00%             1  [unknown]            [k] 0xffffffffb011cc8a
+     0.00%             1  [unknown]            [k] 0xffffffffb0160002
+     0.00%             1  [unknown]            [k] 0xffffffffb01600de
+     0.00%             1  [unknown]            [k] 0xffffffffb0f7c551
+     0.00%             1  [unknown]            [k] 0xffffffffb0f9a184
+     0.00%             1  [unknown]            [k] 0xffffffffb0fac86f
+
+
+#
+# (Tip: To compare scalability of two workload samples use perf diff -c ratio file1 file2)
+#
