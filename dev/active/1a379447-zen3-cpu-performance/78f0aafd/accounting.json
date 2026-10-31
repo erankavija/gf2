@@ -1477,7 +1477,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -1608,7 +1608,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -1719,7 +1719,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -1855,7 +1855,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -1982,7 +1982,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -2113,7 +2113,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -2224,7 +2224,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -2360,7 +2360,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -2471,7 +2471,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -2602,7 +2602,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -2713,7 +2713,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -2824,7 +2824,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -2935,7 +2935,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -3066,7 +3066,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -3177,7 +3177,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -3288,7 +3288,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/f434ddd3/profile/profile-summary.json",
             "sha256": "9b02abc24461ebfe214c2ad7c67331a4c23be691fc82b2895eded72283c3f6e6"
@@ -3456,7 +3456,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -3628,7 +3628,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -3780,7 +3780,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -3948,7 +3948,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -4116,7 +4116,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -4288,7 +4288,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -4440,7 +4440,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -4608,7 +4608,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -4719,7 +4719,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -4850,7 +4850,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -4961,7 +4961,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -5072,7 +5072,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -5183,7 +5183,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -5314,7 +5314,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -5425,7 +5425,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -5536,7 +5536,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/3be770d5/v4-r1-steady-profile/profile-summary.json",
             "sha256": "043820e51dc16553a03ccd5debe022c79e6f479821b78c3a27fc99390f97f3b0"
@@ -5704,7 +5704,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -5876,7 +5876,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -6028,7 +6028,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -6196,7 +6196,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -6348,7 +6348,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -6520,7 +6520,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -6672,7 +6672,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -6840,7 +6840,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -6951,7 +6951,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -7082,7 +7082,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -7193,7 +7193,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -7304,7 +7304,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -7415,7 +7415,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -7546,7 +7546,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -7657,7 +7657,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -7768,7 +7768,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/bench_results/07ca8585/v4-r1-resampled-profile/profile-summary.json",
             "sha256": "5c7b2064be380e99dec1d1ae242db7ae5ef4f6d2dd79f4d6ab9018a32904509b"
@@ -7895,7 +7895,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
             "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
@@ -8032,7 +8032,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
             "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
@@ -8149,7 +8149,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
             "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
@@ -8266,7 +8266,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
             "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
@@ -8451,7 +8451,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
             "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
@@ -8588,7 +8588,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
             "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
@@ -8705,7 +8705,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
             "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"
@@ -8822,7 +8822,7 @@
           "status": "unmeasured"
         },
         "orchestration": {
-          "status": "measured scaling, attribution unmeasured",
+          "status": "measured per-worker ratio; route and attribution unmeasured",
           "source": {
             "path": "dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile-summary.json",
             "sha256": "9b668089865fa690bef35fe591b6ad0eb72911f2d239bcc075cb63eac5b48c46"

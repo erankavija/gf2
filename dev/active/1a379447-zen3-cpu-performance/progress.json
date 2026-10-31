@@ -3665,8 +3665,8 @@
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
  },
  "benchmark_window": {
-  "unit": "gf2-bench-window-20261025",
-  "armed_for": "2026-10-25T04:00:00+02:00",
+  "unit": "gf2-bench-window-20261101",
+  "armed_for": "2026-11-01T04:00:00+02:00",
   "state_dir": ".agents/bench-window",
   "queue": "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv",
   "pending_jobs": {
@@ -3813,7 +3813,7 @@
      "model": "sonnet",
      "task": "F3 regeneration test, batch-fill and REQ-02 projection in outcome",
      "reason": "narrow generator and test change",
-     "result": "running"
+     "result": "done 417b4427b; lead merged; code-review F1 then found six pilot-only cells lack tuned batch fill"
     },
     {
      "issue": "78f0aafd",
@@ -3822,9 +3822,38 @@
      "effort": "xhigh",
      "task": "F2 inventory test and report current state",
      "reason": "exact criteria, narrow footprint",
-     "result": "running"
+     "result": "done, committed by lead; merged a60198113"
+    },
+    {
+     "issue": "31727c57",
+     "vendor": "codex",
+     "model": "gpt-6.1-sol",
+     "effort": "high",
+     "task": "pilot-only cell batch-fill campaign preparation",
+     "reason": "multi-file generalization of the launcher and projection",
+     "result": "done e1fd572a2; merged e40810f2a; awaiting window"
+    },
+    {
+     "issue": "78f0aafd",
+     "vendor": "claude",
+     "model": "sonnet",
+     "task": "scaling baseline matched by batch",
+     "reason": "narrow fix in a shared summarizer",
+     "result": "done a10c139a9; merged 7c3ea552e"
     }
-   ]
+   ],
+   "lead_fixes": [
+    "cda95fd73: make-outcome-tables reader tolerates summaries without resolution; the 78f0aafd merge had broken every outcome projection on main",
+    "Accounting status for per-worker ratios states route unmeasured: portable tuned arm routes Lane at w1-b8 and SingleFrame at multiple workers (pilot-cells untimed log), and the decoder profile sessions record no route."
+   ],
+   "window_20261101": {
+    "unit": "gf2-bench-window-20261101.timer",
+    "armed_for": "2026-11-01T04:00:00+02:00",
+    "approved": "Invoker approved 2026-11-01",
+    "job": "31727c57 pilot-cells batch fill, one new queue line",
+    "arming_note": "systemd-run --user needs XDG_RUNTIME_DIR=/run/user/$(id -u) from this shell"
+   },
+   "open_observation": "31727c57/test_preparation test_core_build_bytes and the batch-fill plan test need built arms; they fail on the main checkout where target/ lacks them and pass in agent-31727c57. They are not CI steps."
   }
  }
 }

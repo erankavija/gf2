@@ -219,7 +219,7 @@ def decoder_rows(path):
         ratios = [row for row in summary['ratios'] if row['numerator'] == label or
                   row['denominator'] == label]
         if ratios:
-            mechanisms['orchestration'] = {'status': 'measured scaling, attribution unmeasured',
+            mechanisms['orchestration'] = {'status': 'measured per-worker ratio; route and attribution unmeasured',
                                            'source': cited(path), 'ratios': ratios,
                                            'sessions': summary['sessions']}
         record = summary['records'].get(label)

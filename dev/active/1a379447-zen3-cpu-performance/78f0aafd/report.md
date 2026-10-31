@@ -22,7 +22,7 @@ The consumed confirmation derivations preserve the invoker's margin ruling. The 
 
 ## REQ-03: mechanism accounting
 
-The generated table contains 123 profiled-cell rows. It names allocation, instructions, dependencies, compiler spills, packing, cache traffic, bandwidth, orchestration and hardware-limit evidence for each row and marks unmeasured mechanisms explicitly. Allocation-witness applicability is limited to its recorded workloads; IPC does not identify dependency latency; static stack references do not establish compiler spills; and the assembly listings are context without an executable-identity join. No approach to a hardware limit is claimed: host bandwidth and instruction/dependency bounds are unmeasured.
+The generated table contains 123 profiled-cell rows. It names allocation, instructions, dependencies, compiler spills, packing, cache traffic, bandwidth, orchestration and hardware-limit evidence for each row and marks unmeasured mechanisms explicitly. Allocation-witness applicability is limited to its recorded workloads; IPC does not identify dependency latency; static stack references do not establish compiler spills; and the assembly listings are context without an executable-identity join. The per-worker ratios of the decoder series are not thread-scaling measurements alone: its sessions record no decode route, and the [route outcome](../31727c57/outcome.md) records different routes for the portable tuned arm at one worker on eight-frame waves and at multiple workers, so a ratio can include a route change. No approach to a hardware limit is claimed: host bandwidth and instruction/dependency bounds are unmeasured.
 
 ## Queue
 
