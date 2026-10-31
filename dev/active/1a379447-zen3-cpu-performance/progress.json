@@ -2674,13 +2674,21 @@
   },
   {
    "session": 47,
-   "status": "open",
+   "status": "resolved",
    "questions": [
     "Q1 arm the benchmark window for the queued FI-1..FI-4 campaigns and decoder/BCH profile series",
     "Q2 78f0aafd REQ-02 profiles of historical executables (NR encoder, byte-field, polynomial): restore-by-rebuild vs profile integrated code with amendment",
     "Q3 bring follow-ups 53f5b940 and ff10cb51 into the epic"
    ],
-   "record": "handoff-41.md"
+   "record": "handoff-41.md",
+   "answer": "Invoker rulings Q1-Q3 recorded in session_scope.session_48."
+  },
+  {
+   "id": "31727c57-REQ-02",
+   "question": "REQ-02 ten confirmed cells conflict with the six-cell REQ-03/P-20 bound",
+   "status": "resolved",
+   "raised_at": "2026-11-01",
+   "answer": "Amend REQ-02; see session_scope.session_50."
   }
  ],
  "rework_counts": {
@@ -3786,6 +3794,34 @@
      "model": "gpt-6.1-sol",
      "effort": "high",
      "task": "FI-3 exact-arm profile series",
+     "result": "running"
+    }
+   ]
+  },
+  "session_50": {
+   "date": "2026-11-01",
+   "recovered_from_session_49": "Session 49 ended without a handoff. Reconstructed: 2026-10-29 code-review failed on 31727c57 (run cb869c52: F1 tuned batch fill missing, F2 REQ-02 confirmation coverage, F3 regeneration test) and 78f0aafd (run 5e3945c8: F1 four FI-3 profiles missing, F2 inventory test); the tracker state was left uncommitted, committed as 25ef65c62. 2026-10-30 window ran both queued lines to terminal completion, uncollected until this session.",
+   "window_20261030": "31727c57 batch fill: 30 replicate cells, 60 validation dispatches, terminal complete; committed da4e84963 on worktree-agent-31727c57. 78f0aafd FI-3 arm series: nine sessions, series done, 46 of 46 material gaps profile-cited; committed b179da882 on worktree-agent-78f0aafd. These resolve code-review F1 on both issues subject to re-review.",
+   "invoker_rulings": {
+    "31727c57-REQ-02": "2026-11-01: amend REQ-02. Pilot on the full ten-cell matrix; confirmation of selected and holdout cells within the REQ-03 bound with at least one confirmed cell at one core, six and twelve physical cores and 24 logical CPUs; other configurations reported as exploratory pilot evidence. Applied to the issue description. Reason: REQ-02 as written needed ten confirmed cells while REQ-03 and P-20 admit six and the family ledger admits no second attempt."
+   },
+   "dispatch_policy": "Model by task difficulty; no Fable; alternate Claude and Codex workers.",
+   "dispatches": [
+    {
+     "issue": "31727c57",
+     "vendor": "claude",
+     "model": "sonnet",
+     "task": "F3 regeneration test, batch-fill and REQ-02 projection in outcome",
+     "reason": "narrow generator and test change",
+     "result": "running"
+    },
+    {
+     "issue": "78f0aafd",
+     "vendor": "codex",
+     "model": "gpt-6-luna",
+     "effort": "xhigh",
+     "task": "F2 inventory test and report current state",
+     "reason": "exact criteria, narrow footprint",
      "result": "running"
     }
    ]
