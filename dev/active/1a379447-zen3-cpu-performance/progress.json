@@ -1170,7 +1170,7 @@
      "short_id": "31727c57",
      "title": "Confirm the core and decoder routes after integration",
      "classification": "research",
-     "status": "in-session preparation merged (b81b48534); queued FI-1/FI-2 launchers on worktree agent-31727c57 (pinned); waits for window",
+     "status": "REQ-02 amended; awaiting 2026-11-01 window for pilot-cell batch fill, then gates",
      "tracker_state": "in_progress"
     },
     {
@@ -1186,8 +1186,8 @@
      "short_id": "78f0aafd",
      "title": "Profile the integrated bottlenecks",
      "classification": "research",
-     "status": "dispatched session 47 (Codex gpt-6.1-sol high): in-session profile preparation",
-     "tracker_state": "in_progress"
+     "status": "done session 50; cargo-ci, code-review and research-review pass at 655649403 with zero findings",
+     "tracker_state": "done"
     },
     {
      "id": "94213540",
@@ -2790,7 +2790,9 @@
   "6230e0b6": 2,
   "d06a99ed": 2,
   "ecad1724": 2,
-  "94213540": 1
+  "94213540": 1,
+  "78f0aafd": 2,
+  "31727c57": 2
  },
  "surfaced_pitfalls": [
   {
@@ -3659,7 +3661,8 @@
   "handoff-39.md",
   "handoff-40.md",
   "handoff-41.md",
-  "handoff-42.md"
+  "handoff-42.md",
+  "handoff-43.md"
  ],
  "pending_artifact_links": {
   "note": "Tables the session-11 workers reported; link with jit doc add when each issue closes (paths relative to the repository root). Files: dev/active/1a379447-zen3-cpu-performance/pending-links/{04b85d10,6c6b09b1,12fdeb5b}-links.tsv (path<TAB>doc_type<TAB>label). 04b85d10 also relabels tables.md to 'Generated receipt tables' and run-consumer-campaigns.sh to 'Consumer campaign launcher'. 6c6b09b1's receipts are listed by receipt.json; also link acceptance-summary and execution.log per receipt directory. 428f2f6b's table arrives with its report. Session 14: pending-links/1d4fd63d-links.tsv (68 rows, lead-generated) and pending-links/07ca8585-links.tsv (24 rows, worker; the rework adds more)."
