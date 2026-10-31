@@ -14,9 +14,10 @@ class Outcome(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.campaigns = outcome.campaigns()
+        cls.fill = outcome.batch_fill_record()
 
     def test_document_regenerates(self):
-        self.assertEqual(outcome.render(self.campaigns), outcome.OUTPUT.read_text())
+        self.assertEqual(outcome.render(self.campaigns, self.fill), outcome.OUTPUT.read_text())
 
     def test_every_recorded_cell_keeps_its_interval_pairs_and_verdict(self):
         for (route, stage), campaign in self.campaigns.items():
@@ -57,12 +58,53 @@ class Outcome(unittest.TestCase):
                     else:
                         self.assertEqual(row[-1], outcome.tables.spread(side["batch_fill"])[0])
 
-    def test_absent_batch_fill_record_keeps_the_unmeasured_rows(self):
+    def test_incomplete_batch_fill_stage_yields_no_record(self):
         with tempfile.TemporaryDirectory() as empty:
             self.assertIsNone(outcome.batch_fill_record(Path(empty)))
-        text = outcome.render(self.campaigns)
-        self.assertIn("REQ-04 has that evidence gap", text)
-        self.assertNotIn("### Tuned-arm batch fill", text)
+
+    def test_committed_batch_fill_record_is_complete_and_probed(self):
+        confirmation = self.campaigns["decoder", "confirmation"]
+        build = outcome.batch_fill.read(outcome.batch_fill.BUILD_RECORD)
+        probed = build["arms"][outcome.batch_fill.ARM]["executable_sha256"]
+        self.assertEqual(set(self.fill["cells"]),
+                         {cell["cell_id"] for cell in confirmation["plan"]["cells"]})
+        for identifier, cell in self.fill["cells"].items():
+            with self.subTest(cell=identifier):
+                self.assertEqual(len(cell["fill"]), 2 * outcome.batch_fill.REPLICATES)
+                self.assertTrue(all(value > 0 for value in cell["fill"]))
+                self.assertEqual(cell["executables"], {probed})
+                self.assertNotIn(0, cell["probes"])
+        text = outcome.render(self.campaigns, self.fill)
+        self.assertIn("### Tuned-arm batch fill", text)
+        self.assertNotIn("evidence gap", text)
+
+    def test_pilot_configurations_are_confirmed_or_exploratory_from_the_receipts(self):
+        pilot = self.campaigns["decoder", "pilot"]
+        confirmation = self.campaigns["decoder", "confirmation"]
+        rows, counts, outside = outcome.pilot_coverage(pilot, confirmation)
+        self.assertEqual(len(rows), len(pilot["cells"]))
+        confirmed = {cell["summary"]["cell_id"] for cell in confirmation["cells"]}
+        for row, cell in zip(rows, pilot["cells"]):
+            identifier = cell["summary"]["cell_id"]
+            with self.subTest(cell=identifier):
+                self.assertEqual(row[-1].startswith("confirmed"), identifier in confirmed)
+                if identifier not in confirmed:
+                    self.assertEqual(row[-1], "exploratory pilot evidence")
+        # REQ-02: a confirmed cell at one core, six and twelve physical cores, 24 logical CPUs.
+        self.assertTrue({1, 6, 12, 24} <= set(counts))
+        self.assertEqual(set(outside), confirmed - {cell["summary"]["cell_id"]
+                                                    for cell in pilot["cells"]})
+        text = outcome.render(self.campaigns, self.fill)
+        self.assertIn("### Pilot configurations and confirmation", text)
+        for cell in pilot["cells"]:
+            self.assertIn(f"`{cell['summary']['cell_id']}`", text)
+
+    def test_coverage_marks_a_dropped_confirmation_cell_exploratory(self):
+        confirmation = copy.deepcopy(self.campaigns["decoder", "confirmation"])
+        dropped = confirmation["cells"].pop(0)["summary"]["cell_id"]
+        rows, counts, _ = outcome.pilot_coverage(self.campaigns["decoder", "pilot"], confirmation)
+        row = next(row for row in rows if row[0] == f"`{dropped}`")
+        self.assertEqual(row[-1], "exploratory pilot evidence")
 
     def test_batch_fill_record_reports_every_confirmation_cell(self):
         # The untimed smoke's log has the record's shape; its values are no measurement.
@@ -87,7 +129,6 @@ class Outcome(unittest.TestCase):
         self.assertIn("### Tuned-arm batch fill", text)
         self.assertIn(build["confirmed_arm"]["executable_sha256"], text)
         self.assertIn(outcome.batch_fill.RULING, text)
-        self.assertNotIn("REQ-04 has that evidence gap", text)
 
     def test_confirmation_count_comes_from_roles(self):
         for route in ("core", "decoder"):
