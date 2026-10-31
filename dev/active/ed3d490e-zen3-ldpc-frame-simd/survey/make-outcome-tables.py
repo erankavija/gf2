@@ -76,7 +76,7 @@ def profile_summary():
     """The one committed profile summary whose series profiled an executable of the story's arms."""
     arms = generator.repository_path(SURVEY / "arms").as_posix() + "/"
     found = [smoke.ROOT / path for path in smoke.listed("profile-summary.json")
-             if read(smoke.ROOT / path)["resolution"]["executable"].startswith(arms)]
+             if read(smoke.ROOT / path).get("resolution", {}).get("executable", "").startswith(arms)]
     if len(found) != 1:
         sys.exit(f"{len(found)} profile summaries profile the story's arms; exactly one must")
     return found[0]
