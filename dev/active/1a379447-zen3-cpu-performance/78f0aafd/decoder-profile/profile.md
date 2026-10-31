@@ -485,9 +485,9 @@ Ratio of medians over sessions with a 10000-draw percentile bootstrap (CPython 3
 
 | Ratio | Kind | Estimate | 95% interval | Seed |
 |---|---|---:|---|---:|
-| `slowdown:production-dvb-l24` | per-worker slowdown against one worker | 2.412 | [2.389, 2.434] | 1816392191 |
-| `slowdown:production-dvb-p12` | per-worker slowdown against one worker | 1.614 | [1.607, 1.685] | 2834550725 |
-| `slowdown:production-dvb-p6` | per-worker slowdown against one worker | 1.449 | [1.438, 1.466] | 3708193241 |
-| `slowdown:production-nr-l24` | per-worker slowdown against one worker | 1.477 | [1.426, 1.572] | 1870367532 |
-| `slowdown:production-nr-p12` | per-worker slowdown against one worker | 0.988 | [0.984, 1.032] | 1947578342 |
-| `slowdown:production-nr-p6` | per-worker slowdown against one worker | 0.884 | [0.883, 0.924] | 1837463833 |
+| `slowdown:production-dvb-l24` | per-worker slowdown against one worker | 8.864 | [8.788, 8.942] | 1816392191 |
+| `slowdown:production-dvb-p12` | per-worker slowdown against one worker | 5.930 | [5.905, 6.198] | 2834550725 |
+| `slowdown:production-dvb-p6` | per-worker slowdown against one worker | 5.324 | [5.283, 5.391] | 3708193241 |
+| `slowdown:production-nr-l24` | per-worker slowdown against one worker | 9.313 | [8.980, 9.882] | 1870367532 |
+| `slowdown:production-nr-p12` | per-worker slowdown against one worker | 6.227 | [6.192, 6.497] | 1947578342 |
+| `slowdown:production-nr-p6` | per-worker slowdown against one worker | 5.574 | [5.549, 5.809] | 1837463833 |

@@ -365,9 +365,13 @@ def stat_summary(root, sessions, cases):
 
 def scaling_summary(cases, per_session):
     ratios = []
-    labels = {(c["arm"], c["code"], c["core_arm"]): label for (kind, label), c in cases.items() if kind == "stat"}
-    for (arm, code, core_arm), label in sorted(labels.items()):
-        base = labels.get((arm, code, "single-core"))
+    # A baseline is the single-worker case of the same arm, code, batch and passes;
+    # route pairs differ in arm and pass count, so they match on batch alone.
+    stat = {label: c for (kind, label), c in cases.items() if kind == "stat"}
+    labels = {(c["arm"], c["code"], c["core_arm"], c["batch"], c["passes"]): label for label, c in stat.items()}
+    routes = {(c["arm"], c["code"], c["core_arm"], c["batch"]): label for label, c in stat.items()}
+    for (arm, code, core_arm, batch, passes), label in sorted(labels.items()):
+        base = labels.get((arm, code, "single-core", batch, passes))
         values = per_session[label].get("ns_per_frame_per_worker", [])
         base_values = per_session[base].get("ns_per_frame_per_worker", []) if base else []
         if base and base != label and len(values) >= 2 and len(base_values) >= 2:
@@ -379,7 +383,7 @@ def scaling_summary(cases, per_session):
         for numerator, denominator, kind in ROUTE_PAIRS:
             if arm != numerator:
                 continue
-            other = labels.get((denominator, code, core_arm))
+            other = routes.get((denominator, code, core_arm, batch))
             other_values = per_session[other].get("ns_per_frame_per_worker", []) if other else []
             if other and len(values) >= 2 and len(other_values) >= 2:
                 identifier = f"gap:{label}"
@@ -847,13 +851,23 @@ def self_test():
         got = [row["category"] for row in summary[label]["categories"]]
         if got != ["other:lane::kernel"]:
             sys.exit(f"self-test: a batch profiler sample categorized as {got}")
-    cases = {("stat", f"{arm}-w1"): {"arm": arm, "code": "c", "core_arm": "single-core"}
+    cases = {("stat", f"{arm}-w1"): {"arm": arm, "code": "c", "core_arm": "single-core", "batch": 8, "passes": 1}
              for arm in ("lane", "single-frame")}
     per_session = {f"{arm}-w1": {"ns_per_frame_per_worker": [float(v) for v in values]}
                    for arm, values in (("lane", (2, 2, 2)), ("single-frame", (4, 4, 4)))}
     pairs = [(r["numerator"], r["denominator"], r["estimate"]) for r in scaling_summary(cases, per_session)]
     if pairs != [("lane-w1", "single-frame-w1", 0.5)]:
         sys.exit(f"self-test: route pairs {pairs}, expected lane-w1 over single-frame-w1 at 0.5")
+    shape = {"arm": "a", "code": "c", "passes": 1}
+    cases = {("stat", label): dict(shape, core_arm=core_arm, batch=batch)
+             for label, core_arm, batch in (("w1-b1", "single-core", 1), ("w1-b8", "single-core", 8),
+                                            ("p6-b8", "physical-cores-6", 8), ("p6-b4", "physical-cores-6", 4))}
+    per_session = {label: {"ns_per_frame_per_worker": [float(v)] * 3}
+                   for label, v in (("w1-b1", 8), ("w1-b8", 2), ("p6-b8", 6), ("p6-b4", 5))}
+    pairs = [(r["numerator"], r["denominator"], r["estimate"]) for r in scaling_summary(cases, per_session)]
+    if pairs != [("p6-b8", "w1-b8", 3.0)]:
+        sys.exit(f"self-test: scaling pairs {pairs}, expected p6-b8 over its own batch's w1-b8 at 3.0 "
+                 "and no ratio for the batch without a single-worker case")
     with tempfile.TemporaryDirectory() as directory:
         root = pathlib.Path(directory)
         BINARY = root / "absent-executable"
