@@ -20,7 +20,7 @@
 #
 # Lead registers this gate post-merge with:
 #
-#   jit gate define criterion-1.5x \
+#   jit gate define criterion-1-5x \
 #       --title "Criterion 1.5x speedup" \
 #       --description "geomean speedup vs pinned baseline >= 1.5x for the kernel named by ppc-kernel:<id>" \
 #       --mode auto --stage postcheck \

@@ -456,11 +456,11 @@ env = {}
 [[contribution]]
 kind = "keyed-array"
 target = "gates"
-identity = "criterion-1.5x"
+identity = "criterion-1-5x"
 
 [contribution.value]
 version = 1
-key = "criterion-1.5x"
+key = "criterion-1-5x"
 title = "Criterion 1.5x speedup"
 description = "Require geomean speedup against the pinned baseline of at least 1.5x for the kernel named by ppc-kernel:<id>."
 stage = "postcheck"
