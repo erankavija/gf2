@@ -2694,7 +2694,7 @@
    "date": "2026-11-01",
    "issue": "101604ef",
    "reason": "code-review failed three times; findings pull in opposite directions on shell-text comparison",
-   "state": "awaiting invoker"
+   "state": "ruled 2026-11-01: narrow REQ-01/REQ-02, older-form logs do not resume"
   }
  ],
  "rework_counts": {
@@ -2801,7 +2801,7 @@
   "31727c57": 2,
   "1362381c": 2,
   "1a379447": 2,
-  "101604ef": 3
+  "101604ef": 0
  },
  "surfaced_pitfalls": [
   {
@@ -3815,7 +3815,13 @@
    "recovered_from_session_49": "Session 49 ended without a handoff. Reconstructed: 2026-10-29 code-review failed on 31727c57 (run cb869c52: F1 tuned batch fill missing, F2 REQ-02 confirmation coverage, F3 regeneration test) and 78f0aafd (run 5e3945c8: F1 four FI-3 profiles missing, F2 inventory test); the tracker state was left uncommitted, committed as 25ef65c62. 2026-10-30 window ran both queued lines to terminal completion, uncollected until this session.",
    "window_20261030": "31727c57 batch fill: 30 replicate cells, 60 validation dispatches, terminal complete; committed da4e84963 on worktree-agent-31727c57. 78f0aafd FI-3 arm series: nine sessions, series done, 46 of 46 material gaps profile-cited; committed b179da882 on worktree-agent-78f0aafd. These resolve code-review F1 on both issues subject to re-review.",
    "invoker_rulings": {
-    "31727c57-REQ-02": "2026-11-01: amend REQ-02. Pilot on the full ten-cell matrix; confirmation of selected and holdout cells within the REQ-03 bound with at least one confirmed cell at one core, six and twelve physical cores and 24 logical CPUs; other configurations reported as exploratory pilot evidence. Applied to the issue description. Reason: REQ-02 as written needed ten confirmed cells while REQ-03 and P-20 admit six and the family ledger admits no second attempt."
+    "31727c57-REQ-02": "2026-11-01: amend REQ-02. Pilot on the full ten-cell matrix; confirmation of selected and holdout cells within the REQ-03 bound with at least one confirmed cell at one core, six and twelve physical cores and 24 logical CPUs; other configurations reported as exploratory pilot evidence. Applied to the issue description. Reason: REQ-02 as written needed ten confirmed cells while REQ-03 and P-20 admit six and the family ledger admits no second attempt.",
+    "2026-11-01-batch": {
+     "101604ef": "narrow",
+     "cargo-ci.sh": "fix: 54b34be1",
+     "rename": "approved: feea02ef6",
+     "seeding": "take fix: 9ed4b23c"
+    }
    },
    "dispatch_policy": "Model by task difficulty; no Fable; alternate Claude and Codex workers.",
    "dispatches": [
@@ -3886,6 +3892,14 @@
      "task": "epic rework 2: dense identity cutover and four launcher resume identities",
      "reason": "last rework attempt, resume contract across launchers; follows Codex in the alternation",
      "result": "done 08a92bd33, merged 2517fb169; code-review failed third time; escalated"
+    },
+    {
+     "issue": "101604ef",
+     "vendor": "claude",
+     "model": "opus",
+     "task": "apply the invoker narrowing: delete older-form compatibility",
+     "reason": "worker holds the design context; narrow removal",
+     "result": "running"
     }
    ],
    "lead_fixes": [
