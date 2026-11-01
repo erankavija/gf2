@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Untimed determinism suites on the integrated tree (REQ-11). Run from the worktree root.
 set -uo pipefail
-out=dev/bench_results/1362381c/determinism
+out=$(dirname "${BASH_SOURCE[0]}")
 filter='binary(ldpc_batch_contract) | binary(batch_decode_worker_determinism) | binary(pooled_batch_decoder) | binary(checkpoint_compat) | binary(core_dispatch_fallback) | binary(ldpc_simd_validation) | binary(hybrid_resume) | binary(executor_oom_fallback_run)'
 {
   rustc --version

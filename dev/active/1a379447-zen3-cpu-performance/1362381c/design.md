@@ -67,10 +67,10 @@ remeasuring every primary cell, needs roughly one family per six primary cells
 (P-20 below) and every family harness rebuilt. That fails the lightest-approach
 standing rule and gains nothing the invariant does not already grant.
 
-The [drift record](production-drift.json) contradicts the premise of D-3: it
-classifies every committed receipt whose measured content resolves as
-`code-differs`, because each such receipt's measured packages carry code
-changes; the rest pin no production content and are `unresolvable`. The invoker therefore ruled on
+The [drift record](production-drift.json) contradicted the premise of D-3 when
+it was ruled: every receipt committed by then whose measured content resolved was
+`code-differs`, and the rest pinned no production content and were `unresolvable`.
+The record states each receipt's current class. The invoker therefore ruled on
 2026-10-25 that consumed cells keep their evidence by identity, each labelled
 with its drift class (REQ-07 invalidates evidence only for producing
 measurement-behavior changes), and that the integrated families remeasure only
@@ -99,34 +99,25 @@ protocol v4, which leaves REQ-12 without a measured BCH comparison.
 
 ## Problem statement
 
-The epic's family surveys measured kernels and consumers one family at a
-time, often before later production changes landed: the lane decoder and its
-selectors (`ed3d490e`, `0a77ecfc`), worker-aware routing (`d06a99ed`),
-word-wise BCH codeword assembly (`8e53235b`), the BMI2 shift route
-(`f8dd4dde`) and the core profile's bit-backend selector (`63bad95d`). This
-issue publishes one scorecard over the frozen workload set. Each cell either
-cites a receipt that still measures current production code or is remeasured
-on the current release build. Matched-algorithm and fastest
-quality-compatible comparisons are reported separately, together with a
+The epic's family surveys measured kernels and consumers one family at a time,
+often before later production changes landed: the lane decoder and its selectors
+(`ed3d490e`, `0a77ecfc`), worker-aware routing (`d06a99ed`), word-wise BCH
+codeword assembly (`8e53235b`), the BMI2 shift route (`f8dd4dde`) and the core
+profile's bit-backend selector (`63bad95d`). This issue publishes one scorecard
+over the frozen workload set. Integrated rows are remeasured on release builds of
+the integrated tree. Consumed rows stay historical evidence of the code their
+receipts pin, each labelled with its drift class (D-3). Matched-algorithm and
+fastest quality-compatible comparisons are reported separately, together with a
 post-integration reprofile and a disposition for every material residual gap.
 
-## Success criteria (verbatim from the issue)
+## Success criteria
 
-- [hard] REQ-01: Satisfy the [Zen 3 measurement contract](../measurement-contract.md) for correctness, reproducible release benchmarks, comparison validity and adoption; receipts pin its committed version, the frozen protocol and the cell addendum. Include mandatory before/after evidence for production changes and preserve negative outcomes.
+The issue's items are authoritative: `@/issue/1362381c/requirement/REQ-01`,
+`@/issue/1362381c/requirement/REQ-07`, `@/issue/1362381c/requirement/REQ-08`,
+`@/issue/1362381c/requirement/REQ-09`, `@/issue/1362381c/requirement/REQ-10`,
+`@/issue/1362381c/requirement/REQ-11` and `@/issue/1362381c/requirement/REQ-12`.
 
-- [hard] REQ-07: Publish raw samples, a per-cell scorecard and reproducible report for the complete frozen workload set. Identify source/input/toolchain/hardware provenance, selected paths, latency, throughput, memory, scaling and uncertainty. Consume completed canonical BCH evidence by identity, then remeasure affected integrated BCH cells under this protocol; preserve historical evidence and invalidate it only for producing measurement-behavior changes.
-
-- [hard] REQ-08: Run independent confirmation after integration for both core and decoder-specific tuned production routes, with one-core, physical-core and SMT configurations where meaningful. Report batch-fill latency separately from throughput. Compare matched-algorithm and fastest quality-compatible measured arms per cell; do not designate a surveyed project the winner or hide losses in an aggregate.
-
-- [hard] REQ-09: Reprofile the integrated bottlenecks and account for allocation, instruction/dependency limits, compiler spills, packing, cache traffic, bandwidth and orchestration. State the measured basis for any claimed approach to a hardware limit.
-
-- [hard] REQ-10: Give every gap exceeding the frozen material-gap threshold a recorded measured limit, preserved negative/inconclusive experiment, or concrete tracked follow-up with its next falsifiable experiment. Apply the predeclared search/stop budget; do not claim an absolute maximum from a finite search or endlessly retune against confirmation samples.
-
-- [hard] REQ-11: Publish BER/FER sample counts and confidence intervals for decoder validation, and separate any schedule/precision differences from matched runs. Demonstrate the declared deterministic contract across batching, worker counts, fallback and resume.
-
-- [hard] REQ-12: Report the outcome of the aspirational fastest-open-source target for every primary cell, including losses and unavailable equivalent comparisons, with source citations and no substitution of an unrelated metric.
-
-## Inventory and gaps per criterion
+## Inventory per criterion
 
 ### Family registry
 
@@ -156,14 +147,14 @@ and the AFF3CT flooding SIMD modes
 
 ### Criterion inventory
 
-| Criterion | What exists | Gap this issue closes |
+| Criterion | Family evidence | Artifact of this issue |
 |---|---|---|
-| REQ-01 | Every family receipt pins contract, protocol and addendum (P-02, P-03). Before/after evidence for each production change is in its owning issue (`d06a99ed` outcome, `8e53235b`, `00dd43c3`, `63bad95d` F-09). [Receipt re-evaluation](../a203a23c/receipt-reevaluation.json) records fresh-checkout verdicts. | New integrated families with frozen addenda and pilot-derived resolution. A scorecard row per cell with its receipt pins and preserved outcome. |
-| REQ-07 | Raw samples per receipt. Per-domain generated tables (e.g. [LDPC tables](../../../bench_results/ed3d490e/tables.md), `make-outcome-tables.py`). | No cross-family scorecard, no workload-set declaration (D-1), no drift classification of consumed cells (D-3), and no protocol-v4 integrated BCH cells (D-2). |
-| REQ-08 | Pre-integration holdouts: core (`63bad95d-profile-dispatch-overhead-v2`, one core) and decoder (`ldpc-batch-decode-selector-holdout-v1`, one worker, [outcome](../7695aaee/outcome.md)), both measured before `d06a99ed`. Batch fill is measured as a zero-iteration stage probe in the gf2 decoder arms. | Post-integration holdout confirmation of both routes, with physical-core and SMT arms for the decoder. Batch-fill latency as its own scorecard column. Matched and fastest columns per primary cell. |
-| REQ-09 | Decoder profile series ([`f434ddd3` profile](../../../bench_results/f434ddd3/profile/profile.md)); 3be770d5 steady profile; 2037941f logical and dense profiles; c04dd4ac shift and interleave profiles; committed assembly listings. | Reprofile of the integrated decoder route (worker-aware routing changes the multicore route). Attribution of every primary cell with a material gap that no profile of its current code covers. A per-mechanism accounting table. |
-| REQ-10 | Per-family residual-gap sections, e.g. [mid-range residual gaps](../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md#residual-gaps) and R-01…R-05 of the [decoder record](../6230e0b6/findings.md#residual-gaps-and-their-limits). Each family freezes its `material_gap_threshold` and `search_budget`. | One gap register over all primary cells, each material gap mapped to a measured limit, a preserved experiment or a tracked issue with its next falsifiable experiment, and the budget spent. |
-| REQ-11 | Decoder receipts carry per-frame errors, FER/BER points and frame-Hoeffding/Wilson intervals (P-18). Determinism tests: `ldpc_batch_contract.rs`, `batch_decode_worker_determinism.rs`, `pooled_batch_decoder.rs`, checkpoint tests in `checkpoint_compat.rs`. | Projection of the quality columns into the scorecard, with matched and fastest rows kept apart. A committed untimed verification record of the determinism suites on the integrated tree. |
+| REQ-01 | Every family receipt pins contract, protocol and addendum (P-02, P-03). Before/after evidence for each production change is in its owning issue (`d06a99ed` outcome, `8e53235b`, `00dd43c3`, `63bad95d` F-09). | Integrated families with frozen addenda and pilot-derived resolution ([route outcome](../31727c57/outcome.md), [comparator outcome](../1358d6ab/outcome.md)); a scorecard row per cell with its pins and preserved outcome. |
+| REQ-07 | Raw samples per receipt. Per-domain generated tables (e.g. [LDPC tables](../../../bench_results/ed3d490e/tables.md)). | [Scorecard](../../../bench_results/1362381c/scorecard.md), [workload set](workload-set.json), [drift record](production-drift.json) and the protocol-v4 BCH cells of FI-4. |
+| REQ-08 | Pre-integration holdouts: core (`63bad95d-profile-dispatch-overhead-v2`) and decoder (`ldpc-batch-decode-selector-holdout-v1`, [outcome](../7695aaee/outcome.md)). | FI-1 and FI-2 post-integration confirmations; batch-fill latency as its own column; matched and fastest tables per domain. |
+| REQ-09 | Decoder profile series ([`f434ddd3` profile](../../../bench_results/f434ddd3/profile/profile.md)), 3be770d5 steady profile, 2037941f and c04dd4ac profiles, committed assembly listings. | [Profile report](../78f0aafd/report.md) and [accounting](../78f0aafd/accounting.md). |
+| REQ-10 | Per-family residual-gap sections, e.g. [mid-range residual gaps](../2037941f-profile-and-optimize-mid-range-buffer-operations/mid-range-findings.md#residual-gaps) and R-01…R-05 of the [decoder record](../6230e0b6/findings.md#residual-gaps-and-their-limits). Each family freezes its `material_gap_threshold` and `search_budget`. | [Gap register](gaps.json), projected into the scorecard with the budget spent. |
+| REQ-11 | Decoder receipts carry per-frame errors, FER/BER points and frame-Hoeffding/Wilson intervals (P-18). | Quality columns in the scorecard, with matched and fastest rows apart; the [determinism record](../../../bench_results/1362381c/determinism/nextest.log). |
 | REQ-12 | Per-family aspirational statements, e.g. [performance evidence](../../../../docs/reference/performance-evidence.md) and the `fd9d5416` W1/W2 table. | Target outcome per primary cell (met, not met, inconclusive, unavailable), each with its comparator citation key. |
 
 ### Dispositions of pitfalls and tasks that name this issue
@@ -306,8 +297,8 @@ estimate.
 - One committed generator,
   `dev/active/1a379447-zen3-cpu-performance/1362381c/survey/make-scorecard.py`,
   reads `workload-set.json`, the drift record, the gap register and the
-  committed receipts it names. Its outputs are
-  `dev/bench_results/1362381c/scorecard.json` and `scorecard.md`.
+  committed receipts it names. It writes `scorecard.json` and `scorecard.md` into
+  the results directory its argument names, `dev/bench_results/1362381c`.
 - It verifies each campaign's execution log through
   `dev/scripts/verify-campaign-log.py`. It reads outcomes through
   `make-collection-outcome.py` and enumerates receipts through
@@ -332,10 +323,13 @@ estimate.
   - FER/BER sample counts and intervals for decoder cells;
   - aspirational target outcome (`met`, `not met`, `inconclusive`,
     `unavailable` with the record that says so) with the comparator's
-    citation key.
+    citation key. The target holds per workload over every other project's
+    measured arm; a published ruling on a receipt makes its cell `inconclusive`;
+    `pairwise` keeps the cell's own comparison.
 - No aggregate row exists. Losses stay per cell. No project is named winner.
 - The gap register `gaps.json` (input, committed) maps each primary cell whose
-  outcome records a material gap to one disposition: a measured-limit pointer,
+  outcome records a material gap, or whose estimate exceeds its family's frozen
+  threshold with its outcome kept as evaluated, to one disposition: a measured-limit pointer,
   a preserved-experiment pointer, or a tracked issue with its next falsifiable
   experiment and the family's spent search budget. The generator refuses to
   write when a material-gap cell has no entry. That refusal belongs to the
@@ -372,8 +366,6 @@ queue lines in its report.
   (P-20, $t = 2$). It is recorded as in the `63bad95d` disturbance record. A
   repeat needs an invoker ruling like F-08 of
   [campaign findings](../63bad95d/campaign-findings.md).
-- bchlib has no citation key in the issue's `cites:` labels; FI-4 needs a
-  registry key before the report cites it.
 - `e5f8b3ae` changes the gf2 arm digests; FI-2 and FI-3 build only after it
   merges, and story receipts keep the digests they pin.
 - Ledger paths of `12fdeb5b` and `eda07788` addenda name `dev/active/<id>/`,
