@@ -143,9 +143,7 @@ pub fn permanent_bipedal3_parallel(mat: &Bipedal3Matrix) -> Fp<3> {
     permanent_bipedal3_parallel_with_chunk(mat, permanent_chunk_len())
 }
 
-/// Same as [`permanent_bipedal3_parallel`] but takes the chunk size as an
-/// argument. The `parallel_chunk_sweep` example calls this function, so its
-/// sweep measures the code path [`permanent_bipedal3_parallel`] runs.
+/// Computes the parallel permanent with an explicit chunk length.
 ///
 /// # Panics
 ///

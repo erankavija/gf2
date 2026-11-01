@@ -40,8 +40,7 @@ gf2-core = { path = "../gf2-core", features = ["test-support"] }
 # Production-only validation boundary: exact algebra anchors exercise the
 # sampler and interval estimator without making algebra depend on statistics.
 gf2-stats = { path = "../gf2-stats" }
-# SHA-256 for the `paper_repro_slope` example's input-fingerprint column
-# (criterion 5 amendment 2026-05-11). Test-time only.
+# SHA-256 identities for the `tuning_calibration` benchmark harness.
 sha2 = "0.10"
 tempfile = "3"
 serde_json = { workspace = true }
@@ -81,16 +80,6 @@ required-features = ["simd", "test-support"]
 name = "tuning_calibration"
 harness = false
 required-features = ["parallel", "simd", "tuning-profile", "test-support"]
-
-# ── Issue `96dcbec4` (epic `ae82bd73`) — paper Table 2 slope reproduction ──
-[[example]]
-name = "paper_repro_slope"
-required-features = ["test-support"]
-
-# ── Issue `05250df5` (epic `ae82bd73`) — T15 parallel chunk-size sweep bench ──
-[[example]]
-name = "parallel_chunk_sweep"
-required-features = ["parallel", "test-support"]
 
 # ── Issue `4513209c` (epic `ae82bd73`) — S2 parallel scaling sweep ──
 [[example]]

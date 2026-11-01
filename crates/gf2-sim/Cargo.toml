@@ -66,28 +66,10 @@ gf2-sim = { path = ".", features = ["test-support"] }
 hip = ["dep:gf2-kernels-hip", "gf2-coding/hip", "gf2-algebra/hip"]
 
 # Exposes the canonical test/bench-only deterministic AWGN channel-LLR source
-# (`testutil::AwgnLlrSource`) to integration tests, benches, and the GPU
-# throughput bins. Off by default; auto-enabled for this crate's own tests and
-# benches via the self-dev-dependency above. Mirrors `gf2-algebra`'s
-# `test-support`.
+# (`testutil::AwgnLlrSource`) to integration tests, benches, and comparison
+# tools. Off by default; auto-enabled for this crate's own tests and benches
+# via the self-dev-dependency above. Mirrors `gf2-algebra`'s `test-support`.
 test-support = []
-
-# GPU LDPC decode-stage throughput bin (issue a930be7f receipt). A normal
-# (non-dev) target, so the self-dev-dependency does NOT auto-enable
-# `test-support` for it — it must be requested explicitly:
-#   cargo run -p gf2-sim --release --features hip,test-support \
-#       --bin gpu_ldpc_throughput -- ...
-[[bin]]
-name = "gpu_ldpc_throughput"
-required-features = ["test-support"]
-
-# GPU BCH syndrome-evaluation throughput bin (issue 9012f8a0 receipt). Builds
-# its own DVB-T2 BCH frames via the encoder (no AwgnLlrSource), so it needs only
-# `hip`. Without `--features hip` the main prints a notice and exits 0:
-#   cargo run -p gf2-sim --release --features hip \
-#       --bin gpu_bch_syndrome_throughput -- --frames 1024 --repeats 5
-[[bin]]
-name = "gpu_bch_syndrome_throughput"
 
 # LDPC-only AWGN-BPSK BLER sweep for the external-library comparison harness
 # (issue 18e69a1a). Uses `testutil::AwgnLlrSource` and the shared
