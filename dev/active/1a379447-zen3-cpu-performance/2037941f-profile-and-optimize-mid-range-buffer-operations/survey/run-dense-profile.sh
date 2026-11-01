@@ -150,7 +150,7 @@ trap 'on_exit "$?"' EXIT
 if [[ "${mode}" != --case ]]; then
     identity_arguments=()
     if [[ -n "${CASE_FILE}" ]]; then
-        identity_arguments+=(--table "cases=${CASE_FILE}" --table-drop title= --table-file-name-column '|' 1)
+        identity_arguments+=(--table "cases=${CASE_FILE}" --table-drop title=)
         for addendum in "${ADDENDA[@]}"; do
             identity_arguments+=(--json "addendum=${addendum}")
         done

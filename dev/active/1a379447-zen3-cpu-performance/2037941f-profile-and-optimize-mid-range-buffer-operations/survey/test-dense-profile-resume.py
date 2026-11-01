@@ -17,10 +17,6 @@ REPOSITORY = Path(subprocess.run(
     capture_output=True, check=True, text=True,
 ).stdout.strip())
 SURVEY = SOURCE.parent.relative_to(REPOSITORY)
-CAMPAIGNS = SURVEY.parent / "campaigns"
-BASELINE_ADDENDA = {"isolated-addendum": "dense-isolated-fused-parity.json",
-                    "allocated-addendum": "dense-allocated-matvec.json"}
-FAMILIES = ("2037941f-dense-isolated-fused-parity", "2037941f-dense-allocated-matvec")
 UNRELATED = "a" * 64
 
 
@@ -74,10 +70,9 @@ class ResumeTest(unittest.TestCase):
         self.environment = dict(os.environ, GF2_BENCH_WINDOW="1")
         self.environment["HOME"] = str(self.root / "home")
 
-    def run_gate(self, accepted=True, arguments=None):
+    def run_gate(self, accepted=True):
         result = subprocess.run(
-            ["bash", str(self.launcher), "window",
-             *(("--cases", str(self.cases)) if arguments is None else arguments)],
+            ["bash", str(self.launcher), "window", "--cases", str(self.cases)],
             cwd=self.root, env=self.environment, text=True, capture_output=True,
         )
         if accepted:
@@ -135,104 +130,25 @@ class ResumeTest(unittest.TestCase):
         self.launcher.write_text(self.launcher.read_text().replace("REPETITIONS=9", "REPETITIONS=10"))
         self.run_gate(accepted=False)
 
-    def executable_fields(self):
-        arm, scalar, tool = (digest(self.root / relative) for relative in EXECUTABLES)
-        return f"arm={arm} scalar={scalar} tool={tool}"
-
-    def commit(self):
-        subprocess.run(["git", "-C", str(self.root), "add", "-A", "--", str(SURVEY)], check=True)
-        subprocess.run(["git", "-C", str(self.root), "-c", "user.name=fixture",
-                        "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false",
-                        "commit", "-q", "-am", "fixture"], check=True)
-
-    def write_ragged_record(self):
+    def write_older_record(self):
         """The first line of a committed `--cases` session's log."""
-        subprocess.run(["git", "-C", str(self.root), "add", self.cases.name], check=True)
-        older = (f"{self.executable_fields()} script={digest(self.launcher)} summary={UNRELATED} "
-                 f"closure={UNRELATED} cases={digest(self.cases)} "
-                 f"addendum={digest(self.addendum)} addendum={digest(self.second_addendum)}")
+        arm, scalar, tool = (digest(self.root / relative) for relative in EXECUTABLES)
         self.log.parent.mkdir()
-        self.log.write_text(f"identity {older}\nsession start 2026-10-08T23:07:09Z\n")
-        return older
+        self.log.write_text(
+            f"identity arm={arm} scalar={scalar} tool={tool} script={UNRELATED} "
+            f"summary={UNRELATED} closure={UNRELATED} cases={digest(self.cases)} "
+            f"addendum={digest(self.addendum)} addendum={digest(self.second_addendum)}\n"
+            "session start 2026-10-08T23:07:09Z\n")
 
-    def write_baseline_record(self):
-        """The first line of a committed baseline session's log, with its accepted receipts."""
-        fields = []
-        for name, file_name in BASELINE_ADDENDA.items():
-            path = self.root / CAMPAIGNS / file_name
-            path.parent.mkdir(exist_ok=True, parents=True)
-            path.write_text(json.dumps({"cells": [{"workload": {"seed": 1}}], "name": name}))
-            fields.append(f"{name}={digest(path)}")
-        for family in FAMILIES:
-            receipt = self.root / "dev/bench_results/2037941f" / family / "v4-r1-pilot"
-            receipt.mkdir(parents=True)
-            (receipt / "receipt.json").write_text("{}")
-            (receipt / "acceptance-summary.json").write_text(json.dumps(
-                {"verdict": "accepted", "family": {"family_id": family}}))
-        subprocess.run(["git", "-C", str(self.root), "add", "-A", "--", str(CAMPAIGNS)], check=True)
-        older = (f"{self.executable_fields()} script={digest(self.launcher)} summary={UNRELATED} "
-                 f"closure={UNRELATED} {' '.join(fields)}")
-        self.log = self.root / "dev/bench_results/2037941f/dense-baseline-profile-r2/execution.log"
-        self.log.parent.mkdir(parents=True)
-        self.log.write_text(f"identity {older}\n")
-        return older
-
-    def test_older_case_session_resumes_with_identical_inputs(self):
-        older = self.write_ragged_record()
-        self.assertEqual(self.run_gate(), f"identity {older}")
-
-    def test_older_baseline_session_resumes_with_identical_inputs(self):
-        older = self.write_baseline_record()
-        self.assertEqual(self.run_gate(arguments=()), f"identity {older}")
-
-    def test_older_record_resumes_after_comment_and_formatting_edits(self):
-        older = self.write_ragged_record()
-        self.commit()
-        self.cases.write_text("# Comment only\n" + self.cases.read_text().replace(
-            "title=Fixture", "title=Description"))
-        self.addendum.write_text(json.dumps(json.loads(self.addendum.read_text()), indent=4))
-        self.launcher.write_text(self.launcher.read_text() + "# Documentation only\n")
-        self.assertEqual(self.run_gate(), f"identity {older}")
-
-    def test_older_record_resumes_when_addendum_paths_became_file_names(self):
-        path_form = self.cases.read_text().replace("|fixture-addendum.json|",
-                                                   "|campaigns/fixture-addendum.json|")
-        file_name_form = self.cases.read_text()
-        self.cases.write_text(path_form)
-        older = self.write_ragged_record()
-        self.commit()
-        self.cases.write_text(file_name_form)
-        self.assertEqual(self.run_gate(), f"identity {older}")
-
-    def test_older_record_refuses_measurement_setting_change(self):
-        self.write_ragged_record()
-        self.commit()
-        text = self.launcher.read_text()
-        for old, new in (("REPETITIONS=9", "REPETITIONS=10"),
-                         ("RECORD_EVENT=cycles:u", "RECORD_EVENT=instructions:u"),
-                         ("SAMPLE_FREQUENCY=4999", "SAMPLE_FREQUENCY=5000"),
-                         ("taskset -c", "taskset -a -c")):
-            with self.subTest(change=new):
-                self.launcher.write_text(text.replace(old, new))
-                self.run_gate(accepted=False)
-                self.launcher.write_text(text)
-
-    def test_older_record_refuses_unrecoverable_script(self):
-        older = self.write_ragged_record().replace(f"script={digest(self.launcher)}",
-                                                   f"script={UNRELATED}")
-        self.log.write_text(f"identity {older}\n")
-        self.commit()
-        self.run_gate(accepted=False)
-
-    def test_older_record_binds_settings_after_first_resume(self):
-        older = self.write_ragged_record()
-        self.commit()
-        self.assertEqual(self.run_gate(), f"identity {older}")
-        self.assertIn("identity arm=", self.log.read_text().splitlines()[-1])
-        self.assertIn("configuration=", self.log.read_text().splitlines()[-1])
-        self.launcher.write_text(self.launcher.read_text().replace(
-            "SAMPLE_FREQUENCY=4999", "SAMPLE_FREQUENCY=5000"))
-        self.run_gate(accepted=False)
+    def test_older_identity_form_refuses_naming_a_new_log(self):
+        self.write_older_record()
+        result = subprocess.run(
+            ["bash", str(self.launcher), "window", "--cases", str(self.cases)],
+            cwd=self.root, env=self.environment, text=True, capture_output=True,
+        )
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("older identity form", result.stderr)
+        self.assertIn("new log", result.stderr)
 
     def test_control_flow_change_refuses_resume(self):
         self.run_gate()
@@ -240,33 +156,11 @@ class ResumeTest(unittest.TestCase):
             '$(seq 1 "${REPETITIONS}")', '$(seq 2 "${REPETITIONS}")'))
         self.run_gate(accepted=False)
 
-    def test_older_record_refuses_changed_case(self):
-        self.write_ragged_record()
-        self.commit()
-        self.cases.write_text(self.cases.read_text().replace("|route|", "|another-route|"))
+    def test_emitted_prose_change_refuses_resume(self):
+        self.run_gate()
+        self.launcher.write_text(self.launcher.read_text().replace(
+            "non-timed profile preparation complete", "preparation finished"))
         self.run_gate(accepted=False)
-
-    def test_older_record_refuses_changed_addendum(self):
-        self.write_ragged_record()
-        self.commit()
-        self.second_addendum.write_text(json.dumps({"cells": [{"workload": {"seed": 4}}]}))
-        self.run_gate(accepted=False)
-
-    def test_older_record_refuses_changed_baseline_addendum(self):
-        self.write_baseline_record()
-        self.commit()
-        (self.root / CAMPAIGNS / BASELINE_ADDENDA["allocated-addendum"]).write_text("{}")
-        self.run_gate(accepted=False, arguments=())
-
-    def test_older_record_refuses_each_changed_executable(self):
-        self.write_ragged_record()
-        for relative in EXECUTABLES:
-            with self.subTest(executable=relative):
-                binary = self.root / relative
-                original = binary.read_bytes()
-                binary.write_bytes(original + b"# Different executable bytes\n")
-                self.run_gate(accepted=False)
-                binary.write_bytes(original)
 
 
 if __name__ == "__main__":

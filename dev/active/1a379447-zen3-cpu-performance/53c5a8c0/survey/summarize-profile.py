@@ -434,8 +434,8 @@ def validate(directory, declarations, runs_list, counters, resolution):
     with open(log_path, encoding="utf-8") as handle:
         log = handle.read().splitlines()
     identities = [line for line in log if line.startswith("identity ")]
-    if not identities:
-        problems.append("profile log has no identity line")
+    if len(identities) != 1:
+        problems.append("profile log has {} identity lines".format(len(identities)))
     for label in labels:
         done = sum(line.startswith("row {} done ".format(label)) for line in log)
         if done != 1:

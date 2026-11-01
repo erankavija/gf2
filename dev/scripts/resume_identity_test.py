@@ -126,12 +126,6 @@ class LauncherContract:
         with self.log.open("a") as log:
             log.write(f"rep-01 start {TIME} {identity} {LOAD}\n")
 
-    def commit_inputs(self):
-        git = ["git", "-C", str(self.root), "-c", "user.name=fixture",
-               "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false"]
-        subprocess.run([*git, "add", "-A", "--", "dev"], check=True)
-        subprocess.run([*git, "commit", "-q", "-m", "fixture"], check=True)
-
     def checked(self, edit):
         """Apply `edit` to a file and restore its bytes afterwards."""
         path, change = edit
@@ -156,6 +150,18 @@ class LauncherContract:
                 self.run_launcher(accepted=False)
                 restore()
 
+    def test_older_identity_form_refuses_naming_a_new_log(self):
+        self.write_older_record()
+        original = self.log.read_text()
+        result = subprocess.run(
+            ["bash", str(self.launcher), *self.ARGUMENTS], cwd=self.root, env=self.environment,
+            text=True, capture_output=True,
+        )
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("older identity form", result.stderr)
+        self.assertIn("new log", result.stderr)
+        self.assertEqual(self.log.read_text(), original)
+
     def test_changed_executable_refuses_resume(self):
         self.record(self.run_launcher())
         for path in self.executables():
@@ -165,68 +171,7 @@ class LauncherContract:
                 restore()
 
 
-class OlderRecordContract:
-    """Launchers whose older records name their script by digest."""
-
-    def test_older_record_resumes_and_stays_in_its_form(self):
-        older = self.write_older_record()
-        self.assertEqual(self.run_launcher(), older)
-        self.assertEqual(self.log.read_text().splitlines()[0].split(" load=")[0].split(" ", 3)[-1],
-                         older)
-
-    def test_older_record_resumes_after_comment_edit(self):
-        older = self.write_older_record()
-        self.commit_inputs()
-        for path in self.comment_inputs():
-            with self.subTest(input=path.name):
-                restore = self.checked((path, add_comment))
-                self.assertEqual(self.run_launcher(), older)
-                restore()
-
-    def test_older_record_refuses_measured_change(self):
-        self.write_older_record()
-        self.commit_inputs()
-        for name, path, change in self.older_measured_edits():
-            with self.subTest(change=name):
-                restore = self.checked((path, change))
-                self.run_launcher(accepted=False)
-                restore()
-
-    def test_older_record_refuses_changed_executable(self):
-        self.write_older_record()
-        for path in self.executables():
-            with self.subTest(executable=path.name):
-                restore = self.checked((path, self.change_executable))
-                self.run_launcher(accepted=False)
-                restore()
-
-    def test_older_record_binds_settings_after_first_resume(self):
-        self.write_older_record()
-        self.commit_inputs()
-        self.run_launcher()
-        self.assertIn("configuration=", self.log.read_text())
-        for name, path, change in self.measured_edits():
-            with self.subTest(change=name):
-                restore = self.checked((path, change))
-                self.run_launcher(accepted=False)
-                restore()
-
-    def test_older_record_unknown_script_refuses(self):
-        self.write_older_record(script_digest=UNRELATED)
-        self.commit_inputs()
-        self.run_launcher(accepted=False)
-
-
-class NoScriptDigestContract:
-    """Launchers whose older records name no script: their settings cannot be recovered."""
-
-    def test_older_record_refuses(self):
-        self.write_older_record()
-        self.commit_inputs()
-        self.run_launcher(accepted=False)
-
-
-class ClmulCrossoverProfile(LauncherContract, NoScriptDigestContract, unittest.TestCase):
+class ClmulCrossoverProfile(LauncherContract, unittest.TestCase):
     SUFFIX = "53c5a8c0/survey/run-profile.sh"
     STOP = 'if [[ "${MODE}" == "row" ]]; then\n    :\n'
 
@@ -248,18 +193,19 @@ class ClmulCrossoverProfile(LauncherContract, NoScriptDigestContract, unittest.T
 
     def measured_edits(self):
         return [("case", self.cases, lambda path: replace(path, '"seed":1', '"seed":2')),
+                ("emitted prose", self.launcher,
+                 lambda path: replace(path, 'echo "complete" >&2', 'echo "finished" >&2')),
                 ("calibration slope divisor", self.launcher,
                  lambda path: replace(path, "(double - single) / low", "(double - single) / (2 * low)"))]
 
-    def write_older_record(self, script_digest=None):
+    def write_older_record(self):
         conservative, native = self.executables()
-        older = (f"profile-arm-conservative={digest(conservative)} "
-                 f"profile-arm-native={digest(native)} profile-cases.tsv={digest(self.cases)}")
-        self.log.write_text(f"identity {older}\nsession start {TIME} load=2.53 3.21 3.81\n")
-        return older
+        self.log.write_text(f"identity profile-arm-conservative={digest(conservative)} "
+                            f"profile-arm-native={digest(native)} "
+                            f"profile-cases.tsv={digest(self.cases)}\n"
+                            f"session start {TIME} load=2.53 3.21 3.81\n")
 
-
-class ConsumerProfile(LauncherContract, OlderRecordContract, unittest.TestCase):
+class ConsumerProfile(LauncherContract, unittest.TestCase):
     SUFFIX = "04b85d10/survey/run-profile.sh"
     STOP = "# ------------------------------------------------------------- provenance\n"
     TABLES = ("counter-cases.txt", "report-cases.txt", "alloc-trace-cases.txt")
@@ -281,7 +227,7 @@ class ConsumerProfile(LauncherContract, OlderRecordContract, unittest.TestCase):
         return [self.survey / "sweep.sh", *(self.survey / name for name in self.TABLES),
                 self.generator, self.launcher]
 
-    def older_measured_edits(self):
+    def measured_edits(self):
         return [*((name, self.survey / name, lambda path: replace(path, "row|", "other|"))
                   for name in self.TABLES),
                 ("session script", self.survey / "sweep.sh",
@@ -289,11 +235,8 @@ class ConsumerProfile(LauncherContract, OlderRecordContract, unittest.TestCase):
                 ("session heredoc code", self.survey / "sweep.sh",
                  lambda path: replace(path, 'str(entry["target_ms"])', 'str(entry["target_ms"] + 1)')),
                 ("ladder", self.generator, lambda path: replace(path, "fixture", "another")),
-                ("repetitions", self.launcher,
-                 lambda path: replace(path, "REPETITIONS=9", "REPETITIONS=10"))]
-
-    def measured_edits(self):
-        return [*self.older_measured_edits(),
+                ("emitted prose", self.launcher,
+                 lambda path: replace(path, 'echo "profile written to', 'echo "profile stored in')),
                 ("allocation trace session", self.launcher, lambda path: replace(
                     path, 'if [[ "${index}" == 1 ]]; then\n        trace=yes',
                     'if [[ "${index}" == 2 ]]; then\n        trace=yes'))]
@@ -305,24 +248,12 @@ class ConsumerProfile(LauncherContract, OlderRecordContract, unittest.TestCase):
                 "import json, sys  # Documentation only\n")
         self.assertEqual(self.run_launcher(), identity)
 
-    def write_older_record(self, script_digest=None):
-        profile, verify = self.executables()
-        older = f"consumer-profile={digest(profile)}"
-        self.log.write_text(f"rep-01 start {TIME} {older} {LOAD}\nrep-01 done {TIME} {LOAD}\n")
-        sources = "\n".join(f"{digest(self.survey / name)}  dev/active/04b85d10/survey/{name}"
-                            for name in ("sweep.sh", *self.TABLES))
-        (self.out / "host.txt").write_text(
-            f"## harness executables\n{UNRELATED} consumer-arm\n{digest(profile)} consumer-profile\n"
-            f"{digest(verify)} consumer-verify\n\n## harness sources\n{sources}\n"
-            f"{UNRELATED}  dev/active/04b85d10/survey/profile-cases.py\n"
-            f"{script_digest or digest(self.launcher)}  dev/active/04b85d10/survey/run-profile.sh\n"
-        )
-        with (self.out / "cases.jsonl").open("w") as ladder:
-            subprocess.run(["python3", str(self.generator)], check=True, stdout=ladder)
-        return older
+    def write_older_record(self):
+        profile, _ = self.executables()
+        self.log.write_text(f"rep-01 start {TIME} consumer-profile={digest(profile)} {LOAD}\n"
+                            f"rep-01 done {TIME} {LOAD}\n")
 
-
-class SteadyStateLdpcProfile(LauncherContract, NoScriptDigestContract, unittest.TestCase):
+class SteadyStateLdpcProfile(LauncherContract, unittest.TestCase):
     SUFFIX = "3be770d5/survey/run-profile.sh"
     STOP = "# Summaries read files and time nothing, so they run after the mutex.\n"
     STOP_WITH = "exit 0\n"
@@ -385,6 +316,8 @@ class SteadyStateLdpcProfile(LauncherContract, NoScriptDigestContract, unittest.
                  lambda path: replace(path, "SAMPLE_PERIOD=4000037", "SAMPLE_PERIOD=4000039")),
                 ("arm environment", self.survey / "arms.json",
                  lambda path: replace(path, '"GF2_AFF3CT_IMPLEM": "NMS"', '"GF2_AFF3CT_IMPLEM": "MS"')),
+                ("emitted prose", self.launcher,
+                 lambda path: replace(path, 'echo "profile written to', 'echo "profile stored in')),
                 ("awk program", self.survey / "profile-session.sh",
                  lambda path: replace(path, 'count[$0]++', 'count[$0] += 2')),
                 ("case expansion heredoc", self.launcher,
@@ -398,19 +331,17 @@ class SteadyStateLdpcProfile(LauncherContract, NoScriptDigestContract, unittest.
                 "                    # Documentation only\n                    END { for (key in count)")
         self.assertEqual(self.run_launcher(), identity)
 
-    def write_older_record(self, script_digest=None):
+    def write_older_record(self):
         profile, census = self.executables()
-        older = " ".join([
+        fields = " ".join([
             f"ldpc-profile={digest(profile)}", f"ldpc-alloc-census={digest(census)}",
             *(f"{name}={digest(self.survey / name)}"
               for name in ("profile-session.sh", "profile-cases.tsv", "arms.json")),
         ])
-        self.log.write_text(f"rep-01 start {TIME} {older} load=[1.20 1.52 4.66]\n"
+        self.log.write_text(f"rep-01 start {TIME} {fields} load=[1.20 1.52 4.66]\n"
                             f"rep-01 done {TIME} load=[10.94 7.38 6.38]\n")
-        return older
 
-
-class DvbInterleaverProfile(LauncherContract, OlderRecordContract, unittest.TestCase):
+class DvbInterleaverProfile(LauncherContract, unittest.TestCase):
     SUFFIX = "c04dd4ac-zen3-shifts-and-permutations/survey/run-profile.sh"
     STOP = 'if [[ ! -e "${OUT}/host.txt" ]]; then\n'
 
@@ -449,38 +380,19 @@ class DvbInterleaverProfile(LauncherContract, OlderRecordContract, unittest.Test
     def comment_inputs(self):
         return [self.cases, self.build_record, self.manifest, self.behavior_source, self.launcher]
 
-    def older_measured_edits(self):
+    def measured_edits(self):
         return [("case", self.cases, lambda path: replace(path, "direct", "packed")),
                 ("sampling frequency", self.launcher,
-                 lambda path: replace(path, "SAMPLE_FREQUENCY=4000", "SAMPLE_FREQUENCY=4001"))]
-
-    def measured_edits(self):
-        return [*self.older_measured_edits(),
+                 lambda path: replace(path, "SAMPLE_FREQUENCY=4000", "SAMPLE_FREQUENCY=4001")),
+                ("emitted prose", self.launcher,
+                 lambda path: replace(path, 'echo "profile written to', 'echo "profile stored in')),
                 ("counter selection", self.launcher,
                  lambda path: replace(path, "counters=yes", "counters=no"))]
 
-    def write_older_host(self):
+    def write_older_record(self):
         (binary,) = self.executables()
-        (self.out / "host.txt").write_text(
-            f"## executable\n{digest(binary)}  {binary}\n"
-            f"## profile case declaration\n{digest(self.cases)}  {self.cases}\n"
-        )
-
-    def write_older_record(self, script_digest=None):
-        (binary,) = self.executables()
-        (self.out / "profile-inputs.sha256").write_text(
-            f"{script_digest or digest(self.launcher)}  survey/run-profile.sh\n")
-        older = f"dvb-profile={digest(binary)} inputs={UNRELATED}"
-        self.log.write_text(f"rep-01 start {TIME} {older} {LOAD}\n"
-                            f"rep-01 inner argv: run-profile.sh --session out rep-01 yes\n")
-        self.write_older_host()
-        return older
-
-    def test_record_naming_no_script_refuses(self):
-        (binary,) = self.executables()
-        self.log.write_text(f"rep-01 start {TIME} dvb-profile={digest(binary)} {LOAD}\n")
-        self.write_older_host()
-        self.run_launcher(accepted=False)
+        self.log.write_text(f"rep-01 start {TIME} dvb-profile={digest(binary)} "
+                            f"inputs={UNRELATED} {LOAD}\n")
 
 
 class EmbeddedPrograms(unittest.TestCase):

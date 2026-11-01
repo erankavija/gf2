@@ -49,7 +49,6 @@ if [[ "${MODE}" == series ]]; then
         exit 2
     }
     IDENTITY="$(python3 -B "${RESUME_IDENTITY}" --log "${LOG}" \
-        --recorded-digests "${OUT}/host.txt" --recorded-digests "${OUT}/profile-inputs.sha256" \
         --executable "dvb-profile=${BIN}" --script "run-profile.sh=${BASH_SOURCE[0]}" \
         --table "profile-cases.txt=${CASES}")"
 fi

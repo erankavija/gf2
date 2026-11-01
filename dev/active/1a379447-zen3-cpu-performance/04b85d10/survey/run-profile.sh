@@ -51,23 +51,15 @@ LOG="${OUT}/repetitions.log"
     --manifest-path "${MANIFEST}") >>"${OUT}/build.log" 2>&1
 
 # ---------------------------------------------------------------- identity
-# A resumed series measures what its first session measured. An older record
-# digests the generator's bytes, so its ladder is compared directly; removed when
-# no such log is resumed (@/issue/101604ef).
+# A resumed series measures what its first session measured.
 touch "${LOG}"
 LADDER="${OUT}/cases.jsonl"
 python3 "${HERE}/profile-cases.py" >"${LADDER}.new"
-if [[ -s "${LOG}" && -e "${LADDER}" ]] && ! cmp -s "${LADDER}.new" "${LADDER}"; then
-    rm "${LADDER}.new"
-    echo "resume refused: the expanded case ladder differs from the first session's" >&2
-    exit 2
-fi
 IDENTITY="$(python3 -B "${RESUME_IDENTITY}" --log "${LOG}" \
-    --recorded-digests "${OUT}/host.txt" \
     --script "run-profile.sh=${BASH_SOURCE[0]}" \
     --executable "consumer-profile=${BIN}/consumer-profile" \
     --executable "consumer-verify=${BIN}/consumer-verify" \
-    --shell "sweep.sh=${HERE}/sweep.sh" \
+    --script "sweep.sh=${HERE}/sweep.sh" \
     --table "counter-cases.txt=${HERE}/counter-cases.txt" \
     --table "report-cases.txt=${HERE}/report-cases.txt" \
     --table "alloc-trace-cases.txt=${HERE}/alloc-trace-cases.txt" \

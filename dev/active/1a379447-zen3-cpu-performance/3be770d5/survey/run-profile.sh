@@ -41,8 +41,8 @@ series_identity() {
     done
     python3 -B "$(series_located resume_identity.py)" --log "${OUT}/repetitions.log" \
         "${arguments[@]}" --script "run-profile.sh=${BASH_SOURCE[0]}" \
-        --shell "profile-series.sh=${HERE}/profile-series.sh" \
-        --shell "profile-session.sh=${HERE}/profile-session.sh" \
+        --script "profile-series.sh=${HERE}/profile-series.sh" \
+        --script "profile-session.sh=${HERE}/profile-session.sh" \
         --table "profile-cases.tsv=${HERE}/profile-cases.tsv" \
         --json "arms.json=${HERE}/arms.json"
 }
