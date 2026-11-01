@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "address": {
+    "root_seed": 4923361482881630209,
+    "q": 7,
+    "n": 3,
+    "purpose_tag": 1,
+    "stream_index": 0
+  },
+  "started_at": {
+    "seconds": 1788217264,
+    "nanoseconds": 244563465
+  },
+  "phase": "sample"
+}
