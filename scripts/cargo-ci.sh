@@ -81,6 +81,12 @@ LOGDIR="$RUN_ROOT/logs"
 SCRATCH="$RUN_ROOT/scratch"
 mkdir -p "$LOGDIR" "$SCRATCH"
 export TMPDIR="$SCRATCH"
+if [ -z "${CARGO_CI_NO_SCCACHE:-}" ] && [ -z "${RUSTC_WRAPPER:-}" ] &&
+   command -v sccache >/dev/null 2>&1; then
+  export CARGO_CI_SYSTEM_TMPDIR="$SYSTEM_TMPDIR"
+  RUSTC_WRAPPER="$(cd "$(dirname "$0")" && pwd)/sccache-system-tmp.sh"
+  export RUSTC_WRAPPER
+fi
 
 # Directory-name prefixes the suites give their scratch trees. A run that ends
 # with more of these than it started with leaked a fixture: `/tmp` is a tmpfs
