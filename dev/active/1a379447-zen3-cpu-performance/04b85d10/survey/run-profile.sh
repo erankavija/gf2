@@ -63,6 +63,7 @@ if [[ -s "${LOG}" && -e "${LADDER}" ]] && ! cmp -s "${LADDER}.new" "${LADDER}"; 
 fi
 IDENTITY="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
     --recorded-digests "${OUT}/host.txt" \
+    --script "run-profile.sh=${BASH_SOURCE[0]}" --measured-lines 'trace=' \
     --executable "consumer-profile=${BIN}/consumer-profile" \
     --executable "consumer-verify=${BIN}/consumer-verify" \
     --setting "REPETITIONS=${REPETITIONS}" \

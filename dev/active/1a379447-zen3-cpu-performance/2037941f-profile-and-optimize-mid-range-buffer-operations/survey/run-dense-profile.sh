@@ -156,17 +156,17 @@ if [[ "${mode}" != --case ]]; then
     else
         identity_arguments+=(--json "isolated-addendum=${ISOLATED}" --json "allocated-addendum=${ALLOCATED}")
         for item in "${CASES[@]}"; do
-            identity_arguments+=(--setting "case=${item}")
+            identity_arguments+=(--observed "case=${item}")
         done
     fi
-    for setting in REPETITIONS ISSUE_EVENTS MEMORY_EVENTS RECORD_EVENT SAMPLE_FREQUENCY \
-        FRESH_CASE REPORT_PERCENT_LIMIT ANNOTATE_PERCENT_LIMIT cpu; do
+    for setting in REPETITIONS ISSUE_EVENTS MEMORY_EVENTS; do
         identity_arguments+=(--setting "${setting}=${!setting}")
     done
     # Result rendering and source pointers do not decide measurement or resume.
     identity="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
         --executable "arm=${ARM}" --executable "scalar=${SCALAR_ARM}" --executable "tool=${TOOL}" \
-        "${identity_arguments[@]}")"
+        --script "script=${BASH_SOURCE[0]}" \
+        --observed "cpu=${cpu}" "${identity_arguments[@]}")"
     grep -q '^identity ' "${LOG}" || echo "identity ${identity}" >>"${LOG}"
 fi
 echo "profile execution log: ${OUT}/execution.log"

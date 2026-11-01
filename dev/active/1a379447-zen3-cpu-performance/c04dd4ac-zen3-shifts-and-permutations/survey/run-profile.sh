@@ -47,14 +47,11 @@ if [[ "${MODE}" == series ]]; then
         echo "build record does not pin dvb-profile ${DIGEST}" >&2
         exit 2
     }
-    identity_arguments=()
-    for setting in REPETITIONS COUNTER_EVENTS SAMPLE_FREQUENCY REPORT_PERCENT_LIMIT \
-        ANNOTATE_PERCENT_LIMIT; do
-        identity_arguments+=(--setting "${setting}=${!setting}")
-    done
     IDENTITY="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
-        --recorded-digests "${OUT}/host.txt" --executable "dvb-profile=${BIN}" \
-        --table "profile-cases.txt=${CASES}" "${identity_arguments[@]}")"
+        --recorded-digests "${OUT}/host.txt" --recorded-digests "${OUT}/profile-inputs.sha256" \
+        --executable "dvb-profile=${BIN}" --script "run-profile.sh=${BASH_SOURCE[0]}" \
+        --measured-lines 'BIN[}]" session|counters=' --setting "REPETITIONS=${REPETITIONS}" \
+        --table "profile-cases.txt=${CASES}")"
 fi
 
 if [[ "${MODE}" == session ]]; then
