@@ -1170,8 +1170,8 @@
      "short_id": "31727c57",
      "title": "Confirm the core and decoder routes after integration",
      "classification": "research",
-     "status": "REQ-02 amended; awaiting 2026-11-01 window for pilot-cell batch fill, then gates",
-     "tracker_state": "in_progress"
+     "status": "done session 50; cargo-ci, code-review and research-review pass at 60981f68d; one advisory fixed e6aecd8ad",
+     "tracker_state": "done"
     },
     {
      "id": "1358d6ab",
@@ -1202,8 +1202,8 @@
      "short_id": "1362381c",
      "title": "Publish end-to-end competitive results and remaining limits",
      "classification": "documentation",
-     "status": "pending",
-     "tracker_state": "backlog"
+     "status": "claimed; Claude opus worker on agent-1362381c",
+     "tracker_state": "in_progress"
     }
    ]
   }
@@ -3852,19 +3852,21 @@
      "task": "read-only investigation of closing the AFF3CT gaps",
      "reason": "invoker request",
      "result": "done; 1362381c/aff3ct-gap-investigation.md; no plan adopted"
+    },
+    {
+     "issue": "1362381c",
+     "vendor": "claude",
+     "model": "opus",
+     "task": "WP-6 scorecard, gap register, report, publication",
+     "reason": "largest synthesis of the epic; research-review gate; follows the Codex Astra dispatch in the vendor alternation",
+     "result": "running"
     }
    ],
    "lead_fixes": [
     "cda95fd73: make-outcome-tables reader tolerates summaries without resolution; the 78f0aafd merge had broken every outcome projection on main",
     "Accounting status for per-worker ratios states route unmeasured: portable tuned arm routes Lane at w1-b8 and SingleFrame at multiple workers (pilot-cells untimed log), and the decoder profile sessions record no route."
    ],
-   "window_20261101": {
-    "unit": "gf2-bench-window-20261101.timer",
-    "armed_for": "2026-11-01T04:00:00+02:00",
-    "approved": "Invoker approved 2026-11-01",
-    "job": "31727c57 pilot-cells batch fill, one new queue line",
-    "arming_note": "systemd-run --user needs XDG_RUNTIME_DIR=/run/user/$(id -u) from this shell"
-   },
+   "window_20261101": "31727c57 pilot-cell batch fill: 30 replicate cells, 60 validation dispatches, terminal complete, nonzero fill; f7705b7f8, merged 934fb8df0. execution.log and plan.json of that stage exceed the jit doc add depth budget; outcome.md links them.",
    "open_observation": "31727c57/test_preparation test_core_build_bytes and the batch-fill plan test need built arms; they fail on the main checkout where target/ lacks them and pass in agent-31727c57. They are not CI steps.",
    "follow_up_epic": {
     "id": "55c3e433",
