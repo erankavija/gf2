@@ -174,6 +174,67 @@
         "GF2_AFF3CT_LLR_FACTOR": "2"
       },
       "package": "ldpc-aff3ct-intra-arm"
+    },
+    "gf2-batch-single-frame-iterations": {
+      "source": "workspace",
+      "own_record": true,
+      "executable": "gf2-batch-single-frame-arm",
+      "build": "native",
+      "comparison": "baseline",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "normalized-min-sum",
+      "description": "gf2-coding LdpcBatchDecoder on the single-frame route, reporting per-frame iterations after timing",
+      "environment": {},
+      "package": "ldpc-batch-arms"
+    },
+    "gf2-batch-single-frame-unchanged": {
+      "source": "workspace",
+      "own_record": true,
+      "executable": "gf2-batch-single-frame-arm",
+      "build": "native",
+      "comparison": "baseline",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "normalized-min-sum",
+      "description": "gf2-coding LdpcBatchDecoder on the single-frame route, built from its own pinned tree",
+      "environment": {},
+      "package": "ldpc-batch-arms"
+    },
+    "qc-decoder": {
+      "source": "workspace",
+      "own_record": true,
+      "executable": "qc-decoder-arm",
+      "build": "native",
+      "comparison": "candidate",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "normalized-min-sum",
+      "description": "QC-aware prototype decoder, eight sequential single-frame decodes at batch eight, NR BG1 Z=384 only",
+      "environment": {},
+      "package": "ldpc-qc-arms"
+    },
+    "aff3ct-flooding-nms-f32-iterations": {
+      "source": "workspace",
+      "own_record": true,
+      "executable": "aff3ct-throughput-arm",
+      "build": "external",
+      "comparison": "matched",
+      "precision": "f32",
+      "schedule": "flooding",
+      "update_rule": "normalized-min-sum",
+      "simd": "none",
+      "description": "AFF3CT [Cassagne2019] flooding normalized min-sum, one clone per pinned worker, reporting replay-derived per-frame iterations after timing",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      },
+      "package": "ldpc-throughput-harness",
+      "features": ["aff3ct"],
+      "quality": "aff3ct-flooding-nms-f32"
     }
   }
 }
