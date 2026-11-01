@@ -26,7 +26,7 @@ the receipt and its [plan](../../../bench_results/2037941f/2037941f-dense-matvec
 each declared cell starts, checkpoints and completes once with status
 `measured` at its declared pair count, each resumed session closes with
 `paused`, and the last closes with the single `complete` record. The
-[launcher log](../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-pilot/launcher.log)
+`launcher log`
 retains the exact invocation, the addendum, plan and executable digests, and
 each session's exit status.
 
@@ -111,7 +111,7 @@ each confirmatory cell starts, checkpoints and completes once with status
 byte for byte from a copy of the receipt directory. The summary is accepted,
 does not qualify for production selection, and carries no P-20 note on either
 cell. The receipt's
-[resolution-evidence snapshot](../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/inputs/resolution-evidence/receipt.json)
+`resolution-evidence snapshot`
 is the pinned pilot, and its
 [unavailable-row companion](../../../bench_results/2037941f/2037941f-dense-matvec-vs-m4ri/v4-r1-confirmation/unavailable-rows.tsv)
 repeats the predeclared unqualified shapes at zero samples and zero

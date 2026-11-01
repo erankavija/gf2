@@ -264,7 +264,7 @@ any session (`REPETITIONS` in [`run-profile.sh`](survey/run-profile.sh), with
 its rationale), each under its own
 `dev/scripts/ccx1-bench-flock.sh --full-host` invocation, with one
 `consumer-profile` executable throughout. Its
-[`repetitions.log`](../../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/repetitions.log)
+``repetitions.log``
 records every session's start with the executable digest, every completion
 and every discarded unfinished start; its
 [`host.txt`](../../../bench_results/04b85d10/2026-09-10-04b85d10-profile-v3-repeated/host.txt)

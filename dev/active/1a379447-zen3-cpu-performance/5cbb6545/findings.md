@@ -233,7 +233,7 @@ wire contract between runner and arm child is established by an execution rather
 than by reading code; its receipt is a throwaway by design and only its ledger
 and launcher log are committed
 ([`smoke-family-ledger.jsonl`](../../../bench_results/5cbb6545/smoke-family-ledger.jsonl),
-[`smoke-launcher.log`](../../../bench_results/5cbb6545/smoke-launcher.log)). Two
+``smoke-launcher.log``). Two
 arms are named there and by no committed cell, as their rows above state.
 
 Each launcher log records the external compile commands and compiler versions on

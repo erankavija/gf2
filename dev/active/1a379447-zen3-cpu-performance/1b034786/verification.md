@@ -45,10 +45,10 @@ rule.
 
 | Tree | Build | Result |
 |---|---|---|
-| Reference and matrix-level builder without the shared check | every feature | Exit 100; [log](survey/test-logs/all-builders-before-simd.txt). |
-| Same | without `simd` | Exit 100; [log](survey/test-logs/all-builders-before-scalar.txt). |
-| Every builder with the shared check | every feature | Exit 0; [log](survey/test-logs/all-builders-after-simd.txt). |
-| Same | without `simd` | Exit 0; [log](survey/test-logs/all-builders-after-scalar.txt). |
+| Reference and matrix-level builder without the shared check | every feature | Exit 100; `log`. |
+| Same | without `simd` | Exit 100; `log`. |
+| Every builder with the shared check | every feature | Exit 0; `log`. |
+| Same | without `simd` | Exit 0; `log`. |
 
 In the first two rows each `FAILED` line states what the builder does: the
 reference accepts a zero table size, a table size that is not a power of two
@@ -61,8 +61,8 @@ bounds checks.
 
 The specialized builders' behaviour without their assertions is recorded by an
 earlier form of the test, at the tree where the first line of each log names
-its command: [before](survey/test-logs/before-fix.txt), exit 100, and
-[after](survey/test-logs/after-fix.txt), exit 0. Their overflowing-table case,
+its command: `before`, exit 100, and
+`after`, exit 0. Their overflowing-table case,
 `table_size = usize::MAX / stride_words + 1`, is absent from the first of those
 logs: without the assertions the wrapped product passes the length check and
 the kernel stores outside the buffer, which ended the test process with
@@ -79,8 +79,8 @@ feature; the commands are the first line of each log.
 
 | Build | Result |
 |---|---|
-| `simd` | Exit 0; [log](survey/test-logs/simd-build.txt). |
-| without `simd` | Exit 0; [log](survey/test-logs/scalar-build.txt). |
+| `simd` | Exit 0; `log`. |
+| without `simd` | Exit 0; `log`. |
 
 ## Listing (REQ-04)
 
@@ -96,7 +96,7 @@ own banner and dividers; the listing names `multiply`,
 `update_panel_register_tiled` and `build_gray_table_flat`.
 `python3 -B survey/make-listing-comparison.py` writes the
 [listing comparison](survey/listing-comparison.json) against
-[the listing of the tree without the checks](survey/inputs/before-checks/m4rm.asm.txt),
+`the listing of the tree without the checks`,
 which `regen-asm.sh` writes for the same three symbols and settings. Under the
 record's `comparison_rule`, `build_gray_table_flat` carries
 `instruction_text: differs` and the other two symbols `same`: the difference

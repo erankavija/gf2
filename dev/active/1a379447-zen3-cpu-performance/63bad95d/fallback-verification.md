@@ -44,7 +44,7 @@ It returns what each reporter answered. Three suites run it: `gf2-core`
 entry points that have a reporter in every build; `transpose_block_lane`
 (`transpose-lane-reporter`) is the reporter this issue adds. The run that
 preceded the contract module is
-[`survey/test-logs/before-contract.txt`](survey/test-logs/before-contract.txt).
+``survey/test-logs/before-contract.txt``.
 
 ## Build configurations
 
@@ -57,13 +57,13 @@ packages in each package's ordinary dependency build.
 
 | Configuration | Selection of the test run | Log |
 |---|---|---|
-| Standalone `gf2-core`, default features | `-p gf2-core --test dispatch_fallback` | [core-default](survey/test-logs/core-default.txt) |
-| Standalone `gf2-core`, `simd` | `-p gf2-core --features simd --test dispatch_fallback` | [core-simd](survey/test-logs/core-simd.txt) |
-| Standalone `gf2-core`, every feature | `-p gf2-core --all-features --test dispatch_fallback` | [core-all-features](survey/test-logs/core-all-features.txt) |
-| Standalone `gf2-core`, baked | `RUSTFLAGS="--cfg gf2_tuning_baked"`, `-p gf2-core --features simd,test-support,tuning-profile --test dispatch_fallback` | [core-baked](survey/test-logs/core-baked.txt) |
-| `gf2-coding` dependency build | `-p gf2-coding --test core_dispatch_fallback` | [coding-default](survey/test-logs/coding-default.txt) |
-| `gf2-coding` test build without default features | `-p gf2-coding --no-default-features --test core_dispatch_fallback` | [coding-no-default-features](survey/test-logs/coding-no-default-features.txt) |
-| `gf2-sim` dependency build | `-p gf2-sim --test core_dispatch_fallback` | [sim-default](survey/test-logs/sim-default.txt) |
+| Standalone `gf2-core`, default features | `-p gf2-core --test dispatch_fallback` | `core-default` |
+| Standalone `gf2-core`, `simd` | `-p gf2-core --features simd --test dispatch_fallback` | `core-simd` |
+| Standalone `gf2-core`, every feature | `-p gf2-core --all-features --test dispatch_fallback` | `core-all-features` |
+| Standalone `gf2-core`, baked | `RUSTFLAGS="--cfg gf2_tuning_baked"`, `-p gf2-core --features simd,test-support,tuning-profile --test dispatch_fallback` | `core-baked` |
+| `gf2-coding` dependency build | `-p gf2-coding --test core_dispatch_fallback` | `coding-default` |
+| `gf2-coding` test build without default features | `-p gf2-coding --no-default-features --test core_dispatch_fallback` | `coding-no-default-features` |
+| `gf2-sim` dependency build | `-p gf2-sim --test core_dispatch_fallback` | `sim-default` |
 
 Each log opens with the toolchain and the full command and closes with the
 exit status. What the configurations establish:

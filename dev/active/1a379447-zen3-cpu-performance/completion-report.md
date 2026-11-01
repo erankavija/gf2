@@ -17,7 +17,7 @@ Every hard criterion is delivered and the four epic gates pass. The aspirational
 | REQ-03 steady-state and batch decoding, LDPC checkpoint | `@/issue/3be770d5`, `@/issue/ed3d490e`, `@/issue/f63a2464` |
 | REQ-04 canonical tuning and dispatch | `@/issue/63bad95d`, `@/issue/d06a99ed`, confirmed by `@/issue/31727c57` |
 | REQ-05 scorecard, reprofile, residual gaps | `@/issue/1362381c`, `@/issue/78f0aafd`, `@/issue/1358d6ab` |
-| REQ-06 conformance, MSRV, isolation, determinism | Shared suites in `cargo-ci`; [determinism record](../../bench_results/1362381c/determinism/nextest.log) |
+| REQ-06 conformance, MSRV, isolation, determinism | Shared suites in `cargo-ci`; `determinism record` |
 | REQ-07 aspirational target | Reported per primary cell in the scorecard's target column |
 
 ## Invoker rulings of the closing session

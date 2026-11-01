@@ -33,7 +33,7 @@ the plan committed beside it: every declared cell starts, checkpoints and
 completes once with status `measured` at its declared pair count, the session
 that reached its cell budget closes with `paused`, and the resumed session
 closes with the single terminal `complete` record. Each
-[launcher log](../../../bench_results/ad2a6a58/r1-axpy-confirmation/launcher.log)
+`launcher log`
 keeps the invocation, the digests of the addendum, plan and executables, each
 session's exit status and the host load average at start and finish.
 

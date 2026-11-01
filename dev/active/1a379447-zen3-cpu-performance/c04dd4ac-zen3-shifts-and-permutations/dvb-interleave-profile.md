@@ -169,13 +169,13 @@ and closes with a terminal `complete` record; the acceptance summary accepts the
 receipt and qualifies it for no production selection.
 
 The preserved
-[`v4-r2-dynamic-profile`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r2-dynamic-profile/repetitions.log)
+``v4-r2-dynamic-profile``
 records nine completed sessions of direct scatter, the simulation stage,
 packed-boundary xdsopl and the full max-log BICM channel for every MODCOD. Its
 wall-time intervals and allocation census remain in the attribution tables.
 
 The fresh
-[`v4-r3-dynamic-profile`](../../../bench_results/c04dd4ac/dvb-interleave-profile/v4-r3-dynamic-profile/repetitions.log)
+``v4-r3-dynamic-profile``
 closes with nine completed repetitions. Every repetition records all sixteen
 cases, successful counters and hot samples, and instruction listings. The
 generated tables carry nine-repetition intervals for counters, hot symbols and

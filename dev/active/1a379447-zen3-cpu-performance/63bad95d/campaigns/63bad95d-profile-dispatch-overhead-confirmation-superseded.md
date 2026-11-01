@@ -23,7 +23,7 @@ indices 8 to 11) the per-call time of one or both arms leaves the level that
 indices 0 to 7 hold for both arms, and the calibrated call counts of those
 executions fall with it. The cells measured before and after it hold their
 level throughout. The pilot's
-[launcher log](../../../../bench_results/63bad95d/63bad95d-profile-dispatch-overhead/r1-pilot/launcher.log)
+`launcher log`
 records the host load at start and end (`load_avg_start`, `load_avg_end`).
 A disturbance that reaches both arms of one cell for part of its pairs is
 read here as host contention; the receipt does not identify its cause.

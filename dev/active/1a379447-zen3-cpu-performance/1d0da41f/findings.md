@@ -101,7 +101,7 @@ fixture inputs is outside the timed call and reported as setup telemetry
 (tables "Protocol-v1 confirmation" → "Untimed conversion diagnostics").
 
 The [shared measurement contract](../measurement-contract.md),
-[receipt-pinned protocol v1](../../../bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/inputs/protocol.md) and
+`receipt-pinned protocol v1` and
 [frozen family](addendum-ymm-clmul-dispatch.json) govern this result. The family
 bytes are those the receipt pins by digest (`receipt.addendum.sha256`), and its
 resolution evidence is the distinct committed exploratory pilot receipt the

@@ -117,7 +117,7 @@ launcher's build command made verbose. The record's `reproduces` is true: the
 rebuilt executable has the digest of the owner's measurement block and of
 [`producer/identity.json`](producer/identity.json).
 
-[`producer-rebuild/build.log`](producer-rebuild/build.log) holds every
+``producer-rebuild/build.log`` holds every
 compiler invocation of the dependency closure; the record's `build` block
 holds the producer's full `rustc` command line and the codegen options of the
 closure by invocation count, and its `toolchain` entry the compiler version.

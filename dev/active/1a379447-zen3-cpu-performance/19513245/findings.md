@@ -550,7 +550,7 @@ change to pair with a crate-local assembly artifact.
 
 REQ-02's profile is complete under
 `dev/bench_results/19513245/r1-consumer-profile`. The append-only
-[`repetitions.log`](../../../bench_results/19513245/r1-consumer-profile/repetitions.log)
+``repetitions.log``
 records nine starts, nine completions and the terminal `series done`, with no
 discarded or unfinished session. Every `rep-*/cases.json` contains each of the
 38 unique ladder cases exactly once, with no missing or extra case. The first

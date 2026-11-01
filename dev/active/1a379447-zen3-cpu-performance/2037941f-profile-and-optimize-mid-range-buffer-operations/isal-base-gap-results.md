@@ -36,8 +36,8 @@ preserves the NASM-absence and offset-alignment reasons with zero samples from
 the qualification records. It does not infer SIMD performance from the scalar
 arm.
 
-The [launcher log](../../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/launcher.log)
-and [invocation log](../../../bench_results/2037941f/2037941f-logical-isal-base-gap/v4-r1-pilot/invocations.log)
+The `launcher log`
+and `invocation log`
 retain the exact run commands. Receipt-local input snapshots pin source,
 configuration and toolchain; [arm build provenance](isal-arm-build-record.txt)
 pins compiler identity, cleared Make overrides, object `.comment` records,

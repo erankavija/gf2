@@ -197,7 +197,7 @@ manifest. No environment override selects producing provenance.
 Protocol-v3 fixtures preserve exact decoder frame vectors, settings, aggregate
 counts, intervals and iteration evidence across child executions. Process RSS
 and untimed latency may vary; each child's diagnostics remain in its checkpoint.
-The [red/green evidence](../../../bench_results/c077a88b/v3-preparation/shared-contract-red.log)
+The `red/green evidence`
 and full shared suite exercise both contracts. These changes affect measurement
 tooling and survey adapters; they change no production decoder behavior.
 
@@ -215,7 +215,7 @@ receipt; that record enumerates them.
 Their snapshot of the standalone harness lockfile was never committed and the
 harness has since resolved its dependencies again, so no content of this
 repository carries the pinned digest;
-[`dev/scripts/receipt-input-omissions.json`](../../../scripts/receipt-input-omissions.json)
+``dev/scripts/receipt-input-omissions.json``
 records that omission. Independently of it, their saved plans predate the typed
 `producing_manifest` field, so the evaluator compares the family manifest the
 receipt pins against the historical shared manifest that omission selects and
@@ -270,7 +270,7 @@ The [initial matched-confirmation rejection](../../../bench_results/c077a88b/v3-
 remains intact. P-03 incorrectly required an optional decision claim from a
 pilot without decision margins. The shared evaluator now derives resolution
 from raw pairs, the canonical seed and the verified ledger alpha, checking a
-claim when present. The [reevaluation audit](../../../bench_results/c077a88b/v3-r1-matched-confirmation-reevaluation.log)
+claim when present. The `reevaluation audit`
 records identical receipt hashes before and after acceptance and identifies both
 the corrected evaluator and its source. No timing was repeated and no raw
 measurement, addendum or protocol bytes were edited. The focused red test,

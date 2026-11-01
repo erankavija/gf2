@@ -176,7 +176,7 @@ conclusion in this document rests on that series**, and its
 [generated summary](../../../bench_results/3be770d5/v3-r1-steady-profile/profile.md)
 reports zero samples in every table. The series stays: its session
 directories, the per-case statuses, that summary and the
-[window job log](../../../bench_results/3be770d5/v3-r1-steady-profile-window-job.log)
+`window job log`
 are the record of the outcome, and the second series neither replaces nor
 amends them.
 
@@ -204,7 +204,7 @@ cases themselves occupy every logical CPU, so a load average taken at a
 session boundary cannot separate the series' own work from anything else, and
 what the full-host mutex each session holds excludes is other measurement.
 The second series records the same quantities in its own
-[repetitions log](../../../bench_results/3be770d5/v4-r1-steady-profile/repetitions.log)
+`repetitions log`
 and [host record](../../../bench_results/3be770d5/v4-r1-steady-profile/host.txt).
 
 ## Structural and allocation evidence
@@ -268,7 +268,7 @@ summary. Downstream work: `07ca8585` (allocation and edge traversal),
 From the worktree root: build the harness with the command the build identity
 records, extract the `c077a88b` recorded-input archive into
 `target/ldpc-inputs`, record the preparation with
-[record-preparation.py](survey/record-preparation.py), then run
+`record-preparation.py`, then run
 `dev/bench_results/3be770d5/run-campaign.sh FAMILY MODE RUN_ID prepare`
 followed by `window` for each family and mode, and
 `dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/run-profile.sh DIR` for the profile series. Each

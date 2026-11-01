@@ -135,7 +135,7 @@ preserves intermediate failed checks without treating them as measurements.
 failed test is the GPU dispatcher’s HIP device detection. The isolated rerun
 reproduces `hipGetDeviceCount`, code 100; the worker changes no GPU code or
 wall-clock assertion. The complete verdict is in
-[the raw CI log](validation-r3/cargo-ci.log); the failing step is verbatim:
+`the raw CI log`; the failing step is verbatim:
 
 ```text
   ✗ test: FAILED (exit 100, 576s)

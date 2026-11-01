@@ -190,7 +190,7 @@ with its exit status.
 
 | `simd` | without `simd` |
 |---|---|
-| [log](survey/test-logs/simd-build.txt) | [log](survey/test-logs/scalar-build.txt) |
+| `log` | `log` |
 
 ## Measurement family (REQ-04)
 

@@ -98,8 +98,8 @@ counts.
 
 | Build | Result |
 |---|---|
-| `simd` | Exit 0; [log](survey/test-logs/simd-build.txt). |
-| without `simd` | Exit 0; [log](survey/test-logs/scalar-build.txt). |
+| `simd` | Exit 0; `log`. |
+| without `simd` | Exit 0; `log`. |
 
 The harness contract suite of the logical harness, run with
 `cargo test --release --test harness_contract` on its own manifest, exits 0

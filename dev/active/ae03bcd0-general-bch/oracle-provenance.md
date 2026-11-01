@@ -341,7 +341,7 @@ below are the scope's. Every figure below is read from that record.
 |---|---|---|
 | Invocation | `systemd-run --user --scope -p MemoryMax=52G --unit=gf2-gap-b4-$$ timeout 1200 gap -q -A -T -o 50g -c '...CALL_WITH_CATCH(BCHCode,[65535,1,25,GF(2)])...'` | [`gap-b4-probe.sh`](oracle/attempts/2026-09-02-b4-heap-50g/gap-b4-probe.sh) |
 | Outcome | `built=false` | [`gap.out`](oracle/attempts/2026-09-02-b4-heap-50g/gap.out) |
-| GAP diagnostic | `Error, reached the pre-set memory limit` and `(change it with the -o command line option)` | [`gap.err`](oracle/attempts/2026-09-02-b4-heap-50g/gap.err) |
+| GAP diagnostic | `Error, reached the pre-set memory limit` and `(change it with the -o command line option)` | ``gap.err`` |
 | GAP processor time | `cpu_ms=273885` | [`gap.out`](oracle/attempts/2026-09-02-b4-heap-50g/gap.out) |
 | Memory free at launch, MiB | `total=64196 used=15544 avail=48651` | [`timeline.txt`](oracle/attempts/2026-09-02-b4-heap-50g/timeline.txt) |
 | Scope processor time and wall clock | `9min 14.018s CPU time over 9min 17.296s wall clock time` | [`scope.txt`](oracle/attempts/2026-09-02-b4-heap-50g/scope.txt) |

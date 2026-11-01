@@ -127,8 +127,8 @@ the toolchain and command and closes with the exit status; its nextest
 
 | Build | Command | Result |
 |---|---|---|
-| `simd` | `./scripts/cargo-budget.sh --test cargo nextest run -p gf2-kernels-simd -p gf2-core -p gf2-algebra -p gf2-coding --all-features --cargo-profile ci-test --profile ci` | Exit 0; [log](survey/test-logs/simd-build.txt). |
-| without `simd` | `./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --no-default-features --features rand,io,parallel,visualization,tuning-profile,test-support --cargo-profile ci-test --profile ci` | Exit 0; [log](survey/test-logs/scalar-build.txt). |
+| `simd` | `./scripts/cargo-budget.sh --test cargo nextest run -p gf2-kernels-simd -p gf2-core -p gf2-algebra -p gf2-coding --all-features --cargo-profile ci-test --profile ci` | Exit 0; `log`. |
+| without `simd` | `./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --no-default-features --features rand,io,parallel,visualization,tuning-profile,test-support --cargo-profile ci-test --profile ci` | Exit 0; `log`. |
 
 The second row covers `gf2-core` alone and names each of its features except
 `simd`. The test builds of `gf2-algebra` and `gf2-coding` enable their default

@@ -353,7 +353,7 @@ From the worktree root: extract the `c077a88b` recorded-input archive the
 names into `target/ldpc-inputs`, build the `3be770d5` harness once from the
 working tree and once from an export of the pinned pre-change revision with the
 commands that file records, and run
-[record-preparation.py](survey/record-preparation.py). Then
+`record-preparation.py`. Then
 [run-smoke.sh](../../../bench_results/07ca8585/run-smoke.sh) proves the wire
 contract of every arm on a throwaway plan, and
 [run-campaign.sh](../../../bench_results/07ca8585/run-campaign.sh) `FAMILY MODE
@@ -367,7 +367,7 @@ The REQ-10 granularity arms are a second build, from
 [survey/arms](survey/arms/) into its own target directory, with the command and
 the digests
 [kernel-build-identity.json](../../../bench_results/07ca8585/preparation/kernel-build-identity.json)
-records; [record-kernel-preparation.py](survey/record-kernel-preparation.py)
+records; `record-kernel-preparation.py`
 writes that file and the producing manifest those families' plans select. Their
 untimed preparation runs outside the mutex:
 [ldpc-checknode-verify](survey/arms/src/bin/ldpc-checknode-verify.rs) for the

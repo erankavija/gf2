@@ -20,7 +20,7 @@ names each archived record by its path under
 `.agents/campaign-evidence/gf2-63bad95d-20261006t230547z-2073085/` on the
 producing host. The bytes of that archive, which hold the raw results, the
 run-time records, the checkpoints and the execution journal, are committed as
-[`gf2-63bad95d-20261006t230547z-2073085-evidence-archive.tar.zst`](../../../bench_results/63bad95d/gf2-63bad95d-20261006t230547z-2073085-evidence-archive.tar.zst).
+``gf2-63bad95d-20261006t230547z-2073085-evidence-archive.tar.zst``.
 Extracted at the repository root the archive restores those paths, and the
 campaign's committed checksum manifest and the archive's own `SHA256SUMS`
 verify every file:

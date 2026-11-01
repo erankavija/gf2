@@ -11,7 +11,7 @@ timing window, the host lock, or an ignored test.
 The task anchor is identified by content. The
 [anchor baseline](survey/anchor-baseline.json) holds the SHA-256 of every file
 of `gf2-core` and `gf2-kernels-simd` at the anchor, and
-[`survey/inputs/anchor/`](survey/inputs/anchor/crates/gf2-kernels-simd/src/x86/avx2.rs)
+``survey/inputs/anchor/``
 holds the anchor bytes of the paths this task changes, each checked against
 its baseline digest on use. The baseline's commit id is informational; no
 generator reads it or the position of `HEAD`.
@@ -162,10 +162,10 @@ passes on the current tree (last row of the table below).
 
 | Command | Result |
 |---|---|
-| `nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --all-features --test simd_equiv_matvec --test popcount_routes --test matrix_vector --cargo-profile ci-test --profile ci` | Exit 0; [log](survey/test-logs/simd-build.txt). |
-| `nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --test simd_equiv_matvec --test popcount_routes --test matrix_vector --cargo-profile ci-test --profile ci` | Exit 0; [log](survey/test-logs/scalar-build.txt). |
-| `nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --all-features --lib --cargo-profile ci-test --profile ci -E 'test(test_from_words_) \| test(test_boundary_) \| test(test_mask_tail_invariant)'` | Exit 0; [log](survey/test-logs/packed-bits.txt). |
-| `RUSTFLAGS="--cfg gf2_tuning_baked" nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --features simd,test-support,tuning-profile --test matrix_selection_baked --cargo-profile ci-test --profile ci` | Exit 0; [log](survey/test-logs/baked-route.txt). |
+| `nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --all-features --test simd_equiv_matvec --test popcount_routes --test matrix_vector --cargo-profile ci-test --profile ci` | Exit 0; `log`. |
+| `nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --test simd_equiv_matvec --test popcount_routes --test matrix_vector --cargo-profile ci-test --profile ci` | Exit 0; `log`. |
+| `nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --all-features --lib --cargo-profile ci-test --profile ci -E 'test(test_from_words_) \| test(test_boundary_) \| test(test_mask_tail_invariant)'` | Exit 0; `log`. |
+| `RUSTFLAGS="--cfg gf2_tuning_baked" nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core --features simd,test-support,tuning-profile --test matrix_selection_baked --cargo-profile ci-test --profile ci` | Exit 0; `log`. |
 
 Each log opens with the toolchain and command and closes with the exit status;
 its nextest `Summary` line carries the test counts. The first two rows run the
