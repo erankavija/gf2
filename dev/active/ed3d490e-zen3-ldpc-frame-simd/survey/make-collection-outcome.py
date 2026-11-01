@@ -54,6 +54,9 @@ INTERPRETATION = {
     ("improvement", "pilot"): "exploratory cell, no decision",
     ("non-regression", "pilot"): "exploratory cell, no decision",
     ("comparator-gap", "pilot"): "exploratory cell, no decision",
+    ("improvement", "not-confirmatory"): "no confirmatory decision; decision is descriptive",
+    ("non-regression", "not-confirmatory"): "no confirmatory decision; decision is descriptive",
+    ("comparator-gap", "not-confirmatory"): "no confirmatory decision; decision is descriptive",
 }
 HOLDOUT = "holdout"
 

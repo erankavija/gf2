@@ -80,6 +80,105 @@ workload, baseline and date.
   [fixed iterations](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-fixed-iteration-confirmation/receipt.json)),
   [check-node update](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/cdbefa4be6bfe8815c7fce3fabf2c415edcca93b/dev/bench_results/07ca8585/v4-r1-07ca8585-ldpc-update-checknode-confirmation/receipt.json)).
 
+<a id="integrated-ldpc-aff3ct"></a>
+
+### Integrated LDPC decoding against AFF3CT
+
+- **Method:** [paired comparison protocol](#paired-protocol), version 4.
+- **Result:** gf2 is faster at one worker with eight frames per call:
+  $r = 0.376\ [0.369, 0.377]$ for DVB-T2 and
+  $0.325\ [0.313, 0.326]$ for NR. AFF3CT is faster with one
+  frame per call, $r = 1.97\ [1.97, 1.98]$ and
+  $1.78\ [1.77, 1.78]$, and at twelve physical cores with
+  eight frames per worker, $r = 1.82\ [1.77, 1.84]$ and
+  $1.54\ [1.50, 1.56]$.
+- **Workload:** the DVB-T2 rate-$1/2$ normal frame, $n = 64800$, $k = 32400$
+  (`@/citation/Etsi2015`), and the NR base graph 1 mother code at lifting
+  $Z = 384$, $n = 26112$, $k = 8448$ (`@/citation/ThreeGpp2017`). Timed calls
+  reuse the first frames of the recorded corpus; quality statistics cover all
+  $128$ frames. Both decoders run f32 flooding normalized min-sum, factor
+  $0.75$, at most $50$ iterations, syndrome stopping. Whole consumer, warm.
+- **Baseline:** AFF3CT v4.7.0 (`@/citation/Cassagne2019`)
+  `Decoder_LDPC_BP_flooding<NMS>`, scalar f32, one clone per worker. gf2 runs the
+  production route of `LdpcBatchDecoder` under the committed coding envelope.
+- **Hardware:** AMD Ryzen 9 5900X, SMT on, Linux 7.2.11.
+- **Build:** rustc 1.95.0; RUSTFLAGS `-C target-cpu=native` on both arms.
+- **Date:** 2026-10-28.
+- **Evidence:** [receipt summary](https://github.com/erankavija/gf2/blob/e18288afa5a92442eb8d8066c032520d448f2aa4/dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/e18288afa5a92442eb8d8066c032520d448f2aa4/dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/receipt.json))
+  at commit `e18288afa5a9`.
+
+<a id="integrated-bch-encode"></a>
+
+### Integrated BCH encoding against AFF3CT and bchlib
+
+- **Method:** [paired comparison protocol](#paired-protocol), version 4.
+- **Result:** gf2 is faster than AFF3CT on the GF($2^{14}$) mother code,
+  $r = 0.268\ [0.267, 0.269]$ against its scalar encoder at one
+  message and $0.437\ [0.384, 0.440]$ against its
+  interleaved encoder at $256$ messages. bchlib is faster on the DVB-T2 outer
+  codes: $r = 106\ [105, 107]$ and
+  $107\ [107, 108]$ at $n = 7200$ with $1$ and $256$
+  messages, $105\ [104, 106]$ and
+  $106\ [106, 107]$ at $n = 32400$.
+- **Workload:** systematic encoding of seeded `BitVec` messages: the mother code
+  $n = 16383$, $k = 16215$, and the DVB-T2 rate-$1/2$ outer codes $(7200, 7032)$
+  and $(32400, 32208)$ (`@/citation/Etsi2015`). Every pair reports codewords equal
+  to gf2's. Kernel-isolated, one core, warm.
+- **Baseline:** AFF3CT v4.7.0 (`@/citation/Cassagne2019`) `Encoder_BCH` and
+  `Encoder_BCH_inter`; bchlib (`@/citation/Bchlib2026`) `bch_encode`, four-table
+  remainder over packed bytes; all built `-O3 -march=native`.
+- **Hardware:** AMD Ryzen 9 5900X, SMT on, Linux 7.2.11.
+- **Build:** rustc 1.95.0; gf2 conservative-portable, no RUSTFLAGS.
+- **Date:** 2026-10-29.
+- **Evidence:** [receipt summary](https://github.com/erankavija/gf2/blob/ce0bfdccb8bde17ac0dc993b2935ee9b95f122ef/dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/ce0bfdccb8bde17ac0dc993b2935ee9b95f122ef/dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/receipt.json))
+  at commit `ce0bfdccb8bd`.
+
+<a id="integrated-core-route"></a>
+
+### Integrated core route: native against tuned portable
+
+- **Method:** [paired comparison protocol](#paired-protocol), version 4. Here the
+  comparator is the tuned-portable build of gf2 and $r$ is its median time over
+  the native build's, so $r > 1$ means the native build is faster.
+- **Result:** $r = 1.34\ [1.17, 1.35]$ for the matrix-vector
+  product, $1.02\ [1.02, 1.02]$ for population count and
+  $1.07\ [1.07, 1.07]$ for the nine-word long product. The first
+  meets the frozen improvement margin; the others are not worse within the frozen
+  equivalence margin.
+- **Workload:** kernels at $1024 \times 1536$ bits, $1024$ words and nine words
+  through the production dispatch. Kernel-isolated, one core, warm.
+- **Baseline:** the tuned-portable release build of the same tree.
+- **Hardware:** AMD Ryzen 9 5900X, SMT on, Linux 7.2.11.
+- **Build:** rustc 1.95.0; RUSTFLAGS `--cfg gf2_tuning_baked`, native arm with
+  `-C target-cpu=native`.
+- **Date:** 2026-10-29.
+- **Evidence:** [receipt summary](https://github.com/erankavija/gf2/blob/d9cbcfcddaea049e001f16326e5550a9d212706d/dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/d9cbcfcddaea049e001f16326e5550a9d212706d/dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/receipt.json))
+  at commit `d9cbcfcddaea`.
+
+<a id="integrated-decoder-route"></a>
+
+### Integrated decoder route: tuned against conservative selectors
+
+- **Method:** [paired comparison protocol](#paired-protocol), version 4. Here the
+  comparator is the conservative-portable single-frame arm and $r$ is its median
+  time over the tuned arm's, so $r > 1$ means the tuned arm is faster.
+- **Result:** the tuned arm is not worse within the frozen equivalence margin at
+  every confirmatory cell: DVB-T2 $r = 1.00\ [1.00, 1.01]$ at
+  one worker with one frame and $1.01\ [1.00, 1.01]$ at six
+  physical cores; NR $1.01\ [0.999, 1.02]$ at twelve
+  physical cores and $1.00\ [0.998, 1.01]$ at twenty-four
+  logical CPUs. Each cell's route is its `selected_path`.
+- **Workload:** the LDPC workloads of
+  [integrated LDPC decoding](#integrated-ldpc-aff3ct), eight frames per worker at
+  more than one worker. Whole consumer, warm.
+- **Baseline:** `LdpcBatchDecoder` conservative-portable single-frame arm of the
+  same tree.
+- **Hardware:** AMD Ryzen 9 5900X, SMT on, Linux 7.2.11.
+- **Build:** rustc 1.95.0; no native target on either arm.
+- **Date:** 2026-10-29.
+- **Evidence:** [receipt summary](https://github.com/erankavija/gf2/blob/d9cbcfcddaea049e001f16326e5550a9d212706d/dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/acceptance-summary.md) ([`receipt.json`](https://github.com/erankavija/gf2/blob/d9cbcfcddaea049e001f16326e5550a9d212706d/dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/receipt.json))
+  at commit `d9cbcfcddaea`.
+
 <a id="nr-ldpc-encode"></a>
 
 ### NR rate-matched LDPC encoding against srsRAN and AFF3CT
