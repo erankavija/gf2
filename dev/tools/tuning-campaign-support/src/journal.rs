@@ -1344,7 +1344,7 @@ pub struct ResumeIdentity {
     #[serde(default)]
     pub source_revision: String,
     /// Digest locating the source the recorder ran from: the producing-input
-    /// snapshot, or a source-control tree. Informational, as the revision is.
+    /// digests, or a source-control tree. Informational, as the revision is.
     pub source_sha256: String,
     /// Digest of the fixed ordered unit manifest.
     pub ordered_work_manifest_sha256: String,

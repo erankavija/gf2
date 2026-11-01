@@ -6,9 +6,9 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-/// Directory name of receipt input snapshots, which hold byte copies of live
-/// files beside each receipt.
-pub const SNAPSHOT_DIRECTORY: &str = "inputs";
+/// Directory of a campaign's frozen configuration, inside its stage and its
+/// receipt directory. Its files are copies of the live documents.
+pub const CONFIGURATION_DIRECTORY: &str = "configuration";
 
 /// Returns the canonical top-level directory of the git checkout containing
 /// the current working directory.
@@ -67,11 +67,11 @@ pub fn listed_files(root: &Path, name: &str) -> io::Result<Vec<String>> {
     Ok(paths.into_iter().collect())
 }
 
-/// Whether the `root`-relative `path` lies in a receipt input snapshot.
-pub fn is_snapshot_copy(path: &str) -> bool {
+/// Whether the `root`-relative `path` lies in a campaign's frozen configuration.
+pub fn is_frozen_configuration(path: &str) -> bool {
     Path::new(path)
         .parent()
-        .is_some_and(|parent| parent.iter().any(|part| part == SNAPSHOT_DIRECTORY))
+        .is_some_and(|parent| parent.iter().any(|part| part == CONFIGURATION_DIRECTORY))
 }
 
 /// The first path of each distinct content among `files`, in their order:
@@ -85,7 +85,7 @@ pub fn distinct_contents(files: impl IntoIterator<Item = (String, Vec<u8>)>) -> 
 }
 
 /// The `root`-relative path of the one live file named by the glob `name`
-/// whose bytes satisfy `identifies`; receipt input snapshots are not live.
+/// whose bytes satisfy `identifies`; frozen configuration copies are not live.
 /// Byte-identical copies are one file, named by its lexicographically first
 /// path.
 ///
@@ -100,7 +100,7 @@ pub fn locate_live(
 ) -> io::Result<String> {
     let mut found = Vec::new();
     for path in listed_files(root, name)? {
-        if is_snapshot_copy(&path) {
+        if is_frozen_configuration(&path) {
             continue;
         }
         let bytes = match fs::read(root.join(&path)) {

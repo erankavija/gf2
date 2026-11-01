@@ -157,7 +157,7 @@ def addendum_cell(declared, codes, manifests, arms, settings, profiles):
             "code": {"identity": code["code_identity"], "n": manifest["n"], "k": manifest["k"],
                      "h_sha256": manifest["h_sha256"]},
             "input": {
-                "llr_source": str(bundle["directory"]),
+                "llr_source": bundle["directory"].name,
                 "llr_sha256": manifest["llrs_sha256"],
                 "frames": manifest["frames"],
                 "seed": manifest["seed"],

@@ -11,7 +11,7 @@ python3 -B dev/active/1a379447-zen3-cpu-performance/31727c57/make_outcome.py
 python3 -B dev/active/1a379447-zen3-cpu-performance/31727c57/make_outcome.py --check
 ```
 
-The generator verifies each execution log with the shared campaign verifier. Receipts pin the protocol, measurement contract, addendum, producing inputs, arm digests, toolchain and observed host; their `inputs/` directories carry the pinned snapshots. Executed plans identify each arm. Speedup is baseline median time per call divided by candidate median time per call, with the acceptance summary's percentile-bootstrap interval. Values above one favour the candidate. All declared objectives are non-regression; `improved` and `not-worse` decisions can both yield `pass`. Pilot outcomes remain exploratory and do not qualify for production selection. Confirmation claims apply only to selected and holdout cells.
+The generator verifies each execution log with the shared campaign verifier. Receipts pin the protocol, measurement contract, addendum, producing inputs, arm digests, toolchain and observed host. Executed plans identify each arm. Speedup is baseline median time per call divided by candidate median time per call, with the acceptance summary's percentile-bootstrap interval. Values above one favour the candidate. All declared objectives are non-regression; `improved` and `not-worse` decisions can both yield `pass`. Pilot outcomes remain exploratory and do not qualify for production selection. Confirmation claims apply only to selected and holdout cells.
 
 ## Core family
 
@@ -53,7 +53,7 @@ replaced worthwhile_speedup 1.05 -> 1.08
 replaced equivalence_margin 1.05 -> 1.08
 ```
 
-Frozen worthwhile speedup 1.08; equivalence margin 1.08; measurement resolution 0.07. The [pilot addendum snapshot](core/31727c57-core-pilot/inputs/family-addendum.json) retains the refused values. These refusals remain part of the outcome.
+Frozen worthwhile speedup 1.08; equivalence margin 1.08; measurement resolution 0.07. The [pilot addendum](core/pilot/addendum.json) retains the refused values. These refusals remain part of the outcome.
 
 ### Confirmation
 
@@ -114,7 +114,7 @@ frozen measurement resolution 0.06
 replaced equivalence_margin 1.05 -> 1.07
 ```
 
-Frozen worthwhile speedup 1.1; equivalence margin 1.07; measurement resolution 0.06. The [pilot addendum snapshot](decoder/31727c57-decoder-pilot/inputs/family-addendum.json) retains the refused values. These refusals remain part of the outcome.
+Frozen worthwhile speedup 1.1; equivalence margin 1.07; measurement resolution 0.06. The [pilot addendum](decoder/pilot/addendum.json) retains the refused values. These refusals remain part of the outcome.
 
 ### Confirmation
 

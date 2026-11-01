@@ -21,8 +21,9 @@ The throwaway addenda are the `07ca8585` before/after pilot addenda with the
 family renamed and the ledger redirected into `target/`. The single-worker one
 gains two cells per code: a one-frame batch, and an eleven-frame batch whose
 last wave is partial and which sets the portable lane backend against the
-AVX2 one. The recorded bundles live under `GF2_LDPC_INPUTS`, outside the repository. The
-prepared quality records are located by their recorded digests.
+AVX2 one. The recorded bundles live under `GF2_LDPC_INPUTS`, outside the repository, and a
+bundle whose bytes differ from its frozen manifest digest is refused. The prepared quality
+records are located by their recorded digests.
 
 Usage (from the worktree root): smoke-gf2-arms.py OUT_DIR [gf2|aff3ct]
 """
@@ -42,10 +43,11 @@ PACKAGE = "ldpc-batch-arms"
 SCRATCH = pathlib.Path("target/ldpc-batch-arms-smoke")
 LOCK = "/tmp/gf2-ccx1.lock"
 
-# Identities of the frozen quality records.
+# Identities of the frozen bundle manifests, those of `recorded-inputs.tar.gz`, and quality records.
 CODES = {
     "dvb-t2-r12": {
         "bundle": "dvb-t2-r12-waterfall",
+        "manifest_sha256": "9a0e2b55268dbc6e1c79371b1d1ef7c6d776f96e0315b3f114ce4990932a5a03",
         "code": "dvb-t2-r12",
         "quality": ("gf2-nms-f32-dvb-t2-r12.json",
                     "15fd3cb1c0818b6c14780f9ba74961ea9f52d38b216f883ea3b4c28c19af3ca6"),
@@ -54,6 +56,7 @@ CODES = {
     },
     "nr-bg1-z384": {
         "bundle": "nr-bg1-z384-mother",
+        "manifest_sha256": "4d5f1c9602f090fd5ad07c8b0937ac7a42f2ff1feb226ef68b9d47e8111c9b98",
         "code": "nr-bg1-r12",
         "quality": ("gf2-nms-f32-nr-bg1-z384.json",
                     "d93ca58e2b19539ceb7e4cd71cb5e43046dc73390d218d86f4e4b3e06cefa42f"),
@@ -301,11 +304,38 @@ def diagnostics(stage):
     return rows
 
 
+# The files a bundle manifest pins, with the field holding each digest.
+BUNDLE_FILES = {"h.alist": "h_sha256", "codewords.bin": "codewords_sha256",
+                "llrs.f32": "llrs_sha256"}
+
+
+@functools.lru_cache(maxsize=None)
+def verified_inputs(configured):
+    """Refuses a directory whose bundles differ from their frozen digests; returns it resolved."""
+    root = pathlib.Path(configured).resolve()
+    for code in CODES.values():
+        bundle = root / code["bundle"]
+        manifest = bundle / "manifest.json"
+        if not manifest.is_file():
+            sys.exit(f"GF2_LDPC_INPUTS: {root} holds no {code['bundle']}/manifest.json; "
+                     "extract the recorded bundle archive there")
+        pinned = json.loads(manifest.read_bytes())
+        if hashlib.sha256(manifest.read_bytes()).hexdigest() != code["manifest_sha256"]:
+            sys.exit(f"GF2_LDPC_INPUTS: {manifest} differs from the frozen manifest digest "
+                     f"{code['manifest_sha256']}")
+        for name, field in BUNDLE_FILES.items():
+            if not (bundle / name).is_file():
+                sys.exit(f"GF2_LDPC_INPUTS: {bundle} holds no {name}")
+            if hashlib.sha256((bundle / name).read_bytes()).hexdigest() != pinned[field]:
+                sys.exit(f"GF2_LDPC_INPUTS: {bundle / name} differs from its manifest digest")
+    return root
+
+
 def inputs_root():
     """The caller-supplied directory containing the recorded code bundles."""
     if "GF2_LDPC_INPUTS" not in os.environ:
         sys.exit("set GF2_LDPC_INPUTS to the external recorded bundle directory")
-    return pathlib.Path(os.environ["GF2_LDPC_INPUTS"]).resolve()
+    return verified_inputs(os.environ["GF2_LDPC_INPUTS"])
 
 
 def input_identities():

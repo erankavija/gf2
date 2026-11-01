@@ -1,8 +1,10 @@
 //! Independent acceptance evaluation of a Zen 3 benchmark receipt directory:
 //! `benchmark-acceptance <receipt-dir>` recomputes every digest, statistic and
-//! decision from the receipt's raw parts, writes `acceptance-summary.json` and
-//! `acceptance-summary.md` beside the receipt, and exits 0 when the receipt is
-//! accepted, 1 when it is rejected, and 2 on a usage or I/O error.
+//! decision from the receipt's raw parts and its `configuration/` directory,
+//! writes `acceptance-summary.json` and `acceptance-summary.md` beside the
+//! receipt, and exits 0 when the receipt is accepted, 1 when it is rejected, 2 on
+//! a usage or I/O error, and 3 without writing when the receipt holds no
+//! configuration to evaluate.
 //! `benchmark-acceptance --bootstrap` reads an `abtest::BootstrapRequest` from
 //! standard input and prints its intervals, so a sizing script takes the
 //! evaluator's bootstrap of the pairs it names. `benchmark-acceptance
@@ -16,7 +18,8 @@ use std::path::PathBuf;
 use tuning_campaign_support::abtest::BootstrapRequest;
 use tuning_campaign_support::protocol::SHARED_SETTINGS;
 use tuning_campaign_support::receipt::{
-    evaluate, render_markdown, Verdict, MIN_TAIL_DRAWS, SUMMARY_JSON_FILE, SUMMARY_MARKDOWN_FILE,
+    evaluate, is_configuration_unavailable, render_markdown, Verdict, MIN_TAIL_DRAWS,
+    SUMMARY_JSON_FILE, SUMMARY_MARKDOWN_FILE,
 };
 use tuning_campaign_support::trial_ledger;
 
@@ -49,6 +52,11 @@ fn main() {
         .and_then(|root| evaluate(&root, &receipt_dir))
     {
         Ok(summary) => summary,
+        Err(error) if is_configuration_unavailable(&error) => {
+            println!("GF2_BENCHMARK_ACCEPTANCE=ConfigurationUnavailable");
+            eprintln!("benchmark-acceptance: {error}");
+            std::process::exit(3);
+        }
         Err(error) => {
             eprintln!("benchmark-acceptance: {error}");
             std::process::exit(2);

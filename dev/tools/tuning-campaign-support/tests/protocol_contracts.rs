@@ -25,18 +25,19 @@ use tuning_campaign_support::protocol::{
     FamilyWise, Frozen, Holdout, MetricKind, Normalization, NormalizationKind, Precision,
     ProtocolRef, QualityTolerance, ReceiptLabel, ResolutionEvidence, RunnerPlan, Scaling, Schedule,
     SearchBudget, SharedInput, Stopping, StoppingKind, WorkerDeclaration, Workload,
-    ADDENDUM_SCHEMA_ID, PROTOCOL_ID, PROTOCOL_VERSION, RECEIPT_SCHEMA_ID, RUNNER_LIFECYCLE_SCHEMA,
-    SHARED_PRODUCING_MANIFEST, SHARED_SETTINGS,
+    ADDENDUM_SCHEMA_ID, CONFIGURATION_ADDENDUM, PROTOCOL_ID, PROTOCOL_VERSION, RECEIPT_SCHEMA_ID,
+    RUNNER_LIFECYCLE_SCHEMA, SHARED_PRODUCING_MANIFEST, SHARED_SETTINGS,
 };
 use tuning_campaign_support::provenance::ProducingInputs;
 use tuning_campaign_support::receipt::{
-    evaluate, render_markdown, ArmQuality, ArmRecord, BenchmarkReceipt, CampaignFacts, CellClaim,
-    CellOutcome, CellRecord, CellStatus, CheckpointRecord, DecoderArmSettings,
-    DecoderQualityRecord, ExecutionRecord, IterationDistribution, LockRecord, LogRecord,
-    PairRecord, Severity, SourceIdentity, Verdict, WindowRecord, WorkerReport, CHECKPOINT_DIR,
-    LOG_FILE, PLAN_FILE, RECEIPT_FILE,
+    evaluate, is_configuration_unavailable, render_markdown, verify_cited_receipts, ArmQuality,
+    ArmRecord, BenchmarkReceipt, CampaignFacts, CellClaim, CellOutcome, CellRecord, CellStatus,
+    CheckpointRecord, DecoderArmSettings, DecoderQualityRecord, ExecutionRecord,
+    IterationDistribution, LockRecord, LogRecord, PairRecord, Severity, SourceIdentity, Verdict,
+    WindowRecord, WorkerReport, CHECKPOINT_DIR, LOG_FILE, PLAN_FILE, RECEIPT_FILE,
+    SUMMARY_JSON_FILE, SUMMARY_MARKDOWN_FILE,
 };
-use tuning_campaign_support::repository::{listed_files, repository_root};
+use tuning_campaign_support::repository::{listed_files, repository_root, CONFIGURATION_DIRECTORY};
 use tuning_campaign_support::schema;
 use tuning_campaign_support::scratch::Scratch;
 
@@ -769,6 +770,18 @@ fn build_receipt_with_history(
     let contract_pin = shared(CONTRACT_DOC);
     let schema_pin = shared(SCHEMA_DOC);
     let addendum_pin = ArtifactPin::capture(&repo, ADDENDUM_DOC).unwrap();
+    for (source, file) in [
+        (PROTOCOL_DOC, SharedInput::Protocol.configuration_file()),
+        (CONTRACT_DOC, SharedInput::Contract.configuration_file()),
+        (SCHEMA_DOC, SharedInput::AddendumSchema.configuration_file()),
+        (ADDENDUM_DOC, CONFIGURATION_ADDENDUM),
+    ] {
+        put(
+            &dir,
+            &format!("{CONFIGURATION_DIRECTORY}/{file}"),
+            &fs::read(repo.join(source)).unwrap(),
+        );
+    }
     let producing = ProducingInputs::capture(&repo, "producing-inputs.json").unwrap();
     let campaign = "fixture-campaign";
     let mut arms = BTreeMap::new();
@@ -1471,11 +1484,15 @@ fn acceptance_rejects_a_receipt_with_missing_protocol_identity() {
         &[spec("a", 2.0)],
         false,
         false,
-        |receipt| {
-            receipt.protocol.path = "missing-protocol.md".into();
-            receipt.addendum.sha256 = sha256_hex(b"other");
-        },
+        |receipt| receipt.addendum.sha256 = sha256_hex(b"other"),
     );
+    fs::remove_file(
+        built
+            .dir
+            .join(CONFIGURATION_DIRECTORY)
+            .join(SharedInput::Protocol.configuration_file()),
+    )
+    .unwrap();
     let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary
@@ -1562,6 +1579,12 @@ fn acceptance_identifies_shared_pins_by_digest_not_by_source_path() {
             receipt.protocol.path = receipt.contract.path.clone();
         },
     );
+    let frozen = built.dir.join(CONFIGURATION_DIRECTORY);
+    fs::copy(
+        frozen.join(SharedInput::Contract.configuration_file()),
+        frozen.join(SharedInput::Protocol.configuration_file()),
+    )
+    .unwrap();
     let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|finding| {
@@ -1647,11 +1670,18 @@ fn frozen_fact_replacement_is_rejected(replacement: &str) {
                 "schema-pin" => &mut receipt.addendum_schema,
                 _ => &mut receipt.addendum,
             };
-            let mut bytes = fs::read(built.repo.join(&pin.path)).unwrap();
+            let file = match replacement {
+                "protocol-pin" => SharedInput::Protocol.configuration_file(),
+                "contract-pin" => SharedInput::Contract.configuration_file(),
+                "schema-pin" => SharedInput::AddendumSchema.configuration_file(),
+                _ => CONFIGURATION_ADDENDUM,
+            };
+            let frozen = built.dir.join(CONFIGURATION_DIRECTORY).join(file);
+            let mut bytes = fs::read(&frozen).unwrap();
             bytes.push(b' ');
-            fs::write(built.repo.join(&pin.path), &bytes).unwrap();
+            fs::write(&frozen, &bytes).unwrap();
             pin.sha256 = sha256_hex(&bytes);
-            pin.verify_content(&built.repo).unwrap();
+            pin.verify_frozen(&built.dir, file).unwrap();
         }
         "executable" => {
             receipt
@@ -2678,8 +2708,6 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
     );
     assert_eq!(fs::read(out.join(RECEIPT_FILE)).unwrap(), receipt_bytes);
     assert!(!stale.exists(), "the torn receipt's temporary file remains");
-    assert!(!stage.join("inputs").exists());
-    assert!(!out.join("inputs").exists());
     let summary = evaluate(&repo, &out).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(
@@ -2765,6 +2793,8 @@ fn runner_check_validates_a_plan_and_measures_nothing() {
     family.protocol.version = PROTOCOL_VERSION;
     family.schema = ADDENDUM_SCHEMA_ID.into();
     family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
+    family.effect.measurement_resolution = None;
+    family.effect.resolution_evidence = None;
     fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
     write_addendum(&repo, &family);
     // `check` reads no executable: the plan's arm names an absent one.
@@ -2867,6 +2897,8 @@ fn runner_check_rejects_an_addendum_its_schema_edition_rejects() {
     family.family.purpose = FamilyPurpose::DecoderFamily;
     family.cells[0].decoder = Some(decoder(DecoderArmKind::MatchedAlgorithm));
     family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
+    family.effect.measurement_resolution = None;
+    family.effect.resolution_evidence = None;
     fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
     let plan_path = root.join("plan.json");
     fs::write(
@@ -2974,6 +3006,446 @@ fn material_host_changes_reject_resume_but_observation_time_load_memory_do_not()
             "resume material field {change}"
         );
     }
+}
+
+/// A timed two-cell campaign of the fixture workload that pauses after each
+/// cell, with its committed repository, lock, plan and stage.
+struct TimedCampaign {
+    /// Owns the tree the paths point into.
+    _root: Scratch,
+    repo: PathBuf,
+    lock: PathBuf,
+    arm: PathBuf,
+    plan: PathBuf,
+    stage: PathBuf,
+}
+
+impl TimedCampaign {
+    fn new(name: &str, adjust: impl FnOnce(&mut FamilyAddendum)) -> Self {
+        let root = scratch(name);
+        let repo = root.join("repo");
+        stage_repo(&repo);
+        stage_runner_producing(&repo);
+        stage_current(&repo);
+        let mut family = addendum(vec![
+            cell(
+                "first",
+                CellObjective::Improvement,
+                CellRole::Exploratory,
+                CoreArm::SingleCore,
+            ),
+            cell(
+                "second",
+                CellObjective::NonRegression,
+                CellRole::Exploratory,
+                CoreArm::SingleCore,
+            ),
+        ]);
+        family.protocol.version = PROTOCOL_VERSION;
+        family.schema = ADDENDUM_SCHEMA_ID.into();
+        family.family_wise.ledger_path = Some("family-ledger.jsonl".into());
+        family.effect.measurement_resolution = None;
+        family.effect.resolution_evidence = None;
+        adjust(&mut family);
+        fs::write(repo.join("family-ledger.jsonl"), b"").unwrap();
+        write_addendum(&repo, &family);
+        git(&repo, &["init", "-q"]);
+        git(&repo, &["add", "."]);
+        git(
+            &repo,
+            &[
+                "-c",
+                "user.name=fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-q",
+                "-m",
+                "fixture",
+            ],
+        );
+        let lock = root.join("bench.lock");
+        fs::write(&lock, b"").unwrap();
+        let arm = root.join("arm");
+        fs::copy(env!("CARGO_BIN_EXE_ab-smoke-workload"), &arm).unwrap();
+        let declared_arm = |passes: &str| {
+            json!({
+                "build": "conservative-portable",
+                "description": format!("xor-fold {passes} pass"),
+                "executable": arm,
+                "arguments": [],
+                "environment": {"GF2_SMOKE_PASSES": passes},
+                "rustflags": null,
+                "tuning_profile": null
+            })
+        };
+        let plan = root.join("plan.json");
+        fs::write(
+            &plan,
+            serde_json::to_vec_pretty(&json!({
+                "schema": "zen3-benchmark-plan-v1",
+                "campaign_id": "frozen-configuration",
+                "producing_manifest": "producing-inputs.json",
+                "issue": "f547c394",
+                "label": "pilot",
+                "campaign_seed": 5,
+                "addendum": ADDENDUM_DOC,
+                "lock_path": lock,
+                "wrapper": "flock",
+                "timing_override": {"windows_per_execution": 2, "window_target_ms": 3},
+                "arms": {"baseline": declared_arm("2"), "candidate": declared_arm("1")},
+                "cells": [
+                    {"cell_id": "first", "baseline_arm": "baseline", "candidate_arm": "candidate", "case": {"words": 4096, "seed": 1}, "pilot_pairs": 6},
+                    {"cell_id": "second", "baseline_arm": "candidate", "candidate_arm": "candidate", "case": {"words": 4096, "seed": 2}, "pilot_pairs": 6}
+                ],
+                "max_cells_per_session": 1
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+        let stage = root.join("stage");
+        Self {
+            _root: root,
+            repo,
+            lock,
+            arm,
+            plan,
+            stage,
+        }
+    }
+
+    fn run(&self) -> std::process::Output {
+        Command::new("flock")
+            .arg("-x")
+            .arg(&self.lock)
+            .args(["taskset", "-c", "0-2"])
+            .arg(env!("CARGO_BIN_EXE_benchmark-ab-runner"))
+            .arg("run")
+            .arg(&self.stage)
+            .arg(&self.plan)
+            .current_dir(&self.repo)
+            .output()
+            .unwrap()
+    }
+
+    fn finalize(&self, out: &Path) -> std::process::Output {
+        Command::new(env!("CARGO_BIN_EXE_benchmark-ab-runner"))
+            .arg("finalize")
+            .arg(&self.stage)
+            .arg(out)
+            .current_dir(&self.repo)
+            .output()
+            .unwrap()
+    }
+
+    fn ledger(&self) -> Vec<u8> {
+        fs::read(self.repo.join("family-ledger.jsonl")).unwrap()
+    }
+}
+
+fn assert_exit(output: &std::process::Output, code: i32) {
+    assert_eq!(
+        output.status.code(),
+        Some(code),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+fn append(path: &Path, bytes: &[u8]) {
+    let mut content = fs::read(path).unwrap();
+    content.extend_from_slice(bytes);
+    fs::write(path, content).unwrap();
+}
+
+#[test]
+fn resume_and_finalize_read_the_campaigns_frozen_configuration() {
+    let campaign = TimedCampaign::new("frozen-configuration", |_| {});
+    assert_exit(&campaign.run(), 3);
+    let frozen_protocol = fs::read(
+        campaign
+            .stage
+            .join(CONFIGURATION_DIRECTORY)
+            .join(SharedInput::Protocol.configuration_file()),
+    )
+    .unwrap();
+    assert_eq!(
+        frozen_protocol,
+        fs::read(campaign.repo.join(PROTOCOL_DOC)).unwrap()
+    );
+
+    append(&campaign.repo.join(PROTOCOL_DOC), b"\nEdited.\n");
+    append(&campaign.repo.join(CONTRACT_DOC), b"\nEdited.\n");
+    append(&campaign.repo.join("producer.rs"), b"// Edited.\n");
+    assert_exit(&campaign.run(), 0);
+
+    append(&campaign.repo.join(ADDENDUM_DOC), b" ");
+    let out = campaign.repo.join("receipts/frozen-configuration");
+    assert_exit(&campaign.finalize(&out), 0);
+
+    let receipt = BenchmarkReceipt::decode(&fs::read(out.join(RECEIPT_FILE)).unwrap()).unwrap();
+    assert_eq!(receipt.protocol.sha256, sha256_hex(&frozen_protocol));
+    let summary = evaluate(&campaign.repo, &out).unwrap();
+    assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
+    assert_eq!(summary.sessions, 2);
+}
+
+#[test]
+fn resume_refuses_a_changed_executable() {
+    let campaign = TimedCampaign::new("changed-executable", |_| {});
+    assert_exit(&campaign.run(), 3);
+    append(&campaign.arm, b"\0");
+    let resumed = campaign.run();
+    assert_ne!(resumed.status.code(), Some(0));
+    assert_ne!(resumed.status.code(), Some(3));
+}
+
+#[test]
+fn a_wrong_citation_digest_fails_before_the_ledger_or_any_timing() {
+    let campaign = TimedCampaign::new("wrong-citation", |family| {
+        family.effect.measurement_resolution = Some(0.05);
+        family.effect.resolution_evidence = Some(ResolutionEvidence {
+            receipt: "receipts/pilot/receipt.json".into(),
+            sha256: sha256_hex(b"a different pilot"),
+        });
+    });
+    put(&campaign.repo, "receipts/pilot/receipt.json", b"{}\n");
+    let output = campaign.run();
+    assert_exit(&output, 1);
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("resolution evidence"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(campaign.ledger().is_empty(), "the failure spent an attempt");
+    assert!(!campaign.stage.join(LOG_FILE).exists());
+}
+
+#[test]
+fn citation_check_covers_the_pilot_addendum_and_ledger_without_a_copy() {
+    let family = v3_family();
+    let built = build_receipt(
+        "citation-check",
+        &family,
+        &[spec("quality", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    let citing: FamilyAddendum =
+        FamilyAddendum::decode(&fs::read(built.repo.join(ADDENDUM_DOC)).unwrap()).unwrap();
+    let check = || verify_cited_receipts(&built.repo, &citing);
+    check().unwrap();
+
+    let pilot_addendum = built.repo.join("campaign/addendum-fixture-pilot.json");
+    let bytes = fs::read(&pilot_addendum).unwrap();
+    append(&pilot_addendum, b" ");
+    assert!(check().unwrap_err().to_string().contains("pilot addendum"));
+
+    // A pilot's frozen copy answers for the live addendum edited since.
+    put(
+        &built.repo,
+        &format!("receipts/pilot/{CONFIGURATION_DIRECTORY}/{CONFIGURATION_ADDENDUM}"),
+        &bytes,
+    );
+    check().unwrap();
+
+    let ledger = built.repo.join("family-ledger.jsonl");
+    fs::write(&ledger, b"").unwrap();
+    assert!(check().unwrap_err().to_string().contains("pilot ledger"));
+}
+
+#[test]
+fn prior_trial_citation_is_checked_by_digest() {
+    let mut family = addendum(Vec::new());
+    family.effect.resolution_evidence = None;
+    family.family_wise.prior_confirmatory_trials = 1;
+    let root = scratch("prior-trial-citation");
+    put(&root, "prior/receipt.json", b"{}\n");
+    family
+        .family_wise
+        .prior_trials
+        .push(tuning_campaign_support::protocol::PriorTrial {
+            receipt: "prior/receipt.json".into(),
+            sha256: sha256_hex(b"{}\n"),
+            outcome: "fail".into(),
+        });
+    verify_cited_receipts(&root, &family).unwrap();
+    append(&root.join("prior/receipt.json"), b" ");
+    assert!(verify_cited_receipts(&root, &family)
+        .unwrap_err()
+        .to_string()
+        .contains("prior trial"));
+}
+
+#[test]
+fn resume_after_the_ledger_lost_the_campaign_refuses_without_appending() {
+    let campaign = TimedCampaign::new("lost-ledger", |_| {});
+    assert_exit(&campaign.run(), 3);
+    assert!(!campaign.ledger().is_empty());
+    fs::write(campaign.repo.join("family-ledger.jsonl"), b"").unwrap();
+    let resumed = campaign.run();
+    assert_exit(&resumed, 1);
+    assert!(
+        String::from_utf8_lossy(&resumed.stderr).contains("lost this campaign"),
+        "{}",
+        String::from_utf8_lossy(&resumed.stderr)
+    );
+    assert!(campaign.ledger().is_empty(), "the refusal appended");
+}
+
+#[test]
+fn a_timed_session_over_a_validation_stage_spends_no_attempt() {
+    let campaign = TimedCampaign::new("validation-stage", |_| {});
+    let smoke = Command::new(env!("CARGO_BIN_EXE_benchmark-ab-runner"))
+        .arg("smoke")
+        .arg(&campaign.plan)
+        .arg("--stage")
+        .arg(&campaign.stage)
+        .current_dir(&campaign.repo)
+        .output()
+        .unwrap();
+    assert_exit(&smoke, 3);
+    let timed = campaign.run();
+    assert_exit(&timed, 1);
+    assert!(campaign.ledger().is_empty(), "the refusal appended");
+}
+
+#[test]
+fn a_receipt_without_configuration_is_unavailable_rather_than_rejected() {
+    let family = addendum(vec![cell(
+        "a",
+        CellObjective::Improvement,
+        CellRole::Exploratory,
+        CoreArm::SingleCore,
+    )]);
+    let built = build_receipt(
+        "no-configuration",
+        &family,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    fs::remove_dir_all(built.dir.join(CONFIGURATION_DIRECTORY)).unwrap();
+    assert!(is_configuration_unavailable(
+        &evaluate(&built.repo, &built.dir).unwrap_err()
+    ));
+    git(&built.repo, &["init", "-q"]);
+    let output = Command::new(env!("CARGO_BIN_EXE_benchmark-acceptance"))
+        .arg(&built.dir)
+        .current_dir(&built.repo)
+        .output()
+        .unwrap();
+    assert_exit(&output, 3);
+    assert!(String::from_utf8_lossy(&output.stderr).contains("configuration is not available"));
+    assert!(!built.dir.join(SUMMARY_JSON_FILE).exists());
+    assert!(!built.dir.join(SUMMARY_MARKDOWN_FILE).exists());
+}
+
+#[test]
+fn acceptance_rejects_an_escaping_or_absent_pinned_input() {
+    let exploratory = || {
+        addendum(vec![cell(
+            "a",
+            CellObjective::Improvement,
+            CellRole::Exploratory,
+            CoreArm::SingleCore,
+        )])
+    };
+    let rejected = |built: &Built, rule: &str, text: &str| {
+        let summary = evaluate(&built.repo, &built.dir).unwrap();
+        assert_eq!(summary.verdict, Verdict::Rejected);
+        assert!(
+            summary
+                .findings
+                .iter()
+                .any(|f| f.rule == rule && f.message.contains(text)),
+            "{rule} {text}: {:?}",
+            summary.findings
+        );
+    };
+
+    let built = build_receipt(
+        "escaping-pin",
+        &exploratory(),
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |receipt| {
+            receipt.addendum.path = "../outside/addendum.json".into();
+        },
+    );
+    rejected(&built, "P-03", "not a literal relative path");
+
+    let built = build_receipt(
+        "absent-frozen",
+        &exploratory(),
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    fs::remove_file(
+        built
+            .dir
+            .join(CONFIGURATION_DIRECTORY)
+            .join(CONFIGURATION_ADDENDUM),
+    )
+    .unwrap();
+    rejected(&built, "P-03", "cannot read frozen");
+
+    let built = build_receipt(
+        "escaping-ledger",
+        &v2_family(),
+        &[spec("quality", 2.0)],
+        false,
+        false,
+        |receipt| {
+            receipt.trial_ledger.as_mut().unwrap().path = "../outside/ledger.jsonl".into();
+        },
+    );
+    rejected(&built, "P-22", "ledger path differs");
+    let escaping = ArtifactPin {
+        path: "../family-ledger.jsonl".into(),
+        sha256: sha256_hex(b""),
+    };
+    put(&built.dir, "family-ledger.jsonl", b"");
+    assert!(escaping
+        .read_pinned(&built.dir.join(CHECKPOINT_DIR))
+        .unwrap_err()
+        .contains("not a literal relative path"));
+
+    let built = build_receipt(
+        "absent-ledger",
+        &v2_family(),
+        &[spec("quality", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    fs::remove_file(built.repo.join("family-ledger.jsonl")).unwrap();
+    rejected(&built, "P-22", "cannot read pinned input");
+
+    let mut with_prior = exploratory();
+    with_prior.family_wise.prior_confirmatory_trials = 1;
+    with_prior
+        .family_wise
+        .prior_trials
+        .push(tuning_campaign_support::protocol::PriorTrial {
+            receipt: "receipts/absent/receipt.json".into(),
+            sha256: "a".repeat(64),
+            outcome: "fail".into(),
+        });
+    let built = build_receipt(
+        "absent-prior",
+        &with_prior,
+        &[spec("a", 2.0)],
+        false,
+        false,
+        |_| {},
+    );
+    rejected(&built, "P-22", "cannot read pinned input");
 }
 
 fn v2_family() -> FamilyAddendum {

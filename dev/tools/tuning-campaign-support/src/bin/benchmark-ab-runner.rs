@@ -6,7 +6,10 @@
 //!
 //! `run <stage> <plan.json>` executes unfinished cells inside the lock wrapper
 //! and pauses or completes; `finalize <stage> <out-dir>` assembles the receipt
-//! directory from the stage after the wrapper returns. Every arm is a fresh
+//! directory from the stage after the wrapper returns. The first session
+//! freezes the campaign's configuration and records the producing digests in
+//! the stage; later sessions and finalize read them from there, so a commit
+//! during an interruption leaves resume unaffected. Every arm is a fresh
 //! child process speaking the canonical child-v2 framing. Under protocol
 //! version 4 a resumed session journals `cell-abandoned` for a cell attempt
 //! that an interruption left unfinished, then measures that cell again from
@@ -40,15 +43,16 @@ use tuning_campaign_support::journal::{
 };
 use tuning_campaign_support::protocol::{
     sha256_hex, ArtifactPin, CellDeclaration, FamilyAddendum, PlanCell, RunnerPlan, SharedInput,
-    RUNNER_LIFECYCLE_SCHEMA,
+    CONFIGURATION_ADDENDUM, RUNNER_LIFECYCLE_SCHEMA,
 };
 use tuning_campaign_support::provenance::{ProducingInputs, ProducingSnapshot};
 use tuning_campaign_support::receipt::{
-    ArmRecord, BenchmarkReceipt, CampaignFacts, CellAbandonment, CellAttempts, CellClaim,
-    CellRecord, CellStatus, CheckpointRecord, ExecutionRecord, LockRecord, LogRecord, PairRecord,
-    SourceIdentity, WorkerReport, CHECKPOINT_DIR, LOG_FILE, PLAN_FILE, RECEIPT_FILE,
+    verify_cited_receipts, ArmRecord, BenchmarkReceipt, CampaignFacts, CellAbandonment,
+    CellAttempts, CellClaim, CellRecord, CellStatus, CheckpointRecord, ExecutionRecord, LockRecord,
+    LogRecord, PairRecord, SourceIdentity, WorkerReport, CHECKPOINT_DIR, LOG_FILE, PLAN_FILE,
+    RECEIPT_FILE,
 };
-use tuning_campaign_support::repository::repository_root;
+use tuning_campaign_support::repository::{repository_root, CONFIGURATION_DIRECTORY};
 
 fn invalid(message: impl ToString) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, message.to_string())
@@ -134,22 +138,99 @@ fn arm_records(plan: &RunnerPlan) -> io::Result<BTreeMap<String, ArmRecord>> {
     Ok(arms)
 }
 
-fn facts(root: &Path, plan: &RunnerPlan, plan_bytes: &[u8]) -> io::Result<CampaignFacts> {
-    let addendum = ArtifactPin::capture(root, &plan.addendum)?;
-    let family = FamilyAddendum::decode(&addendum.verify_content(root).map_err(invalid)?)
-        .map_err(invalid)?;
-    // The protocol and schema editions are the ones the addendum names.
-    let shared = |input: SharedInput, identity: &str| {
-        ArtifactPin::capture(root, &input.locate(root, identity)?)
-    };
-    let protocol = shared(
-        SharedInput::Protocol,
-        &SharedInput::protocol_identity(family.protocol.version),
-    )?;
-    let contract = shared(SharedInput::Contract, &SharedInput::contract_identity())?;
-    let addendum_schema = shared(SharedInput::AddendumSchema, &family.schema)?;
-    let producing = ProducingInputs::capture(root, &plan.producing_manifest_path(&protocol.path))?;
-    let source = source_identity(root, producing.clone())?;
+/// What a campaign fixes in its first session and every later session reads
+/// back: pins of the frozen configuration and the producing-source record.
+struct FrozenInputs {
+    protocol: ArtifactPin,
+    contract: ArtifactPin,
+    addendum_schema: ArtifactPin,
+    addendum: ArtifactPin,
+    source: SourceIdentity,
+}
+
+impl FrozenInputs {
+    /// Copies the live configuration into a stage whose campaign has not begun
+    /// and records the producing digests. A start interrupted before its
+    /// execution log opens freezes again.
+    fn freeze(root: &Path, stage: &Path, plan: &RunnerPlan) -> io::Result<Self> {
+        let directory = stage.join(CONFIGURATION_DIRECTORY);
+        fs::create_dir_all(&directory)?;
+        let freeze = |relative: &str, file: &str| -> io::Result<(ArtifactPin, Vec<u8>)> {
+            let pin = ArtifactPin::capture(root, relative)?;
+            let bytes = pin.verify_content(root).map_err(invalid)?;
+            atomic_replace(&directory.join(file), &bytes)?;
+            Ok((pin, bytes))
+        };
+        let (addendum, addendum_bytes) = freeze(&plan.addendum, CONFIGURATION_ADDENDUM)?;
+        let family = FamilyAddendum::decode(&addendum_bytes).map_err(invalid)?;
+        // The protocol and schema editions are the ones the addendum names.
+        let shared = |input: SharedInput, identity: &str| {
+            freeze(&input.locate(root, identity)?, input.configuration_file()).map(|(pin, _)| pin)
+        };
+        let protocol = shared(
+            SharedInput::Protocol,
+            &SharedInput::protocol_identity(family.protocol.version),
+        )?;
+        let contract = shared(SharedInput::Contract, &SharedInput::contract_identity())?;
+        let addendum_schema = shared(SharedInput::AddendumSchema, &family.schema)?;
+        let producing =
+            ProducingInputs::capture(root, &plan.producing_manifest_path(&protocol.path))?;
+        Ok(Self {
+            source: source_identity(root, producing)?,
+            protocol,
+            contract,
+            addendum_schema,
+            addendum,
+        })
+    }
+
+    /// The inputs a campaign's opening record fixed, once the stage's frozen
+    /// copies match them.
+    fn recorded(stage: &Path, first: &CampaignFacts) -> io::Result<Self> {
+        for (pin, file) in [
+            (&first.protocol, SharedInput::Protocol.configuration_file()),
+            (&first.contract, SharedInput::Contract.configuration_file()),
+            (
+                &first.addendum_schema,
+                SharedInput::AddendumSchema.configuration_file(),
+            ),
+            (&first.addendum, CONFIGURATION_ADDENDUM),
+        ] {
+            pin.verify_frozen(stage, file).map_err(invalid)?;
+        }
+        Ok(Self {
+            protocol: first.protocol.clone(),
+            contract: first.contract.clone(),
+            addendum_schema: first.addendum_schema.clone(),
+            addendum: first.addendum.clone(),
+            source: first.source.clone(),
+        })
+    }
+}
+
+/// This session's facts: `frozen` as the campaign fixed it, and the host, arms
+/// and toolchain as they are observed now.
+fn facts(
+    root: &Path,
+    stage: &Path,
+    plan: &RunnerPlan,
+    plan_bytes: &[u8],
+    frozen: FrozenInputs,
+) -> io::Result<CampaignFacts> {
+    let FrozenInputs {
+        protocol,
+        contract,
+        addendum_schema,
+        addendum,
+        source,
+    } = frozen;
+    let family = FamilyAddendum::decode(
+        &addendum
+            .verify_frozen(stage, CONFIGURATION_ADDENDUM)
+            .map_err(invalid)?,
+    )
+    .map_err(invalid)?;
+    let producing = source.producing.clone();
     let host = (family.protocol.version >= 2)
         .then(HostObservation::observe)
         .transpose()?;
@@ -190,6 +271,27 @@ fn facts(root: &Path, plan: &RunnerPlan, plan_bytes: &[u8]) -> io::Result<Campai
         settings_deviation,
         arms,
     })
+}
+
+/// The opening record of the execution log at `log_path`.
+///
+/// Validates the complete lines only: the session's resume recovers an append
+/// an interruption tore off. Also returns whether a validation session opened
+/// the stage.
+fn campaign_start(log_path: &Path, campaign_id: &str) -> io::Result<(CampaignFacts, bool)> {
+    let bytes = fs::read(log_path)?;
+    let complete = bytes
+        .iter()
+        .rposition(|byte| *byte == b'\n')
+        .map_or(0, |last| last + 1);
+    let records = ExecutionLog::validate_prefix(&bytes[..complete], campaign_id)?;
+    let first = records
+        .first()
+        .filter(|record| record.event == JournalEvent::CampaignStart)
+        .ok_or_else(|| invalid("log lacks campaign-start"))?;
+    let facts = serde_json::from_value(first.details.clone())
+        .map_err(|error| invalid(format!("campaign-start facts do not decode: {error}")))?;
+    Ok((facts, validation_stage(&records)))
 }
 
 /// What a session dispatches over the plan's cells.
@@ -249,10 +351,35 @@ fn open_session(
     } else {
         tuning_campaign_support::journal::atomic_write_new(&staged_plan, &plan_bytes)?;
     }
-    let mut facts = facts(root, &plan, &plan_bytes)?;
-    let addendum_bytes = facts.addendum.verify_content(root).map_err(invalid)?;
+    let timed = dispatch == SessionDispatch::Timed;
+    let log_path = stage.join(LOG_FILE);
+    let resumed = log_path.exists();
+    let start = resumed
+        .then(|| campaign_start(&log_path, &plan.campaign_id))
+        .transpose()?;
+    if start
+        .as_ref()
+        .is_some_and(|(_, validation)| *validation == timed)
+    {
+        return Err(invalid(
+            "the stage was opened under the other dispatch; a resume keeps it",
+        ));
+    }
+    let first = start.map(|(first, _)| first);
+    let frozen = match &first {
+        Some(first) => FrozenInputs::recorded(&stage, first)?,
+        None => FrozenInputs::freeze(root, &stage, &plan)?,
+    };
+    let mut facts = facts(root, &stage, &plan, &plan_bytes, frozen)?;
+    let addendum_bytes = facts
+        .addendum
+        .verify_frozen(&stage, CONFIGURATION_ADDENDUM)
+        .map_err(invalid)?;
     let addendum = load_addendum(&addendum_bytes, &plan)?;
-    let protocol_text = facts.protocol.verify_content(root).map_err(invalid)?;
+    let protocol_text = facts
+        .protocol
+        .verify_frozen(&stage, SharedInput::Protocol.configuration_file())
+        .map_err(invalid)?;
     if !String::from_utf8_lossy(&protocol_text).contains(&format!(
         "Protocol `zen3-benchmark-protocol` version {}.",
         addendum.protocol.version
@@ -261,7 +388,9 @@ fn open_session(
             "protocol document version differs from frozen addendum",
         ));
     }
-    let timed = dispatch == SessionDispatch::Timed;
+    if first.is_none() {
+        verify_cited_receipts(root, &addendum)?;
+    }
     let holder = timed
         .then(|| inherited_lock(Path::new(&plan.lock_path)))
         .transpose()?;
@@ -277,49 +406,44 @@ fn open_session(
             return Err(invalid("addendum freeze timestamp is after campaign start"));
         }
         if timed {
-            facts.trial_ledger = Some(tuning_campaign_support::trial_ledger::reserve(
+            let candidates = tuning_campaign_support::trial_ledger::candidate_ids(
+                &addendum,
+                &plan,
+                &facts.arms,
+            )?;
+            let open = if first.is_some() {
+                tuning_campaign_support::trial_ledger::resume_reservation
+            } else {
+                tuning_campaign_support::trial_ledger::reserve
+            };
+            facts.trial_ledger = Some(open(
                 root,
                 &addendum,
                 &plan.campaign_id,
                 &facts.addendum.sha256,
-                &tuning_campaign_support::trial_ledger::candidate_ids(
-                    &addendum,
-                    &plan,
-                    &facts.arms,
-                )?,
+                &candidates,
             )?);
         }
     }
     let session_id = format!("session-{}-{}", utc_compact(), std::process::id());
-    let log_path = stage.join(LOG_FILE);
-    let resumed = log_path.exists();
     let mut log = if resumed {
         ExecutionLog::resume(&log_path, plan.campaign_id.clone(), session_id)?
     } else {
         ExecutionLog::create_new(&stage, plan.campaign_id.clone(), session_id)?
     };
     log.announce(io::stdout().lock())?;
-    if !resumed {
-        log.append(
-            JournalEvent::CampaignStart,
-            None,
-            serde_json::to_value(&facts)?,
-        )?;
-    } else {
-        let bytes = fs::read(&log_path)?;
-        let records = ExecutionLog::validate_prefix(&bytes, &plan.campaign_id)?;
-        let first: CampaignFacts = serde_json::from_value(records[0].details.clone())
-            .map_err(|error| invalid(format!("campaign-start facts do not decode: {error}")))?;
+    if let Some(first) = &first {
         if !first.resume_equivalent(&facts) {
             return Err(invalid(
                 "resume identity differs from the campaign-start facts",
             ));
         }
-        if validation_stage(&records) == timed {
-            return Err(invalid(
-                "the stage was opened under the other dispatch; a resume keeps it",
-            ));
-        }
+    } else {
+        log.append(
+            JournalEvent::CampaignStart,
+            None,
+            serde_json::to_value(&facts)?,
+        )?;
     }
     log.append(
         JournalEvent::OrchestrationStart,
@@ -803,8 +927,8 @@ fn copy_tree(source: &Path, target: &Path) -> io::Result<()> {
 }
 
 /// A stage as its own records describe it: the plan it pins, the validated
-/// execution log, the campaign facts its campaign-start carries and the family
-/// addendum those facts authenticate.
+/// execution log, the campaign facts its campaign-start carries and the frozen
+/// family addendum those facts authenticate.
 struct Stage {
     /// Canonical stage directory.
     root: PathBuf,
@@ -842,7 +966,7 @@ fn open_stage(stage: &Path) -> io::Result<Stage> {
     }
     let addendum_bytes = facts
         .addendum
-        .verify_content(&invocation_root()?)
+        .verify_frozen(&root, CONFIGURATION_ADDENDUM)
         .map_err(invalid)?;
     let addendum = FamilyAddendum::decode(&addendum_bytes).map_err(invalid)?;
     let validation = validation_stage(&records);
@@ -991,6 +1115,10 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
     fs::create_dir_all(out_dir)?;
     fs::write(out_dir.join(PLAN_FILE), &plan_bytes)?;
     fs::write(out_dir.join(LOG_FILE), &log_bytes)?;
+    copy_tree(
+        &stage.join(CONFIGURATION_DIRECTORY),
+        &out_dir.join(CONFIGURATION_DIRECTORY),
+    )?;
     let checkpoint_out = out_dir.join(CHECKPOINT_DIR);
     fs::create_dir_all(&checkpoint_out)?;
     fs::copy(
@@ -1083,15 +1211,16 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
 /// nothing and writing nothing.
 ///
 /// The check a launcher runs in a working session so a malformed frozen input
-/// fails there rather than inside a benchmark window. It applies the decode
-/// and validation `run` applies before its first measurement, and the
-/// validation against the addendum schema that acceptance applies to the
-/// receipt (P-03).
+/// fails there rather than inside a benchmark window. It applies the decode,
+/// validation and citation digests `run` checks before its first measurement,
+/// and the validation against the addendum schema that acceptance applies to
+/// the receipt (P-03).
 fn check(plan_path: &Path) -> io::Result<i32> {
     let root = invocation_root()?;
     let (plan, _) = read_plan(plan_path)?;
     let addendum_bytes = fs::read(&plan.addendum)?;
     let addendum = load_addendum(&addendum_bytes, &plan)?;
+    verify_cited_receipts(&root, &addendum)?;
     let violations = FamilyAddendum::schema_violations(&root, &addendum_bytes)?;
     if !violations.is_empty() {
         return Err(invalid(violations.join("; ")));

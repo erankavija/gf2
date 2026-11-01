@@ -28,9 +28,9 @@ sha256sum -c .agents/campaign-evidence/gf2-0a77ecfc-20261013t011147z-815998/SHA2
 
 ## F-01: the journal accounts for every declared unit
 
-[`campaign-verification.json`](campaign-verification.json), written by
-`verify-campaign.py`, reads the execution journal of the evidence archive
-under the digest the committed checksum manifest pins. Every declared unit starts, validates,
+[`campaign-verification.json`](campaign-verification.json) records the check
+of the execution journal of the evidence archive, under the digest the
+committed checksum manifest pins. Every declared unit starts, validates,
 checkpoints and completes once with a clean child exit, every cell holds its
 probe and its declared timed children, every timed child reports its declared
 windows, and the journal ends in a terminal `complete` record; the record's

@@ -32,17 +32,18 @@ crate is the canonical home.
 - The protocol identity is the pair `zen3-benchmark-protocol` version 4, the
   constants `PROTOCOL_ID` and `PROTOCOL_VERSION` in `src/protocol.rs`.
 - The content identity of this document, the addendum schema, the measurement
-  contract and every addendum is an `ArtifactPin`: its original path, its
-  receipt-local immutable snapshot path and the SHA-256 of the exact bytes.
-  The runner publishes each snapshot atomically before opening the execution
-  log. The acceptance tool reads only those portable receipt-local bytes and
-  rejects a missing snapshot or digest mismatch (P-02, P-03). Git revisions,
-  commit ancestry and whole-tree state are optional navigation metadata and do
-  not decide acceptance or resume compatibility.
+  contract and every addendum is an `ArtifactPin`: its source path and the
+  SHA-256 of the exact bytes. The runner freezes each into the stage's
+  `configuration/` directory before opening the execution log, and resume,
+  finalize and acceptance read those copies. Acceptance rejects a missing copy
+  or digest mismatch (P-02, P-03), and reports a receipt with no
+  `configuration/` directory as unavailable without evaluating it. Git
+  revisions, commit ancestry and whole-tree state are navigation metadata and
+  do not decide acceptance or resume compatibility.
 - This is version 4. The amendment records of [version 2](amendment-v2.md),
   [version 3](amendment-v3.md) and [version 4](amendment-v4.md) state what
-  each version changed and which rules and evidence it superseded. Receipts,
-  snapshots and negative results of earlier versions remain immutable, and
+  each version changed and which rules and evidence it superseded. Receipts
+  and negative results of earlier versions remain immutable, and
   each receipt is evaluated under the version it pins. Confirmation under v4
   uses fresh samples. The evaluator refuses an explicit version different from
   the receipt pin (P-01, P-22, P-13).
@@ -74,7 +75,7 @@ crate is the canonical home.
 | Comparable operations and costs: setup, conversion, batch fill, dispatch in whole-consumer cells; isolated kernels separate | Cell schema | P-17 (conversion costs) |
 | Decoder comparisons: matched-algorithm and fastest quality-compatible arms, quality tolerances, BER/FER intervals, stopping contracts | Decoder cells | P-18, P-19 |
 | Receipts: raw samples, exact commands, seeds, identities, provenance, interpretation and acceptance summary under `dev/bench_results` | Receipt layout | P-01 to P-12, P-23, summary files |
-| Production change needs a fresh pinned before/after measurement | Roles and freezing | P-05 (source identity) |
+| Production change needs a fresh pinned before/after measurement | Roles and freezing | P-05 (toolchain and producing digests), P-23 |
 
 ## Roles and freezing
 
@@ -114,11 +115,11 @@ load and available memory in `session_hosts` and the journal; those three
 informational fields can vary. All material fields must match the first session
 before measurements resume. Git revision strings remain informational.
 
-The addendum pin names immutable receipt-local bytes. Resolution evidence names a
-repository-relative pilot `receipt.json` and its SHA-256. Before opening the
-campaign log, the runner captures that receipt at
-`inputs/resolution-evidence/receipt.json`; the acceptance tool verifies the
-snapshot's digest, `pilot` label, and family identity. It recomputes the widest
+The addendum pin names the frozen `configuration/family-addendum.json`. Resolution
+evidence names a repository-relative pilot `receipt.json` and its SHA-256. Before
+reserving a ledger attempt, the runner checks that digest and the pilot's addendum
+and ledger prefix against the pilot's pins; the acceptance tool verifies the
+receipt's digest, `pilot` label, and family identity. It recomputes the widest
 relative bootstrap half-width from the pilot's paired bytes and rejects a
 declared resolution below that conservative value. Missing, self-referential,
 cross-family, or non-pilot evidence rejects (P-03). Thus the pilot evidence
@@ -435,9 +436,11 @@ The runner opens the canonical append-only execution log
 `GF2_CAMPAIGN_EXECUTION_LOG=<path>` before its first bounded run, then journals
 an `execution-log-announced` record; the tool requires that record before the
 first `cell-start` (P-10). The campaign-start record binds the exact plan,
-protocol, contract, schema, addendum, producing-input snapshot, process
-descriptors and executable digests. Resume compares these content identities;
-source-control locators and unrelated repository files do not participate.
+protocol, contract, schema, addendum, producing-input digests, process
+descriptors and executable digests. Resume reads the configuration and producing
+digests the campaign fixed at its start and compares the plan, process
+descriptors, executables, toolchain and material host facts; source-control
+locators and live repository files do not participate.
 Acceptance verifies the saved plan digest, validates its schema and addendum
 connections, and checks campaign, issue, label, seed, lock observations, timing,
 arm descriptors, cell inputs, arm pairing and sample counts against the receipt
@@ -492,7 +495,7 @@ Each bounded campaign writes one directory under the owning issue's
 | `plan.json` | Exact `zen3-benchmark-plan-v1` bytes whose SHA-256 is frozen in the opening `CampaignFacts`; `protocol::RunnerPlan` is the strict typed schema. |
 | `receipt.json` | `zen3-benchmark-receipt-v1`: identities, source, toolchain, host observation, lock evidence, worker report, log and checkpoint digests, arms, and every cell with its raw windows, per-execution values, observed CPUs and the runner's claim. |
 | `execution.log` | The append-only journal of every session. |
-| `inputs/` | Immutable protocol, contract, schema, addendum, producing-input and referenced-receipt snapshots used by this campaign. |
+| `configuration/` | The campaign's frozen protocol, contract, schema and addendum, copied at its start. |
 | `checkpoints/` | The immutable manifest and accepted units. |
 | `acceptance-summary.json` | `zen3-benchmark-acceptance-v2` from `benchmark-acceptance`. |
 | `acceptance-summary.md` | Markdown rendered from the summary alone. |
@@ -507,10 +510,10 @@ receipt. Neither is a performance result about gf2.
 | Rule | Check |
 |---|---|
 | P-01 | Receipt envelope is `zen3-benchmark-receipt-v1`; the pinned protocol and addendum versions agree with each other and any explicitly requested evaluation version. |
-| P-02 | Protocol, contract and addendum-schema pins name the canonical source paths, literal receipt-local snapshot paths and 64-hex digests; missing snapshots and digest mismatches reject. |
-| P-03 | The addendum matches its receipt-local snapshot, it validates against the schema and semantic rules, and resolution evidence is a distinct digest-matched pilot receipt snapshot from the same family whose widest relative bootstrap half-width supports the declared resolution. |
+| P-02 | Protocol, contract and addendum-schema pins name literal relative source paths and 64-hex digests, and match the `configuration/` copies; missing copies and digest mismatches reject. |
+| P-03 | The addendum matches its `configuration/` copy, it validates against the schema and semantic rules, and resolution evidence is a distinct digest-matched pilot receipt from the same family whose widest relative bootstrap half-width supports the declared resolution. |
 | P-04 | Receipt settings equal the frozen shared settings unless a deviation is declared; a deviation makes every cell non-confirmatory. |
-| P-05 | The manifest and every declared producing/build input match their receipt-local content snapshot, and the toolchain is recorded. Source-control metadata is informational. |
+| P-05 | The toolchain is recorded. The manifest and producing/build input digests are the record of campaign start; source-control metadata is informational. |
 | P-06 | The host observation carries model, flags, kernel, governors, affinity and topology. |
 | P-07 | Lock evidence records the inherited held descriptor and conflicting-lock observation with its absolute lock path and holder PID. |
 | P-08 | The worker report carries the runner thread count. |

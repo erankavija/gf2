@@ -17,8 +17,11 @@ instead of restating figures.
 Claims whose method line cites this section come from confirmatory cells of
 the
 [Zen 3 benchmark protocol](https://github.com/erankavija/gf2/blob/6776fe30ea9af85ad509ddca95926f051421676d/dev/active/f547c394/protocol.md).
-Each such receipt records its protocol version and input digests; its source
-revision is the rebuild pointer.
+Each such receipt records its protocol version and input digests. A receipt
+with a `configuration/` directory also carries its frozen configuration and its
+source revision, the rebuild pointer, and acceptance evaluates it against those
+files. Acceptance reports a receipt without that directory as unavailable, and
+the acceptance summary committed beside it is the record of its evaluation.
 Its `receipt.json`, linked beside each summary, records the host, build,
 workload, baseline and date.
 

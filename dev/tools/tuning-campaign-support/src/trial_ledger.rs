@@ -83,7 +83,8 @@ pub fn comparisons(entries: &[Reservation]) -> io::Result<u32> {
 }
 
 /// Reserves this campaign under the caller's exclusive timing lock and records
-/// the ledger prefix digest. Resumption reuses its reservation.
+/// the ledger prefix digest. A start interrupted before its execution log opens
+/// reuses its reservation; a campaign with a log uses [`resume_reservation`].
 /// The family ledger must already exist (even at genesis); a missing ledger is
 /// an error so deleting a family history cannot silently restart accounting.
 pub fn reserve(
@@ -103,25 +104,9 @@ pub fn reserve(
     file.lock()?;
     let bytes = fs::read(&path)?;
     let entries = decode(&bytes, &family.family.id)?;
-    let count = family
-        .cells
-        .iter()
-        .filter(|c| c.role != CellRole::Exploratory)
-        .count() as u32;
+    let count = reserved_comparisons(family);
     let prefix = if let Some(entry) = entries.iter().find(|e| e.campaign == campaign) {
-        if entry.addendum_sha256 != addendum_sha
-            || entry.comparisons != count
-            || entry.protocol_version != family.protocol.version
-            || entry.candidates != candidates
-        {
-            return Err(invalid("campaign reservation differs from frozen addendum"));
-        }
-        bytes
-            .split_inclusive(|b| *b == b'\n')
-            .take(entry.sequence as usize + 1)
-            .flatten()
-            .copied()
-            .collect::<Vec<u8>>()
+        reservation_prefix(&bytes, entry, family, addendum_sha, candidates)?
     } else {
         if entries.iter().any(|entry| {
             entry.protocol_version == family.protocol.version
@@ -165,6 +150,69 @@ pub fn reserve(
     })
 }
 
+/// The pin of a resuming campaign's reservation, read without appending: a
+/// ledger without it refuses, so a lost history spends no second attempt.
+pub fn resume_reservation(
+    root: &Path,
+    family: &FamilyAddendum,
+    campaign: &str,
+    addendum_sha: &str,
+    candidates: &[String],
+) -> io::Result<ArtifactPin> {
+    let relative = family
+        .family_wise
+        .ledger_path
+        .as_deref()
+        .ok_or_else(|| invalid("missing family ledger"))?;
+    let bytes = fs::read(root.join(relative))?;
+    let entries = decode(&bytes, &family.family.id)?;
+    let entry = entries
+        .iter()
+        .find(|e| e.campaign == campaign)
+        .ok_or_else(|| invalid("authoritative ledger lost this campaign"))?;
+    Ok(ArtifactPin {
+        path: relative.to_owned(),
+        sha256: sha256_hex(&reservation_prefix(
+            &bytes,
+            entry,
+            family,
+            addendum_sha,
+            candidates,
+        )?),
+    })
+}
+
+/// The ledger bytes through `entry`, once `entry` matches the frozen addendum.
+fn reservation_prefix(
+    bytes: &[u8],
+    entry: &Reservation,
+    family: &FamilyAddendum,
+    addendum_sha: &str,
+    candidates: &[String],
+) -> io::Result<Vec<u8>> {
+    if entry.addendum_sha256 != addendum_sha
+        || entry.comparisons != reserved_comparisons(family)
+        || entry.protocol_version != family.protocol.version
+        || entry.candidates != candidates
+    {
+        return Err(invalid("campaign reservation differs from frozen addendum"));
+    }
+    Ok(bytes
+        .split_inclusive(|b| *b == b'\n')
+        .take(entry.sequence as usize + 1)
+        .flatten()
+        .copied()
+        .collect())
+}
+
+fn reserved_comparisons(family: &FamilyAddendum) -> u32 {
+    family
+        .cells
+        .iter()
+        .filter(|c| c.role != CellRole::Exploratory)
+        .count() as u32
+}
+
 /// Reads the digest-pinned prefix from the authoritative append-only ledger.
 /// Later reservations do not change an earlier campaign's input identity.
 pub fn read_prefix(pin: &ArtifactPin, root: &Path) -> io::Result<Vec<u8>> {
@@ -199,11 +247,7 @@ pub fn verify(
     let last = entries
         .last()
         .ok_or_else(|| invalid("ledger lacks this reservation"))?;
-    let count = family
-        .cells
-        .iter()
-        .filter(|c| c.role != CellRole::Exploratory)
-        .count() as u32;
+    let count = reserved_comparisons(family);
     if last.campaign != campaign
         || last.addendum_sha256 != addendum_sha
         || last.comparisons != count

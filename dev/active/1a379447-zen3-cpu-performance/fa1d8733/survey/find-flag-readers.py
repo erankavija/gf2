@@ -51,13 +51,13 @@ def under(path, directories):
 def classifier(paths):
     packages = {
         str(Path(path).parent) for path in paths
-        if Path(path).name == "Cargo.toml" and not repository_files.is_snapshot_copy(path)
+        if Path(path).name == "Cargo.toml" and not repository_files.is_frozen_configuration(path)
     }
     receipts = {str(Path(path).parent) for path in paths if Path(path).name == "receipt.json"}
 
     def classify(path):
         name, parts = Path(path).name, Path(path).parts
-        if repository_files.is_snapshot_copy(path):
+        if repository_files.is_frozen_configuration(path):
             return "receipt-snapshot"
         if parts[0] == ".jit":
             return "tracker"

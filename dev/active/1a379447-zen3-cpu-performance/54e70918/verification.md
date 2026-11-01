@@ -97,9 +97,8 @@ configuration this host can run reaches the guard with a missing arm through
 the probe; the ledger row `calibration-contract-returns-without-a-backend`
 cites the guard line of the tree before the change and its occurrence count.
 
-`survey/record-producer-identity.sh` builds the producer from the working tree
-and from the source held under `survey/inputs/before/` and writes
-`survey/producer-identity.json`. Its `binary_equal` and `source_equal` fields
+`survey/producer-identity.json` records release builds of the producer from the
+tree after the edit and from the source before it. Its `binary_equal` and `source_equal` fields
 state the outcome: the edit changes the bytes of the source and leaves the
 release binary and the behaviour token `CoreTuningCodec::HARNESS_SCHEMA` as
 they are. The measured owner that `crates/gf2-core/src/tuning/baked.rs` pins by

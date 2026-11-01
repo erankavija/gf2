@@ -1,5 +1,5 @@
 //! Benchmark receipt schema and the independent acceptance evaluation. A
-//! receipt is the durable evidence of one bounded campaign: pinned protocol,
+//! receipt is the durable evidence of one bounded campaign: frozen protocol,
 //! contract and addendum identities, source and build identities, runtime host
 //! observation, lock evidence, the append-only execution log, checkpoints,
 //! every arm's raw timing windows, and the runner's own claims. [`evaluate`]
@@ -18,10 +18,11 @@ use crate::journal::{
 use crate::protocol::{
     is_hex, sha256_hex, ArtifactPin, BuildIdentity, CacheState, CellObjective, CellRole,
     DecoderArmKind, FamilyAddendum, Normalization, Precision, ReceiptLabel, RunnerPlan, Schedule,
-    SharedInput, SharedSettings, Stopping, ACCEPTANCE_SCHEMA_ID, RECEIPT_SCHEMA_ID,
-    RUNNER_LIFECYCLE_SCHEMA, SHARED_SETTINGS,
+    SharedInput, SharedSettings, Stopping, ACCEPTANCE_SCHEMA_ID, CONFIGURATION_ADDENDUM,
+    RECEIPT_SCHEMA_ID, RUNNER_LIFECYCLE_SCHEMA, SHARED_SETTINGS,
 };
 use crate::provenance::ProducingSnapshot;
+use crate::repository::CONFIGURATION_DIRECTORY;
 use crate::schema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -998,7 +999,37 @@ impl Evaluation {
     }
 }
 
-/// Evaluates receipt results using inputs from the rebuild checkout `repo_root`.
+/// A receipt directory holds no frozen configuration, so acceptance has nothing
+/// to evaluate its pins against. Distinct from a rejection, which judges a
+/// receipt on its evidence.
+#[derive(Debug)]
+pub struct ConfigurationUnavailable;
+
+impl std::fmt::Display for ConfigurationUnavailable {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "the receipt's configuration is not available: it holds no {CONFIGURATION_DIRECTORY}/ directory"
+        )
+    }
+}
+
+impl std::error::Error for ConfigurationUnavailable {}
+
+/// Whether `error` from [`evaluate`] is [`ConfigurationUnavailable`].
+pub fn is_configuration_unavailable(error: &io::Error) -> bool {
+    error
+        .get_ref()
+        .is_some_and(|inner| inner.is::<ConfigurationUnavailable>())
+}
+
+/// Evaluates a receipt against its frozen configuration. `repo_root` supplies
+/// the family ledger and the receipts the addendum cites.
+///
+/// # Errors
+///
+/// Fails with [`ConfigurationUnavailable`] when `receipt_dir` holds no frozen
+/// configuration, and otherwise when the receipt cannot be read or decoded.
 pub fn evaluate(repo_root: &Path, receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
     evaluate_version(repo_root, receipt_dir, None)
 }
@@ -1010,6 +1041,9 @@ pub fn evaluate_version(
     receipt_dir: &Path,
     expected_version: Option<u32>,
 ) -> io::Result<AcceptanceSummary> {
+    if !receipt_dir.join(CONFIGURATION_DIRECTORY).is_dir() {
+        return Err(io::Error::other(ConfigurationUnavailable));
+    }
     let receipt_bytes = fs::read(receipt_dir.join(RECEIPT_FILE))?;
     let receipt_sha256 = sha256_hex(&receipt_bytes);
     let receipt = BenchmarkReceipt::decode(&receipt_bytes)
@@ -1041,10 +1075,8 @@ pub fn evaluate_version(
         ("P-03", &receipt.addendum, None),
     ] {
         let name = shared.map_or("addendum", SharedInput::name);
-        if let Err(message) = pin.validate_shape() {
-            e.error(rule, None, format!("{name} identity: {message}"));
-        }
-        match pin.verify_content(repo_root) {
+        let file = shared.map_or(CONFIGURATION_ADDENDUM, SharedInput::configuration_file);
+        match pin.verify_frozen(receipt_dir, file) {
             Err(message) => e.error(rule, None, format!("{name} identity: {message}")),
             Ok(bytes) if shared.is_some_and(|input| input.identity(&bytes).is_none()) => {
                 e.error(
@@ -2300,14 +2332,18 @@ fn verify_resolution_evidence(
                     );
                     return;
                 }
-                let corrected_alpha =
-                    match verified_pilot_alpha(&pilot, repo_root, addendum.protocol.version) {
-                        Ok(alpha) => alpha,
-                        Err(message) => {
-                            evaluation.error("P-03", None, message);
-                            return;
-                        }
-                    };
+                let corrected_alpha = match verified_pilot_alpha(
+                    &pilot,
+                    &evidence.receipt,
+                    repo_root,
+                    addendum.protocol.version,
+                ) {
+                    Ok(alpha) => alpha,
+                    Err(message) => {
+                        evaluation.error("P-03", None, message);
+                        return;
+                    }
+                };
                 match pilot_resolution(&pilot, corrected_alpha) {
                     Ok(derived) if addendum.effect.measurement_resolution.unwrap() < derived => {
                         evaluation.error(
@@ -2383,21 +2419,84 @@ fn pilot_resolution(pilot: &BenchmarkReceipt, corrected_alpha: f64) -> Result<f6
     widest.ok_or_else(|| "pilot receipt contains no measured paired cells".into())
 }
 
+/// The pinned addendum bytes of the pilot receipt at the repository-relative
+/// `pilot_path`: its frozen copy, or the pinned path for a receipt that holds
+/// no frozen configuration.
+fn pilot_addendum_bytes(
+    pilot: &BenchmarkReceipt,
+    pilot_path: &str,
+    repo_root: &Path,
+) -> Result<Vec<u8>, String> {
+    let pilot_dir = repo_root
+        .join(pilot_path)
+        .parent()
+        .map(Path::to_path_buf)
+        .ok_or_else(|| "pilot receipt path has no parent".to_owned())?;
+    if pilot_dir.join(CONFIGURATION_DIRECTORY).is_dir() {
+        pilot
+            .addendum
+            .verify_frozen(&pilot_dir, CONFIGURATION_ADDENDUM)
+    } else {
+        pilot.addendum.verify_content(repo_root)
+    }
+}
+
+/// Checks every receipt `addendum` cites against its recorded digest, and a
+/// version-3-or-later pilot's addendum and ledger prefix against that pilot's
+/// pins, so a wrong citation fails before a campaign spends a reservation.
+///
+/// # Errors
+///
+/// Fails on the first citation that cannot be read or differs from its pin.
+pub fn verify_cited_receipts(repo_root: &Path, addendum: &FamilyAddendum) -> io::Result<()> {
+    let cited = |what: &str, message: String| {
+        io::Error::new(io::ErrorKind::InvalidData, format!("{what}: {message}"))
+    };
+    if let Some(evidence) = &addendum.effect.resolution_evidence {
+        let pin = ArtifactPin {
+            path: evidence.receipt.clone(),
+            sha256: evidence.sha256.clone(),
+        };
+        let bytes = pin
+            .verify_content(repo_root)
+            .map_err(|message| cited("resolution evidence", message))?;
+        if addendum.protocol.version >= 3 {
+            let pilot = BenchmarkReceipt::decode(&bytes)
+                .map_err(|message| cited("resolution evidence", message))?;
+            pilot_addendum_bytes(&pilot, &evidence.receipt, repo_root)
+                .map_err(|message| cited("resolution evidence pilot addendum", message))?;
+            let ledger = pilot.trial_ledger.as_ref().ok_or_else(|| {
+                cited(
+                    "resolution evidence",
+                    "versioned pilot lacks a trial ledger".to_owned(),
+                )
+            })?;
+            crate::trial_ledger::read_prefix(ledger, repo_root)
+                .map_err(|error| cited("resolution evidence pilot ledger", error.to_string()))?;
+        }
+    }
+    for trial in &addendum.family_wise.prior_trials {
+        ArtifactPin {
+            path: trial.receipt.clone(),
+            sha256: trial.sha256.clone(),
+        }
+        .verify_content(repo_root)
+        .map_err(|message| cited("prior trial", message))?;
+    }
+    Ok(())
+}
+
 /// Derives the family-corrected bootstrap alpha of a pilot from version 3 up
 /// to the citing receipt's `version` from its pinned addendum and ledger
 /// prefix, never from a receipt claim.
 fn verified_pilot_alpha(
     pilot: &BenchmarkReceipt,
+    pilot_path: &str,
     repo_root: &Path,
     version: u32,
 ) -> Result<f64, String> {
-    let addendum_pin = ArtifactPin {
-        path: pilot.addendum.path.clone(),
-        sha256: pilot.addendum.sha256.clone(),
-    };
     let addendum = FamilyAddendum::decode(
-        &addendum_pin
-            .verify_content(repo_root)
+        &pilot_addendum_bytes(pilot, pilot_path, repo_root)
             .map_err(|error| format!("pilot addendum is not verified: {error}"))?,
     )
     .map_err(|error| format!("pilot addendum does not decode: {error}"))?;
