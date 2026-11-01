@@ -10,7 +10,7 @@
 
 use ldpc_survey::arm::{self, ArmResult, DecoderCase, ARM_RESULT_SCHEMA};
 use ldpc_throughput::aff3ct::{Aff3ctWorker, Handle, Selection};
-use ldpc_throughput::driver::run_cell;
+use ldpc_throughput::driver::{report_iterations, run_cell, IterationSource};
 use ldpc_throughput::workload::{check_request, Workload};
 use std::process::ExitCode;
 use std::time::Instant;
@@ -48,6 +48,7 @@ fn run() -> Result<(), String> {
         return Err("the prepared quality was produced under other settings".to_owned());
     }
     let name = prototype.name();
+    let prototype = std::sync::Mutex::new(prototype);
     let cell = run_cell(
         "aff3ct",
         &request,
@@ -56,9 +57,18 @@ fn run() -> Result<(), String> {
         setup_start,
         // AFF3CT converts inside every decode call; no separate stage exists.
         0,
-        |_| Aff3ctWorker::new(&prototype, batch, k),
+        |_| {
+            let prototype = prototype.lock().map_err(|e| e.to_string())?;
+            Aff3ctWorker::new(&prototype, batch, k)
+        },
         |worker: &mut Aff3ctWorker| worker.decode_batch(llrs),
         |worker: &Aff3ctWorker| &worker.decisions,
+        |index, worker| {
+            let mut prototype = prototype.lock().map_err(|e| e.to_string())?;
+            let iterations = worker.replay_iterations(&mut prototype, llrs)?;
+            report_iterations("aff3ct", index, IterationSource::ReplayDerived, &iterations);
+            Ok(())
+        },
     )?;
     let result = ArmResult {
         schema: ARM_RESULT_SCHEMA.to_owned(),

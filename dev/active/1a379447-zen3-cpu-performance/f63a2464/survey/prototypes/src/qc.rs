@@ -219,6 +219,9 @@ impl QcDecoder {
             *slot = llr.value();
         }
 
+        if max_iterations == 0 {
+            self.posterior.copy_from_slice(&self.channel);
+        }
         let z = self.layout.z;
         self.check_to_var.fill(0.0);
         for (index, edge) in self.layout.check_edges.iter().enumerate() {

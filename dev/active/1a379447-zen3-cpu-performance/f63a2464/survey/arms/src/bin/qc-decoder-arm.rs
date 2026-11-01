@@ -19,7 +19,7 @@ use ldpc_survey::arm::{
     self, ArmResult, DecoderCase, Normalization, NormalizationKind, Precision, Schedule, Stopping,
     StoppingKind, ARM_RESULT_SCHEMA,
 };
-use ldpc_throughput::driver::run_cell;
+use ldpc_throughput::driver::{report_iterations, run_cell, IterationSource};
 use ldpc_throughput::workload::{check_request, median_u64, Workload};
 use std::hint::black_box;
 use std::process::ExitCode;
@@ -77,6 +77,19 @@ impl QcWorker {
         }
         black_box(&self.decisions);
     }
+}
+
+fn check_relation(
+    lifted: &gf2_coding::ldpc::LdpcCode,
+    recorded: &gf2_coding::ldpc::LdpcCode,
+) -> Result<(), String> {
+    if lifted.n() != recorded.n()
+        || lifted.k() != recorded.k()
+        || lifted.parity_check_matrix() != recorded.parity_check_matrix()
+    {
+        return Err("the lifted base graph is not the recorded parity-check matrix".to_owned());
+    }
+    Ok(())
 }
 
 fn run() -> Result<(), String> {
@@ -138,10 +151,10 @@ fn run() -> Result<(), String> {
     if lifted.n() != workload.manifest.n
         || lifted.k() != workload.manifest.k
         || lifted.parity_check_matrix().nnz() != workload.manifest.nnz
-        || recorded.parity_check_matrix().nnz() != lifted.parity_check_matrix().nnz()
     {
         return Err("the lifted base graph is not the recorded parity-check matrix".to_owned());
     }
+    check_relation(&lifted, &recorded)?;
     let (n, k) = (workload.manifest.n, workload.manifest.k);
     let rule = MinSumRule::Normalized(case.normalization_factor);
     let cap = case.iteration_cap as usize;
@@ -155,6 +168,10 @@ fn run() -> Result<(), String> {
         |_| Ok(QcWorker::new(&qc, rule, n, k, batch, cap)),
         |worker: &mut QcWorker| worker.decode_batch(llrs),
         |worker: &QcWorker| &worker.decisions,
+        |index, worker| {
+            report_iterations("qc", index, IterationSource::Direct, &worker.iterations);
+            Ok(())
+        },
     )?;
     let avx2 = QcDecoder::new(&qc, rule).uses_avx2();
     let result = ArmResult {
@@ -185,5 +202,27 @@ fn main() -> ExitCode {
             eprintln!("qc-decoder-arm: {error}");
             ExitCode::FAILURE
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gf2_coding::ldpc::LdpcCode;
+
+    #[test]
+    fn corpus_comparison_rejects_another_relation_with_the_same_dimensions_and_edges() {
+        let qc = QuasiCyclicLdpc::new(vec![vec![0, 0, -1], vec![1, -1, 0]], 4);
+        let different = QuasiCyclicLdpc::new(vec![vec![1, 0, -1], vec![1, -1, 0]], 4);
+        let lifted = LdpcCode::from_quasi_cyclic(&qc);
+        let recorded = LdpcCode::from_quasi_cyclic(&different);
+        assert_eq!(lifted.n(), recorded.n());
+        assert_eq!(lifted.k(), recorded.k());
+        assert_eq!(
+            lifted.parity_check_matrix().nnz(),
+            recorded.parity_check_matrix().nnz()
+        );
+        assert!(check_relation(&lifted, &lifted).is_ok());
+        assert!(check_relation(&lifted, &recorded).is_err());
     }
 }

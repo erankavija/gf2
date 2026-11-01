@@ -36,14 +36,15 @@ pub struct CellRun {
 ///
 /// A request with role [`VALIDATION_ROLE`] runs one untimed dispatch and no
 /// probe, returns no windows, and applies every placement and decision check,
-/// so an arm can be exercised end to end without a timing run.
+/// so an arm can be exercised end to end without a timing run. `observe` runs
+/// once per verified worker after the pool has stopped, in both roles.
 ///
 /// # Errors
 ///
 /// Returns an error when the pool fails or any worker violates its placement
-/// or decodes other than the prepared quality records.
+/// or decodes other than the prepared quality records, or `observe` fails.
 #[allow(clippy::too_many_arguments)]
-pub fn run_cell<S, I, B, D>(
+pub fn run_cell<S, I, B, D, O>(
     arm_name: &str,
     request: &Request,
     workload: &Workload,
@@ -53,12 +54,14 @@ pub fn run_cell<S, I, B, D>(
     init: I,
     body: B,
     decisions: D,
+    mut observe: O,
 ) -> Result<CellRun, String>
 where
     S: Send,
     I: Fn(usize) -> Result<S, String> + Sync,
     B: Fn(&mut S) + Sync,
     D: Fn(&S) -> &[u8],
+    O: FnMut(usize, &S) -> Result<(), String>,
 {
     let empty = AtomicBool::new(false);
     let validation = request.role == VALIDATION_ROLE;
@@ -106,6 +109,9 @@ where
     let workers_observed = verify_workers(
         arm_name, &finished, calls, threads, decisions, workload, quality,
     )?;
+    for done in &finished {
+        observe(done.observation.worker, &done.state)?;
+    }
     Ok(CellRun {
         windows,
         conversion: ConversionCosts {
@@ -121,4 +127,31 @@ where
         workers_observed,
         threads,
     })
+}
+
+/// How an untimed iteration observation was obtained.
+#[derive(Clone, Copy, serde::Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum IterationSource {
+    Direct,
+    ReplayDerived,
+}
+
+/// Journals counts in frame order for one worker's repeatedly decoded prefix.
+///
+/// The vector describes the final call's prefix, not every repeated invocation.
+/// Call only after the worker pool has stopped.
+pub fn report_iterations(arm: &str, worker: usize, source: IterationSource, iterations: &[u32]) {
+    eprintln!(
+        "{}",
+        serde_json::json!({
+            "kind": "frame-iterations",
+            "arm": arm,
+            "worker": worker,
+            "source": source,
+            "scope": "repeated-prefix",
+            "first_frame": 0,
+            "iterations": iterations,
+        })
+    );
 }
