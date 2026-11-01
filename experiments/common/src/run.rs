@@ -27,7 +27,8 @@ pub struct RngIdentity {
 
 /// Build flags stamped when this crate compiled. Cargo compiles the crate under
 /// the profile and flags of the executable that links it, apart from a
-/// per-package profile override.
+/// per-package profile override. LTO and codegen units come from the named
+/// profile; an environment override of them shows only in the executable digest.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BuildFlags {
@@ -121,7 +122,7 @@ impl RunRecord {
     ) -> io::Result<Self> {
         Ok(Self {
             identity: RunIdentity {
-                executable_sha256: Sha256Digest::of_file(&std::env::current_exe()?)?,
+                executable_sha256: Sha256Digest::of_file(Path::new("/proc/self/exe"))?,
                 build: BuildFlags::stamped(),
                 configuration_sha256,
                 seed,

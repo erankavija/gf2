@@ -63,6 +63,6 @@ fn git(directory: &Path, arguments: &[&str]) -> io::Result<String> {
         )));
     }
     String::from_utf8(output.stdout)
-        .map(|text| text.trim_end().to_owned())
+        .map(|text| text.strip_suffix('\n').unwrap_or(&text).to_owned())
         .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))
 }

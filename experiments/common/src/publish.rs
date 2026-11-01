@@ -25,7 +25,7 @@ pub fn publish_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
         Some(parent) if !parent.as_os_str().is_empty() => parent,
         _ => Path::new("."),
     };
-    fs::create_dir_all(directory)?;
+    create_durable(directory)?;
     let (temporary, mut file) = reserve_sibling(directory, name)?;
     let published = file
         .write_all(bytes)
@@ -36,6 +36,24 @@ pub fn publish_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
     }
     published?;
     File::open(directory)?.sync_all()
+}
+
+/// Creates missing ancestors and syncs each parent that gains an entry, so a
+/// crash can't lose the directories leading to a published file.
+fn create_durable(directory: &Path) -> io::Result<()> {
+    if directory.is_dir() {
+        return Ok(());
+    }
+    let parent = match directory.parent() {
+        Some(parent) if !parent.as_os_str().is_empty() => parent,
+        _ => Path::new("."),
+    };
+    create_durable(parent)?;
+    match fs::create_dir(directory) {
+        Ok(()) => File::open(parent)?.sync_all(),
+        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => Ok(()),
+        Err(error) => Err(error),
+    }
 }
 
 fn reserve_sibling(directory: &Path, name: &OsStr) -> io::Result<(PathBuf, File)> {
