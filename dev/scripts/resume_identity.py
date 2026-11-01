@@ -2,17 +2,21 @@
 """Resume gate shared by the append-only profile logs.
 
 An identity is the executables' digests and `configuration`, the digest of the
-parsed settings and input files, so comments, formatting and documentation never
-decide resume. Prints the identity the log carries from here on; exit 2 refuses.
+settings, the parsed input files and the launcher scripts' measurement commands,
+so comments, formatting and documentation never decide resume. Prints the identity
+the log's session records carry; exit 2 refuses.
 
 Usage: resume_identity.py --log <file> [--recorded-digests <file>]...
-           [--executable <name>=<file>]... [--setting <name>=<value>]...
+           [--executable <name>=<file>]... [--script <name>=<file>]...
+           [--measured-lines <regex>] [--setting <name>=<value>]...
+           [--observed <name>=<value>]...  (a value no older script states)
            [--table <name>=<file>]... [--table-drop <line-prefix>]...
            [--table-file-name-column <separator> <index>]
            [--json <name>=<file>]... [--shell <name>=<file>]...
 """
 
 import argparse
+import ast
 import hashlib
 import json
 from pathlib import Path
@@ -23,8 +27,15 @@ import sys
 RECORD = re.compile(r"^(?:identity (?P<line>.*)|rep-\d+ start \S+ (?P<start>.*?) load=.*)$")
 FIELD = re.compile(r"(\S+?)=([0-9a-f]{64})(?=\s|$)")
 DIGEST_LINE = re.compile(r"^([0-9a-f]{64})\s+(\S+)$")
-# bash prints a function's parsed form, which holds no shell comment.
+# bash prints a function's parsed form, which holds no shell comment and one line
+# per simple command.
 CANONICAL_SHELL = 'body=$(cat); eval "resume_identity_body() {\n$body\n}" && declare -f resume_identity_body'
+PYTHON_HEREDOC = re.compile(r"(python3?\b[^\n]*<<\s*['\"]?(\w+)['\"]?[^\n]*\n)(.*?)(\n\2$)",
+                            re.DOTALL | re.MULTILINE)
+PYTHON_ARGUMENT = re.compile(r"(python3?\s+(?:-\S+\s+)*-c\s+')([^']*)(')")
+ASSIGNMENT = re.compile(r"^    ([A-Z_]+)=([^$`()\n]*?);?$", re.MULTILINE)
+MEASURED_COMMAND = r"\bperf (?:stat|record|report|annotate)\b|\btaskset\b|--full-host"
+HOST_SCOPE = "--full-host"
 
 
 def sha256(data):
@@ -32,7 +43,6 @@ def sha256(data):
 
 
 def significant_lines(text):
-    """Non-blank lines; a line opening with `#` is a comment here or in a heredoc."""
     return [line.rstrip() for line in text.splitlines()
             if line.strip() and not line.lstrip().startswith("#")]
 
@@ -57,17 +67,61 @@ def table_row(line, file_name_column):
     return separator.join(columns)
 
 
+def python_program(source):
+    """Python's syntax tree, free of comments; a program that does not parse stays as bytes."""
+    try:
+        return ast.dump(ast.parse(source))
+    except SyntaxError:
+        return source
+
+
+def canonical_shell(data):
+    """A script's parsed form, with its embedded Python programs as syntax trees."""
+    canonical = subprocess.run(["bash", "--noprofile", "--norc", "-c", CANONICAL_SHELL],
+                               input=data.decode(), capture_output=True, check=True,
+                               text=True).stdout
+    canonical = PYTHON_HEREDOC.sub(
+        lambda match: match[1] + python_program(match[3]) + match[4], canonical)
+    return PYTHON_ARGUMENT.sub(
+        lambda match: match[1] + python_program(match[2]) + match[3], canonical)
+
+
+def assignments(canonical):
+    return {name: value.strip("\"'") for name, value in ASSIGNMENT.findall(canonical)}
+
+
+def measured_commands(data, extra, full_dispatch=True):
+    """A script's measurement commands with its constants expanded.
+
+    An older script holds as literals what the current one holds in constants, and
+    its dispatch passes other arguments, so `full_dispatch=False` compares only up
+    to the host scope.
+    """
+    canonical = canonical_shell(data)
+    constants = assignments(canonical)
+    selected = re.compile(f"{MEASURED_COMMAND}|{extra}" if extra else MEASURED_COMMAND)
+    commands = []
+    for line in map(str.strip, canonical.splitlines()):
+        if (not selected.search(line) or line.startswith(("printf ", "echo ", "#"))
+                or "resume_identity" in line):
+            continue
+        for _ in range(3):
+            line = re.sub(r"\$\{([A-Z_]+)\}", lambda m: constants.get(m[1], m[0]), line)
+        line = line.replace('"', "")
+        if not full_dispatch and HOST_SCOPE in line:
+            line = line[:line.index(HOST_SCOPE) + len(HOST_SCOPE)]
+        commands.append(line)
+    return commands
+
+
 def parsed_input(kind, data, arguments):
     if kind == "json":
         return without_documentation(json.loads(data))
-    text = data.decode()
     if kind == "table":
         return [table_row(line, arguments.table_file_name_column)
-                for line in significant_lines(text)
+                for line in significant_lines(data.decode())
                 if not line.startswith(tuple(arguments.table_drop))]
-    canonical = subprocess.run(["bash", "--noprofile", "--norc", "-c", CANONICAL_SHELL],
-                               input=text, capture_output=True, check=True, text=True)
-    return significant_lines(canonical.stdout)
+    return canonical_shell(data).splitlines()
 
 
 def committed_bytes(path, digest):
@@ -84,19 +138,16 @@ def committed_bytes(path, digest):
     return None
 
 
-def first_record(log):
-    """The identity text of the log's first record, or None."""
+def log_records(log):
+    """The identity text of each of the log's records, in log order."""
     path = Path(log)
-    for line in path.read_text().splitlines() if path.exists() else ():
-        record = RECORD.match(line)
-        if record:
-            return record.group("line") or record.group("start") or ""
-    return None
+    matches = map(RECORD.match, path.read_text().splitlines() if path.exists() else ())
+    return [match.group("line") or match.group("start") or "" for match in matches if match]
 
 
 def refuse(name, recorded, current):
-    print(f"resume refused: {name} differs from the first recorded identity\n"
-          f"first:   {recorded}\ncurrent: {current}", file=sys.stderr)
+    print(f"resume refused: {name} differs from the recorded identity\n"
+          f"recorded: {recorded}\ncurrent:  {current}", file=sys.stderr)
     raise SystemExit(2)
 
 
@@ -114,6 +165,34 @@ def recorded_fields(record, digest_files):
     return {**listed, **fields}
 
 
+def bytes_named(digest, path):
+    data = Path(path).read_bytes()
+    return data if sha256(data) == digest else committed_bytes(path, digest)
+
+
+def check_older_scripts(record, current, fields, arguments):
+    """Read the older record's settings and commands from the scripts it names by digest."""
+    if not arguments.script:
+        refuse("launcher script", record, current)
+    for name, path in (item.split("=", 1) for item in arguments.script):
+        digest = fields.get(name, [None])[0]
+        older = bytes_named(digest, path) if digest else None
+        if older is None:
+            refuse(name, record, current)
+        try:
+            constants = assignments(canonical_shell(older))
+            commands = measured_commands(older, arguments.measured_lines, full_dispatch=False)
+        except subprocess.CalledProcessError:
+            refuse(name, record, current)
+        if commands != measured_commands(Path(path).read_bytes(), arguments.measured_lines,
+                                         full_dispatch=False):
+            refuse(f"{name} measurement commands", record, current)
+        if name == arguments.script[0].split("=", 1)[0]:
+            for setting, value in (item.split("=", 1) for item in arguments.setting):
+                if constants.get(setting) != value:
+                    refuse(setting, record, current)
+
+
 def check_older_record(record, current, executables, inputs, arguments):
     fields = recorded_fields(record, arguments.recorded_digests)
     for name, digest in executables:
@@ -128,12 +207,11 @@ def check_older_record(record, current, executables, inputs, arguments):
             refuse(name, record, current)
         for digest, (kind, _, path) in zip(digests, same_name):
             data = Path(path).read_bytes()
-            if sha256(data) == digest:
-                continue
-            older = committed_bytes(path, digest)
+            older = bytes_named(digest, path)
             if older is None or (parsed_input(kind, older, arguments)
                                  != parsed_input(kind, data, arguments)):
                 refuse(name, record, current)
+    check_older_scripts(record, current, fields, arguments)
 
 
 def main():
@@ -142,7 +220,8 @@ def main():
     parser.add_argument("--recorded-digests", action="append", default=[])
     parser.add_argument("--table-drop", action="append", default=[])
     parser.add_argument("--table-file-name-column", nargs=2)
-    for option in ("executable", "setting", "table", "json", "shell"):
+    parser.add_argument("--measured-lines", default="")
+    for option in ("executable", "script", "setting", "observed", "table", "json", "shell"):
         parser.add_argument(f"--{option}", action="append", default=[])
     arguments = parser.parse_args()
 
@@ -153,26 +232,29 @@ def main():
     inputs = [(kind, *item.split("=", 1)) for kind in ("table", "json", "shell")
               for item in getattr(arguments, kind)]
     configuration = json.dumps(
-        [arguments.setting,
+        [arguments.setting, arguments.observed,
          [[kind, name, parsed_input(kind, Path(path).read_bytes(), arguments)]
-          for kind, name, path in inputs]],
+          for kind, name, path in inputs],
+         [measured_commands(Path(item.split("=", 1)[1]).read_bytes(), arguments.measured_lines)
+          for item in arguments.script]],
         sort_keys=True, separators=(",", ":"),
     )
     current = " ".join([*(f"{name}={digest}" for name, digest in executables),
                         f"configuration={sha256(configuration.encode())}"])
 
-    record = first_record(arguments.log)
-    if record is None:
-        print(current)
-    elif "configuration=" in record:
-        if record != current:
-            differing = set(FIELD.findall(record)) ^ set(FIELD.findall(current))
-            refuse(", ".join(sorted({name for name, _ in differing})), record, current)
-        print(current)
-    else:
-        # Migration boundary, removed when no older log is resumed (@/issue/101604ef).
-        check_older_record(record, current, executables, inputs, arguments)
-        print(record)
+    records = log_records(arguments.log)
+    bound = [record for record in records if "configuration=" in record]
+    if bound:
+        if bound[-1] != current:
+            differing = set(FIELD.findall(bound[-1])) ^ set(FIELD.findall(current))
+            refuse(", ".join(sorted({name for name, _ in differing})), bound[-1], current)
+    elif records:
+        # Migration boundary, removed when no older log is resumed (@/issue/101604ef):
+        # the appended record binds the rest of the log, the first record stays.
+        check_older_record(records[0], current, executables, inputs, arguments)
+        with Path(arguments.log).open("a") as log:
+            log.write(f"identity {current}\n")
+    print(records[0] if records else current)
 
 
 if __name__ == "__main__":

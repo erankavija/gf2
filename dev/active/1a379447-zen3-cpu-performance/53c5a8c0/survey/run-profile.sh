@@ -110,6 +110,7 @@ done
 IDENTITY="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
     --executable "profile-arm-conservative=$(binary_for conservative)" \
     --executable "profile-arm-native=$(binary_for native)" \
+    --script "run-profile.sh=${BASH_SOURCE[0]}" --measured-lines 'invoke=|--calls|calls=' \
     --table "profile-cases.tsv=${CASES}" "${identity_arguments[@]}")"
 grep -q '^identity ' "${LOG}" || [[ "${MODE}" == "row" ]] || echo "identity ${IDENTITY}" >>"${LOG}"
 

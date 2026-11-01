@@ -45,7 +45,7 @@ class ResumeTest(unittest.TestCase):
         stop = 'echo "profile execution log: ${OUT}/execution.log"'
         source = SOURCE.read_text()
         self.assertEqual(source.count(stop), 1)
-        self.launcher.write_text(source.split(stop)[0] + "exit 0\n")
+        self.launcher.write_text(source.replace(stop, "exit 0\n" + stop))
         shutil.copyfile(SOURCE.with_name("repo_artifacts.py"), survey / "repo_artifacts.py")
         (self.root / "dev/scripts").mkdir(parents=True)
         shutil.copyfile(REPOSITORY / "dev/scripts/resume_identity.py",
@@ -139,6 +139,7 @@ class ResumeTest(unittest.TestCase):
         return f"arm={arm} scalar={scalar} tool={tool}"
 
     def commit(self):
+        subprocess.run(["git", "-C", str(self.root), "add", "-A", "--", str(SURVEY)], check=True)
         subprocess.run(["git", "-C", str(self.root), "-c", "user.name=fixture",
                         "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false",
                         "commit", "-q", "-am", "fixture"], check=True)
@@ -146,7 +147,7 @@ class ResumeTest(unittest.TestCase):
     def write_ragged_record(self):
         """The first line of a committed `--cases` session's log."""
         subprocess.run(["git", "-C", str(self.root), "add", self.cases.name], check=True)
-        older = (f"{self.executable_fields()} script={UNRELATED} summary={UNRELATED} "
+        older = (f"{self.executable_fields()} script={digest(self.launcher)} summary={UNRELATED} "
                  f"closure={UNRELATED} cases={digest(self.cases)} "
                  f"addendum={digest(self.addendum)} addendum={digest(self.second_addendum)}")
         self.log.parent.mkdir()
@@ -168,7 +169,7 @@ class ResumeTest(unittest.TestCase):
             (receipt / "acceptance-summary.json").write_text(json.dumps(
                 {"verdict": "accepted", "family": {"family_id": family}}))
         subprocess.run(["git", "-C", str(self.root), "add", "-A", "--", str(CAMPAIGNS)], check=True)
-        older = (f"{self.executable_fields()} script={UNRELATED} summary={UNRELATED} "
+        older = (f"{self.executable_fields()} script={digest(self.launcher)} summary={UNRELATED} "
                  f"closure={UNRELATED} {' '.join(fields)}")
         self.log = self.root / "dev/bench_results/2037941f/dense-baseline-profile-r2/execution.log"
         self.log.parent.mkdir(parents=True)
@@ -178,7 +179,6 @@ class ResumeTest(unittest.TestCase):
     def test_older_case_session_resumes_with_identical_inputs(self):
         older = self.write_ragged_record()
         self.assertEqual(self.run_gate(), f"identity {older}")
-        self.assertEqual(self.log.read_text().count("identity "), 1)
 
     def test_older_baseline_session_resumes_with_identical_inputs(self):
         older = self.write_baseline_record()
@@ -202,6 +202,41 @@ class ResumeTest(unittest.TestCase):
         self.commit()
         self.cases.write_text(file_name_form)
         self.assertEqual(self.run_gate(), f"identity {older}")
+
+    def test_older_record_refuses_measurement_setting_change(self):
+        self.write_ragged_record()
+        self.commit()
+        text = self.launcher.read_text()
+        for old, new in (("REPETITIONS=9", "REPETITIONS=10"),
+                         ("RECORD_EVENT=cycles:u", "RECORD_EVENT=instructions:u"),
+                         ("SAMPLE_FREQUENCY=4999", "SAMPLE_FREQUENCY=5000"),
+                         ("taskset -c", "taskset -a -c")):
+            with self.subTest(change=new):
+                self.launcher.write_text(text.replace(old, new))
+                self.run_gate(accepted=False)
+                self.launcher.write_text(text)
+
+    def test_older_record_refuses_unrecoverable_script(self):
+        older = self.write_ragged_record().replace(f"script={digest(self.launcher)}",
+                                                   f"script={UNRELATED}")
+        self.log.write_text(f"identity {older}\n")
+        self.commit()
+        self.run_gate(accepted=False)
+
+    def test_older_record_binds_settings_after_first_resume(self):
+        older = self.write_ragged_record()
+        self.commit()
+        self.assertEqual(self.run_gate(), f"identity {older}")
+        self.assertIn("identity arm=", self.log.read_text().splitlines()[-1])
+        self.assertIn("configuration=", self.log.read_text().splitlines()[-1])
+        self.launcher.write_text(self.launcher.read_text().replace(
+            "SAMPLE_FREQUENCY=4999", "SAMPLE_FREQUENCY=5000"))
+        self.run_gate(accepted=False)
+
+    def test_measurement_literal_refuses_resume(self):
+        self.run_gate()
+        self.launcher.write_text(self.launcher.read_text().replace("perf record --quiet", "perf record"))
+        self.run_gate(accepted=False)
 
     def test_older_record_refuses_changed_case(self):
         self.write_ragged_record()
