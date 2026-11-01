@@ -1,0 +1,32 @@
+{
+  "epic_id": "55c3e433-843f-4079-adc5-4530ff3e8946",
+  "epic_short_id": "55c3e433",
+  "current_wave": 1,
+  "waves": [
+    {"wave_number": 1, "issues": [
+      {"id": "10590c11-0127-47a5-9f82-6ea876e39a44", "short_id": "10590c11", "title": "Prepare the comparison arms and per-frame iteration record", "classification": "implementation", "status": "in_progress"}
+    ]},
+    {"wave_number": 2, "issues": [
+      {"id": "1d787ed3-c956-486d-9878-c591aa16e193", "short_id": "1d787ed3", "title": "Pilot the NR routes against AFF3CT and record the route decisions", "classification": "research", "status": "pending"},
+      {"id": "a72f2b3f-9ba6-460b-a4fb-e038f935cf3f", "short_id": "a72f2b3f", "title": "Compare check-update variants and nominate at most one", "classification": "research", "status": "pending"}
+    ]},
+    {"wave_number": 3, "issues": [
+      {"id": "4555dfb3-088f-4e2a-b8ea-959cc9040f6d", "short_id": "4555dfb3", "title": "Deliver the QC decoder core with its kernel and scalar fallback", "classification": "implementation", "status": "pending"}
+    ]},
+    {"wave_number": 4, "issues": [
+      {"id": "0cc6c195-b73e-46af-96c5-60c83ac0a13a", "short_id": "0cc6c195", "title": "Route the QC decoder through canonical tuning and dispatch", "classification": "implementation", "status": "pending"}
+    ]},
+    {"wave_number": 5, "issues": [
+      {"id": "3ee00fcf-8803-44d5-a421-818b48ab68e7", "short_id": "3ee00fcf", "title": "Confirm the integrated candidate and adopt it only if it qualifies", "classification": "research", "status": "pending"}
+    ]},
+    {"wave_number": 6, "issues": [
+      {"id": "5f401907-d456-4055-b902-d297b0d9cd69", "short_id": "5f401907", "title": "Close the integrated LDPC cells against AFF3CT", "classification": "research", "status": "pending"}
+    ]}
+  ],
+  "dispatches": [],
+  "created_during_execution": [],
+  "escalations": [],
+  "surfaced_pitfalls": [],
+  "rework_counts": {},
+  "started_at": "2026-11-01T15:20:00+02:00"
+}
