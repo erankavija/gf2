@@ -191,7 +191,8 @@ pub fn fresh_tuning_process(case: FreshProcessCase) -> Result<serde_json::Value,
         .map_err(|_| "fresh-process child stdout is not UTF-8".to_owned())?;
     let results: Vec<&str> = stdout
         .lines()
-        .filter_map(|line| line.strip_prefix(RESULT_PREFIX))
+        // With one test thread, libtest's `test ... ` opens the same line.
+        .filter_map(|line| line.split_once(RESULT_PREFIX).map(|(_, result)| result))
         .collect();
     if results.len() != 1 {
         return Err(format!(
