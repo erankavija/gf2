@@ -2792,7 +2792,8 @@
   "ecad1724": 2,
   "94213540": 1,
   "78f0aafd": 2,
-  "31727c57": 2
+  "31727c57": 2,
+  "1362381c": 1
  },
  "surfaced_pitfalls": [
   {
@@ -3859,7 +3860,7 @@
      "model": "opus",
      "task": "WP-6 scorecard, gap register, report, publication",
      "reason": "largest synthesis of the epic; research-review gate; follows the Codex Astra dispatch in the vendor alternation",
-     "result": "running"
+     "result": "first attempt merged 894b3bd2e; lead committed findings.md because the harness refuses subagent report files; gates: cargo-ci pass, code-review, doc-review, research-review fail; rework 1 sent"
     }
    ],
    "lead_fixes": [
@@ -3872,7 +3873,8 @@
     "id": "55c3e433",
     "reason": "Invoker request 2026-11-01; outside 1a379447 and outside the 1.0 milestone, with no dependency edge either way. Plan bracket scaffolded; breakdown not done."
    },
-   "open_question": "docs-mechanical: exclude **/inputs/** or baseline the snapshot findings; gate change, invoker ruling needed."
+   "open_question": "docs-mechanical: exclude **/inputs/** or baseline the snapshot findings; gate change, invoker ruling needed.",
+   "open_observation_sccache": "cargo-ci.sh exports TMPDIR to a run-private directory; a run that starts the sccache daemon leaves it with a deleted temp dir, failing every project on the host. Daemon 1915255 was started by this session gate at 09:00. Replacement and the script change await the invoker."
   }
  }
 }
