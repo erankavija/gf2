@@ -1,0 +1,489 @@
+{
+ "description": "Gap register of @/issue/1362381c: one disposition per primary cell that records a material gap or whose estimate exceeds its family's frozen threshold. make-scorecard.py projects it and refuses to write when a gap cell has no entry.",
+ "entries": [
+  {
+   "cells": [
+    {
+     "family": "1362381c-ldpc-aff3ct-integration",
+     "cell": "nr-bg1-z384-integrated-w1-b1"
+    }
+   ],
+   "disposition": "tracked-issue",
+   "issue": "55c3e433",
+   "next_experiment": "Pilot @/issue/1d787ed3: production single-frame route, QC-aware intra-frame prototype and AFF3CT on NR BG1 Z=384 at one worker with one and eight frames and at six, twelve and twenty-four workers with eight frames per worker, with every timed frame's iteration count; applies qc-go-rule of dev/active/55c3e433-aff3ct-ldpc-gaps/plan.md.",
+   "statement": "All four FI-3 losing cells take the single-frame route (selected_path), so lane stall does not explain them.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/07ca8585/findings.md#the-residual-gap",
+    "dev/active/1a379447-zen3-cpu-performance/f63a2464/findings.md#proceed-and-no-proceed-decisions",
+    "dev/active/1a379447-zen3-cpu-performance/1362381c/aff3ct-gap-investigation.md"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "1362381c-ldpc-aff3ct-integration",
+     "cell": "nr-bg1-z384-integrated-p12-b8"
+    }
+   ],
+   "disposition": "tracked-issue",
+   "issue": "55c3e433",
+   "next_experiment": "Pilot @/issue/1d787ed3: production single-frame route, QC-aware intra-frame prototype and AFF3CT on NR BG1 Z=384 at one worker with one and eight frames and at six, twelve and twenty-four workers with eight frames per worker, with every timed frame's iteration count; applies qc-go-rule of dev/active/55c3e433-aff3ct-ldpc-gaps/plan.md.",
+   "statement": "All four FI-3 losing cells take the single-frame route (selected_path), so lane stall does not explain them.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/1362381c/aff3ct-gap-investigation.md"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "1362381c-ldpc-aff3ct-integration",
+     "cell": "dvb-t2-r12-integrated-w1-b1"
+    }
+   ],
+   "disposition": "tracked-issue",
+   "issue": "55c3e433",
+   "next_experiment": "Pilot @/issue/a72f2b3f: two contract-preserving check-update variants against the production check update at w1-b1 and p12-b8 on both codes, killing any variant whose posterior bits differ. It is the next DVB-T2 experiment because @/issue/1d787ed3 covers NR only and DVB-T2 has no QC partition.",
+   "statement": "All four FI-3 losing cells take the single-frame route (selected_path), so lane stall does not explain them.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/07ca8585/findings.md#the-residual-gap",
+    "dev/active/1a379447-zen3-cpu-performance/f63a2464/findings.md#proceed-and-no-proceed-decisions",
+    "dev/active/1a379447-zen3-cpu-performance/1362381c/aff3ct-gap-investigation.md"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "1362381c-ldpc-aff3ct-integration",
+     "cell": "dvb-t2-r12-integrated-p12-b8"
+    }
+   ],
+   "disposition": "tracked-issue",
+   "issue": "55c3e433",
+   "next_experiment": "Pilot @/issue/a72f2b3f: two contract-preserving check-update variants against the production check update at w1-b1 and p12-b8 on both codes, killing any variant whose posterior bits differ. It is the next DVB-T2 experiment because @/issue/1d787ed3 covers NR only and DVB-T2 has no QC partition.",
+   "statement": "All four FI-3 losing cells take the single-frame route (selected_path), so lane stall does not explain them.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/1362381c/aff3ct-gap-investigation.md"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "1362381c-bch-integration",
+     "cell": "t2s-b1-bchlib-table-remainder"
+    },
+    {
+     "family": "1362381c-bch-integration",
+     "cell": "t2s-b256-bchlib-table-remainder"
+    },
+    {
+     "family": "1362381c-bch-integration",
+     "cell": "t2n-b1-bchlib-table-remainder"
+    },
+    {
+     "family": "1362381c-bch-integration",
+     "cell": "t2n-b256-bchlib-table-remainder"
+    }
+   ],
+   "disposition": "tracked-issue",
+   "issue": "040bc2b8",
+   "next_experiment": "Bit-exact 32-bit, four-table remainder arm against the production encoder and bchlib in these cells. Falsified if the arm shows no material gain over production.",
+   "statement": "The FI-4 profile attributes the gf2 arm's samples to per-bit codeword assembly (BitVec::set and the systematic kernel); bchlib's encoder steps 32 input bits through four remainder tables. The gf2 arm is a conservative-portable build and bchlib is built -O3 -march=native, per the receipt's arm records.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/78f0aafd/report.md#req-03-mechanism-accounting",
+    "dev/active/ae03bcd0-general-bch/4e732b56/findings.md#31-bchlib-v213--table-driven-remainder-over-packed-bytes"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "ldpc-batch-aff3ct-matched-v1",
+     "cell": "dvb-t2-r12-matched-p12-b8"
+    },
+    {
+     "family": "ldpc-batch-aff3ct-matched-v1",
+     "cell": "nr-bg1-z384-matched-p12-b8"
+    }
+   ],
+   "disposition": "measured-limit",
+   "record": "dev/active/1a379447-zen3-cpu-performance/6230e0b6/findings.md#residual-gaps-and-their-limits",
+   "statement": "R-01: lane route at twelve workers; the counters show added stall time; the shared-bandwidth reading is an interpretation. The worker bound selects the single-frame route at these worker counts, which FI-3 remeasures.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/1362381c/aff3ct-gap-investigation.md"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "ldpc-batch-aff3ct-matched-v1",
+     "cell": "dvb-t2-r12-matched-w1-b1"
+    },
+    {
+     "family": "ldpc-batch-aff3ct-matched-v1",
+     "cell": "nr-bg1-z384-matched-w1-b1"
+    }
+   ],
+   "disposition": "measured-limit",
+   "record": "dev/active/1a379447-zen3-cpu-performance/6230e0b6/findings.md#residual-gaps-and-their-limits",
+   "statement": "R-03: single-frame latency, with the QC-aware prototype preserved without deciding force. FI-3 remeasures these configurations.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/07ca8585/findings.md#the-residual-gap",
+    "dev/active/1a379447-zen3-cpu-performance/f63a2464/findings.md#proceed-and-no-proceed-decisions",
+    "dev/active/1a379447-zen3-cpu-performance/1362381c/aff3ct-gap-investigation.md"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "ldpc-steady-matched-single-worker-v1",
+     "cell": "dvb-t2-r12-matched-w1"
+    },
+    {
+     "family": "ldpc-steady-matched-single-worker-v1",
+     "cell": "nr-bg1-z384-matched-w1"
+    }
+   ],
+   "disposition": "preserved-experiment",
+   "record": "dev/active/1a379447-zen3-cpu-performance/07ca8585/findings.md#the-residual-gap",
+   "statement": "Negative result preserved: the allocation and edge-traversal levers ran, and the same comparison stays behind AFF3CT at one worker; the recategorization record states which category claims stand.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/92c53589/record.md",
+    "dev/active/1a379447-zen3-cpu-performance/3be770d5/findings.md#ranked-levers"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "ldpc-steady-matched-multicore-v1",
+     "cell": "dvb-t2-r12-matched-p6"
+    },
+    {
+     "family": "ldpc-steady-matched-multicore-v1",
+     "cell": "dvb-t2-r12-matched-p12"
+    },
+    {
+     "family": "ldpc-steady-matched-multicore-v1",
+     "cell": "dvb-t2-r12-matched-l24"
+    },
+    {
+     "family": "ldpc-steady-matched-multicore-v1",
+     "cell": "nr-bg1-z384-matched-p6"
+    },
+    {
+     "family": "ldpc-steady-matched-multicore-v1",
+     "cell": "nr-bg1-z384-matched-p12"
+    },
+    {
+     "family": "ldpc-steady-matched-multicore-v1",
+     "cell": "nr-bg1-z384-matched-l24"
+    }
+   ],
+   "disposition": "preserved-experiment",
+   "record": "dev/active/1a379447-zen3-cpu-performance/3be770d5/findings.md#single-core-work-against-multicore-saturation",
+   "statement": "The steady-state saturation comparison is preserved as measured on the code its receipt pins; it establishes no bandwidth limit, and the lane and single-frame multicore outcomes are preserved under R-01.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/6230e0b6/findings.md#residual-gaps-and-their-limits",
+    "dev/active/1a379447-zen3-cpu-performance/07ca8585/findings.md#the-residual-gap"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "ldpc-update-checknode-v1",
+     "cell": "dvb-t2-r12-checknode-w1"
+    },
+    {
+     "family": "ldpc-update-checknode-v1",
+     "cell": "nr-bg1-z384-checknode-w1"
+    },
+    {
+     "family": "ldpc-update-comparator-single-worker-v1",
+     "cell": "dvb-t2-r12-update-w1"
+    },
+    {
+     "family": "ldpc-update-comparator-single-worker-v1",
+     "cell": "nr-bg1-z384-update-w1"
+    },
+    {
+     "family": "ldpc-update-fixed-iteration-v1",
+     "cell": "dvb-t2-r12-fixed-iteration-w1"
+    },
+    {
+     "family": "ldpc-update-fixed-iteration-v1",
+     "cell": "nr-bg1-z384-fixed-iteration-w1"
+    }
+   ],
+   "disposition": "tracked-issue",
+   "issue": "55c3e433",
+   "next_experiment": "Pilot @/issue/a72f2b3f: check-update variants against the production check update on both codes, killing any variant whose posterior bits differ. The isolated check-node cells locate part of these gaps in that update.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/07ca8585/findings.md#the-residual-gap",
+    "dev/active/1a379447-zen3-cpu-performance/92c53589/record.md"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "byte-field-region-axpy",
+     "cell": "axpy-4k-element-vs-isal"
+    },
+    {
+     "family": "byte-field-region-axpy",
+     "cell": "axpy-128k-element-vs-isal"
+    },
+    {
+     "family": "byte-field-region-axpy",
+     "cell": "axpy-8m-element-vs-isal"
+    },
+    {
+     "family": "byte-field-region-axpy",
+     "cell": "axpy-128k-wide-vs-isal"
+    },
+    {
+     "family": "byte-field-region-axpy",
+     "cell": "axpy-128k-whole-element-vs-isal"
+    },
+    {
+     "family": "byte-field-region-axpy",
+     "cell": "axpy-128k-whole-wide-vs-isal"
+    },
+    {
+     "family": "byte-field-matrix-product",
+     "cell": "matmul-n256-element-vs-m4rie"
+    },
+    {
+     "family": "byte-field-matrix-product",
+     "cell": "matmul-n256-wide-vs-m4rie"
+    },
+    {
+     "family": "byte-field-matrix-product",
+     "cell": "matmul-n256-whole-element-vs-m4rie"
+    },
+    {
+     "family": "byte-field-matrix-product",
+     "cell": "matmul-n256-whole-wide-vs-m4rie"
+    },
+    {
+     "family": "byte-field-matrix-product",
+     "cell": "encode-k10r4-64k-element-vs-isal"
+    },
+    {
+     "family": "byte-field-matrix-product",
+     "cell": "encode-k10r4-64k-wide-vs-isal"
+    }
+   ],
+   "disposition": "tracked-issue",
+   "issue": "c9cb0dd2",
+   "next_experiment": "Re-pair the shipped table lane with the same external arm in every assigned cell at the frozen threshold. The hypothesis that the shipped lane closes the gaps is falsified by any cell keeping one.",
+   "statement": "Measured route: these cells' selected_path carries no lane token and their producing snapshots hold no product-table lane; the gemm paths name per-cell batch dot or whole-gemm over VPCLMULQDQ. The shipped lane reports lane=gf256-product-table in the before/after receipts of @/issue/ad2a6a58 and @/issue/4c1e441f, which have no external arm.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/ad2a6a58/outcome.md#decision",
+    "dev/active/1a379447-zen3-cpu-performance/4c1e441f/outcome.md#decision",
+    "dev/active/1a379447-zen3-cpu-performance/19513245/findings.md#decision"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "nr-rate-matched-encode-baselines-v1",
+     "cell": "nr-enc-bg1-n2560-k2048-gap-native-vs-aff3ct"
+    },
+    {
+     "family": "nr-rate-matched-encode-baselines-v1",
+     "cell": "nr-enc-bg1-n2560-k2048-gap-native-vs-srsran"
+    },
+    {
+     "family": "nr-rate-matched-encode-baselines-v1",
+     "cell": "nr-enc-bg1-n8448-k4224-gap-native-vs-srsran"
+    },
+    {
+     "family": "nr-rate-matched-encode-baselines-v1",
+     "cell": "nr-enc-bg2-n1440-k720-gap-native-vs-srsran"
+    },
+    {
+     "family": "nr-rate-matched-encode-baselines-v1",
+     "cell": "nr-enc-bg2-n256-k121-gap-native-vs-srsran"
+    }
+   ],
+   "disposition": "tracked-issue",
+   "issue": "be6d6f45",
+   "next_experiment": "Bit-exact word-wise lifted-circulant encode arm against production, srsRAN and AFF3CT in these cells. Falsified if the arm shows no material gain over production.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/12fdeb5b/findings.md#negative-unavailable-and-recorded-outcomes",
+    "dev/active/1a379447-zen3-cpu-performance/78f0aafd/report.md#req-02-material-gap-coverage"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "wide-polynomial-competitiveness",
+     "cell": "poly-16w"
+    },
+    {
+     "family": "polynomial-multiplication-baselines",
+     "cell": "poly-mul-64w-1core"
+    },
+    {
+     "family": "polynomial-multiplication-baselines",
+     "cell": "poly-mul-256w-1core"
+    },
+    {
+     "family": "polynomial-multiplication-baselines",
+     "cell": "poly-mul-256w-6core"
+    },
+    {
+     "family": "polynomial-multiplication-baselines",
+     "cell": "poly-mul-256w-12core"
+    },
+    {
+     "family": "polynomial-multiplication-baselines",
+     "cell": "poly-mul-256w-24smt"
+    },
+    {
+     "family": "polynomial-multiplication-baselines",
+     "cell": "poly-mul-2048w-streaming-1core"
+    },
+    {
+     "family": "polynomial-host-targeting",
+     "cell": "poly-mul-256w-conservative-1core"
+    },
+    {
+     "family": "polynomial-host-targeting",
+     "cell": "poly-mul-256w-tuned-1core"
+    }
+   ],
+   "disposition": "tracked-issue",
+   "issue": "befccab3",
+   "next_experiment": "Recursive split over the four- and nine-word kernels against production and gf2x at 16, 64, 256 and 2048 words. Falsified if the arm shows no material gain over production.",
+   "statement": "Above nine words the production long product runs the portable schoolbook and has no carry-less kernel.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/53c5a8c0/findings.md#why-poly-16w-changes-direction-sharply",
+    "dev/active/1a379447-zen3-cpu-performance/c7113c5a/findings.md#what-accounts-for-the-gaps"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "polynomial-multiplication-baselines",
+     "cell": "poly-mul-4w-public-api-1core"
+    }
+   ],
+   "disposition": "preserved-experiment",
+   "record": "dev/active/1a379447-zen3-cpu-performance/1c602857/findings.md#the-receipt-and-its-confirmed-result",
+   "statement": "The cell measures the public entry point before it reached the kernels; the routed path against the replaced one is preserved in that record. No external arm remeasures the routed path.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/c7113c5a/findings.md#the-public-long-product-api-misses-gf2s-kernels"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "wide-polynomial-competitiveness",
+     "cell": "wide-field-256-composed"
+    }
+   ],
+   "disposition": "preserved-experiment",
+   "record": "dev/active/1a379447-zen3-cpu-performance/53c5a8c0/findings.md#selector-and-crossover-recommendations",
+   "statement": "The study retains the established path and records no change; the composed product's Barrett share is in its profiler attribution.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/53c5a8c0/findings.md#profiler-attribution-of-the-measured-paths"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "popcount-baselines",
+     "cell": "popcount-w4-vs-libpopcnt"
+    },
+    {
+     "family": "popcount-baselines",
+     "cell": "popcount-w60-vs-libpopcnt"
+    },
+    {
+     "family": "popcount-baselines",
+     "cell": "popcount-w64-vs-libpopcnt"
+    },
+    {
+     "family": "popcount-baselines",
+     "cell": "popcount-w64-ones-vs-libpopcnt"
+    },
+    {
+     "family": "popcount-baselines",
+     "cell": "popcount-w64-zeros-vs-libpopcnt"
+    },
+    {
+     "family": "popcount-baselines",
+     "cell": "popcount-w128-vs-libpopcnt"
+    },
+    {
+     "family": "popcount-baselines",
+     "cell": "popcount-w256-vs-libpopcnt"
+    },
+    {
+     "family": "popcount-baselines",
+     "cell": "popcount-w256-off24-vs-libpopcnt"
+    },
+    {
+     "family": "popcount-baselines",
+     "cell": "popcount-w16384-vs-libpopcnt"
+    },
+    {
+     "family": "popcount-baselines",
+     "cell": "popcount-w16384-vs-mula-avx2-harley-seal"
+    }
+   ],
+   "disposition": "preserved-experiment",
+   "record": "dev/active/1a379447-zen3-cpu-performance/5cbb6545/findings.md#question-and-answer",
+   "statement": "Route selection records no qualifying family and leaves the production selector unchanged; its limits are stated there. The v3 cells stay not-confirmatory.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/26465e6c/findings.md#limits",
+    "dev/active/1a379447-zen3-cpu-performance/5cbb6545/findings.md#what-is-not-established"
+   ]
+  },
+  {
+   "cells": [
+    {
+     "family": "transpose-vs-external",
+     "cell": "transpose-consumer-65-vs-m4ri"
+    }
+   ],
+   "disposition": "preserved-experiment",
+   "record": "dev/active/1a379447-zen3-cpu-performance/6fb89a3c/findings.md#8-follow-ups",
+   "statement": "Exploratory evidence: the family's ledger admits no further confirmatory attempt for this geometry.",
+   "see_also": [
+    "dev/active/1a379447-zen3-cpu-performance/1d4fd63d/findings.md#10-follow-ups"
+   ]
+  }
+ ],
+ "unavailable_comparisons": [
+  {
+   "comparator": "OpenAirInterface",
+   "citation": "OpenAirInterface2026",
+   "scope": "LDPC decode: unavailable to measure",
+   "record": "dev/active/1a379447-zen3-cpu-performance/c077a88b/findings.md#pinned-arms-and-upstream-status"
+  },
+  {
+   "comparator": "srsRAN",
+   "citation": "Srsran2026",
+   "scope": "LDPC decode through the matched contract: not expressible through its interface",
+   "record": "dev/active/1a379447-zen3-cpu-performance/c077a88b/findings.md#pinned-arms-and-upstream-status"
+  },
+  {
+   "comparator": "srsRAN",
+   "citation": "Srsran2026",
+   "scope": "LLR de-rate-matching: unavailable",
+   "record": "dev/active/1a379447-zen3-cpu-performance/eda07788/findings.md#2-5g-nr-rate-matching-and-de-rate-matching"
+  },
+  {
+   "comparator": "AFF3CT",
+   "citation": "Cassagne2019",
+   "scope": "Flooding SIMD modes: unavailable; the fastest-compatible pilot admits no mode as quality-compatible on the recorded corpus; INTRA at half LLR scale tracked by @/issue/11bfbfd9",
+   "record": "dev/active/1a379447-zen3-cpu-performance/6230e0b6/findings.md#lane-route-against-aff3ct-fastest-compatible"
+  },
+  {
+   "comparator": "bchlib",
+   "citation": "Bchlib2026",
+   "scope": "GF(2^14) mother code rows: not served, so FI-4 has no bchlib arm there",
+   "record": "dev/active/1a379447-zen3-cpu-performance/1358d6ab/outcome.md#bit-exact-equivalence-of-the-external-arms"
+  }
+ ]
+}
