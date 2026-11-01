@@ -11,8 +11,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use gf2_coding::ldpc::{
-    DecoderAlgorithm, DecoderConfig, EdgeLayout, LdpcCode, LdpcDecoder, MinSumRule,
-    QuasiCyclicLdpc,
+    DecoderAlgorithm, DecoderConfig, EdgeLayout, LdpcCode, LdpcDecoder, MinSumRule, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
 use gf2_core::BitVec;
@@ -96,7 +95,9 @@ impl Arm {
                 let mut codeword = BitVec::with_capacity(llrs.len());
                 let outcome = decoder.decode_codeword_into(llrs, ITERATION_CAP, &mut codeword);
                 let bit_errors = (0..k)
-                    .filter(|&index| usize::from(codeword.get(index)) != usize::from(transmitted[index]))
+                    .filter(|&index| {
+                        usize::from(codeword.get(index)) != usize::from(transmitted[index])
+                    })
                     .count();
                 FrameResult {
                     bit_errors,
@@ -187,11 +188,7 @@ fn count_errors(bits: &[bool], k: usize, transmitted: &[u8]) -> usize {
 }
 
 /// Builds the arm named on the command line over `code`.
-fn build_arm(
-    name: &str,
-    code: &LdpcCode,
-    qc: Option<&QuasiCyclicLdpc>,
-) -> Result<Arm, String> {
+fn build_arm(name: &str, code: &LdpcCode, qc: Option<&QuasiCyclicLdpc>) -> Result<Arm, String> {
     let rule = MinSumRule::Normalized(NORMALIZATION);
     match name {
         "canonical-f32" => Ok(Arm::Canonical(Box::new(LdpcDecoder::with_config(
@@ -262,16 +259,19 @@ fn run(args: &Args) -> Result<(), String> {
     let llrs = read_llrs(&args.bundle, manifest.frames, n).map_err(|e| e.to_string())?;
     let codewords = read_codewords(&args.bundle, manifest.frames, n).map_err(|e| e.to_string())?;
 
-    let qc = match args.qc_base {
-        Some((graph, lifting)) => Some(QuasiCyclicLdpc::nr_5g(graph, lifting)),
-        None => None,
-    };
+    let qc = args
+        .qc_base
+        .map(|(graph, lifting)| QuasiCyclicLdpc::nr_5g(graph, lifting));
     let graph_identity = match qc.as_ref() {
         Some(qc) => {
             if !same_graph(&code, qc) {
                 return Err("the lifted base graph is not the recorded parity-check matrix".into());
             }
-            Some(format!("nr-bg{}-z{}", args.qc_base.unwrap().0, args.qc_base.unwrap().1))
+            Some(format!(
+                "nr-bg{}-z{}",
+                args.qc_base.unwrap().0,
+                args.qc_base.unwrap().1
+            ))
         }
         None => None,
     };
@@ -295,7 +295,11 @@ fn run(args: &Args) -> Result<(), String> {
                 // Filler positions carry bits the rate matching forced to zero,
                 // so only the all-zero frames of the bundle carry zero there.
                 let all_zero: Vec<usize> = (0..manifest.frames)
-                    .filter(|&frame| codewords[frame * n..frame * n + k].iter().all(|bit| *bit == 0))
+                    .filter(|&frame| {
+                        codewords[frame * n..frame * n + k]
+                            .iter()
+                            .all(|bit| *bit == 0)
+                    })
                     .collect();
                 (all_zero, 0, lifting)
             }
