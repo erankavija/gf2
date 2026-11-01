@@ -81,8 +81,9 @@ class LauncherContract:
         text = self.source.read_text()
         self.assertEqual(text.count(self.STOP), 1)
         self.launcher.write_text(text.replace(self.STOP, self.STOP_WITH + self.STOP))
-        self.write_script(self.root / "dev/scripts/resume_identity.py",
-                          (HERE / "resume_identity.py").read_text())
+        for name in ("resume_identity.py", "repository_files.py"):
+            self.write_script(self.root / "dev/scripts" / name, (HERE / name).read_text())
+        subprocess.run(["git", "-C", str(self.root), "add", "dev/scripts"], check=True)
         self.out = self.root / "profile"
         self.out.mkdir()
         self.environment = dict(os.environ, HOME=str(self.root / "home"), GF2_BENCH_WINDOW="1")
@@ -185,7 +186,7 @@ class OlderRecordContract:
     def test_older_record_refuses_measured_change(self):
         self.write_older_record()
         self.commit_inputs()
-        for name, path, change in self.measured_edits():
+        for name, path, change in self.older_measured_edits():
             with self.subTest(change=name):
                 restore = self.checked((path, change))
                 self.run_launcher(accepted=False)
@@ -247,16 +248,8 @@ class ClmulCrossoverProfile(LauncherContract, NoScriptDigestContract, unittest.T
 
     def measured_edits(self):
         return [("case", self.cases, lambda path: replace(path, '"seed":1', '"seed":2')),
-                ("sampling", self.launcher,
-                 lambda path: replace(path, "SAMPLE_FREQUENCY=4000", "SAMPLE_FREQUENCY=4001")),
-                ("record event literal", self.launcher,
-                 lambda path: replace(path, "perf record -q -e cycles:u", "perf record -q -e instructions:u")),
-                ("arm warmup literal", self.launcher,
-                 lambda path: replace(path, "--warmup 0", "--warmup 2")),
-                ("host scope literal", self.launcher,
-                 lambda path: replace(path, '"${FLOCK}" --full-host', '"${FLOCK}" --pinned')),
-                ("repetitions", self.launcher,
-                 lambda path: replace(path, "REPETITIONS=9", "REPETITIONS=10"))]
+                ("calibration slope divisor", self.launcher,
+                 lambda path: replace(path, "(double - single) / low", "(double - single) / (2 * low)"))]
 
     def write_older_record(self, script_digest=None):
         conservative, native = self.executables()
@@ -288,7 +281,7 @@ class ConsumerProfile(LauncherContract, OlderRecordContract, unittest.TestCase):
         return [self.survey / "sweep.sh", *(self.survey / name for name in self.TABLES),
                 self.generator, self.launcher]
 
-    def measured_edits(self):
+    def older_measured_edits(self):
         return [*((name, self.survey / name, lambda path: replace(path, "row|", "other|"))
                   for name in self.TABLES),
                 ("session script", self.survey / "sweep.sh",
@@ -296,12 +289,14 @@ class ConsumerProfile(LauncherContract, OlderRecordContract, unittest.TestCase):
                 ("session heredoc code", self.survey / "sweep.sh",
                  lambda path: replace(path, 'str(entry["target_ms"])', 'str(entry["target_ms"] + 1)')),
                 ("ladder", self.generator, lambda path: replace(path, "fixture", "another")),
-                ("host scope literal", self.launcher,
-                 lambda path: replace(path, '"${FLOCK}" --full-host', '"${FLOCK}" --pinned')),
-                ("allocation trace session", self.launcher,
-                 lambda path: replace(path, "trace=yes", "trace=no")),
                 ("repetitions", self.launcher,
                  lambda path: replace(path, "REPETITIONS=9", "REPETITIONS=10"))]
+
+    def measured_edits(self):
+        return [*self.older_measured_edits(),
+                ("allocation trace session", self.launcher, lambda path: replace(
+                    path, 'if [[ "${index}" == 1 ]]; then\n        trace=yes',
+                    'if [[ "${index}" == 2 ]]; then\n        trace=yes'))]
 
     def test_session_heredoc_comment_keeps_identity(self):
         identity = self.run_launcher()
@@ -390,12 +385,18 @@ class SteadyStateLdpcProfile(LauncherContract, NoScriptDigestContract, unittest.
                  lambda path: replace(path, "SAMPLE_PERIOD=4000037", "SAMPLE_PERIOD=4000039")),
                 ("arm environment", self.survey / "arms.json",
                  lambda path: replace(path, '"GF2_AFF3CT_IMPLEM": "NMS"', '"GF2_AFF3CT_IMPLEM": "MS"')),
-                ("host scope literal", self.survey / "profile-series.sh",
-                 lambda path: replace(path, '"./${wrapper}" --full-host', '"./${wrapper}" --pinned')),
+                ("awk program", self.survey / "profile-session.sh",
+                 lambda path: replace(path, 'count[$0]++', 'count[$0] += 2')),
                 ("case expansion heredoc", self.launcher,
                  lambda path: replace(path, 'spec["profile_arm"]', 'spec["executable"]')),
-                ("repetitions", self.launcher,
-                 lambda path: replace(path, "REPETITIONS=9", "REPETITIONS=10"))]
+                ("series scope", self.survey / "profile-series.sh",
+                 lambda path: replace(path, '"./${wrapper}" --full-host', '"./${wrapper}" --pinned'))]
+
+    def test_awk_comment_keeps_identity(self):
+        identity = self.run_launcher()
+        replace(self.survey / "profile-session.sh", "                    END { for (key in count)",
+                "                    # Documentation only\n                    END { for (key in count)")
+        self.assertEqual(self.run_launcher(), identity)
 
     def write_older_record(self, script_digest=None):
         profile, census = self.executables()
@@ -448,22 +449,15 @@ class DvbInterleaverProfile(LauncherContract, OlderRecordContract, unittest.Test
     def comment_inputs(self):
         return [self.cases, self.build_record, self.manifest, self.behavior_source, self.launcher]
 
-    def measured_edits(self):
+    def older_measured_edits(self):
         return [("case", self.cases, lambda path: replace(path, "direct", "packed")),
-                ("record event literal", self.launcher,
-                 lambda path: replace(path, "perf record -q -e cycles:u", "perf record -q -e instructions:u")),
-                ("no-buildid literal", self.launcher,
-                 lambda path: replace(path, "--no-buildid-cache", "--buildid-all")),
-                ("session command", self.launcher,
-                 lambda path: replace(path, '"${BIN}" session', '"${BIN}" counters')),
+                ("sampling frequency", self.launcher,
+                 lambda path: replace(path, "SAMPLE_FREQUENCY=4000", "SAMPLE_FREQUENCY=4001"))]
+
+    def measured_edits(self):
+        return [*self.older_measured_edits(),
                 ("counter selection", self.launcher,
-                 lambda path: replace(path, "counters=yes", "counters=no")),
-                ("counter events", self.launcher,
-                 lambda path: replace(path, "COUNTER_EVENTS=cycles:u,", "COUNTER_EVENTS=")),
-                ("sampling", self.launcher,
-                 lambda path: replace(path, "SAMPLE_FREQUENCY=4000", "SAMPLE_FREQUENCY=4001")),
-                ("repetitions", self.launcher,
-                 lambda path: replace(path, "REPETITIONS=9", "REPETITIONS=10"))]
+                 lambda path: replace(path, "counters=yes", "counters=no"))]
 
     def write_older_host(self):
         (binary,) = self.executables()
@@ -493,6 +487,7 @@ class EmbeddedPrograms(unittest.TestCase):
     PYTHON = "python3 - <<'PY'\nimport sys\nprint(1)\nPY\n"
     ARGUMENT = "python3 -c 'import sys\nprint(1)'\n"
     OTHER = "cat <<'EOF'\n# data\nvalue # note\nEOF\n"
+    AWK = """awk -v x="1" '/#/ { n = 4 / 2 # note / more\n print "#", n }\n# whole line\nEND { print n }' file\n"""
 
     def canonical(self, text):
         return resume_identity.canonical_shell(text.encode())
@@ -509,6 +504,15 @@ class EmbeddedPrograms(unittest.TestCase):
             with self.subTest(program=program):
                 self.assertNotEqual(self.canonical(program),
                                     self.canonical(program.replace("print(1)", "print(2)")))
+
+    def test_awk_comment_is_not_code_and_literals_stay(self):
+        canonical = self.canonical(self.AWK)
+        self.assertEqual(canonical, self.canonical(self.AWK.replace("# note / more", "# other")))
+        self.assertEqual(canonical, self.canonical(self.AWK.replace("# whole line\n", "")))
+        self.assertIn('/#/', canonical)
+        self.assertIn('"#"', canonical)
+        self.assertNotIn("note", canonical)
+        self.assertNotEqual(canonical, self.canonical(self.AWK.replace("4 / 2", "4 / 3")))
 
     def test_other_embedded_language_compares_by_bytes(self):
         self.assertNotEqual(self.canonical(self.OTHER),

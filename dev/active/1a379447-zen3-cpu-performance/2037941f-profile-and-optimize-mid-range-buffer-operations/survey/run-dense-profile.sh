@@ -16,6 +16,7 @@ REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
     echo 'invoke from the worker worktree root' >&2
     exit 2
 }
+RESUME_IDENTITY="${REPO}/$(python3 -B "${REPO}/$(git -C "${REPO}" ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')" file resume_identity.py)"
 SURVEY=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey
 CAMPAIGNS=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/campaigns
 ARM=target/e1f9a78f-arms/release/dense-arm
@@ -155,18 +156,11 @@ if [[ "${mode}" != --case ]]; then
         done
     else
         identity_arguments+=(--json "isolated-addendum=${ISOLATED}" --json "allocated-addendum=${ALLOCATED}")
-        for item in "${CASES[@]}"; do
-            identity_arguments+=(--observed "case=${item}")
-        done
     fi
-    for setting in REPETITIONS ISSUE_EVENTS MEMORY_EVENTS; do
-        identity_arguments+=(--setting "${setting}=${!setting}")
-    done
-    # Result rendering and source pointers do not decide measurement or resume.
-    identity="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
+    identity="$(python3 -B "${RESUME_IDENTITY}" --log "${LOG}" \
         --executable "arm=${ARM}" --executable "scalar=${SCALAR_ARM}" --executable "tool=${TOOL}" \
         --script "script=${BASH_SOURCE[0]}" \
-        --observed "cpu=${cpu}" "${identity_arguments[@]}")"
+        --setting "cpu=${cpu}" "${identity_arguments[@]}")"
     grep -q '^identity ' "${LOG}" || echo "identity ${identity}" >>"${LOG}"
 fi
 echo "profile execution log: ${OUT}/execution.log"

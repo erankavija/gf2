@@ -15,6 +15,7 @@ REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
     exit 2
 }
 FLOCK="${REPO}/dev/scripts/ccx1-bench-flock.sh"
+RESUME_IDENTITY="${REPO}/$(python3 -B "${REPO}/$(git -C "${REPO}" ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')" file resume_identity.py)"
 BIN="${REPO}/target/9fb40c83-arms-native/release/dvb-profile"
 CASES="${HERE}/profile-cases.txt"
 BUILD_RECORD="${HERE}/harness-validation.txt"
@@ -47,10 +48,9 @@ if [[ "${MODE}" == series ]]; then
         echo "build record does not pin dvb-profile ${DIGEST}" >&2
         exit 2
     }
-    IDENTITY="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
+    IDENTITY="$(python3 -B "${RESUME_IDENTITY}" --log "${LOG}" \
         --recorded-digests "${OUT}/host.txt" --recorded-digests "${OUT}/profile-inputs.sha256" \
         --executable "dvb-profile=${BIN}" --script "run-profile.sh=${BASH_SOURCE[0]}" \
-        --measured-lines 'BIN[}]" session|counters=' --setting "REPETITIONS=${REPETITIONS}" \
         --table "profile-cases.txt=${CASES}")"
 fi
 

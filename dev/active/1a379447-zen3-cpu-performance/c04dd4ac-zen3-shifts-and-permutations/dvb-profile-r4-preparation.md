@@ -18,7 +18,7 @@ The exact queue line is in
 The launcher prints and appends the authoritative profile log, checks its
 resume identity on resume, and preserves an interrupted repetition before
 retrying it. The identity covers the actual executable, the parsed cases and the
-measurement settings. The existing provenance renderer checks a committed
+launcher's canonical form. The existing provenance renderer checks a committed
 session's input snapshot against the measured tree and records the top-level and
 inner invocation.
 

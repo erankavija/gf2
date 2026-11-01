@@ -48,8 +48,9 @@ class ResumeTest(unittest.TestCase):
         self.launcher.write_text(source.replace(stop, "exit 0\n" + stop))
         shutil.copyfile(SOURCE.with_name("repo_artifacts.py"), survey / "repo_artifacts.py")
         (self.root / "dev/scripts").mkdir(parents=True)
-        shutil.copyfile(REPOSITORY / "dev/scripts/resume_identity.py",
-                        self.root / "dev/scripts/resume_identity.py")
+        for name in ("resume_identity.py", "repository_files.py"):
+            shutil.copyfile(REPOSITORY / "dev/scripts" / name, self.root / "dev/scripts" / name)
+        subprocess.run(["git", "-C", str(self.root), "add", "dev/scripts"], check=True)
         (survey / "run-dense-harness.sh").write_text("#!/bin/sh\nexit 0\n")
         (survey / "run-dense-harness.sh").chmod(0o755)
         for name in ("summarize-dense-profile.py", "dense-producing-inputs.json"):
@@ -233,9 +234,10 @@ class ResumeTest(unittest.TestCase):
             "SAMPLE_FREQUENCY=4999", "SAMPLE_FREQUENCY=5000"))
         self.run_gate(accepted=False)
 
-    def test_measurement_literal_refuses_resume(self):
+    def test_control_flow_change_refuses_resume(self):
         self.run_gate()
-        self.launcher.write_text(self.launcher.read_text().replace("perf record --quiet", "perf record"))
+        self.launcher.write_text(self.launcher.read_text().replace(
+            '$(seq 1 "${REPETITIONS}")', '$(seq 2 "${REPETITIONS}")'))
         self.run_gate(accepted=False)
 
     def test_older_record_refuses_changed_case(self):
