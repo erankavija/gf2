@@ -116,6 +116,6 @@ flowchart LR
 
 ## Investigation sources
 
-- [Investigation](investigation.md) holds the claim classification, reuse paths and go-path findings.
+- [Investigation](investigation.md) holds the claim classification, reuse paths and go-path findings. Manifest source aliases map to its sections: `INV-harness` to Harness reuse, `INV-check-path` to Check-update path, `INV-go-path` to Go path, and `INV-closeout` to Closeout.
 - `dev/active/1a379447-zen3-cpu-performance/1362381c/aff3ct-gap-investigation.md` holds the candidate ranking.
 - `dev/active/1a379447-zen3-cpu-performance/1358d6ab/outcome.md` holds FI-3's values.

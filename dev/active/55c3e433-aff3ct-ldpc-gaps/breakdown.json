@@ -226,7 +226,7 @@
     "worker_sized_reason": "One route variant added to the existing selector and route types",
     "footprint": {
      "creates": [
-      "crates/gf2-coding/data/tuning-profiles/"
+      "crates/gf2-coding/data/tuning-profiles/gf2-qc-candidate.json"
      ],
      "touches": [
       "crates/gf2-coding/src/tuning.rs",
@@ -288,7 +288,7 @@
      "touches": [
       "crates/gf2-coding/src/ldpc/min_sum.rs",
       "crates/gf2-coding/src/tuning.rs",
-      "crates/gf2-coding/data/tuning-profiles/",
+      "crates/gf2-coding/data/tuning-profiles/gf2-qc-candidate.json",
       "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/tuned-profile/src/lib.rs"
      ]
     }
