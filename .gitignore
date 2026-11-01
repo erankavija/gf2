@@ -119,3 +119,8 @@ rpl_data_*/
 # GPU hard-fail diagnostic dumps (gf2-sim `42eac5cc`; runtime-generated per fatal GPU event)
 dev/benchmarks/gf2-sim/diagnostic-dumps/
 __pycache__/
+
+# Copied inputs and raw single-host output (@/inv/committed-evidence-budget).
+**/inputs/producing/
+**/source-inputs/
+perf.data*

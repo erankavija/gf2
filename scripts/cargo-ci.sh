@@ -310,6 +310,8 @@ done
 for survey_tool in $(git grep -l -F '["--self-test"]' -- ":(glob)$survey/**/*.py"); do
   run_step "survey-${survey_tool#"$survey"/}-self-test" python3 -B "$survey_tool" --self-test
 done
+run_step tracked-budget-self-test python3 -B scripts/check-tracked-budget.py --self-test
+run_step tracked-budget python3 -B scripts/check-tracked-budget.py
 run_step addendum-schema-versions-self-test python3 dev/scripts/check-addendum-schema-versions.py --self-test
 run_step addendum-schema-versions python3 dev/scripts/check-addendum-schema-versions.py
 run_step docs-mechanical-self-test python3 contrib/gates/tests/docs-mechanical-test.py
