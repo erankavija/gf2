@@ -1,9 +1,11 @@
 # gf2 development directory
 
-`dev/` holds the working documents, measurement evidence and tooling of gf2
-development. Permanent documentation is indexed at
+`dev/` is gf2's developer documentation, with the working documents,
+measurement evidence and tooling of its development. An experiment's code,
+protocol, configuration, results and small receipts live at
+[`experiments/<name>/`](../experiments/). Permanent documentation is indexed at
 [`docs/index.md`](../docs/index.md), and [`AGENTS.md`](../AGENTS.md) is the
-engineering contract for both.
+engineering contract for all of them.
 
 The `[documentation]` table of [`.jit/config.toml`](../.jit/config.toml)
 declares the development root, the archive root, the paths archival relocates
