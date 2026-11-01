@@ -18,7 +18,6 @@ INPUTS="${REPO}/target/ldpc-inputs"
 # median at 95% coverage excludes the extreme sessions ([x(2), x(8)], 96.1%).
 REPETITIONS=9
 EXECUTABLES=(ldpc-profile ldpc-alloc-census)
-SESSION_FILES=(profile-session.sh profile-cases.tsv arms.json)
 
 OUT="${1:?usage: run-profile.sh <output-dir>}"
 # shellcheck disable=SC1091
@@ -30,19 +29,21 @@ OUT="$(cd "${OUT}" && pwd)"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 
 series_identity() {
-    local binary file recorded line=""
+    local binary recorded
+    local -a arguments=()
     for binary in "${EXECUTABLES[@]}"; do
         recorded="$(series_recorded "${IDENTITY}" executables "${binary}")"
         if [[ "$(series_digest "${BIN}/${binary}")" != "${recorded}" ]]; then
             echo "${binary} differs from the preparation build identity" >&2
             return 2
         fi
-        line+="${line:+ }${binary}=${recorded}"
+        arguments+=(--executable "${binary}=${BIN}/${binary}")
     done
-    for file in "${SESSION_FILES[@]}"; do
-        line+=" ${file}=$(series_digest "${HERE}/${file}")"
-    done
-    echo "${line}"
+    python3 -B "$(series_located resume_identity.py)" --log "${OUT}/repetitions.log" \
+        "${arguments[@]}" --setting "REPETITIONS=${REPETITIONS}" \
+        --shell "profile-session.sh=${HERE}/profile-session.sh" \
+        --table "profile-cases.tsv=${HERE}/profile-cases.tsv" \
+        --json "arms.json=${HERE}/arms.json"
 }
 series_cases() {
     python3 - "${HERE}/profile-cases.tsv" "${HERE}/arms.json" "${INPUTS}" "${QUALITY}" <<'PY'

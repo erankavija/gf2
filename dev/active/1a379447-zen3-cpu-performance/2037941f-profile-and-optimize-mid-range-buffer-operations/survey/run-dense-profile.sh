@@ -145,33 +145,30 @@ on_exit() {
     fi
 }
 trap 'on_exit "$?"' EXIT
-# Result rendering and source pointers do not decide measurement or resume.
-configuration="$(python3 -B - "${REPETITIONS}" "${ISSUE_EVENTS}" "${MEMORY_EVENTS}" \
-    "${RECORD_EVENT}" "${SAMPLE_FREQUENCY}" "${FRESH_CASE}" \
-    "${REPORT_PERCENT_LIMIT}" "${ANNOTATE_PERCENT_LIMIT}" "${cpu}" "${CASES[@]}" <<'PYIDENTITY'
-import hashlib
-import json
-import pathlib
-import sys
-
-settings, cases = sys.argv[1:10], sys.argv[10:]
-parsed = []
-for case in cases:
-    family, addendum, cell, route, build, label = case.split("|")
-    parsed.append([family, json.loads(pathlib.Path(addendum).read_bytes()),
-                   cell, route, build, label])
-configuration = json.dumps([settings, parsed], sort_keys=True, separators=(",", ":"))
-print(hashlib.sha256(configuration.encode()).hexdigest())
-PYIDENTITY
-)"
-identity="arm=$(sha256sum "${ARM}" | cut -d' ' -f1) scalar=$(sha256sum "${SCALAR_ARM}" | cut -d' ' -f1) tool=$(sha256sum "${TOOL}" | cut -d' ' -f1) configuration=${configuration}"
-first="$(sed -n 's/^identity //p' "${LOG}" | head -n 1)"
 # A case runs inside the session whose parent wrote and checked the identity.
-[[ "${mode}" == --case || -z "${first}" || "${first}" == "${identity}" ]] || {
-    echo 'profile producing identity changed; resume refused' >&2
-    exit 2
-}
-[[ "${mode}" == --case || -n "${first}" ]] || echo "identity ${identity}" >>"${LOG}"
+if [[ "${mode}" != --case ]]; then
+    identity_arguments=()
+    if [[ -n "${CASE_FILE}" ]]; then
+        identity_arguments+=(--table "cases=${CASE_FILE}" --table-drop title= --table-file-name-column '|' 1)
+        for addendum in "${ADDENDA[@]}"; do
+            identity_arguments+=(--json "addendum=${addendum}")
+        done
+    else
+        identity_arguments+=(--json "isolated-addendum=${ISOLATED}" --json "allocated-addendum=${ALLOCATED}")
+        for item in "${CASES[@]}"; do
+            identity_arguments+=(--setting "case=${item}")
+        done
+    fi
+    for setting in REPETITIONS ISSUE_EVENTS MEMORY_EVENTS RECORD_EVENT SAMPLE_FREQUENCY \
+        FRESH_CASE REPORT_PERCENT_LIMIT ANNOTATE_PERCENT_LIMIT cpu; do
+        identity_arguments+=(--setting "${setting}=${!setting}")
+    done
+    # Result rendering and source pointers do not decide measurement or resume.
+    identity="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
+        --executable "arm=${ARM}" --executable "scalar=${SCALAR_ARM}" --executable "tool=${TOOL}" \
+        "${identity_arguments[@]}")"
+    grep -q '^identity ' "${LOG}" || echo "identity ${identity}" >>"${LOG}"
+fi
 echo "profile execution log: ${OUT}/execution.log"
 if [[ ! -e "${OUT}/host.txt" ]]; then
     {

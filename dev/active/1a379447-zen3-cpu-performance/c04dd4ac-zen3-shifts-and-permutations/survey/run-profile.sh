@@ -17,9 +17,12 @@ REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 FLOCK="${REPO}/dev/scripts/ccx1-bench-flock.sh"
 BIN="${REPO}/target/9fb40c83-arms-native/release/dvb-profile"
 CASES="${HERE}/profile-cases.txt"
-MANIFEST="${HERE}/dvb-producing-inputs.json"
 BUILD_RECORD="${HERE}/harness-validation.txt"
 REPETITIONS=9
+COUNTER_EVENTS=cycles:u,instructions:u,branches:u,branch-misses:u,cache-references:u,cache-misses:u
+SAMPLE_FREQUENCY=4000
+REPORT_PERCENT_LIMIT=0.5
+ANNOTATE_PERCENT_LIMIT=1.0
 
 MODE=series
 TOP_LEVEL_ARGV=("$@")
@@ -44,40 +47,14 @@ if [[ "${MODE}" == series ]]; then
         echo "build record does not pin dvb-profile ${DIGEST}" >&2
         exit 2
     }
-    inputs="${OUT}/profile-inputs.sha256"
-    candidate="${OUT}/profile-inputs.sha256.new"
-    python3 - "${REPO}" "${MANIFEST}" "${BIN}" "${BUILD_RECORD}" >"${candidate}" <<'PYINPUTS'
-import hashlib
-import json
-import pathlib
-import sys
-
-repo, manifest, binary, build_record = map(pathlib.Path, sys.argv[1:])
-paths = set()
-declaration = json.loads(manifest.read_text())
-for role in ("behavior_sources", "lifecycle_sources"):
-    paths.update(declaration[role])
-files = [repo / path for path in sorted(paths)]
-files.extend((binary, build_record))
-for path in files:
-    digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    print(f"{digest}  {path.relative_to(repo)}")
-PYINPUTS
-    if [[ -e "${inputs}" ]]; then
-        cmp -s "${candidate}" "${inputs}" || {
-            rm "${candidate}"
-            echo "profile producing inputs changed since the first session" >&2
-            exit 2
-        }
-        rm "${candidate}"
-    elif [[ -s "${LOG}" ]]; then
-        rm "${candidate}"
-        echo "profile log exists without an input snapshot" >&2
-        exit 2
-    else
-        mv "${candidate}" "${inputs}"
-    fi
-    INPUT_DIGEST="$(sha256sum "${inputs}" | cut -d' ' -f1)"
+    identity_arguments=()
+    for setting in REPETITIONS COUNTER_EVENTS SAMPLE_FREQUENCY REPORT_PERCENT_LIMIT \
+        ANNOTATE_PERCENT_LIMIT; do
+        identity_arguments+=(--setting "${setting}=${!setting}")
+    done
+    IDENTITY="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
+        --recorded-digests "${OUT}/host.txt" --executable "dvb-profile=${BIN}" \
+        --table "profile-cases.txt=${CASES}" "${identity_arguments[@]}")"
 fi
 
 if [[ "${MODE}" == session ]]; then
@@ -91,26 +68,26 @@ if [[ "${MODE}" == session ]]; then
             [[ -n "${case}" && "${case}" != \#* ]] || continue
             set +e
             perf stat -x, --no-big-num \
-                -e cycles:u,instructions:u,branches:u,branch-misses:u,cache-references:u,cache-misses:u \
+                -e "${COUNTER_EVENTS}" \
                 -o "${OUT}/${REP}/counters/${case}.csv" -- \
                 "${BIN}" counters "${case}" \
                 >"${OUT}/${REP}/counters/${case}.json" \
                 2>"${OUT}/${REP}/counters/${case}.err"
             stat_rc=$?
             echo "${stat_rc}" >"${OUT}/${REP}/counters/${case}.status"
-            perf record -q -e cycles:u -F 4000 --no-buildid-cache \
+            perf record -q -e cycles:u -F "${SAMPLE_FREQUENCY}" --no-buildid-cache \
                 -o "${OUT}/${REP}/hot/${case}.data" -- \
                 "${BIN}" counters "${case}" \
                 >"${OUT}/${REP}/hot/${case}.json" \
                 2>"${OUT}/${REP}/hot/${case}.err"
             record_rc=$?
             if [[ "${record_rc}" == 0 ]]; then
-                perf report --stdio --no-children --percent-limit 0.5 \
+                perf report --stdio --no-children --percent-limit "${REPORT_PERCENT_LIMIT}" \
                     --sort dso,symbol -F overhead,sample,dso,symbol \
                     -i "${OUT}/${REP}/hot/${case}.data" \
                     >"${OUT}/${REP}/hot/${case}.report.txt" 2>>"${OUT}/${REP}/hot/${case}.err"
                 report_rc=$?
-                perf annotate --stdio --percent-limit 1.0 \
+                perf annotate --stdio --percent-limit "${ANNOTATE_PERCENT_LIMIT}" \
                     -i "${OUT}/${REP}/hot/${case}.data" \
                     >"${OUT}/${REP}/hot/${case}.instructions.txt" 2>>"${OUT}/${REP}/hot/${case}.err"
                 annotate_rc=$?
@@ -133,19 +110,12 @@ if [[ "${MODE}" == session ]]; then
     exit 0
 fi
 
-FIRST="$(sed -n 's/^rep-[0-9]* start .* dvb-profile=\([0-9a-f]*\).*/\1/p' "${LOG}" | head -n 1)"
-if [[ -n "${FIRST}" && "${FIRST}" != "${DIGEST}" ]]; then
-    echo "dvb-profile changed since the first session (${FIRST} -> ${DIGEST})" >&2
-    exit 2
-fi
-
 if [[ ! -e "${OUT}/host.txt" ]]; then
 {
     echo '# DVB-T2 interleaver profile host record'
     echo "# generated_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     echo "# gf2 revision (informational): $(git rev-parse HEAD)"
     echo "# dvb-profile sha256: ${DIGEST}"
-    echo "# producing inputs sha256: ${INPUT_DIGEST}"
     printf '# top-level argv:'
     printf ' %q' "${BASH_SOURCE[0]}" "${TOP_LEVEL_ARGV[@]}"
     printf '\n'
@@ -193,7 +163,7 @@ for index in $(seq 1 "${REPETITIONS}"); do
         echo "${rep} discarded $(date -u +%Y-%m-%dT%H:%M:%SZ) incomplete output preserved at ${abandoned}" >>"${LOG}"
     fi
     counters=yes
-    echo "${rep} start $(date -u +%Y-%m-%dT%H:%M:%SZ) dvb-profile=${DIGEST} inputs=${INPUT_DIGEST} load=[$(uptime)]" >>"${LOG}"
+    echo "${rep} start $(date -u +%Y-%m-%dT%H:%M:%SZ) ${IDENTITY} load=[$(uptime)]" >>"${LOG}"
     {
         printf '%s inner argv:' "${rep}"
         printf ' %q' "${BASH_SOURCE[0]}" --session "${OUT}" "${rep}" "${counters}"

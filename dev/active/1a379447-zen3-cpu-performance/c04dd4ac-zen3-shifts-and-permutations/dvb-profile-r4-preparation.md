@@ -16,10 +16,10 @@ sample files support the generated intervals and provenance closure.
 The exact queue line is in
 [`bench-window/queue.tsv`](../bench-window/queue.tsv).
 The launcher prints and appends the authoritative profile log, checks its
-runtime producing-input snapshot on resume, and preserves an interrupted
-repetition before retrying it. The snapshot covers declared producing behavior,
-the actual executable and its build record. The existing provenance renderer
-checks that snapshot against the measured tree and records the top-level and
+resume identity on resume, and preserves an interrupted repetition before
+retrying it. The identity covers the actual executable, the parsed cases and the
+measurement settings. The existing provenance renderer checks a committed
+session's input snapshot against the measured tree and records the top-level and
 inner invocation.
 
 The fresh profile's generated provenance record and attribution tables
