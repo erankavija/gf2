@@ -3884,7 +3884,8 @@
    ],
    "lead_fixes": [
     "cda95fd73: make-outcome-tables reader tolerates summaries without resolution; the 78f0aafd merge had broken every outcome projection on main",
-    "Accounting status for per-worker ratios states route unmeasured: portable tuned arm routes Lane at w1-b8 and SingleFrame at multiple workers (pilot-cells untimed log), and the decoder profile sessions record no route."
+    "Accounting status for per-worker ratios states route unmeasured: portable tuned arm routes Lane at w1-b8 and SingleFrame at multiple workers (pilot-cells untimed log), and the decoder profile sessions record no route.",
+    "0716ee26 result parser in three test support files"
    ],
    "window_20261101": "31727c57 pilot-cell batch fill: 30 replicate cells, 60 validation dispatches, terminal complete, nonzero fill; f7705b7f8, merged 934fb8df0. execution.log and plan.json of that stage exceed the jit doc add depth budget; outcome.md links them.",
    "open_observation": "31727c57/test_preparation test_core_build_bytes and the batch-fill plan test need built arms; they fail on the main checkout where target/ lacks them and pass in agent-31727c57. They are not CI steps.",
@@ -3899,7 +3900,8 @@
     "c9cb0dd2",
     "be6d6f45",
     "befccab3"
-   ]
+   ],
+   "jit_gate_memoization": "jit reuses a failed verdict over identical declared inputs; rerun after a contention failure needs changed inputs or --force"
   }
  }
 }
