@@ -1,0 +1,10 @@
+{
+  "root_seed": 73,
+  "field_order": 3,
+  "rows": 3,
+  "target_runs": 4,
+  "trajectories_per_run": 64,
+  "prefix_rows": 2,
+  "student_critical_numerator": 3182446305,
+  "student_critical_denominator": 1000000000
+}

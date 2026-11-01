@@ -17,8 +17,7 @@ slow-timeout = { period = "10s", terminate-after = 1 }
 # `test_gpu_box_muller_within_1_ulp_over_1024_frames` (SIGABRT) and
 # `test_gpu_chacha_raw_words_full_range_byte_identical`,
 # `tuning_calibration::campaign_owner::tests::accepted_complete_experiment_measures_defaults_and_reopens_only_its_27_leaves`
-# (5.7 s in isolation under load 12), and
-# `rare_event_artifact_partial_publish_recovery`. 15 s restores roughly 3x
+# (5.7 s in isolation under load 12). 15 s restores roughly 3x
 # headroom over the measured worst case.
 #
 # This remains a tier budget, not a hanging-test amnesty: a test that grows past

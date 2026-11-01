@@ -59,7 +59,6 @@ pub mod observability;
 pub mod osd_campaign;
 pub mod parallel;
 pub mod permanent_campaign;
-pub mod permanent_rare_event;
 pub mod pipeline;
 pub mod presets;
 pub mod snr_checkpoint;

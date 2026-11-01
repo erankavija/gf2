@@ -1,126 +1,22 @@
-//! Independent importance trajectories for compressed permanental rank. Each
-//! trajectory opens one private canonical sampler stream, draws the next row
-//! uniformly from the current contraction nullspace, advances the shared
-//! [`CompressedRankState`], and accumulates the exact likelihood exponent. A
-//! trajectory can be restarted at any prefix boundary by replaying its same
-//! immutable address. Scheduling and worker counts never enter stream identity.
+//! Importance trajectories for compressed permanental rank: uniform draws from
+//! the contraction nullspace with exact likelihood exponents and deterministic
+//! addressed replay across prefix boundaries and worker counts.
 
 use std::fmt;
 
 use gf2_algebra::permanent::{CompressedRankState, SupportedPrimeField, Vector3};
 use gf2_core::gfp::Fp;
-use gf2_stats::sampler::{
-    FieldOrder, MatrixAddress, MatrixSampler, SamplerError, StreamIndex, StreamPurpose,
-    STREAM_INDEX_LIMIT,
-};
+use gf2_stats::sampler::{MatrixAddress, MatrixSampler, SamplerError, StreamPurpose};
 
-pub mod artifact;
 pub mod runner;
-
-/// Frozen campaign root shared with the manifested permanent campaign.
-pub const RARE_EVENT_ROOT_SEED: u64 = 0x7a81_6262_0000_0001;
-/// Manifested stream-purpose tag for rare-event work.
-pub const RARE_EVENT_PURPOSE_TAG: u8 = 4;
-/// Target-run count.
-pub const TARGET_RUNS: u16 = 32;
-/// Target trajectories per run.
-pub const TARGET_TRAJECTORIES_PER_RUN: u32 = 16_384;
-/// Target checkpoint block size.
-pub const TARGET_BLOCK_SIZE: u32 = 256;
-/// Coverage replicates per field.
-pub const COVERAGE_REPLICATES: u16 = 200;
-/// Coverage independent runs per replicate.
-pub const COVERAGE_RUNS: u16 = 32;
-/// Coverage trajectories per run and checkpoint block.
-pub const COVERAGE_TRAJECTORIES_PER_RUN: u32 = 4_096;
-/// First coverage stream index.
-pub const COVERAGE_INDEX_START: u64 = 1 << 54;
-/// First deterministic-test stream index.
-pub const TEST_INDEX_START: u64 = 1 << 55;
-/// First reserved, unallocated stream index.
-pub const RESERVED_INDEX_START: u64 = 3 << 54;
-
-/// Returns one canonical target matrix address.
-pub fn target_address(run: u16, trajectory: u32) -> Result<MatrixAddress, RareEventError> {
-    if run >= TARGET_RUNS || trajectory >= TARGET_TRAJECTORIES_PER_RUN {
-        return Err(RareEventError::AddressOutOfRange);
-    }
-    matrix_address(
-        FieldOrder::F3,
-        1_024,
-        (u64::from(run) << 14) | u64::from(trajectory),
-    )
-}
-
-/// Returns one canonical coverage matrix address.
-pub fn coverage_address(
-    field_order: u8,
-    replicate: u16,
-    run: u16,
-    trajectory: u32,
-) -> Result<MatrixAddress, RareEventError> {
-    let field_order = field_order_from_u8(field_order)?;
-    if replicate >= COVERAGE_REPLICATES
-        || run >= COVERAGE_RUNS
-        || trajectory >= COVERAGE_TRAJECTORIES_PER_RUN
-    {
-        return Err(RareEventError::AddressOutOfRange);
-    }
-    matrix_address(
-        field_order,
-        3,
-        COVERAGE_INDEX_START
-            | (u64::from(replicate) << 17)
-            | (u64::from(run) << 12)
-            | u64::from(trajectory),
-    )
-}
-
-/// Returns one canonical deterministic-test matrix address.
-pub fn deterministic_test_address(
-    field_order: u8,
-    dimension: usize,
-    case: u16,
-) -> Result<MatrixAddress, RareEventError> {
-    let field_order = field_order_from_u8(field_order)?;
-    let slot = match field_order {
-        FieldOrder::F3 => 0,
-        FieldOrder::F5 => 1,
-        FieldOrder::F7 => 2,
-    };
-    matrix_address(
-        field_order,
-        dimension,
-        TEST_INDEX_START | (slot << 16) | u64::from(case),
-    )
-}
-
-fn matrix_address(
-    field_order: FieldOrder,
-    dimension: usize,
-    raw_index: u64,
-) -> Result<MatrixAddress, RareEventError> {
-    if raw_index >= STREAM_INDEX_LIMIT
-        || (RESERVED_INDEX_START..STREAM_INDEX_LIMIT).contains(&raw_index)
-    {
-        return Err(RareEventError::AddressOutOfRange);
-    }
-    Ok(MatrixAddress::new(
-        RARE_EVENT_ROOT_SEED,
-        field_order,
-        dimension,
-        StreamPurpose::RareEvent,
-        StreamIndex::new(raw_index).map_err(|_| RareEventError::AddressOutOfRange)?,
-    ))
-}
 
 /// A proposal construction or trajectory validation failure.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RareEventError {
-    /// A semantic address lies outside its fixed partition.
-    AddressOutOfRange,
-    /// A field outside `3`, `5`, and `7` was supplied.
-    UnsupportedField(u8),
+    /// The address does not select rare-event sampling.
+    PurposeMismatch,
+    /// Three times the row count cannot be represented by the likelihood exponent.
+    LengthOutOfRange,
     /// The sampler address field differs from the trajectory field.
     SamplerFieldMismatch,
     /// The sampler address dimension differs from the requested trajectory length.
@@ -144,11 +40,11 @@ pub enum RareEventError {
 impl fmt::Display for RareEventError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::AddressOutOfRange => {
-                formatter.write_str("rare-event address is outside its fixed subdomain")
+            Self::PurposeMismatch => {
+                formatter.write_str("address purpose must be rare-event sampling")
             }
-            Self::UnsupportedField(order) => {
-                write!(formatter, "field order {order} is not supported")
+            Self::LengthOutOfRange => {
+                formatter.write_str("three times the row count must fit in u32")
             }
             Self::SamplerFieldMismatch => {
                 formatter.write_str("trajectory field differs from its sampler address")
@@ -246,8 +142,8 @@ pub struct TrajectoryOutcome {
 ///
 /// # Errors
 ///
-/// Rejects a mismatched field or dimension. Every valid invocation returns one
-/// record; repeated or zero rows are retained like every other draw.
+/// Rejects a mismatched field, dimension, or purpose, and row counts whose
+/// maximum exponent exceeds `u32`. Repeated or zero rows are retained.
 ///
 /// # Complexity
 ///
@@ -260,11 +156,9 @@ where
     Fp<Q>: SupportedPrimeField,
 {
     validate_trajectory_address::<Q>(rows, address)?;
-    let mut sampler = MatrixSampler::<Q>::new(address)?;
-    let mut state = CompressedRankState::initial();
-    let mut exponent = 0;
-    advance_prefix(&mut sampler, &mut state, &mut exponent, rows);
-    Ok(outcome(rows, address, state, exponent))
+    let mut cursor = TrajectoryCursor::<Q>::new(address, 0)?;
+    cursor.advance(rows);
+    Ok(outcome(rows, address, cursor.state, cursor.exponent))
 }
 
 /// A stopped addressed trajectory prefix used to test and implement restart.
@@ -279,6 +173,11 @@ pub struct TrajectoryPrefixCheckpoint {
 }
 
 /// Stops a trajectory after exactly `completed_prefix` rows.
+///
+/// # Errors
+///
+/// Returns the address errors of [`sample_trajectory`] or a boundary after the
+/// terminal row. Work is linear in the completed prefix length.
 pub fn checkpoint_trajectory<const Q: u64>(
     rows: usize,
     address: MatrixAddress,
@@ -287,23 +186,24 @@ pub fn checkpoint_trajectory<const Q: u64>(
 where
     Fp<Q>: SupportedPrimeField,
 {
-    validate_boundary(rows, completed_prefix)?;
     validate_trajectory_address::<Q>(rows, address)?;
-    let mut sampler = MatrixSampler::<Q>::new(address)?;
-    let mut state = CompressedRankState::initial();
-    let mut exponent = 0;
-    advance_prefix(&mut sampler, &mut state, &mut exponent, completed_prefix);
+    let cursor = TrajectoryCursor::<Q>::new(address, completed_prefix)?;
     Ok(TrajectoryPrefixCheckpoint {
         completed_prefix,
-        exponent,
-        state: state.to_canonical_bytes(),
+        exponent: cursor.exponent,
+        state: cursor.state.to_canonical_bytes(),
     })
 }
 
 /// Restarts one trajectory from its immutable address and replays through a boundary.
 ///
-/// Replaying is intentional: only a complete published block is durable, so
-/// an unpublished trajectory always restarts from its original stream address.
+/// The sampler reconstructs its state by replaying the completed prefix once.
+/// Completed trajectories in the runner are retained as exponent histograms.
+///
+/// # Errors
+///
+/// Returns the same errors as [`checkpoint_trajectory`]. Work is linear in
+/// `rows`, including the prefix replay.
 pub fn resume_trajectory<const Q: u64>(
     rows: usize,
     address: MatrixAddress,
@@ -312,22 +212,10 @@ pub fn resume_trajectory<const Q: u64>(
 where
     Fp<Q>: SupportedPrimeField,
 {
-    let stopped = checkpoint_trajectory::<Q>(rows, address, completed_prefix)?;
-
-    let mut sampler = MatrixSampler::<Q>::new(address)?;
-    let mut state = CompressedRankState::initial();
-    let mut exponent = 0;
-    advance_prefix(&mut sampler, &mut state, &mut exponent, completed_prefix);
-    if state.to_canonical_bytes() != stopped.state || exponent != stopped.exponent {
-        return Err(RareEventError::AddressOutOfRange);
-    }
-    advance_prefix(
-        &mut sampler,
-        &mut state,
-        &mut exponent,
-        rows - completed_prefix,
-    );
-    Ok(outcome(rows, address, state, exponent))
+    validate_trajectory_address::<Q>(rows, address)?;
+    let mut cursor = TrajectoryCursor::<Q>::new(address, completed_prefix)?;
+    cursor.advance(rows - completed_prefix);
+    Ok(outcome(rows, address, cursor.state, cursor.exponent))
 }
 
 /// Samples addresses and returns outcomes in canonical input order.
@@ -335,6 +223,11 @@ where
 /// Addresses are assigned round-robin to distinct logical worker lanes, then
 /// reassembled by original address position. This makes scheduling paths
 /// distinct while preserving one canonical reduction order.
+///
+/// # Errors
+///
+/// Rejects zero workers and the address errors of [`sample_trajectory`]. Work
+/// is linear in `rows * addresses.len() + workers`.
 pub fn sample_trajectories_in_order<const Q: u64>(
     rows: usize,
     addresses: &[MatrixAddress],
@@ -382,34 +275,59 @@ where
         });
     }
     if address.purpose() != StreamPurpose::RareEvent {
-        return Err(RareEventError::AddressOutOfRange);
+        return Err(RareEventError::PurposeMismatch);
+    }
+    if rows > (u32::MAX / 3) as usize {
+        return Err(RareEventError::LengthOutOfRange);
     }
     MatrixSampler::<Q>::new(address)?;
     Ok(())
 }
 
-fn advance_prefix<const Q: u64>(
-    sampler: &mut MatrixSampler<Q>,
-    state: &mut CompressedRankState<Fp<Q>>,
-    exponent: &mut u32,
-    row_count: usize,
-) where
+struct TrajectoryCursor<const Q: u64>
+where
     Fp<Q>: SupportedPrimeField,
 {
-    for _ in 0..row_count {
-        let nullspace = state.contraction_span().orthogonal_complement();
-        let basis = nullspace.basis_residues();
-        let mut residues = [0_u8; 3];
-        for basis_row in basis.iter().take(nullspace.dimension()) {
-            let coefficient = sampler.next_entry().value() as u8;
-            for coordinate in 0..3 {
-                residues[coordinate] =
-                    (residues[coordinate] + coefficient * basis_row[coordinate]) % Q as u8;
+    sampler: MatrixSampler<Q>,
+    state: CompressedRankState<Fp<Q>>,
+    exponent: u32,
+}
+
+impl<const Q: u64> TrajectoryCursor<Q>
+where
+    Fp<Q>: SupportedPrimeField,
+{
+    fn new(address: MatrixAddress, prefix: usize) -> Result<Self, RareEventError> {
+        validate_trajectory_address::<Q>(address.dimension(), address)?;
+        validate_boundary(address.dimension(), prefix)?;
+        let mut cursor = Self {
+            sampler: MatrixSampler::new(address)?,
+            state: CompressedRankState::initial(),
+            exponent: 0,
+        };
+        cursor.advance(prefix);
+        Ok(cursor)
+    }
+
+    fn advance(&mut self, rows: usize) {
+        for _ in 0..rows {
+            let nullspace = self.state.contraction_span().orthogonal_complement();
+            let basis = nullspace.basis_residues();
+            let mut residues = [0_u8; 3];
+            for basis_row in basis.iter().take(nullspace.dimension()) {
+                let coefficient = self.sampler.next_entry().value() as u8;
+                for coordinate in 0..3 {
+                    residues[coordinate] =
+                        (residues[coordinate] + coefficient * basis_row[coordinate]) % Q as u8;
+                }
             }
+            self.exponent += self.state.contraction_span().dimension() as u32;
+            let row = Vector3::from_residues(residues).expect("sampled residues are canonical");
+            self.state = self
+                .state
+                .successor(row)
+                .expect("a nullspace row is admissible");
         }
-        *exponent += state.contraction_span().dimension() as u32;
-        let row = Vector3::from_residues(residues).expect("sampled residues are canonical");
-        *state = state.successor(row).expect("a nullspace row is admissible");
     }
 }
 
@@ -424,14 +342,5 @@ fn outcome<F: SupportedPrimeField>(
         rows_completed: rows,
         stream_index: address.stream().get(),
         terminal_state: state.to_canonical_bytes(),
-    }
-}
-
-fn field_order_from_u8(order: u8) -> Result<FieldOrder, RareEventError> {
-    match order {
-        3 => Ok(FieldOrder::F3),
-        5 => Ok(FieldOrder::F5),
-        7 => Ok(FieldOrder::F7),
-        _ => Err(RareEventError::UnsupportedField(order)),
     }
 }
