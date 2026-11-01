@@ -509,6 +509,35 @@ impl Aff3ctWorker {
         })
     }
 
+    /// Replays the repeated prefix on its counting prototype after timing.
+    ///
+    /// Counts are expanded from native waves to their frames; frames in a SIMD
+    /// wave share the wave's stopping decision.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when replay decisions differ from this worker's final
+    /// decisions. `prototype` must have the same settings as the timed clone.
+    ///
+    /// # Panics
+    ///
+    /// As [`Handle::decode_counted`].
+    pub fn replay_iterations(
+        &self,
+        prototype: &mut Handle,
+        llrs: &[f32],
+    ) -> Result<Vec<u32>, String> {
+        let mut decisions = vec![0; self.decisions.len()];
+        let iterations = prototype.decode_counted(llrs, &mut decisions, self.frames);
+        if decisions != self.decisions {
+            return Err("AFF3CT replay decisions differ from timed-worker decisions".to_owned());
+        }
+        Ok(iterations
+            .into_iter()
+            .flat_map(|count| std::iter::repeat_n(count, prototype.wave()))
+            .collect())
+    }
+
     /// Decodes the batch; AFF3CT converts and interleaves inside the call.
     pub fn decode_batch(&mut self, llrs: &[f32]) {
         self.handle.decode(llrs, &mut self.decisions, self.frames);
@@ -581,6 +610,35 @@ mod tests {
             let mut worker = Aff3ctWorker::new(&prototype, frames, K).expect("clone");
             worker.decode_batch(&llrs);
             assert_eq!(worker.decisions, counted);
+        }
+    }
+
+    #[test]
+    fn post_timing_replay_matches_each_reused_workers_prefix_decisions() {
+        let mut prototype = selected();
+        let frames = 8;
+        let mut llrs = llrs(frames);
+        for (frame, values) in llrs.chunks_exact_mut(N).enumerate() {
+            if frame % 2 == 1 {
+                for value in values {
+                    *value = -*value;
+                }
+            }
+        }
+        for _ in 0..2 {
+            let mut worker = Aff3ctWorker::new(&prototype, frames, K).expect("clone");
+            for _ in 0..3 {
+                worker.decode_batch(&llrs);
+            }
+            let timed = worker.decisions.clone();
+            let iterations = worker
+                .replay_iterations(&mut prototype, &llrs)
+                .expect("replay");
+            assert_eq!(worker.decisions, timed);
+            assert_eq!(iterations.len(), frames);
+            assert!(iterations.iter().all(|count| (1..=CAP).contains(count)));
+            worker.decisions[0] ^= 1;
+            assert!(worker.replay_iterations(&mut prototype, &llrs).is_err());
         }
     }
 

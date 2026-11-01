@@ -124,6 +124,37 @@ fn qc_posteriors_match_the_canonical_decoder_bit_for_bit() {
     }
 }
 
+#[test]
+fn qc_zero_cap_reinitializes_a_reused_decoders_posterior() {
+    let qc = small_qc_code(8);
+    let code = LdpcCode::from_quasi_cyclic(&qc);
+    for avx2 in [false, true] {
+        for stopping in [false, true] {
+            let mut candidate = QcDecoder::with_dispatch(&qc, MinSumRule::Plain, avx2);
+            let (_, previous) = noisy_llrs(&code, 27, 0.7, false);
+            candidate.decode(&previous, 4, stopping);
+            for sign in [1.0, -1.0] {
+                let mut llrs = vec![Llr::new(sign * 2.0); code.n()];
+                llrs[0] = Llr::new(-sign * 3.0);
+                let mut canonical = LdpcDecoder::with_config(
+                    code.clone(),
+                    DecoderConfig::new(DecoderAlgorithm::MinSum, stopping),
+                );
+                let mut word = BitVec::new();
+                let expected = canonical.decode_codeword_into(&llrs, 0, &mut word);
+                let got = candidate.decode(&llrs, 0, stopping);
+                assert_eq!(got.iterations, expected.iterations);
+                assert_eq!(candidate.last_iterations(), 0);
+                assert_eq!(got.syndrome_check_passed, expected.syndrome_check_passed);
+                for (index, value) in candidate.posterior().iter().enumerate() {
+                    assert_eq!(value.to_bits(), llrs[index].value().to_bits());
+                    assert_eq!(candidate.hard_bits()[index], word.get(index));
+                }
+            }
+        }
+    }
+}
+
 /// Punctured positions enter at zero and filler positions at a finite
 /// magnitude; both are ordinary channel LLRs and neither changes the identity.
 #[test]

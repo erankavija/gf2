@@ -12,7 +12,7 @@ use ldpc_survey::arm::{
     self, ArmResult, DecoderCase, Normalization, NormalizationKind, Precision, Schedule, Stopping,
     StoppingKind, ARM_RESULT_SCHEMA,
 };
-use ldpc_throughput::driver::run_cell;
+use ldpc_throughput::driver::{report_iterations, run_cell, IterationSource};
 use ldpc_throughput::gf2::{config, Gf2Worker};
 use ldpc_throughput::workload::{check_request, median_u64, Workload};
 use std::hint::black_box;
@@ -93,6 +93,10 @@ fn run() -> Result<(), String> {
         |_| Ok(Gf2Worker::new(&code, decoder_config, batch, cap)),
         |worker: &mut Gf2Worker| worker.decode_batch(llrs),
         |worker: &Gf2Worker| &worker.decisions,
+        |index, worker| {
+            report_iterations("gf2", index, IterationSource::Direct, &worker.iterations);
+            Ok(())
+        },
     )?;
     let result = ArmResult {
         schema: ARM_RESULT_SCHEMA.to_owned(),

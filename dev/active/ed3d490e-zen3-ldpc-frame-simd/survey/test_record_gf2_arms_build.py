@@ -269,6 +269,31 @@ class FlavourTest(unittest.TestCase):
         self.assertEqual(sorted(recorder.flavour_arms(CATALOGUE, "portable")),
                          ["single-portable", "tuned-portable"])
 
+    def test_an_arm_with_its_own_record_belongs_to_no_flavour(self):
+        catalogue = {**CATALOGUE, "own": {"build": "native", "own_record": True}}
+        self.assertNotIn("own", recorder.flavour_arms(catalogue, "native"))
+
+    def test_an_arm_recorded_alone_builds_its_package_and_only_a_linking_arm_sees_aff3ct(self):
+        plain, = recorder.own_arm_commands(["build"], {"package": "qc"}, None)
+        self.assertEqual(plain["argv"], ["build", "--package", "qc"])
+        self.assertNotIn(recorder.AFF3CT_VARIABLE, plain["environment"])
+        linking, = recorder.own_arm_commands(
+            ["build"], {"package": "harness", "features": ["aff3ct"]}, "/aff3ct")
+        self.assertEqual(linking["argv"],
+                         ["build", "--package", "harness", "--features", "aff3ct"])
+        self.assertEqual(linking["environment"][recorder.AFF3CT_VARIABLE], "/aff3ct")
+        self.assertEqual(linking["environment"]["RUSTFLAGS"],
+                         recorder.environment("native")["RUSTFLAGS"])
+
+    def test_the_arm_option_leaves_the_flavour_arguments(self):
+        self.assertEqual(recorder.own_arm(["out", "--arm", "qc", "/aff3ct"]),
+                         ("qc", ["out", "/aff3ct"]))
+        self.assertEqual(recorder.own_arm(["out", "/aff3ct"]), (None, ["out", "/aff3ct"]))
+        out_dir, flavour, aff3ct, _ = recorder.arguments(["out"], alone=True)
+        self.assertEqual((str(out_dir), flavour, aff3ct), ("out", "native", None))
+        with self.assertRaises(SystemExit):
+            recorder.arguments(["out"])
+
     def test_the_native_flavour_builds_the_default_members_then_each_other_member_alone(self):
         commands = recorder.build_commands(
             "native", ["build"], ARMS, recorder.flavour_arms(CATALOGUE, "native"), "/aff3ct")

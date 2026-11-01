@@ -21,7 +21,7 @@ use ldpc_survey::arm::{
     self, ArmResult, ConversionCosts, DecoderCase, Normalization, NormalizationKind, Precision,
     Schedule, Stopping, StoppingKind, ARM_RESULT_SCHEMA,
 };
-use ldpc_throughput::driver::{run_cell, CellRun};
+use ldpc_throughput::driver::{report_iterations, run_cell, CellRun, IterationSource};
 use ldpc_throughput::gf2::config;
 use ldpc_throughput::workload::{check_request, median_u64, Workload};
 use serde::Serialize;
@@ -521,6 +521,15 @@ pub fn run_with_policy(arm_name: &str, policy: impl ArmPolicy) -> Result<(), Str
             worker.decode_batch_with_workers(llrs, concurrency.expect("nonempty pool"))
         },
         |worker: &BatchWorker| &worker.decisions,
+        |index, worker| {
+            let iterations: Vec<u32> = worker
+                .outcomes
+                .iter()
+                .map(|outcome| outcome.iterations as u32)
+                .collect();
+            report_iterations(arm_name, index, IterationSource::Direct, &iterations);
+            Ok(())
+        },
     )?;
     let observations = observations.into_inner().expect("worker observations");
     let (workspace_bytes, routes) = observations.into_iter().map(Option::unwrap).unzip();

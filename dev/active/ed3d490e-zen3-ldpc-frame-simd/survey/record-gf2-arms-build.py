@@ -8,9 +8,13 @@ flavour: the catalogue's native and external arms, host-targeted. Given
 `--portable`, it records the portable arms, built for the target's baseline
 into a target directory of their own. `--supersedes` names, by root-relative path, the record
 this one replaces; the record pins it by digest, and the arms tooling reads only the replacement.
+Given `--arm NAME`, it records that one native-flavour arm of the catalogue, marked `own_record`,
+built from the current tree by its package alone, so another pinned tree gives the name its own
+`build_root`; such an arm may share an executable name with a pinned campaign.
 
 Usage (from the worktree root):
   record-gf2-arms-build.py OUT_DIR AFF3CT_ROOT|--portable [--supersedes RECORD]
+  record-gf2-arms-build.py OUT_DIR --arm NAME [AFF3CT_ROOT] [--supersedes RECORD]
   record-gf2-arms-build.py OUT_DIR --profile-only
 """
 
@@ -314,7 +318,17 @@ def separate_members(metadata):
 
 def flavour_arms(catalogue, flavour):
     return {name: arm for name, arm in catalogue.items()
-            if arm["build"] in FLAVOURS[flavour]["builds"]}
+            if arm["build"] in FLAVOURS[flavour]["builds"] and not arm.get("own_record")}
+
+
+def own_arm_commands(build, arm, aff3ct):
+    """The one command that builds an arm recorded alone; a feature linking AFF3CT sees the tree."""
+    features = arm.get("features", [])
+    variables = environment("native")
+    if "aff3ct" in features:
+        variables = {**variables, AFF3CT_VARIABLE: str(aff3ct)}
+    selected = ["--features", ",".join(features)] if features else []
+    return [{"environment": variables, "argv": [*build, "--package", arm["package"], *selected]}]
 
 
 def build_commands(flavour, build, metadata, named, aff3ct):
@@ -349,7 +363,15 @@ def write_record(out_dir, record):
     partial.replace(out_dir / RECORD)
 
 
-def arguments(argv):
+def own_arm(argv):
+    """The name after `--arm`, if any, and the other arguments."""
+    if "--arm" not in argv[:-1]:
+        return None, argv
+    at = argv.index("--arm")
+    return argv[at + 1], argv[:at] + argv[at + 2:]
+
+
+def arguments(argv, alone=False):
     """OUT_DIR, flavour, AFF3CT tree and the identity of the superseded record, if any."""
     supersedes = None
     match argv:
@@ -362,6 +384,8 @@ def arguments(argv):
             return pathlib.Path(out_dir), "portable", None, supersedes
         case [out_dir, aff3ct] if not aff3ct.startswith("--"):
             return pathlib.Path(out_dir), "native", pathlib.Path(aff3ct).resolve(), supersedes
+        case [out_dir] if alone:
+            return pathlib.Path(out_dir), "native", None, supersedes
         case _:
             sys.exit(__doc__)
 
@@ -412,11 +436,14 @@ def main():
         sys.exit("invoke from the worktree root")
     if len(sys.argv) == 3 and sys.argv[2] == "--profile-only":
         return profile_build(pathlib.Path(sys.argv[1]))
-    out_dir, flavour, aff3ct, supersedes = arguments(sys.argv[1:])
+    alone, rest = own_arm(sys.argv[1:])
+    out_dir, flavour, aff3ct, supersedes = arguments(rest, alone is not None)
     arms = located("package-directory", PACKAGE)
-    manifest = arms / "Cargo.toml"
     catalogue = arms.parent / "arms.json"
-    named = flavour_arms(json.loads(catalogue.read_text(encoding="utf-8"))["arms"], flavour)
+    catalogued = json.loads(catalogue.read_text(encoding="utf-8"))["arms"]
+    named = flavour_arms(catalogued, flavour) if alone is None else {alone: catalogued[alone]}
+    manifest = (arms if alone is None
+                else located("package-directory", named[alone]["package"])) / "Cargo.toml"
     target = FLAVOURS[flavour]["target"]
     target_dir = [] if target is None else [
         "--config", f"build.target-dir={json.dumps(str(arms / target))}"]
@@ -436,7 +463,8 @@ def main():
     build = ["./scripts/cargo-budget.sh", "cargo", f"+{TOOLCHAIN}", "build", "--offline",
              "--locked", "--release", "--manifest-path", str(manifest),
              "--config", f"target.{host}.linker={json.dumps(str(linker))}", *target_dir]
-    commands = build_commands(flavour, build, metadata, named, aff3ct)
+    commands = (build_commands(flavour, build, metadata, named, aff3ct) if alone is None
+                else own_arm_commands(build, named[alone], aff3ct))
     binaries = built_binaries(metadata, commands)
     for command in commands:
         subprocess.run(command["argv"], check=True, env={**inherited, **command["environment"]})
@@ -470,7 +498,8 @@ def main():
         "catalogue": {"path": str(catalogue), "sha256": digest(catalogue)},
         **({} if supersedes is None else {"supersedes": supersedes}),
         "arms": arm_rows(named, rows, records, executables, release),
-        "isolation": isolation(metadata, arms, rows),
+        "isolation": (isolation(metadata, arms, rows) if alone is None
+                      else {"target_directory": str(release.parent)}),
         "pinned_records": records,
         "pinned_executables": rows,
     }

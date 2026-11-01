@@ -49,6 +49,9 @@ class CommittedRecordTest(unittest.TestCase):
 
     def records(self):
         for build_path, build in peak.build_records():
+            # The campaign's own untimed smoke validates an arm recorded alone.
+            if any(peak.catalogue_of(build)[arm].get("own_record") for arm in build["arms"]):
+                continue
             text = (build_path.parent / recorder.RECORD).read_text(encoding="utf-8")
             with self.subTest(build=str(build_path)):
                 yield build_path, build, json.loads(text)

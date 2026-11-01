@@ -218,6 +218,7 @@ pub fn run() -> Result<(), String> {
         |_| Aff3ctWorker::new(&prototype, batch, k),
         |worker: &mut Aff3ctWorker| worker.decode_batch(llrs),
         |worker: &Aff3ctWorker| &worker.decisions,
+        |_, _| Ok(()),
     )?;
     let diagnostics = Diagnostics {
         kind: "aff3ct-decoder-diagnostics",

@@ -205,18 +205,24 @@ def quality_files(build_identity):
                 files[name, key] = (intra_path.parent.relative_to(smoke.ROOT) / held["file"],
                                     held["sha256"])
             elif arm["executable"] == "aff3ct-throughput-arm":
-                files[name, key] = pinned[f"{name}-{key}.json"]
+                quality = catalogue_of(build_identity)[name].get("quality", name)
+                files[name, key] = pinned[f"{quality}-{key}.json"]
             else:
                 files[name, key] = pinned[f"gf2-nms-f32-{key}.json"]
     return files
 
 
 def catalogued(build_identity):
-    """The catalogue's arms, once the build record holds every arm of the builds it records."""
+    """The catalogue's arms, once the build record holds every arm of the builds it records or
+    the one `own_record` arm it was built for."""
     catalogue = catalogue_of(build_identity)
-    builds = {catalogue[name]["build"] for name in build_identity["arms"] if name in catalogue}
-    if {name for name, arm in catalogue.items() if arm["build"] in builds} != \
-            build_identity["arms"].keys():
+    recorded = build_identity["arms"].keys()
+    own = {name for name, arm in catalogue.items() if arm.get("own_record")}
+    if len(recorded) == 1 and recorded <= own:
+        return catalogue
+    builds = {catalogue[name]["build"] for name in recorded if name in catalogue}
+    if not recorded or {name for name, arm in catalogue.items()
+                        if arm["build"] in builds and name not in own} != recorded:
         sys.exit("the build identity and the catalogue name different arms")
     return catalogue
 
