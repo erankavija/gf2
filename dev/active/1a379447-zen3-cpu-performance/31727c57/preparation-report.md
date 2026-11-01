@@ -24,8 +24,8 @@ The [core](core/confirmation-untimed-smoke.json) and
 exercise the arm wire contract with zero timing windows. The
 [preparation diagnostics](decoder/untimed-diagnostics.json) check the presence
 of `batch_fill_ns`; that field alone does not establish a stage measurement.
-The outcome record identifies the tuned arm's unmeasured batch-fill latency
-in the timed receipts. This REQ-04 evidence gap requires lead disposition.
+The timed receipts leave the tuned arm's batch-fill latency unmeasured; the
+outcome record reports it from the descriptive batch-fill campaigns.
 
 The [core](core/window.sh) and [decoder](decoder/window.sh) launchers require
 the overnight benchmark window. The [queue file](window-queue.tsv) records
