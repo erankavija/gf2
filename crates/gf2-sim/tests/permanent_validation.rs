@@ -16,14 +16,14 @@ use gf2_sim::permanent_campaign::schedule::backend_supports_cell;
 use gf2_sim::permanent_campaign::schema::{read_manifest, ArtifactIdentity, Backend, Sha256Digest};
 use gf2_sim::permanent_campaign::validation::{
     evaluate_validation_anchor, is_frozen_validation_toolchain,
-    load_frozen_campaign_validation_preregistration, load_validation_continuation_authorization,
-    load_validation_preregistration, preflight_required_backends,
-    publish_validation_receipt_atomic, read_validation_receipt, run_frozen_campaign_validation,
-    run_validation, verify_validation_receipt_journal, AnchorReceipt, AnchorSpec,
-    BackendAgreementStatus, DecisionRule, FrozenArtifactGuard, FrozenArtifactSnapshot, PhaseStatus,
-    ReplayMode, RetryRule, SampleOrigin, ValidationAuthorities, ValidationFailure, ValidationPhase,
-    ValidationPreregistration, ValidationProducerSegment, ValidationProtocol, ValidationReceipt,
-    ValidationStreamPurpose, ValidationVerdict, CONTINUATION_STATE_FILE, FROZEN_TOOLCHAIN_PREFIX,
+    load_frozen_campaign_validation_preregistration, load_validation_preregistration,
+    preflight_required_backends, publish_validation_receipt_atomic, read_validation_receipt,
+    run_frozen_campaign_validation, run_validation, verify_validation_receipt_journal,
+    AnchorReceipt, AnchorSpec, BackendAgreementStatus, DecisionRule, FrozenArtifactGuard,
+    FrozenArtifactSnapshot, PhaseStatus, ReplayMode, RetryRule, SampleOrigin,
+    ValidationAuthorities, ValidationFailure, ValidationPhase, ValidationPreregistration,
+    ValidationProducerSegment, ValidationProtocol, ValidationReceipt, ValidationStreamPurpose,
+    ValidationVerdict, CONTINUATION_STATE_FILE, FROZEN_TOOLCHAIN_PREFIX,
     FROZEN_VALIDATION_RECEIPT_FILE, PREREGISTRATION_SCHEMA_VERSION, RECEIPT_SCHEMA_VERSION,
 };
 use gf2_stats::binomial::two_sided_test;
