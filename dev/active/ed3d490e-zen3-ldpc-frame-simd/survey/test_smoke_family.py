@@ -48,7 +48,7 @@ fixture_spec.loader.exec_module(fixture)
 
 class SmokeFamilyTest(unittest.TestCase):
     def setUp(self):
-        fixture.bundle_inputs(self)
+        fixture.bundle_inputs(self, smoke, generator.smoke)
         SCRATCH.mkdir(parents=True, exist_ok=True)
         self.directory = Path(tempfile.mkdtemp(dir=SCRATCH))
         self.addCleanup(shutil.rmtree, self.directory, ignore_errors=True)

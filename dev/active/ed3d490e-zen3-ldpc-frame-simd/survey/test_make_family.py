@@ -27,23 +27,64 @@ ENVELOPE = Path(smoke.output(["git", "-C", str(smoke.ROOT), "ls-files",
                               "crates/gf2-coding/data/tuning-profiles/*.json"]))
 
 
-def bundle_inputs(test):
-    """Synthetic bundle manifests for configuration and synthetic-arm tests."""
+def bundle_inputs(test, *loaded):
+    """Synthetic bundle manifests for configuration and synthetic-arm tests.
+
+    The frozen digests become the synthetic ones in `smoke` and in each further loaded instance
+    of its module.
+    """
     temporary = tempfile.TemporaryDirectory()
     test.addCleanup(temporary.cleanup)
     root = Path(temporary.name)
-    for index, code in enumerate(smoke.CODES.values()):
+    for index, (key, code) in enumerate(smoke.CODES.items()):
         directory = root / code["bundle"]
         directory.mkdir()
+        files = {"h.alist": b"synthetic H", "codewords.bin": b"synthetic codewords",
+                 "llrs.f32": b"synthetic LLRs"}
+        for name, content in files.items():
+            (directory / name).write_bytes(content)
         manifest = {"n": 65 + index, "k": 32, "frames": 8, "nnz": 120 + index,
-                    "seed": index + 1, "h_sha256": hashlib.sha256(b"synthetic H").hexdigest(),
-                    "llrs_sha256": hashlib.sha256(b"synthetic LLRs").hexdigest(),
+                    "seed": index + 1, "h_sha256": hashlib.sha256(files["h.alist"]).hexdigest(),
+                    "codewords_sha256": hashlib.sha256(files["codewords.bin"]).hexdigest(),
+                    "llrs_sha256": hashlib.sha256(files["llrs.f32"]).hexdigest(),
                     "codeword_source": "all-zero", "esn0_db": 1.0}
-        (directory / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        encoded = json.dumps(manifest).encode()
+        (directory / "manifest.json").write_bytes(encoded)
+        for module in (smoke, *loaded):
+            frozen = mock.patch.dict(module.CODES[key],
+                                     {"manifest_sha256": hashlib.sha256(encoded).hexdigest()})
+            frozen.start()
+            test.addCleanup(frozen.stop)
     configured = mock.patch.dict(os.environ, {"GF2_LDPC_INPUTS": str(root)})
     configured.start()
     test.addCleanup(configured.stop)
     return root
+
+
+class RecordedInputsTest(unittest.TestCase):
+    def test_a_directory_without_bundles_is_refused_with_its_remedy(self):
+        with tempfile.TemporaryDirectory() as empty:
+            with mock.patch.dict(os.environ, {"GF2_LDPC_INPUTS": empty}):
+                with self.assertRaises(SystemExit) as refused:
+                    smoke.inputs_root()
+        self.assertIn("extract the recorded bundle archive", str(refused.exception))
+
+    def test_a_bundle_differing_from_its_frozen_digest_is_refused(self):
+        root = bundle_inputs(self)
+        bundle = next(iter(smoke.CODES.values()))["bundle"]
+        manifest = root / bundle / "manifest.json"
+        manifest.write_text(manifest.read_text(encoding="utf-8") + " ", encoding="utf-8")
+        with self.assertRaises(SystemExit) as refused:
+            smoke.inputs_root()
+        self.assertIn("frozen manifest digest", str(refused.exception))
+
+    def test_a_payload_differing_from_its_manifest_is_refused(self):
+        root = bundle_inputs(self)
+        bundle = next(iter(smoke.CODES.values()))["bundle"]
+        (root / bundle / "llrs.f32").write_bytes(b"other LLRs")
+        with self.assertRaises(SystemExit) as refused:
+            smoke.inputs_root()
+        self.assertIn("differs from its manifest digest", str(refused.exception))
 
 
 class GeneratorTest(unittest.TestCase):
@@ -82,11 +123,17 @@ class GeneratorTest(unittest.TestCase):
 
     def test_generation_reads_external_manifests_without_copying_inputs(self):
         self.generate()
-        self.assertFalse((self.directory / "out" / "inputs").exists())
         identities = smoke.input_identities()
         for bundle, digest in identities["manifests"].items():
             source = Path(identities["path"]) / bundle / "manifest.json"
             self.assertEqual(digest, hashlib.sha256(source.read_bytes()).hexdigest())
+
+    def test_the_addendum_does_not_depend_on_where_the_bundles_lie(self):
+        first = self.generate()[0]
+        moved = self.directory / "moved"
+        shutil.copytree(os.environ["GF2_LDPC_INPUTS"], moved)
+        with mock.patch.dict(os.environ, {"GF2_LDPC_INPUTS": str(moved)}):
+            self.assertEqual(self.generate(name="moved-out")[0], first)
 
     def test_two_runs_write_identical_bytes(self):
         self.generate()

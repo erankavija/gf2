@@ -164,6 +164,12 @@ those of [`3be770d5`](../1a379447-zen3-cpu-performance/3be770d5/findings.md) and
 [`c077a88b`](../1a379447-zen3-cpu-performance/c077a88b/findings.md), and each timed execution checks its
 per-frame errors against the prepared quality record.
 
+The recorded corpus stays outside the repository. To run the survey tools, extract
+`recorded-inputs.tar.gz` (SHA-256 `a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba`,
+kept in `~/.local/share/gf2/external-inputs/`) into an empty directory and set `GF2_LDPC_INPUTS`
+to that directory. The tools refuse a directory whose bundles differ from the frozen digests in
+`survey/smoke-gf2-arms.py`.
+
 ### `comparison-arms` [plan-fixed] — AFF3CT arms the pinned build admits
 
 The comparator is AFF3CT [Cassagne2019] at the pin of
