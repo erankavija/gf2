@@ -2,13 +2,13 @@
 
 > **Diátaxis Type:** Explanation
 
-Design and execution plan of `@/issue/1362381c`, the final integrated
+Design record of `@/issue/1362381c`, the final integrated
 scorecard of epic `@/issue/1a379447` (epic REQ-05 and the aspirational REQ-07,
 with REQ-01, REQ-03, REQ-04 and REQ-06 support). The
 [measurement contract](../measurement-contract.md), the
 [frozen protocol](../f547c394/protocol.md) version 4 with its
 [amendment](../f547c394/amendment-v4.md) and the
-[worker brief](../worker-brief.md) govern every step; this design adds no
+[worker brief](../worker-brief.md) govern its evidence; this design adds no
 protocol, schema or checker version.
 
 ## Decisions
@@ -121,7 +121,7 @@ The issue's items are authoritative: `@/issue/1362381c/requirement/REQ-01`,
 
 ### Family registry
 
-The registry is the family list WP-1 projects into `workload-set.json`. Each
+The registry is the family list `survey/make-workload-set.py` projects into `workload-set.json`. Each
 family's receipts, ledgers and generated tables sit under
 `dev/bench_results/<issue>/` and the record directory of its owning issue.
 
@@ -163,38 +163,29 @@ and the AFF3CT flooding SIMD modes
 |---|---|
 | surfaced pitfall 7: the P-20 bound | Folded in: every integrated family is sized by it (below). Not-confirmatory families (`1d0da41f` v3, `26465e6c` v3 popcount, `6fb89a3c` logical/transpose, `eda07788` DVB v3, `c7113c5a` baselines) enter the scorecard as `not-confirmatory` rows with that reason. |
 | surfaced pitfall 34: comparator-gap outcome inversion | Folded in: the scorecard reads comparator-gap outcomes through the `INTERPRETATION` map of `make-collection-outcome.py`, extended at its source where a family's arm order differs. |
-| surfaced pitfall 50: no zero-window runner mode | Resolved: the shared `benchmark-ab-runner smoke` (`@/issue/d45aff82`) answers the validation position with one untimed dispatch; WP-3 and WP-4 use it. |
+| surfaced pitfall 50: no zero-window runner mode | Resolved: the shared `benchmark-ab-runner smoke` (`@/issue/d45aff82`) answers the validation position with one untimed dispatch; each integrated family's untimed smoke record comes from it. |
 | surfaced pitfall 83: AFF3CT INTRA at half LLR scale | Outside any criterion of this issue: bug `@/issue/11bfbfd9` tracks it outside the epic. The scorecard reports the arm as not quality-compatible on the recorded corpus, as recorded. |
 | `12fdeb5b` NR encoder baselines | Resolved, done: consumed by identity with its drift class. |
 | `bdc507a3` resumable P-11 | Resolved by protocol v4; integrated campaigns resume under it. |
 | `428f2f6b` hand-copied numbers | Resolved; the scorecard copies no figure into prose. |
-| `a387825e` lock leak | Resolved on main; the window runner also replaces lock-holding compiler-cache servers. |
+| `a387825e` lock leak | Resolved on main. |
 | `3e59cb9a` DVB warm pass | Resolved; the repaired v3 receipt is exploratory history and enters as such. |
-| `a203a23c`, `7cdc28e9` fresh-checkout verdicts | Resolved; WP-6 reruns `reevaluate-receipts.sh` to show every consumed receipt reproduces its verdict. |
+| `a203a23c`, `7cdc28e9` fresh-checkout verdicts | Resolved; the [re-evaluation record](../../../bench_results/1362381c/receipt-reevaluation.json) states each receipt's fresh-checkout verdict. |
 | `2c487595` schema siblings | Resolved; schema siblings exist per version. |
 | `706a8f93` achieved priority | Outside any criterion: rejected under the provenance freeze. The scorecard states the host facts receipts observe and nothing more. |
-| `94bbe5d7` freezer prose | Outside any criterion: rejected. Every in-window freeze passes `--family-description` (worker brief). |
+| `94bbe5d7` freezer prose | Outside any criterion: rejected. Each frozen confirmation states its own family description. |
 | `8275a6f8` child diagnostics | Resolved on main. |
 
-## Integrated measurement plan
+## Integrated families
 
-### Families
+Each integrated family asks one post-integration question on its own ledger and holds a pilot, a canonical freeze and a confirmation of release builds. Its frozen addendum states its cells, `material_gap_threshold`, margins and `search_budget`; the freezer refuses margins that do not exceed one plus the resolution.
 
-Each new family has its own fresh ledger (genesis file committed with the
-pilot addendum) and runs pilot → canonical freeze → confirmation. All arms are
-release builds of the current tree, built in-session before the window.
-
-| Family | Purpose | Question | Arms | Cells (C + H ≤ 6) |
+| Family | Purpose | Question | Arms | Record |
 |---|---|---|---|---|
-| FI-1 `1362381c-core-route-integration` | `final-integration` | Does the committed core envelope hold on the integrated tree: tuned-portable no worse than, or better than, conservative-portable, and native no worse than tuned-portable? | `63bad95d` profile harness build levels, through its `planned-families.json` / `make-family-addenda.py` / `make-family-plan.py` (extended at source for a new family entry) | Confirmatory: workloads of the `63bad95d` families. Holdout: workload-set entries that no `63bad95d` pilot measured (declaration committed before the pilot). One core (D-5). |
-| FI-2 `1362381c-decoder-route-integration` | `final-integration` | Does the committed coding envelope with worker-aware routing decode no slower than the conservative selectors at every worker configuration? | tuned-portable tuned-profile arm against the conservative-portable single-frame arm, rebuilt after `e5f8b3ae`; `make-family.py` declaration under `survey/families/` with `holdout_declaration` | Both codes, one worker at full and one-frame waves, plus six and twelve physical cores and twenty-four logical CPUs; holdout cells from batch sizes and seeds absent from the calibration inventory. |
-| FI-3 `1362381c-ldpc-aff3ct-integration` | `decoder-family`, `comparator-gap` | Is the integrated production route materially slower than AFF3CT's matched flooding NMS decoder? | production gf2 arm under the committed envelope; pinned AFF3CT matched arm; `make-family.py` | Both codes at one worker, full wave and one frame, plus twelve physical cores. Matched-algorithm only: the fastest-compatible pilot admitted no AFF3CT mode as quality-compatible, so that comparison is consumed by identity. |
-| FI-4 `1362381c-bch-integration` | `consumer-family`, `comparator-gap` | Is gf2's production BCH batch encode materially slower than the strongest external arm of the `4e732b56` survey on its workloads? | production gf2 BCH encode (the `8e53235b` harness); AFF3CT and bchlib programs wrapped as runner arms (D-6) | One cell per survey code class that `8e53235b` changed (m14 and the DVB-T2 short and normal codes), at the batch sizes of the `fd9d5416` W1 table; one core, plus a parallel batch cell at six physical cores if the arm exposes workers. |
-
-Each family freezes its own `material_gap_threshold`, margins and
-`search_budget` in the pilot addendum committed before the window, with a
-rationale tied to its pilot resolution. The freezer refuses margins that do
-not exceed one plus the resolution.
+| FI-1 `1362381c-core-route-integration` | `final-integration` | Does the committed core envelope hold on the integrated tree: tuned-portable no worse than, or better than, conservative-portable, and native no worse than tuned-portable? | `63bad95d` profile harness build levels, from the family's entry in `63bad95d/survey/planned-families.json` | [route outcome](../31727c57/outcome.md#core-family) |
+| FI-2 `1362381c-decoder-route-integration` | `final-integration` | Does the committed coding envelope with worker-aware routing decode no slower than the conservative selectors at every worker configuration? | tuned-portable tuned-profile arm against the conservative-portable single-frame arm | [route outcome](../31727c57/outcome.md#decoder-family) |
+| FI-3 `1362381c-ldpc-aff3ct-integration` | `decoder-family`, `comparator-gap` | Is the integrated production route materially slower than AFF3CT's matched flooding NMS decoder? | production gf2 arm under the committed envelope; pinned AFF3CT matched arm. The fastest-compatible comparison is consumed by identity. | [comparator outcome](../1358d6ab/outcome.md#fi-3-1362381c-ldpc-aff3ct-integration) |
+| FI-4 `1362381c-bch-integration` | `consumer-family`, `comparator-gap` | Is gf2's production BCH batch encode materially slower than the strongest external arm of the `4e732b56` survey on its workloads? | production gf2 BCH encode; AFF3CT and bchlib programs as runner arms (D-6) | [comparator outcome](../1358d6ab/outcome.md#fi-4-1362381c-bch-integration) |
 
 ### P-20 bound arithmetic
 
@@ -215,82 +206,11 @@ $m \le 6.25$, so each FI family admits six confirmatory and holdout cells.
 Pilots are exploratory and spend nothing. A second attempt on the same ledger
 ($t = 2$, $\alpha_2 = 0.05/6$) admits $m \le 2.08$ cumulatively, so after a
 six-cell first attempt it admits no cell: each FI family has exactly one
-confirmatory attempt. Before each freeze, the launcher prints
-`benchmark-acceptance --next-attempt <ledger> <family>` into the job output,
-and the freezer's cell selection stays within `max_cells`.
+confirmatory attempt.
 
-### Sequencing and windows
+## Reprofile (REQ-09)
 
-```mermaid
-flowchart LR
-  A[WP-1 workload set + registry] --> B[WP-2 drift classification]
-  B --> C[WP-3 core and decoder route families]
-  B --> D[WP-4 comparator families FI-3, FI-4]
-  E[e5f8b3ae lands] --> C
-  E --> D
-  C --> W[window 1: pilots, in-window freeze, confirmations, profiles]
-  D --> W
-  P[WP-5 profile cases and launchers] --> W
-  W --> G[WP-6 scorecard, gap register, report]
-```
-
-1. In session: WP-1 and WP-2 commit the workload-set declaration and the
-   drift record. WP-3 and WP-4 build arms after `e5f8b3ae` merges, smoke every
-   arm through `benchmark-ab-runner smoke`, and commit pilot addenda, ledger
-   genesis files, holdout declarations, plans and the FI declarations' margins.
-   Every holdout declaration is committed before its pilot.
-2. Window 1: one launcher per family, modelled on
-   [`d06a99ed/measurement/window.sh`](../d06a99ed/measurement/window.sh). It
-   runs the pilot, freezes with the canonical freezer
-   (`c7113c5a/survey/freeze-confirmation.py`, with repository-relative
-   `--pilot`, `--family-description`, `--purpose final-integration` and
-   `--holdout-cells` where applicable), commits only the freeze outputs, and
-   runs the confirmation. The profile series follow the campaigns.
-3. Window 2 is a reserve. It resumes an interrupted campaign under its own
-   identity, or runs a voided-attempt replacement (amendment-v4 rule) after a
-   procedural freeze or launch defect. It never repeats a confirmation whose
-   results were read.
-
-Estimated window load is a queue estimate, not a measurement: the
-`d06a99ed` pilot-plus-confirmation job (six decoder cells) is the per-family
-reference in `bench-window/queue.tsv`, and each job line states its own
-estimate.
-
-## Reprofiling plan (REQ-09)
-
-- **Decoder route.** A new case file runs the integrated production route,
-  under the committed envelope with worker-aware routing, at one, six and
-  twelve physical cores and twenty-four logical CPUs on both codes. It runs
-  through [`run-profile.sh`](../../../bench_results/ed3d490e/run-profile.sh)
-  (`2a3b479d`) with a build record of the rebuilt `ldpc-batch-profile`, and
-  is summarized by `3be770d5/survey/summarize-profile.py`. Its
-  `RULES_BY_EXECUTABLE` gains the new executable's digest at its source. The
-  `f434ddd3` series is consumed by identity for the lane cases that did not
-  change.
-- **Other integrated bottlenecks.** Every primary cell with a material gap
-  needs a profile of the code it measures. If an existing profile covers that
-  code unchanged (WP-2 classification), the cell cites it: the 2037941f
-  logical and dense profiles, the c04dd4ac shift and interleave profiles, the
-  3be770d5 steady profile. Each remaining cell gets a launcher that sources
-  the shared session loop `3be770d5/survey/profile-series.sh` with its own
-  `series_cases`, so no new session framework is written. Expected subjects
-  are the NR encoder against srsRAN (if no current profile covers it) and FI-4
-  BCH encode.
-- **Accounting table**, generated in WP-6 per profiled cell:
-  - allocation: the `69dd39f1` allocation witnesses, an untimed in-session test
-    run on the integrated tree;
-  - instruction and dependency limits: perf counters and the committed
-    assembly listings, e.g. `ldpc_lanes.asm.txt`;
-  - compiler spills: stack traffic in those listings, through the existing
-    `make-asm-comparison.py` tools;
-  - packing and conversion: stage probes and whole-consumer adapter stages;
-  - cache traffic and bandwidth: counter ratios;
-  - orchestration: worker scaling rows.
-
-  A mechanism the evidence does not measure is stated as unmeasured. No
-  approach to a hardware limit is claimed unless a counter or bytes-per-second
-  measurement against a measured host bound supports it, and the row names
-  that basis.
+The [profile report](../78f0aafd/report.md) states the integrated profile series and their coverage of the primary material-gap cells; the [accounting](../78f0aafd/accounting.md) carries the mechanism columns per profiled cell. A mechanism the evidence does not measure is stated as unmeasured, and no approach to a hardware limit is claimed.
 
 ## Scorecard and report generator (REQ-07, REQ-12)
 
@@ -337,38 +257,17 @@ estimate.
 - Reproducibility: two consecutive runs followed by `git diff --exit-code`.
   The report `1362381c/findings.md` (Research) states conclusions with
   pointers only.
-- `docs/reference/performance-evidence.md` gains claim entries only for
+- `docs/reference/performance-evidence.md` carries claim entries only for
   confirmatory integrated cells, in its existing format.
 
-## Work packages
+## Evidence notes
 
-| WP | Goal | Files | Inputs | Untimed verification | Queue lines |
-|---|---|---|---|---|---|
-| WP-1 | Freeze the workload set (D-1) and the family registry | `1362381c/survey/make-workload-set.py`, `1362381c/workload-set.json` | committed addenda and acceptance summaries | generator self-test; byte-stable rerun | none |
-| WP-2 | Classify consumed cells as affected or unaffected (D-3) | extend `6e87c436/survey/make-production-drift.py` at its source to take any receipt; `1362381c/production-drift.json` | receipts' `inputs/` snapshots, current tree | rerun identical | none |
-| WP-3 | Core and decoder route integration families FI-1, FI-2 | `63bad95d/survey/planned-families.json` entry and its generators; `ed3d490e-zen3-ldpc-frame-simd/survey/families/1362381c-decoder-route.json`; holdout declarations; ledgers; launchers | WP-1; `e5f8b3ae` merged | arm builds at Rust 1.95; `benchmark-ab-runner smoke`; untimed staged runs | two (pilot → freeze → confirmation each) |
-| WP-4 | Comparator integration families FI-3, FI-4 | FI-3 declaration under `survey/families/`; BCH arm wrappers beside the `8e53235b` harness; per-family addenda and launchers | WP-1, WP-2; `e5f8b3ae` merged | bit-exact equivalence gates; smoke | one per family |
-| WP-5 | Reprofile cases and launchers | decoder case file and build record; `RULES_BY_EXECUTABLE` entry; launchers over `profile-series.sh` for the other subjects | WP-2, WP-3 builds | dry session (outputs are not evidence); allocation witnesses | one per series |
-| WP-6 | Scorecard, gap register, report, determinism record, publication | `make-scorecard.py`, `gaps.json`, `dev/bench_results/1362381c/*`, `1362381c/findings.md`, `performance-evidence.md` entries | window outputs, WP-1/2 | byte-reproducible double run; `reevaluate-receipts.sh`; determinism suites through `./scripts/cargo-budget.sh --test`; `./scripts/cargo-ci.sh` | none |
-
-WP-1 and WP-2 run in parallel. WP-3, WP-4 and WP-5 run in parallel after them
-and after `e5f8b3ae`. Their pilot addenda, holdout declarations, ledger
-genesis files and margins are frozen and committed before window 1. WP-6
-follows the window. Every package commits evidence before prose and lists its
-queue lines in its report.
-
-## Risks and open questions
-
-- A consumed cell is a historical row labelled with its drift class; the
-  scorecard never presents a `code-differs` row as a measurement of the
-  current tree.
-- A host disturbance during window 1 cannot be repaired by a second attempt
-  (P-20, $t = 2$). It is recorded as in the `63bad95d` disturbance record. A
-  repeat needs an invoker ruling like F-08 of
-  [campaign findings](../63bad95d/campaign-findings.md).
-- `e5f8b3ae` changes the gf2 arm digests; FI-2 and FI-3 build only after it
-  merges, and story receipts keep the digests they pin.
+- A consumed row is historical, labelled with its drift class; the scorecard
+  never presents a `code-differs` row as a measurement of the current tree.
 - Ledger paths of `12fdeb5b` and `eda07788` addenda name `dev/active/<id>/`,
-  while the files live under this epic's record directory. The scorecard
-  resolves each ledger through the receipt's pinned prefix (P-22), never
-  through the addendum path.
+  while the files live under this epic's record directory. The scorecard reads
+  each ledger through the receipt's pinned prefix (P-22), never through the
+  addendum path.
+- Remaining gaps and their next experiments are in the
+  [gap register](gaps.json) and its tracked issues; the
+  [report](findings.md) states the conclusions.
