@@ -436,9 +436,6 @@ def validate(directory, declarations, runs_list, counters, resolution):
     identities = [line for line in log if line.startswith("identity ")]
     if len(identities) != 1:
         problems.append("profile log has {} identity lines".format(len(identities)))
-    case_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "profile-cases.tsv")
-    if identities and "profile-cases.tsv={}".format(digest(case_path)) not in identities[0]:
-        problems.append("profile log does not pin the current profile-cases.tsv")
     for label in labels:
         done = sum(line.startswith("row {} done ".format(label)) for line in log)
         if done != 1:

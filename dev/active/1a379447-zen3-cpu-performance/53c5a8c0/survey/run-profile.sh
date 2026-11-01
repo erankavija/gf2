@@ -93,7 +93,6 @@ export PATH="${HOME}/.cargo/bin:${PATH}"
 
 python3 "${HERE}/check-profile-cases.py" "${CASES}" >&2
 
-digest() { sha256sum "$1" | cut -d' ' -f1; }
 binary_for() { echo "${REPO}/target/53c5a8c0-arms-${1}/release/profile-arm"; }
 for variant in conservative native; do
     [[ -x "$(binary_for "${variant}")" ]] || {
@@ -102,17 +101,17 @@ for variant in conservative native; do
     }
 done
 
-IDENTITY="profile-arm-conservative=$(digest "$(binary_for conservative)")"
-IDENTITY+=" profile-arm-native=$(digest "$(binary_for native)")"
-IDENTITY+=" profile-cases.tsv=$(digest "${CASES}")"
-FIRST="$(sed -n 's/^identity //p' "${LOG}" | head -n 1)"
-if [[ -n "${FIRST}" && "${FIRST}" != "${IDENTITY}" ]]; then
-    echo "an executable or the case table changed since the first session" >&2
-    echo "first:   ${FIRST}" >&2
-    echo "current: ${IDENTITY}" >&2
-    exit 2
-fi
-[[ -n "${FIRST}" || "${MODE}" == "row" ]] || echo "identity ${IDENTITY}" >>"${LOG}"
+identity_arguments=()
+for setting in REPETITIONS CALLS_TARGET_MS CALIBRATION_CALLS CALIBRATION_MIN_DELTA_MS \
+    CALIBRATION_MAX_CALLS CALLS_CEILING SAMPLE_FREQUENCY REPORT_PERCENT_LIMIT \
+    THROUGHPUT_EVENTS MEMORY_EVENTS; do
+    identity_arguments+=(--setting "${setting}=${!setting}")
+done
+IDENTITY="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
+    --executable "profile-arm-conservative=$(binary_for conservative)" \
+    --executable "profile-arm-native=$(binary_for native)" \
+    --table "profile-cases.tsv=${CASES}" "${identity_arguments[@]}")"
+grep -q '^identity ' "${LOG}" || [[ "${MODE}" == "row" ]] || echo "identity ${IDENTITY}" >>"${LOG}"
 
 if [[ "${MODE}" == "row" ]]; then
     :

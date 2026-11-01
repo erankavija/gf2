@@ -18,8 +18,8 @@
 # session's start with the executable digest, its completion, and the discard
 # of a session that did not finish. A re-run with the same output directory
 # resumes after the last completed session, re-runs an unfinished one whole,
-# and refuses to resume when an executable a session runs or a file that
-# defines its cases differs from the first session's record in `host.txt`.
+# and refuses to resume when an executable a session runs or the parsed
+# configuration differs from the first session's record.
 #
 # Usage: dev/active/1a379447-zen3-cpu-performance/04b85d10/survey/run-profile.sh <output-dir>
 #
@@ -43,9 +43,6 @@ export RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
 export CARGO_TARGET_DIR="${REPO}/target/consumer-profile-${ISSUE}"
 BIN="${CARGO_TARGET_DIR}/release"
 LOG="${OUT}/repetitions.log"
-# The harness files that define what a session measures, besides the two
-# executables it runs.
-SESSION_FILES=(sweep.sh profile-cases.py counter-cases.txt report-cases.txt alloc-trace-cases.txt)
 
 # ------------------------------------------------------------------ build
 # Builds finish before any timed work.
@@ -53,40 +50,41 @@ SESSION_FILES=(sweep.sh profile-cases.py counter-cases.txt report-cases.txt allo
     --manifest-path "${MANIFEST}") >>"${OUT}/build.log" 2>&1
 
 # ---------------------------------------------------------------- identity
-# A resumed series measures what its first session measured: the same
-# `consumer-profile`, as the log's first start line records it, and the same
-# `consumer-verify` and session files, as the first session's host record
-# lists them.
+# A resumed series measures what its first session measured. An older record
+# digests the generator's bytes, so its ladder is compared directly; removed when
+# no such log is resumed (@/issue/101604ef).
 touch "${LOG}"
-DIGEST="$(sha256sum "${BIN}/consumer-profile" | cut -d' ' -f1)"
-FIRST="$(sed -n 's/^rep-[0-9]* start .* consumer-profile=\([0-9a-f]*\).*/\1/p' "${LOG}" | head -n 1)"
-if [[ -n "${FIRST}" && "${FIRST}" != "${DIGEST}" ]]; then
-    echo "consumer-profile changed since the first session (${FIRST} -> ${DIGEST})" >&2
+LADDER="${OUT}/cases.jsonl"
+python3 "${HERE}/profile-cases.py" >"${LADDER}.new"
+if [[ -s "${LOG}" && -e "${LADDER}" ]] && ! cmp -s "${LADDER}.new" "${LADDER}"; then
+    rm "${LADDER}.new"
+    echo "resume refused: the expanded case ladder differs from the first session's" >&2
     exit 2
 fi
-unchanged() {
-    local recorded current
-    recorded="$(awk -v name="$1" '$2 == name {print $1; exit}' "${OUT}/host.txt")"
-    current="$(sha256sum "$2" | cut -d' ' -f1)"
-    if [[ "${recorded}" != "${current}" ]]; then
-        echo "$1 changed since the first session (${recorded:-unrecorded} -> ${current})" >&2
-        exit 2
-    fi
+IDENTITY="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
+    --recorded-digests "${OUT}/host.txt" \
+    --executable "consumer-profile=${BIN}/consumer-profile" \
+    --executable "consumer-verify=${BIN}/consumer-verify" \
+    --setting "REPETITIONS=${REPETITIONS}" \
+    --shell "sweep.sh=${HERE}/sweep.sh" \
+    --table "counter-cases.txt=${HERE}/counter-cases.txt" \
+    --table "report-cases.txt=${HERE}/report-cases.txt" \
+    --table "alloc-trace-cases.txt=${HERE}/alloc-trace-cases.txt" \
+    --table "cases.jsonl=${LADDER}.new")" || {
+    rm "${LADDER}.new"
+    exit 2
 }
+mv "${LADDER}.new" "${LADDER}"
 
 # ------------------------------------------------------------- provenance
 # Written once; a resumed run appends to it instead.
 if [[ -e "${OUT}/host.txt" ]]; then
-    unchanged consumer-verify "${BIN}/consumer-verify"
-    for file in "${SESSION_FILES[@]}"; do
-        unchanged "dev/active/1a379447-zen3-cpu-performance/${ISSUE}/survey/${file}" "${HERE}/${file}"
-    done
     {
         echo
         echo "## resumed"
         echo "# resumed_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
         echo "# gf2 revision (informational): $(git -C "${REPO}" rev-parse HEAD)"
-        echo "# unchanged since the first session: consumer-profile, consumer-verify, ${SESSION_FILES[*]}"
+        echo "# resume identity: ${IDENTITY}"
         uptime
     } >>"${OUT}/host.txt"
 else
@@ -163,11 +161,8 @@ else
 fi
 
 # --------------------------------------------------------------- timed work
-# The ladder is generated outside the mutex; each session then runs inside one
-# wrapper invocation, so the host mutex changes hands once per session rather
-# than once per measured process.
-python3 "${HERE}/profile-cases.py" >"${OUT}/cases.jsonl"
-
+# Each session runs inside one wrapper invocation, so the host mutex changes
+# hands once per session rather than once per measured process.
 echo "profile execution log: ${LOG}" >&2
 for index in $(seq 1 "${REPETITIONS}"); do
     rep="rep-$(printf '%02d' "${index}")"
@@ -191,9 +186,9 @@ for index in $(seq 1 "${REPETITIONS}"); do
     if [[ "${index}" == 1 ]]; then
         trace=yes
     fi
-    echo "${rep} start $(date -u +%Y-%m-%dT%H:%M:%SZ) consumer-profile=${DIGEST} load=[$(uptime)]" >>"${LOG}"
+    echo "${rep} start $(date -u +%Y-%m-%dT%H:%M:%SZ) ${IDENTITY} load=[$(uptime)]" >>"${LOG}"
     GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "${FLOCK}" --full-host \
-        bash "${HERE}/sweep.sh" "${OUT}/${rep}" "${BIN}" "${HERE}" "${OUT}/cases.jsonl" "${trace}"
+        bash "${HERE}/sweep.sh" "${OUT}/${rep}" "${BIN}" "${HERE}" "${LADDER}" "${trace}"
     echo "${rep} done $(date -u +%Y-%m-%dT%H:%M:%SZ) load=[$(uptime)]" >>"${LOG}"
 done
 if ! grep -q '^series done ' "${LOG}"; then
