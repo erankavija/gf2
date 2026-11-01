@@ -364,6 +364,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "experiments-common"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+]
+
+[[package]]
 name = "f3-bipedal-prototype"
 version = "0.1.0"
 

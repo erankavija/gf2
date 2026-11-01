@@ -1,0 +1,15 @@
+[package]
+name = "experiments-common"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+description = "Identity types, run identity observation and atomic publish shared by gf2 experiments"
+
+[dependencies]
+serde = { workspace = true }
+sha2 = "0.10"
+
+[dev-dependencies]
+serde_json = { workspace = true }
+tempfile = "3"

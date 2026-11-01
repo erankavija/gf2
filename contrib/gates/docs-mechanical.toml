@@ -1,5 +1,5 @@
 markdown = ["README.md", "crates/*/README.md", "docs/**/*.md", "AGENTS.md", "CLAUDE.md", "dev/active/**/*.md", "dev/index.md", "dev/authoring-conventions.md"]
 citations = ["README.md", "crates/*/README.md", "docs/**/*.md", "AGENTS.md", "CLAUDE.md"]
-rustdoc = ["crates/**/*.rs", "dev/tools/tuning-campaign-support/**/*.rs"]
+rustdoc = ["crates/**/*.rs", "dev/tools/tuning-campaign-support/**/*.rs", "experiments/**/*.rs"]
 exclude = ["dev/archive"]
 baseline = "contrib/gates/docs-mechanical-baseline.md"

@@ -56,25 +56,25 @@ release mode.
 - `gf2-core` owns low-level bit storage, dense and sparse linear algebra,
   finite-field abstractions and arithmetic, and safe runtime dispatch. Its only
   production dependency inside the workspace is `gf2-kernels-simd`.
-- `gf2-coding` owns codes, modems, channels, and coding-domain composition and
-  depends inward on `gf2-core`.
+- `gf2-coding` (on `gf2-core`) owns codes, modems, channels, domain composition.
 - `gf2-algebra` owns packed $\mathbb{F}_3$, $\mathbb{F}_5$ and $\mathbb{F}_7$
   arithmetic and permanent algorithms; it may dispatch to isolated kernels
   without becoming a kernel layer itself.
 - `gf2-sim` owns the generic CPU/GPU simulation pipeline and orchestration
-  primitives. Its design source of truth is linked through JIT item
-  `@/issue/ec530af9`. Experiment code stays outside it under
-  `@/inv/experiment-library-separation`.
+  primitives. JIT item `@/issue/ec530af9` links its design source of truth.
+  Experiment code stays outside it under `@/inv/experiment-library-separation`.
 - `gf2-kernels-simd` and `gf2-kernels-hip` are the only production crates that
   may contain `unsafe`. Every unsafe boundary requires an explicit safety
   contract. Other production crates deny unsafe code.
 - `proofs/` owns Lean verification of selected arithmetic and algorithm paths.
+- `experiments/<name>/` holds an experiment's code, protocol, configuration,
+  results and small receipts, and `experiments/common` the mechanics several
+  share. No `crates/*/Cargo.toml` depends on `experiments/`.
 
 Keep mathematical primitives, coding-domain behavior, orchestration, and
 machine-specific kernels separated. Dependencies point inward; a lower layer
 must not acquire a production dependency on a higher one. See
-`@/inv/crate-dependency-direction` and
-`@/inv/unsafe-kernel-isolation`.
+`@/inv/crate-dependency-direction` and `@/inv/unsafe-kernel-isolation`.
 
 ## Correctness and test policy
 
