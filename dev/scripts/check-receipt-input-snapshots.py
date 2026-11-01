@@ -133,7 +133,7 @@ def receipt_paths(oids: dict[str, str]) -> list[str]:
     return sorted(
         path
         for path in oids
-        if path.startswith("dev/bench_results/")
+        if path.startswith("dev/")
         and path.endswith("/receipt.json")
         and "/inputs/" not in path
     )
