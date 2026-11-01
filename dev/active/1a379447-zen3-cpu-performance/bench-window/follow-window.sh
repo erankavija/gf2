@@ -1,17 +1,9 @@
 #!/usr/bin/env bash
 # Live view of the benchmark window for epic 1a379447 (jit:1a379447).
 #
-# Reads the same three things run-window.sh writes and nothing else: the
-# append-only window.log, the per-job <key>.out, and the <key>.done markers.
-# It derives each job's state from those rather than from a process check, so
-# the view is the same whether the window is running, finished or interrupted.
-#
-# A job's exit code is not evidence that it measured anything: a launcher that
-# logs each case's status and continues exits 0 over a wholly failed series.
-# The last panel therefore tails the running job's own output, which is where
-# that shows up, and a finished job is shown with the rc the log recorded.
-#
-# The layout adapts to the pane, so it stays readable in a narrow split.
+# Job status comes from the append-only window.log, job output and done markers.
+# An exit code does not establish measurement completion; consult the campaign's
+# own execution log.
 #
 # Usage: follow-window.sh [interval-seconds | --print-root]
 set -uo pipefail

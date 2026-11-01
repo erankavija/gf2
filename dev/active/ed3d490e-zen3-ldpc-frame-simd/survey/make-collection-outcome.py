@@ -1,17 +1,9 @@
 #!/usr/bin/env python3
-"""Per-cell outcome table of one confirmation receipt (jit:32bfe9f8).
+"""Generate a per-cell outcome table from a confirmation receipt (jit:32bfe9f8).
 
-Reads the receipt's acceptance summary, its plan and the addendum snapshot the receipt pins, and
-writes one row per summary cell: role and objective from the addendum, arms from the plan,
-decision and outcome as the evaluator records them, and the interpretation INTERPRETATION
-declares for the cell's objective and outcome. When the addendum declares holdout cells, a
-second table names each cell's baseline and candidate builds from the plan's arms and states for
-each holdout cell whether the calibrated profile holds on the held-out inputs, which it does
-exactly when the recorded outcome is `pass`. The receipt directory is the one named by
-CAMPAIGN_ID among the repository's receipts.
-
-Usage (from the worktree root): make-collection-outcome.py CAMPAIGN_ID OUT
-                                make-collection-outcome.py --self-test
+Usage (from the worktree root):
+    python3 dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/make-collection-outcome.py CAMPAIGN_ID OUT
+    python3 dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/make-collection-outcome.py --self-test
 """
 
 import functools
@@ -127,7 +119,7 @@ def render(directory, place):
         f"the [plan]({link(place, directory / 'plan.json')}) and the "
         f"[addendum snapshot]({link(place, directory / pinned['snapshot'])}) "
         "the receipt pins; from the worktree root, "
-        f"`{pathlib.Path(__file__).name} {summary['campaign_id']} "
+        f"`python3 {generator.repository_path(pathlib.Path(__file__))} {summary['campaign_id']} "
         f"{generator.repository_path(place)}` regenerates it.", "",
         f"Source: verdict `{summary['verdict']}`, qualifies `{str(summary['qualifies']).lower()}`, "
         f"{len(summary['findings'])} findings.", "",
