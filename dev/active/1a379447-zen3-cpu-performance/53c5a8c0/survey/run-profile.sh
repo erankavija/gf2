@@ -59,6 +59,7 @@ REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 [[ "$(pwd -P)" == "$(cd "${REPO}" && pwd -P)" ]] || { echo 'invoke from the worktree root' >&2; exit 2; }
 
 FLOCK="${REPO}/dev/scripts/ccx1-bench-flock.sh"
+RESUME_IDENTITY="${REPO}/$(python3 -B "${REPO}/$(git -C "${REPO}" ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')" file resume_identity.py)"
 CASES="${HERE}/profile-cases.tsv"
 REPETITIONS=9
 CALLS_TARGET_MS=300
@@ -101,17 +102,10 @@ for variant in conservative native; do
     }
 done
 
-identity_arguments=()
-for setting in REPETITIONS CALLS_TARGET_MS CALIBRATION_CALLS CALIBRATION_MIN_DELTA_MS \
-    CALIBRATION_MAX_CALLS CALLS_CEILING SAMPLE_FREQUENCY REPORT_PERCENT_LIMIT \
-    THROUGHPUT_EVENTS MEMORY_EVENTS; do
-    identity_arguments+=(--setting "${setting}=${!setting}")
-done
-IDENTITY="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
+IDENTITY="$(python3 -B "${RESUME_IDENTITY}" --log "${LOG}" \
     --executable "profile-arm-conservative=$(binary_for conservative)" \
     --executable "profile-arm-native=$(binary_for native)" \
-    --script "run-profile.sh=${BASH_SOURCE[0]}" --measured-lines 'invoke=|--calls|calls=' \
-    --table "profile-cases.tsv=${CASES}" "${identity_arguments[@]}")"
+    --script "run-profile.sh=${BASH_SOURCE[0]}" --table "profile-cases.tsv=${CASES}")"
 grep -q '^identity ' "${LOG}" || [[ "${MODE}" == "row" ]] || echo "identity ${IDENTITY}" >>"${LOG}"
 
 if [[ "${MODE}" == "row" ]]; then

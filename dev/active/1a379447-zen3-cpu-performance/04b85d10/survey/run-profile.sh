@@ -30,6 +30,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(git -C "${HERE}" rev-parse --show-toplevel)"
 ISSUE=04b85d10
 FLOCK="${REPO}/dev/scripts/ccx1-bench-flock.sh"
+RESUME_IDENTITY="${REPO}/$(python3 -B "${REPO}/$(git -C "${REPO}" ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')" file resume_identity.py)"
 MANIFEST="${HERE}/gf2-side/Cargo.toml"
 # Nine is the smallest session count whose order-statistic interval for a
 # median at 95% coverage excludes the extreme sessions ([x(2), x(8)], 96.1%).
@@ -61,12 +62,11 @@ if [[ -s "${LOG}" && -e "${LADDER}" ]] && ! cmp -s "${LADDER}.new" "${LADDER}"; 
     echo "resume refused: the expanded case ladder differs from the first session's" >&2
     exit 2
 fi
-IDENTITY="$(python3 -B "${REPO}/dev/scripts/resume_identity.py" --log "${LOG}" \
+IDENTITY="$(python3 -B "${RESUME_IDENTITY}" --log "${LOG}" \
     --recorded-digests "${OUT}/host.txt" \
-    --script "run-profile.sh=${BASH_SOURCE[0]}" --measured-lines 'trace=' \
+    --script "run-profile.sh=${BASH_SOURCE[0]}" \
     --executable "consumer-profile=${BIN}/consumer-profile" \
     --executable "consumer-verify=${BIN}/consumer-verify" \
-    --setting "REPETITIONS=${REPETITIONS}" \
     --shell "sweep.sh=${HERE}/sweep.sh" \
     --table "counter-cases.txt=${HERE}/counter-cases.txt" \
     --table "report-cases.txt=${HERE}/report-cases.txt" \
