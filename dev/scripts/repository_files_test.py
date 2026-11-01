@@ -17,7 +17,7 @@ sys.dont_write_bytecode = True
 from repository_files import (  # noqa: E402
     PROTOCOL_OPENING,
     SHARED_PRODUCING_MANIFEST,
-    SNAPSHOT_DIRECTORY,
+    CONFIGURATION_DIRECTORY,
     document,
     live_file,
     package_directory,
@@ -61,9 +61,9 @@ class SharedProducingManifest(Fixture):
             shared_producing_manifest(self.root), f"a/copy/{SHARED_PRODUCING_MANIFEST}"
         )
 
-    def test_snapshot_copy_of_the_protocol_document_is_not_live(self):
+    def test_frozen_copy_of_the_protocol_document_is_not_live(self):
         self.entry("entry", b"{}\n")
-        self.entry(f"receipt/{SNAPSHOT_DIRECTORY}", b'{"other": true}\n')
+        self.entry(f"receipt/{CONFIGURATION_DIRECTORY}", b'{"other": true}\n')
         self.assertEqual(
             shared_producing_manifest(self.root), f"entry/{SHARED_PRODUCING_MANIFEST}"
         )
@@ -92,9 +92,9 @@ class Document(Fixture):
         self.write("a/record.md", b"# Wanted\n")
         self.assertEqual(document(self.root, "record.md", b"# Wanted\n"), "a/record.md")
 
-    def test_snapshot_copy_is_not_live(self):
+    def test_frozen_copy_is_not_live(self):
         self.write("entry/record.md", b"# Wanted\n")
-        self.write(f"receipt/{SNAPSHOT_DIRECTORY}/record.md", b"# Wanted\n\nSnapshot.\n")
+        self.write(f"receipt/{CONFIGURATION_DIRECTORY}/record.md", b"# Wanted\n\nFrozen.\n")
         self.assertEqual(document(self.root, "record.md", b"# Wanted\n"), "entry/record.md")
 
     def test_absent_and_differing_documents_are_rejected(self):
@@ -107,15 +107,15 @@ class Document(Fixture):
 
 
 class LiveFile(Fixture):
-    def test_file_is_located_by_name_outside_snapshots(self):
+    def test_file_is_located_by_name_outside_frozen_configurations(self):
         self.write("x/tool.sh", b"live\n")
-        self.write(f"r/{SNAPSHOT_DIRECTORY}/x/tool.sh", b"copy\n")
+        self.write(f"r/{CONFIGURATION_DIRECTORY}/x/tool.sh", b"copy\n")
         self.assertEqual(live_file(self.root, "tool.sh"), "x/tool.sh")
 
     def test_path_suffix_selects_one_of_several_files_of_a_name(self):
         self.write("x/a/record.json", b"")
         self.write("y/b/record.json", b"")
-        self.write(f"r/{SNAPSHOT_DIRECTORY}/x/a/record.json", b"")
+        self.write(f"r/{CONFIGURATION_DIRECTORY}/x/a/record.json", b"")
         self.assertEqual(live_file(self.root, "a/record.json"), "x/a/record.json")
         for suffix in ("record.json", "c/record.json", "x/a"):
             with self.assertRaises(LookupError):

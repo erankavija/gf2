@@ -1,8 +1,9 @@
 //! Zen 3 benchmark protocol identity, frozen shared settings, and the
 //! family/cell addendum contract. The protocol document, the addendum schema
-//! and this module describe one versioned contract. Receipts pin the document
-//! and schema by content digest. The source revision is the rebuild pointer;
-//! acceptance reads inputs from that checkout and recomputes statistics.
+//! and this module describe one versioned contract. A campaign freezes the
+//! document, contract, schema and addendum into its `configuration/` directory
+//! and pins them by content digest; acceptance reads those copies and recomputes
+//! statistics. The source revision is the rebuild pointer.
 
 use crate::abtest::Margins;
 use crate::host::CoreArm;
@@ -133,6 +134,9 @@ impl SharedSettings {
 /// protocol document and serves every plan that names no manifest of its own.
 pub const SHARED_PRODUCING_MANIFEST: &str = "producing-inputs.json";
 
+/// File name of the family addendum inside a frozen configuration.
+pub const CONFIGURATION_ADDENDUM: &str = "family-addendum.json";
+
 /// A shared document every receipt pins. Each is identified by the identity
 /// its own bytes declare, so a receipt's recorded source path is provenance
 /// and a live document is found wherever it lies below the repository root.
@@ -156,6 +160,16 @@ impl SharedInput {
             Self::Protocol => "protocol",
             Self::Contract => "contract",
             Self::AddendumSchema => "addendum schema",
+        }
+    }
+
+    /// File name of this input inside a frozen configuration, which no lookup
+    /// of a live document matches.
+    pub fn configuration_file(self) -> &'static str {
+        match self {
+            Self::Protocol => "benchmark-protocol.md",
+            Self::Contract => "contract.md",
+            Self::AddendumSchema => "family-addendum.schema.json",
         }
     }
 
@@ -268,6 +282,25 @@ impl ArtifactPin {
         if sha256_hex(&bytes) != self.sha256 {
             return Err(format!(
                 "pinned artifact {} content digest differs",
+                self.path
+            ));
+        }
+        Ok(bytes)
+    }
+
+    /// Returns the bytes of `file` in the frozen configuration of the stage or
+    /// receipt directory `campaign_dir`, whose digest matches this pin.
+    pub fn verify_frozen(&self, campaign_dir: &Path, file: &str) -> Result<Vec<u8>, String> {
+        self.validate_shape()?;
+        let bytes = fs::read(
+            campaign_dir
+                .join(crate::repository::CONFIGURATION_DIRECTORY)
+                .join(file),
+        )
+        .map_err(|error| format!("cannot read frozen {file}: {error}"))?;
+        if sha256_hex(&bytes) != self.sha256 {
+            return Err(format!(
+                "frozen {file} content digest differs from the pin of {}",
                 self.path
             ));
         }

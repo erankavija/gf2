@@ -20,9 +20,9 @@ import sys
 import tomllib
 from pathlib import Path
 
-# Receipt input snapshots hold byte copies of tracked files beside the receipt;
-# a lookup for the live file excludes them.
-SNAPSHOT_DIRECTORY = "inputs"
+# A campaign's frozen configuration holds byte copies of live documents beside
+# its receipt; a lookup for the live file excludes them.
+CONFIGURATION_DIRECTORY = "configuration"
 
 # `protocol::SHARED_PRODUCING_MANIFEST` and the opening `SharedInput::identity`
 # requires of a protocol document, in the campaign support crate.
@@ -42,9 +42,9 @@ def repository_root(anchor: Path) -> Path:
     return Path(listing.stdout.strip())
 
 
-def is_snapshot_copy(path: str) -> bool:
-    """Whether the repository-relative `path` lies in a receipt input snapshot."""
-    return SNAPSHOT_DIRECTORY in Path(path).parts[:-1]
+def is_frozen_configuration(path: str) -> bool:
+    """Whether the repository-relative `path` lies in a frozen configuration."""
+    return CONFIGURATION_DIRECTORY in Path(path).parts[:-1]
 
 
 def tracked_files(root: Path, name: str) -> list[str]:
@@ -61,7 +61,7 @@ def tracked_files(root: Path, name: str) -> list[str]:
     ).stdout
     return sorted(
         {path for path in listing.split("\0")
-         if path and (root / path).is_file() and not is_snapshot_copy(path)}
+         if path and (root / path).is_file() and not is_frozen_configuration(path)}
     )
 
 

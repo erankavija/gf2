@@ -14,8 +14,8 @@ This check reads every committed campaign receipt's pinned addendum-schema
 digest (`addendum_schema.sha256`) and confirms it equals the digest of some
 committed addendum schema file. It identifies the schema files by name and
 by a `$id` naming a protocol version, the receipts by the name `receipt.json`,
-and the versions table by its `schema` field; receipt input snapshot copies
-are not live files. No input is located by a literal repository path.
+and the versions table by its `schema` field; copies in a frozen
+configuration are not live files. No input is located by a literal repository path.
 
 The check reads committed content only: paths come from `HEAD` (or from the
 revision `--revision` names) and bytes from the blobs they name, so the
@@ -45,7 +45,7 @@ import tempfile
 from pathlib import Path
 from typing import NamedTuple
 
-from repository_files import is_snapshot_copy, repository_root
+from repository_files import is_frozen_configuration, repository_root
 
 SCHEMA_FILE_RE = re.compile(r"^addendum\.schema\.json$|^addendum-v\d+(?:-[a-z]+)?\.schema\.json$")
 SCHEMA_ID_RE = re.compile(r"^zen3-benchmark-addendum-v(\d+)$")
@@ -145,7 +145,7 @@ def versions_table_path(oids: dict[str, str], read, files: list[SchemaFile]) -> 
     `VERSIONS_TABLE_SCHEMA`; absent one, it belongs beside the schema files.
     """
     for path in sorted(oids):
-        if Path(path).name != VERSIONS_TABLE_NAME or is_snapshot_copy(path):
+        if Path(path).name != VERSIONS_TABLE_NAME or is_frozen_configuration(path):
             continue
         document = decode(read, path)
         if isinstance(document, dict) and document.get("schema") == VERSIONS_TABLE_SCHEMA:
@@ -162,7 +162,7 @@ def schema_files(oids: dict[str, str], read) -> list[SchemaFile]:
     """
     files: list[SchemaFile] = []
     for path in sorted(oids):
-        if not SCHEMA_FILE_RE.match(Path(path).name) or is_snapshot_copy(path):
+        if not SCHEMA_FILE_RE.match(Path(path).name) or is_frozen_configuration(path):
             continue
         content = read(path)
         document = json.loads(content)
@@ -182,27 +182,8 @@ def schema_files(oids: dict[str, str], read) -> list[SchemaFile]:
 
 
 def receipt_paths(oids: dict[str, str]) -> list[str]:
-    """Lists every committed campaign receipt, snapshot copies excluded."""
-    return sorted(
-        path
-        for path in oids
-        if Path(path).name == "receipt.json" and not is_snapshot_copy(path)
-    )
-
-
-def all_receipt_paths(oids: dict[str, str]) -> list[str]:
-    """Lists every committed file named `receipt.json`, snapshot copies included.
-
-    A citation embedded as another receipt's resolution evidence is a
-    distinct committed blob that a fresh checkout also carries, so its pinned
-    digest is checked too even though `receipt_paths` excludes it from the
-    version table's counts to avoid double-counting one campaign.
-    """
-    return sorted(
-        path
-        for path in oids
-        if Path(path).name == "receipt.json"
-    )
+    """Lists every committed campaign receipt."""
+    return sorted(path for path in oids if Path(path).name == "receipt.json")
 
 
 def pinned_schema_digests(paths: list[str], read) -> list[Pin]:
@@ -223,11 +204,9 @@ def pinned_schema_digests(paths: list[str], read) -> list[Pin]:
 def build_table(files: list[SchemaFile], counted_pins: list[Pin]) -> dict:
     """Builds the version-to-digest table the versions table records.
 
-    `pinning_receipts` counts committed campaign receipts only (snapshot
-    copies excluded), so one campaign is counted once regardless of how many
-    resolution-evidence citations repeat its receipt bytes elsewhere. A
-    version with two committed schema files (version 1) gets two rows, one
-    per file, each counting only the receipts that pin its own digest.
+    `pinning_receipts` counts committed campaign receipts. A version with two
+    committed schema files (version 1) gets two rows, one per file, each
+    counting only the receipts that pin its own digest.
     """
     counts: dict[str, int] = {}
     for pin in counted_pins:
@@ -263,11 +242,10 @@ def check(root: Path, revision: str = "HEAD") -> Findings:
         files = schema_files(oids, read)
         known_digests = {file.sha256 for file in files}
 
-        counted_pins = pinned_schema_digests(receipt_paths(oids), read)
-        all_pins = pinned_schema_digests(all_receipt_paths(oids), read)
-        unmatched = [pin for pin in all_pins if pin.sha256 not in known_digests]
+        pins = pinned_schema_digests(receipt_paths(oids), read)
+        unmatched = [pin for pin in pins if pin.sha256 not in known_digests]
 
-        table = build_table(files, counted_pins)
+        table = build_table(files, pins)
         table_path = versions_table_path(oids, read, files)
         committed_table = read(table_path)
         rendered = render_table(table)

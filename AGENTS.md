@@ -112,9 +112,9 @@ suitable uncontended host. Machine-dependent assertions are benchmark gates,
 not ordinary tests. Use `GF2_BENCH=1` only on a prepared benchmark host and use
 the applicable lock wrapper under `dev/scripts/`.
 
-A committed receipt records results, configuration and input digests, and its
-source revision is the rebuild pointer; input copies and raw single-host output
-stay out of the repository.
+A receipt's digests and source revision name its rebuild inputs; copied inputs
+and raw output stay out of the repository. Acceptance reads the frozen
+`configuration/`, and reports a receipt without one as unavailable, not rejected.
 
 Keep permanent documentation under `README.md`, crate-level rustdoc, or
 `docs/`. Prefer citations or generated projections over copied facts. See

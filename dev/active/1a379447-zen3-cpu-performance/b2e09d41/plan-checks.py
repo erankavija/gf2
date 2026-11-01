@@ -71,7 +71,7 @@ def committed_plans(files):
         check=True, capture_output=True, text=True).stdout.split("\0")
     plans = []
     for path in sorted(filter(None, listing)):
-        if files.is_snapshot_copy(path):
+        if files.is_frozen_configuration(path):
             continue
         data = (ROOT / path).read_bytes()
         if PLAN_SCHEMA.encode() not in data[:4096]:
