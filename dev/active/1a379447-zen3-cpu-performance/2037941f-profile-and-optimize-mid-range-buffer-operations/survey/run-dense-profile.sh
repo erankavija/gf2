@@ -26,6 +26,11 @@ OUT=dev/bench_results/2037941f/dense-baseline-profile-r2
 REPETITIONS=9
 ISSUE_EVENTS=cycles,instructions,branches,branch-misses
 MEMORY_EVENTS=L1-dcache-loads,L1-dcache-load-misses,cache-references,cache-misses
+RECORD_EVENT=cycles:u
+SAMPLE_FREQUENCY=4999
+FRESH_CASE=child-v2
+REPORT_PERCENT_LIMIT=0
+ANNOTATE_PERCENT_LIMIT=1.0
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RUSTUP_TOOLCHAIN=1.95
 
@@ -140,18 +145,26 @@ on_exit() {
     fi
 }
 trap 'on_exit "$?"' EXIT
-identity="arm=$(sha256sum "${ARM}" | cut -d' ' -f1) scalar=$(sha256sum "${SCALAR_ARM}" | cut -d' ' -f1) tool=$(sha256sum "${TOOL}" | cut -d' ' -f1) script=$(sha256sum "$0" | cut -d' ' -f1)"
-identity+=" summary=$(sha256sum "${SURVEY}/summarize-dense-profile.py" | cut -d' ' -f1)"
-identity+=" closure=$(sha256sum "${SURVEY}/dense-producing-inputs.json" | cut -d' ' -f1)"
-if [[ -z "${CASE_FILE}" && "${mode}" != --case ]]; then
-    identity+=" isolated-addendum=$(sha256sum "${ISOLATED}" | cut -d' ' -f1)"
-    identity+=" allocated-addendum=$(sha256sum "${ALLOCATED}" | cut -d' ' -f1)"
-elif [[ -n "${CASE_FILE}" ]]; then
-    identity+=" cases=$(sha256sum "${CASE_FILE}" | cut -d' ' -f1)"
-    for addendum in "${ADDENDA[@]}"; do
-        identity+=" addendum=$(sha256sum "${addendum}" | cut -d' ' -f1)"
-    done
-fi
+# Result rendering and source pointers do not decide measurement or resume.
+configuration="$(python3 -B - "${REPETITIONS}" "${ISSUE_EVENTS}" "${MEMORY_EVENTS}" \
+    "${RECORD_EVENT}" "${SAMPLE_FREQUENCY}" "${FRESH_CASE}" \
+    "${REPORT_PERCENT_LIMIT}" "${ANNOTATE_PERCENT_LIMIT}" "${cpu}" "${CASES[@]}" <<'PYIDENTITY'
+import hashlib
+import json
+import pathlib
+import sys
+
+settings, cases = sys.argv[1:10], sys.argv[10:]
+parsed = []
+for case in cases:
+    family, addendum, cell, route, build, label = case.split("|")
+    parsed.append([family, json.loads(pathlib.Path(addendum).read_bytes()),
+                   cell, route, build, label])
+configuration = json.dumps([settings, parsed], sort_keys=True, separators=(",", ":"))
+print(hashlib.sha256(configuration.encode()).hexdigest())
+PYIDENTITY
+)"
+identity="arm=$(sha256sum "${ARM}" | cut -d' ' -f1) scalar=$(sha256sum "${SCALAR_ARM}" | cut -d' ' -f1) tool=$(sha256sum "${TOOL}" | cut -d' ' -f1) configuration=${configuration}"
 first="$(sed -n 's/^identity //p' "${LOG}" | head -n 1)"
 # A case runs inside the session whose parent wrote and checked the identity.
 [[ "${mode}" == --case || -z "${first}" || "${first}" == "${identity}" ]] || {
@@ -207,31 +220,31 @@ profile_case() {
         "${cell}" "${route}" "${cpu}" "${dir}/request.json" >>"${dir}/commands.txt"
     request "${family}" "${addendum}" "${cell}" "${route}" >"${dir}/request.json"
     echo "cell ${label} start $(date -u +%Y-%m-%dT%H:%M:%SZ) attempt=${attempt} request=$(sha256sum "${dir}/request.json" | cut -d' ' -f1) arm=$(sha256sum "${binary}" | cut -d' ' -f1)" >>"${LOG}"
-    printf 'GF2_DENSE_ROUTE=%q GF2_TUNING_FRESH_CASE=child-v2 taskset -c %q %q < %q\n' \
-        "${route}" "${cpu}" "${binary}" "${dir}/request.json" >>"${dir}/commands.txt"
+    printf 'GF2_DENSE_ROUTE=%q GF2_TUNING_FRESH_CASE=%q taskset -c %q %q < %q\n' \
+        "${route}" "${FRESH_CASE}" "${cpu}" "${binary}" "${dir}/request.json" >>"${dir}/commands.txt"
     local rep events kind
     for rep in $(seq 1 "${REPETITIONS}"); do
         for kind in issue memory; do
             if [[ "${kind}" == issue ]]; then events="${ISSUE_EVENTS}"; else events="${MEMORY_EVENTS}"; fi
-            printf 'perf stat -x, -e %q -o %q -- taskset -c %q env GF2_DENSE_ROUTE=%q GF2_TUNING_FRESH_CASE=child-v2 %q < %q > %q\n' \
+            printf 'perf stat -x, -e %q -o %q -- taskset -c %q env GF2_DENSE_ROUTE=%q GF2_TUNING_FRESH_CASE=%q %q < %q > %q\n' \
                 "${events}" "${dir}/${kind}-${rep}.csv" "${cpu}" "${route}" \
-                "${binary}" "${dir}/request.json" "${dir}/${kind}-${rep}.result" >>"${dir}/commands.txt"
+                "${FRESH_CASE}" "${binary}" "${dir}/request.json" "${dir}/${kind}-${rep}.result" >>"${dir}/commands.txt"
             perf stat -x, -e "${events}" -o "${dir}/${kind}-${rep}.csv" -- \
-                taskset -c "${cpu}" env GF2_DENSE_ROUTE="${route}" GF2_TUNING_FRESH_CASE=child-v2 \
+                taskset -c "${cpu}" env GF2_DENSE_ROUTE="${route}" GF2_TUNING_FRESH_CASE="${FRESH_CASE}" \
                 "${binary}" <"${dir}/request.json" >"${dir}/${kind}-${rep}.result"
         done
-        printf 'perf record --quiet -e cycles:u -F 4999 -o %q -- taskset -c %q env GF2_DENSE_ROUTE=%q GF2_TUNING_FRESH_CASE=child-v2 %q < %q > %q\n' \
-            "${dir}/cycles-${rep}.data" "${cpu}" "${route}" "${binary}" "${dir}/request.json" "${dir}/record-${rep}.result" >>"${dir}/commands.txt"
-        perf record --quiet -e cycles:u -F 4999 -o "${dir}/cycles-${rep}.data" -- \
-            taskset -c "${cpu}" env GF2_DENSE_ROUTE="${route}" GF2_TUNING_FRESH_CASE=child-v2 \
+        printf 'perf record --quiet -e %q -F %q -o %q -- taskset -c %q env GF2_DENSE_ROUTE=%q GF2_TUNING_FRESH_CASE=%q %q < %q > %q\n' \
+            "${RECORD_EVENT}" "${SAMPLE_FREQUENCY}" "${dir}/cycles-${rep}.data" "${cpu}" "${route}" "${FRESH_CASE}" "${binary}" "${dir}/request.json" "${dir}/record-${rep}.result" >>"${dir}/commands.txt"
+        perf record --quiet -e "${RECORD_EVENT}" -F "${SAMPLE_FREQUENCY}" -o "${dir}/cycles-${rep}.data" -- \
+            taskset -c "${cpu}" env GF2_DENSE_ROUTE="${route}" GF2_TUNING_FRESH_CASE="${FRESH_CASE}" \
             "${binary}" <"${dir}/request.json" >"${dir}/record-${rep}.result"
-        printf 'perf report --stdio --no-children --percent-limit 0 -F overhead,sample,dso,symbol -i %q > %q\n' \
-            "${dir}/cycles-${rep}.data" "${dir}/cycles-report-${rep}.txt" >>"${dir}/commands.txt"
-        perf report --stdio --no-children --percent-limit 0 -F overhead,sample,dso,symbol \
+        printf 'perf report --stdio --no-children --percent-limit %q -F overhead,sample,dso,symbol -i %q > %q\n' \
+            "${REPORT_PERCENT_LIMIT}" "${dir}/cycles-${rep}.data" "${dir}/cycles-report-${rep}.txt" >>"${dir}/commands.txt"
+        perf report --stdio --no-children --percent-limit "${REPORT_PERCENT_LIMIT}" -F overhead,sample,dso,symbol \
             -i "${dir}/cycles-${rep}.data" >"${dir}/cycles-report-${rep}.txt"
-        printf 'perf annotate --stdio --percent-limit 1.0 -i %q > %q\n' \
-            "${dir}/cycles-${rep}.data" "${dir}/cycles-annotate-${rep}.txt" >>"${dir}/commands.txt"
-        perf annotate --stdio --percent-limit 1.0 -i "${dir}/cycles-${rep}.data" \
+        printf 'perf annotate --stdio --percent-limit %q -i %q > %q\n' \
+            "${ANNOTATE_PERCENT_LIMIT}" "${dir}/cycles-${rep}.data" "${dir}/cycles-annotate-${rep}.txt" >>"${dir}/commands.txt"
+        perf annotate --stdio --percent-limit "${ANNOTATE_PERCENT_LIMIT}" -i "${dir}/cycles-${rep}.data" \
             >"${dir}/cycles-annotate-${rep}.txt"
         rm "${dir}/cycles-${rep}.data"
     done

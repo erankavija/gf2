@@ -40,5 +40,5 @@ Every worker dispatched on a child of epic 1a379447 (Zen 3 CPU performance) foll
 - `./scripts/cargo-ci.sh` from the worktree root before delivery; exit 75 / QUEUED OUT is host contention (re-run); "can't find crate" is a stale seeded cache (`cargo clean -p <crate> --profile ci-test`, or remove `target/debug` and `target/ci-test`).
 - Merge `main` into the branch only after the timed runs, so a confirmation measures the tree its pilot measured; the merge must touch no evidence file.
 - Never write `.jit/`; never run state-mutating jit commands from a worktree (the tracker refuses them). The lead links artifacts: deliver a `path<TAB>doc_type<TAB>label` table in the scratchpad path the dispatch names.
-- Never remove a directory without looking inside it; external comparator sources live under the primary checkout's `.agents/ext/<issue>` and are shared.
+- Never remove a directory without looking inside it; consult the owning launcher and recorded build paths to locate external comparator sources and determine whether the directory is shared.
 - Final report under 3500 characters; longer reports are dropped whole. Report problems as problems; a contract that cannot be met is stated, not softened.
