@@ -61,8 +61,10 @@ release mode.
 - `gf2-algebra` owns packed $\mathbb{F}_3$, $\mathbb{F}_5$ and $\mathbb{F}_7$
   arithmetic and permanent algorithms; it may dispatch to isolated kernels
   without becoming a kernel layer itself.
-- `gf2-sim` owns the CPU/GPU simulation pipeline and orchestration. Its design
-  source of truth is linked through JIT item `@/issue/ec530af9`.
+- `gf2-sim` owns the generic CPU/GPU simulation pipeline and orchestration
+  primitives. Its design source of truth is linked through JIT item
+  `@/issue/ec530af9`. Experiment code stays outside it under
+  `@/inv/experiment-library-separation`.
 - `gf2-kernels-simd` and `gf2-kernels-hip` are the only production crates that
   may contain `unsafe`. Every unsafe boundary requires an explicit safety
   contract. Other production crates deny unsafe code.
@@ -167,7 +169,8 @@ Keep permanent documentation under `README.md`, crate-level rustdoc, or
 - **test-tier-budgets** — Every test respects its tier's configured time budget: release-mode fast-tier tests within the per-test and suite budgets, ignored slow and simulation tests within the nightly budget or through an explicitly serialized or host-gated execution path; slower work carries a descriptive ignore tier.
 - **convention-convergence** — A shared convention or abstraction has one form: work that finds it harmful or ill-fitting changes it at its source, or reports the mismatch as a blocking concern before proceeding. A local parallel variant, a private helper duplicating a shared mechanism, or a bypass around an abstraction is a defect unless it is a named, cited exception with a tracked convergence condition.
 - **present-tense-prose** — Permanent artifacts describe the current state of the system; change-relative narration — old/new contrasts, previously/now framing, legacy markers, migration history — lives in commit messages and issue history.
-- **library-first-generality** — New behavior lands as a reusable API in the layer-appropriate library crate, generic over its natural domain; binaries, simulations, and orchestration stay thin consumers. A capability implemented privately inside a consumer that a library layer could own is a defect unless cited as a tracked exception.
+- **library-first-generality** — New generic behavior lands as a reusable API in the layer-appropriate library crate, generic over its natural domain; binaries, simulations, and orchestration stay thin consumers. A generic capability implemented privately inside a consumer that a library layer could own is a defect unless cited as a tracked exception.
+- **experiment-library-separation** — Library crates contain only capabilities applicable to several experiments. An experiment's protocol, constants, records, validation and orchestration live with that experiment outside the library crates and consume library APIs.
 - **no-deferred-defects** — Quality defects surfaced while implementing a change are fixed in that change or filed as a tracked issue before completion; a TODO or FIXME marker without a tracked issue is a defect.
 - **claims-trace-to-artifacts** — Every published scientific number traces to a committed artifact that records the closed identity set of `behavioral-evidence-validity`. A stochastic estimate states its sample count and confidence interval, and plots and tables of stochastic results carry error bars or interval columns. A reproduction target or externally sourced number cites a key resolving in the citation registry.
 - **falsification-preserved** — Data that contradicts a criterion, hypothesis, or cited claim is recorded together with the contradiction; silent rework of the falsified statement is a defect.
