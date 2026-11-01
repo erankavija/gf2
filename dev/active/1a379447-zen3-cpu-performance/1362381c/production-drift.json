@@ -28,6 +28,130 @@
     {
       "receipts": [
         {
+          "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/receipt.json",
+          "snapshot": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/inputs/producing"
+        },
+        {
+          "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-pilot/receipt.json",
+          "snapshot": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-pilot/inputs/producing"
+        }
+      ],
+      "packages": [
+        "crates/gf2-core",
+        "crates/gf2-kernels-simd"
+      ],
+      "class": "code-identical",
+      "basis": "production files",
+      "class_counts": {
+        "identical": 153
+      },
+      "differing_files": []
+    },
+    {
+      "receipts": [
+        {
+          "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/receipt.json",
+          "snapshot": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/inputs/producing"
+        },
+        {
+          "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-pilot/receipt.json",
+          "snapshot": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-pilot/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/receipt.json",
+          "snapshot": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-confirmation/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-pilot/receipt.json",
+          "snapshot": "dev/bench_results/1358d6ab/ldpc-aff3ct-integration/1358d6ab-ldpc-aff3ct-integration-pilot/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-confirmation/receipt.json",
+          "snapshot": "dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-confirmation/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot/receipt.json",
+          "snapshot": "dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/ed3d490e/aff3ct-fastest/caabc4e1-ldpc-batch-aff3ct-fastest-pilot/receipt.json",
+          "snapshot": "dev/bench_results/ed3d490e/aff3ct-fastest/caabc4e1-ldpc-batch-aff3ct-fastest-pilot/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/ed3d490e/aff3ct-matched/493dba5a-ldpc-batch-aff3ct-matched-pilot/receipt.json",
+          "snapshot": "dev/bench_results/ed3d490e/aff3ct-matched/493dba5a-ldpc-batch-aff3ct-matched-pilot/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/ed3d490e/aff3ct-matched/87a6bb36-ldpc-batch-aff3ct-matched-confirmation/receipt.json",
+          "snapshot": "dev/bench_results/ed3d490e/aff3ct-matched/87a6bb36-ldpc-batch-aff3ct-matched-confirmation/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/ed3d490e/batch-sweep/9bcc7e73-ldpc-batch-size-sweep-pilot/receipt.json",
+          "snapshot": "dev/bench_results/ed3d490e/batch-sweep/9bcc7e73-ldpc-batch-size-sweep-pilot/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/ed3d490e/decode-selector-holdout/37aa7254-ldpc-batch-decode-selector-holdout-pilot-superseded/receipt.json",
+          "snapshot": "dev/bench_results/ed3d490e/decode-selector-holdout/37aa7254-ldpc-batch-decode-selector-holdout-pilot-superseded/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/ed3d490e/decode-selector-holdout/37aa7254-ldpc-batch-decode-selector-holdout-pilot/receipt.json",
+          "snapshot": "dev/bench_results/ed3d490e/decode-selector-holdout/37aa7254-ldpc-batch-decode-selector-holdout-pilot/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/ed3d490e/decode-selector-holdout/67517a7b-ldpc-batch-decode-selector-holdout-confirmation/receipt.json",
+          "snapshot": "dev/bench_results/ed3d490e/decode-selector-holdout/67517a7b-ldpc-batch-decode-selector-holdout-confirmation/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/ed3d490e/multicore/093ae4d0-ldpc-batch-multicore-confirmation/receipt.json",
+          "snapshot": "dev/bench_results/ed3d490e/multicore/093ae4d0-ldpc-batch-multicore-confirmation/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/ed3d490e/multicore/a7ae2623-ldpc-batch-multicore-pilot/receipt.json",
+          "snapshot": "dev/bench_results/ed3d490e/multicore/a7ae2623-ldpc-batch-multicore-pilot/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/ed3d490e/single-worker/a91e7cef-ldpc-batch-single-worker-pilot/receipt.json",
+          "snapshot": "dev/bench_results/ed3d490e/single-worker/a91e7cef-ldpc-batch-single-worker-pilot/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/ed3d490e/single-worker/d0d2c1bd-ldpc-batch-single-worker-confirmation/receipt.json",
+          "snapshot": "dev/bench_results/ed3d490e/single-worker/d0d2c1bd-ldpc-batch-single-worker-confirmation/inputs/producing"
+        }
+      ],
+      "class": "unresolvable",
+      "basis": "measured content not pinned",
+      "unresolved_inputs": [
+        ".cargo/config.toml",
+        "Cargo.lock",
+        "Cargo.toml",
+        "dev/bench_results/f547c394/run-smoke-v3.sh",
+        "dev/scripts/ccx1-bench-flock.sh",
+        "dev/tools/tuning-campaign-support/Cargo.toml",
+        "dev/tools/tuning-campaign-support/src/abtest.rs",
+        "dev/tools/tuning-campaign-support/src/arm.rs",
+        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
+        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
+        "dev/tools/tuning-campaign-support/src/campaign.rs",
+        "dev/tools/tuning-campaign-support/src/host.rs",
+        "dev/tools/tuning-campaign-support/src/journal.rs",
+        "dev/tools/tuning-campaign-support/src/lib.rs",
+        "dev/tools/tuning-campaign-support/src/process.rs",
+        "dev/tools/tuning-campaign-support/src/protocol.rs",
+        "dev/tools/tuning-campaign-support/src/provenance.rs",
+        "dev/tools/tuning-campaign-support/src/receipt.rs",
+        "dev/tools/tuning-campaign-support/src/repository.rs",
+        "dev/tools/tuning-campaign-support/src/schema.rs",
+        "dev/tools/tuning-campaign-support/src/seed.rs",
+        "dev/tools/tuning-campaign-support/src/statistics.rs",
+        "dev/tools/tuning-campaign-support/src/timing.rs",
+        "dev/tools/tuning-campaign-support/src/transport.rs",
+        "dev/tools/tuning-campaign-support/src/trial_ledger.rs"
+      ]
+    },
+    {
+      "receipts": [
+        {
           "receipt": "dev/bench_results/00dd43c3/v4-r1-confirmation/receipt.json",
           "snapshot": "dev/bench_results/00dd43c3/v4-r1-confirmation/inputs/producing"
         },
@@ -4695,6 +4819,83 @@
         },
         {
           "path": "crates/gf2-kernels-simd/src/x86/shift_funnel.rs",
+          "class": "added"
+        }
+      ]
+    },
+    {
+      "receipts": [
+        {
+          "receipt": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/receipt.json",
+          "snapshot": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/inputs/producing"
+        },
+        {
+          "receipt": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-pilot/receipt.json",
+          "snapshot": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-pilot/inputs/producing"
+        }
+      ],
+      "packages": [
+        "crates/gf2-coding",
+        "crates/gf2-core",
+        "crates/gf2-kernels-simd"
+      ],
+      "class": "code-differs",
+      "basis": "production files",
+      "class_counts": {
+        "identical": 240,
+        "added": 13
+      },
+      "differing_files": [
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_1_R1_2_N64800.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_2_R3_5_N64800.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_3_R2_3_N64800.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_4_R3_4_N64800.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_5_R4_5_N64800.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_a_6_R5_6_N64800.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_1_R1_2_N16200.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_2_R3_5_N16200.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_3_R2_3_N16200.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_4_R3_4_N16200.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_5_R4_5_N16200.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-coding/src/ldpc/dvb_t2/table_b_6_R5_6_N16200.txt",
+          "class": "added"
+        },
+        {
+          "path": "crates/gf2-core/data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json",
           "class": "added"
         }
       ]
@@ -15501,92 +15702,6 @@
           "path": "crates/gf2-kernels-simd/src/x86/shift_funnel.rs",
           "class": "added"
         }
-      ]
-    },
-    {
-      "receipts": [
-        {
-          "receipt": "dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-confirmation/receipt.json",
-          "snapshot": "dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-confirmation/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot/receipt.json",
-          "snapshot": "dev/bench_results/d06a99ed/worker-routing/d06a99ed-worker-routing-pilot/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/ed3d490e/aff3ct-fastest/caabc4e1-ldpc-batch-aff3ct-fastest-pilot/receipt.json",
-          "snapshot": "dev/bench_results/ed3d490e/aff3ct-fastest/caabc4e1-ldpc-batch-aff3ct-fastest-pilot/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/ed3d490e/aff3ct-matched/493dba5a-ldpc-batch-aff3ct-matched-pilot/receipt.json",
-          "snapshot": "dev/bench_results/ed3d490e/aff3ct-matched/493dba5a-ldpc-batch-aff3ct-matched-pilot/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/ed3d490e/aff3ct-matched/87a6bb36-ldpc-batch-aff3ct-matched-confirmation/receipt.json",
-          "snapshot": "dev/bench_results/ed3d490e/aff3ct-matched/87a6bb36-ldpc-batch-aff3ct-matched-confirmation/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/ed3d490e/batch-sweep/9bcc7e73-ldpc-batch-size-sweep-pilot/receipt.json",
-          "snapshot": "dev/bench_results/ed3d490e/batch-sweep/9bcc7e73-ldpc-batch-size-sweep-pilot/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/ed3d490e/decode-selector-holdout/37aa7254-ldpc-batch-decode-selector-holdout-pilot-superseded/receipt.json",
-          "snapshot": "dev/bench_results/ed3d490e/decode-selector-holdout/37aa7254-ldpc-batch-decode-selector-holdout-pilot-superseded/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/ed3d490e/decode-selector-holdout/37aa7254-ldpc-batch-decode-selector-holdout-pilot/receipt.json",
-          "snapshot": "dev/bench_results/ed3d490e/decode-selector-holdout/37aa7254-ldpc-batch-decode-selector-holdout-pilot/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/ed3d490e/decode-selector-holdout/67517a7b-ldpc-batch-decode-selector-holdout-confirmation/receipt.json",
-          "snapshot": "dev/bench_results/ed3d490e/decode-selector-holdout/67517a7b-ldpc-batch-decode-selector-holdout-confirmation/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/ed3d490e/multicore/093ae4d0-ldpc-batch-multicore-confirmation/receipt.json",
-          "snapshot": "dev/bench_results/ed3d490e/multicore/093ae4d0-ldpc-batch-multicore-confirmation/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/ed3d490e/multicore/a7ae2623-ldpc-batch-multicore-pilot/receipt.json",
-          "snapshot": "dev/bench_results/ed3d490e/multicore/a7ae2623-ldpc-batch-multicore-pilot/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/ed3d490e/single-worker/a91e7cef-ldpc-batch-single-worker-pilot/receipt.json",
-          "snapshot": "dev/bench_results/ed3d490e/single-worker/a91e7cef-ldpc-batch-single-worker-pilot/inputs/producing"
-        },
-        {
-          "receipt": "dev/bench_results/ed3d490e/single-worker/d0d2c1bd-ldpc-batch-single-worker-confirmation/receipt.json",
-          "snapshot": "dev/bench_results/ed3d490e/single-worker/d0d2c1bd-ldpc-batch-single-worker-confirmation/inputs/producing"
-        }
-      ],
-      "class": "unresolvable",
-      "basis": "measured content not pinned",
-      "unresolved_inputs": [
-        ".cargo/config.toml",
-        "Cargo.lock",
-        "Cargo.toml",
-        "dev/bench_results/f547c394/run-smoke-v3.sh",
-        "dev/scripts/ccx1-bench-flock.sh",
-        "dev/tools/tuning-campaign-support/Cargo.toml",
-        "dev/tools/tuning-campaign-support/src/abtest.rs",
-        "dev/tools/tuning-campaign-support/src/arm.rs",
-        "dev/tools/tuning-campaign-support/src/bin/ab-smoke-workload.rs",
-        "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
-        "dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs",
-        "dev/tools/tuning-campaign-support/src/campaign.rs",
-        "dev/tools/tuning-campaign-support/src/host.rs",
-        "dev/tools/tuning-campaign-support/src/journal.rs",
-        "dev/tools/tuning-campaign-support/src/lib.rs",
-        "dev/tools/tuning-campaign-support/src/process.rs",
-        "dev/tools/tuning-campaign-support/src/protocol.rs",
-        "dev/tools/tuning-campaign-support/src/provenance.rs",
-        "dev/tools/tuning-campaign-support/src/receipt.rs",
-        "dev/tools/tuning-campaign-support/src/repository.rs",
-        "dev/tools/tuning-campaign-support/src/schema.rs",
-        "dev/tools/tuning-campaign-support/src/seed.rs",
-        "dev/tools/tuning-campaign-support/src/statistics.rs",
-        "dev/tools/tuning-campaign-support/src/timing.rs",
-        "dev/tools/tuning-campaign-support/src/transport.rs",
-        "dev/tools/tuning-campaign-support/src/trial_ledger.rs"
       ]
     },
     {

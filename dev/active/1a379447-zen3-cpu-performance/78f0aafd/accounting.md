@@ -15,10 +15,10 @@ Profiled code is `historical` when the profile runs the measured executable byte
 
 | Family | Cell | Drift | Profiled code | Coverage |
 |---|---|---|---|---|
-| 1362381c-bch-integration | t2n-b1-bchlib-table-remainder | unresolvable | historical | profile-cited: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-profile/cases.expanded.tsv` |
-| 1362381c-bch-integration | t2n-b256-bchlib-table-remainder | unresolvable | historical | profile-cited: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-profile/cases.expanded.tsv` |
-| 1362381c-bch-integration | t2s-b1-bchlib-table-remainder | unresolvable | historical | profile-cited: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-profile/cases.expanded.tsv` |
-| 1362381c-bch-integration | t2s-b256-bchlib-table-remainder | unresolvable | historical | profile-cited: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-profile/cases.expanded.tsv` |
+| 1362381c-bch-integration | t2n-b1-bchlib-table-remainder | code-differs | historical | profile-cited: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-profile/cases.expanded.tsv` |
+| 1362381c-bch-integration | t2n-b256-bchlib-table-remainder | code-differs | historical | profile-cited: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-profile/cases.expanded.tsv` |
+| 1362381c-bch-integration | t2s-b1-bchlib-table-remainder | code-differs | historical | profile-cited: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-profile/cases.expanded.tsv` |
+| 1362381c-bch-integration | t2s-b256-bchlib-table-remainder | code-differs | historical | profile-cited: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-profile/cases.expanded.tsv` |
 | byte-field-matrix-product | encode-k10r4-64k-element-vs-isal | code-differs | historical | profile-cited: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/byte-field-profile/cases.expanded.tsv` |
 | byte-field-matrix-product | encode-k10r4-64k-wide-vs-isal | code-differs | historical | profile-cited: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/byte-field-profile/cases.expanded.tsv` |
 | byte-field-matrix-product | matmul-n256-element-vs-m4rie | code-differs | historical | profile-cited: `dev/active/1a379447-zen3-cpu-performance/78f0aafd/byte-field-profile/cases.expanded.tsv` |

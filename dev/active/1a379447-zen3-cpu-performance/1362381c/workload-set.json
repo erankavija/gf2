@@ -19,10 +19,10 @@
       "exploratory": 0
     },
     "Core route and builds": {
-      "cells": 30,
+      "cells": 36,
       "primary": 0,
-      "confirmatory": 27,
-      "holdout": 3,
+      "confirmatory": 30,
+      "holdout": 6,
       "exploratory": 0
     },
     "DVB-T2 interleave": {
@@ -40,10 +40,10 @@
       "exploratory": 3
     },
     "LDPC decode": {
-      "cells": 97,
+      "cells": 103,
       "primary": 30,
-      "confirmatory": 57,
-      "holdout": 4,
+      "confirmatory": 61,
+      "holdout": 6,
       "exploratory": 36
     },
     "Logical buffers, matvec": {
@@ -95,6 +95,34 @@
       "receipt": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/receipt.json",
       "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9",
       "addendum": "dev/bench_results/1358d6ab/bch-integration/1358d6ab-bch-integration-confirmation/inputs/family-addendum.json",
+      "rejected_confirmations": []
+    },
+    {
+      "family": "1362381c-core-route-integration",
+      "registry_pattern": "1362381c-core-route-integration",
+      "issues": [
+        "1362381c"
+      ],
+      "label": "confirmation",
+      "protocol_version": 4,
+      "ledger_sequence": 1,
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/receipt.json",
+      "receipt_sha256": "135497a20af294e8e1476be5a6268b16157e2a303f872f5566efd8ec21a92855",
+      "addendum": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/inputs/family-addendum.json",
+      "rejected_confirmations": []
+    },
+    {
+      "family": "1362381c-decoder-route-integration",
+      "registry_pattern": "1362381c-decoder-route-integration",
+      "issues": [
+        "1362381c"
+      ],
+      "label": "confirmation",
+      "protocol_version": 4,
+      "ledger_sequence": 1,
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/receipt.json",
+      "receipt_sha256": "ab21e122b1508bcd986cf25421e64fa9f7966065514456785d2db71158ad3fcf",
+      "addendum": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/inputs/family-addendum.json",
       "rejected_confirmations": []
     },
     {
@@ -1093,22 +1121,6 @@
       "context": "dev/bench_results/fd9d5416/2026-10-02-fd9d5416-bch-performance-receipt.md"
     },
     {
-      "domain": "Core route and builds",
-      "pattern": "1362381c-core-route-integration",
-      "issues": [
-        "1362381c"
-      ],
-      "integrated_family": "FI-1"
-    },
-    {
-      "domain": "LDPC decode",
-      "pattern": "1362381c-decoder-route-integration",
-      "issues": [
-        "1362381c"
-      ],
-      "integrated_family": "FI-2"
-    },
-    {
       "domain": "Integrated affected domains",
       "pattern": "1362381c-*-integration",
       "issues": [
@@ -1331,6 +1343,66 @@
       "external_arms": [],
       "receipt": "dev/bench_results/1d4fd63d/2026-09-13-1d4fd63d-transpose-lane-confirmation/receipt.json",
       "receipt_sha256": "34f0ab4be8a3f9ffcbb453a0833cb1aa258bac384fc0df394086894dc82bf414"
+    },
+    {
+      "domain": "Core route and builds",
+      "family": "1362381c-core-route-integration",
+      "cell": "clmul-wide-9w-native",
+      "role": "confirmatory",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/receipt.json",
+      "receipt_sha256": "135497a20af294e8e1476be5a6268b16157e2a303f872f5566efd8ec21a92855"
+    },
+    {
+      "domain": "Core route and builds",
+      "family": "1362381c-core-route-integration",
+      "cell": "matvec-r1024-24w-native",
+      "role": "confirmatory",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/receipt.json",
+      "receipt_sha256": "135497a20af294e8e1476be5a6268b16157e2a303f872f5566efd8ec21a92855"
+    },
+    {
+      "domain": "Core route and builds",
+      "family": "1362381c-core-route-integration",
+      "cell": "popcount-1024w-native",
+      "role": "confirmatory",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/receipt.json",
+      "receipt_sha256": "135497a20af294e8e1476be5a6268b16157e2a303f872f5566efd8ec21a92855"
+    },
+    {
+      "domain": "Core route and builds",
+      "family": "1362381c-core-route-integration",
+      "cell": "popcount-6w",
+      "role": "holdout",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/receipt.json",
+      "receipt_sha256": "135497a20af294e8e1476be5a6268b16157e2a303f872f5566efd8ec21a92855"
+    },
+    {
+      "domain": "Core route and builds",
+      "family": "1362381c-core-route-integration",
+      "cell": "xor-inplace-3w",
+      "role": "holdout",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/receipt.json",
+      "receipt_sha256": "135497a20af294e8e1476be5a6268b16157e2a303f872f5566efd8ec21a92855"
+    },
+    {
+      "domain": "Core route and builds",
+      "family": "1362381c-core-route-integration",
+      "cell": "xor-inplace-5w",
+      "role": "holdout",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/core/31727c57-core-confirmation/receipt.json",
+      "receipt_sha256": "135497a20af294e8e1476be5a6268b16157e2a303f872f5566efd8ec21a92855"
     },
     {
       "domain": "Core route and builds",
@@ -2331,6 +2403,66 @@
       "external_arms": [],
       "receipt": "dev/bench_results/4c1e441f/r1-dense-product-confirmation/receipt.json",
       "receipt_sha256": "a1f53ad3e194915bd3c31410515dff71df2897539a587c908a0bee98b51396e6"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-decoder-route-integration",
+      "cell": "dvb-t2-r12-integrated-w1-b1",
+      "role": "confirmatory",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/receipt.json",
+      "receipt_sha256": "ab21e122b1508bcd986cf25421e64fa9f7966065514456785d2db71158ad3fcf"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-decoder-route-integration",
+      "cell": "dvb-t2-r12-integrated-w6-b8",
+      "role": "confirmatory",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/receipt.json",
+      "receipt_sha256": "ab21e122b1508bcd986cf25421e64fa9f7966065514456785d2db71158ad3fcf"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-decoder-route-integration",
+      "cell": "nr-bg1-z384-integrated-holdout-w1-b13",
+      "role": "holdout",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/receipt.json",
+      "receipt_sha256": "ab21e122b1508bcd986cf25421e64fa9f7966065514456785d2db71158ad3fcf"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-decoder-route-integration",
+      "cell": "nr-bg1-z384-integrated-holdout-w1-b5",
+      "role": "holdout",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/receipt.json",
+      "receipt_sha256": "ab21e122b1508bcd986cf25421e64fa9f7966065514456785d2db71158ad3fcf"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-decoder-route-integration",
+      "cell": "nr-bg1-z384-integrated-w12-b8",
+      "role": "confirmatory",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/receipt.json",
+      "receipt_sha256": "ab21e122b1508bcd986cf25421e64fa9f7966065514456785d2db71158ad3fcf"
+    },
+    {
+      "domain": "LDPC decode",
+      "family": "1362381c-decoder-route-integration",
+      "cell": "nr-bg1-z384-integrated-w24-b8",
+      "role": "confirmatory",
+      "primary": false,
+      "external_arms": [],
+      "receipt": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/31727c57-decoder-confirmation/receipt.json",
+      "receipt_sha256": "ab21e122b1508bcd986cf25421e64fa9f7966065514456785d2db71158ad3fcf"
     },
     {
       "domain": "LDPC decode",

@@ -5,11 +5,11 @@
   },
   "source": {
     "path": "dev/active/1a379447-zen3-cpu-performance/1362381c/workload-set.json",
-    "sha256": "7e758ecd344ae817925cefda9d2cc4309e638d81d1a80d4016f4a9c63529de6e"
+    "sha256": "44d49831304caae335de44768b5b7ca91e4cb3af2e60ed8f073aa1b75ad95350"
   },
   "drift": {
     "path": "dev/active/1a379447-zen3-cpu-performance/1362381c/production-drift.json",
-    "sha256": "8166dd1aaddf6054a9b26b8768a8bfb7c58c7791003d6e2e2077a2565c1fea6d"
+    "sha256": "3ce8dca93d581a61abb29efe01e729da62b2259cd714a4f865551ba49c669381"
   },
   "material_gap_rule": "comparator-gap pass with the external arm as candidate; canonical INTERPRETATION",
   "material_gaps": [
@@ -26,7 +26,7 @@
       "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9",
       "outcome": "pass",
       "interpretation": "candidate faster by a material gap",
-      "drift_class": "unresolvable",
+      "drift_class": "code-differs",
       "coverage": {
         "status": "profile-cited",
         "profile": {
@@ -51,7 +51,7 @@
       "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9",
       "outcome": "pass",
       "interpretation": "candidate faster by a material gap",
-      "drift_class": "unresolvable",
+      "drift_class": "code-differs",
       "coverage": {
         "status": "profile-cited",
         "profile": {
@@ -76,7 +76,7 @@
       "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9",
       "outcome": "pass",
       "interpretation": "candidate faster by a material gap",
-      "drift_class": "unresolvable",
+      "drift_class": "code-differs",
       "coverage": {
         "status": "profile-cited",
         "profile": {
@@ -101,7 +101,7 @@
       "receipt_sha256": "07cd723a158c5a7beb0f265875e823cd88cc31d571cce92e872d7d39232906c9",
       "outcome": "pass",
       "interpretation": "candidate faster by a material gap",
-      "drift_class": "unresolvable",
+      "drift_class": "code-differs",
       "coverage": {
         "status": "profile-cited",
         "profile": {

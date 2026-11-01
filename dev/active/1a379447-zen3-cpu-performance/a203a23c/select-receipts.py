@@ -2,7 +2,8 @@
 """Selects committed benchmark receipts by their declared schema.
 
 `reevaluate-receipts.sh` evaluates every `zen3-benchmark-receipt-v1` receipt
-under `dev/bench_results/` with `benchmark-acceptance`. A receipt of another
+under `dev/` with `benchmark-acceptance`; a campaign's stage directory may sit
+in its issue's record directory instead of `dev/bench_results/`. A receipt of another
 schema is not a benchmark receipt: handing it to a benchmark-shaped evaluator
 aborts the run. This module partitions a tree of
 committed receipts by each receipt's own declared `schema` field, never by
@@ -30,7 +31,7 @@ def receipt_paths(tree: Path) -> list[str]:
     """Lists every campaign receipt path under `tree`, snapshot copies excluded."""
     return sorted(
         str(path.relative_to(tree))
-        for path in tree.glob("dev/bench_results/**/receipt.json")
+        for path in tree.glob("dev/**/receipt.json")
         if "/inputs/" not in str(path.relative_to(tree))
     )
 
