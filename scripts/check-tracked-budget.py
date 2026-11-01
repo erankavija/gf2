@@ -90,7 +90,7 @@ def tree_faults(sizes, config, baseline):
 
 
 def added_bytes(old, new, cwd):
-    """Growth between two trees, and the paths added or modified.
+    """Growth between two trees, and the new size of each added or modified path.
 
     `new` empty means the index. A modified file counts only its growth, so an
     append to a large log costs what it appends.
@@ -104,7 +104,7 @@ def added_bytes(old, new, cwd):
         if fields[i].split()[4] != "D"
     ]
     if not changes:
-        return 0, []
+        return 0, {}
     objects = [blob for pair in changes for blob in pair[:2]]
     sizes = subprocess.run(
         ["git", "cat-file", "--batch-check=%(objectsize)"],
@@ -117,7 +117,7 @@ def added_bytes(old, new, cwd):
     # An all-zero object id prints "<id> missing": a new file has no old size.
     sizes = [0 if s.endswith("missing") else int(s) for s in sizes]
     total = sum(max(0, sizes[i + 1] - sizes[i]) for i in range(0, len(sizes), 2))
-    return total, [path for _, _, path in changes]
+    return total, {change[2]: sizes[2 * i + 1] for i, change in enumerate(changes)}
 
 
 def change_faults(old, new, config, label, cwd):
@@ -165,17 +165,24 @@ def has_head(cwd):
 
 
 def check_range(revisions, cwd):
-    """Checks each commit; a merge counts only what its first parent lacks."""
+    """Checks each commit against the budget of the range's newest commit.
+
+    A merge counts only what its first parent lacks; a range whose newest
+    commit predates the budget has nothing to check against.
+    """
     faults = []
     commits = git("rev-list", "--reverse", "--no-merges", *revisions.split(), cwd=cwd).split()
+    if not commits:
+        return faults
+    try:
+        config, baseline = read_config(commits[-1], cwd)
+    except subprocess.CalledProcessError:
+        return faults
     for commit in commits:
-        config, baseline = read_config(commit, cwd)
         parents = git("rev-list", "--parents", "-n1", commit, cwd=cwd).split()[1:]
         parent = parents[0] if parents else EMPTY_TREE
-        _, changed = added_bytes(parent, commit, cwd)
-        sizes = tree_sizes(commit, cwd)
+        _, touched = added_bytes(parent, commit, cwd)
         label = commit[:9]
-        touched = {p: sizes[p] for p in changed if p in sizes}
         faults += [f"{label}: {f}" for f in path_faults(touched, config, baseline)]
         faults += [f"{label}: {f}" for f in size_faults(touched, config, baseline)]
         faults += change_faults(parent, commit, config, label, cwd)
