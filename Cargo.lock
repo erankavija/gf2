@@ -585,7 +585,6 @@ dependencies = [
  "gf2-kernels-hip",
  "gf2-sim",
  "gf2-stats",
- "num-bigint",
  "proptest",
  "rand 0.8.5",
  "rand 0.9.2",
@@ -885,6 +884,20 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-link",
+]
+
+[[package]]
+name = "permanent-statistics"
+version = "0.1.0"
+dependencies = [
+ "experiments-common",
+ "gf2-algebra",
+ "gf2-core",
+ "gf2-sim",
+ "gf2-stats",
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]
