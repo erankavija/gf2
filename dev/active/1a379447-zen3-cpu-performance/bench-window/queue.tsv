@@ -123,3 +123,5 @@ d06a99ed	.	20	bash dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement
 
 # 31727c57 tuned-arm batch fill on the pilot-only FI-2 cells; est_minutes is an estimate, the prior record of the same 60 dispatches took under one minute
 31727c57	.agents/worktrees/agent-31727c57	2	bash dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/batch-fill/pilot-cells/window.sh
+1d787ed3	.agents/worktrees/agent-1d787ed3	40	bash dev/active/55c3e433-aff3ct-ldpc-gaps/pilot/window.sh
+a72f2b3f	.agents/worktrees/agent-a72f2b3f	25	bash dev/active/55c3e433-aff3ct-ldpc-gaps/check-variants/window.sh
