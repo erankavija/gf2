@@ -5,7 +5,10 @@ Reads the workload declaration, the production-drift record, the gap register an
 receipts they name, verifies each campaign from its execution log, and writes `scorecard.json`
 and `scorecard.md`. Refuses to write when a gap cell has no register entry.
 
-Usage (from the worktree root): make-scorecard.py [--check]
+Usage (from the worktree root): make-scorecard.py OUT [--check]
+
+OUT is the results directory: it holds the two outputs and the `determinism/` and
+`receipt-reevaluation.json` verification records.
 """
 
 import argparse
@@ -22,19 +25,19 @@ sys.dont_write_bytecode = True
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = pathlib.Path(subprocess.check_output(
     ["git", "-C", str(HERE), "rev-parse", "--show-toplevel"], text=True).strip())
+# The one bootstrap step every family locator shares; `repository_files` resolves the rest.
+LOCATOR = subprocess.check_output(
+    ["git", "ls-files", "--", ":(glob)**/repository_files.py", ":(exclude,glob)**/inputs/**"],
+    text=True, cwd=ROOT).splitlines()
+sys.path.insert(0, str((ROOT / min(LOCATOR, key=len)).parent))
+import repository_files  # noqa: E402
 
 
-def tracked(suffix):
-    """The one live tracked file ending in `suffix`, snapshot copies excluded."""
-    found = subprocess.check_output(
-        ["git", "ls-files", "--", f":(glob)**/{suffix}", ":(exclude,glob)**/inputs/**"],
-        text=True, cwd=ROOT).splitlines()
-    if len(found) != 1:
-        sys.exit(f"{len(found)} tracked files end in {suffix}; exactly one must")
-    return ROOT / found[0]
+def live(suffix):
+    return ROOT / repository_files.live_file(ROOT, suffix)
 
 
-sys.path.insert(0, str(tracked("31727c57/locate.py").parent))
+sys.path.insert(0, str(live("31727c57/locate.py").parent))
 import make_outcome  # noqa: E402
 
 tables = make_outcome.tables
@@ -54,16 +57,12 @@ def read_json(path):
     return json.loads(pathlib.Path(path).read_bytes())
 
 
-WORKLOAD = HERE.parent / "workload-set.json"
-DRIFT = HERE.parent / "production-drift.json"
-GAPS = HERE.parent / "gaps.json"
-REGISTRY = HERE / "family-registry.json"
-ACCOUNTING = tracked("78f0aafd/accounting.md")
-OUTPUT_DIRECTORY = ROOT / "dev/bench_results/1362381c"
-OUTPUT_JSON = OUTPUT_DIRECTORY / "scorecard.json"
-OUTPUT_MD = OUTPUT_DIRECTORY / "scorecard.md"
-DETERMINISM = OUTPUT_DIRECTORY / "determinism"
-REEVALUATION = OUTPUT_DIRECTORY / "receipt-reevaluation.json"
+WORKLOAD = live("1362381c/workload-set.json")
+DRIFT = live("1362381c/production-drift.json")
+GAPS = live("1362381c/gaps.json")
+REGISTRY = live("1362381c/survey/family-registry.json")
+ACCOUNTING = live("78f0aafd/accounting.md")
+JSON_NAME, MD_NAME = "scorecard.json", "scorecard.md"
 # The clause of the deterministic contract each suite exercises.
 DETERMINISM_SUITES = {
     "ldpc_batch_contract": "batching and routes", "pooled_batch_decoder": "batching",
@@ -378,29 +377,29 @@ def pilot_only_fill(rows):
             for cell, item in sorted(record["cells"].items()) if cell not in confirmed]
 
 
-def determinism_record():
+def determinism_record(directory):
     """Per suite: the contract clause and the passed and skipped tests of the committed log."""
-    log = (DETERMINISM / "nextest.log").read_text(encoding="utf-8")
-    identity = (DETERMINISM / "run-identity.txt").read_text(encoding="utf-8").splitlines()
+    log = (directory / "determinism/nextest.log").read_text(encoding="utf-8")
+    identity = (directory / "determinism/run-identity.txt").read_text(encoding="utf-8").splitlines()
     rows = []
     for suite, clause in DETERMINISM_SUITES.items():
         rows.append({"suite": suite, "clause": clause,
                      "passed": len(re.findall(rf"^\s+PASS .*::{suite} ", log, re.M)),
                      "failed": len(re.findall(rf"^\s+FAIL .*::{suite} ", log, re.M)),
                      "skipped": len(re.findall(rf"^\s+SKIP .*::{suite} ", log, re.M))})
-    return {"toolchain": identity[0], "source": cited(DETERMINISM / "nextest.log"),
+    return {"toolchain": identity[0], "source": cited(directory / "determinism/nextest.log"),
             "summary": re.search(r"Summary \[[^]]*\] (.*)", log)[1], "suites": rows}
 
 
-def reevaluation_record(rows):
+def reevaluation_record(directory, rows):
     """Fresh-checkout verdict of every receipt the scorecard consumes, read from its record."""
-    record = read_json(REEVALUATION)
+    record = read_json(directory / "receipt-reevaluation.json")
     verdicts = {row["receipt"]: row for row in record["receipts"]}
     consumed = sorted({row["receipt"] for row in rows})
     missing = [receipt for receipt in consumed if receipt not in verdicts]
     if missing:
         sys.exit(f"receipts missing from the re-evaluation record: {missing}")
-    return {"source": cited(REEVALUATION), "evidence_revision": record["evidence_revision"],
+    return {"source": cited(directory / "receipt-reevaluation.json"), "evidence_revision": record["evidence_revision"],
             "toolchain": record["toolchain"], "receipts": len(consumed),
             "differs": [receipt for receipt in consumed if not verdicts[receipt]["reproduces"]]}
 
@@ -416,9 +415,51 @@ def pending_rows(workload):
     return rows
 
 
-def build():
+def qualify(rows, rulings):
+    """Attach each published ruling on a receipt; a ruled primary cell's target is inconclusive."""
+    for ruling in rulings:
+        for row in rows:
+            if (row["family"] in ruling["families"]
+                    and row["cell"] in ruling.get("cells", [row["cell"]])):
+                row["evidence_ruling"] = {"ruling": ruling["ruling"], "record": ruling["record"]}
+                if row["target"]:
+                    row["target"] |= {"outcome": "inconclusive",
+                                      "reason": f"{ruling['ruling']} ({ruling['record']})"}
+
+
+def workload_key(row):
+    """Rows sharing a key time the same gf2 path on the same operation, size and configuration."""
+    return (row["workload"]["identity"], json.dumps(row["workload"]["size"], sort_keys=True),
+            row["metric_kind"], row["core_arm"], row["baseline"]["build"],
+            tuple(row["baseline"]["selected_path"]))
+
+
+def apply_workload_targets(rows):
+    """The target holds per workload over every other project's measured arm.
+
+    Each row keeps its own comparison as `pairwise`. A confirmed loss to another project makes
+    the workload `not met`; otherwise an undecided comparison makes it `inconclusive`. Rows
+    against the same project stay apart: they measure that project at other gf2 generations.
+    """
+    primary = [row for row in rows if row["target"]]
+    for row in primary:
+        row["target"]["pairwise"] = row["target"]["outcome"]
+    for row in primary:
+        others = [other for other in primary if workload_key(other) == workload_key(row)
+                  and other["target"]["citation"] != row["target"]["citation"]]
+        pairwise = row["target"]["pairwise"]
+        for level, phrase in (("not met", "loses to"), ("inconclusive", "undecided against")):
+            deciding = [other for other in others if other["target"]["pairwise"] == level]
+            if deciding and pairwise != "not met" and (level == "not met" or pairwise == "met"):
+                row["target"]["outcome"] = level
+                row["target"]["reason"] += "; workload " + phrase + " " + ", ".join(
+                    f"[{other['target']['citation']}] in `{other['cell']}`" for other in deciding)
+                break
+
+
+def build(directory):
     workload = read_json(WORKLOAD)
-    selector = load(tracked("a203a23c/select-receipts.py"))
+    selector = load(live("a203a23c/select-receipts.py"))
     selected, _ = selector.select(ROOT)
     missing = sorted({cell["receipt"] for cell in workload["cells"]} - set(selected))
     if missing:
@@ -432,6 +473,10 @@ def build():
     tuned = {decoder_family: make_outcome.batch_fill_record()["cells"]}
     rows = [cell_row(cell, classes, integrated, tuned) for cell in workload["cells"]]
     gaps = read_json(GAPS)
+    for ruling in gaps["evidence_rulings"]:
+        check_pointer(ruling["record"], ruling["families"][0])
+    qualify(rows, gaps["evidence_rulings"])
+    apply_workload_targets(rows)
     for entry in gaps["unavailable_comparisons"]:
         check_pointer(entry["record"], entry["comparator"])
     return {
@@ -440,17 +485,21 @@ def build():
         "gap_rule": "a primary comparator-gap cell whose outcome is pass, or whose estimate "
                     "exceeds the family's frozen material_gap_threshold; each keeps its "
                     "outcome as evaluated",
-        "target_rule": "decision regressed: met; decision improved: not met; any other decision "
-                       "or a not-confirmatory outcome: inconclusive; an unmeasured cell: "
-                       "unavailable",
+        "target_rule": "per comparison, decision regressed: met; decision improved: not met; any "
+                       "other decision, a not-confirmatory outcome or a published ruling on the "
+                       "receipt: inconclusive; an unmeasured cell: unavailable. The target "
+                       "holds per workload: a loss to another project's measured arm on the same "
+                       "operation, size, consumer scope, core arm, gf2 build and gf2 path makes "
+                       "the cell not met, and an undecided comparison there makes a met cell "
+                       "inconclusive; `pairwise` keeps the cell's own comparison",
         "cells": rows,
         "gaps": register(rows, gaps),
         "pilot_only_batch_fill": pilot_only_fill(
             [row for row in rows if row["family"] == decoder_family]),
         "unavailable_comparisons": gaps["unavailable_comparisons"],
         "pending": pending_rows(workload),
-        "determinism": determinism_record(),
-        "reevaluation": reevaluation_record(rows),
+        "determinism": determinism_record(directory),
+        "reevaluation": reevaluation_record(directory, rows),
     }
 
 
@@ -511,8 +560,8 @@ def paths(side):
     return escape("; ".join(side["selected_path"]))
 
 
-def link(target):
-    return shared.link(OUTPUT_MD, ROOT / target)
+def link(target, directory):
+    return shared.link(directory / MD_NAME, ROOT / target)
 
 
 def interval_text(row):
@@ -536,7 +585,8 @@ def target_text(row):
     target = row["target"]
     if not target:
         return "no external arm" if not row["primary"] else "—"
-    return f"{target['outcome']} [{target['citation']}]; {target['reason']}"
+    return (f"{target['outcome']} [{target['citation']}]; own comparison {target['pairwise']}; "
+            f"{target['reason']}")
 
 
 CELL_HEADER = ["Family / cell", "Role", "Evidence and drift", "Receipt", "Provenance",
@@ -545,10 +595,10 @@ CELL_HEADER = ["Family / cell", "Role", "Evidence and drift", "Receipt", "Proven
                "Batch fill, ns", "BER / FER", "Target outcome"]
 
 
-def cell_line(row):
+def cell_line(row, directory):
     settings = (f"; differing settings: {', '.join(row['settings_differences'])}"
                 if row["settings_differences"] else "")
-    receipt = f"[`{row['receipt_sha256'][:12]}`]({link(row['receipt'])})"
+    receipt = f"[`{row['receipt_sha256'][:12]}`]({link(row['receipt'], directory)})"
     return [
         f"`{row['family']}` / `{row['cell']}`", row["role"],
         f"{row['evidence']}; `{row['drift_class']}`", receipt, provenance_text(row),
@@ -559,14 +609,16 @@ def cell_line(row):
         f"{row['scaling']} / {row['core_arm']}, {row['resolved_cpus']} CPUs",
         interval_text(row),
         f"`{row['decision']}` / `{row['outcome']}`: {row['interpretation']}"
-        + (f"; {row['reason']}" if row["reason"] else ""),
+        + (f"; {row['reason']}" if row["reason"] else "")
+        + (f"; **{row['evidence_ruling']['ruling']}** (`{row['evidence_ruling']['record']}`)"
+           if row.get("evidence_ruling") else ""),
         both(row, lambda side: span(side["batch_fill_ns"])),
         both(row, lambda side: quality_text(side["quality"])) + settings,
         target_text(row),
     ]
 
 
-def render(record):
+def render(record, directory):
     lines = [
         "# Integrated competitive scorecard", "",
         "> **Diátaxis Type:** Reference", "",
@@ -590,7 +642,7 @@ def render(record):
         rows = [row for row in record["cells"] if row["domain"] == domain]
         for kind in sorted({row["comparator_kind"] for row in rows}):
             lines += [f"### {domain}: {kind}", "",
-                      *shared.table(CELL_HEADER, [cell_line(row) for row in rows
+                      *shared.table(CELL_HEADER, [cell_line(row, directory) for row in rows
                                                   if row["comparator_kind"] == kind]), ""]
     lines += [
         "## Gap register", "",
@@ -638,19 +690,20 @@ def render(record):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("out", type=pathlib.Path)
     parser.add_argument("--check", action="store_true")
     arguments = parser.parse_args()
     if pathlib.Path.cwd() != ROOT:
         sys.exit("invoke from the worktree root")
-    record = build()
-    outputs = {OUTPUT_JSON: json.dumps(record, indent=1, ensure_ascii=False) + "\n",
-               OUTPUT_MD: render(record)}
+    directory = arguments.out.resolve()
+    record = build(directory)
+    outputs = {directory / JSON_NAME: json.dumps(record, indent=1, ensure_ascii=False) + "\n",
+               directory / MD_NAME: render(record, directory)}
     for path, text in outputs.items():
         if arguments.check:
             if not path.is_file() or path.read_text(encoding="utf-8") != text:
                 sys.exit(f"projection differs: {path.relative_to(ROOT)}")
         else:
-            path.parent.mkdir(parents=True, exist_ok=True)
             shared.write(path, text)
     print(json.dumps({"cells": len(record["cells"]), "gaps": len(record["gaps"])}))
 

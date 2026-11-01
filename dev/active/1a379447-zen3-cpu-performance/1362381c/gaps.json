@@ -448,7 +448,7 @@
    ],
    "disposition": "preserved-experiment",
    "record": "dev/active/1a379447-zen3-cpu-performance/6fb89a3c/findings.md#8-follow-ups",
-   "statement": "Exploratory evidence: the family's ledger admits no further confirmatory attempt for this geometry.",
+   "statement": "Withdrawn confirmation cell under the warm-pass defect; the corrected re-measurement reproduces its decision as exploratory evidence, and the family's ledger admits no further confirmatory attempt for this geometry.",
    "see_also": [
     "dev/active/1a379447-zen3-cpu-performance/1d4fd63d/findings.md#10-follow-ups"
    ]
@@ -484,6 +484,45 @@
    "citation": "Bchlib2026",
    "scope": "GF(2^14) mother code rows: not served, so FI-4 has no bchlib arm there",
    "record": "dev/active/1a379447-zen3-cpu-performance/1358d6ab/outcome.md#bit-exact-equivalence-of-the-external-arms"
+  }
+ ],
+ "evidence_rulings": [
+  {
+   "families": [
+    "ldpc-qc-comparator-single-worker-v1",
+    "ldpc-qc-intra-frame-single-worker-v1",
+    "ldpc-qc-intra-frame-multicore-v1"
+   ],
+   "ruling": "C-09: family QC has no valid confirmatory verdict; recorded outcomes decide nothing",
+   "record": "dev/active/1a379447-zen3-cpu-performance/f63a2464/corrections.md#c-09-three-confirmatory-campaigns-against-a-cap-of-one"
+  },
+  {
+   "families": [
+    "bch-genmatrix-consumer",
+    "logical-buffer-vs-isal",
+    "transpose-vs-external"
+   ],
+   "ruling": "Withdrawn: the gf2 arm did not apply the declared warm policy; the corrected re-measurement is exploratory",
+   "record": "dev/active/1a379447-zen3-cpu-performance/6fb89a3c/findings.md#4-results"
+  },
+  {
+   "families": [
+    "dvb-t2-bit-interleave-baselines"
+   ],
+   "ruling": "Withdrawn: warm cells skipped the untimed pass; the re-measurement is exploratory",
+   "record": "dev/active/1a379447-zen3-cpu-performance/eda07788/findings.md#warm-state-defect-and-re-measurement"
+  },
+  {
+   "families": [
+    "bit-storage-layout-consumers"
+   ],
+   "cells": [
+    "layout-bch-encode-bitslice-m14-b256-1core",
+    "layout-bch-encode-caller-buffer-m14-b256-1core",
+    "layout-bch-encode-fold-m14-b256-1core"
+   ],
+   "ruling": "layout-v3-declared-mother-code: withdrawn as evidence about the normal-frame mother code; they measure the short-frame mother code",
+   "record": "dev/active/1a379447-zen3-cpu-performance/04b85d10/findings.md#recorded-contradictions"
   }
  ]
 }
