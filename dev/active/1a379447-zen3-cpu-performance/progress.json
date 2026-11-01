@@ -1,7 +1,7 @@
 {
  "epic_id": "1a379447-212f-4aff-b2c3-a83c13021e1d",
  "epic_short_id": "1a379447",
- "current_wave": 6,
+ "current_wave": 7,
  "waves": [
   {
    "wave_number": 1,
@@ -2694,7 +2694,7 @@
    "date": "2026-11-01",
    "issue": "101604ef",
    "reason": "code-review failed three times; findings pull in opposite directions on shell-text comparison",
-   "state": "ruled 2026-11-01: narrow REQ-01/REQ-02, older-form logs do not resume"
+   "state": "resolved by invoker ruling"
   }
  ],
  "rework_counts": {
@@ -3899,7 +3899,7 @@
      "model": "opus",
      "task": "apply the invoker narrowing: delete older-form compatibility",
      "reason": "worker holds the design context; narrow removal",
-     "result": "running"
+     "result": "done d7744b30b; lead fixed escaped apostrophes 854d6ec13; gates pass; epic gates pass"
     }
    ],
    "lead_fixes": [
@@ -3921,7 +3921,8 @@
     "be6d6f45",
     "befccab3"
    ],
-   "jit_gate_memoization": "jit reuses a failed verdict over identical declared inputs; rerun after a contention failure needs changed inputs or --force"
+   "jit_gate_memoization": "jit reuses a failed verdict over identical declared inputs; rerun after a contention failure needs changed inputs or --force",
+   "record_rewrite": "b7f30e17a; jit validate rc 0"
   }
  }
 }
