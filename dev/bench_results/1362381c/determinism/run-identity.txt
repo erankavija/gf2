@@ -1,0 +1,4 @@
+rustc 1.97.0 (2d8144b78 2026-07-07)
+e9236ea2616119381c98c727a0c8b1dec8247cce
+filter: binary(ldpc_batch_contract) | binary(batch_decode_worker_determinism) | binary(pooled_batch_decoder) | binary(checkpoint_compat) | binary(core_dispatch_fallback) | binary(ldpc_simd_validation) | binary(hybrid_resume) | binary(executor_oom_fallback_run)
+exit: 0
