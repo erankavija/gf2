@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """Freeze one baseline of the safety-contract change by content (jit:7d44b71f).
 
-Writes `<stage>-baseline.json` beside itself: the SHA-256 of every file the
-kernel package holds at COMMIT. For each path whose working-tree bytes differ,
-the baseline bytes are snapshotted under `inputs/<stage>/`. The generators read
-these records and their snapshots only. `locate.py` names the stages.
+Records the selected source-file digests and source revision as the rebuild pointer.
 
 Usage: freeze-anchor.py STAGE COMMIT
 """

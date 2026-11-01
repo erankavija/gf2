@@ -6,6 +6,7 @@ import copy
 import hashlib
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -26,8 +27,28 @@ ENVELOPE = Path(smoke.output(["git", "-C", str(smoke.ROOT), "ls-files",
                               "crates/gf2-coding/data/tuning-profiles/*.json"]))
 
 
+def bundle_inputs(test):
+    """Synthetic bundle manifests for configuration and synthetic-arm tests."""
+    temporary = tempfile.TemporaryDirectory()
+    test.addCleanup(temporary.cleanup)
+    root = Path(temporary.name)
+    for index, code in enumerate(smoke.CODES.values()):
+        directory = root / code["bundle"]
+        directory.mkdir()
+        manifest = {"n": 65 + index, "k": 32, "frames": 8, "nnz": 120 + index,
+                    "seed": index + 1, "h_sha256": hashlib.sha256(b"synthetic H").hexdigest(),
+                    "llrs_sha256": hashlib.sha256(b"synthetic LLRs").hexdigest(),
+                    "codeword_source": "all-zero", "esn0_db": 1.0}
+        (directory / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    configured = mock.patch.dict(os.environ, {"GF2_LDPC_INPUTS": str(root)})
+    configured.start()
+    test.addCleanup(configured.stop)
+    return root
+
+
 class GeneratorTest(unittest.TestCase):
     def setUp(self):
+        bundle_inputs(self)
         self.directory = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.directory)
         self.declaration = json.loads(SAMPLE.read_text(encoding="utf-8"))
@@ -58,6 +79,14 @@ class GeneratorTest(unittest.TestCase):
         checked = subprocess.run([runner, "check", str(out_dir / generator.PLAN)],
                                  env=environment, capture_output=True, text=True)
         self.assertEqual(checked.returncode, 0, checked.stderr)
+
+    def test_generation_reads_external_manifests_without_copying_inputs(self):
+        self.generate()
+        self.assertFalse((self.directory / "out" / "inputs").exists())
+        identities = smoke.input_identities()
+        for bundle, digest in identities["manifests"].items():
+            source = Path(identities["path"]) / bundle / "manifest.json"
+            self.assertEqual(digest, hashlib.sha256(source.read_bytes()).hexdigest())
 
     def test_two_runs_write_identical_bytes(self):
         self.generate()
@@ -192,7 +221,7 @@ class GeneratorTest(unittest.TestCase):
                                  capture_output=True, text=True)
         self.assertEqual(checked.returncode, 0, checked.stderr)
 
-    def test_workload_sizes_come_from_the_recorded_bundles(self):
+    def test_workload_sizes_come_from_the_configured_bundle_manifests(self):
         addendum, plan = self.generate()
         for cell, case in zip(addendum["cells"], (cell["case"] for cell in plan["cells"])):
             manifest = json.loads((Path(case["bundle"]) / "manifest.json").read_text())

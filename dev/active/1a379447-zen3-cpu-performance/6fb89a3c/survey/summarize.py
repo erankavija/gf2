@@ -284,7 +284,7 @@ def overview() -> list[str]:
                 f"| `{fam['family_id']}` | `{directory.name}` | {fam['comparisons']} | {fam['per_comparison_confidence']:.6g} | "
                 f"{draws:.1f} | {', '.join(f'{outcome} x{count}' for outcome, count in sorted(counts.items()))} | "
                 f"{'; '.join(leads) or 'none'} |")
-            effect = json.loads((directory / receipt["addendum"]["snapshot"]).read_text())["effect"]
+            effect = json.loads((pathlib.Path(receipt["addendum"]["path"])).read_text())["effect"]
             pilot = pathlib.Path(effect["resolution_evidence"]["receipt"]).parent
             pilot_summary = json.loads((pilot / "acceptance-summary.json").read_text())
             widths = {cell["cell_id"]: max(abs(cell["interval"]["estimate"] - cell["interval"]["lower"]),

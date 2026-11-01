@@ -67,9 +67,6 @@ def main():
         sys.exit("the resolution evidence must be a pilot receipt of the same family")
     if summary["receipt_sha256"] != sha(receipt_bytes) or summary["verdict"] != "accepted":
         sys.exit("the acceptance summary must accept the exact pilot receipt bytes")
-    for pin in (receipt["addendum"], receipt["trial_ledger"]):
-        if sha((receipt_path.parent / pin["snapshot"]).read_bytes()) != pin["sha256"]:
-            sys.exit("the pilot addendum or ledger snapshot differs from its pin")
     widths = {cell["cell_id"]: relative_half_width(cell) for cell in summary["cells"] if cell.get("interval")}
     if len(widths) != len(receipt["cells"]):
         sys.exit("every pilot cell must carry an interval")
@@ -90,7 +87,7 @@ def main():
     identity = IDENTITY.read_bytes()
     document["family"]["description"] = description + (
         f" Executables, toolchain and AFF3CT identity are pinned by {IDENTITY} (SHA-256 {sha(identity)}); "
-        "the receipt snapshots this record and the complete producing-input closure.")
+        "the receipt records input digests and the source revision as the rebuild pointer.")
     document["frozen"]["frozen_utc"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     document["effect"].update({
         "worthwhile_speedup": None,

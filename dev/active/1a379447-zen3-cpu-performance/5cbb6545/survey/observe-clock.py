@@ -124,7 +124,7 @@ def main():
     for directory in receipts:
         plan = json.loads((directory / "plan.json").read_text())
         receipt = json.loads((directory / "receipt.json").read_text())
-        addendum = json.loads((directory / "inputs" / "family-addendum.json").read_text())
+        addendum = json.loads((pathlib.Path(receipt["addendum"]["path"])).read_text())
         settings = receipt["settings"]
         declared = {cell["cell_id"]: cell for cell in addendum["cells"]}
         measured = {cell["cell_id"]: cell for cell in receipt["cells"]}

@@ -11,7 +11,7 @@ and contributes no claim.
 Every figure is read from a committed artifact: the configuration grid and the
 derived code parameters from the survey's parameter dump, the equivalence
 outcomes from its validation record, and the measured cells from each receipt
-directory's acceptance summary, receipt and receipt-local ledger snapshot. The
+directory's acceptance summary, receipt and configuration at the rebuild checkout. The
 generator computes only presentation quantities (relative half-width, the
 reciprocal of a speedup, medians over the receipt's own per-execution values)
 and states the derivation of each.
@@ -108,26 +108,6 @@ def validation_rows(out):
     out.append(f"| unavailable | {unavailable} |")
     out.append("")
 
-
-def ledger_rows(out, directory, receipt):
-    snapshot = directory / "inputs" / "trial-ledger.jsonl"
-    if not snapshot.exists():
-        return
-    entries = [json.loads(line) for line in snapshot.read_text().splitlines() if line.strip()]
-    out.append("### Family accounting (P-20)\n")
-    out.append(
-        f"Source: `{snapshot.relative_to(directory.parent.parent.parent)}`, the "
-        f"receipt-local ledger prefix pinned by `receipt.trial_ledger.sha256` = "
-        f"`{receipt['trial_ledger']['sha256']}`.\n"
-    )
-    out.append("| Sequence | Campaign | Protocol | Comparisons | Candidate identities |")
-    out.append("|---|---|---|---|---|")
-    for entry in entries:
-        out.append(
-            f"| {entry['sequence']} | `{entry['campaign']}` | {entry['protocol_version']} | "
-            f"{entry['comparisons']} | {len(entry['candidates'])} |"
-        )
-    out.append("")
 
 
 def arm_rows(out, receipt):
@@ -254,13 +234,13 @@ def receipt_section(out, directory):
             f"| widest relative half-width | {fmt(relative_half_width(widest['interval']), 6)} "
             f"(`{widest['cell_id']}`) | `{directory.name}/acceptance-summary.json` |"
         )
-        addendum = load(directory / receipt["addendum"]["snapshot"])
+        addendum = load(pathlib.Path(receipt["addendum"]["path"]))
         resolution = addendum["effect"]["measurement_resolution"]
         evidence = addendum["effect"]["resolution_evidence"]
         out.append(
             f"| declared measurement resolution | "
             f"{'none declared' if resolution is None else resolution} | "
-            f"`{directory.name}/{receipt['addendum']['snapshot']}` |"
+            f"`{receipt['addendum']['path']}` |"
         )
         out.append(
             f"| resolution evidence | "
@@ -268,7 +248,7 @@ def receipt_section(out, directory):
             f"{'-' if evidence is None else '`' + evidence['receipt'] + '`'} |"
         )
         out.append("")
-    ledger_rows(out, directory, receipt)
+
     arm_rows(out, receipt)
 
 

@@ -46,10 +46,7 @@ def verify(log_path, receipt_path, plan_path):
     with open(plan_path) as handle:
         plan = json.load(handle)
 
-    snapshot = os.path.join(os.path.dirname(receipt_path), receipt["addendum"]["snapshot"])
-    with open(snapshot) as handle:
-        addendum = json.load(handle)
-    roles = {cell["cell_id"]: cell["role"] for cell in addendum["cells"]}
+    roles = {cell["cell_id"]: cell["role"] for cell in receipt["cells"]}
     declared = {}
     for cell in plan["cells"]:
         pairs = cell.get("pilot_pairs")

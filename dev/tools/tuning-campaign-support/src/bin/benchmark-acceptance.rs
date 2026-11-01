@@ -45,7 +45,9 @@ fn main() {
     let Some(receipt_dir) = receipt_dir else {
         usage()
     };
-    let summary = match evaluate(&receipt_dir) {
+    let summary = match tuning_campaign_support::repository::repository_root()
+        .and_then(|root| evaluate(&root, &receipt_dir))
+    {
         Ok(summary) => summary,
         Err(error) => {
             eprintln!("benchmark-acceptance: {error}");

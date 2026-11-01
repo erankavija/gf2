@@ -463,7 +463,7 @@ def family_table(lines, addendum, receipt, acceptance):
         "## Family accounting",
         "",
         f"Source: `{LEDGER}`, snapshotted receipt-local as "
-        f"`{receipt['trial_ledger']['snapshot']}` and pinned by "
+        f"`{receipt['trial_ledger']['path']}` and pinned by "
         f"`receipt.trial_ledger.sha256` = `{receipt['trial_ledger']['sha256']}`.",
         "",
     ]

@@ -19,7 +19,6 @@ class() {
     */breakdown.json) echo tracker-state ;;
     */2037941f-*/dense-parity-addendum*.md) echo frozen-document ;;
     */fa787f85-documentation-overhaul/*) echo epic-record ;;
-    */receipt-input-omissions.json) echo snapshot-path ;;
     *.json|*.jsonl|*.txt|*.tsv|*.log) echo data-record ;;
     */63bad95d/route-inventory.md) echo generated-table ;;
     */handoff-23.md) echo manifest-quote ;;

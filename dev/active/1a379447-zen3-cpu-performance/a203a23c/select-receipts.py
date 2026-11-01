@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 """Selects committed benchmark receipts by their declared schema.
 
-`reevaluate-receipts.sh` evaluates every `zen3-benchmark-receipt-v1` receipt
-under `dev/` with `benchmark-acceptance`; a campaign's stage directory may sit
-in its issue's record directory instead of `dev/bench_results/`. A receipt of another
-schema is not a benchmark receipt: handing it to a benchmark-shaped evaluator
-aborts the run. This module partitions a tree of
-committed receipts by each receipt's own declared `schema` field, never by
-path, so a receipt of another schema is skipped and recorded instead of
-evaluated.
+This module partitions a tree of committed receipts by each receipt's declared
+`schema` field. Receipts of another schema are listed separately from benchmark
+receipts that `benchmark-acceptance` evaluates.
 
 Usage:
   select-receipts.py <tree> --selected-out <path> --skipped-out <path>

@@ -36,7 +36,7 @@ def campaigns():
                 summary, _, cells = shared.outcomes(directory)
                 record = {"directory": directory, "summary": summary, "cells": cells}
             record["receipt"] = shared.read(directory / "receipt.json")
-            record["addendum"] = shared.read(directory / record["receipt"]["addendum"]["snapshot"])
+            record["addendum"] = shared.read(ROOT / record["receipt"]["addendum"]["path"])
             record["plan"] = shared.read(directory / "plan.json")
             records[route, stage] = record
     return records
@@ -241,7 +241,7 @@ def margin_record(route, pilot, confirmation):
         f"Frozen worthwhile speedup {effect['worthwhile_speedup']:g}; equivalence margin "
         f"{effect['equivalence_margin']:g}; measurement resolution "
         f"{effect['measurement_resolution']:g}. "
-        f"The {link(pilot['directory'] / pilot['receipt']['addendum']['snapshot'], 'pilot addendum snapshot')} "
+        f"The {link(ROOT / pilot['receipt']['addendum']['path'], 'pilot addendum')} "
         "retains the refused values. These refusals remain part of the outcome.", "",
     ]
 

@@ -143,8 +143,8 @@ def pilot_history() -> dict[str, list[str]]:
         declared = entries[0]["details"]["addendum"]
         if pathlib.Path(declared["path"]).name == OUTPUT.name:
             continue
-        snapshot = log.parent / declared["snapshot"]
-        addendum = json.loads(snapshot.read_text())
+        source = pathlib.Path(declared["path"])
+        addendum = json.loads(source.read_text())
         if addendum["family"]["id"] not in QUESTION_IDS:
             continue
         roles = {cell["cell_id"]: cell["role"] for cell in addendum["cells"]}

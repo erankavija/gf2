@@ -36,7 +36,7 @@ def gaps():
         summary = read(directory / 'acceptance-summary.json')
         result = next(row for row in summary['cells'] if row['cell_id'] == cell['cell'])
         receipt = read(directory / 'receipt.json')
-        addendum = read(directory / receipt['addendum']['snapshot'])
+        addendum = read(ROOT / receipt['addendum']['path'])
         declared = next(row for row in addendum['cells'] if row['cell_id'] == cell['cell'])
         plan = read(directory / 'plan.json')
         planned = next(row for row in plan['cells'] if row['cell_id'] == cell['cell'])

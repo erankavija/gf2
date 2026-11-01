@@ -53,8 +53,8 @@ class WorkloadSetTests(unittest.TestCase):
         (directory / "plan.json").write_text(json.dumps(plan))
         receipt = {"schema": selector.BENCHMARK_SCHEMA, "campaign_id": campaign,
                    "label": label, "family_id": family,
-                   "addendum": {"snapshot": "addendum.json"},
-                   "trial_ledger": {"snapshot": "ledger.jsonl"}}
+                   "addendum": {"path": str((directory / "addendum.json").relative_to(self.root))},
+                   "trial_ledger": {"path": str((directory / "ledger.jsonl").relative_to(self.root))}}
         (directory / "receipt.json").write_text(json.dumps(receipt))
         digest = hashlib.sha256((directory / "receipt.json").read_bytes()).hexdigest()
         summary = {"verdict": verdict, "label": label, "receipt_sha256": digest,

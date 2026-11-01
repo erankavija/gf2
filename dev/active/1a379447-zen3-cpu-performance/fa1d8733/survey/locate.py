@@ -41,12 +41,12 @@ PACKAGE_NAME = "gf2-kernels-simd"
 PACKAGE = repository_files.package_directory(ROOT, PACKAGE_NAME)
 
 # The two trees this task compares, each by content: per-path digests of the
-# kernel package, and byte snapshots of the paths the working tree changes.
+# kernel package, and a source revision as the rebuild pointer.
 #
 #   before  the sources holding the unroll bodies and their listing
 #   after   the sources without them and the listing regenerated from those
 BASELINES = {
-    stage: content_anchor.Anchor(ROOT, HERE / f"{stage}-baseline.json", HERE / "inputs" / stage)
+    stage: content_anchor.Anchor(ROOT, HERE / f"{stage}-baseline.json")
     for stage in ("before", "after")
 }
 STEP = "before to after"

@@ -22,7 +22,7 @@ for family in ['matched-algorithm', 'quality-compatible']:
     predecessor = '0' * 64
     for plan_path in sorted(base.glob(f'2026-*-ldpc-{family}-pilot/plan.json')):
         plan = json.loads(plan_path.read_bytes())
-        addendum_path = plan_path.parent / 'inputs/family-addendum.json'
+        addendum_path = Path(plan['addendum'])
         addendum = json.loads(addendum_path.read_bytes())
         assert addendum['protocol']['version'] == 1
         assert all(c['role'] == 'exploratory' for c in addendum['cells'])

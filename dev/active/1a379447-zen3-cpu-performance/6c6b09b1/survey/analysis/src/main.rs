@@ -92,10 +92,14 @@ fn ledger_genesis(family: &str, ledger: &str, receipt_dir: &str) -> Result<(), S
     let dir = Path::new(receipt_dir);
     let bytes = fs::read(dir.join("receipt.json")).map_err(|e| format!("receipt: {e}"))?;
     let receipt = BenchmarkReceipt::decode(&bytes)?;
-    let addendum = fs::read(dir.join(&receipt.addendum.snapshot))
-        .map_err(|e| format!("addendum snapshot: {e}"))?;
+    let addendum = receipt
+        .addendum
+        .verify_content(
+            &tuning_campaign_support::repository::repository_root().map_err(|e| e.to_string())?,
+        )
+        .map_err(|e| format!("addendum: {e}"))?;
     if sha256_hex(&addendum) != receipt.addendum.sha256 {
-        return Err("the v1 addendum snapshot differs from its receipt pin".to_owned());
+        return Err("the v1 addendum differs from its receipt pin".to_owned());
     }
     let value: serde_json::Value =
         serde_json::from_slice(&addendum).map_err(|e| format!("addendum: {e}"))?;

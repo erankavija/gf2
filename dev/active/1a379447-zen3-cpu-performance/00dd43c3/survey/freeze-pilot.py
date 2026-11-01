@@ -19,7 +19,7 @@ ACTIVE = SURVEY.parent.relative_to(ROOT)
 PROFILE = Path("dev/bench_results/c04dd4ac/residual-shift-profile")
 PROFILE_RECEIPT = PROFILE / "receipt.json"
 PROFILE_SUMMARY = PROFILE / "acceptance-summary.json"
-PROFILE_ADDENDUM = PROFILE / "inputs/family-addendum.json"
+PROFILE_ADDENDUM = ACTIVE.parent / "c04dd4ac-zen3-shifts-and-permutations" / "shift-profile-addendum.json"
 FROZEN_UTC = "2026-09-26T07:29:22Z"
 
 

@@ -45,8 +45,7 @@ def main():
     os.chdir(root)
     with open(f"{V1_PILOT}/receipt.json") as handle:
         receipt = json.load(handle)
-    with open(receipt["addendum"]["snapshot"] if os.path.isabs(receipt["addendum"]["snapshot"])
-              else f"{V1_PILOT}/{receipt['addendum']['snapshot']}") as handle:
+    with open(receipt["addendum"]["path"]) as handle:
         v1_addendum = json.load(handle)
     non_exploratory = sum(1 for cell in v1_addendum["cells"] if cell["role"] != "exploratory")
     for short, family in FAMILIES.items():
@@ -100,7 +99,7 @@ def main():
                     "receipt_sha256": sha256(f"{V1_PILOT}/receipt.json"),
                     "plan": f"{V1_PILOT}/plan.json",
                     "plan_sha256": sha256(f"{V1_PILOT}/plan.json"),
-                    "addendum": f"{V1_PILOT}/{receipt['addendum']['snapshot']}",
+                    "addendum": receipt["addendum"]["path"],
                     "addendum_sha256": receipt["addendum"]["sha256"],
                     "acceptance_summary": f"{V1_PILOT}/acceptance-summary.json",
                     "acceptance_summary_sha256": sha256(f"{V1_PILOT}/acceptance-summary.json"),

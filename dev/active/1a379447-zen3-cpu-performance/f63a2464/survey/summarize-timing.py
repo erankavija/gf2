@@ -76,7 +76,7 @@ def stage_tables(lines, results, family, stage, verify):
     receipt = read_json(directory / "receipt.json")
     summary = read_json(directory / "acceptance-summary.json")
     plan = read_json(directory / "plan.json")
-    addendum = read_json(directory / receipt["addendum"]["snapshot"])
+    addendum = read_json(ROOT / receipt["addendum"]["path"])
     declared = {cell["cell_id"]: cell for cell in addendum["cells"]}
     cases = {cell["cell_id"]: cell["case"] for cell in plan["cells"]}
     verdicts = {cell["cell_id"]: cell for cell in summary["cells"]}

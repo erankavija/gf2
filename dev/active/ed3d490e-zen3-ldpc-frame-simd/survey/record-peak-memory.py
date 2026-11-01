@@ -19,7 +19,6 @@ import shutil
 import statistics
 import subprocess
 import sys
-import tarfile
 
 sys.dont_write_bytecode = True
 INTRA = pathlib.Path(__file__).resolve().with_name("record-intra-quality.py")
@@ -105,12 +104,9 @@ def arm_plans(rows, files, batches, group=GROUP, family=FAMILY, label="peak-memo
     """Per arm and code, the throwaway plan of the arm against a smoke arm and its cell ids.
 
     The plan holds every cell of the smoke family `family` on the code at the batch `batches`
-    gives the arm. The recorded bundles are extracted under `scratch`, which keeps the rest of
-    its contents, so a caller's stages there resume.
+    gives the arm. The recorded bundles live under `GF2_LDPC_INPUTS`; stages under `scratch` resume.
     """
-    (scratch / "inputs").mkdir(parents=True, exist_ok=True)
-    with tarfile.open(smoke.by_digest(smoke.ARCHIVE)) as handle:
-        handle.extractall(scratch / "inputs", filter="data")
+    scratch.mkdir(parents=True, exist_ok=True)
     base = family_batches(family)
     extra = sorted(set(batches.values()) - set(base.values()))
     derived = [("", None, "single-frame", "lane-avx2"),
@@ -320,7 +316,7 @@ def record_mode(out_dir):
                 "above_floor_median_kib": peak["median_kib"] - floor["median_kib"]}
     record = {"cites": ["Cassagne2019"], "method": {**METHOD, "launches": LAUNCHES},
               "pointers": {"build_identity": cited(build_path), "catalogue": build["catalogue"]},
-              "recorded_inputs": {"name": smoke.ARCHIVE[0], "sha256": smoke.ARCHIVE[1]},
+              "recorded_inputs": smoke.input_identities(),
               "host": host(),
               "arms": arms}
     (out_dir / RECORD).write_text(intra.encoded(record), encoding="utf-8")

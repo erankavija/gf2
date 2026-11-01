@@ -1,9 +1,8 @@
 //! Zen 3 benchmark protocol identity, frozen shared settings, and the
 //! family/cell addendum contract. The protocol document, the addendum schema
 //! and this module describe one versioned contract. Receipts pin the document
-//! and schema by receipt-local snapshot and content digest, with the source
-//! path as provenance; the acceptance tool recomputes every digest and every
-//! statistic instead of trusting a receipt's own claims.
+//! and schema by content digest. The source revision is the rebuild pointer;
+//! acceptance reads inputs from that checkout and recomputes statistics.
 
 use crate::abtest::Margins;
 use crate::host::CoreArm;
@@ -13,8 +12,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io;
 use std::path::Path;
-
-use crate::journal::atomic_write_new;
 
 /// Stable protocol identifier; a new version keeps the identifier.
 pub const PROTOCOL_ID: &str = "zen3-benchmark-protocol";
@@ -162,15 +159,6 @@ impl SharedInput {
         }
     }
 
-    /// Receipt-relative snapshot path.
-    pub fn snapshot(self) -> &'static str {
-        match self {
-            Self::Protocol => "inputs/protocol.md",
-            Self::Contract => "inputs/measurement-contract.md",
-            Self::AddendumSchema => "inputs/addendum.schema.json",
-        }
-    }
-
     /// File-name glob of the live documents.
     fn file_name(self) -> &'static str {
         match self {
@@ -236,58 +224,28 @@ impl SharedInput {
     }
 }
 
-/// Content identity of one receipt-local input snapshot.
+/// Content identity of one repository input.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
 pub struct ArtifactPin {
-    /// Original repository-relative source path.
+    /// Repository-relative source path.
     pub path: String,
-    /// Receipt-relative immutable snapshot path.
-    pub snapshot: String,
     /// Lowercase hex SHA-256 of the exact file bytes.
     pub sha256: String,
 }
 
 impl ArtifactPin {
-    /// Captures an input into a durable stage snapshot. An existing snapshot
-    /// is retained on resume, so unrelated source-tree edits cannot rewrite a
-    /// campaign's frozen inputs.
-    pub fn capture(
-        repo_root: &Path,
-        stage_root: &Path,
-        relative: &str,
-        snapshot: &str,
-    ) -> io::Result<Self> {
+    /// Records an input's digest without copying its bytes.
+    pub fn capture(repo_root: &Path, relative: &str) -> io::Result<Self> {
         validate_relative(relative, "artifact source")?;
-        validate_relative(snapshot, "artifact snapshot")?;
-        let destination = stage_root.join(snapshot);
-        let bytes = if destination.exists() {
-            fs::read(&destination)?
-        } else {
-            let bytes = fs::read(repo_root.join(relative))?;
-            if let Some(parent) = destination.parent() {
-                fs::create_dir_all(parent)?;
-            }
-            atomic_write_new(&destination, &bytes)?;
-            bytes
-        };
-        let pin = Self {
+        Ok(Self {
             path: relative.to_owned(),
-            snapshot: snapshot.to_owned(),
-            sha256: sha256_hex(&bytes),
-        };
-        pin.validate_shape()
-            .map_err(|message| io::Error::new(io::ErrorKind::InvalidData, message))?;
-        pin.verify_content(stage_root)
-            .map_err(|message| io::Error::new(io::ErrorKind::InvalidData, message))?;
-        Ok(pin)
+            sha256: sha256_hex(&fs::read(repo_root.join(relative))?),
+        })
     }
 
     /// Checks the identity's syntax without touching the filesystem.
     pub fn validate_shape(&self) -> Result<(), String> {
         validate_relative(&self.path, "artifact path").map_err(|error| error.to_string())?;
-        validate_relative(&self.snapshot, "artifact snapshot path")
-            .map_err(|error| error.to_string())?;
         if !is_hex(&self.sha256, 64) {
             return Err(format!(
                 "artifact {} sha256 is not 64 hex digits",
@@ -297,21 +255,16 @@ impl ArtifactPin {
         Ok(())
     }
 
-    /// Reads the receipt-local snapshot bytes.
-    pub fn read_pinned(&self, receipt_root: &Path) -> Result<Vec<u8>, String> {
+    /// Reads the source input at the rebuild checkout.
+    pub fn read_pinned(&self, repo_root: &Path) -> Result<Vec<u8>, String> {
         self.validate_shape()?;
-        fs::read(receipt_root.join(&self.snapshot)).map_err(|error| {
-            format!(
-                "cannot read pinned content snapshot {}: {error}",
-                self.snapshot
-            )
-        })
+        fs::read(repo_root.join(&self.path))
+            .map_err(|error| format!("cannot read pinned input {}: {error}", self.path))
     }
 
-    /// Recomputes the content digest from the pinned bytes and returns those
-    /// exact bytes on success.
-    pub fn verify_content(&self, receipt_root: &Path) -> Result<Vec<u8>, String> {
-        let bytes = self.read_pinned(receipt_root)?;
+    /// Returns source bytes whose digest matches this pin.
+    pub fn verify_content(&self, repo_root: &Path) -> Result<Vec<u8>, String> {
+        let bytes = self.read_pinned(repo_root)?;
         if sha256_hex(&bytes) != self.sha256 {
             return Err(format!(
                 "pinned artifact {} content digest differs",
@@ -1236,7 +1189,7 @@ pub struct RunnerPlan {
 }
 
 impl RunnerPlan {
-    /// Manifest captured into this campaign's producing-input snapshot: the
+    /// Manifest whose input digests the campaign records: the
     /// plan's own, or [`SHARED_PRODUCING_MANIFEST`] beside the pinned
     /// protocol document at `protocol_path`.
     pub fn producing_manifest_path(&self, protocol_path: &str) -> String {

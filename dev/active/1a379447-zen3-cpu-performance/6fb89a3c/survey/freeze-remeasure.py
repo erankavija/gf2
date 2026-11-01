@@ -124,8 +124,8 @@ def pilot_history(family_ids: set[str], output: pathlib.Path,
         declared = entries[0]["details"]["addendum"]
         if pathlib.Path(declared["path"]).name == output.name:
             continue
-        snapshot = log.parent / declared["snapshot"]
-        addendum = json.loads(snapshot.read_text())
+        source = pathlib.Path(declared["path"])
+        addendum = json.loads(source.read_text())
         if addendum["family"]["id"] not in family_ids:
             continue
         roles = {cell["cell_id"]: cell["role"] for cell in addendum["cells"]}
@@ -152,10 +152,11 @@ def self_test() -> int:
         def campaign(name: str, addendum_path: pathlib.Path) -> None:
             campaign_dir = results / name
             campaign_dir.mkdir()
-            (campaign_dir / "family-addendum.json").write_text(json.dumps(addendum))
+            source = results / addendum_path.name
+            source.write_text(json.dumps(addendum))
             entries = [
                 {"event": "campaign-start",
-                 "details": {"addendum": {"path": str(addendum_path), "snapshot": "family-addendum.json"}}},
+                 "details": {"addendum": {"path": str(source)}}},
                 {"event": "cell-start", "case": {"cell_id": "cell-a"}},
                 {"event": "cell-start", "case": {"cell_id": "cell-b"}},
             ]

@@ -17,7 +17,8 @@ instead of restating figures.
 Claims whose method line cites this section come from confirmatory cells of
 the
 [Zen 3 benchmark protocol](https://github.com/erankavija/gf2/blob/6776fe30ea9af85ad509ddca95926f051421676d/dev/active/f547c394/protocol.md).
-Each such receipt carries a snapshot of the protocol version that evaluates it.
+Each such receipt records its protocol version and input digests; its source
+revision is the rebuild pointer.
 Its `receipt.json`, linked beside each summary, records the host, build,
 workload, baseline and date.
 

@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
 """Checks that every addendum schema digest a receipt pins has a schema file.
 
-The unversioned `addendum.schema.json` always describes the current protocol
-version; protocol version 4 amended it in
-place rather than adding a version-4 sibling, so an earlier version's schema
-survived only inside the receipts whose campaigns pinned it. A frozen
-addendum of that earlier version could no longer be validated against a
-committed schema from a fresh checkout — only against the specific receipt's
-own snapshot copy.
-
 Version 1 itself was pinned under two distinct digests: a wording-only edit
 to its `frozen.description` annotation (no `$id`, `const`, `enum`, `required`
 or numeric-bound change — see `amendment-v2.md`) split the very first pilot
@@ -104,9 +96,8 @@ def committed_oids(root: Path, revision: str | None = None) -> dict[str, str]:
 class BlobReader:
     """Reads committed bytes by repository-relative path.
 
-    One `git cat-file --batch` serves every read, following the pattern
-    `check-receipt-input-snapshots.py` uses for the same reason: a process per
-    file dominates the run once there are more than a handful.
+    One `git cat-file --batch` serves every read; a process per file
+    dominates the run once there are more than a handful.
     """
 
     def __init__(self, root: Path, oids: dict[str, str]) -> None:

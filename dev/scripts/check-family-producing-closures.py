@@ -6,7 +6,7 @@ that enumerates its sources. A generator whose source offers `--check` compares
 the committed closure with that enumeration and writes nothing; a generator
 without the option is not run, since its invocation writes its output. A merge that adds or removes an
 enumerated source leaves the closure stale and its campaign evidence outside the
-receipt's snapshot (`@/inv/behavioral-evidence-validity`). This check runs the
+receipt's input digests (`@/inv/behavioral-evidence-validity`). This check runs the
 `--check` of every live generator the shared locator finds, so a later family is
 covered without a CI edit; the shared closure is checked by
 `check-campaign-producing-closure.py`.

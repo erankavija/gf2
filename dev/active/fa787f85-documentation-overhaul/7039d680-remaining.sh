@@ -22,7 +22,6 @@ class() {
     */handoff-*.md|*/reviews/*) echo session-record ;;
     */26465e6c/superseded/v1/survey/*) echo pinned-script ;;
     */eda07788/survey/freeze-remeasure.py) echo addendum-text ;;
-    */eda07788/survey/inspect-sources.py) echo snapshot-path ;;
     */c04dd4ac-*/survey/make-profile-provenance.py) echo revision-path ;;
     *) echo "unclassified:$1" ;;
   esac

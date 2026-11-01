@@ -110,13 +110,14 @@ def part_of(purpose, declared, sides):
     return BEFORE_AFTER
 
 
-def campaign(directory):
+def campaign(directory, root=None):
     """The verified campaign in `directory`: its summary and, per cell, outcome and arm sides."""
+    root = smoke.ROOT if root is None else root
     verifier.verify(str(directory / "execution.log"), str(directory / "receipt.json"),
                     str(directory / "plan.json"))
-    summary, _, cells = outcome.outcomes(directory)
+    summary, _, cells = outcome.outcomes(directory, root)
     receipt = read(directory / "receipt.json")
-    purpose = read(directory / receipt["addendum"]["snapshot"])["family"]["purpose"]
+    purpose = read(root / receipt["addendum"]["path"])["family"]["purpose"]
     measured = {cell["cell_id"]: cell for cell in receipt["cells"]}
     reports = defaultdict(list)
     for row in smoke.diagnostics(directory):
@@ -169,18 +170,8 @@ def peak_memory(results):
 
 
 def calibration():
-    """The calibration campaign's verification record and the owner's field decisions."""
-    sys.path.insert(0, str(CALIBRATION))
-    try:
-        verify = load(CALIBRATION / "verify-campaign.py")
-    finally:
-        sys.path.remove(str(CALIBRATION))
-    record = verify.verification()
-    archive = verify.evidence()[3]
-    responses = json.loads(verify.pinned(archive, "/owner-decisions.json")[1])
-    fields = [field for response in responses
-              for field in json.loads(response["decisions"])["fields"]]
-    return {"record": record, "fields": fields}
+    """The committed calibration verification result."""
+    return read(CALIBRATION / "campaign-verification.json")
 
 
 def profile(summary_path):
@@ -445,25 +436,17 @@ def finding_rows(campaigns):
 
 
 def calibration_section(place, calibrated):
-    record = calibrated["record"]
+    record = calibrated
     journal, owner = record["journal"], record["owner_envelope"]
     return [
         "## Decode selector calibration", "",
-        f"Campaign `{record['campaign_id']}`, verified from its execution journal "
-        f"`{record['execution_log']['path']}` in the committed evidence archive by "
-        f"{link(place, CALIBRATION / 'verify-campaign.py', '`verify-campaign.py`')}: "
+        f"Campaign `{record['campaign_id']}`, recorded in "
+        f"{link(place, CALIBRATION / 'campaign-verification.json')}: "
         f"declared cells {journal['declared']['cells']}, units {journal['declared']['units']}, "
         f"sessions {journal['sessions']}, terminal record `{journal['terminal']}`. Its owner "
         f"envelope is {link(place, smoke.ROOT / owner['path'])} with the receipt "
         f"{link(place, smoke.ROOT / owner['receipt'])}. The holdout family's `tuned-portable` and "
         "`native` arms install this envelope; its `conservative-portable` arms install none.", "",
-        "Field decisions as the owner records them; their scores are the producer's descriptive "
-        "statistic, carry no interval and stay in the receipt.", "",
-        *table(["Field", "Reason", "Selected", "Emitted", "Grid-boundary limited"],
-               [[f"`{field['field']}`", f"`{field['decision']['reason']}`",
-                 str(field["selected"]), f"`{str(field['emitted']).lower()}`",
-                 f"`{str(field['decision']['grid_boundary_limited']).lower()}`"]
-                for field in calibrated["fields"]]), "",
     ]
 
 

@@ -17,7 +17,7 @@ from locate import (
 )
 
 ANCHOR = content_anchor.Anchor(
-    ROOT, HERE / "kernel-anchor-baseline.json", HERE / "inputs" / "kernel-anchor"
+    ROOT, HERE / "kernel-anchor-baseline.json"
 )
 RECORDS = {"before": "crate-functions-before.json", "after": "crate-functions-default.json"}
 

@@ -261,7 +261,7 @@ def family_accounting(lines, directory, summary, receipt):
         ]
         for entry in entries
     ])
-    addendum = load(directory, os.path.join("inputs", "family-addendum.json"))
+    addendum = load(".", receipt["addendum"]["path"])
     alpha = addendum["family_wise"]["alpha"]
     comparisons = sum(entry["comparisons"] for entry in entries)
     attempts = sum(1 for entry in entries if entry["comparisons"] > 0)

@@ -6,7 +6,7 @@ recorded input bundles or the arms' build identity records; the generator holds 
 the declaration's `cell` overlaid with its own entry, and its `case` overrides the runner case
 its decoder block derives, where the arms' shared case differs from that block; a family's declaration is
 `families/<family>.json` beside this script. The plan names its addendum relative to the repository root when
-it lies inside it, the bundles extracted beside it and each arm's executable under its build record's
+it lies inside it, the bundles under `GF2_LDPC_INPUTS` and each arm's executable under its build record's
 `build_root` by absolute host path; one declaration and one output directory give the same bytes.
 `--confirmation` plans the declaration's `confirmation` campaign over the cells of the confirmation
 addendum the canonical freezer wrote to OUT_DIR, which the generator reads and never writes.
@@ -29,7 +29,6 @@ import json
 import pathlib
 import re
 import sys
-import tarfile
 
 sys.dont_write_bytecode = True
 PEAK = pathlib.Path(__file__).resolve().with_name("record-peak-memory.py")
@@ -40,7 +39,6 @@ smoke, arm_build = peak.smoke, peak.arm_build
 ADDENDUM = "addendum.json"
 PLAN = "plan.json"
 HOLDOUT = "holdout-cells.json"
-INPUTS = "inputs"
 # The declaration block that identifies the campaign of each plan label.
 CAMPAIGN = {"pilot": "campaign", "confirmation": "confirmation"}
 # `protocol::PLAN_SCHEMA_ID` of the campaign support crate.
@@ -101,12 +99,9 @@ def merged(base, overlay):
     return result
 
 
-def bundles(catalogue, out_dir):
-    """The extracted bundle directory and manifest of each catalogued code."""
-    inputs = out_dir / INPUTS
-    inputs.mkdir(parents=True, exist_ok=True)
-    with tarfile.open(smoke.by_digest(smoke.ARCHIVE)) as archive:
-        archive.extractall(inputs, filter="data")
+def bundles(catalogue):
+    """The external bundle directory and manifest of each catalogued code."""
+    inputs = smoke.inputs_root()
     found = {}
     for key, code in catalogue["codes"].items():
         directory = inputs / code["bundle"]
@@ -137,7 +132,6 @@ def build_identity(arm, profile):
 def addendum_cell(declared, codes, manifests, arms, settings, profiles):
     bundle = manifests[declared["code"]]
     manifest = bundle["manifest"]
-    archive, archive_sha256 = smoke.ARCHIVE
     code = codes[declared["code"]]
     workers = declared["workers"]["declared"]
     batch = declared["timed_batch"]
@@ -163,8 +157,7 @@ def addendum_cell(declared, codes, manifests, arms, settings, profiles):
             "code": {"identity": code["code_identity"], "n": manifest["n"], "k": manifest["k"],
                      "h_sha256": manifest["h_sha256"]},
             "input": {
-                "llr_source": f"{archive} (SHA-256 {archive_sha256}) bundle "
-                              f"{bundle['directory'].name}",
+                "llr_source": str(bundle["directory"]),
                 "llr_sha256": manifest["llrs_sha256"],
                 "frames": manifest["frames"],
                 "seed": manifest["seed"],
@@ -333,12 +326,13 @@ def write(path, document):
 
 def generate(declaration_path, out_dir, confirmation=False):
     out_dir = pathlib.Path(out_dir).resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
     declaration = json.loads(pathlib.Path(declaration_path).read_text(encoding="utf-8"))
     records = [build for _, build in peak.build_records()]
     (catalogue_path,) = {build["catalogue"]["path"] for build in records}
     catalogue = json.loads((smoke.ROOT / catalogue_path).read_text(encoding="utf-8"))
     profiles = tuning_profiles(declaration, catalogue["arms"])
-    manifests = bundles(catalogue, out_dir)
+    manifests = bundles(catalogue)
     cells = [merged(declaration["cell"], cell) for cell in declaration["cells"]]
     held = [merged(declaration["cell"], cell)
             for cell in declaration.get("holdout_declaration", {}).get("cells", [])]

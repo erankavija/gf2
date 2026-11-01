@@ -166,7 +166,7 @@ def main():
         chosen, coverage = CELLS[short]
         pilot_path = pilot_receipt(family_id, path)
         pilot = json.loads(pilot_path.read_bytes())
-        pilot_addendum = json.loads(Path(pilot_path.parent, pilot["addendum"]["snapshot"]).read_bytes())
+        pilot_addendum = json.loads(Path(pilot["addendum"]["path"]).read_bytes())
         by_id = {cell["cell_id"]: cell for cell in pilot_addendum["cells"]}
         missing = [cell_id for cell_id in chosen if cell_id not in by_id]
         if missing:

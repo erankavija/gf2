@@ -218,15 +218,20 @@ fn render_receipt(dir: &Path, out: &mut String) -> Result<(), String> {
         summary["sessions"]
     );
     let addendum: Value = serde_json::from_slice(
-        &fs::read(dir.join(&receipt.addendum.snapshot))
-            .map_err(|e| format!("{}: addendum snapshot: {e}", dir.display()))?,
+        &receipt
+            .addendum
+            .verify_content(
+                &tuning_campaign_support::repository::repository_root()
+                    .map_err(|e| e.to_string())?,
+            )
+            .map_err(|e| format!("{}: addendum: {e}", dir.display()))?,
     )
-    .map_err(|e| format!("addendum snapshot: {e}"))?;
+    .map_err(|e| format!("addendum: {e}"))?;
     let version = addendum["protocol"]["version"].as_u64().unwrap_or(0);
     let _ = writeln!(
         out,
-        "- Protocol version {version} (addendum snapshot `{}`){}.",
-        receipt.addendum.snapshot,
+        "- Protocol version {version} (addendum `{}`){}.",
+        receipt.addendum.path,
         if version < u64::from(PROTOCOL_VERSION) {
             ": superseded, immutable history that decides nothing under the \
              current protocol version"

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Runs the shared Gray-table builder contract under Rust 1.95 and writes
-# `test-logs/<LABEL>-simd.txt` and `test-logs/<LABEL>-scalar.txt` beside this
-# script (jit:1b034786): the kernel crate's own run and `gf2-core`'s run over
+# raw output under /tmp (jit:1b034786): the kernel crate's own run and `gf2-core`'s run over
 # every builder with every feature, then `gf2-core`'s run without `simd`. Each
 # log opens with the toolchain and command, holds one line per builder and
 # case, and closes with the exit status.
@@ -17,10 +16,11 @@ here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 root=$(git -C "$here" rev-parse --show-toplevel)
 cd "$root"
 export RUSTUP_TOOLCHAIN=1.95.0
-mkdir -p "$here/test-logs"
+logs=$(mktemp -d /tmp/gf2-test-output-XXXXXX)
+echo "Raw test output: $logs"
 
 run() {
-    local log="$here/test-logs/$1.txt"
+    local log="$logs/$1.txt"
     shift
     local command=(nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run "$@"
         --cargo-profile ci-test --profile ci --no-capture)

@@ -36,7 +36,7 @@ use tuning_campaign_support::receipt::{
     PairRecord, Severity, SourceIdentity, Verdict, WindowRecord, WorkerReport, CHECKPOINT_DIR,
     LOG_FILE, PLAN_FILE, RECEIPT_FILE,
 };
-use tuning_campaign_support::repository::{is_snapshot_copy, listed_files, repository_root};
+use tuning_campaign_support::repository::{listed_files, repository_root};
 use tuning_campaign_support::schema;
 use tuning_campaign_support::scratch::Scratch;
 
@@ -121,9 +121,7 @@ const ADDENDUM_DOC: &str = "campaign/addendum-fixture.json";
 /// schema, and the version-2 and version-3 documents the published smoke
 /// pilots of those versions pin.
 const V1_SCHEMA_SHA256: &str = "44dd132a6203c5d04676bbc9d596915a0aeb4c250fb88975ab930a81ffe6aca1";
-const V2_PROTOCOL_SHA256: &str = "9e0193ecce1453119a575e07d6ff84bf8c82eca3ce38d53f3b01fafe14df0eae";
 const V2_SCHEMA_SHA256: &str = "4900f412729a76cd6ecf94de21b1f3fb36239f977975490ab8e182397a6fadef";
-const V3_PROTOCOL_SHA256: &str = "1d42ac3c965c816f4488a5524d17aa05fdea15f6011c6806a10754561f9f3c1c";
 const V3_SCHEMA_SHA256: &str = "513f37627dd82dbce95f49ff3f714af83131320fdbd0fe704baffc18a57412cd";
 
 fn put(root: &Path, relative: &str, bytes: &[u8]) {
@@ -133,7 +131,7 @@ fn put(root: &Path, relative: &str, bytes: &[u8]) {
 }
 
 /// Bytes of the committed file named by the glob `name` whose SHA-256 is
-/// `sha256`, snapshot copies included.
+/// `sha256`, in the checkout.
 fn committed(name: &str, sha256: &str) -> Vec<u8> {
     let root = repository_root().unwrap();
     listed_files(&root, name)
@@ -181,22 +179,6 @@ fn byte_identical_shared_document_copies_are_one_live_document() {
             .to_string(),
         "2 live measurement-contract.md files carry the identity, not one"
     );
-}
-
-/// The directory of the one committed receipt of `campaign_id`.
-fn committed_receipt(campaign_id: &str) -> PathBuf {
-    let root = repository_root().unwrap();
-    let found: Vec<_> = listed_files(&root, RECEIPT_FILE)
-        .unwrap()
-        .into_iter()
-        .filter(|path| !is_snapshot_copy(path))
-        .filter(|path| {
-            let value: Value = serde_json::from_slice(&fs::read(root.join(path)).unwrap()).unwrap();
-            value["campaign_id"] == campaign_id
-        })
-        .collect();
-    assert_eq!(found.len(), 1, "{campaign_id}: {found:?}");
-    root.join(&found[0]).parent().unwrap().to_path_buf()
 }
 
 /// Copies the live current protocol document and addendum schema into `root`.
@@ -277,7 +259,6 @@ fn stage_runner_producing(root: &Path) {
 fn pin(root: &Path, relative: &str) -> ArtifactPin {
     ArtifactPin {
         path: relative.to_owned(),
-        snapshot: format!("inputs/{}", relative.replace('/', "-")),
         sha256: sha256_hex(&fs::read(root.join(relative)).unwrap()),
     }
 }
@@ -634,7 +615,7 @@ fn build_receipt_with_history(
                 put(
                     &repo,
                     PROTOCOL_DOC,
-                    &committed("protocol.md", V2_PROTOCOL_SHA256),
+                    b"# Zen 3 benchmark protocol\n\nProtocol `zen3-benchmark-protocol` version 2.\n",
                 );
                 put(
                     &repo,
@@ -646,7 +627,7 @@ fn build_receipt_with_history(
                 put(
                     &repo,
                     PROTOCOL_DOC,
-                    &committed("protocol.md", V3_PROTOCOL_SHA256),
+                    b"# Zen 3 benchmark protocol\n\nProtocol `zen3-benchmark-protocol` version 3.\n",
                 );
                 put(
                     &repo,
@@ -681,14 +662,8 @@ fn build_receipt_with_history(
     let pilot_path = "receipts/pilot/receipt.json";
     let pilot_dir = repo.join(pilot_path).parent().unwrap().to_path_buf();
     fs::create_dir_all(&pilot_dir).unwrap();
-    fs::create_dir_all(pilot_dir.join("inputs")).unwrap();
-    let pilot_addendum_pin = ArtifactPin::capture(
-        &repo,
-        &pilot_dir,
-        pilot_addendum_path,
-        "inputs/family-addendum.json",
-    )
-    .unwrap();
+
+    let pilot_addendum_pin = ArtifactPin::capture(&repo, pilot_addendum_path).unwrap();
     let mut pilot = fixture_pilot_receipt(&repo, pilot_addendum_pin);
     if addendum.protocol.version >= 3 {
         pilot.family_id = addendum.family.id.clone();
@@ -697,21 +672,17 @@ fn build_receipt_with_history(
         }
         let ledger = tuning_campaign_support::trial_ledger::reserve(
             &repo,
-            &pilot_dir,
             &pilot_addendum,
             &pilot.campaign_id,
             &pilot.addendum.sha256,
             &[],
         )
         .unwrap();
-        let alpha = tuning_campaign_support::trial_ledger::attempt_alpha(
-            &ledger,
-            &pilot_dir,
-            &pilot_addendum,
-        )
-        .unwrap();
+        let alpha =
+            tuning_campaign_support::trial_ledger::attempt_alpha(&ledger, &repo, &pilot_addendum)
+                .unwrap();
         let entries = tuning_campaign_support::trial_ledger::decode(
-            &fs::read(pilot_dir.join(&ledger.snapshot)).unwrap(),
+            &tuning_campaign_support::trial_ledger::read_prefix(&ledger, &repo).unwrap(),
             &pilot_addendum.family.id,
         )
         .unwrap();
@@ -793,40 +764,12 @@ fn build_receipt_with_history(
         });
     }
     write_addendum(&repo, &addendum);
-    let shared = |input: SharedInput, relative: &str| {
-        ArtifactPin::capture(&repo, &dir, relative, input.snapshot()).unwrap()
-    };
-    let protocol_pin = shared(SharedInput::Protocol, PROTOCOL_DOC);
-    let contract_pin = shared(SharedInput::Contract, CONTRACT_DOC);
-    let schema_pin = shared(SharedInput::AddendumSchema, SCHEMA_DOC);
-    let addendum_pin =
-        ArtifactPin::capture(&repo, &dir, ADDENDUM_DOC, "inputs/family-addendum.json").unwrap();
-    fs::create_dir_all(dir.join("inputs/resolution-evidence")).unwrap();
-    fs::write(
-        dir.join("inputs/resolution-evidence/receipt.json"),
-        &pilot_bytes,
-    )
-    .unwrap();
-    if addendum.protocol.version >= 3 {
-        for (pin, snapshot) in [
-            (
-                &pilot.addendum,
-                "inputs/resolution-evidence/family-addendum.json",
-            ),
-            (
-                pilot.trial_ledger.as_ref().unwrap(),
-                "inputs/resolution-evidence/trial-ledger.jsonl",
-            ),
-        ] {
-            fs::write(dir.join(snapshot), pin.verify_content(&pilot_dir).unwrap()).unwrap();
-        }
-    }
-    let producing = ProducingInputs::capture_to(
-        &repo,
-        "producing-inputs.json",
-        &dir.join("inputs/producing"),
-    )
-    .unwrap();
+    let shared = |relative: &str| ArtifactPin::capture(&repo, relative).unwrap();
+    let protocol_pin = shared(PROTOCOL_DOC);
+    let contract_pin = shared(CONTRACT_DOC);
+    let schema_pin = shared(SCHEMA_DOC);
+    let addendum_pin = ArtifactPin::capture(&repo, ADDENDUM_DOC).unwrap();
+    let producing = ProducingInputs::capture(&repo, "producing-inputs.json").unwrap();
     let campaign = "fixture-campaign";
     let mut arms = BTreeMap::new();
     for spec in specs {
@@ -897,11 +840,8 @@ fn build_receipt_with_history(
     let host = HostObservation::observe().unwrap();
     let identity = identity(&protocol_pin, &producing, &plan, &arms, &host);
     for failed in prior_failed {
-        let prior_stage = repo.join(failed);
-        fs::create_dir_all(prior_stage.join("inputs")).unwrap();
         tuning_campaign_support::trial_ledger::reserve(
             &repo,
-            &prior_stage,
             &addendum,
             failed,
             &addendum_pin.sha256,
@@ -912,7 +852,6 @@ fn build_receipt_with_history(
     let ledger = (addendum.protocol.version >= 2).then(|| {
         tuning_campaign_support::trial_ledger::reserve(
             &repo,
-            &dir,
             &addendum,
             campaign,
             &addendum_pin.sha256,
@@ -959,14 +898,14 @@ fn build_receipt_with_history(
         CheckpointStore::create_new(dir.join(CHECKPOINT_DIR), campaign, identity).unwrap();
     let cpus = vec![host.affinity.cpus()[0]];
     let alpha = if let Some(pin) = &ledger {
-        tuning_campaign_support::trial_ledger::attempt_alpha(pin, &dir, &addendum).unwrap()
+        tuning_campaign_support::trial_ledger::attempt_alpha(pin, &repo, &addendum).unwrap()
     } else {
         0.05
     };
     let comparisons = if let Some(pin) = &ledger {
         tuning_campaign_support::trial_ledger::verify(
             pin,
-            &dir,
+            &repo,
             &addendum,
             campaign,
             &addendum_pin.sha256,
@@ -1314,7 +1253,7 @@ fn unresolved_required_settings_make_a_cell_non_confirmatory() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted);
     assert_eq!(outcome(&summary, "a"), CellOutcome::NotConfirmatory);
     assert!(!summary.qualifies);
@@ -1455,7 +1394,7 @@ fn acceptance_passes_a_confirmed_improvement_receipt() {
         CoreArm::SingleCore,
     )]);
     let built = build_receipt("pass", &family, &[spec("a", 2.0)], false, false, |_| {});
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(outcome(&summary, "a"), CellOutcome::Pass);
     assert!(summary.qualifies);
@@ -1479,7 +1418,7 @@ fn acceptance_fails_a_regression_beyond_the_equivalence_margin() {
         CoreArm::SingleCore,
     )]);
     let built = build_receipt("fail", &family, &[spec("a", 0.8)], false, false, |_| {});
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(outcome(&summary, "a"), CellOutcome::Fail);
     assert_eq!(summary.cells[0].decision, Some(Decision::Regressed));
@@ -1506,7 +1445,7 @@ fn acceptance_marks_an_interval_spanning_the_margin_inconclusive() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     let cell = &summary.cells[0];
     let interval = cell.interval.unwrap();
@@ -1533,11 +1472,11 @@ fn acceptance_rejects_a_receipt_with_missing_protocol_identity() {
         false,
         false,
         |receipt| {
-            receipt.protocol.snapshot = "inputs/missing-protocol.md".into();
+            receipt.protocol.path = "missing-protocol.md".into();
             receipt.addendum.sha256 = sha256_hex(b"other");
         },
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary
         .findings
@@ -1549,12 +1488,12 @@ fn acceptance_rejects_a_receipt_with_missing_protocol_identity() {
         .any(|f| f.rule == "P-03" && f.message.contains("content digest")));
     assert!(!summary.qualifies);
     let intact = build_receipt("portable", &family, &[spec("a", 2.0)], false, false, |_| {});
-    let summary = evaluate(&intact.dir).unwrap();
+    let summary = evaluate(&intact.repo, &intact.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
 }
 
 #[test]
-fn acceptance_rejects_a_snapshot_path_that_escapes_the_receipt() {
+fn acceptance_rejects_a_digest_that_does_not_match_the_input() {
     let family = addendum(vec![cell(
         "a",
         CellObjective::Improvement,
@@ -1562,67 +1501,14 @@ fn acceptance_rejects_a_snapshot_path_that_escapes_the_receipt() {
         CoreArm::SingleCore,
     )]);
     let built = build_receipt(
-        "escaping-snapshot",
-        &family,
-        &[spec("a", 2.0)],
-        false,
-        false,
-        |receipt| receipt.protocol.snapshot = "inputs/../../protocol.md".into(),
-    );
-    let summary = evaluate(&built.dir).unwrap();
-    assert_eq!(summary.verdict, Verdict::Rejected);
-    assert!(summary.findings.iter().any(|finding| {
-        finding.rule == "P-02"
-            && finding.severity == Severity::Error
-            && finding.message.contains("literal relative path")
-    }));
-}
-
-#[test]
-fn acceptance_rejects_a_missing_snapshot_despite_matching_source_bytes() {
-    let family = addendum(vec![cell(
-        "a",
-        CellObjective::Improvement,
-        CellRole::Confirmatory,
-        CoreArm::SingleCore,
-    )]);
-    let built = build_receipt(
-        "missing-snapshot",
-        &family,
-        &[spec("a", 2.0)],
-        false,
-        false,
-        |_| {},
-    );
-    let receipt =
-        BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
-    fs::remove_file(built.dir.join(receipt.protocol.snapshot)).unwrap();
-    let summary = evaluate(&built.dir).unwrap();
-    assert_eq!(summary.verdict, Verdict::Rejected);
-    assert!(summary.findings.iter().any(|finding| {
-        finding.rule == "P-02"
-            && finding.severity == Severity::Error
-            && finding.message.contains("content snapshot")
-    }));
-}
-
-#[test]
-fn acceptance_rejects_a_digest_that_does_not_match_the_snapshot() {
-    let family = addendum(vec![cell(
-        "a",
-        CellObjective::Improvement,
-        CellRole::Confirmatory,
-        CoreArm::SingleCore,
-    )]);
-    let built = build_receipt(
-        "snapshot-digest-mismatch",
+        "input-digest-mismatch",
         &family,
         &[spec("a", 2.0)],
         false,
         false,
         |receipt| receipt.protocol.sha256 = sha256_hex(b"not the committed protocol"),
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|finding| {
         finding.rule == "P-02"
@@ -1662,7 +1548,7 @@ fn acceptance_identifies_shared_pins_by_digest_not_by_source_path() {
         assert_ne!(pin.path, path);
         assert_eq!(pin.sha256, sha256_hex(&bytes));
     }
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
 
     let built = build_receipt(
@@ -1673,10 +1559,10 @@ fn acceptance_identifies_shared_pins_by_digest_not_by_source_path() {
         false,
         |receipt| {
             receipt.protocol.sha256 = receipt.contract.sha256.clone();
-            receipt.protocol.snapshot = receipt.contract.snapshot.clone();
+            receipt.protocol.path = receipt.contract.path.clone();
         },
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|finding| {
         finding.rule == "P-02" && finding.message.contains("identifies no protocol edition")
@@ -1707,40 +1593,8 @@ fn source_control_metadata_does_not_change_acceptance() {
         serde_json::to_vec_pretty(&receipt).unwrap(),
     )
     .unwrap();
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
-}
-
-#[test]
-fn acceptance_rejects_changed_producing_input_snapshot() {
-    let family = addendum(vec![cell(
-        "a",
-        CellObjective::Improvement,
-        CellRole::Confirmatory,
-        CoreArm::SingleCore,
-    )]);
-    let built = build_receipt(
-        "changed-producing-input",
-        &family,
-        &[spec("a", 2.0)],
-        false,
-        false,
-        |_| {},
-    );
-    fs::write(
-        built.dir.join("inputs/producing/producer.rs"),
-        b"fn measured_behavior_changed() {}\n",
-    )
-    .unwrap();
-    let summary = evaluate(&built.dir).unwrap();
-    assert_eq!(summary.verdict, Verdict::Rejected);
-    assert!(summary.findings.iter().any(|finding| {
-        finding.rule == "P-05"
-            && finding.severity == Severity::Error
-            && finding
-                .message
-                .contains("producing-input snapshot content differs")
-    }));
 }
 
 #[test]
@@ -1759,7 +1613,7 @@ fn exploratory_only_receipts_never_qualify_for_production_selection() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(outcome(&summary, "pilot"), CellOutcome::Pilot);
     assert!(
@@ -1793,11 +1647,11 @@ fn frozen_fact_replacement_is_rejected(replacement: &str) {
                 "schema-pin" => &mut receipt.addendum_schema,
                 _ => &mut receipt.addendum,
             };
-            let mut bytes = fs::read(built.dir.join(&pin.snapshot)).unwrap();
+            let mut bytes = fs::read(built.repo.join(&pin.path)).unwrap();
             bytes.push(b' ');
-            fs::write(built.dir.join(&pin.snapshot), &bytes).unwrap();
+            fs::write(built.repo.join(&pin.path), &bytes).unwrap();
             pin.sha256 = sha256_hex(&bytes);
-            pin.verify_content(&built.dir).unwrap();
+            pin.verify_content(&built.repo).unwrap();
         }
         "executable" => {
             receipt
@@ -1820,11 +1674,8 @@ fn frozen_fact_replacement_is_rejected(replacement: &str) {
                 b"fn replacement_measured_behavior() {}\n",
             )
             .unwrap();
-            let snapshot_root = built.dir.join("inputs/producing");
-            fs::remove_dir_all(&snapshot_root).unwrap();
             receipt.source.producing =
-                ProducingInputs::capture_to(&built.repo, "producing-inputs.json", &snapshot_root)
-                    .unwrap();
+                ProducingInputs::capture(&built.repo, "producing-inputs.json").unwrap();
         }
         "missing-plan" => {
             fs::remove_file(built.dir.join(PLAN_FILE)).unwrap();
@@ -1905,7 +1756,7 @@ fn frozen_fact_replacement_is_rejected(replacement: &str) {
         CheckpointStore::inspect(&checkpoint_root).unwrap();
     }
     fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected, "{replacement}");
     if !matches!(replacement, "missing-plan" | "plan-case" | "plan-arm") {
         assert!(
@@ -2039,15 +1890,15 @@ fn acceptance_rejects_an_addendum_not_frozen_before_measurement() {
     );
     let receipt_path = built.dir.join(RECEIPT_FILE);
     let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
-    let alternate = "inputs/alternate-addendum.json";
+    let alternate = "campaign/alternate-addendum.json";
     fs::copy(
-        built.dir.join(&receipt.addendum.snapshot),
-        built.dir.join(alternate),
+        built.repo.join(&receipt.addendum.path),
+        built.repo.join(alternate),
     )
     .unwrap();
-    receipt.addendum.snapshot = alternate.into();
+    receipt.addendum.path = alternate.into();
     fs::write(receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|finding| {
         finding.rule == "P-23"
@@ -2082,7 +1933,7 @@ fn acceptance_rejects_missing_and_self_referential_resolution_evidence() {
             sha256: "0".repeat(64),
         });
         let built = build_receipt(name, &family, &[spec("a", 2.0)], false, false, |_| {});
-        let summary = evaluate(&built.dir).unwrap();
+        let summary = evaluate(&built.repo, &built.dir).unwrap();
         assert_eq!(summary.verdict, Verdict::Rejected, "{name}");
         assert!(summary.findings.iter().any(|finding| {
             finding.rule == "P-03"
@@ -2116,7 +1967,7 @@ fn acceptance_accepts_a_resumed_run_and_rejects_a_repeated_cell() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(summary.sessions, 2);
     assert!(summary.resumed);
@@ -2130,7 +1981,7 @@ fn acceptance_accepts_a_resumed_run_and_rejects_a_repeated_cell() {
         true,
         |_| {},
     );
-    let summary = evaluate(&repeated.dir).unwrap();
+    let summary = evaluate(&repeated.repo, &repeated.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary
         .findings
@@ -2175,7 +2026,7 @@ fn acceptance_preserves_unavailable_and_not_material_cells() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(outcome(&summary, "a"), CellOutcome::NotMaterial);
     assert_eq!(outcome(&summary, "twelve"), CellOutcome::Unavailable);
@@ -2191,7 +2042,7 @@ fn acceptance_preserves_unavailable_and_not_material_cells() {
         .unwrap()
         .unavailable_reason = Some("another locally plausible unavailable reason".into());
     fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|finding| {
         finding.rule == "P-12"
@@ -2206,7 +2057,7 @@ fn acceptance_preserves_unavailable_and_not_material_cells() {
         .join(format!("{}.json", sha256_hex(b"twelve")));
     let unit_bytes = fs::read(&unavailable_unit).unwrap();
     fs::remove_file(&unavailable_unit).unwrap();
-    let missing = evaluate(&built.dir).unwrap();
+    let missing = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(missing.verdict, Verdict::Rejected);
     assert_eq!(outcome(&missing, "twelve"), CellOutcome::Invalid);
     assert!(missing
@@ -2217,7 +2068,7 @@ fn acceptance_preserves_unavailable_and_not_material_cells() {
     let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
     receipt.cells.retain(|cell| cell.cell_id != "twelve");
     fs::write(receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|f| f.rule == "P-21"));
     let markdown = render_markdown(&summary);
@@ -2360,7 +2211,7 @@ fn decoder_cells_require_quality_intervals_and_matched_settings() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(outcome(&summary, "matched"), CellOutcome::Pass);
     assert_eq!(
@@ -2382,7 +2233,7 @@ fn decoder_cells_require_quality_intervals_and_matched_settings() {
         serde_json::to_vec_pretty(&receipt).unwrap(),
     )
     .unwrap();
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert_eq!(outcome(&summary, "matched"), CellOutcome::Invalid);
     assert_eq!(outcome(&summary, "fastest"), CellOutcome::Invalid);
@@ -2599,7 +2450,7 @@ fn acceptance_summary_markdown_renders_from_the_summary_only() {
             receipt.label = ReceiptLabel::Smoke;
         },
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     let markdown = render_markdown(&summary);
     assert_eq!(markdown, render_markdown(&summary));
     assert!(markdown.contains("smoke receipt"));
@@ -2618,6 +2469,21 @@ fn git(repo: &Path, args: &[&str]) {
         .status()
         .unwrap();
     assert!(status.success(), "git {args:?} failed");
+    if args.first() == Some(&"init") {
+        git(
+            repo,
+            &[
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "--allow-empty",
+                "-qm",
+                "fixture root",
+            ],
+        );
+    }
 }
 
 #[test]
@@ -2812,15 +2678,17 @@ fn runner_announces_the_log_before_work_and_resumes_without_repeating() {
     );
     assert_eq!(fs::read(out.join(RECEIPT_FILE)).unwrap(), receipt_bytes);
     assert!(!stale.exists(), "the torn receipt's temporary file remains");
-    let summary = evaluate(&out).unwrap();
+    assert!(!stage.join("inputs").exists());
+    assert!(!out.join("inputs").exists());
+    let summary = evaluate(&repo, &out).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(
-        tuning_campaign_support::receipt::evaluate_version(&out, Some(PROTOCOL_VERSION))
+        tuning_campaign_support::receipt::evaluate_version(&repo, &out, Some(PROTOCOL_VERSION))
             .unwrap()
             .verdict,
         Verdict::Accepted
     );
-    let wrong = tuning_campaign_support::receipt::evaluate_version(&out, Some(1)).unwrap();
+    let wrong = tuning_campaign_support::receipt::evaluate_version(&repo, &out, Some(1)).unwrap();
     assert_eq!(wrong.verdict, Verdict::Rejected);
     assert!(wrong.findings.iter().any(|f| f.rule == "P-01"));
     assert_eq!(summary.sessions, 3);
@@ -3054,21 +2922,6 @@ fn runner_check_rejects_an_addendum_its_schema_edition_rejects() {
 }
 
 #[test]
-fn v1_published_receipts_keep_their_pinned_rules_and_refuse_v2() {
-    for campaign_id in [
-        "pilot-f547c394-20260906t230725z",
-        "confirmation-f547c394-20260906t230920z",
-    ] {
-        let dir = committed_receipt(campaign_id);
-        let summary = tuning_campaign_support::receipt::evaluate_version(&dir, Some(1)).unwrap();
-        assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
-        let wrong = tuning_campaign_support::receipt::evaluate_version(&dir, Some(2)).unwrap();
-        assert_eq!(wrong.verdict, Verdict::Rejected);
-        assert!(wrong.findings.iter().any(|f| f.rule == "P-01"));
-    }
-}
-
-#[test]
 fn material_host_changes_reject_resume_but_observation_time_load_memory_do_not() {
     let original = HostObservation::observe().unwrap();
     let mut benign = original.clone();
@@ -3155,7 +3008,7 @@ fn v3_resolution_derives_the_pilot_half_width_and_binds_its_family() {
         false,
         |_| {},
     );
-    let summary = evaluate(&underdeclared.dir).unwrap();
+    let summary = evaluate(&underdeclared.repo, &underdeclared.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected, "{:?}", summary.findings);
     assert!(summary
         .findings
@@ -3169,7 +3022,7 @@ fn v3_resolution_derives_the_pilot_half_width_and_binds_its_family() {
         &[spec("quality", 2.0)],
         "another-family",
     );
-    let summary = evaluate(&cross_family.dir).unwrap();
+    let summary = evaluate(&cross_family.repo, &cross_family.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected, "{:?}", summary.findings);
     assert!(summary
         .findings
@@ -3201,7 +3054,7 @@ fn v3_resolution_uses_raw_pilot_pairs_without_a_decision_claim() {
             },
             |_| {},
         );
-        let summary = evaluate(&built.dir).unwrap();
+        let summary = evaluate(&built.repo, &built.dir).unwrap();
         assert_eq!(summary.verdict, expected, "{:?}", summary.findings);
         if expected == Verdict::Rejected {
             assert!(summary.findings.iter().any(|finding| {
@@ -3225,7 +3078,7 @@ fn v3_binds_claimed_alpha_in_receipts_and_pilot_resolution() {
         false,
         |_| {},
     );
-    let summary = evaluate(&claimed.dir).unwrap();
+    let summary = evaluate(&claimed.repo, &claimed.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected, "{:?}", summary.findings);
     assert!(
         summary
@@ -3242,7 +3095,7 @@ fn v3_binds_claimed_alpha_in_receipts_and_pilot_resolution() {
         &[spec("quality", 2.0)],
         0.02,
     );
-    let summary = evaluate(&pilot.dir).unwrap();
+    let summary = evaluate(&pilot.repo, &pilot.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected, "{:?}", summary.findings);
     assert!(summary
         .findings
@@ -3261,7 +3114,7 @@ fn v3_lock_evidence_records_observed_lock_facts_without_a_wrapper_identity() {
         false,
         |_| {},
     );
-    let accepted = evaluate(&built.dir).unwrap();
+    let accepted = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(
         accepted.verdict,
         Verdict::Accepted,
@@ -3277,7 +3130,7 @@ fn v3_lock_evidence_records_observed_lock_facts_without_a_wrapper_identity() {
     let mut receipt = BenchmarkReceipt::decode(&fs::read(&receipt_path).unwrap()).unwrap();
     receipt.lock.observation = "fixture".into();
     fs::write(receipt_path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
-    let rejected = evaluate(&built.dir).unwrap();
+    let rejected = evaluate(&built.repo, &built.dir).unwrap();
     assert!(rejected
         .findings
         .iter()
@@ -3346,7 +3199,7 @@ fn v2_decoder_denominators_points_and_clustered_intervals_are_enforced() {
             false,
             |_| {},
         );
-        let summary = evaluate(&built.dir).unwrap();
+        let summary = evaluate(&built.repo, &built.dir).unwrap();
         if (1..=3).contains(&defect) {
             assert_eq!(
                 summary.verdict,
@@ -3422,35 +3275,20 @@ fn ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction()
     let family = v2_family();
     fs::write(root.join("family-ledger.jsonl"), b"").unwrap();
     let mut last = None;
+    let mut first = None;
     for campaign in ["successful", "failed", "confirmation"] {
-        let stage = root.join(campaign);
-        fs::create_dir_all(stage.join("inputs")).unwrap();
         let candidates = vec![sha256_hex(campaign.as_bytes())];
-        let pin = trial_ledger::reserve(
-            &root,
-            &stage,
-            &family,
-            campaign,
-            &"a".repeat(64),
-            &candidates,
-        )
-        .unwrap();
-        let count = trial_ledger::verify(
-            &pin,
-            &stage,
-            &family,
-            campaign,
-            &"a".repeat(64),
-            &candidates,
-        )
-        .unwrap();
-        last = Some((stage, pin, count));
+        let pin =
+            trial_ledger::reserve(&root, &family, campaign, &"a".repeat(64), &candidates).unwrap();
+        let count =
+            trial_ledger::verify(&pin, &root, &family, campaign, &"a".repeat(64), &candidates)
+                .unwrap();
+        first.get_or_insert((campaign, candidates, pin.clone()));
+        last = Some((pin, count));
     }
-    let retry_stage = root.join("retry");
-    fs::create_dir_all(retry_stage.join("inputs")).unwrap();
+
     assert!(trial_ledger::reserve(
         &root,
-        &retry_stage,
         &family,
         "retry",
         &"b".repeat(64),
@@ -3459,9 +3297,26 @@ fn ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction()
     .unwrap_err()
     .to_string()
     .contains("attempt limit"));
-    let (stage, pin, count) = last.unwrap();
+    let (campaign, candidates, original) = first.unwrap();
+    let resumed =
+        trial_ledger::reserve(&root, &family, campaign, &"a".repeat(64), &candidates).unwrap();
+    assert_eq!(resumed, original);
+    assert_eq!(
+        trial_ledger::verify(
+            &original,
+            &root,
+            &family,
+            campaign,
+            &"a".repeat(64),
+            &candidates
+        )
+        .unwrap(),
+        1
+    );
+    assert!(!root.join("inputs").exists());
+    let (pin, count) = last.unwrap();
     assert_eq!(count, 3);
-    let bytes = fs::read(stage.join(&pin.snapshot)).unwrap();
+    let bytes = trial_ledger::read_prefix(&pin, &root).unwrap();
     let removed: Vec<u8> = bytes
         .split_inclusive(|b| *b == b'\n')
         .enumerate()
@@ -3480,7 +3335,7 @@ fn ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction()
         PilotFixture::default(),
         |_| {},
     );
-    let accepted = evaluate(&complete.dir).unwrap();
+    let accepted = evaluate(&complete.repo, &complete.dir).unwrap();
     assert_eq!(
         accepted.verdict,
         Verdict::Accepted,
@@ -3491,7 +3346,7 @@ fn ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction()
     let receipt =
         BenchmarkReceipt::decode(&fs::read(complete.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
     let ledger_pin = receipt.trial_ledger.unwrap();
-    let bytes = fs::read(complete.dir.join(&ledger_pin.snapshot)).unwrap();
+    let bytes = trial_ledger::read_prefix(&ledger_pin, &complete.repo).unwrap();
     let missing_failed: Vec<u8> = bytes
         .split_inclusive(|b| *b == b'\n')
         .skip(1)
@@ -3499,8 +3354,8 @@ fn ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction()
         .copied()
         .collect();
     assert!(trial_ledger::decode(&missing_failed, &family.family.id).is_err());
-    fs::write(complete.dir.join(&ledger_pin.snapshot), missing_failed).unwrap();
-    let omitted = evaluate(&complete.dir).unwrap();
+    fs::write(complete.repo.join(&ledger_pin.path), missing_failed).unwrap();
+    let omitted = evaluate(&complete.repo, &complete.dir).unwrap();
     assert_eq!(omitted.verdict, Verdict::Rejected);
     assert!(omitted.findings.iter().any(|f| f.rule == "P-22"));
     let built = build_receipt(
@@ -3514,7 +3369,7 @@ fn ledger_preserves_failed_attempts_and_rejects_omissions_and_wrong_correction()
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary.findings.iter().any(|f| f.rule == "P-20"));
 }
@@ -3530,7 +3385,7 @@ fn family_summary_names_first_attempt_alpha_distinctly_from_the_family_total() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     let fam = summary.family.as_ref().unwrap();
 
@@ -3548,7 +3403,7 @@ fn family_summary_names_first_attempt_alpha_distinctly_from_the_family_total() {
         BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
     let ledger_pin = receipt.trial_ledger.clone().unwrap();
     let recomputed =
-        tuning_campaign_support::trial_ledger::attempt_alpha(&ledger_pin, &built.dir, &family)
+        tuning_campaign_support::trial_ledger::attempt_alpha(&ledger_pin, &built.repo, &family)
             .unwrap();
     assert_eq!(fam.attempt_alpha, recomputed);
 
@@ -3570,7 +3425,7 @@ fn family_summary_names_later_attempt_alpha_distinctly_from_the_family_total() {
         PilotFixture::default(),
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     let fam = summary.family.as_ref().unwrap();
 
@@ -3588,7 +3443,7 @@ fn family_summary_names_later_attempt_alpha_distinctly_from_the_family_total() {
         BenchmarkReceipt::decode(&fs::read(built.dir.join(RECEIPT_FILE)).unwrap()).unwrap();
     let ledger_pin = receipt.trial_ledger.clone().unwrap();
     let recomputed =
-        tuning_campaign_support::trial_ledger::attempt_alpha(&ledger_pin, &built.dir, &family)
+        tuning_campaign_support::trial_ledger::attempt_alpha(&ledger_pin, &built.repo, &family)
             .unwrap();
     assert_eq!(fam.attempt_alpha, recomputed);
 
@@ -3612,7 +3467,7 @@ fn v2_outlier_flags_do_not_depend_on_cross_arm_effect_size() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(summary.cells[0].flagged_windows, 0);
     let receipt =
@@ -3638,7 +3493,7 @@ fn v2_rejects_a_freeze_timestamp_after_the_opening_record() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected);
     assert!(summary
         .findings
@@ -3661,7 +3516,7 @@ fn v2_unresolved_bootstrap_endpoint_resolution_prevents_confirmation() {
         false,
         |_| {},
     );
-    let summary = evaluate(&built.dir).unwrap();
+    let summary = evaluate(&built.repo, &built.dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(summary.cells[0].outcome, CellOutcome::NotConfirmatory);
     assert!(summary
@@ -3787,7 +3642,7 @@ fn v3_decoder_quality_preserves_exact_vectors_but_allows_process_diagnostics() {
             false,
             |_| {},
         );
-        let summary = evaluate(&built.dir).unwrap();
+        let summary = evaluate(&built.repo, &built.dir).unwrap();
         assert_eq!(
             summary.verdict,
             if defect == 0 {
@@ -4022,12 +3877,16 @@ fn cell_starts(records: &[JournalRecord], key: &str) -> Vec<u64> {
 #[test]
 fn runner_restarts_an_interrupted_cell_and_acceptance_accepts_the_receipt() {
     let campaign = interrupted_campaign("interrupted-accepted");
-    let summary = evaluate(&campaign.out).unwrap();
+    let summary = evaluate(&campaign._root.join("repo"), &campaign.out).unwrap();
     assert_eq!(summary.verdict, Verdict::Accepted, "{:?}", summary.findings);
     assert_eq!(
-        tuning_campaign_support::receipt::evaluate_version(&campaign.out, Some(PROTOCOL_VERSION))
-            .unwrap()
-            .verdict,
+        tuning_campaign_support::receipt::evaluate_version(
+            &campaign._root.join("repo"),
+            &campaign.out,
+            Some(PROTOCOL_VERSION)
+        )
+        .unwrap()
+        .verdict,
         Verdict::Accepted
     );
     assert_eq!(summary.sessions, 2);
@@ -4157,8 +4016,8 @@ fn rewrite_cell(dir: &Path, cell_id: &str, edit: impl FnOnce(&mut CellRecord)) {
 }
 
 /// Asserts that P-11 alone rejects the receipt, naming cell `second`.
-fn assert_rejected_by_p11(dir: &Path, expected: &str) {
-    let summary = evaluate(dir).unwrap();
+fn assert_rejected_by_p11(repo: &Path, dir: &Path, expected: &str) {
+    let summary = evaluate(repo, dir).unwrap();
     assert_eq!(summary.verdict, Verdict::Rejected, "{expected}");
     let errors: Vec<_> = summary
         .findings
@@ -4192,7 +4051,11 @@ fn acceptance_rejects_unrecorded_restarts_double_completions_and_abandoned_sampl
     rewrite_log(&unrecorded, |records| {
         records.retain(|record| record.event != JournalEvent::CellAbandoned);
     });
-    assert_rejected_by_p11(&unrecorded, "without an abandonment record");
+    assert_rejected_by_p11(
+        &campaign._root.join("repo"),
+        &unrecorded,
+        "without an abandonment record",
+    );
 
     let completed_twice = variant("completed-twice");
     rewrite_log(&completed_twice, |records| {
@@ -4205,7 +4068,11 @@ fn acceptance_rejects_unrecorded_restarts_double_completions_and_abandoned_sampl
         let duplicate = records[index].clone();
         records.insert(index + 1, duplicate);
     });
-    assert_rejected_by_p11(&completed_twice, "completed 2 times");
+    assert_rejected_by_p11(
+        &campaign._root.join("repo"),
+        &completed_twice,
+        "completed 2 times",
+    );
 
     let journaled = |event: JournalEvent| {
         records
@@ -4233,7 +4100,11 @@ fn acceptance_rejects_unrecorded_restarts_double_completions_and_abandoned_sampl
         execution.windows = windows;
         execution.ns_per_call = ns_per_call;
     });
-    assert_rejected_by_p11(&abandoned_sample, "abandoned attempt");
+    assert_rejected_by_p11(
+        &campaign._root.join("repo"),
+        &abandoned_sample,
+        "abandoned attempt",
+    );
 
     let unjournaled_sample = variant("unjournaled-sample");
     rewrite_cell(&unjournaled_sample, "second", |cell| {
@@ -4246,7 +4117,11 @@ fn acceptance_rejects_unrecorded_restarts_double_completions_and_abandoned_sampl
             .collect();
         execution.ns_per_call = median(&mut values).unwrap();
     });
-    assert_rejected_by_p11(&unjournaled_sample, "differ from the executions");
+    assert_rejected_by_p11(
+        &campaign._root.join("repo"),
+        &unjournaled_sample,
+        "differ from the executions",
+    );
 }
 
 #[test]
@@ -4271,7 +4146,7 @@ fn resolution_evidence_accepts_pilots_from_version_3_to_the_citing_version() {
             },
             |_| {},
         );
-        let summary = evaluate(&built.dir).unwrap();
+        let summary = evaluate(&built.repo, &built.dir).unwrap();
         assert_eq!(
             summary.verdict, expected,
             "v{pilot_version} pilot for v{family_version}: {:?}",
@@ -4283,22 +4158,6 @@ fn resolution_evidence_accepts_pilots_from_version_3_to_the_citing_version() {
             }));
         }
     }
-}
-
-#[test]
-fn v3_receipts_keep_rejecting_a_restarted_cell_and_refuse_later_rules() {
-    let dir = committed_receipt("26465e6c-v3-and-popcnt-pilot");
-    let summary = tuning_campaign_support::receipt::evaluate_version(&dir, Some(3)).unwrap();
-    assert_eq!(summary.verdict, Verdict::Rejected);
-    assert!(summary.findings.iter().any(|finding| {
-        finding.rule == "P-11"
-            && finding.cell.as_deref() == Some("and-popcnt-w4096-vs-scalar-control")
-            && finding.message.contains("started 2 times")
-    }));
-    let later =
-        tuning_campaign_support::receipt::evaluate_version(&dir, Some(PROTOCOL_VERSION)).unwrap();
-    assert_eq!(later.verdict, Verdict::Rejected);
-    assert!(later.findings.iter().any(|finding| finding.rule == "P-01"));
 }
 
 mod arm_wire {

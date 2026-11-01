@@ -287,9 +287,8 @@ run_step repository-files-self-test python3 dev/scripts/repository_files_test.py
 run_step campaign-producing-closure-self-test python3 dev/scripts/check-campaign-producing-closure.py --self-test
 run_step campaign-producing-closure python3 dev/scripts/check-campaign-producing-closure.py
 # The checker is located through the shared file locator, which git finds by
-# name outside receipt input snapshots; -B keeps the steps from writing
-# bytecode into the repository.
-repository_files=$(git ls-files -- ':(glob)**/repository_files.py' ':(exclude,glob)**/inputs/**')
+# name; -B keeps the steps from writing bytecode into the repository.
+repository_files=$(git ls-files -- ':(glob)**/repository_files.py')
 family_closures=$(python3 -B "$repository_files" file check-family-producing-closures.py)
 run_step family-producing-closures-self-test python3 -B "$family_closures" --self-test
 run_step family-producing-closures python3 -B "$family_closures"
@@ -305,14 +304,12 @@ spec = importlib.util.spec_from_file_location("smoke", sys.argv[1])
 smoke = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(smoke)
 smoke.build_runner(*sys.argv[2:])' "$survey_smoke" ab-smoke-workload benchmark-acceptance
-for survey_test in $(git ls-files -- ":(glob)$survey/**/test_*.py" ':(exclude,glob)**/inputs/**'); do
+for survey_test in $(git ls-files -- ":(glob)$survey/**/test_*.py"); do
   run_step "survey-${survey_test#"$survey"/}" python3 -B "$survey_test"
 done
-for survey_tool in $(git grep -l -F '["--self-test"]' -- ":(glob)$survey/**/*.py" ':(exclude,glob)**/inputs/**'); do
+for survey_tool in $(git grep -l -F '["--self-test"]' -- ":(glob)$survey/**/*.py"); do
   run_step "survey-${survey_tool#"$survey"/}-self-test" python3 -B "$survey_tool" --self-test
 done
-run_step receipt-input-snapshots-self-test python3 dev/scripts/check-receipt-input-snapshots.py --self-test
-run_step receipt-input-snapshots python3 dev/scripts/check-receipt-input-snapshots.py
 run_step addendum-schema-versions-self-test python3 dev/scripts/check-addendum-schema-versions.py --self-test
 run_step addendum-schema-versions python3 dev/scripts/check-addendum-schema-versions.py
 run_step docs-mechanical-self-test python3 contrib/gates/tests/docs-mechanical-test.py
