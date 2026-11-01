@@ -1,0 +1,1236 @@
+{
+  "schema_version": 2,
+  "preregistration_identity": {
+    "path": "dev/active/02b8137c/pre-draw-validation-v1-preregistration.json",
+    "sha256": "38cc7c11498c749f9dc9098e1ff0cf2ed48127ad75a7caad932a0d921f5030aa"
+  },
+  "preregistration": {
+    "schema_version": 1,
+    "protocol": {
+      "root_seed": 4923361482881630209,
+      "stream_purpose": "validation",
+      "replay_matrix_count": 1024,
+      "sample_matrix_count": 400000,
+      "exact_test_level": 0.001,
+      "decision_rule": "probability_ordering_exact_two_sided_strict_greater",
+      "retry_rule": "no_redraw",
+      "backend_batch_matrix_count": 8192,
+      "sample_backend": "batch_parallel",
+      "selectable_backends": [
+        "batch_parallel",
+        "intra_matrix_parallel",
+        "generic_ryser",
+        "accelerator"
+      ]
+    },
+    "anchors": [
+      {
+        "q": 3,
+        "n": 1,
+        "stream_index": 0,
+        "expected_matrix_count": 3,
+        "expected_permanent_zero_count": 1,
+        "expected_determinant_zero_count": 1
+      },
+      {
+        "q": 3,
+        "n": 2,
+        "stream_index": 0,
+        "expected_matrix_count": 81,
+        "expected_permanent_zero_count": 33,
+        "expected_determinant_zero_count": 33
+      },
+      {
+        "q": 3,
+        "n": 3,
+        "stream_index": 0,
+        "expected_matrix_count": 19683,
+        "expected_permanent_zero_count": 8163,
+        "expected_determinant_zero_count": 8451
+      },
+      {
+        "q": 3,
+        "n": 4,
+        "stream_index": 0,
+        "expected_matrix_count": 43046721,
+        "expected_permanent_zero_count": 17116353,
+        "expected_determinant_zero_count": 18785601
+      },
+      {
+        "q": 5,
+        "n": 1,
+        "stream_index": 0,
+        "expected_matrix_count": 5,
+        "expected_permanent_zero_count": 1,
+        "expected_determinant_zero_count": 1
+      },
+      {
+        "q": 5,
+        "n": 2,
+        "stream_index": 0,
+        "expected_matrix_count": 625,
+        "expected_permanent_zero_count": 145,
+        "expected_determinant_zero_count": 145
+      },
+      {
+        "q": 5,
+        "n": 3,
+        "stream_index": 0,
+        "expected_matrix_count": 1953125,
+        "expected_permanent_zero_count": 439525,
+        "expected_determinant_zero_count": 465125
+      },
+      {
+        "q": 7,
+        "n": 1,
+        "stream_index": 0,
+        "expected_matrix_count": 7,
+        "expected_permanent_zero_count": 1,
+        "expected_determinant_zero_count": 1
+      },
+      {
+        "q": 7,
+        "n": 2,
+        "stream_index": 0,
+        "expected_matrix_count": 2401,
+        "expected_permanent_zero_count": 385,
+        "expected_determinant_zero_count": 385
+      },
+      {
+        "q": 7,
+        "n": 3,
+        "stream_index": 0,
+        "expected_matrix_count": 40353607,
+        "expected_permanent_zero_count": 6188455,
+        "expected_determinant_zero_count": 6569479
+      }
+    ],
+    "authorities": {
+      "protocol": {
+        "path": "dev/simulation_results/permanent-zero-fraction/protocol.md",
+        "sha256": "f299feae7b8786b51d0c83f478c45d01fa22a9af8c30ca7baf073d46c89e1247"
+      },
+      "manifest": {
+        "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json",
+        "sha256": "1a22968435bf3bee958ef07204505d85827fb6227af6e2d2d1d864a0f7a93dc2"
+      },
+      "exact_anchors": {
+        "path": "dev/benchmarks/permanent_campaign/exact-anchors.csv",
+        "sha256": "688ac3f425d1eb57c7f81f0538c4464375a1b8bba1426dfd1b3ed79a8582adc7"
+      },
+      "backend_equivalence": {
+        "path": "dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.csv",
+        "sha256": "fda669f399700a968e3feae75c0f34cec2743c0df76fa404c0177ffba70100bc"
+      }
+    }
+  },
+  "producer_segments": [
+    {
+      "segment_index": 0,
+      "first_anchor_index": 0,
+      "end_anchor_index": 5,
+      "runtime": {
+        "provenance": {
+          "git_revision": "397520d64551b5bab7f54ef24a9ee621fb14657f",
+          "binary_sha256": "76c778f1e3e90530c3db39b26d8954642b601a17d1050144929270e48c59297e",
+          "deps_source_revision": "4f67e70223f6fa1dd4abbada6492b1ea425d7ff2",
+          "deps_source_dirty": false,
+          "compiler_version": "rustc 1.95.0 (59807616e 2026-04-14)",
+          "rng_algorithm": "cha_cha20",
+          "rng_version": "rand_chacha 0.9.0",
+          "invocation": [
+            "/home/vkaskivuo/Projects/gf2/target/release/permanent_validation",
+            "--preregistration",
+            "dev/active/02b8137c/pre-draw-validation-v1-preregistration.json",
+            "--state-dir",
+            "dev/active/02b8137c/validation-journal",
+            "--receipt",
+            "dev/active/02b8137c/pre-draw-validation-v1-receipt.json",
+            "--workers",
+            "24"
+          ],
+          "accelerator_runtime": {
+            "state": "present",
+            "value": "7.2.4"
+          },
+          "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+          "cpu_physical_cores": 12,
+          "cpu_logical_threads": 24,
+          "gpu_model": {
+            "state": "not_present"
+          }
+        },
+        "worker_count": 24
+      },
+      "state": {
+        "path": "run-state.json",
+        "sha256": "bd108332375684992b5be6830bf278c1dd8281cb1d4e1f272d0982e30c9d31a0"
+      }
+    },
+    {
+      "segment_index": 1,
+      "first_anchor_index": 5,
+      "end_anchor_index": 10,
+      "runtime": {
+        "provenance": {
+          "git_revision": "fa8a9d9cd89dcc2fccb3dde8d67366e42730f3ed",
+          "binary_sha256": "d0d674800f0d32778b3d50fd176d3e810daebc986620a537b437633a66ae788e",
+          "deps_source_revision": "c0db11e25936ceb8323d864b88de54923281c0a5",
+          "deps_source_dirty": false,
+          "compiler_version": "rustc 1.95.0 (59807616e 2026-04-14)",
+          "rng_algorithm": "cha_cha20",
+          "rng_version": "rand_chacha 0.9.0",
+          "invocation": [
+            "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-02b8137c-run/target/release/permanent_validation",
+            "--preregistration",
+            "dev/active/02b8137c/pre-draw-validation-v1-preregistration.json",
+            "--state-dir",
+            "dev/active/02b8137c/validation-journal",
+            "--receipt",
+            "dev/active/02b8137c/pre-draw-validation-v2-receipt.json",
+            "--workers",
+            "24",
+            "--continue-producer-segment",
+            "dev/active/02b8137c/pre-draw-validation-v2-continuation.json"
+          ],
+          "accelerator_runtime": {
+            "state": "present",
+            "value": "7.2.4"
+          },
+          "cpu_model": "AMD Ryzen 9 5900X 12-Core Processor",
+          "cpu_physical_cores": 12,
+          "cpu_logical_threads": 24,
+          "gpu_model": {
+            "state": "not_present"
+          }
+        },
+        "worker_count": 24
+      },
+      "state": {
+        "path": "producer-segment-state-v2.json",
+        "sha256": "e0dfdf2adde9570b561097046bda727a5ab1e63bdbdcfe2283d74cf4289c4b0f"
+      }
+    }
+  ],
+  "anchor_producers": [
+    {
+      "anchor_index": 0,
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 3,
+        "n": 1,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "producer_segment": 0,
+      "terminal": {
+        "path": "q3-n01-s0.terminal.json",
+        "sha256": "e197617c6bf172afc14ac99239d5fa4acafc28eee96f3094f3f06ca494cfcd1b"
+      }
+    },
+    {
+      "anchor_index": 1,
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 3,
+        "n": 2,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "producer_segment": 0,
+      "terminal": {
+        "path": "q3-n02-s0.terminal.json",
+        "sha256": "96c224a693dd607d466c7e0b7d2ba628835da2cb1f7f58865a5b119950415ec4"
+      }
+    },
+    {
+      "anchor_index": 2,
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 3,
+        "n": 3,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "producer_segment": 0,
+      "terminal": {
+        "path": "q3-n03-s0.terminal.json",
+        "sha256": "bd26b4b7fb6b247aec3e7c125d9e7c59d13f812b3cbf706f2fa8c8ef0fdd3e3e"
+      }
+    },
+    {
+      "anchor_index": 3,
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 3,
+        "n": 4,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "producer_segment": 0,
+      "terminal": {
+        "path": "q3-n04-s0.terminal.json",
+        "sha256": "becad80b23e575c58cb69daab72038143ae94fc902f282bcf3dbeecd666cf449"
+      }
+    },
+    {
+      "anchor_index": 4,
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 5,
+        "n": 1,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "producer_segment": 0,
+      "terminal": {
+        "path": "q5-n01-s0.terminal.json",
+        "sha256": "423caaab7edf090d5246ea021b407bec1c1c64ad73b9a28ad18825afffd52363"
+      }
+    },
+    {
+      "anchor_index": 5,
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 5,
+        "n": 2,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "producer_segment": 1,
+      "terminal": {
+        "path": "q5-n02-s0.terminal.json",
+        "sha256": "e94e45fa42b5135ef32700fd9f60a9434bf9d2a9fffd422a74b60ecd92ff7d13"
+      }
+    },
+    {
+      "anchor_index": 6,
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 5,
+        "n": 3,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "producer_segment": 1,
+      "terminal": {
+        "path": "q5-n03-s0.terminal.json",
+        "sha256": "7c02be290cc3d4678b72e08d84bb1f64b15ba168f92fa91ef6e79d0c2dd8006b"
+      }
+    },
+    {
+      "anchor_index": 7,
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 7,
+        "n": 1,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "producer_segment": 1,
+      "terminal": {
+        "path": "q7-n01-s0.terminal.json",
+        "sha256": "5885e70d014f62dd8c53fe68a9e02bd1e8016091c3984acf76ed38fb9b9bbc4b"
+      }
+    },
+    {
+      "anchor_index": 8,
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 7,
+        "n": 2,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "producer_segment": 1,
+      "terminal": {
+        "path": "q7-n02-s0.terminal.json",
+        "sha256": "cd68980bd5368c175b1736f3b36934d3c578dea3fdd4d5d0ebb5d3da356077e2"
+      }
+    },
+    {
+      "anchor_index": 9,
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 7,
+        "n": 3,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "producer_segment": 1,
+      "terminal": {
+        "path": "q7-n03-s0.terminal.json",
+        "sha256": "9aec5878450bf2f9ef500c075e744f51736104508d015e6e4e91b44d1c3df790"
+      }
+    }
+  ],
+  "journal_directory": "dev/active/02b8137c/validation-journal",
+  "started_at": {
+    "seconds": 1788130830,
+    "nanoseconds": 458500538
+  },
+  "finished_at": {
+    "seconds": 1788217264,
+    "nanoseconds": 779555358
+  },
+  "anchors": [
+    {
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 3,
+        "n": 1,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "started_at": {
+        "seconds": 1788130830,
+        "nanoseconds": 462912049
+      },
+      "finished_at": {
+        "seconds": 1788130830,
+        "nanoseconds": 903384455
+      },
+      "exact": {
+        "enumerated_matrix_count": 3,
+        "oracle_permanent_zero_count": 1,
+        "production_determinant_zero_count": 1,
+        "backend_agreements": [
+          {
+            "backend": "batch_parallel",
+            "status": "identical",
+            "matrices_compared": 3,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 1,
+            "diagnostic": null
+          },
+          {
+            "backend": "intra_matrix_parallel",
+            "status": "identical",
+            "matrices_compared": 3,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 1,
+            "diagnostic": null
+          },
+          {
+            "backend": "generic_ryser",
+            "status": "identical",
+            "matrices_compared": 3,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 1,
+            "diagnostic": null
+          },
+          {
+            "backend": "accelerator",
+            "status": "identical",
+            "matrices_compared": 3,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 1,
+            "diagnostic": null
+          }
+        ]
+      },
+      "replay": {
+        "mode": "two_fresh_serial",
+        "matrix_count": 1024,
+        "mismatch_count": 0,
+        "identical": true,
+        "first_sha256": "a97c98677811c4c74ce0c3370bc9c4dbadc86ca9c785727c8f57520e086ccc96",
+        "second_sha256": "a97c98677811c4c74ce0c3370bc9c4dbadc86ca9c785727c8f57520e086ccc96"
+      },
+      "sample": {
+        "stream_purpose": "validation",
+        "origin": "fresh_address_start",
+        "matrix_count": 400000,
+        "permanent_zero_count": 133774,
+        "null_numerator": "1",
+        "null_denominator": "3",
+        "log_p_value": -1.969357162508782,
+        "p_value": 0.13954653313138715,
+        "verdict": "passed"
+      },
+      "exact_oracle_status": "passed",
+      "backend_status": "passed",
+      "determinant_status": "passed",
+      "replay_status": "passed",
+      "statistical_status": "passed",
+      "failure": null,
+      "verdict": "passed"
+    },
+    {
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 3,
+        "n": 2,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "started_at": {
+        "seconds": 1788130830,
+        "nanoseconds": 912166577
+      },
+      "finished_at": {
+        "seconds": 1788130831,
+        "nanoseconds": 472535378
+      },
+      "exact": {
+        "enumerated_matrix_count": 81,
+        "oracle_permanent_zero_count": 33,
+        "production_determinant_zero_count": 33,
+        "backend_agreements": [
+          {
+            "backend": "batch_parallel",
+            "status": "identical",
+            "matrices_compared": 81,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 33,
+            "diagnostic": null
+          },
+          {
+            "backend": "intra_matrix_parallel",
+            "status": "identical",
+            "matrices_compared": 81,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 33,
+            "diagnostic": null
+          },
+          {
+            "backend": "generic_ryser",
+            "status": "identical",
+            "matrices_compared": 81,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 33,
+            "diagnostic": null
+          },
+          {
+            "backend": "accelerator",
+            "status": "identical",
+            "matrices_compared": 81,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 33,
+            "diagnostic": null
+          }
+        ]
+      },
+      "replay": {
+        "mode": "two_fresh_serial",
+        "matrix_count": 1024,
+        "mismatch_count": 0,
+        "identical": true,
+        "first_sha256": "be7d4e59898eefa462e51f9bf3db53afc8d940a439b5b130b397b44861668e5f",
+        "second_sha256": "be7d4e59898eefa462e51f9bf3db53afc8d940a439b5b130b397b44861668e5f"
+      },
+      "sample": {
+        "stream_purpose": "validation",
+        "origin": "fresh_address_start",
+        "matrix_count": 400000,
+        "permanent_zero_count": 163686,
+        "null_numerator": "33",
+        "null_denominator": "81",
+        "log_p_value": -3.908328037693737,
+        "p_value": 0.020074036050864563,
+        "verdict": "passed"
+      },
+      "exact_oracle_status": "passed",
+      "backend_status": "passed",
+      "determinant_status": "passed",
+      "replay_status": "passed",
+      "statistical_status": "passed",
+      "failure": null,
+      "verdict": "passed"
+    },
+    {
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 3,
+        "n": 3,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "started_at": {
+        "seconds": 1788130831,
+        "nanoseconds": 481547370
+      },
+      "finished_at": {
+        "seconds": 1788130832,
+        "nanoseconds": 700994719
+      },
+      "exact": {
+        "enumerated_matrix_count": 19683,
+        "oracle_permanent_zero_count": 8163,
+        "production_determinant_zero_count": 8451,
+        "backend_agreements": [
+          {
+            "backend": "batch_parallel",
+            "status": "identical",
+            "matrices_compared": 19683,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 8163,
+            "diagnostic": null
+          },
+          {
+            "backend": "intra_matrix_parallel",
+            "status": "identical",
+            "matrices_compared": 19683,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 8163,
+            "diagnostic": null
+          },
+          {
+            "backend": "generic_ryser",
+            "status": "identical",
+            "matrices_compared": 19683,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 8163,
+            "diagnostic": null
+          },
+          {
+            "backend": "accelerator",
+            "status": "identical",
+            "matrices_compared": 19683,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 8163,
+            "diagnostic": null
+          }
+        ]
+      },
+      "replay": {
+        "mode": "two_fresh_serial",
+        "matrix_count": 1024,
+        "mismatch_count": 0,
+        "identical": true,
+        "first_sha256": "7f47dd525e65ea5730d76330b9d8012f5399dcd7e0e0f023b6c3eef488829f83",
+        "second_sha256": "7f47dd525e65ea5730d76330b9d8012f5399dcd7e0e0f023b6c3eef488829f83"
+      },
+      "sample": {
+        "stream_purpose": "validation",
+        "origin": "fresh_address_start",
+        "matrix_count": 400000,
+        "permanent_zero_count": 166206,
+        "null_numerator": "8163",
+        "null_denominator": "19683",
+        "log_p_value": -1.1719834989995892,
+        "p_value": 0.30975193887792163,
+        "verdict": "passed"
+      },
+      "exact_oracle_status": "passed",
+      "backend_status": "passed",
+      "determinant_status": "passed",
+      "replay_status": "passed",
+      "statistical_status": "passed",
+      "failure": null,
+      "verdict": "passed"
+    },
+    {
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 3,
+        "n": 4,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "started_at": {
+        "seconds": 1788130832,
+        "nanoseconds": 709874532
+      },
+      "finished_at": {
+        "seconds": 1788131886,
+        "nanoseconds": 661609720
+      },
+      "exact": {
+        "enumerated_matrix_count": 43046721,
+        "oracle_permanent_zero_count": 17116353,
+        "production_determinant_zero_count": 18785601,
+        "backend_agreements": [
+          {
+            "backend": "batch_parallel",
+            "status": "identical",
+            "matrices_compared": 43046721,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 17116353,
+            "diagnostic": null
+          },
+          {
+            "backend": "intra_matrix_parallel",
+            "status": "identical",
+            "matrices_compared": 43046721,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 17116353,
+            "diagnostic": null
+          },
+          {
+            "backend": "generic_ryser",
+            "status": "identical",
+            "matrices_compared": 43046721,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 17116353,
+            "diagnostic": null
+          },
+          {
+            "backend": "accelerator",
+            "status": "identical",
+            "matrices_compared": 43046721,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 17116353,
+            "diagnostic": null
+          }
+        ]
+      },
+      "replay": {
+        "mode": "two_fresh_serial",
+        "matrix_count": 1024,
+        "mismatch_count": 0,
+        "identical": true,
+        "first_sha256": "620d2436468cece4deaeb6b5b0d01c6c4f6dfe426f9ff7052b52d911fd23de49",
+        "second_sha256": "620d2436468cece4deaeb6b5b0d01c6c4f6dfe426f9ff7052b52d911fd23de49"
+      },
+      "sample": {
+        "stream_purpose": "validation",
+        "origin": "fresh_address_start",
+        "matrix_count": 400000,
+        "permanent_zero_count": 159316,
+        "null_numerator": "17116353",
+        "null_denominator": "43046721",
+        "log_p_value": -0.9458329770993752,
+        "p_value": 0.3883559445255893,
+        "verdict": "passed"
+      },
+      "exact_oracle_status": "passed",
+      "backend_status": "passed",
+      "determinant_status": "passed",
+      "replay_status": "passed",
+      "statistical_status": "passed",
+      "failure": null,
+      "verdict": "passed"
+    },
+    {
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 5,
+        "n": 1,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "started_at": {
+        "seconds": 1788131886,
+        "nanoseconds": 670499212
+      },
+      "finished_at": {
+        "seconds": 1788131887,
+        "nanoseconds": 134457285
+      },
+      "exact": {
+        "enumerated_matrix_count": 5,
+        "oracle_permanent_zero_count": 1,
+        "production_determinant_zero_count": 1,
+        "backend_agreements": [
+          {
+            "backend": "batch_parallel",
+            "status": "identical",
+            "matrices_compared": 5,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 1,
+            "diagnostic": null
+          },
+          {
+            "backend": "intra_matrix_parallel",
+            "status": "unsupported",
+            "matrices_compared": 0,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": null,
+            "diagnostic": null
+          },
+          {
+            "backend": "generic_ryser",
+            "status": "identical",
+            "matrices_compared": 5,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 1,
+            "diagnostic": null
+          },
+          {
+            "backend": "accelerator",
+            "status": "identical",
+            "matrices_compared": 5,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 1,
+            "diagnostic": null
+          }
+        ]
+      },
+      "replay": {
+        "mode": "two_fresh_serial",
+        "matrix_count": 1024,
+        "mismatch_count": 0,
+        "identical": true,
+        "first_sha256": "47e92b9a1c75532eb289e51793b78364f7f806df2ccf91b602016ed4b1fed6d2",
+        "second_sha256": "47e92b9a1c75532eb289e51793b78364f7f806df2ccf91b602016ed4b1fed6d2"
+      },
+      "sample": {
+        "stream_purpose": "validation",
+        "origin": "fresh_address_start",
+        "matrix_count": 400000,
+        "permanent_zero_count": 80029,
+        "null_numerator": "1",
+        "null_denominator": "5",
+        "log_p_value": -0.09570024693119883,
+        "p_value": 0.9087363717631065,
+        "verdict": "passed"
+      },
+      "exact_oracle_status": "passed",
+      "backend_status": "passed",
+      "determinant_status": "passed",
+      "replay_status": "passed",
+      "statistical_status": "passed",
+      "failure": null,
+      "verdict": "passed"
+    },
+    {
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 5,
+        "n": 2,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "started_at": {
+        "seconds": 1788217230,
+        "nanoseconds": 676184251
+      },
+      "finished_at": {
+        "seconds": 1788217231,
+        "nanoseconds": 369399379
+      },
+      "exact": {
+        "enumerated_matrix_count": 625,
+        "oracle_permanent_zero_count": 145,
+        "production_determinant_zero_count": 145,
+        "backend_agreements": [
+          {
+            "backend": "batch_parallel",
+            "status": "identical",
+            "matrices_compared": 625,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 145,
+            "diagnostic": null
+          },
+          {
+            "backend": "intra_matrix_parallel",
+            "status": "unsupported",
+            "matrices_compared": 0,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": null,
+            "diagnostic": null
+          },
+          {
+            "backend": "generic_ryser",
+            "status": "identical",
+            "matrices_compared": 625,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 145,
+            "diagnostic": null
+          },
+          {
+            "backend": "accelerator",
+            "status": "identical",
+            "matrices_compared": 625,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 145,
+            "diagnostic": null
+          }
+        ]
+      },
+      "replay": {
+        "mode": "two_fresh_serial",
+        "matrix_count": 1024,
+        "mismatch_count": 0,
+        "identical": true,
+        "first_sha256": "9fec814c111ca7f9d39f3523ab3cf3b9d0d8fecab2f239e3aa3d704d4ff8ad56",
+        "second_sha256": "9fec814c111ca7f9d39f3523ab3cf3b9d0d8fecab2f239e3aa3d704d4ff8ad56"
+      },
+      "sample": {
+        "stream_purpose": "validation",
+        "origin": "fresh_address_start",
+        "matrix_count": 400000,
+        "permanent_zero_count": 92483,
+        "null_numerator": "145",
+        "null_denominator": "625",
+        "log_p_value": -1.4447682835412974,
+        "p_value": 0.2358007091312651,
+        "verdict": "passed"
+      },
+      "exact_oracle_status": "passed",
+      "backend_status": "passed",
+      "determinant_status": "passed",
+      "replay_status": "passed",
+      "statistical_status": "passed",
+      "failure": null,
+      "verdict": "passed"
+    },
+    {
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 5,
+        "n": 3,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "started_at": {
+        "seconds": 1788217231,
+        "nanoseconds": 378914382
+      },
+      "finished_at": {
+        "seconds": 1788217233,
+        "nanoseconds": 827372243
+      },
+      "exact": {
+        "enumerated_matrix_count": 1953125,
+        "oracle_permanent_zero_count": 439525,
+        "production_determinant_zero_count": 465125,
+        "backend_agreements": [
+          {
+            "backend": "batch_parallel",
+            "status": "identical",
+            "matrices_compared": 1953125,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 439525,
+            "diagnostic": null
+          },
+          {
+            "backend": "intra_matrix_parallel",
+            "status": "unsupported",
+            "matrices_compared": 0,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": null,
+            "diagnostic": null
+          },
+          {
+            "backend": "generic_ryser",
+            "status": "identical",
+            "matrices_compared": 1953125,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 439525,
+            "diagnostic": null
+          },
+          {
+            "backend": "accelerator",
+            "status": "identical",
+            "matrices_compared": 1953125,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 439525,
+            "diagnostic": null
+          }
+        ]
+      },
+      "replay": {
+        "mode": "two_fresh_serial",
+        "matrix_count": 1024,
+        "mismatch_count": 0,
+        "identical": true,
+        "first_sha256": "639a2d19260f1bb978470d03684d217bf1b0bcdbc148a6286ca826d3c8231e4b",
+        "second_sha256": "639a2d19260f1bb978470d03684d217bf1b0bcdbc148a6286ca826d3c8231e4b"
+      },
+      "sample": {
+        "stream_purpose": "validation",
+        "origin": "fresh_address_start",
+        "matrix_count": 400000,
+        "permanent_zero_count": 89507,
+        "null_numerator": "439525",
+        "null_denominator": "1953125",
+        "log_p_value": -2.9064506640703294,
+        "p_value": 0.054669426077620396,
+        "verdict": "passed"
+      },
+      "exact_oracle_status": "passed",
+      "backend_status": "passed",
+      "determinant_status": "passed",
+      "replay_status": "passed",
+      "statistical_status": "passed",
+      "failure": null,
+      "verdict": "passed"
+    },
+    {
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 7,
+        "n": 1,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "started_at": {
+        "seconds": 1788217233,
+        "nanoseconds": 837073035
+      },
+      "finished_at": {
+        "seconds": 1788217234,
+        "nanoseconds": 240268631
+      },
+      "exact": {
+        "enumerated_matrix_count": 7,
+        "oracle_permanent_zero_count": 1,
+        "production_determinant_zero_count": 1,
+        "backend_agreements": [
+          {
+            "backend": "batch_parallel",
+            "status": "identical",
+            "matrices_compared": 7,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 1,
+            "diagnostic": null
+          },
+          {
+            "backend": "intra_matrix_parallel",
+            "status": "unsupported",
+            "matrices_compared": 0,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": null,
+            "diagnostic": null
+          },
+          {
+            "backend": "generic_ryser",
+            "status": "identical",
+            "matrices_compared": 7,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 1,
+            "diagnostic": null
+          },
+          {
+            "backend": "accelerator",
+            "status": "identical",
+            "matrices_compared": 7,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 1,
+            "diagnostic": null
+          }
+        ]
+      },
+      "replay": {
+        "mode": "two_fresh_serial",
+        "matrix_count": 1024,
+        "mismatch_count": 0,
+        "identical": true,
+        "first_sha256": "6c6fa3c7250c2a2c687b6dc9d8341a8a1c311e82c9db9147b7fb9165e9729182",
+        "second_sha256": "6c6fa3c7250c2a2c687b6dc9d8341a8a1c311e82c9db9147b7fb9165e9729182"
+      },
+      "sample": {
+        "stream_purpose": "validation",
+        "origin": "fresh_address_start",
+        "matrix_count": 400000,
+        "permanent_zero_count": 57003,
+        "null_numerator": "1",
+        "null_denominator": "7",
+        "log_p_value": -0.6377493443036969,
+        "p_value": 0.5284805142302946,
+        "verdict": "passed"
+      },
+      "exact_oracle_status": "passed",
+      "backend_status": "passed",
+      "determinant_status": "passed",
+      "replay_status": "passed",
+      "statistical_status": "passed",
+      "failure": null,
+      "verdict": "passed"
+    },
+    {
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 7,
+        "n": 2,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "started_at": {
+        "seconds": 1788217234,
+        "nanoseconds": 249966424
+      },
+      "finished_at": {
+        "seconds": 1788217234,
+        "nanoseconds": 710004495
+      },
+      "exact": {
+        "enumerated_matrix_count": 2401,
+        "oracle_permanent_zero_count": 385,
+        "production_determinant_zero_count": 385,
+        "backend_agreements": [
+          {
+            "backend": "batch_parallel",
+            "status": "identical",
+            "matrices_compared": 2401,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 385,
+            "diagnostic": null
+          },
+          {
+            "backend": "intra_matrix_parallel",
+            "status": "unsupported",
+            "matrices_compared": 0,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": null,
+            "diagnostic": null
+          },
+          {
+            "backend": "generic_ryser",
+            "status": "identical",
+            "matrices_compared": 2401,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 385,
+            "diagnostic": null
+          },
+          {
+            "backend": "accelerator",
+            "status": "identical",
+            "matrices_compared": 2401,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 385,
+            "diagnostic": null
+          }
+        ]
+      },
+      "replay": {
+        "mode": "two_fresh_serial",
+        "matrix_count": 1024,
+        "mismatch_count": 0,
+        "identical": true,
+        "first_sha256": "6edb042ac9033d648c1433982ea13eae23ed5aec5cb84aeebb79a9a61cb2b7f2",
+        "second_sha256": "6edb042ac9033d648c1433982ea13eae23ed5aec5cb84aeebb79a9a61cb2b7f2"
+      },
+      "sample": {
+        "stream_purpose": "validation",
+        "origin": "fresh_address_start",
+        "matrix_count": 400000,
+        "permanent_zero_count": 64063,
+        "null_numerator": "385",
+        "null_denominator": "2401",
+        "log_p_value": -0.29885414435120805,
+        "p_value": 0.7416675779520943,
+        "verdict": "passed"
+      },
+      "exact_oracle_status": "passed",
+      "backend_status": "passed",
+      "determinant_status": "passed",
+      "replay_status": "passed",
+      "statistical_status": "passed",
+      "failure": null,
+      "verdict": "passed"
+    },
+    {
+      "address": {
+        "root_seed": 4923361482881630209,
+        "q": 7,
+        "n": 3,
+        "purpose_tag": 1,
+        "stream_index": 0
+      },
+      "started_at": {
+        "seconds": 1788217234,
+        "nanoseconds": 719623638
+      },
+      "finished_at": {
+        "seconds": 1788217264,
+        "nanoseconds": 779555358
+      },
+      "exact": {
+        "enumerated_matrix_count": 40353607,
+        "oracle_permanent_zero_count": 6188455,
+        "production_determinant_zero_count": 6569479,
+        "backend_agreements": [
+          {
+            "backend": "batch_parallel",
+            "status": "identical",
+            "matrices_compared": 40353607,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 6188455,
+            "diagnostic": null
+          },
+          {
+            "backend": "intra_matrix_parallel",
+            "status": "unsupported",
+            "matrices_compared": 0,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": null,
+            "diagnostic": null
+          },
+          {
+            "backend": "generic_ryser",
+            "status": "identical",
+            "matrices_compared": 40353607,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 6188455,
+            "diagnostic": null
+          },
+          {
+            "backend": "accelerator",
+            "status": "identical",
+            "matrices_compared": 40353607,
+            "mismatch_count": 0,
+            "production_permanent_zero_count": 6188455,
+            "diagnostic": null
+          }
+        ]
+      },
+      "replay": {
+        "mode": "two_fresh_serial",
+        "matrix_count": 1024,
+        "mismatch_count": 0,
+        "identical": true,
+        "first_sha256": "fe1e7e4e7b813c46f1265da358daed7db294452289bc4cdb80d2b122f0ec1d48",
+        "second_sha256": "fe1e7e4e7b813c46f1265da358daed7db294452289bc4cdb80d2b122f0ec1d48"
+      },
+      "sample": {
+        "stream_purpose": "validation",
+        "origin": "fresh_address_start",
+        "matrix_count": 400000,
+        "permanent_zero_count": 61267,
+        "null_numerator": "6188455",
+        "null_denominator": "40353607",
+        "log_p_value": -0.296067578674184,
+        "p_value": 0.7437371655502739,
+        "verdict": "passed"
+      },
+      "exact_oracle_status": "passed",
+      "backend_status": "passed",
+      "determinant_status": "passed",
+      "replay_status": "passed",
+      "statistical_status": "passed",
+      "failure": null,
+      "verdict": "passed"
+    }
+  ],
+  "frozen_artifacts": {
+    "before": {
+      "root": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829",
+      "artifacts": [
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/checksums.sha256",
+          "sha256": "fbd2605b9fe939f9f6817665d87f378d4951123903eddf933cc73614c9b1358c"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md",
+          "sha256": "ccf183133d8a9f0f9bed4d926f39cbda27d72bec0558f222533fdbdc661c9502"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json",
+          "sha256": "1a22968435bf3bee958ef07204505d85827fb6227af6e2d2d1d864a0f7a93dc2"
+        }
+      ]
+    },
+    "after": {
+      "root": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829",
+      "artifacts": [
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/checksums.sha256",
+          "sha256": "fbd2605b9fe939f9f6817665d87f378d4951123903eddf933cc73614c9b1358c"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md",
+          "sha256": "ccf183133d8a9f0f9bed4d926f39cbda27d72bec0558f222533fdbdc661c9502"
+        },
+        {
+          "path": "dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json",
+          "sha256": "1a22968435bf3bee958ef07204505d85827fb6227af6e2d2d1d864a0f7a93dc2"
+        }
+      ]
+    },
+    "status": "passed"
+  },
+  "overall_verdict": "passed"
+}
