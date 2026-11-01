@@ -155,6 +155,11 @@ impl Selection {
         })
     }
 
+    /// Whether this selection's decoder counts iterations; the shim's layered decoders do not.
+    pub fn counts_iterations(&self) -> bool {
+        self.kind == "flooding"
+    }
+
     /// The settings this selection decodes with, `wave` frames per decode.
     ///
     /// # Errors
@@ -572,18 +577,21 @@ mod tests {
         Handle::build_spa_intra(alist(), K, N, CAP, true, SYNDROME_DEPTH).expect("decoder")
     }
 
-    /// The flooding normalized min-sum decoder of the survey's defaults.
-    fn selected() -> Handle {
-        let selection = Selection {
-            kind: "flooding".to_owned(),
+    fn selection(kind: &str, simd: &str) -> Selection {
+        Selection {
+            kind: kind.to_owned(),
             implem: "NMS".to_owned(),
-            simd: String::new(),
+            simd: simd.to_owned(),
             precision: "f32".to_owned(),
             offset: 0.0,
             quant_scale: 8.0,
             syndrome_depth: SYNDROME_DEPTH,
-        };
-        Handle::build(alist(), K, N, CAP, 0.75, true, &selection).expect("decoder")
+        }
+    }
+
+    /// The flooding normalized min-sum decoder of the survey's defaults.
+    fn selected() -> Handle {
+        Handle::build(alist(), K, N, CAP, 0.75, true, &selection("flooding", "")).expect("decoder")
     }
 
     /// The all-zero codeword with one unreliable wrong position per frame.
@@ -640,6 +648,23 @@ mod tests {
             worker.decisions[0] ^= 1;
             assert!(worker.replay_iterations(&mut prototype, &llrs).is_err());
         }
+    }
+
+    #[test]
+    fn only_flooding_selections_are_replayed() {
+        assert!(selection("flooding", "").counts_iterations());
+        assert!(!selection("horizontal-layered", "INTER").counts_iterations());
+    }
+
+    #[test]
+    #[should_panic(expected = "a counting handle")]
+    fn a_layered_decoder_has_no_counter_to_replay() {
+        let layered = selection("horizontal-layered", "INTER");
+        let mut prototype =
+            Handle::build(alist(), K, N, CAP, 0.75, true, &layered).expect("decoder");
+        let frames = prototype.wave();
+        let mut decisions = vec![0; frames * K];
+        prototype.decode_counted(&llrs(frames), &mut decisions, frames);
     }
 
     /// Decodes one wave with buffers `llr_delta` and `decision_delta`
