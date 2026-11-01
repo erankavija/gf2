@@ -90,26 +90,34 @@ def tree_faults(sizes, config, baseline):
 
 
 def added_bytes(old, new, cwd):
-    """Bytes of files added or modified between two trees, the index when `new` is empty."""
+    """Growth between two trees, and the paths added or modified.
+
+    `new` empty means the index. A modified file counts only its growth, so an
+    append to a large log costs what it appends.
+    """
     args = ["diff", "--raw", "--no-abbrev", "--no-renames", "-z"]
     args += ["--cached", old] if not new else [old, new]
     fields = git(*args, cwd=cwd).split("\0")
-    blobs = [
-        (fields[i].split()[3], fields[i + 1])
+    changes = [
+        (fields[i].split()[2], fields[i].split()[3], fields[i + 1])
         for i in range(0, len(fields) - 1, 2)
         if fields[i].split()[4] != "D"
     ]
-    if not blobs:
+    if not changes:
         return 0, []
+    objects = [blob for pair in changes for blob in pair[:2]]
     sizes = subprocess.run(
         ["git", "cat-file", "--batch-check=%(objectsize)"],
         cwd=cwd,
-        input="\n".join(b for b, _ in blobs) + "\n",
+        input="\n".join(objects) + "\n",
         check=True,
         capture_output=True,
         text=True,
-    ).stdout.split()
-    return sum(map(int, sizes)), [path for _, path in blobs]
+    ).stdout.splitlines()
+    # An all-zero object id prints "<id> missing": a new file has no old size.
+    sizes = [0 if s.endswith("missing") else int(s) for s in sizes]
+    total = sum(max(0, sizes[i + 1] - sizes[i]) for i in range(0, len(sizes), 2))
+    return total, [path for _, _, path in changes]
 
 
 def change_faults(old, new, config, label, cwd):
@@ -219,6 +227,9 @@ reason = "fixture"
             assert_faults(check_staged(repo), [expected], name)
             run("reset", "-q", "--hard", "HEAD")
 
+        write("big.lock", 4100)
+        assert_faults(check_staged(repo), [], "small append to an excepted large file")
+        run("reset", "-q", "--hard", "HEAD")
         write("a/execution.log", 1)
         write("old.bin", 1499)
         assert_faults(check_staged(repo), [], "allowed log and shrink")

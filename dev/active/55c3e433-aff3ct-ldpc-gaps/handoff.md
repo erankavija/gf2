@@ -47,6 +47,7 @@
 
 ## Traps — do not repeat these
 
+- **Do NOT land `inputs/` copies or raw logs from the pilots.** `@/inv/committed-evidence-budget` and `scripts/check-tracked-budget.py` now refuse them on main. Commit results, configuration and digests only. `git rm` the runner's `inputs/` and `*.log` output before merging; execution logs stay. `gf2-sim` aff3ct comparison helpers move under `@/issue/1aea3958`, last in `@/issue/45ecf975`; coordinate before that lands. A history rewrite is planned under `@/issue/45ecf975` and needs this epic's branches pushed or merged first.
 - **Do NOT dispatch until the worktree is confirmed to exist.** The dispatch script refused a dirty main with exit 0 from my wrapper pipeline, and I launched two workers at missing directories. Check `git worktree list` first, in a separate step.
 - **Do NOT merge main into a wave 2 worktree before its receipt exists.** The executables, build records and committed plan there are what the window runs. `pilot/window.sh` fails if regenerating the plan changes it.
 - **Do NOT delete `target/` in either wave 2 worktree or reclaim it early.** Build records point there, including `target/variant-trees/` in `agent-a72f2b3f`.
