@@ -305,8 +305,7 @@ def render(records, fill, pilot_fill=None):
         f"python3 -B {(HERE / 'make_outcome.py').relative_to(ROOT)} --check", "```", "",
         "The generator verifies each execution log with the shared campaign verifier. "
         "Receipts pin the protocol, measurement contract, addendum, producing inputs, arm "
-        "digests, toolchain and observed host; their `inputs/` directories carry the pinned "
-        "snapshots. Executed plans identify each arm. Speedup is baseline median time per "
+        "digests, toolchain and observed host. Executed plans identify each arm. Speedup is baseline median time per "
         "call divided by candidate median time per call, with the acceptance summary's "
         "percentile-bootstrap interval. Values above one favour the candidate. "
         "All declared objectives are non-regression; `improved` and `not-worse` decisions "

@@ -47,7 +47,6 @@ medians below one means gf2 is faster.
 | `../../bench_results/6c6b09b1/run-byte-field-v4.sh plan\|window CAMPAIGN` | the v4 campaigns; each receipt's `launcher.log` records every session command. A campaign that completes holding no cell with paired executions fails the job (exit 4) instead of passing as a clean run; a cell the host makes inapplicable is named, not failed |
 | `../../bench_results/6c6b09b1/run-byte-field-v4.test.sh` | the launcher's outcome guards over synthesized journals and receipts, alongside the real failed v3 stage and the committed v1 receipt |
 | `survey/make-addenda.py`, `survey/make-plan-versioned.py`, `survey/make-producing-inputs.py` | the pilot addenda, the runner plans and the producing closure `survey/producing-inputs-v4.json` |
-| `survey/make-confirmation-addenda.py` and its `.test.sh` | the three confirmation addenda, frozen from the committed pilot receipts, and the guards that keep that freeze reproducible |
 | `survey/make-source-evidence.py` | `survey/source-evidence.json`: every code claim below, cited by claim ID in backticks |
 | `survey/make-ledger-origin-v3.py` | `../../bench_results/6c6b09b1/v3-*-ledger-origin.json` |
 | `survey/make-void-attempt-record.py` | `../../bench_results/6c6b09b1/v3-r1-void-attempts.json`: what each ledger attempt that measured no cell actually did |
@@ -302,9 +301,8 @@ bootstrap draws in each tail at that corrected confidence, and the frozen
 `bootstrap_resamples` fixes the draws, so a family that declares more than six
 confirmatory cells would report every one of them `not-confirmatory`. Each
 confirmation therefore declares six cells and leaves the rest of its pilot
-breadth as exploratory evidence; `survey/make-confirmation-addenda.py` states
-which six each family confirms and what they cover, and so does each
-addendum's family description.
+breadth as exploratory evidence; each addendum's family description states
+which six the family confirms and what they cover.
 
 Each confirmation is frozen from its own family's committed pilot receipt
 before any confirmatory trial: the measurement resolution is that pilot's
@@ -319,10 +317,6 @@ unchanged, and each strictly exceeds one plus its family's frozen resolution,
 which the addendum validation requires. The campaign seed is fresh, so the pair
 order and the bootstrap stream are; the workload seeds stay the pilot's, so the
 confirmation measures the workload whose resolution it declares.
-`survey/make-confirmation-addenda.test.sh` runs the real freeze over a fixture
-tree and shows it writes the same bytes once a confirmation receipt, or a
-pilot-labelled campaign relaunched from the confirmation addendum, sits beside
-the pilot.
 
 The confirmation receipts need one reading stated, because the outcome
 vocabulary is written for adoption decisions and these cells decide no

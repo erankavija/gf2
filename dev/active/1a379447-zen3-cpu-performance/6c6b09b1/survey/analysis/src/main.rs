@@ -34,7 +34,7 @@
 //! pilot receipt and the widest one, the input of a confirmation's frozen
 //! measurement resolution. `resolution-freeze` prints that widest half-width
 //! alone, rounded up to six decimal places, which is the literal a
-//! confirmation addendum freezes; `make-confirmation-addenda.py` reads it.
+//! confirmation addendum freezes.
 
 mod tables;
 

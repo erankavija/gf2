@@ -68,7 +68,6 @@ Committed commands produce every artifact:
 | `survey/inspect-sources.py` | `survey/source-evidence.json`: every code claim below with project, commit, path, line, verbatim text and interpretation |
 | `../../bench_results/eda07788/run-dvb-t2-baselines.sh`, `run-nr-derate-baselines.sh` | bounded checkpointed campaigns under the CCX1 full-host lock; `remeasure-v3` runs the DVB-T2 re-measurement and resumes under its campaign identity |
 | `../../bench_results/eda07788/reevaluate-v3.sh` | independent re-evaluation of every v3 receipt of both families: `reevaluation-v3.log` |
-| `../../bench_results/eda07788/summarize-v3.py` | [DVB-T2 tables](../../../bench_results/eda07788/tables-v3.md) and [NR tables](../../../bench_results/eda07788/tables-nr-derate.md) |
 
 Code claims cite `source-evidence.json` claim IDs in backticks. This report
 carries the argument and cites the evidence: it states no measured or derived
@@ -77,8 +76,7 @@ or in a named output file, and each pointer here names the table section and the
 row that carries it. A number appears below only when it identifies a cell,
 names a workload size, names a protocol or addendum constant that fixes the
 design before measurement, or belongs to a citation key, version pin or commit
-id. Both table documents regenerate byte for byte from the committed receipts
-through `summarize-v3.py`.
+id. Both table documents project the committed receipts.
 
 | Source | Pin | License | Role here |
 |---|---|---|---|
@@ -542,9 +540,7 @@ execution log is byte-identical to the runner's canonical log. The
 re-measurement addendum is checked against the version-3 schema snapshot its
 receipt pins, whose digest equals the committed
 [`addendum-v3.schema.json`](../f547c394/addendum-v3.schema.json); `freeze-remeasure.py`
-reproduces that addendum byte for byte from the committed evidence, and
-`summarize-v3.py` reproduces both table documents byte for byte from the
-committed receipts.
+reproduces that addendum byte for byte from the committed evidence.
 
 ## Criterion outcomes
 

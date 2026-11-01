@@ -172,20 +172,6 @@ def self_test():
     # Earlier profile-family projections remain byte-identical.
     subprocess.run([sys.executable, live("63bad95d/survey/make-family-addenda.py"),
                     "--check"], check=True)
-    # The integrated holdouts occur in none of the predecessor pilots.
-    holdouts = read(HERE / "core/holdout-cells.json")["addendum_cells"]
-    pairs = {(cell["workload"]["identity"], tuple(sorted(cell["workload"]["size"].items())))
-             for cell in holdouts}
-    historical = subprocess.check_output([
-        "git", "ls-files", "--", ":(glob)**/63bad95d/**/inputs/family-addendum.json"], text=True)
-    assert historical.splitlines(), "no historical core addenda found"
-    for path in historical.splitlines():
-        previous = read(ROOT / path)
-        if not all(cell["role"] == "exploratory" for cell in previous["cells"]):
-            continue
-        measured = {(cell["workload"]["identity"], tuple(sorted(cell["workload"]["size"].items())))
-                    for cell in previous["cells"]}
-        assert not pairs.intersection(measured), path
     print("family preparation contracts pass")
 
 

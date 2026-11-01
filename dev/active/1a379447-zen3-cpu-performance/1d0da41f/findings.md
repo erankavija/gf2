@@ -10,10 +10,9 @@ is accepted with no protocol finding and **does not qualify for adoption**
 decides `regressed` (same section, `Decision` column); no negative, unavailable
 or inconclusive result is omitted. The
 [acceptance summary](../../../bench_results/1d0da41f/2026-09-08-1d0da41f-clmul-dispatch-confirmation/acceptance-summary.md)
-is the authoritative record of the measurements, and
-[`survey/summarize.py`](survey/summarize.py) projects it and every other
-committed receipt of this issue into the
-[generated tables](../../../bench_results/1d0da41f/tables.md). This report carries
+is the authoritative record of the measurements, and the
+[generated tables](../../../bench_results/1d0da41f/tables.md) project it and every other
+committed receipt of this issue. This report carries
 the argument and cites the evidence: it states no measured or derived value.
 Every figure lives in `tables.md`, in the receipts and summaries themselves, or
 in the evidence files named below, and each pointer here names the `tables.md`
