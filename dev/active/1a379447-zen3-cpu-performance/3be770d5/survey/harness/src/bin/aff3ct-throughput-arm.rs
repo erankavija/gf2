@@ -64,6 +64,9 @@ fn run() -> Result<(), String> {
         |worker: &mut Aff3ctWorker| worker.decode_batch(llrs),
         |worker: &Aff3ctWorker| &worker.decisions,
         |index, worker| {
+            if !selection.counts_iterations() {
+                return Ok(());
+            }
             let mut prototype = prototype.lock().map_err(|e| e.to_string())?;
             let iterations = worker.replay_iterations(&mut prototype, llrs)?;
             report_iterations("aff3ct", index, IterationSource::ReplayDerived, &iterations);
