@@ -39,9 +39,7 @@ def claims():
 def resolve(owner, relative):
     """Root-relative path of a claim's file."""
     if owner == review.MEASURED:
-        stages = family_stages(HERE.parent / review.PILOT_ADDENDUM)
-        stage = {label: directory for label, directory, _ in stages}["confirmation"]
-        return str((stage / "inputs" / "producing" / relative).relative_to(ROOT))
+        return relative
     if owner is not None:
         return f"{package(owner)}/{relative}"
     if relative == ROOT_FILE:

@@ -52,7 +52,7 @@ writes the directory.
 
 | Material | Directory | Readers and writers |
 |---|---|---|
-| Benchmark receipts with their digest-pinned input snapshots | `bench_results/` | `scripts/cargo-ci.sh` step `receipt-input-snapshots`, `crates/gf2-algebra/tests/rank_event_rates.rs` |
+| Benchmark results, configuration and input digests | `bench_results/` | `crates/gf2-algebra/tests/rank_event_rates.rs` |
 | Benchmark output tables, campaign measurement plans, tuning-profile receipts | `benchmarks/` | Read by `dev/scripts/permanent-campaign-runner.sh` and `crates/gf2-sim/tests/permanent_campaign_bin.rs`; written by `scripts/perm-uniformity-repro.sh` and `dev/tools/tuning-campaign-support` |
 | `sim_runner` campaign definitions | `campaigns/` | `crates/gf2-coding/src/bin/sim_runner.rs`, `crates/gf2-coding/tests/grand_phase1_smoke.rs` |
 | Reference curves, their comparison scripts, complete tuning profiles | `reference_data/` | `crates/gf2-coding/tests/ebch_128_64_reference.rs`, `crates/gf2-algebra/tests/tuning_repository_envelopes.rs`, `dev/tools/tuning-profile-compose/src/main.rs`, `dev/scripts/gen_fig7_report.sh` |

@@ -184,10 +184,6 @@ def main():
               "before any reservation or candidate confirmation; the "
               "[frozen portfolio](portfolio.md) defines that stop rule.", ""]
 
-    for (factor, family) in sources:
-        snapshot = (RESULTS / "2037941f" / FAMILIES[family] / f"bc091474-u{factor}-pilot"
-                    / "inputs/producing" / KERNEL_SOURCE)
-        assert f"gf2_xor_unroll{factor}" in snapshot.read_text(), snapshot
     added = added_nonblank_source_lines()
     assert added <= 80
     lines += ["## Code complexity", "",
@@ -195,9 +191,8 @@ def main():
               f"Its diff adds {added} nonblank source lines against its parent, "
               "within the frozen 80-line cap. The measured symbol sizes below "
               "come from the release disassembly headers; size is not a speed result. "
-              "Both candidate bodies exist in the pilot receipts' producing-input "
-              f"snapshots only, as `inputs/producing/{KERNEL_SOURCE}` of each receipt; "
-              "the current kernel source holds neither ([removal record]"
+              "The pilot receipts record input digests and source revisions for rebuilding "
+              "the candidate bodies ([removal record]"
               f"({link(removal_record())})).",
               "", "| Body | Symbol bytes | Assembly |", "|---|---:|---|"]
     for variant, label in (("baseline", "Baseline"), ("unroll2", "Factor 2"),

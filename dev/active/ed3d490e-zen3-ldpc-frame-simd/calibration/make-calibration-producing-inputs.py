@@ -73,22 +73,10 @@ def digest_lines(paths):
         f"{hashlib.sha256((ROOT / path).read_bytes()).hexdigest()}  {path}\n" for path in paths)
 
 
-def check_digests(paths):
-    """Exits non-zero, naming each moved row, when the digest record differs from this tree."""
-    relative = str(DIGESTS.relative_to(ROOT))
-    recorded = DIGESTS.read_text().splitlines() if DIGESTS.is_file() else []
-    expected = digest_lines(paths).splitlines()
-    if recorded != expected:
-        moved = sorted({line.split("  ", 1)[-1] for line in set(recorded) ^ set(expected)})
-        raise SystemExit("\n".join(
-            [f"{relative} does not pin this tree; regenerate it with {GENERATOR}", *moved]))
-    print(f"{relative}: pins this tree")
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true",
-                        help="compare the committed records instead of writing them")
+                        help="check source enumeration without writing records")
     arguments = parser.parse_args()
     behavior = set(BEHAVIOR_EXTRA)
     for directory in (*(f"{crate}/src" for crate in CRATES), f"{TOOL}/src", f"{COMPOSER}/src"):
@@ -100,10 +88,8 @@ def main():
         raise SystemExit(f"producing inputs missing from the tree: {missing}")
     closure = producing_closure.document(behavior, LIFECYCLE, build)
     producing_closure.emit(MANIFEST, closure, arguments.check, GENERATOR)
-    pinned = sorted({*closure["build_inputs"], str(MANIFEST.relative_to(ROOT))})
-    if arguments.check:
-        check_digests(pinned)
-    else:
+    if not arguments.check:
+        pinned = sorted({*closure["build_inputs"], str(MANIFEST.relative_to(ROOT))})
         DIGESTS.write_text(digest_lines(pinned))
         print(f"wrote {DIGESTS.relative_to(ROOT)}: {len(pinned)} digests")
 

@@ -21,8 +21,8 @@ The throwaway addenda are the `07ca8585` before/after pilot addenda with the
 family renamed and the ledger redirected into `target/`. The single-worker one
 gains two cells per code: a one-frame batch, and an eleven-frame batch whose
 last wave is partial and which sets the portable lane backend against the
-AVX2 one. The recorded bundles and the prepared quality records are the
-`c077a88b` ones, found among the repository's files by the digests below.
+AVX2 one. The recorded bundles live under `GF2_LDPC_INPUTS`, outside the repository. The
+prepared quality records are located by their recorded digests.
 
 Usage (from the worktree root): smoke-gf2-arms.py OUT_DIR [gf2|aff3ct]
 """
@@ -35,7 +35,6 @@ import pathlib
 import shutil
 import subprocess
 import sys
-import tarfile
 
 TOOLCHAIN = "1.95"
 RUSTFLAGS = "-C target-cpu=native"
@@ -43,9 +42,7 @@ PACKAGE = "ldpc-batch-arms"
 SCRATCH = pathlib.Path("target/ldpc-batch-arms-smoke")
 LOCK = "/tmp/gf2-ccx1.lock"
 
-# Identities of the frozen `c077a88b` inputs.
-ARCHIVE = ("recorded-inputs.tar.gz",
-           "a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba")
+# Identities of the frozen quality records.
 CODES = {
     "dvb-t2-r12": {
         "bundle": "dvb-t2-r12-waterfall",
@@ -216,7 +213,7 @@ def throwaway(group, family, base, derived, refusing=None, unusable=None):
             declared_cells.append(cell)
             decoder = cell["decoder"]
             case = {
-                "bundle": str(ROOT / SCRATCH / "inputs" / code["bundle"]),
+                "bundle": str(inputs_root() / code["bundle"]),
                 "code": code["code"],
                 "iteration_cap": decoder["iteration_cap"],
                 "normalization_factor": decoder["normalization"]["factor"],
@@ -304,6 +301,21 @@ def diagnostics(stage):
     return rows
 
 
+def inputs_root():
+    """The caller-supplied directory containing the recorded code bundles."""
+    if "GF2_LDPC_INPUTS" not in os.environ:
+        sys.exit("set GF2_LDPC_INPUTS to the external recorded bundle directory")
+    return pathlib.Path(os.environ["GF2_LDPC_INPUTS"]).resolve()
+
+
+def input_identities():
+    """The external bundle location and manifest digests observed for this run."""
+    root = inputs_root()
+    return {"path": str(root), "manifests": {
+        code["bundle"]: hashlib.sha256((root / code["bundle"] / "manifest.json").read_bytes()).hexdigest()
+        for code in CODES.values()}}
+
+
 def build_runner(*others):
     """Path of the built runner and the environment its plans run under; `others` names further
     binaries of the runner's package to build beside it."""
@@ -324,9 +336,7 @@ def main():
     out_dir = pathlib.Path(sys.argv[1])
     group = GROUPS[(sys.argv[2:] or ["gf2"])[0]]
     shutil.rmtree(SCRATCH, ignore_errors=True)
-    (SCRATCH / "inputs").mkdir(parents=True)
-    with tarfile.open(by_digest(ARCHIVE)) as archive:
-        archive.extractall(SCRATCH / "inputs", filter="data")
+    SCRATCH.mkdir(parents=True)
 
     runner, environment = build_runner()
     out_dir.mkdir(parents=True, exist_ok=True)

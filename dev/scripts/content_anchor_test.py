@@ -62,7 +62,7 @@ class HistoryBlob(Fixture):
 
 
 class AnchorBytes(Fixture):
-    def test_a_path_without_a_snapshot_reads_the_committed_blob_after_it_changes(self):
+    def test_the_rebuild_pointer_reads_the_source_after_it_changes(self):
         anchor = self.pinned()
         self.commit(SOURCE, b"fn two() {}\n")
         self.assertEqual(anchor.bytes(SOURCE), b"fn one() {}\n")

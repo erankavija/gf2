@@ -111,7 +111,7 @@ def read_receipt(root, name):
     receipt = json.loads(receipt_bytes)
     summary = json.loads((directory / "acceptance-summary.json").read_text())
     addendum = json.loads(
-        (directory / receipt["addendum"]["snapshot"]).read_text()
+        (root / receipt["addendum"]["path"]).read_text()
     )
     return {
         "name": name,

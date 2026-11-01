@@ -41,8 +41,7 @@ PACKAGE_NAME = "gf2-kernels-simd"
 PACKAGE = repository_files.package_directory(ROOT, PACKAGE_NAME)
 
 # The baselines this task compares, each by content: per-path digests, and
-# byte snapshots of the paths the working tree changes. An `inputs` directory
-# is outside every live lookup.
+# a source revision as the rebuild pointer.
 #
 #   anchor            the unedited sources with listings regenerated from them
 #   before-1b034786   the tree holding this task's contracts, before the code
@@ -57,7 +56,7 @@ FIX = "1b034786"
 
 
 def _baseline(stage):
-    return content_anchor.Anchor(ROOT, HERE / f"{stage}-baseline.json", HERE / "inputs" / stage)
+    return content_anchor.Anchor(ROOT, HERE / f"{stage}-baseline.json")
 
 
 ANCHOR = _baseline("anchor")

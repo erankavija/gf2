@@ -268,7 +268,7 @@ def overview(out, loaded):
         "informational. Expected draws per tail are the resamples times the per-comparison alpha "
         "over two, which P-20 requires to reach twenty. A pilot's widest relative half-width is "
         "P-03's quantity over its intervals; a confirmation's frozen resolution comes from the "
-        "addendum snapshot in its receipt and names the pilot receipt it was derived from; "
+        "addendum its receipt pins and names the pilot receipt it was derived from; "
         "margins are the summary's."
     )
     out.append("")
@@ -281,7 +281,7 @@ def overview(out, loaded):
         family = summary["family"]
         alpha = 1 - family["per_comparison_confidence"]
         pilot = summary["label"] == "pilot"
-        addendum = json.loads((directory / "inputs" / "family-addendum.json")
+        addendum = json.loads((pathlib.Path(receipt["addendum"]["path"]))
                               .read_text(encoding="utf-8"))
         ratio = addendum["family_wise"]["alpha"] / family["family_alpha"]
         attempt = round((math.sqrt(1 + 4 * ratio) - 1) / 2)

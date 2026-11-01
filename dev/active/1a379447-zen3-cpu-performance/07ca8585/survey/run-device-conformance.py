@@ -2,7 +2,7 @@
 """Run, record, and package correctness-only LDPC GPU conformance (jit:07ca8585).
 
 The output is a durable receipt, raw device/toolchain reports, exact test logs,
-and a portable snapshot of every source/build input that decides the verdict.
+and digests of every source/build input that decides the verdict.
 Test-runner durations are incidental diagnostics and are not interpreted as
 measurements.
 """
@@ -23,7 +23,6 @@ OUTPUT_PREFIX = pathlib.Path("dev/bench_results") / ISSUE / "device-conformance-
 PRODUCING_MANIFEST = pathlib.Path(
     "dev/active/1a379447-zen3-cpu-performance/07ca8585/survey/producing-inputs-device-conformance.json"
 )
-PRODUCING_ROOT = pathlib.Path("inputs/producing")
 RUNNER = pathlib.Path("dev/active/1a379447-zen3-cpu-performance/07ca8585/survey/run-device-conformance.py")
 SOURCE_TREES = [
     pathlib.Path("crates/gf2-core/src"),
@@ -179,7 +178,7 @@ def revision_bytes(root, revision, path):
     ).stdout
 
 
-def prepare_snapshot(root, revision):
+def producing_digests(root, revision):
     manifest = read_manifest(root)
     content = {
         path: revision_bytes(root, revision, path) for path in manifest["build_inputs"]
@@ -196,64 +195,6 @@ def prepare_snapshot(root, revision):
         },
         "build_inputs_sha256": hashes,
     }
-    return snapshot, content
-
-
-def verify_snapshot(output, expected):
-    snapshot_root = output / PRODUCING_ROOT
-    observed = json.loads(
-        (snapshot_root / "producing-snapshot.json").read_text(encoding="utf-8")
-    )
-    if observed != expected:
-        raise SystemExit("producing snapshot marker differs from expected identity")
-    if expected.get("manifest_path") != str(PRODUCING_MANIFEST):
-        raise SystemExit("producing snapshot names another manifest")
-    selected = {expected["manifest_path"]: expected["manifest_sha256"]}
-    selected.update(expected["build_inputs_sha256"])
-    for path, digest in selected.items():
-        candidate = snapshot_root / path
-        if not candidate.is_file() or sha256(candidate) != digest:
-            raise SystemExit(f"producing snapshot content differs: {path}")
-    manifest = json.loads(
-        (snapshot_root / expected["manifest_path"]).read_text(encoding="utf-8")
-    )
-    behavior = {
-        path: expected["build_inputs_sha256"][path]
-        for path in manifest["behavior_sources"]
-    }
-    lifecycle = {
-        path: expected["build_inputs_sha256"][path]
-        for path in manifest["lifecycle_sources"]
-    }
-    if behavior != expected["behavior_sha256"]:
-        raise SystemExit("producing snapshot behavior selection differs from its manifest")
-    if lifecycle != expected["lifecycle_sha256"]:
-        raise SystemExit("producing snapshot lifecycle selection differs from its manifest")
-
-
-def publish_snapshot(root, output, revision):
-    snapshot_root = output / PRODUCING_ROOT
-    if (snapshot_root / "producing-snapshot.json").exists():
-        expected = json.loads(
-            (snapshot_root / "producing-snapshot.json").read_text(encoding="utf-8")
-        )
-        verify_snapshot(output, expected)
-        return expected
-    if snapshot_root.exists():
-        raise SystemExit(f"refusing to overwrite partial producing snapshot: {snapshot_root}")
-    snapshot, content = prepare_snapshot(root, revision)
-    snapshot_root.mkdir(parents=True)
-    manifest_destination = snapshot_root / PRODUCING_MANIFEST
-    manifest_destination.parent.mkdir(parents=True)
-    manifest_destination.write_bytes((root / PRODUCING_MANIFEST).read_bytes())
-    for path, data in content.items():
-        destination = snapshot_root / path
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(data)
-    (snapshot_root / "producing-snapshot.json").write_text(
-        json.dumps(snapshot, separators=(",", ":")), encoding="utf-8"
-    )
-    verify_snapshot(output, snapshot)
     return snapshot
 
 
@@ -357,80 +298,6 @@ def suite_executables(root, listing):
     return executables
 
 
-def producing_pointer(output, snapshot):
-    marker = output / PRODUCING_ROOT / "producing-snapshot.json"
-    return {
-        "snapshot": str(PRODUCING_ROOT / "producing-snapshot.json"),
-        "sha256": sha256(marker),
-        "manifest_path": snapshot["manifest_path"],
-        "manifest_sha256": snapshot["manifest_sha256"],
-    }
-
-
-def verify_existing_evidence(root, output, receipt):
-    if receipt.get("schema") != "ldpc-device-conformance-v1":
-        raise SystemExit("existing receipt schema mismatch")
-    if receipt.get("verdict") != "pass":
-        raise SystemExit("existing receipt does not record a passing verdict")
-    raw = output / "raw"
-    for path, digest in receipt.get("raw_files", {}).items():
-        candidate = output / path
-        if not candidate.is_file() or sha256(candidate) != digest:
-            raise SystemExit(f"recorded raw input differs: {path}")
-    rocminfo = output / receipt["device"]["rocminfo"]
-    if sha256(rocminfo) != receipt["device"]["rocminfo_sha256"]:
-        raise SystemExit("recorded rocminfo differs")
-    assert_test_log(
-        "device-edge-cases",
-        (raw / "device-edge-cases.log").read_text(encoding="utf-8"),
-        EXPECTED_TESTS["device"],
-        18,
-    )
-    assert_test_log(
-        "ordinary-slow",
-        (raw / "ordinary-slow.log").read_text(encoding="utf-8"),
-        EXPECTED_TESTS["ordinary_slow"],
-    )
-    assert_test_log(
-        "ordinary-smoke",
-        (raw / "ordinary-smoke.log").read_text(encoding="utf-8"),
-        EXPECTED_TESTS["ordinary_smoke"],
-    )
-    for suites in receipt.get("executables", {}).values():
-        for name, executable in suites.items():
-            path = root / executable["path"]
-            if not path.is_file() or sha256(path) != executable["sha256"]:
-                raise SystemExit(f"recorded executable is unavailable or differs: {name}")
-
-
-def package_existing(root, output):
-    receipt_path = output / "receipt.json"
-    if not receipt_path.is_file():
-        raise SystemExit(f"existing receipt is absent: {receipt_path}")
-    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-    verify_existing_evidence(root, output, receipt)
-    revision = receipt["source_identity"]["revision_informational"]
-    snapshot = publish_snapshot(root, output, revision)
-    for path, digest in receipt["source_identity"]["files"].items():
-        if snapshot["behavior_sha256"].get(path) != digest:
-            raise SystemExit(f"producing snapshot disagrees with recorded source: {path}")
-    receipt["producing_inputs"] = producing_pointer(output, snapshot)
-    receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
-
-    summary_path = output / "summary.md"
-    summary = summary_path.read_text(encoding="utf-8")
-    old = "Source and executable content identities are in `receipt.json`."
-    new = old + "\nThe portable producing-input closure is under `inputs/producing/`."
-    if new in summary:
-        pass
-    elif old in summary:
-        summary_path.write_text(summary.replace(old, new), encoding="utf-8")
-    else:
-        raise SystemExit("evidence summary does not contain the provenance paragraph")
-    print(receipt_path)
-    print(output / PRODUCING_ROOT / "producing-snapshot.json")
-
-
 def resolve_output(root, output):
     if output is None:
         raise SystemExit("an output path is required")
@@ -449,23 +316,15 @@ def main():
         action="store_true",
         help="regenerate the committed device-conformance producing-input manifest",
     )
-    parser.add_argument(
-        "--package-existing",
-        action="store_true",
-        help="verify and package retained evidence without executing device tests",
-    )
     args = parser.parse_args()
 
     root = repository_root()
     if args.write_manifest:
-        if args.output is not None or args.package_existing:
+        if args.output is not None:
             raise SystemExit("--write-manifest does not accept an output or another mode")
         write_manifest(root)
         return
     output = resolve_output(root, args.output)
-    if args.package_existing:
-        package_existing(root, output)
-        return
     if output.exists():
         raise SystemExit(f"refusing to overwrite existing evidence: {output}")
     raw = output / "raw"
@@ -496,7 +355,7 @@ def main():
         check=True,
     )
     revision = capture(root, raw, "source-revision", ["git", "rev-parse", "HEAD"]).strip()
-    snapshot = publish_snapshot(root, output, revision)
+    snapshot = producing_digests(root, revision)
     status = capture(root, raw, "git-status", ["git", "status", "--porcelain=v1"])
     rustc = capture(root, raw, "rustc", ["rustc", "+1.95", "--version", "--verbose"])
     hipcc = capture(root, raw, "hipcc", ["/opt/rocm/bin/hipcc", "--version"])
@@ -583,7 +442,7 @@ def main():
             "files": snapshot["behavior_sha256"],
             "git_status_informational": status.splitlines(),
         },
-        "producing_inputs": producing_pointer(output, snapshot),
+        "producing_inputs": snapshot,
         "toolchain": {
             "rustc": rustc.strip(),
             "hipcc": hipcc.strip(),
@@ -636,7 +495,7 @@ def main():
 This correctness receipt validates the current HIP min-sum check update on the
 {marketing_name} (`gfx1030`). It interprets no runtime duration as a performance
 measurement. Source and executable content identities are in `receipt.json`.
-The portable producing-input closure is under `inputs/producing/`.
+The source revision in `receipt.json` is the rebuild pointer.
 
 ## Verdict
 

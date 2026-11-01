@@ -41,8 +41,14 @@ def fake_arms(plan_path, executable):
     plan_path.write_text(json.dumps(plan), encoding="utf-8")
 
 
+fixture_spec = importlib.util.spec_from_file_location("family_fixture", SURVEY / "test_make_family.py")
+fixture = importlib.util.module_from_spec(fixture_spec)
+fixture_spec.loader.exec_module(fixture)
+
+
 class SmokeFamilyTest(unittest.TestCase):
     def setUp(self):
+        fixture.bundle_inputs(self)
         SCRATCH.mkdir(parents=True, exist_ok=True)
         self.directory = Path(tempfile.mkdtemp(dir=SCRATCH))
         self.addCleanup(shutil.rmtree, self.directory, ignore_errors=True)

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs the `gf2-core` fast tier under Rust 1.95 in each feature configuration
-# and writes one log per run into `test-logs/` beside this script
+# and writes one log per run under /tmp
 # (jit:54e70918). Each log opens with the toolchain and command and closes with
 # the exit status.
 #
@@ -19,10 +19,11 @@ here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 root=$(git -C "$here" rev-parse --show-toplevel)
 cd "$root"
 export RUSTUP_TOOLCHAIN=1.95.0
-mkdir -p "$here/test-logs"
+logs=$(mktemp -d /tmp/gf2-test-output-XXXXXX)
+echo "Raw test output: $logs"
 
 run() {
-    local log="$here/test-logs/$1.txt"
+    local log="$logs/$1.txt"
     shift
     local command=(nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-core "$@"
         --cargo-profile ci-test --profile ci)

@@ -101,7 +101,7 @@ def stage(receipt):
     if any(cell["decoder_quality"] for cell in pinned["cells"]):
         decoders = {row["summary"]["cell_id"]: row for row in tables.campaign(directory)["cells"]}
     return {"directory": directory, "receipt": pinned, "summary": summary, "plan": plan,
-            "addendum": read_json(directory / pinned["addendum"]["snapshot"]),
+            "addendum": read_json(ROOT / pinned["addendum"]["path"]),
             "outcomes": {cell["summary"]["cell_id"]: cell for cell in cells},
             "measured": {cell["cell_id"]: cell for cell in pinned["cells"]},
             "decoders": decoders}
@@ -252,8 +252,13 @@ def search_budget(record):
         return {"declared": budget, "spent": NOT_RECORDED}
     family = record["addendum"]["family"]["id"]
     entries = [json.loads(line) for line in
-               (record["directory"] / pin["snapshot"]).read_text().splitlines() if line.strip()]
-    own = [entry for entry in entries if entry["family"] == family]
+               (ROOT / pin["path"]).read_text().splitlines() if line.strip()]
+    own = []
+    for entry in entries:
+        if entry["family"] == family:
+            own.append(entry)
+        if entry["campaign"] == record["receipt"]["campaign_id"]:
+            break
     return {"declared": budget, "spent": {
         "reservations": len(own),
         "confirmatory_attempts": sum(entry["comparisons"] > 0 for entry in own),

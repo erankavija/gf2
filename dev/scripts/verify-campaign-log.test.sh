@@ -12,12 +12,10 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT=$(git -C "${HERE}" rev-parse --show-toplevel)
 CHECKER="${HERE}/verify-campaign-log.py"
 
-# The committed receipt directory whose path ends in $1: receipt input snapshots
-# hold byte copies under an `inputs` directory, and the live one lies outside.
+# The committed receipt directory whose path ends in $1.
 campaign() {
     local found
-    mapfile -t found < <(git -C "${ROOT}" ls-files -- ":(glob)**/$1/receipt.json" |
-        grep -v '/inputs/')
+    mapfile -t found < <(git -C "${ROOT}" ls-files -- ":(glob)**/$1/receipt.json")
     [[ ${#found[@]} -eq 1 ]] || {
         echo "${#found[@]} committed campaigns end in $1; exactly one must" >&2
         exit 2
@@ -105,7 +103,7 @@ run "${CAMPAIGN}/execution.log" | grep -q 'terminal record' || {
     exit 1
 }
 
-# The plans omit pilot_pairs; their frozen addenda declare exploratory cells.
+# The plans omit pilot_pairs; their receipts record exploratory cell roles.
 for family in 2037941f-logical-isolated-xor 2037941f-logical-nr-construction \
     2037941f-logical-public-row-xor; do
     pilot=$(campaign "${family}/v4-r1-pilot")

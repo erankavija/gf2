@@ -11,11 +11,6 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use crate::journal::atomic_write_new;
-
-const SNAPSHOT_PENDING: &str = ".producing-snapshot.pending.json";
-const SNAPSHOT_COMPLETE: &str = "producing-snapshot.json";
-
 /// Schema shared by producing-input manifests.
 pub const PRODUCING_INPUTS_SCHEMA: &str = "tuning-campaign-producing-inputs-v1";
 
@@ -59,7 +54,7 @@ pub struct ProducingInputs {
     pub build_inputs: Vec<String>,
 }
 
-/// Exact content snapshot selected by a [`ProducingInputs`] manifest.
+/// Input digests selected by a [`ProducingInputs`] manifest.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProducingSnapshot {
@@ -146,114 +141,20 @@ impl ProducingInputs {
             build_inputs_sha256: Self::hashes_at(root, &manifest.build_inputs)?,
         })
     }
-
-    /// Captures every selected input beneath `snapshot_root`, preserving
-    /// repository-relative paths. If the manifest snapshot already exists,
-    /// the frozen snapshot is reopened without consulting `source_root`.
-    pub fn capture_to(
-        source_root: &Path,
-        manifest_path: &str,
-        snapshot_root: &Path,
-    ) -> io::Result<ProducingSnapshot> {
-        fs::create_dir_all(snapshot_root)?;
-        let complete_path = snapshot_root.join(SNAPSHOT_COMPLETE);
-        if complete_path.try_exists()? {
-            let expected: ProducingSnapshot = serde_json::from_slice(&fs::read(&complete_path)?)
-                .map_err(|error| {
-                    invalid(format!(
-                        "producing snapshot marker does not decode: {error}"
-                    ))
-                })?;
-            if expected.manifest_path != manifest_path {
-                return Err(invalid("producing snapshot marker names another manifest"));
-            }
-            Self::verify_snapshot(snapshot_root, &expected)?;
-            return Ok(expected);
-        }
-
-        let pending_path = snapshot_root.join(SNAPSHOT_PENDING);
-        let expected = if pending_path.try_exists()? {
-            serde_json::from_slice(&fs::read(&pending_path)?).map_err(|error| {
-                invalid(format!(
-                    "pending producing snapshot does not decode: {error}"
-                ))
-            })?
-        } else {
-            let captured = Self::capture(source_root, manifest_path)?;
-            atomic_write_new(
-                &pending_path,
-                &serde_json::to_vec(&captured).map_err(|error| invalid(error.to_string()))?,
-            )?;
-            captured
-        };
-        if expected.manifest_path != manifest_path {
-            return Err(invalid("pending producing snapshot names another manifest"));
-        }
-
-        let manifest = Self::read_at(source_root, manifest_path)?;
-        let mut paths = Vec::with_capacity(manifest.build_inputs.len() + 1);
-        paths.push(manifest_path.to_owned());
-        paths.extend(manifest.build_inputs);
-        for path in paths {
-            let source_bytes = fs::read(source_root.join(&path))?;
-            let expected_sha = if path == manifest_path {
-                &expected.manifest_sha256
-            } else {
-                expected
-                    .build_inputs_sha256
-                    .get(&path)
-                    .ok_or_else(|| invalid("pending producing snapshot omits a build input"))?
-            };
-            if sha256_hex(&source_bytes) != *expected_sha {
-                return Err(invalid(format!(
-                    "source input {path} changed during snapshot publication"
-                )));
-            }
-            let destination = snapshot_root.join(&path);
-            if destination.try_exists()? {
-                if sha256_hex(&fs::read(&destination)?) != *expected_sha {
-                    return Err(invalid(format!(
-                        "partial producing snapshot input {path} differs"
-                    )));
-                }
-            } else {
-                if let Some(parent) = destination.parent() {
-                    fs::create_dir_all(parent)?;
-                }
-                atomic_write_new(&destination, &source_bytes)?;
-            }
-        }
-        Self::verify_snapshot(snapshot_root, &expected)?;
-        atomic_write_new(
-            &complete_path,
-            &serde_json::to_vec(&expected).map_err(|error| invalid(error.to_string()))?,
-        )?;
-        Ok(expected)
-    }
-
-    /// Verifies that a portable snapshot still contains exactly the recorded
-    /// selected-content identity.
-    pub fn verify_snapshot(snapshot_root: &Path, expected: &ProducingSnapshot) -> io::Result<()> {
-        let observed = Self::capture(snapshot_root, &expected.manifest_path)?;
-        if &observed != expected {
-            return Err(invalid("producing-input snapshot content differs"));
-        }
-        Ok(())
-    }
 }
 
 impl ProducingSnapshot {
-    /// Digest of the canonical selected-content snapshot.
+    /// Digest of the canonical input-digest record.
     pub fn identity_sha256(&self) -> io::Result<String> {
         let bytes = serde_json::to_vec(self)
-            .map_err(|error| invalid(format!("producing snapshot does not encode: {error}")))?;
+            .map_err(|error| invalid(format!("producing digests do not encode: {error}")))?;
         Ok(sha256_hex(&bytes))
     }
 
     /// Digest of the lifecycle source map used by the shared resume identity.
     pub fn lifecycle_sha256(&self) -> io::Result<String> {
         let bytes = serde_json::to_vec(&self.lifecycle_sha256)
-            .map_err(|error| invalid(format!("lifecycle snapshot does not encode: {error}")))?;
+            .map_err(|error| invalid(format!("lifecycle digests do not encode: {error}")))?;
         Ok(sha256_hex(&bytes))
     }
 }

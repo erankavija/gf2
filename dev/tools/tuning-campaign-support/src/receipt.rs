@@ -21,7 +21,7 @@ use crate::protocol::{
     SharedInput, SharedSettings, Stopping, ACCEPTANCE_SCHEMA_ID, RECEIPT_SCHEMA_ID,
     RUNNER_LIFECYCLE_SCHEMA, SHARED_SETTINGS,
 };
-use crate::provenance::{ProducingInputs, ProducingSnapshot};
+use crate::provenance::ProducingSnapshot;
 use crate::schema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -57,10 +57,10 @@ pub fn tail_supported(resamples: u32, corrected_alpha: f64) -> bool {
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceIdentity {
-    /// Informational source-control locator; never an acceptance key.
+    /// Source revision used for rebuilding; never an acceptance key.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub revision: String,
-    /// Canonical content closure of producing code and build inputs.
+    /// Digests of producing code and build inputs.
     pub producing: ProducingSnapshot,
 }
 
@@ -363,7 +363,7 @@ pub struct BenchmarkReceipt {
 }
 
 impl BenchmarkReceipt {
-    /// Decodes a receipt strictly.
+    /// Decodes a receipt.
     pub fn decode(bytes: &[u8]) -> Result<Self, String> {
         serde_json::from_slice(bytes).map_err(|error| format!("receipt does not decode: {error}"))
     }
@@ -998,14 +998,15 @@ impl Evaluation {
     }
 }
 
-/// Evaluates a self-contained receipt directory from its durable snapshots.
-pub fn evaluate(receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
-    evaluate_version(receipt_dir, None)
+/// Evaluates receipt results using inputs from the rebuild checkout `repo_root`.
+pub fn evaluate(repo_root: &Path, receipt_dir: &Path) -> io::Result<AcceptanceSummary> {
+    evaluate_version(repo_root, receipt_dir, None)
 }
 
 /// Evaluates only under the receipt-pinned rules. An explicit expected version
 /// rejects a differently pinned receipt; it cannot select different semantics.
 pub fn evaluate_version(
+    repo_root: &Path,
     receipt_dir: &Path,
     expected_version: Option<u32>,
 ) -> io::Result<AcceptanceSummary> {
@@ -1043,7 +1044,7 @@ pub fn evaluate_version(
         if let Err(message) = pin.validate_shape() {
             e.error(rule, None, format!("{name} identity: {message}"));
         }
-        match pin.verify_content(receipt_dir) {
+        match pin.verify_content(repo_root) {
             Err(message) => e.error(rule, None, format!("{name} identity: {message}")),
             Ok(bytes) if shared.is_some_and(|input| input.identity(&bytes).is_none()) => {
                 e.error(
@@ -1102,11 +1103,7 @@ pub fn evaluate_version(
                         _ => e.error("P-03", None, "addendum schema or addendum is not JSON"),
                     }
                 } else {
-                    e.error(
-                        "P-03",
-                        None,
-                        "addendum schema snapshot is missing from the receipt",
-                    );
+                    e.error("P-03", None, "pinned addendum schema is unavailable");
                 }
                 Some(addendum)
             }
@@ -1147,16 +1144,10 @@ pub fn evaluate_version(
     if receipt.toolchain.trim().is_empty() {
         e.error("P-05", None, "toolchain identity is empty");
     }
-    if let Err(error) = ProducingInputs::verify_snapshot(
-        &receipt_dir.join("inputs/producing"),
-        &receipt.source.producing,
-    ) {
-        e.error("P-05", None, format!("producing inputs: {error}"));
-    }
     if let Some(addendum) = &addendum {
         verify_resolution_evidence(
             e,
-            receipt_dir,
+            repo_root,
             &receipt.receipt_path,
             &receipt_sha256,
             addendum,
@@ -1467,7 +1458,7 @@ pub fn evaluate_version(
                 .and_then(|pin| {
                     crate::trial_ledger::verify(
                         pin,
-                        receipt_dir,
+                        repo_root,
                         addendum,
                         &receipt.campaign_id,
                         &receipt.addendum.sha256,
@@ -1494,7 +1485,7 @@ pub fn evaluate_version(
             receipt
                 .trial_ledger
                 .as_ref()
-                .and_then(|pin| crate::trial_ledger::attempt_alpha(pin, receipt_dir, addendum).ok())
+                .and_then(|pin| crate::trial_ledger::attempt_alpha(pin, repo_root, addendum).ok())
                 .unwrap_or(receipt.settings.family_alpha)
         } else {
             receipt.settings.family_alpha
@@ -2194,14 +2185,13 @@ pub fn evaluate_version(
         for trial in &addendum.family_wise.prior_trials {
             let pin = ArtifactPin {
                 path: trial.receipt.clone(),
-                snapshot: format!("inputs/prior-trials/{}.json", trial.sha256),
                 sha256: trial.sha256.clone(),
             };
-            if let Err(message) = pin.verify_content(receipt_dir) {
+            if let Err(message) = pin.verify_content(repo_root) {
                 e.error(
                     "P-22",
                     None,
-                    format!("prior trial {} snapshot invalid: {message}", trial.receipt),
+                    format!("prior trial {} input invalid: {message}", trial.receipt),
                 );
             }
         }
@@ -2251,7 +2241,7 @@ pub fn evaluate_version(
 
 fn verify_resolution_evidence(
     evaluation: &mut Evaluation,
-    receipt_dir: &Path,
+    repo_root: &Path,
     evaluated_receipt_path: &str,
     evaluated_receipt_sha256: &str,
     addendum: &FamilyAddendum,
@@ -2286,16 +2276,15 @@ fn verify_resolution_evidence(
     }
     let pin = ArtifactPin {
         path: evidence.receipt.clone(),
-        snapshot: "inputs/resolution-evidence/receipt.json".into(),
         sha256: evidence.sha256.clone(),
     };
-    let bytes = match pin.verify_content(receipt_dir) {
+    let bytes = match pin.verify_content(repo_root) {
         Ok(bytes) => bytes,
         Err(message) => {
             evaluation.error(
                 "P-03",
                 None,
-                format!("resolution evidence is not a verified pilot snapshot: {message}"),
+                format!("resolution evidence is not a verified pilot receipt: {message}"),
             );
             return;
         }
@@ -2312,7 +2301,7 @@ fn verify_resolution_evidence(
                     return;
                 }
                 let corrected_alpha =
-                    match verified_pilot_alpha(&pilot, receipt_dir, addendum.protocol.version) {
+                    match verified_pilot_alpha(&pilot, repo_root, addendum.protocol.version) {
                         Ok(alpha) => alpha,
                         Err(message) => {
                             evaluation.error("P-03", None, message);
@@ -2395,21 +2384,20 @@ fn pilot_resolution(pilot: &BenchmarkReceipt, corrected_alpha: f64) -> Result<f6
 }
 
 /// Derives the family-corrected bootstrap alpha of a pilot from version 3 up
-/// to the citing receipt's `version` from its frozen addendum and ledger
-/// snapshots, never from a receipt claim.
+/// to the citing receipt's `version` from its pinned addendum and ledger
+/// prefix, never from a receipt claim.
 fn verified_pilot_alpha(
     pilot: &BenchmarkReceipt,
-    receipt_dir: &Path,
+    repo_root: &Path,
     version: u32,
 ) -> Result<f64, String> {
     let addendum_pin = ArtifactPin {
         path: pilot.addendum.path.clone(),
-        snapshot: "inputs/resolution-evidence/family-addendum.json".into(),
         sha256: pilot.addendum.sha256.clone(),
     };
     let addendum = FamilyAddendum::decode(
         &addendum_pin
-            .verify_content(receipt_dir)
+            .verify_content(repo_root)
             .map_err(|error| format!("pilot addendum is not verified: {error}"))?,
     )
     .map_err(|error| format!("pilot addendum does not decode: {error}"))?;
@@ -2428,17 +2416,15 @@ fn verified_pilot_alpha(
     }
     let ledger = ArtifactPin {
         path: ledger.path.clone(),
-        snapshot: "inputs/resolution-evidence/trial-ledger.jsonl".into(),
         sha256: ledger.sha256.clone(),
     };
     let entries = crate::trial_ledger::decode(
-        &ledger
-            .verify_content(receipt_dir)
+        &crate::trial_ledger::read_prefix(&ledger, repo_root)
             .map_err(|error| format!("pilot ledger is not verified: {error}"))?,
         &addendum.family.id,
     )
     .map_err(|error| format!("pilot ledger does not decode: {error}"))?;
-    let attempt_alpha = crate::trial_ledger::attempt_alpha(&ledger, receipt_dir, &addendum)
+    let attempt_alpha = crate::trial_ledger::attempt_alpha(&ledger, repo_root, &addendum)
         .map_err(|error| format!("pilot alpha is not verified: {error}"))?;
     Ok(attempt_alpha
         / f64::from(

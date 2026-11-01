@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# usage: 2e18b37c-checks.sh state|builds|root|selfchecks|ci-step|regen|manifest <outfile> [<dir>]
+# usage: 2e18b37c-checks.sh state|builds|root|selfchecks|regen|manifest <outfile> [<dir>]
 # Checks of the entries f8dd4dde, a203a23c and 19513245 wherever they live
 # under dev/active/; inputs/ snapshot directories are outside every listing.
 # builds and selfchecks print a path without dev/active/ and the epic
@@ -13,8 +13,6 @@
 #               with the script's path, nothing else of the script run.
 #   selfchecks  exit status of each script test under dev/active/ and of each
 #               `--self-test` an entry script offers.
-#   ci-step     verdict line of the `receipt-input-snapshots` CI step without
-#               its duration, and the summary line of the script it runs.
 #   regen       per committed file an entry script writes again without a
 #               build or a benchmark window: `same` or the count of diff
 #               lines, and the exit status of the two generators. The addenda and derivation records come from
@@ -69,10 +67,6 @@ selfchecks)
       echo "$(name "$t") --self-test exit=$?"
     done
   } | sort ;;
-ci-step)
-  CARGO_CI_STEPS='^receipt-input-snapshots$' ./scripts/cargo-ci.sh 2>&1 |
-    grep -E '^ *[^ ]+ receipt-input-snapshots:' | sed -E 's/^ *//; s/ \([0-9]+s\)$//'
-  python3 dev/scripts/check-receipt-input-snapshots.py | tail -n 1 ;;
 regen)
   out=$PWD/$2
   e=$(dirname "$(git ls-files -- ':(glob)dev/active/**/19513245/findings.md')")
@@ -85,11 +79,6 @@ regen)
   {
     ( cd "${3:-.}" && python3 -B "$OLDPWD/$e/survey/summarize-profile.py" "$OLDPWD/$p" ) > "$scratch/profile-summary.md"
     compare "$scratch/profile-summary.md" "$p/profile-summary.md"
-    for r in timing.json timing-tmpfs-superseded.json; do
-      cp "$a/timing/$r" "$scratch/$r"
-      ( cd "${3:-.}" && python3 -B "$OLDPWD/$a/timing/measure.py" --assess "$scratch/$r" ) >/dev/null 2>&1
-      compare "$scratch/$r" "$a/timing/$r"
-    done
     ( cd "$scratch" && git init -q . && cd "${3:-.}" &&
       python3 -B "$scratch/$e/survey/make-addenda.py" 4 "$(sed -n 's/.*"frozen_utc": "\(.*\)".*/\1/p' "$scratch/$e/addendum-v4-control-pilot.json")" &&
       bash "$scratch/$e/survey/freeze-confirmations.sh" "$(sed -n 's/.*"frozen_utc": "\(.*\)".*/\1/p' "$scratch/$e/addendum-v4-control-confirmation.json")"

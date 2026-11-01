@@ -49,9 +49,8 @@ CAMPAIGNS = [
 # The production packages the dense campaigns measure.
 PACKAGES = ["gf2-core", "gf2-kernels-simd"]
 
-# The task anchor by content: per-path digests, and byte snapshots of the
-# paths this task changes. An `inputs` directory is outside every live lookup.
-ANCHOR = content_anchor.Anchor(ROOT, HERE / "anchor-baseline.json", HERE / "inputs" / "anchor")
+# The task anchor by content: per-path digests, and the source revision as the rebuild pointer.
+ANCHOR = content_anchor.Anchor(ROOT, HERE / "anchor-baseline.json")
 
 # The tree the verdict's records describe, by per-path digest. The file is
 # located by name once it exists; the freezer writes it beside the records.

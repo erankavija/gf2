@@ -198,7 +198,7 @@ def smoke(subject, runner):
         arm = dict(plan['arms'][name], executable=restored[receipt['arms'][name]['executable_sha256']])
         directory = (ROOT/cell['receipt']).parent
         throwaway = plans.setdefault(directory.name, dict(
-            plan, addendum=(directory/receipt['addendum']['snapshot']).relative_to(ROOT).as_posix(),
+            plan, addendum=(ROOT/receipt['addendum']['path']).relative_to(ROOT).as_posix(),
             arms={}, cells=[]))
         candidate = planned['candidate_arm']
         throwaway['arms'][name] = arm

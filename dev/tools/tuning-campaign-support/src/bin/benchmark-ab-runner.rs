@@ -35,8 +35,8 @@ use tuning_campaign_support::host::{
     inherited_lock, resolve_core_arm, CpuAffinity, HostObservation,
 };
 use tuning_campaign_support::journal::{
-    atomic_replace, atomic_write_new, remove_stale_temporaries, CheckpointStore, ExecutionLog,
-    JournalEvent, JournalRecord, ResumeIdentity, TerminalState,
+    atomic_replace, remove_stale_temporaries, CheckpointStore, ExecutionLog, JournalEvent,
+    JournalRecord, ResumeIdentity, TerminalState,
 };
 use tuning_campaign_support::protocol::{
     sha256_hex, ArtifactPin, CellDeclaration, FamilyAddendum, PlanCell, RunnerPlan, SharedInput,
@@ -72,11 +72,11 @@ fn invocation_root() -> io::Result<PathBuf> {
     Ok(cwd)
 }
 
-fn source_identity(producing: ProducingSnapshot) -> SourceIdentity {
-    SourceIdentity {
-        revision: String::new(),
+fn source_identity(root: &Path, producing: ProducingSnapshot) -> io::Result<SourceIdentity> {
+    Ok(SourceIdentity {
+        revision: command_text("git", &["rev-parse", "HEAD"], root)?,
         producing,
-    }
+    })
 }
 
 fn utc_compact() -> String {
@@ -134,24 +134,13 @@ fn arm_records(plan: &RunnerPlan) -> io::Result<BTreeMap<String, ArmRecord>> {
     Ok(arms)
 }
 
-fn facts(
-    root: &Path,
-    stage: &Path,
-    plan: &RunnerPlan,
-    plan_bytes: &[u8],
-) -> io::Result<CampaignFacts> {
-    let addendum =
-        ArtifactPin::capture(root, stage, &plan.addendum, "inputs/family-addendum.json")?;
-    let family = FamilyAddendum::decode(&addendum.verify_content(stage).map_err(invalid)?)
+fn facts(root: &Path, plan: &RunnerPlan, plan_bytes: &[u8]) -> io::Result<CampaignFacts> {
+    let addendum = ArtifactPin::capture(root, &plan.addendum)?;
+    let family = FamilyAddendum::decode(&addendum.verify_content(root).map_err(invalid)?)
         .map_err(invalid)?;
     // The protocol and schema editions are the ones the addendum names.
     let shared = |input: SharedInput, identity: &str| {
-        ArtifactPin::capture(
-            root,
-            stage,
-            &input.locate(root, identity)?,
-            input.snapshot(),
-        )
+        ArtifactPin::capture(root, &input.locate(root, identity)?)
     };
     let protocol = shared(
         SharedInput::Protocol,
@@ -159,12 +148,8 @@ fn facts(
     )?;
     let contract = shared(SharedInput::Contract, &SharedInput::contract_identity())?;
     let addendum_schema = shared(SharedInput::AddendumSchema, &family.schema)?;
-    let producing = ProducingInputs::capture_to(
-        root,
-        &plan.producing_manifest_path(&protocol.path),
-        &stage.join("inputs/producing"),
-    )?;
-    let source = source_identity(producing.clone());
+    let producing = ProducingInputs::capture(root, &plan.producing_manifest_path(&protocol.path))?;
+    let source = source_identity(root, producing.clone())?;
     let host = (family.protocol.version >= 2)
         .then(HostObservation::observe)
         .transpose()?;
@@ -205,82 +190,6 @@ fn facts(
         settings_deviation,
         arms,
     })
-}
-
-fn capture_referenced_receipts(
-    root: &Path,
-    stage: &Path,
-    addendum: &FamilyAddendum,
-) -> io::Result<()> {
-    if let Some(evidence) = &addendum.effect.resolution_evidence {
-        let pin = ArtifactPin::capture(
-            root,
-            stage,
-            &evidence.receipt,
-            "inputs/resolution-evidence/receipt.json",
-        )?;
-        if pin.sha256 != evidence.sha256 {
-            return Err(invalid("resolution-evidence snapshot digest differs"));
-        }
-        if addendum.protocol.version >= 3 {
-            let pilot = BenchmarkReceipt::decode(&pin.verify_content(stage).map_err(invalid)?)
-                .map_err(invalid)?;
-            let pilot_dir = root
-                .join(&evidence.receipt)
-                .parent()
-                .ok_or_else(|| invalid("resolution evidence receipt has no parent"))?
-                .to_path_buf();
-            capture_pilot_input(
-                &pilot_dir,
-                stage,
-                &pilot.addendum,
-                "inputs/resolution-evidence/family-addendum.json",
-            )?;
-            let ledger = pilot
-                .trial_ledger
-                .as_ref()
-                .ok_or_else(|| invalid("versioned resolution evidence pilot lacks trial ledger"))?;
-            capture_pilot_input(
-                &pilot_dir,
-                stage,
-                ledger,
-                "inputs/resolution-evidence/trial-ledger.jsonl",
-            )?;
-        }
-    }
-    for trial in &addendum.family_wise.prior_trials {
-        let snapshot = format!("inputs/prior-trials/{}.json", trial.sha256);
-        let pin = ArtifactPin::capture(root, stage, &trial.receipt, &snapshot)?;
-        if pin.sha256 != trial.sha256 {
-            return Err(invalid(format!(
-                "prior-trial snapshot {} digest differs",
-                trial.receipt
-            )));
-        }
-    }
-    Ok(())
-}
-
-/// Copies an input already authenticated by a referenced pilot receipt. A
-/// resumed campaign keeps the original bytes and rejects a changed source.
-fn capture_pilot_input(
-    pilot_dir: &Path,
-    stage: &Path,
-    pin: &ArtifactPin,
-    snapshot: &str,
-) -> io::Result<()> {
-    let bytes = pin.verify_content(pilot_dir).map_err(invalid)?;
-    let destination = stage.join(snapshot);
-    if destination.exists() {
-        if fs::read(&destination)? != bytes {
-            return Err(invalid(
-                "resolution evidence pilot input changed after freeze",
-            ));
-        }
-        return Ok(());
-    }
-    fs::create_dir_all(destination.parent().unwrap())?;
-    atomic_write_new(&destination, &bytes)
 }
 
 /// What a session dispatches over the plan's cells.
@@ -340,10 +249,10 @@ fn open_session(
     } else {
         tuning_campaign_support::journal::atomic_write_new(&staged_plan, &plan_bytes)?;
     }
-    let mut facts = facts(root, &stage, &plan, &plan_bytes)?;
-    let addendum_bytes = facts.addendum.verify_content(&stage).map_err(invalid)?;
+    let mut facts = facts(root, &plan, &plan_bytes)?;
+    let addendum_bytes = facts.addendum.verify_content(root).map_err(invalid)?;
     let addendum = load_addendum(&addendum_bytes, &plan)?;
-    let protocol_text = facts.protocol.verify_content(&stage).map_err(invalid)?;
+    let protocol_text = facts.protocol.verify_content(root).map_err(invalid)?;
     if !String::from_utf8_lossy(&protocol_text).contains(&format!(
         "Protocol `zen3-benchmark-protocol` version {}.",
         addendum.protocol.version
@@ -352,7 +261,6 @@ fn open_session(
             "protocol document version differs from frozen addendum",
         ));
     }
-    capture_referenced_receipts(root, &stage, &addendum)?;
     let timed = dispatch == SessionDispatch::Timed;
     let holder = timed
         .then(|| inherited_lock(Path::new(&plan.lock_path)))
@@ -371,7 +279,6 @@ fn open_session(
         if timed {
             facts.trial_ledger = Some(tuning_campaign_support::trial_ledger::reserve(
                 root,
-                &stage,
                 &addendum,
                 &plan.campaign_id,
                 &facts.addendum.sha256,
@@ -704,7 +611,7 @@ fn measure_pairs(
             let comparisons = if let Some(pin) = &session.facts.trial_ledger {
                 tuning_campaign_support::trial_ledger::verify(
                     pin,
-                    session.log.path().parent().unwrap(),
+                    &invocation_root()?,
                     &session.addendum,
                     &session.plan.campaign_id,
                     &session.facts.addendum.sha256,
@@ -720,7 +627,7 @@ fn measure_pairs(
             let alpha = if let Some(pin) = &session.facts.trial_ledger {
                 tuning_campaign_support::trial_ledger::attempt_alpha(
                     pin,
-                    session.log.path().parent().unwrap(),
+                    &invocation_root()?,
                     &session.addendum,
                 )?
             } else {
@@ -933,7 +840,10 @@ fn open_stage(stage: &Path) -> io::Result<Stage> {
             "staged plan differs from the campaign-start plan digest",
         ));
     }
-    let addendum_bytes = facts.addendum.verify_content(&root).map_err(invalid)?;
+    let addendum_bytes = facts
+        .addendum
+        .verify_content(&invocation_root()?)
+        .map_err(invalid)?;
     let addendum = FamilyAddendum::decode(&addendum_bytes).map_err(invalid)?;
     let validation = validation_stage(&records);
     Ok(Stage {
@@ -1081,7 +991,6 @@ fn finalize(stage: &Path, out_dir: &Path) -> io::Result<()> {
     fs::create_dir_all(out_dir)?;
     fs::write(out_dir.join(PLAN_FILE), &plan_bytes)?;
     fs::write(out_dir.join(LOG_FILE), &log_bytes)?;
-    copy_tree(&stage.join("inputs"), &out_dir.join("inputs"))?;
     let checkpoint_out = out_dir.join(CHECKPOINT_DIR);
     fs::create_dir_all(&checkpoint_out)?;
     fs::copy(

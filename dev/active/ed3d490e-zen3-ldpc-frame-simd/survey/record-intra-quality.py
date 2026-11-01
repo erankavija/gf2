@@ -21,7 +21,6 @@ import os
 import pathlib
 import subprocess
 import sys
-import tarfile
 import tempfile
 
 sys.dont_write_bytecode = True
@@ -152,13 +151,11 @@ def recorded_cells():
                       .read_text(encoding="utf-8"))
     with tempfile.TemporaryDirectory() as temporary:
         scratch = pathlib.Path(temporary)
-        with tarfile.open(smoke.by_digest(smoke.ARCHIVE)) as handle:
-            handle.extractall(scratch / "inputs", filter="data")
         cells = []
         for cell in base["cells"]:
             cell["code_key"] = key = next(
                 key for key in smoke.CODES if cell["cell_id"].startswith(key + "-"))
-            bundle = scratch / "inputs" / smoke.CODES[key]["bundle"]
+            bundle = smoke.inputs_root() / smoke.CODES[key]["bundle"]
             manifest = json.loads((bundle / "manifest.json").read_text(encoding="utf-8"))
             cells.append((key, cell, bundle, manifest))
         yield scratch, cells
@@ -194,7 +191,7 @@ def replays():
         "method": METHOD,
         "build": identity(build),
         "build_record": {"path": path, "sha256": sha256((smoke.ROOT / path).read_bytes())},
-        "recorded_inputs": {"name": smoke.ARCHIVE[0], "sha256": smoke.ARCHIVE[1]},
+        "recorded_inputs": smoke.input_identities(),
         "intervals": {**INTERVALS, "method": next(iter(qualities.values()))["interval_method"],
                       "samples": "replayed_frames of each code"},
         "diagnostics_zeroed": list(DIAGNOSTICS),
@@ -219,7 +216,7 @@ def probes():
     declared = build["arms"][ARM]["environment"]
     result = {"cites": ["Cassagne2019"], "arm": ARM, "executable": EXECUTABLE,
               "build": identity(build), "method": PROBE_METHOD,
-              "recorded_inputs": {"name": smoke.ARCHIVE[0], "sha256": smoke.ARCHIVE[1]},
+              "recorded_inputs": smoke.input_identities(),
               "intervals": INTERVALS, "codes": {}}
     with recorded_cells() as (scratch, cells):
         for key, cell, bundle, manifest in cells:

@@ -78,7 +78,6 @@ CODING_BEHAVIOR = "coding-tuning-calibration-v1"
 PRODUCING_INPUTS_SCHEMA = "tuning-campaign-producing-inputs-v1"
 DECLARATION_SCHEMA = "tuning-campaign-declaration-v1"
 DECLARATION_FILE = "campaign-declaration.json"
-PRODUCING_SNAPSHOT = "inputs/producing"
 # The owners a complete envelope composes, by declaration name, in composition
 # order; every complete envelope holds the sections of `REQUIRED_OWNERS`.
 OWNER_NAMES = {"core": "gf2-core", "algebra": "gf2-algebra", "coding": "gf2-coding"}
@@ -525,16 +524,13 @@ def locate_declaration(issue: str, root: Path) -> str:
     return next(iter(matches.values()))
 
 
-def pinned_file(root: Path, declaration: Any, relative: str, sha: str) -> bytes:
-    """`relative`'s bytes under the recorded digest `sha`: the file of the
-    checkout, or the snapshot of it the campaign keeps under `PRODUCING_SNAPSHOT`
-    beside its declaration once the file has moved on."""
-    home = Path(locate_declaration(declaration["issue"], root)).parent
-    for candidate in [root / relative, root / home / PRODUCING_SNAPSHOT / relative]:
-        if candidate.is_file() and digest(candidate.read_bytes()) == sha:
-            return candidate.read_bytes()
-    fail(f"neither {relative} nor its snapshot under {home / PRODUCING_SNAPSHOT} carries the "
-         f"recorded digest {sha}")
+def pinned_file(root: Path, relative: str, sha: str) -> bytes:
+    """Reads an input under its recorded digest from the rebuild checkout."""
+    candidate = root / relative
+    require(candidate.is_file(), f"{relative} is absent from the rebuild checkout")
+    data = candidate.read_bytes()
+    require(digest(data) == sha, f"{relative} differs from the recorded digest {sha}")
+    return data
 
 
 def recorded_declaration(declaration: Any, identities: Any, where: str) -> tuple[str, str]:
@@ -4676,7 +4672,7 @@ def validate_pinned_inputs(campaign_config: Any, declaration: Any) -> None:
     and status of the producing checkout decide nothing.
     """
     root, identity = repository_root(), campaign_config["identity"]
-    pinned_file(root, declaration, declaration["protocol"],
+    pinned_file(root, declaration["protocol"],
                 require_sha(identity.get("protocol_digest"), "protocol digest"))
     producing = require_keys(campaign_config["producing_manifest"], ["path", "sha256"],
                              "campaign producing-input manifest")
@@ -4684,7 +4680,7 @@ def validate_pinned_inputs(campaign_config: Any, declaration: Any) -> None:
             and Path(producing["path"]).name == Path(declaration["producing_manifest"]).name,
             "campaign producing-input manifest identity mismatch")
     inputs = producing_inputs(root, declaration["producing_manifest"], pinned_file(
-        root, declaration, declaration["producing_manifest"],
+        root, declaration["producing_manifest"],
         require_sha(producing["sha256"], "campaign producing-input manifest digest")))
     behavior = recorded_hashes(identity.get("behavior_sha256"), inputs["behavior_sources"],
                                "behavior source")
@@ -5556,7 +5552,7 @@ def self_test() -> None:
                 "real producing-input manifest does not distinguish its three boundaries")
     with tempfile.TemporaryDirectory(prefix="gf2-validator-inputs-", dir="/tmp") as temporary:
         root = Path(temporary)
-        manifest_relative = "inputs/producing-build-inputs.json"
+        manifest_relative = "config/producing-build-inputs.json"
         manifest_path = root / manifest_relative
         manifest_path.parent.mkdir(parents=True)
         for relative in ["behavior.rs", "lifecycle.rs", "build.rs"]:

@@ -22,10 +22,10 @@ SELECTION_RULE = {
                     "if none exists, use accepted confirmations of any protocol version. "
                     "Accepted means acceptance-summary verdict accepted, regardless of qualifies.",
     "ordering": "Within that pool choose the greatest sequence of the campaign's reservation "
-                "in its receipt-pinned family ledger prefix. A receipt without a ledger sorts "
+                "in its authoritative family ledger. A receipt without a ledger sorts "
                 "before ledger-backed receipts. Ties use protocol version, campaign identity, "
                 "then repository-relative receipt path, lexicographically greatest; no Git "
-                "date, file timestamp or live ledger is used.",
+                "date or file timestamp is used.",
     "cells": "Emit every confirmatory and holdout cell in the selected pinned addendum. "
              "If no accepted confirmation exists, select the latest accepted pilot by the "
              "same ordering and emit all its cells as exploratory. Smoke receipts are excluded. "
@@ -56,18 +56,18 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def attempt_order(directory, receipt, addendum):
+def attempt_order(root, receipt, addendum):
     """Use the campaign's own reservation, including zero-comparison pilot entries."""
     pin = receipt.get("trial_ledger")
     sequence = -1
     if pin:
         records = [json.loads(line) for line in
-                   (directory / pin["snapshot"]).read_text().splitlines() if line.strip()]
+                   (root / pin["path"]).read_text().splitlines() if line.strip()]
         own = [record for record in records
                if record["family"] == addendum["family"]["id"]
                and record["campaign"] == receipt["campaign_id"]]
         if len(own) != 1:
-            raise ValueError(f"{directory}: expected one campaign reservation, got {len(own)}")
+            raise ValueError(f"{receipt['campaign_id']}: expected one campaign reservation, got {len(own)}")
         sequence = own[0]["sequence"]
     return sequence, addendum["protocol"]["version"], receipt["campaign_id"]
 
@@ -88,7 +88,7 @@ def declaration(root, registry_path, selector):
     for path in selected_paths:
         directory = (root / path).parent
         receipt = read(root / path)
-        addendum = read(directory / receipt["addendum"]["snapshot"])
+        addendum = read(root / receipt["addendum"]["path"])
         family = addendum["family"]["id"]
         entries = [entry for entry in registry["families"]
                    if fnmatch.fnmatchcase(family, entry["pattern"])
@@ -112,7 +112,7 @@ def declaration(root, registry_path, selector):
                                  "receipt_sha256": receipt_sha,
                                  "summary": summary, "addendum": addendum,
                                  "entry": entries[0],
-                                 "order": attempt_order(directory, receipt, addendum)})
+                                 "order": attempt_order(root, receipt, addendum)})
 
     rows, selections = [], []
     for family, campaigns in sorted(families.items()):
@@ -129,8 +129,7 @@ def declaration(root, registry_path, selector):
             "protocol_version": chosen["addendum"]["protocol"]["version"],
             "ledger_sequence": chosen["order"][0] if chosen["order"][0] >= 0 else None,
             "receipt": chosen["path"], "receipt_sha256": chosen["receipt_sha256"],
-            "addendum": str((directory / chosen["receipt"]["addendum"]["snapshot"])
-                            .relative_to(root)),
+            "addendum": chosen["receipt"]["addendum"]["path"],
             "rejected_confirmations": sorted(rejected[family]),
         })
         for cell in sorted(chosen["addendum"]["cells"], key=lambda cell: cell["cell_id"]):

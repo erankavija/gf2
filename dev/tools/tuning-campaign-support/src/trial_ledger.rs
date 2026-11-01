@@ -82,13 +82,12 @@ pub fn comparisons(entries: &[Reservation]) -> io::Result<u32> {
         .map(|n| n.max(1))
 }
 
-/// Reserves this campaign under the caller's exclusive timing lock and freezes
-/// the ledger prefix. Resumption uses the original snapshot and never appends.
+/// Reserves this campaign under the caller's exclusive timing lock and records
+/// the ledger prefix digest. Resumption reuses its reservation.
 /// The family ledger must already exist (even at genesis); a missing ledger is
 /// an error so deleting a family history cannot silently restart accounting.
 pub fn reserve(
     root: &Path,
-    stage: &Path,
     family: &FamilyAddendum,
     campaign: &str,
     addendum_sha: &str,
@@ -99,7 +98,6 @@ pub fn reserve(
         .ledger_path
         .as_deref()
         .ok_or_else(|| invalid("missing family ledger"))?;
-    let snapshot = "inputs/trial-ledger.jsonl";
     let path = root.join(relative);
     let mut file = fs::OpenOptions::new().read(true).append(true).open(&path)?;
     file.lock()?;
@@ -110,7 +108,7 @@ pub fn reserve(
         .iter()
         .filter(|c| c.role != CellRole::Exploratory)
         .count() as u32;
-    if let Some(entry) = entries.iter().find(|e| e.campaign == campaign) {
+    let prefix = if let Some(entry) = entries.iter().find(|e| e.campaign == campaign) {
         if entry.addendum_sha256 != addendum_sha
             || entry.comparisons != count
             || entry.protocol_version != family.protocol.version
@@ -118,24 +116,13 @@ pub fn reserve(
         {
             return Err(invalid("campaign reservation differs from frozen addendum"));
         }
-        // A prefix may be reconstructed after a crash between append and snapshot.
-        let prefix: Vec<u8> = bytes
+        bytes
             .split_inclusive(|b| *b == b'\n')
             .take(entry.sequence as usize + 1)
             .flatten()
             .copied()
-            .collect();
-        if stage.join(snapshot).exists() {
-            if fs::read(stage.join(snapshot))? != prefix {
-                return Err(invalid("authoritative ledger rewrote the frozen prefix"));
-            }
-        } else {
-            crate::journal::atomic_write_new(&stage.join(snapshot), &prefix)?;
-        }
+            .collect::<Vec<u8>>()
     } else {
-        if stage.join(snapshot).exists() {
-            return Err(invalid("authoritative ledger lost this campaign"));
-        }
         if entries.iter().any(|entry| {
             entry.protocol_version == family.protocol.version
                 && entry.candidates.iter().any(|id| candidates.contains(id))
@@ -169,10 +156,29 @@ pub fn reserve(
         file.sync_all()?;
         let mut prefix = bytes;
         prefix.extend(line);
-        crate::journal::atomic_write_new(&stage.join(snapshot), &prefix)?;
-    }
+        prefix
+    };
     file.unlock()?;
-    ArtifactPin::capture(root, stage, relative, snapshot)
+    Ok(ArtifactPin {
+        path: relative.to_owned(),
+        sha256: sha256_hex(&prefix),
+    })
+}
+
+/// Reads the digest-pinned prefix from the authoritative append-only ledger.
+/// Later reservations do not change an earlier campaign's input identity.
+pub fn read_prefix(pin: &ArtifactPin, root: &Path) -> io::Result<Vec<u8>> {
+    let bytes = pin.read_pinned(root).map_err(invalid)?;
+    let mut end = 0;
+    for line in bytes.split_inclusive(|b| *b == b'\n') {
+        end += line.len();
+        if sha256_hex(&bytes[..end]) == pin.sha256 {
+            return Ok(bytes[..end].to_vec());
+        }
+    }
+    Err(invalid(
+        "authoritative ledger lacks the recorded prefix digest",
+    ))
 }
 
 /// Verifies a receipt's immutable prefix, binding its terminal reservation to
@@ -188,7 +194,7 @@ pub fn verify(
     if family.family_wise.ledger_path.as_deref() != Some(&pin.path) {
         return Err(invalid("ledger path differs from family declaration"));
     }
-    let bytes = pin.verify_content(dir).map_err(invalid)?;
+    let bytes = read_prefix(pin, dir)?;
     let entries = decode(&bytes, &family.family.id)?;
     let last = entries
         .last()
@@ -214,7 +220,7 @@ pub fn verify(
 /// Exploratory reservations spend no budget. This avoids repeated alpha/m
 /// decisions silently exhausting the family's total type-I error budget.
 pub fn attempt_alpha(pin: &ArtifactPin, dir: &Path, family: &FamilyAddendum) -> io::Result<f64> {
-    let bytes = pin.verify_content(dir).map_err(invalid)?;
+    let bytes = read_prefix(pin, dir)?;
     let entries = decode(&bytes, &family.family.id)?;
     Ok(attempt_budget(&entries, family.family_wise.alpha))
 }

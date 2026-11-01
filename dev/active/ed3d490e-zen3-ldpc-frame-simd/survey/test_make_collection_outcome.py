@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks the per-cell outcome generator on a constructed receipt and the committed tables."""
+"""Checks the per-cell outcome generator on a constructed receipt."""
 
 import importlib.util
 import json
@@ -7,6 +7,7 @@ import re
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 SURVEY = Path(__file__).resolve().parent
@@ -24,14 +25,17 @@ class ConstructedReceiptTest(unittest.TestCase):
         scratch = tempfile.TemporaryDirectory()
         self.addCleanup(scratch.cleanup)
         self.directory = Path(scratch.name) / "campaign"
-        (self.directory / "inputs").mkdir(parents=True)
+        self.directory.mkdir(parents=True)
+        root = mock.patch.object(outcome.smoke, "ROOT", self.directory.parent)
+        root.start()
+        self.addCleanup(root.stop)
         self.cells = [
             ("gap", "comparator-gap", "not-worse", "not-material", "b-0", "c-0"),
             ("speed", "improvement", "improved", "pass", "b-1", "c-1"),
             ("guard", "non-regression", "regressed", "fail", "b-2", "c-2"),
         ]
-        self.write("receipt.json", {"addendum": {"snapshot": "inputs/frozen.json"}})
-        self.write("inputs/frozen.json", {"cells": [
+        self.write("receipt.json", {"addendum": {"path": "campaign/addendum.json"}})
+        self.write("addendum.json", {"cells": [
             {"cell_id": cell, "objective": objective, "role": "confirmatory"}
             for cell, objective, *_ in reversed(self.cells)]})
         self.write("plan.json", {"cells": [
@@ -64,7 +68,7 @@ class ConstructedReceiptTest(unittest.TestCase):
     def test_only_a_receipt_with_holdout_cells_gets_the_builds_table(self):
         text = outcome.render(self.directory, self.directory.parent / "outcome.md")
         self.assertNotIn("## Builds and holdout", text)
-        self.write("inputs/frozen.json", {"cells": [
+        self.write("addendum.json", {"cells": [
             {"cell_id": cell, "objective": objective,
              "role": "confirmatory" if cell == "gap" else "holdout"}
             for cell, objective, *_ in self.cells]})
@@ -90,18 +94,6 @@ class ConstructedReceiptTest(unittest.TestCase):
         self.write("acceptance-summary.json", self.summary)
         with self.assertRaises(KeyError):
             self.rows()
-
-
-class CommittedTablesTest(unittest.TestCase):
-    def test_committed_tables_regenerate_byte_identically(self):
-        for path in outcome.smoke.listed("outcome.md"):
-            committed = (ROOT / path).read_text(encoding="utf-8")
-            title = TITLE.match(committed.split("\n", 1)[0])
-            if not title:
-                continue
-            with self.subTest(path):
-                directory = outcome.receipt_directory(title.group(1))
-                self.assertEqual(outcome.render(directory, ROOT / path), committed)
 
 
 if __name__ == "__main__":

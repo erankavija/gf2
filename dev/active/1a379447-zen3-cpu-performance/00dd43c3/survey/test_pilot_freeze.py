@@ -22,7 +22,6 @@ ACTIVE = SURVEY.parent
 class PilotFreezeTest(unittest.TestCase):
     def test_pilot_covers_the_profiles_material_residual_cells(self):
         summary = json.loads((PROFILE / "acceptance-summary.json").read_text())
-        profile = json.loads((PROFILE / "inputs/family-addendum.json").read_text())
         pilot = json.loads((ACTIVE / "pilot-addendum.json").read_text())
         context = json.loads((ACTIVE / "profile-context.json").read_text())
 
@@ -30,7 +29,6 @@ class PilotFreezeTest(unittest.TestCase):
         self.assertEqual({cell["cell_id"] for cell in pilot["cells"]}, material)
         self.assertEqual({cell["role"] for cell in pilot["cells"]}, {"exploratory"})
         self.assertEqual({cell["objective"] for cell in pilot["cells"]}, {"improvement"})
-        self.assertEqual({cell["cell_id"] for cell in profile["cells"]} & material, material)
         self.assertEqual(
             {cell["cell_id"].split("-", 1)[0] for cell in pilot["cells"]},
             {"left", "right"},

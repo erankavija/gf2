@@ -5,8 +5,7 @@
 # section with and without `simd`, on an unbaked and a baked build.
 #
 # Untimed: no timing window, no host lock, no ignored test. Each run writes
-# `test-logs/<name>.txt` (toolchain, command, output, exit status) beside this
-# script; a witness configuration also writes `route-witness/<name>.tsv`
+# raw output (toolchain, command, output, exit status) under /tmp; a witness configuration also writes `route-witness/<name>.tsv`
 # (entry, input, route, kind). `route-witness/dependency-features.tsv` holds
 # the features cargo resolves for the kernel packages in each package's
 # ordinary dependency build.
@@ -22,7 +21,8 @@ export RUSTUP_TOOLCHAIN=1.95 CARGO_CI_NO_SCCACHE=1
 # A build takes its flags, wrapper, profile and target from this script alone.
 unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER \
     "${!CARGO_BUILD_@}" "${!CARGO_PROFILE_@}" "${!CARGO_TARGET_@}"
-logs=$here/test-logs
+logs=$(mktemp -d /tmp/gf2-route-output-XXXXXX)
+echo "Raw test output: $logs"
 records=$here/route-witness
 mkdir -p "$logs" "$records"
 
@@ -102,7 +102,7 @@ witness sim-default - -p gf2-sim --test core_dispatch_fallback
   for selection in "gf2-core" "gf2-core --all-features" "gf2-coding" \
     "gf2-coding --no-default-features" "gf2-algebra" "gf2-sim" "gf2-sim --all-features"; do
     # shellcheck disable=SC2086
-    cargo tree --offline -p $selection -e normal -f '{p}|{f}' --prefix none |
+    ./scripts/cargo-budget.sh cargo tree --offline -p $selection -e normal -f '{p}|{f}' --prefix none |
       sed -E 's/ \(\*\)$//; s/ v[^ |]+( \([^)]*\))?\|/|/' |
       grep -E '^gf2-(core|kernels-simd)\|' | sort -u |
       while IFS='|' read -r package features; do

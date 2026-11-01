@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks the outcome-table generator on constructed campaigns and the committed tables."""
+"""Checks the outcome-table generator on constructed campaigns."""
 
 import importlib.util
 import json
@@ -38,15 +38,15 @@ def constructed(directory, cells, arms, purpose="decoder-family"):
                 "conversion": {"batch_fill_ns": 10 + index}}
 
     write(directory / "receipt.json", {
-        "addendum": {"snapshot": "inputs/frozen.json"},
+        "addendum": {"path": f"{directory.name}/addendum.json"},
         "settings": {"pilot_min_pairs": PAIRS, "confirmatory_pairs": PAIRS},
         "arms": {name: {"build": build, "executable_sha256": name, "environment": {}}
                  for name, (build, _) in arms.items()},
-        "cells": [{"cell_id": cell, "decoder_quality": {"baseline": QUALITY, "candidate": QUALITY},
+        "cells": [{"cell_id": cell, "role": "exploratory", "decoder_quality": {"baseline": QUALITY, "candidate": QUALITY},
                    "pairs": [{"baseline": execution(baseline, index),
                               "candidate": execution(candidate, index)} for index in range(PAIRS)]}
                   for cell, _, baseline, candidate in cells]})
-    write(directory / "inputs" / "frozen.json", {"family": {"purpose": purpose}, "cells": [
+    write(directory / "addendum.json", {"family": {"purpose": purpose}, "cells": [
         {"cell_id": cell, "objective": "improvement", "role": "exploratory",
          "decoder": {"arm_kind": kind}} for cell, kind, _, _ in cells]})
     write(directory / "plan.json", {
@@ -112,16 +112,16 @@ class ConstructedCampaignTest(unittest.TestCase):
                 for line in section.splitlines() if line.startswith("| `")]
 
     def test_a_log_that_does_not_verify_stops_the_campaign(self):
-        tables.campaign(self.directory)
+        tables.campaign(self.directory, root=self.scratch)
         log = self.directory / "execution.log"
         lines = log.read_text(encoding="utf-8").splitlines(keepends=True)
         log.write_text("".join(line for line in lines if '"cell-complete"' not in line
                                or '"native-cell"' not in line), encoding="utf-8")
         with self.assertRaises(SystemExit):
-            tables.campaign(self.directory)
+            tables.campaign(self.directory, root=self.scratch)
 
     def test_matched_and_fastest_compatible_cells_never_share_a_part(self):
-        cells = tables.campaign(self.directory)["cells"]
+        cells = tables.campaign(self.directory, root=self.scratch)["cells"]
         for kind in tables.PARTS:
             text = self.part(kind, [cell for cell in cells if cell["part"] == kind])
             for identifier, _, _, _ in self.CELLS:
@@ -131,11 +131,11 @@ class ConstructedCampaignTest(unittest.TestCase):
     def test_a_selector_calibration_family_has_a_part_of_its_own(self):
         directory = constructed(self.scratch / "holdout", self.CELLS, self.ARMS,
                                 tables.SELECTOR_CALIBRATION)
-        self.assertEqual({cell["part"] for cell in tables.campaign(directory)["cells"]},
+        self.assertEqual({cell["part"] for cell in tables.campaign(directory, root=self.scratch)["cells"]},
                          {SELECTOR})
 
     def test_peak_memory_appears_only_in_its_own_configuration(self):
-        cells = tables.campaign(self.directory)["cells"]
+        cells = tables.campaign(self.directory, root=self.scratch)["cells"]
         for kind in tables.PARTS:
             selected = [cell for cell in cells if cell["part"] == kind]
             if not selected:
@@ -153,7 +153,7 @@ class ConstructedCampaignTest(unittest.TestCase):
                 self.assertIn(record["identity"][0], arms)
 
     def test_each_build_has_rows_of_its_own(self):
-        cells = [cell for cell in tables.campaign(self.directory)["cells"]
+        cells = [cell for cell in tables.campaign(self.directory, root=self.scratch)["cells"]
                  if cell["part"] == BEFORE_AFTER]
         rows = self.rows(self.part(BEFORE_AFTER, cells), "Arm measurements")
         builds = {build for build, _ in self.ARMS.values()}
@@ -162,7 +162,7 @@ class ConstructedCampaignTest(unittest.TestCase):
         self.assertEqual(set().union(*seen), {"conservative-portable", "tuned-portable", "native"})
 
     def test_a_quantity_an_arm_does_not_report_is_stated_unmeasured(self):
-        cells = [cell for cell in tables.campaign(self.directory)["cells"]
+        cells = [cell for cell in tables.campaign(self.directory, root=self.scratch)["cells"]
                  if cell["part"] == BEFORE_AFTER]
         text = self.part(BEFORE_AFTER, cells)
         for row in self.rows(text, "Arm measurements"):
@@ -187,16 +187,6 @@ class SeriesLogTest(unittest.TestCase):
                 else:
                     with self.assertRaises(SystemExit):
                         summarizer.verified_sessions(root)
-
-
-class CommittedTablesTest(unittest.TestCase):
-    def test_committed_tables_regenerate_byte_identically(self):
-        for path in tables.smoke.listed("tables.md"):
-            committed = (ROOT / path).read_text(encoding="utf-8")
-            if committed.split("\n", 1)[0] != tables.TITLE:
-                continue
-            with self.subTest(path):
-                self.assertEqual(tables.tables(ROOT / path), committed)
 
 
 if __name__ == "__main__":

@@ -158,9 +158,9 @@ def main() -> int:
     summary = json.loads((pilot_dir / "acceptance-summary.json").read_text())
     if summary["receipt_sha256"] != digest or summary["verdict"] != "accepted" or receipt["label"] != "pilot":
         raise SystemExit("the pilot must be an accepted receipt whose summary matches its exact bytes")
-    snapshot = (pilot_dir / receipt["addendum"]["snapshot"]).read_bytes()
+    snapshot = pathlib.Path(receipt["addendum"]["path"]).read_bytes()
     if hashlib.sha256(snapshot).hexdigest() != receipt["addendum"]["sha256"]:
-        raise SystemExit("pilot addendum snapshot digest differs")
+        raise SystemExit("pilot addendum digest differs")
     pilot = json.loads(snapshot)
     if pilot["family"]["id"] != receipt["family_id"]:
         raise SystemExit("pilot family identity differs from its receipt")

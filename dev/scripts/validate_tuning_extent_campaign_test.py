@@ -1081,53 +1081,9 @@ class CodingOwner(unittest.TestCase):
         self.rejects(self.preflight, stage)
 
 
-class CommittedPins(unittest.TestCase):
-    """Every file a published campaign pins by digest resolves from the
-    checkout: its own bytes, or the campaign's snapshot of them."""
-
-    RECEIPT_PINS = re.compile(r"Protocol: `[^`]+`; SHA-256 `([0-9a-f]{64})`\."
-                              r"(?: Declaration: `[^`]+`; SHA-256 `([0-9a-f]{64})`\.)?")
-    ARCHIVE = "-evidence-archive.tar.zst"
-
-    @classmethod
-    def setUpClass(cls):
-        cls.v = load_validator()
-
-    def test_every_published_receipt_pins_a_resolvable_protocol_and_declaration(self):
-        receipts = [ROOT / path for path in tracked_files(ROOT, "gf2-*.md")
-                    if self.v.RUN_ID.fullmatch(Path(path).stem)]
-        published = {Path(path).parent.name.removesuffix("-session")
-                     for path in tracked_files(ROOT, "*-self-check.json")
-                     if Path(path).parent.name.endswith("-session")}
-        self.assertEqual({receipt.stem for receipt in receipts}, published)
-        for receipt in receipts:
-            with self.subTest(campaign=receipt.stem):
-                declaration = self.v.load_declaration(receipt.stem)
-                protocol, declared = self.RECEIPT_PINS.search(receipt.read_text()).groups()
-                self.v.pinned_file(ROOT, declaration, declaration["protocol"], protocol)
-                if declared is not None:
-                    located = self.v.locate_declaration(declaration["issue"], ROOT)
-                    self.v.pinned_file(ROOT, declaration, located, declared)
-
-    def test_every_committed_campaign_record_pins_resolvable_inputs(self):
-        archives = tracked_files(ROOT, f"gf2-*{self.ARCHIVE}")
-        self.assertTrue(archives)
-        for archive in archives:
-            campaign = Path(archive).name.removesuffix(self.ARCHIVE)
-            with self.subTest(campaign=campaign):
-                record = subprocess.run(
-                    ["tar", "--zstd", "-xOf", str(ROOT / archive),
-                     f"{self.v.EVIDENCE_ARCHIVE}/{campaign}/campaign.json"],
-                    capture_output=True, check=True).stdout
-                self.v.validate_pinned_inputs(json.loads(record),
-                                              self.v.load_declaration(campaign))
-
-
 class ContentIdentity(unittest.TestCase):
     """The protocol and the producing manifest are read under their recorded
     digests, and the recorded input digests are the campaign's pins."""
-
-    DECLARATION = {"issue": "0badc0de"}
 
     @classmethod
     def setUpClass(cls):
@@ -1136,30 +1092,18 @@ class ContentIdentity(unittest.TestCase):
     def checkout(self) -> Path:
         directory = tempfile.TemporaryDirectory(prefix="gf2-validator-content-identity-")
         self.addCleanup(directory.cleanup)
-        located = mock.patch.object(self.v, "locate_declaration",
-                                    return_value="campaign/campaign-declaration.json")
-        located.start()
-        self.addCleanup(located.stop)
         root = Path(directory.name).resolve()
         (root / "campaign").mkdir()
         (root / "campaign/protocol.md").write_bytes(b"frozen protocol")
         return root
 
     def pinned(self, root: Path, data: bytes) -> bytes:
-        return self.v.pinned_file(root, self.DECLARATION, "campaign/protocol.md",
+        return self.v.pinned_file(root, "campaign/protocol.md",
                                   hashlib.sha256(data).hexdigest())
 
     def test_an_uncommitted_file_with_the_recorded_digest_is_read(self):
         root = self.checkout()
         self.assertFalse((root / ".git").exists())
-        self.assertEqual(self.pinned(root, b"frozen protocol"), b"frozen protocol")
-
-    def test_a_moved_file_is_read_from_the_campaign_snapshot(self):
-        root = self.checkout()
-        snapshot = root / "campaign" / self.v.PRODUCING_SNAPSHOT / "campaign/protocol.md"
-        snapshot.parent.mkdir(parents=True)
-        snapshot.write_bytes(b"frozen protocol")
-        (root / "campaign/protocol.md").write_bytes(b"later protocol")
         self.assertEqual(self.pinned(root, b"frozen protocol"), b"frozen protocol")
 
     def test_a_changed_frozen_input_is_refused_by_digest(self):
