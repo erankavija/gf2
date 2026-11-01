@@ -411,6 +411,19 @@ class EmbeddedPrograms(unittest.TestCase):
                     self.canonical(program),
                     self.canonical(program.replace("print(1)", "print(1)  # note\n# more")))
 
+    def test_escaped_apostrophe_in_a_comment_is_not_code(self):
+        comment = "print(1)  # caller'\\''s note"
+        self.assertEqual(self.canonical(self.ARGUMENT),
+                         self.canonical(self.ARGUMENT.replace("print(1)", comment)))
+        awk = "awk '{ print 1 }' file\n"
+        self.assertEqual(self.canonical(awk),
+                         self.canonical(awk.replace("print 1 ", "print 1 # caller'\\''s note\n")))
+
+    def test_code_after_an_escaped_apostrophe_is_code(self):
+        program = "python3 -c 'print(\"it'\\''s\")\nprint(1)'\n"
+        self.assertNotEqual(self.canonical(program),
+                            self.canonical(program.replace("print(1)", "print(2)")))
+
     def test_python_change_is_code(self):
         for program in (self.PYTHON, self.ARGUMENT):
             with self.subTest(program=program):

@@ -26,8 +26,10 @@ RECORD = re.compile(r"^(?:identity (?P<line>.*)|rep-\d+ start \S+ (?P<start>.*?)
 CANONICAL_SHELL = 'body=$(cat); eval "resume_identity_body() {\n$body\n}" && declare -f resume_identity_body'
 PYTHON_HEREDOC = re.compile(r"(python3?\b[^\n]*<<\s*['\"]?(\w+)['\"]?[^\n]*\n)(.*?)(\n\2$)",
                             re.DOTALL | re.MULTILINE)
-PYTHON_ARGUMENT = re.compile(r"(python3?\s+(?:-\S+\s+)*-c\s+')([^']*)(')")
-AWK_ARGUMENT = re.compile(r"(\bawk\b[^'\n]*')([^']*)(')")
+# A single-quoted shell argument; `'\''` is an apostrophe inside it.
+QUOTED = r"((?:[^']|'\\'')*)"
+PYTHON_ARGUMENT = re.compile(r"(python3?\s+(?:-\S+\s+)*-c\s+')" + QUOTED + "(')")
+AWK_ARGUMENT = re.compile(r"(\bawk\b[^'\n]*')" + QUOTED + "(')")
 AWK_TOKEN = re.compile(r'''"(?:\\.|[^"\\])*"|/(?:\\.|\[(?:\\.|[^]\\])*\]|[^/\\\n])+/|\#[^\n]*|.''', re.DOTALL)
 
 
@@ -76,7 +78,8 @@ def canonical_shell(data):
     canonical = PYTHON_HEREDOC.sub(
         lambda match: match[1] + python_program(match[3]) + match[4], canonical)
     for pattern, program in ((PYTHON_ARGUMENT, python_program), (AWK_ARGUMENT, awk_program)):
-        canonical = pattern.sub(lambda m, p=program: m[1] + p(m[2]) + m[3], canonical)
+        canonical = pattern.sub(
+            lambda m, p=program: m[1] + p(m[2].replace("'\\''", "'")) + m[3], canonical)
     return canonical
 
 
