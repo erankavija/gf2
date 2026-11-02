@@ -1,6 +1,0 @@
-# started on Fri Oct  9 02:09:43 2026
-
-3796296635,,L1-dcache-loads:u,573440746,100.00,,
-284819571,,L1-dcache-load-misses:u,573440746,100.00,,
-442627336,,cache-references:u,573440746,100.00,,
-11759492,,cache-misses:u,573440746,100.00,,

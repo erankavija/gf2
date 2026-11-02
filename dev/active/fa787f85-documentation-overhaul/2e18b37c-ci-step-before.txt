@@ -1,2 +1,0 @@
-✓ receipt-input-snapshots: ok
-check-receipt-input-snapshots: every pinned receipt input is committed, 5 recorded as unrestorable

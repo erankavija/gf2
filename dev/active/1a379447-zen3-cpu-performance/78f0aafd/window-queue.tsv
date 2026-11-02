@@ -1,7 +1,0 @@
-# issue	worktree	est_minutes	command; estimates, not measurements
-78f0aafd	.agents/worktrees/agent-78f0aafd	25	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-window.sh
-78f0aafd	.agents/worktrees/agent-78f0aafd	12	GF2_PROFILE_ARM_ROOT="$PWD/.agents/ext/78f0aafd/restored" bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/nr-encode-window.sh
-78f0aafd	.agents/worktrees/agent-78f0aafd	20	bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/bch-window.sh
-78f0aafd	.agents/worktrees/agent-78f0aafd	25	GF2_PROFILE_ARM_ROOT="$PWD/.agents/ext/78f0aafd/restored" bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/byte-field-window.sh
-78f0aafd	.agents/worktrees/agent-78f0aafd	12	GF2_PROFILE_ARM_ROOT="$PWD/.agents/ext/78f0aafd/restored" bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/polynomial-window.sh
-78f0aafd	.agents/worktrees/agent-78f0aafd	12	GF2_PROFILE_ARM_ROOT="/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-ed3d490e-run/dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release" bash dev/active/1a379447-zen3-cpu-performance/78f0aafd/fi3-arm-window.sh

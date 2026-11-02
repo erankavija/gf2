@@ -1,6 +1,0 @@
-dev/active/1a379447-zen3-cpu-performance/78f0aafd/restoration.json	record	Arm restoration attempts
-dev/active/1a379447-zen3-cpu-performance/78f0aafd/restore-arms.py	tool	Arm restoration rebuild and smoke
-dev/active/1a379447-zen3-cpu-performance/78f0aafd/smoke/restored	record	Restored-arm runner smoke
-dev/active/1a379447-zen3-cpu-performance/78f0aafd/accounting.md	reference	Integrated bottleneck accounting
-dev/active/1a379447-zen3-cpu-performance/78f0aafd/window-queue.tsv	queue	Profile window queue lines
-dev/active/1a379447-zen3-cpu-performance/78f0aafd/report.md	report	Integrated profile preparation

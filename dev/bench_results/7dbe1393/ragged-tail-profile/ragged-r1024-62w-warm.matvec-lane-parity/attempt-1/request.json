@@ -1,1 +1,0 @@
-{"schema":"zen3-benchmark-arm-request-v1","cell_id":"ragged-r1024-62w-warm","arm":"matvec-lane-parity","role":"candidate","pair":0,"case":{"question":"allocated-matvec","seed":12552156834333651177,"shape":"full","words":62},"cache_state":"warm","windows":5,"window_target_ms":100,"cpus":[0],"workers_declared":1}

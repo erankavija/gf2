@@ -1,1 +1,0 @@
-Patched 16 sorry(s), opaqued 19 unsupported def(s), patched 2 trait default field(s), 21 remain (expected for opaque gfpn functions)

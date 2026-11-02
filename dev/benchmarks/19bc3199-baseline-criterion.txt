@@ -1,7 +1,0 @@
-R1 local baseline status (jit:19bc3199)
-
-The worktree does not contain saved Criterion estimates for the pinned B3 baseline `ppc-v0-2026-04-27`. Running the local gate harness after populating current estimates reports:
-
-  ERROR: missing baseline estimates: crates/gf2-core/target/agent-19bc3199/criterion/m4rm_multiply/256/ppc-v0-2026-04-27/estimates.json
-
-Current B3 estimates are recorded in dev/benchmarks/19bc3199-final-b3-criterion.txt. The >=1.5x geomean criterion could not be proven locally without the saved baseline files.

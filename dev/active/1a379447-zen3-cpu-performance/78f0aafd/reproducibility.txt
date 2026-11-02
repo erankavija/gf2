@@ -1,3 +1,0 @@
-dev/active/1a379447-zen3-cpu-performance/78f0aafd/accounting.json: OK
-dev/active/1a379447-zen3-cpu-performance/78f0aafd/accounting.md: OK
-plain python --check: git status --porcelain --ignored --untracked-files=all unchanged

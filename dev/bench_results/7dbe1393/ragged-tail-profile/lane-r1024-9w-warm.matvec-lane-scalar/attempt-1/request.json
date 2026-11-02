@@ -1,1 +1,0 @@
-{"schema":"zen3-benchmark-arm-request-v1","cell_id":"lane-r1024-9w-warm","arm":"matvec-lane-scalar","role":"candidate","pair":0,"case":{"question":"allocated-matvec","seed":5021283998818678245,"shape":"full","words":9},"cache_state":"warm","windows":5,"window_target_ms":100,"cpus":[0],"workers_declared":1}

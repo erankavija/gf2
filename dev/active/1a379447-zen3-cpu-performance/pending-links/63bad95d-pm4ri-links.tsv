@@ -1,6 +1,0 @@
-dev/bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r1-pilot/receipt.json	receipt	Portable M4RI comparator pilot receipt
-dev/bench_results/63bad95d/63bad95d-portable-matvec-vs-m4ri/v4-r1-pilot/acceptance-summary.md	receipt	Portable M4RI comparator pilot acceptance summary
-dev/bench_results/63bad95d/portable-matvec-vs-m4ri-ledger.jsonl	ledger	Portable M4RI comparator family ledger
-dev/active/1a379447-zen3-cpu-performance/63bad95d/portable-m4ri-pilot-resolution.md	reference	Portable M4RI pilot resolution record (resolution-insufficient)
-dev/active/1a379447-zen3-cpu-performance/63bad95d/portable-m4ri-pilot-resolution-v4-r2.md	reference	Portable M4RI second pilot resolution record
-dev/active/1a379447-zen3-cpu-performance/63bad95d/survey/portable-m4ri-confirmation-smoke.json	reference	Portable M4RI confirmation plan smoke record

@@ -1,8 +1,0 @@
-commit: fa29c6a3976e162d8994dfc19ea85c90df848f7c
-crates/gf2-algebra 0
-crates/gf2-coding 0
-crates/gf2-core 0
-crates/gf2-kernels-hip 0
-crates/gf2-kernels-simd 0
-crates/gf2-sim 5
-crates/gf2-stats 0

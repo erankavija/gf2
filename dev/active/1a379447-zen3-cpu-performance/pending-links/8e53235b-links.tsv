@@ -1,6 +1,0 @@
-dev/active/1a379447-zen3-cpu-performance/8e53235b/measurement-plan.md	explanation	Codeword-assembly measurement plan
-dev/active/1a379447-zen3-cpu-performance/8e53235b/addendum-v4-codeword-assembly-pilot.json	reference	Codeword-assembly frozen pilot addendum
-dev/active/1a379447-zen3-cpu-performance/8e53235b/survey/pilot-plan-smoke.json	reference	Untimed shared-smoke record of the codeword-assembly pilot plan
-dev/active/1a379447-zen3-cpu-performance/8e53235b/survey/producing-inputs.json	reference	Codeword-assembly producing-input closure
-dev/bench_results/8e53235b/codeword-assembly-family-ledger.jsonl	ledger	Codeword-assembly family ledger (genesis)
-dev/bench_results/8e53235b/run-codeword-assembly.sh	reference	Codeword-assembly window launcher
