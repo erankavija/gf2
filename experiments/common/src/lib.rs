@@ -14,7 +14,7 @@ mod repository;
 mod run;
 
 pub use identity::{ArtifactIdentity, ArtifactPath, GitRevision, IdentityError, Sha256Digest};
-pub use publish::{create_durable, publish_atomic, DurabilityUnconfirmed};
+pub use publish::{create_durable, is_interrupted_publish, publish_atomic, DurabilityUnconfirmed};
 pub use repository::RepositoryRoot;
 pub use run::{
     AcceleratorIdentity, BuildFlags, CpuIdentity, HostFacts, RngAlgorithm, RngIdentity,

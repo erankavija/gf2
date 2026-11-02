@@ -2,7 +2,9 @@
 use super::{
     invalid, AcceptanceConfig, Backend, CampaignConfig, CampaignError, Cell, ReferenceData,
 };
-use experiments_common::{publish_atomic, ArtifactPath, RunRecord, Sha256Digest};
+use experiments_common::{
+    is_interrupted_publish, publish_atomic, ArtifactPath, RunRecord, Sha256Digest,
+};
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, fs, path::Path};
 
@@ -443,7 +445,27 @@ fn membership(manifest: &Manifest) -> BTreeSet<String> {
     .chain(manifest.cells.iter().map(|c| shard_path(c.q, c.n)))
     .collect()
 }
-/// Publishes pooled summaries, run observations, and integrity digests.
+/// Removes what interrupted writes left beside the dataset's files, which
+/// [`verify`]'s exact membership would otherwise reject.
+fn remove_interrupted_writes(directory: &Path) -> Result<(), CampaignError> {
+    let checkpoint = directory.join("checkpoint.json");
+    for parent in [directory.to_owned(), directory.join("shards")] {
+        if !parent.is_dir() {
+            continue;
+        }
+        for entry in fs::read_dir(parent)? {
+            let path = entry?.path();
+            if is_interrupted_publish(&path)
+                || gf2_sim::checkpoint::is_interrupted_write(&checkpoint, &path)
+            {
+                fs::remove_file(path)?;
+            }
+        }
+    }
+    Ok(())
+}
+/// Publishes pooled summaries, run observations, and integrity digests, and
+/// removes temporaries of interrupted writes. No run may be active.
 /// Refuses until every cell has a logged terminal row.
 pub fn finalize(directory: &Path) -> Result<(), CampaignError> {
     let manifest = Manifest::load(directory)?;
@@ -457,6 +479,7 @@ pub fn finalize(directory: &Path) -> Result<(), CampaignError> {
                 .ok_or_else(|| CampaignError::Invalid("nonterminal cell".into()))
         })
         .collect::<Result<_, _>>()?;
+    remove_interrupted_writes(directory)?;
     for (cell, progress) in manifest.expanded_cells().iter().zip(&state.cells) {
         publish_shards(directory, cell, &progress.shards)?;
     }
