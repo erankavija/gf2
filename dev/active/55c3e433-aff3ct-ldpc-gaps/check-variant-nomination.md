@@ -9,7 +9,7 @@ Two cumulative scalar variants of `min_sum_check_row` in `crates/gf2-coding/src/
 - `cached-signed` computes the normalized signed minima once per check and selects among them.
 - `select-reduced` adds comparison and select reduction to `cached-signed`.
 
-The patches are preserved outside the tracked tree with family `55c3e433-check-variants`. Production source is unchanged.
+The patches are `experiments/aff3ct-ldpc-gaps/patches/cached-signed.patch` and `select-reduced.patch`. Production source is unchanged.
 
 ## Contract and posterior equality (REQ-01, REQ-02)
 
@@ -20,16 +20,7 @@ The patches are preserved outside the tracked tree with family `55c3e433-check-v
 
 Campaign `55c3e433-check-variants-pilot`, family `55c3e433-check-variants`, receipt SHA-256 `64dc191d5d728b430a9c624ee2afcf5139f81175b1232d543f0efc73c79366aa`, Rust 1.95, 8 sessions, verdict Accepted, no flagged window in any cell (0/120 each). Speedup is unchanged-production time divided by variant time; the bound is the lower end of the 0.975 interval. Cells `w1-b1` and `p12-b8` on both codes.
 
-| Variant | Code | Cell | Speedup | Lower bound |
-|---|---|---|---:|---:|
-| `cached-signed` | DVB-T2 R1/2 | `w1-b1` | 0.9495 | 0.9480 |
-| `cached-signed` | DVB-T2 R1/2 | `p12-b8` | 0.9462 | 0.9419 |
-| `cached-signed` | NR BG1 Z=384 | `w1-b1` | 0.9242 | 0.9223 |
-| `cached-signed` | NR BG1 Z=384 | `p12-b8` | 0.9237 | 0.9092 |
-| `select-reduced` | DVB-T2 R1/2 | `w1-b1` | 1.0740 | 1.0719 |
-| `select-reduced` | DVB-T2 R1/2 | `p12-b8` | 1.0554 | 1.0484 |
-| `select-reduced` | NR BG1 Z=384 | `w1-b1` | 1.0805 | 1.0788 |
-| `select-reduced` | NR BG1 Z=384 | `p12-b8` | 1.0727 | 1.0704 |
+On the 5900X host, `cached-signed` is slower than unchanged production on every cell and `select-reduced` is faster on every cell. The receipt holds each cell's speedup and interval.
 
 ## Branches in the reduction (REQ-04)
 
@@ -45,8 +36,8 @@ A variant is eligible when its bits match, its lower bound exceeds $1/1.1 = 0.90
 - `cached-signed`: bits match; lower bounds exceed 0.9091 on all four cells (the smallest, 0.9092, by 0.0001); the largest lower bound is 0.9480, below 1.1. Not eligible.
 - `select-reduced`: bits match; lower bounds exceed 0.9091 on all four cells; the largest lower bound is 1.0788 (NR `w1-b1`), below 1.1. Not eligible.
 
-**No variant is nominated.** The negative result is preserved: the check update variants fall short of the 1.1 margin on this host and these cells, with the strongest point speedup 1.0805. Production is unchanged.
+**No variant is nominated.** The negative result is preserved: the check-update variants fall short of the 1.1 margin on this host and these cells. Production is unchanged.
 
 ## Load at the pilot's start
 
-The job started at 1-minute load 14.47 (`window.log`), immediately after the NR pilot's 24-thread cells ended; that pilot's last session recorded 1-minute load 12.83. The check-variant sessions recorded 1-minute loads of 8.58 to 12.47. No window was flagged (0 of 120 per cell, 192 runs), and the unchanged-production medians agree with the NR pilot's single-frame medians within about 2%: 27.05 ms against 26.47 ms at NR `w1-b1`, and 215.4 ms against 212.3 ms at NR `p12-b8`. The two pilots use separate unchanged builds. The owner approved the load finding.
+The job started under load left by the NR pilot's 24-thread cells, which ended moments earlier; the window log records the figure. The receipt flags no window in any cell. The owner reviewed this and accepted the receipt.
