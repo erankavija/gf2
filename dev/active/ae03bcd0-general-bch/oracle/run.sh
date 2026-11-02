@@ -147,7 +147,7 @@ rust_version="$(rustc --version)"
 {
   echo "# Receipt: external BCH oracle fixture generation"
   echo
-  echo "Written by [\`oracle/run.sh\`](oracle/run.sh) from the run it describes."
+  echo "Written by [\`run.sh\`](run.sh) from the run it describes."
   echo "Every value below was observed during that run."
   echo
   echo "| Field | Value |"
