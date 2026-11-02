@@ -299,8 +299,13 @@ fn test_bpsk_awgn_channel_ber_locked() {
 fn test_qpsk_rician_channel_locked() {
     // A coefficient-swapped or open-loop adapter drives the 10 dB BER toward
     // 0.5; a dropped noise step drives the -2 dB error count to 0.
-    let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
-    let n_bits = 1024; // exact `frame_bits()` for fig8.
+    let config = RicianConfig {
+        k_factor: 5.0,
+        coherence_block: 128,
+        taps: 4,
+    };
+    let n_bits = config.frame_bits();
+    let channel = QpskRicianChannelModel::new(config);
     let tx_bits = bit_stream(0xF1_0FAD_EF16_0008u64, n_bits);
     let tx_bv = bits_to_bitvec(&tx_bits);
 

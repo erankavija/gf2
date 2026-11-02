@@ -24,14 +24,17 @@ use gf2_coding::simulation::SimulationResult;
 #[cfg(feature = "parallel")]
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-/// TOML sub-table selecting a curve's channel, e.g.
-/// `channel = { kind = "rician", preset = "fig8" }`.
+/// TOML channel parameters for one curve.
 #[derive(Debug, Deserialize)]
 struct ChannelToml {
     /// `"awgn"` or `"rician"`.
     kind: String,
-    /// Required when `kind = "rician"`: one of `"fig8"`, `"fig9"`, `"fig10"`.
-    preset: Option<String>,
+    /// Rician LOS-to-scatter power ratio.
+    k_factor: Option<f64>,
+    /// Number of QPSK symbols per coherence block.
+    coherence_block: Option<usize>,
+    /// Number of coherence blocks per frame.
+    taps: Option<usize>,
 }
 
 /// Either channel behind one type, so the helpers stay generic over `ChannelModel`.
@@ -76,15 +79,12 @@ fn build_channel(cfg: Option<&ChannelToml>) -> Result<AnyChannel, String> {
         Some(ch) => match ch.kind.as_str() {
             "awgn" => Ok(AnyChannel::Awgn(BpskAwgnChannel)),
             "rician" => {
-                let preset = ch
-                    .preset
-                    .as_deref()
-                    .ok_or("rician channel requires `preset`")?;
-                let rician_cfg = match preset {
-                    "fig8" => RicianConfig::fig8(),
-                    "fig9" => RicianConfig::fig9(),
-                    "fig10" => RicianConfig::fig10(),
-                    other => return Err(format!("unknown rician preset: {other}")),
+                let rician_cfg = RicianConfig {
+                    k_factor: ch.k_factor.ok_or("rician channel requires `k_factor`")?,
+                    coherence_block: ch
+                        .coherence_block
+                        .ok_or("rician channel requires `coherence_block`")?,
+                    taps: ch.taps.ok_or("rician channel requires `taps`")?,
                 };
                 Ok(AnyChannel::Rician(QpskRicianChannelModel::new(rician_cfg)))
             }
@@ -1243,7 +1243,7 @@ name = "rician_drm_sanity"
 type = "product"
 component = "drm_32_21"
 turbo = { max_iterations = 5, alpha = 0.5, list_size = 2, max_queries = 200 }
-channel = { kind = "rician", preset = "fig8" }
+channel = { kind = "rician", k_factor = 5.0, coherence_block = 128, taps = 4 }
 snr = { start = 2.0, stop = 8.0, step = 3.0 }
 min_errors = 2
 max_frames = 30
@@ -1279,14 +1279,18 @@ max_frames = 30
     }
 
     #[test]
-    fn test_build_channel_rician_preset_parsing() {
+    fn test_build_channel_rician_parameters() {
         let toml_str = r#"
 kind = "rician"
-preset = "fig8"
+k_factor = 5.0
+coherence_block = 128
+taps = 4
 "#;
         let ch: ChannelToml = toml::from_str(toml_str).unwrap();
         assert_eq!(ch.kind, "rician");
-        assert_eq!(ch.preset.as_deref(), Some("fig8"));
+        assert_eq!(ch.k_factor, Some(5.0));
+        assert_eq!(ch.coherence_block, Some(128));
+        assert_eq!(ch.taps, Some(4));
 
         let chan = build_channel(Some(&ch)).unwrap();
         assert!(matches!(chan, AnyChannel::Rician(_)));

@@ -178,16 +178,12 @@ fn write_diagnostic_dump(fatal: &FatalError, ctx: FaultContext, dump_dir: &std::
     }
 }
 
-/// The default diagnostic dump directory.
-///
-/// The returned path is **relative, resolved against the process's current
-/// working directory** at dump time (for `cargo run` from the repo root that
-/// is the workspace root; from anywhere else it is wherever the process was
-/// started). Campaigns that need a stable location should set
+/// The default diagnostic dump directory under the system temporary directory.
+/// Campaigns that need a stable location should set
 /// [`PipelineConfig::diagnostic_dump_dir`](crate::PipelineConfig::diagnostic_dump_dir)
 /// to an absolute path.
 pub fn default_dump_dir() -> PathBuf {
-    PathBuf::from("dev/benchmarks/gf2-sim/diagnostic-dumps")
+    std::env::temp_dir().join("gf2-sim-diagnostic-dumps")
 }
 
 /// Wraps a single GPU stage call with the failure-mode handling below; the

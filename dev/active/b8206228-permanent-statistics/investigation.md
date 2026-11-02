@@ -152,7 +152,7 @@ finding:
 - `crates/gf2-algebra/src/permanent/bipedal3.rs` documents and implements the
   scalar public single-matrix route and the separate direct and batched AVX2
   entry points.
-- `crates/gf2-algebra/examples/s3_scalar_vs_avx2_sanity.rs` measures the direct
+- `experiments/permanent-benchmarks/examples/s3_scalar_vs_avx2_sanity.rs` measures the direct
   kernels and records that the single-matrix AVX2 kernel is about three times
   slower than scalar for `n in {16, 20, 24}`.
 - `dev/benchmarks/gf2_algebra_permanent/csvs/s3_cross_cpu.csv` preserves the
@@ -397,7 +397,7 @@ doc text, and research prototypes:
 | `crates/gf2-algebra/README.md:58` | crate README |
 | `crates/gf2-algebra/src/lib.rs:41` | crate-level status prose |
 | `crates/gf2-algebra/src/permanent/ryser.rs:10` | module prose |
-| `crates/gf2-algebra/examples/s3_scalar_vs_avx2_sanity.rs:1,12-17` | the AVX2-slower sanity sweep |
+| `experiments/permanent-benchmarks/examples/s3_scalar_vs_avx2_sanity.rs:1,12-17` | the AVX2-slower sanity sweep |
 | `dev/research/perm_uniformity/src/main.rs:147`, `tests/smoke.rs:41` | prototype |
 | `dev/research/perm_uniformity_gpu/src/main.rs:619` | prototype |
 | `dev/research/permanent_gpu_crossover/src/main.rs:85`, `tests/smoke.rs:94` | prototype |
@@ -435,7 +435,7 @@ with — which weakens the "reuse the conventions" argument for that location.
 
 - `scripts/plot_permanent_benchmarks.py` — the existing permanent-domain plot
   generator, and the natural home/precedent for the campaign's figures.
-- `scripts/permanent-repro.sh`, `scripts/perm-uniformity-repro.sh`,
+- `experiments/permanent-benchmarks/scripts/permanent-repro.sh`, `scripts/perm-uniformity-repro.sh`,
   `scripts/perm-uniformity-gpu-repro.sh` — reproduction wrappers for this exact
   problem family.
 - `dev/benchmarks/dvb_t2_awgn/plot.py`, `finalize.py`, `run_campaign.sh`,

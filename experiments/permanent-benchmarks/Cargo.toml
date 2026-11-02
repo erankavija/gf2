@@ -1,0 +1,26 @@
+[package]
+name = "permanent-benchmarks"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+description = "Reproducible experiment programs for the gf2-algebra permanent campaigns"
+
+[dependencies]
+gf2-algebra = { path = "../../crates/gf2-algebra", default-features = false }
+gf2-kernels-simd = { path = "../../crates/gf2-kernels-simd", optional = true }
+tuning-campaign-support = { path = "../../dev/tools/tuning-campaign-support" }
+rayon = { workspace = true, optional = true }
+
+[features]
+parallel = ["gf2-algebra/parallel", "dep:rayon"]
+simd = ["gf2-algebra/simd", "dep:gf2-kernels-simd"]
+test-support = ["gf2-algebra/test-support"]
+
+[[example]]
+name = "parallel_scaling_sweep"
+required-features = ["parallel", "test-support"]
+
+[[example]]
+name = "s3_scalar_vs_avx2_sanity"
+required-features = ["simd", "test-support"]

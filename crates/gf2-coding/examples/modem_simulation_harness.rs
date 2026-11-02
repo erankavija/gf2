@@ -40,13 +40,17 @@ fn run() -> Result<(), String> {
         );
     }
 
-    let rician_channel = QpskRicianChannelModel::new(RicianConfig::fig8());
+    let rician_channel = QpskRicianChannelModel::new(RicianConfig {
+        k_factor: 5.0,
+        coherence_block: 128,
+        taps: 4,
+    });
     let mut rng = StdRng::seed_from_u64(0xFACE_CAFE);
     let rician_results =
         SimulationRunner::run_uncoded_ber_with_channel(&rician_channel, &config, &mut rng);
 
     println!();
-    println!("=== QPSK over Rician fading (fig8: K=5, N_c=128, t=4) ===");
+    println!("=== QPSK over Rician fading (K=5, N_c=128, t=4) ===");
     println!("Eb/N0 (dB)     bits     errors      BER");
     for r in &rician_results {
         println!(

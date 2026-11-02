@@ -296,6 +296,10 @@ fn test_default_dump_dir_is_non_empty() {
         dir.to_str().unwrap().contains("diagnostic-dumps"),
         "default_dump_dir should contain 'diagnostic-dumps'"
     );
+    assert!(
+        dir.starts_with(std::env::temp_dir()),
+        "default_dump_dir should be under the system temporary directory"
+    );
 }
 
 #[test]

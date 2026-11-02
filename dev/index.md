@@ -64,7 +64,7 @@ writes the directory.
 | Benchmark output tables, campaign measurement plans, tuning-profile receipts | `benchmarks/` | Read by `dev/scripts/permanent-campaign-runner.sh`; written by `scripts/perm-uniformity-repro.sh` and `dev/tools/tuning-campaign-support` |
 | `sim_runner` campaign definitions | `campaigns/` | `crates/gf2-coding/src/bin/sim_runner.rs`, `crates/gf2-coding/tests/grand_phase1_smoke.rs` |
 | Reference curves, their comparison scripts, complete tuning profiles | `reference_data/` | `crates/gf2-coding/tests/ebch_128_64_reference.rs`, `crates/gf2-algebra/tests/tuning_repository_envelopes.rs`, `dev/tools/tuning-profile-compose/src/main.rs`, `dev/scripts/gen_fig7_report.sh` |
-| Standalone prototype crates | `research/` | `crates/gf2-kernels-simd/Cargo.toml` (dev-dependency), `.jit/gates.toml`, `scripts/permanent-repro.sh`, `dev/scripts/permanent-campaign-runner.sh` |
+| Standalone prototype crates | `research/` | `crates/gf2-kernels-simd/Cargo.toml` (dev-dependency), `.jit/gates.toml`, `experiments/permanent-benchmarks/scripts/permanent-repro.sh`, `dev/scripts/permanent-campaign-runner.sh` |
 | CI checks, the benchmark lock wrapper, campaign runners | `scripts/` | `scripts/cargo-ci.sh`, [`AGENTS.md`](../AGENTS.md) |
 | Campaign output and the permanent zero-fraction datasets | `simulation_results/` | `output_dir` of the `campaigns/` definitions, historical permanent receipts, `crates/gf2-coding/tests/grand_phase1_smoke.rs` |
 | Study inputs and measurement logs, one directory per issue | `studies/` | Written by `dev/scripts/permanent-campaign-runner.sh` |

@@ -87,7 +87,7 @@ mod harness {
     // runtime from the S1 speedup CSV produced by the same one-command repro
     // run (dev/benchmarks/gf2_algebra_permanent/s1_speedup-<DATE>.csv, rows
     // impl=permanent_mod3_reference, mean_us column, µs → s). This mirrors
-    // the S3 Part-A precedent in scripts/permanent-repro.sh (read the S1 CSV
+    // the S3 Part-A precedent in experiments/permanent-benchmarks/scripts/permanent-repro.sh (read the S1 CSV
     // at runtime instead of embedding copied numbers) so the one-command
     // repro is genuinely SSOT / end-to-end: S1g speedup ratios derive from
     // THIS run's S1 measurement, not a stale snapshot.

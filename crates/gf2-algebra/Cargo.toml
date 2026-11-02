@@ -83,16 +83,6 @@ name = "tuning_calibration"
 harness = false
 required-features = ["parallel", "simd", "tuning-profile", "test-support"]
 
-# ── Issue `4513209c` (epic `ae82bd73`) — S2 parallel scaling sweep ──
-[[example]]
-name = "parallel_scaling_sweep"
-required-features = ["parallel", "test-support"]
-
-# ── Issue `363556e6` (epic `ae82bd73`) — S3 scalar-vs-AVX2 sanity sweep ──
-[[example]]
-name = "s3_scalar_vs_avx2_sanity"
-required-features = ["simd", "test-support"]
-
 # ── Issue `16f03734` (epic `ae82bd73`) — headline benchmark demo ──
 # No `required-features`: the example carries its own inline deterministic
 # LCG, so `cargo run -p gf2-algebra --example permanent_demo --release`
