@@ -1,6 +1,6 @@
 Issue fd1ef344 — C4 of umbrella 45ecf975. Implementation handoff.
 
-Worktree: `/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344`. Specification: [c4-design.md](/dev/active/45ecf975/c4-design.md). Final checks completed before the 03:30 Helsinki cutoff; report generated at Mon Nov  2 02:34:09 EET 2026.
+Worktree: `/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344`. Specification: [c4-design.md](/dev/active/b8206228-permanent-statistics/45ecf975/c4-design.md). Final checks completed before the 03:30 Helsinki cutoff; report generated at Mon Nov  2 02:34:09 EET 2026.
 
 The permanent campaign, dataset, and validation binaries build from `experiments/permanent-statistics`. The gf2-sim campaign layer, continuation/frozen decoders, emission authorization, root_fs, and compiled paper data are removed. OSD retains its byte-compatible identity types in `osd_identity.rs`, with the named exception linked to @/issue/779d1926. The experiment uses one shared execution log, configured cell/shard expansion, exact log-scale decisions, Wilson intervals, per-cell run identities, explicit availability policy, and terminal failure propagation. Validation probes unsampled zero matrices before opening streams, preserves exhaustive backend disagreement, and resumes at terminal anchor boundaries.
 
