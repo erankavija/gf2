@@ -33,11 +33,11 @@ pub struct RngIdentity {
 /// manifest and the `CARGO_PROFILE_*` environment declare for the profile.
 /// A package override in either fails the build of this crate.
 ///
-/// A measurement build takes these two settings from no other source: a Cargo
-/// configuration file or `--config` setting either of them is caller error,
-/// which leaves the record stale and shows only in the executable digest. Cargo
-/// exposes neither source to a build script, and does not rerun one when they
-/// change, so this crate cannot detect them.
+/// A measurement build sets no profile value through a Cargo configuration file
+/// or `--config`, package overrides included: doing so is caller error, which can
+/// leave every field stale and shows only in the executable digest. Cargo exposes
+/// neither source to a build script, and does not rerun one when they change, so
+/// this crate cannot detect them.
 #[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

@@ -241,9 +241,6 @@ fn today_date() -> String {
     out.unwrap_or_else(|| "unknown".to_string())
 }
 
-// load_csv_results delegates to the shared parse_baseline_csv helper from
-// gf2_coding::dvb_t2_bicm_harness. The file-IO wrapper stays here since it is
-// thin CLI scaffolding.
 fn load_csv_results(path: &Path) -> Vec<CellResult> {
     let content = std::fs::read_to_string(path).unwrap_or_default();
     parse_baseline_csv(&content)
