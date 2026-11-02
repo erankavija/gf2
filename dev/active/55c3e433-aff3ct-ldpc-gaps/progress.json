@@ -1,7 +1,7 @@
 {
   "epic_id": "55c3e433-843f-4079-adc5-4530ff3e8946",
   "epic_short_id": "55c3e433",
-  "current_wave": 2,
+  "current_wave": 3,
   "waves": [
     {
       "wave_number": 1,
@@ -16,6 +16,18 @@
       ]
     },
     {
+      "wave_number": "2b",
+      "issues": [
+        {
+          "id": "2088e0ec-f69f-4ec3-af60-a38d1eaa745e",
+          "short_id": "2088e0ec",
+          "title": "Land the comparison harness under experiments",
+          "classification": "implementation",
+          "status": "in_progress"
+        }
+      ]
+    },
+    {
       "wave_number": 2,
       "issues": [
         {
@@ -23,14 +35,14 @@
           "short_id": "1d787ed3",
           "title": "Pilot the NR routes against AFF3CT and record the route decisions",
           "classification": "research",
-          "status": "awaiting-window"
+          "status": "done"
         },
         {
           "id": "a72f2b3f-9ba6-460b-a4fb-e038f935cf3f",
           "short_id": "a72f2b3f",
           "title": "Compare check-update variants and nominate at most one",
           "classification": "research",
-          "status": "awaiting-window"
+          "status": "done"
         }
       ]
     },
@@ -42,7 +54,7 @@
           "short_id": "4555dfb3",
           "title": "Deliver the QC decoder core with its kernel and scalar fallback",
           "classification": "implementation",
-          "status": "pending"
+          "status": "in_progress"
         }
       ]
     },
@@ -114,26 +126,73 @@
       "vendor": "claude",
       "model": "sonnet",
       "reason": "family declaration on prepared arms, well specified"
+    },
+    {
+      "issue": "2088e0ec",
+      "vendor": "codex",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "reason": "multi-file harness port"
+    },
+    {
+      "issue": "1d787ed3,a72f2b3f",
+      "vendor": "claude",
+      "model": "sonnet",
+      "reason": "records from preserved evidence, well specified"
+    },
+    {
+      "issue": "2088e0ec",
+      "vendor": "claude",
+      "model": "sonnet",
+      "reason": "three specific review findings"
+    },
+    {
+      "issue": "4555dfb3",
+      "vendor": "codex",
+      "model": "gpt-6-astra",
+      "effort": "high",
+      "reason": "the epic's hardest work: QC decoder and unsafe kernel"
+    },
+    {
+      "issue": "2088e0ec",
+      "vendor": "claude",
+      "model": "sonnet",
+      "reason": "one remaining path-resolution finding"
     }
   ],
   "created_during_execution": [],
-  "escalations": [],
+  "escalations": [
+    {
+      "topic": "committed receipts vs evidence budget",
+      "resolution": "owner: amend criteria; receipts outside tree, cited by digest"
+    },
+    {
+      "topic": "a72f2b3f loaded job start",
+      "resolution": "owner: accept receipt"
+    },
+    {
+      "topic": "adoption window",
+      "resolution": "owner: pre-approved one window after wave 4 passes review"
+    },
+    {
+      "topic": "post-timing posterior check",
+      "resolution": "owner: amended 1d787ed3 REQ-02"
+    },
+    {
+      "topic": "rule values in records",
+      "resolution": "owner: invariant amended"
+    }
+  ],
   "surfaced_pitfalls": [],
   "rework_counts": {
-    "10590c11": 1
+    "10590c11": 1,
+    "1d787ed3": 3,
+    "a72f2b3f": 2,
+    "2088e0ec": 2
   },
   "started_at": "2026-11-01T15:20:00+02:00",
   "window": {
     "approved_by": "owner",
-    "start_local": "2026-11-02T04:00+02:00",
-    "jobs": [
-      "1d787ed3",
-      "a72f2b3f"
-    ],
-    "branches": {
-      "1d787ed3": "worktree-agent-1d787ed3",
-      "a72f2b3f": "worktree-agent-a72f2b3f"
-    },
-    "note": "Keep both worktrees and their target directories until the receipts are committed; do not merge main into them before timing."
+    "scope": "one window for 55c3e433-integrated-adoption pilot and confirmation, first night after wave 4 passes review, only this epic's job queued"
   }
 }
