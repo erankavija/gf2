@@ -31,9 +31,9 @@ The measured means are small constants relative to the $\binom{n}{k}$ worst-case
 - Git revision: `df2868bc0ef8e2d7164bccd7fcf5efa88ae2a5b8`
 - CPU model: `AMD Ryzen 9 5900X 12-Core Processor`
 - Toolchain: `rustc 1.97.0 (2d8144b78 2026-07-07)`; `cargo 1.97.0 (c980f4866 2026-06-30)`
-- Sampler: `gf2_stats::sampler::MatrixSampler<F_q>` with ChaCha20; root `ROOT = 0xe0251af320260813`.
+- Sampler: `permanent_statistics::sampler::MatrixSampler<F_q>` with ChaCha20; root `ROOT = 0xe0251af320260813`.
 - Stream purpose: `StreamPurpose::RareEvent` (tag 4), distinct from `Validation`, `Timing`, and `CampaignCell`; stream indices are recorded per cell below.
-- Harness constants and sample sizes are committed in `crates/gf2-algebra/tests/rank_event_rates.rs`; the sizes were not changed after observing outcomes.
+- Harness constants and sample sizes are committed in `experiments/permanent-statistics/tests/rank_event_rates.rs`; the sizes were not changed after observing outcomes.
 
 | $k$ | $q$ | $n$ | stream index | matrix entries drawn per sample | total samples |
 |---:|---:|---:|---:|---:|---:|
@@ -43,4 +43,4 @@ The measured means are small constants relative to the $\binom{n}{k}$ worst-case
 | 2 | 3 | 5 | 201 | 10 | 10000 |
 | 2 | 5 | 4 | 202 | 8 | 20000 |
 
-Regeneration (from the repository root): `cargo nextest run -p gf2-algebra --test rank_event_rates --release --profile ci --run-ignored ignored-only`.
+Regeneration (from the repository root): `cargo nextest run -p permanent-statistics --test rank_event_rates --release --profile ci --run-ignored ignored-only`.

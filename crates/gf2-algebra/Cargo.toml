@@ -40,8 +40,6 @@ gf2-core = { path = "../gf2-core", features = ["test-support"] }
 # Production-only validation boundary: exact algebra anchors exercise the
 # interval estimator without adding a production dependency on statistics.
 gf2-stats = { path = "../gf2-stats" }
-rand_chacha = { workspace = true }
-rand_core = { workspace = true }
 # SHA-256 identities for the `tuning_calibration` benchmark harness.
 sha2 = "0.10"
 tempfile = "3"

@@ -2,7 +2,7 @@ mod common;
 use permanent_statistics::campaign::{
     assess_completed_cell,
     dataset::{self, Manifest},
-    runner::Invocation,
+    runner::{run_cell, Invocation, RunStatus},
     AcceptancePlan,
 };
 use std::fs;
@@ -126,4 +126,47 @@ fn manifest_is_predraw_immutable_and_has_no_shard_inventory() {
     )
     .is_err());
     assert_eq!(fs::read(dir.path().join("manifest.json")).unwrap(), bytes);
+}
+
+#[test]
+fn temporaries_of_an_interrupted_run_do_not_block_a_recovered_dataset() {
+    let config = common::config();
+    let record = common::record(&config);
+    let dir = tempfile::tempdir().unwrap();
+    let bounded = Invocation {
+        max_shards: Some(1),
+        ..Invocation::default()
+    };
+    assert_eq!(
+        run_cell(&config, &record, dir.path(), 3, 2, &bounded).unwrap(),
+        RunStatus::Incomplete
+    );
+    // A process killed mid-write leaves these under its own identifier.
+    fs::create_dir_all(dir.path().join("shards")).unwrap();
+    let left = [
+        "checkpoint.4294967295.tmp",
+        ".summary.csv.4294967295.0.tmp",
+        "shards/.q3-n02.jsonl.4294967295.1.tmp",
+    ];
+    for name in left {
+        fs::write(dir.path().join(name), b"{").unwrap();
+    }
+
+    common::finish(&config, &record, dir.path(), &bounded);
+    for name in left {
+        assert!(!dir.path().join(name).exists(), "{name}");
+    }
+
+    fs::write(dir.path().join("notes.tmp"), b"unknown").unwrap();
+    dataset::finalize(dir.path()).unwrap();
+    assert!(dir.path().join("notes.tmp").exists());
+    assert!(dataset::verify(dir.path()).is_err());
+}
+
+#[test]
+fn committed_analysis_fixtures_verify() {
+    let fixtures = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/analysis");
+    for name in ["small-campaign", "small-campaign-halted"] {
+        dataset::verify(&fixtures.join(name)).unwrap_or_else(|error| panic!("{name}: {error}"));
+    }
 }

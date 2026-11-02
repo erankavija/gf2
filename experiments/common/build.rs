@@ -5,7 +5,7 @@
 use std::collections::BTreeMap;
 use std::env::var;
 use std::fs;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Component, Path};
 use std::process::Command;
 
 #[path = "src/build_profile.rs"]
@@ -33,7 +33,7 @@ fn main() {
         .collect();
     let settings = build_profile::resolve(
         &profile,
-        &configuration_layers(Path::new(&manifest_dir)),
+        &workspace_manifest(Path::new(&manifest_dir)),
         &environment,
     )
     .unwrap_or_else(|reason| panic!("cannot stamp build flags: {reason}"));
@@ -62,36 +62,18 @@ fn main() {
     );
 }
 
-/// Cargo's files holding profiles, from lowest to highest precedence: the
-/// workspace manifest, the Cargo home configuration, then the configuration of
-/// each directory from the filesystem root down to this package.
-fn configuration_layers(package: &Path) -> Vec<toml::Table> {
-    let read = |path: &Path| -> Option<toml::Table> {
-        let text = fs::read_to_string(path).ok()?;
-        println!("cargo:rerun-if-changed={}", path.display());
-        Some(
-            text.parse()
-                .unwrap_or_else(|error| panic!("{} is invalid: {error}", path.display())),
-        )
-    };
-    let manifest = package.ancestors().find_map(|directory| {
-        read(&directory.join("Cargo.toml")).filter(|manifest| manifest.contains_key("workspace"))
-    });
-    let home = var("CARGO_HOME")
-        .map(PathBuf::from)
-        .ok()
-        .or_else(|| var("HOME").ok().map(|home| Path::new(&home).join(".cargo")));
-    let mut directories: Vec<_> = package
+fn workspace_manifest(package: &Path) -> toml::Table {
+    package
         .ancestors()
-        .map(|path| path.join(".cargo"))
-        .collect();
-    directories.extend(home);
-    directories.reverse();
-    let configurations = directories.iter().filter_map(|directory| {
-        // Cargo prefers the extensionless name when both exist.
-        read(&directory.join("config")).or_else(|| read(&directory.join("config.toml")))
-    });
-    manifest.into_iter().chain(configurations).collect()
+        .find_map(|directory| {
+            let path = directory.join("Cargo.toml");
+            let manifest: toml::Table = fs::read_to_string(&path).ok()?.parse().ok()?;
+            manifest.contains_key("workspace").then(|| {
+                println!("cargo:rerun-if-changed={}", path.display());
+                manifest
+            })
+        })
+        .expect("the package belongs to a workspace")
 }
 
 /// Cargo's `PROFILE` collapses a custom profile to `debug` or `release`, which

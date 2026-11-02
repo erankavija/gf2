@@ -506,8 +506,6 @@ dependencies = [
  "gf2-stats",
  "num-bigint",
  "proptest",
- "rand_chacha 0.9.0",
- "rand_core 0.9.3",
  "rayon",
  "serde",
  "serde_json",

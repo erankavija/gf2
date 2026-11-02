@@ -175,6 +175,21 @@ fn atomic_write_json(path: &Path, json: &[u8], on_pre_fsync: impl FnOnce()) -> s
     Ok(())
 }
 
+/// Whether `candidate` is the temporary sibling an interrupted write of the
+/// checkpoint at `checkpoint` left behind. Nothing reads such a file, so a caller
+/// that holds no running writer may remove it.
+#[must_use]
+pub fn is_interrupted_write(checkpoint: &Path, candidate: &Path) -> bool {
+    let stem = checkpoint.file_stem().map(|stem| stem.to_string_lossy());
+    let name = candidate.file_name().map(|name| name.to_string_lossy());
+    let process = stem.zip(name).and_then(|(stem, name)| {
+        let process = name.strip_prefix(&*stem)?.strip_prefix('.')?;
+        Some(process.strip_suffix(".tmp")?.to_owned())
+    });
+    checkpoint.parent() == candidate.parent()
+        && process.is_some_and(|process| process.parse::<u32>().is_ok())
+}
+
 /// Atomic, crash-safe writer for a serializable checkpoint payload.
 ///
 /// The writer serializes its payload inside an
@@ -407,6 +422,42 @@ mod tests {
         fn config_hash(&self) -> String {
             self.0.to_string()
         }
+    }
+
+    #[test]
+    fn an_interrupted_write_leaves_a_recognizable_temporary() {
+        let dir = tempdir();
+        let path = dir.path().join("progress.json");
+        let writer = CheckpointWriter::<UnrelatedPayload, _>::for_payload(
+            &path,
+            TestConfigHash("blake3:campaign-a"),
+        )
+        .unwrap();
+        let payload = UnrelatedPayload {
+            shard_name: "q5-n12-s003".to_string(),
+            samples: 1,
+        };
+        let interrupted = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            writer.write_payload_with_fsync_hook(&payload, || panic!("interrupted"))
+        }));
+        assert!(interrupted.is_err());
+        assert!(!path.exists());
+
+        let left: Vec<_> = std::fs::read_dir(dir.path())
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .collect();
+        assert_eq!(left.len(), 1);
+        assert!(is_interrupted_write(&path, &left[0]));
+        assert!(!is_interrupted_write(&path, &path));
+        assert!(!is_interrupted_write(
+            &path,
+            &dir.path().join("progress.notes.tmp")
+        ));
+        assert!(!is_interrupted_write(
+            &path,
+            &dir.path().join("other/progress.1.tmp")
+        ));
     }
 
     #[test]
