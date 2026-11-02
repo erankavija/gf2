@@ -2,8 +2,8 @@ use std::fs;
 use std::path::Path;
 
 use experiments_common::{RepositoryRoot, RngAlgorithm, RngIdentity, RunRecord};
-use gf2_stats::sampler::FieldOrder;
 use permanent_statistics::rare_event::runner::{execute_frozen_run, Configuration, RunStatus};
+use permanent_statistics::sampler::FieldOrder;
 
 fn configuration(q: FieldOrder) -> Configuration {
     Configuration {

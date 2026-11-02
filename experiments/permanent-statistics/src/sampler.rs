@@ -231,7 +231,7 @@ const RNG_BUFFER_BYTES: usize = 64;
 ///
 /// ```
 /// use gf2_core::gfp::Fp;
-/// use gf2_stats::sampler::{
+/// use permanent_statistics::sampler::{
 ///     FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose,
 /// };
 ///

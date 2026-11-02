@@ -1,5 +1,7 @@
 use gf2_core::gfp::Fp;
-use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose};
+use permanent_statistics::sampler::{
+    FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose,
+};
 
 #[test]
 fn opens_an_addressed_stream_and_fills_the_callers_buffer() {

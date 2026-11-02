@@ -1,5 +1,6 @@
 use super::dataset::ShardRecord;
 use super::{invalid, CampaignError, Cell, ShardSpec};
+use crate::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose};
 use gf2_algebra::packed::{Bipedal3Matrix, Packed5Matrix, Packed7Matrix};
 use gf2_algebra::permanent::bipedal5::permanent_bipedal5_singleword;
 use gf2_algebra::permanent::bipedal7::permanent_bipedal7_singleword;
@@ -10,7 +11,6 @@ use gf2_core::{
     field::{matrix::FieldMatrix, FieldVec},
     gfp::Fp,
 };
-use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose};
 use rayon::{prelude::*, ThreadPool, ThreadPoolBuilder};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;

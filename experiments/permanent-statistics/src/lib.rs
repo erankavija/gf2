@@ -4,6 +4,7 @@
 #![warn(missing_docs)]
 
 pub mod rare_event;
+pub mod sampler;
 
 mod execution_log;
 

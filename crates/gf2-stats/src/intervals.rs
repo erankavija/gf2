@@ -346,7 +346,7 @@ mod tests {
     }
 
     #[test]
-    fn remains_well_formed_at_campaign_maximum() {
+    fn remains_well_formed_at_large_counts() {
         let (lower, upper) = wilson_interval(2_857_143, 20_000_000, Z_95);
         assert!(lower.is_finite() && upper.is_finite());
         assert!(0.0 <= lower && lower <= upper && upper <= 1.0);

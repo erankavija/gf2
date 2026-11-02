@@ -8,14 +8,12 @@ use std::fs::File;
 use std::path::Path;
 
 use crate::execution_log::{self, ExecutionLog};
+use crate::sampler::{FieldOrder, MatrixAddress, StreamIndex, StreamPurpose, STREAM_INDEX_LIMIT};
 use experiments_common::{create_durable, publish_atomic, RunIdentity, RunRecord, Sha256Digest};
 use gf2_algebra::permanent::SupportedPrimeField;
 use gf2_core::gfp::Fp;
 use gf2_sim::checkpoint::{
     CheckpointLoadError, CheckpointPayload, CheckpointReader, CheckpointWriter,
-};
-use gf2_stats::sampler::{
-    FieldOrder, MatrixAddress, StreamIndex, StreamPurpose, STREAM_INDEX_LIMIT,
 };
 use gf2_stats::weighted::{ExponentHistogram, WeightedError, WeightedRuns};
 use serde::{Deserialize, Serialize};

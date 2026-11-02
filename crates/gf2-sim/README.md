@@ -14,7 +14,7 @@ Choose `gf2-sim` when a study needs an error-rate sweep or a campaign that is
 seeded, distributed over workers and resumable from checkpoints. The component
 crates serve work below that layer: `gf2-coding` for codes, decoders, modems,
 channel models and its `sim_runner` campaign files, `gf2-algebra` for
-permanent computation, `gf2-stats` for sampling and interval statistics, and
+permanent computation, `gf2-stats` for interval statistics, and
 [`gf2-core`](../gf2-core/README.md) for field arithmetic and linear algebra.
 
 ## Documentation

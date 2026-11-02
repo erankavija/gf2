@@ -18,11 +18,11 @@ fn supporting_cpu_backends_share_the_per_matrix_contract() {
 }
 
 mod common;
-use gf2_stats::sampler::StreamPurpose;
 use permanent_statistics::campaign::{
     evaluate_determinant, evaluate_shard, launch_size, resolve_processor_path, ProcessorPath,
     ShardSpec,
 };
+use permanent_statistics::sampler::StreamPurpose;
 use std::time::Duration;
 
 fn field_contract<const Q: u64>() {

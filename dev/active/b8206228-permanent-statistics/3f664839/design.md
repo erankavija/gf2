@@ -451,11 +451,11 @@ The addressing authority is the frozen
 with campaign id `permanent-zero-fraction-20260829`, interpreted under the
 [frozen protocol](/dev/simulation_results/permanent-zero-fraction/protocol.md)
 and the canonical sampler in
-`crates/gf2-stats/src/sampler.rs`. Every stochastic coefficient draw uses the
+`experiments/permanent-statistics/src/sampler.rs`. Every stochastic coefficient draw uses the
 frozen campaign root
 $s=\mathtt{0x7a81626200000001}$, `FieldOrder`, matrix dimension $n$,
 `StreamPurpose::RareEvent`, and `StreamIndex` through
-`gf2_stats::sampler::MatrixAddress`. `StreamPurpose::RareEvent` has manifested
+`permanent_statistics::sampler::MatrixAddress`. `StreamPurpose::RareEvent` has manifested
 tag $4$. Tag $1$ remains validation, tag $2$ remains timing, and tag
 $3$ remains campaign cells. The high purpose byte and low $56$-bit stream
 index therefore separate rare-event draws from campaign and validation data by

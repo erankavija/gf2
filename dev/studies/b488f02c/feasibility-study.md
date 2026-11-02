@@ -1030,7 +1030,7 @@ agent working with review, and assume the harness in
 
 | ID | Gap | Status | Effort (est.) |
 |---|---|---|---|
-| G1 | Uniform $\mathbb{F}_q$ matrix sampler | Landed as [`gf2_stats::sampler`](../../../crates/gf2-stats/src/sampler.rs); prototype retained as historical context | 0.5 d (historical) |
+| G1 | Uniform $\mathbb{F}_q$ matrix sampler | Landed as [`permanent_statistics::sampler`](../../../experiments/permanent-statistics/src/sampler.rs); prototype retained as historical context | 0.5 d (historical) |
 | G2 | Streaming zero-fraction statistics with CIs | Prototyped, needs checkpointing | 1.0 d |
 | G3 | Campaign runner | Landed as [`gf2_sim::permanent_campaign::schedule`](../../../crates/gf2-sim/src/permanent_campaign/schedule.rs) and the [`permanent_campaign` binary](../../../crates/gf2-sim/src/bin/permanent_campaign.rs); one field arm enumerates, executes, and emits the manifest's work items | 2.0 d (historical) |
 | G4 | Versioned dataset format | Landed as [`gf2_sim::permanent_campaign`](../../../crates/gf2-sim/src/permanent_campaign/), published under [`dev/simulation_results/permanent-zero-fraction/`](../../simulation_results/permanent-zero-fraction/README.md) | 0.5 d (historical) |
@@ -1041,7 +1041,7 @@ agent working with review, and assume the harness in
 
 **G1 — uniform sampler.** The feasibility harness implemented exact rejection
 sampling over ChaCha20 (`sampler.rs`). Its production successor is the
-[`gf2_stats::sampler` rustdoc](../../../crates/gf2-stats/src/sampler.rs), which is
+[`permanent_statistics::sampler` rustdoc](../../../experiments/permanent-statistics/src/sampler.rs), which is
 the canonical contract for its `MatrixAddress` and `MatrixSampler` surfaces.
 Rejection is required because the sampler consumes bytes and
 $256 \bmod 7 = 4$: reducing a byte without rejection would give four residues
@@ -1470,7 +1470,7 @@ only be consistent with. Every conclusion must be phrased at the measured sizes.
 
 ### 7.3 Seeding scheme
 
-The production [`gf2_stats::sampler` rustdoc](../../../crates/gf2-stats/src/sampler.rs)
+The production [`permanent_statistics::sampler` rustdoc](../../../experiments/permanent-statistics/src/sampler.rs)
 is the source of truth. Its `MatrixAddress` seeds ChaCha20 (`rand_chacha` 0.9)
 from four little-endian `u64` words: campaign root, $q$, $n$, and a final word
 whose high eight bits are a closed `StreamPurpose` tag and whose low 56 bits are

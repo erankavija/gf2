@@ -71,32 +71,6 @@ pub fn lower_tail_test(successes: u64, trials: u64, null_probability: f64) -> Ex
     }
 }
 
-/// Tests the permanent zero-probability floor for a field of order `field_order`.
-///
-/// This is [`lower_tail_test`] specialized to $H_0: p \ge 1/q$, where
-/// `field_order` is $q$. It therefore evaluates the composite null at exactly
-/// the least favorable permitted probability $p_0 = 1/q$, and rejects only for
-/// a count that is too small. It does not test a deviation above the floor.
-///
-/// # Panics
-///
-/// Panics when `field_order` is smaller than two, or for any invalid count
-/// input documented by [`lower_tail_test`].
-///
-/// # Complexity
-///
-/// Has the same $O(N)$ worst-case time and $O(1)$ auxiliary-space complexity
-/// as [`lower_tail_test`].
-#[must_use]
-pub fn permanent_zero_floor_test(
-    successes: u64,
-    trials: u64,
-    field_order: u64,
-) -> ExactBinomialTest {
-    assert!(field_order >= 2, "field order must be at least two");
-    lower_tail_test(successes, trials, 1.0 / field_order as f64)
-}
-
 /// Performs a two-sided exact binomial test against `null_probability`.
 ///
 /// This uses the conventional probability-ordering definition. For an observed

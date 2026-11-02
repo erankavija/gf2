@@ -13,10 +13,9 @@ algorithm written once over `FiniteField` and run over several field
 families. The crates above it add domain layers:
 [`gf2-coding`](../gf2-coding/README.md) for codes, modems and channels,
 [`gf2-algebra`](../gf2-algebra/README.md) for packed $\mathbb{F}_3$,
-$\mathbb{F}_5$ and $\mathbb{F}_7$ arithmetic and permanents,
-[`gf2-stats`](../gf2-stats/README.md) for seeded sampling and interval
-statistics, and [`gf2-sim`](../gf2-sim/README.md) for simulation
-orchestration.
+$\mathbb{F}_5$ and $\mathbb{F}_7$ arithmetic and permanents, and
+[`gf2-sim`](../gf2-sim/README.md) for simulation orchestration. Statistical
+estimators are available from [`gf2-stats`](../gf2-stats/README.md).
 
 ## Documentation
 

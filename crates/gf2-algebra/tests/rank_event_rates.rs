@@ -1,7 +1,7 @@
 //! Reproducible rare-event estimates for permanental rank deficiency. The
 //! ignored test is an explicitly invoked campaign. It uses the production rank
-//! predicate, the production domain-separated sampler, and the production exact
-//! binomial interval implementation, then writes the committed receipt.
+//! predicate and exact binomial interval implementation. A local test helper
+//! preserves the production sampler's addressed ChaCha20 streams for the receipt.
 
 use std::fmt::Write as _;
 use std::path::PathBuf;
@@ -11,7 +11,11 @@ use gf2_algebra::permanent::{permanental_rank_status_with_stats, PermanentalRank
 use gf2_core::field::ConstField;
 use gf2_core::gfp::Fp;
 use gf2_stats::intervals::clopper_pearson_interval;
-use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose};
+
+#[path = "support/matrix_draw.rs"]
+mod matrix_draw;
+
+use matrix_draw::MatrixDraw;
 
 const ROOT: u64 = 0xE025_1AF3_2026_0813;
 const INTERVAL_LEVEL: f64 = 0.95;
@@ -77,33 +81,15 @@ struct ResultRow {
     mean_permanent_evaluations_interval: (f64, f64),
 }
 
-fn field_order(q: u64) -> FieldOrder {
-    match q {
-        3 => FieldOrder::F3,
-        5 => FieldOrder::F5,
-        7 => FieldOrder::F7,
-        _ => panic!("unsupported field order q={q}"),
-    }
-}
-
 fn run_cell<const Q: u64>(cell: Cell) -> ResultRow {
-    let address = MatrixAddress::new(
-        ROOT,
-        field_order(cell.q),
-        cell.n,
-        StreamPurpose::RareEvent,
-        StreamIndex::new(cell.stream).expect("preregistered stream index fits"),
-    );
-    let mut sampler = MatrixSampler::<Q>::new(address).expect("field order matches sampler");
+    let mut sampler = MatrixDraw::addressed(ROOT, cell.q, cell.n, 4, cell.stream);
     let mut matrix = vec![Fp::<Q>::zero(); cell.n * cell.k];
     let mut events = 0_u64;
     let mut permanent_evaluations_sum = 0_u128;
     let mut permanent_evaluations_sum_squares = 0_u128;
 
     for _ in 0..cell.samples {
-        for entry in &mut matrix {
-            *entry = sampler.next_entry();
-        }
+        sampler.fill_matrix(&mut matrix);
         let evaluation = permanental_rank_status_with_stats(&matrix, cell.n, cell.k);
         events += u64::from(evaluation.status == PermanentalRank::Deficient);
         let permanent_evaluations = u128::from(evaluation.permanent_evaluations as u64);
@@ -254,9 +240,9 @@ fn make_receipt(rows: &[ResultRow]) -> String {
         command_output("cargo", &["--version"])
     )
     .unwrap();
-    writeln!(receipt, "- Sampler: `gf2_stats::sampler::MatrixSampler<F_q>` with ChaCha20; root `ROOT = {ROOT:#018x}`.").unwrap();
+    writeln!(receipt, "- Sampler: test-local ChaCha20 address and byte-rejection helper matching `permanent_statistics::sampler::MatrixSampler<F_q>`; root `ROOT = {ROOT:#018x}`.").unwrap();
     writeln!(receipt, "- Stream purpose: `StreamPurpose::RareEvent` (tag 4), distinct from `Validation`, `Timing`, and `CampaignCell`; stream indices are recorded per cell below.").unwrap();
-    writeln!(receipt, "- Harness constants and sample sizes are committed in `crates/gf2-algebra/tests/rank_event_rates.rs`; the sizes were not changed after observing outcomes.").unwrap();
+    writeln!(receipt, "- Harness constants and sample sizes are committed in `crates/gf2-algebra/tests/rank_event_rates.rs`; draws use `crates/gf2-algebra/tests/support/matrix_draw.rs`, and the sizes were not changed after observing outcomes.").unwrap();
     writeln!(receipt).unwrap();
     writeln!(
         receipt,
