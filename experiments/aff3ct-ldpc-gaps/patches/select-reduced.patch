@@ -1,0 +1,46 @@
+--- a/crates/gf2-coding/src/ldpc/min_sum.rs
++++ b/crates/gf2-coding/src/ldpc/min_sum.rs
+@@ -122,14 +122,22 @@
+             -sign_product
+         };
+         let magnitude = value.abs();
+-        if magnitude < min1 {
+-            min2 = min1;
+-            min1 = magnitude;
+-            arg1 = index;
+-        } else if magnitude < min2 {
+-            min2 = magnitude;
+-        }
+-    }
++        let first = magnitude < min1;
++        let second = magnitude < min2;
++        let next_second = if second { magnitude } else { min2 };
++        min2 = if first { min1 } else { next_second };
++        min1 = if first { magnitude } else { min1 };
++        arg1 = if first { index } else { arg1 };
++    }
++
++    let signed_minima = if let MinSumRule::Normalized(alpha) = rule {
++        Some([
++            [alpha * (1.0 * min1), alpha * (-1.0 * min1)],
++            [alpha * (1.0 * min2), alpha * (-1.0 * min2)],
++        ])
++    } else {
++        None
++    };
+ 
+     // Pass two: each output takes the minimum that excludes its own input, and
+     // the shared sign product with its own sign removed.
+@@ -140,7 +148,11 @@
+             -sign_product
+         };
+         let magnitude = if index == arg1 { min2 } else { min1 };
+-        *output = rule.apply(sign, magnitude);
++        *output = if let Some(signed) = signed_minima {
++            Llr::new(signed[usize::from(index == arg1)][usize::from(sign < 0.0)])
++        } else {
++            rule.apply(sign, magnitude)
++        };
+     }
+ }
+ 

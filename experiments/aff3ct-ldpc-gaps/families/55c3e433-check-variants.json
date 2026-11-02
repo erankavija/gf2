@@ -1,0 +1,203 @@
+{
+  "family": {
+    "id": "55c3e433-check-variants",
+    "issue": "a72f2b3f",
+    "purpose": "decoder-family",
+    "description": "Exploratory comparison of two isolated scalar check-row patches against unchanged production, each from its own pinned tree, on the forced single-frame route. The AList graphs, recorded LLRs, f32 flooding NMS factor 0.75, cap 50, syndrome stopping, timed prefix and steady-state decode boundary are those of 1362381c-ldpc-aff3ct-integration. Each worker owns its decoder before timing; conversion, dispatch and information-window extraction are included. Per-frame iterations are direct post-timing observations. At most one pilot campaign runs. The check-variants contract in dev/active/55c3e433-aff3ct-ldpc-gaps/plan.md governs exploratory nomination; this family adopts no production change."
+  },
+  "frozen_utc": "2026-11-01T15:21:11Z",
+  "effect": {
+    "worthwhile_speedup": 1.1,
+    "rationale": "A repeatable ten percent improvement repays one scalar function and no dispatch.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "The nomination permits no cell whose speedup lower bound falls below 1/1.1; the fixed ten percent improvement margin repays one scalar function and no dispatch.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The exploratory check-row comparison uses the fixed nomination margin; it has no comparator-gap cells."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 150,
+    "maintenance_rationale": "Each isolated patch changes one scalar function without dispatch."
+  },
+  "family_wise": {
+    "ledger_path": "target/aff3ct-ldpc-gaps/55c3e433-check-variants/ledger.jsonl",
+    "prior_trials": []
+  },
+  "max_pilot_trials_per_cell": 1,
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "campaign": {
+    "id": "55c3e433-check-variants-pilot",
+    "seed": 3674285378,
+    "pilot_pairs": 12,
+    "max_cells_per_session": 1
+  },
+  "codes": {
+    "dvb-t2-r12": {
+      "code_identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+      "workload_identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+      "bundle_contract": {
+        "n": 64800,
+        "k": 32400,
+        "frames": 128,
+        "seed": 42
+      },
+      "decoder_code": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+        "n": 64800,
+        "k": 32400,
+        "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+      },
+      "decoder_input": {
+        "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle dvb-t2-r12-waterfall",
+        "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+        "frames": 128,
+        "seed": 42,
+        "codeword_source": "both",
+        "snr_db": -1.2
+      }
+    },
+    "nr-bg1-z384": {
+      "code_identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+      "workload_identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+      "bundle_contract": {
+        "n": 26112,
+        "k": 8448,
+        "frames": 128,
+        "seed": 42
+      },
+      "decoder_code": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+        "n": 26112,
+        "k": 8448,
+        "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+      },
+      "decoder_input": {
+        "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle nr-bg1-z384-mother",
+        "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+        "frames": 128,
+        "seed": 42,
+        "codeword_source": "both",
+        "snr_db": -4.3
+      }
+    }
+  },
+  "cell": {
+    "objective": "improvement",
+    "metric_kind": "whole-consumer",
+    "scaling": "sustained-throughput",
+    "core_arm": "single-core",
+    "workers": {
+      "declared": 1,
+      "nested_pools_allowed": false
+    },
+    "cache_state": "warm",
+    "conversion_costs_included": true,
+    "baseline": "gf2-batch-single-frame-unchanged",
+    "candidate": "gf2-check-cached-signed",
+    "timed_batch": 8,
+    "size": {
+      "timed_fixture_banks": 1
+    },
+    "decoder": {
+      "arm_kind": "matched-algorithm",
+      "precision": "f32",
+      "schedule": "flooding",
+      "normalization": {
+        "kind": "normalized-min-sum",
+        "factor": 0.75
+      },
+      "iteration_cap": 50,
+      "stopping": {
+        "kind": "syndrome",
+        "crc": null
+      },
+      "batching": {
+        "batch_size": 1,
+        "batch_fill_included": true
+      },
+      "quality_tolerance": {
+        "fer_ratio_max": 1.0
+      },
+      "rate_matching": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-cached-signed-w1-b1",
+      "code": "dvb-t2-r12",
+      "candidate": "gf2-check-cached-signed",
+      "timed_batch": 1,
+      "scaling": "single-core-latency"
+    },
+    {
+      "cell_id": "dvb-t2-r12-cached-signed-p12-b8",
+      "code": "dvb-t2-r12",
+      "candidate": "gf2-check-cached-signed",
+      "timed_batch": 8,
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-cached-signed-w1-b1",
+      "code": "nr-bg1-z384",
+      "candidate": "gf2-check-cached-signed",
+      "timed_batch": 1,
+      "scaling": "single-core-latency"
+    },
+    {
+      "cell_id": "nr-bg1-z384-cached-signed-p12-b8",
+      "code": "nr-bg1-z384",
+      "candidate": "gf2-check-cached-signed",
+      "timed_batch": 8,
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12
+      }
+    },
+    {
+      "cell_id": "dvb-t2-r12-select-reduced-w1-b1",
+      "code": "dvb-t2-r12",
+      "candidate": "gf2-check-select-reduced",
+      "timed_batch": 1,
+      "scaling": "single-core-latency"
+    },
+    {
+      "cell_id": "dvb-t2-r12-select-reduced-p12-b8",
+      "code": "dvb-t2-r12",
+      "candidate": "gf2-check-select-reduced",
+      "timed_batch": 8,
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-select-reduced-w1-b1",
+      "code": "nr-bg1-z384",
+      "candidate": "gf2-check-select-reduced",
+      "timed_batch": 1,
+      "scaling": "single-core-latency"
+    },
+    {
+      "cell_id": "nr-bg1-z384-select-reduced-p12-b8",
+      "code": "nr-bg1-z384",
+      "candidate": "gf2-check-select-reduced",
+      "timed_batch": 8,
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12
+      }
+    }
+  ]
+}

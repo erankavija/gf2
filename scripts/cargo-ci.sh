@@ -285,6 +285,7 @@ run_step tuning-coding-calibration-nextest "$BUDGET" --test cargo nextest run -p
 run_step tuning-campaign-support-build "$BUDGET" cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --no-run
 run_step tuning-campaign-support-nextest "$BUDGET" --test cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
 run_step tuning-campaign-validator python3 dev/scripts/validate-tuning-extent-campaign.py --self-test
+run_step aff3ct-ldpc-gaps-python python3 -m pytest -q experiments/aff3ct-ldpc-gaps
 run_step repository-files-self-test python3 dev/scripts/repository_files_test.py
 run_step reference-check-self-test python3 -B scripts/check-references.py --self-test
 run_step reference-check python3 -B scripts/check-references.py

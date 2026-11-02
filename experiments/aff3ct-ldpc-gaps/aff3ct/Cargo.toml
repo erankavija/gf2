@@ -1,0 +1,32 @@
+[workspace]
+
+[package]
+name = "aff3ct-ldpc-arm"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+aff3ct-ldpc-gaps = { path = ".." }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[build-dependencies]
+cc = "1"
+
+[[bin]]
+name = "aff3ct-throughput-arm"
+path = "src/main.rs"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+[profile.ci-test]
+inherits = "release"
+lto = false
+codegen-units = 16
+debug-assertions = true
+
+[dev-dependencies]
+gf2-core = { path = "../../../crates/gf2-core", features = ["test-support"] }
