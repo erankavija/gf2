@@ -9,7 +9,7 @@ import sys
 
 import pytest
 
-from campaign import HERE, ROOT, digest, input_root, output_path, read, write
+from campaign import HERE, ROOT, digest, files, input_root, output_path, read, write
 
 
 def load(name):
@@ -30,6 +30,35 @@ def test_declarations_reproduce_their_tracked_configuration(declaration, tmp_pat
     tracked = HERE / "plans" / declaration.stem
     for name in ("addendum.json", "plan.json"):
         assert (tmp_path / name).read_bytes() == (tracked / name).read_bytes()
+
+
+def test_generation_locates_shared_files_by_content_not_directory(tmp_path):
+    """A checkout that keeps the campaign library elsewhere still generates the tracked plans."""
+    listing = subprocess.check_output(
+        ["git", "-C", str(ROOT), "ls-files", "-z", "--cached", "--others", "--exclude-standard"], text=True)
+    support = ROOT / files.package_directory(ROOT, "tuning-campaign-support")
+    wanted = [path for path in listing.split("\0") if path and (ROOT / path).is_file() and (
+        Path(path).is_relative_to(support.relative_to(ROOT)) and "src" not in Path(path).parts
+        and "tests" not in Path(path).parts
+        or path.startswith(str(HERE.relative_to(ROOT)) + "/") and Path(path).parent.name in ("aff3ct-ldpc-gaps", "families", "plans")
+        or Path(path).name in ("repository_files.py", "campaign_plan.py", "ccx1-bench-flock.sh"))]
+    checkout = tmp_path / "checkout"
+    moved = str(support.relative_to(ROOT))
+    for path in wanted:
+        target = checkout / path.replace(moved, "libraries/renamed-support", 1)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / path, target)
+    subprocess.run(["git", "init", "-q"], cwd=checkout, check=True)
+    subprocess.run(["git", "add", "-A"], cwd=checkout, check=True)
+    declaration = next((checkout / HERE.relative_to(ROOT) / "families").glob("*.json"))
+    out = tmp_path / "out"
+    result = subprocess.run(
+        [sys.executable, str(checkout / HERE.relative_to(ROOT) / "make-family.py"),
+         "--configuration", str(declaration), str(out)], capture_output=True, text=True, cwd=checkout)
+    assert result.returncode == 0, result.stderr
+    tracked = HERE / "plans" / declaration.stem
+    for name in ("addendum.json", "plan.json"):
+        assert (out / name).read_bytes() == (tracked / name).read_bytes()
 
 
 def test_input_root_is_explicit_and_independent_of_cwd(tmp_path, monkeypatch):
