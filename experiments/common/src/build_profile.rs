@@ -1,6 +1,7 @@
-//! Resolves a Cargo profile's LTO and codegen-unit settings, which Cargo hides
-//! from build scripts, by applying its merge rules to its configuration sources.
-//! `build.rs` includes this file; the library compiles it only for its tests.
+//! Resolves the LTO and codegen-unit settings that the workspace manifest and
+//! the environment declare for a Cargo profile, which Cargo hides from build
+//! scripts. `build.rs` includes this file; the library compiles it only for its
+//! tests.
 
 use std::collections::BTreeMap;
 
@@ -16,8 +17,8 @@ pub struct ProfileSettings {
 }
 
 /// Resolves `directory`, the name a profile's output directory carries, against
-/// `layers` ordered from lowest to highest precedence and the `CARGO_PROFILE_*`
-/// entries of `environment`, which outrank every layer.
+/// `manifest` and the `CARGO_PROFILE_*` entries of `environment`, which outrank
+/// it.
 ///
 /// A profile's own value outranks an inherited one at any precedence, as in
 /// Cargo.
@@ -30,11 +31,11 @@ pub struct ProfileSettings {
 /// output directory with `dev` and `release`.
 pub fn resolve(
     directory: &str,
-    layers: &[toml::Table],
+    manifest: &toml::Table,
     environment: &BTreeMap<String, String>,
 ) -> Result<ProfileSettings, String> {
     let source = Source {
-        layers,
+        manifest,
         environment,
     };
     let (name, indistinguishable) = match directory {
@@ -87,16 +88,17 @@ pub fn resolve(
 }
 
 struct Source<'a> {
-    layers: &'a [toml::Table],
+    manifest: &'a toml::Table,
     environment: &'a BTreeMap<String, String>,
 }
 
 impl Source<'_> {
-    fn tables<'s>(&'s self, profile: &'s str) -> impl Iterator<Item = &'s toml::Table> {
-        self.layers
-            .iter()
-            .rev()
-            .filter_map(move |layer| layer.get("profile")?.as_table()?.get(profile)?.as_table())
+    fn table(&self, profile: &str) -> Option<&toml::Table> {
+        self.manifest
+            .get("profile")?
+            .as_table()?
+            .get(profile)?
+            .as_table()
     }
 
     fn value(&self, profile: &str, key: &str) -> Option<String> {
@@ -106,12 +108,10 @@ impl Source<'_> {
             key.replace('-', "_").to_uppercase()
         );
         self.environment.get(&variable).cloned().or_else(|| {
-            self.tables(profile)
-                .find_map(|table| table.get(key))
-                .map(|value| match value {
-                    toml::Value::String(text) => text.clone(),
-                    other => other.to_string(),
-                })
+            self.table(profile)?.get(key).map(|value| match value {
+                toml::Value::String(text) => text.clone(),
+                other => other.to_string(),
+            })
         })
     }
 
@@ -128,10 +128,10 @@ impl Source<'_> {
             .environment
             .keys()
             .any(|name| name.starts_with(&format!("{}PACKAGE_", environment_stem(profile))));
-        let in_layers = self
-            .tables(profile)
-            .any(|table| table.contains_key("package"));
-        if in_environment || in_layers {
+        let in_manifest = self
+            .table(profile)
+            .is_some_and(|table| table.contains_key("package"));
+        if in_environment || in_manifest {
             return Err(format!(
                 "profile `{profile}` has a package override, so one set of flags cannot \
                  describe the executable"
@@ -172,26 +172,20 @@ mod tests {
             codegen-units = 16
             "#,
         );
-        let settings = resolve("gate", &[manifest], &no_environment()).unwrap();
+        let settings = resolve("gate", &manifest, &no_environment()).unwrap();
         assert_eq!(settings.lto, "thin");
         assert_eq!(settings.codegen_units, Some(16));
     }
 
     #[test]
-    fn configuration_outranks_the_manifest_and_the_environment_outranks_both() {
+    fn the_environment_outranks_the_manifest() {
         let manifest = layer("[profile.release]\nlto = \"thin\"\ncodegen-units = 1");
-        let configuration = layer("[profile.release]\nlto = \"fat\"\ncodegen-units = 2");
-        let layers = [manifest, configuration];
-        let settings = resolve("release", &layers, &no_environment()).unwrap();
-        assert_eq!(settings.lto, "fat");
-        assert_eq!(settings.codegen_units, Some(2));
-
         let environment = BTreeMap::from([(
             "CARGO_PROFILE_RELEASE_CODEGEN_UNITS".to_owned(),
             "3".to_owned(),
         )]);
-        let settings = resolve("release", &layers, &environment).unwrap();
-        assert_eq!(settings.lto, "fat");
+        let settings = resolve("release", &manifest, &environment).unwrap();
+        assert_eq!(settings.lto, "thin");
         assert_eq!(settings.codegen_units, Some(3));
     }
 
@@ -200,13 +194,13 @@ mod tests {
         let manifest = layer("[profile.gate]\ninherits = \"release\"\nlto = false");
         let environment =
             BTreeMap::from([("CARGO_PROFILE_RELEASE_LTO".to_owned(), "fat".to_owned())]);
-        let settings = resolve("gate", &[manifest], &environment).unwrap();
+        let settings = resolve("gate", &manifest, &environment).unwrap();
         assert_eq!(settings.lto, "false");
     }
 
     #[test]
     fn unset_values_resolve_to_cargo_defaults_and_the_compiler_choice() {
-        let settings = resolve("debug", &[], &no_environment()).unwrap();
+        let settings = resolve("debug", &toml::Table::new(), &no_environment()).unwrap();
         assert_eq!(settings.lto, "false");
         assert_eq!(settings.codegen_units, None);
     }
@@ -217,27 +211,27 @@ mod tests {
             "[profile.release.package.member]\nopt-level = 1\n\
              [profile.gate]\ninherits = \"release\"",
         );
-        assert!(resolve("gate", &[inherited], &no_environment()).is_err());
+        assert!(resolve("gate", &inherited, &no_environment()).is_err());
 
         let manifest = layer("[profile.gate]\ninherits = \"release\"");
         let environment = BTreeMap::from([(
             "CARGO_PROFILE_RELEASE_PACKAGE_MEMBER_OPT_LEVEL".to_owned(),
             "1".to_owned(),
         )]);
-        assert!(resolve("gate", &[manifest], &environment).is_err());
+        assert!(resolve("gate", &manifest, &environment).is_err());
     }
 
     #[test]
     fn a_build_override_describes_no_linked_crate_and_is_accepted() {
         let manifest = layer("[profile.release.build-override]\nopt-level = 0");
-        assert!(resolve("release", &[manifest], &no_environment()).is_ok());
+        assert!(resolve("release", &manifest, &no_environment()).is_ok());
     }
 
     #[test]
     fn a_setting_on_a_profile_sharing_the_directory_is_refused() {
         let bench = layer("[profile.bench]\nlto = \"fat\"");
-        assert!(resolve("release", &[bench], &no_environment()).is_err());
+        assert!(resolve("release", &bench, &no_environment()).is_err());
         let test = layer("[profile.test]\ncodegen-units = 1");
-        assert!(resolve("debug", &[test], &no_environment()).is_err());
+        assert!(resolve("debug", &test, &no_environment()).is_err());
     }
 }

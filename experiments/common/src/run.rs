@@ -26,11 +26,18 @@ pub struct RngIdentity {
     pub version: String,
 }
 
-/// Effective build flags of the executable, stamped when this crate compiled.
-/// The build of this crate fails on a package override of the profile, so the
-/// flags describe every crate the executable links. A `--config` override on the
-/// Cargo command line stays invisible to the stamp and shows only in the
-/// executable digest.
+/// Build flags of the executable, stamped when this crate compiled.
+///
+/// Cargo tells a build script `profile`, `opt_level`, `target` and `rustflags`
+/// and hides `lto` and `codegen_units`, so those two record what the workspace
+/// manifest and the `CARGO_PROFILE_*` environment declare for the profile.
+/// A package override in either fails the build of this crate.
+///
+/// A measurement build takes these two settings from no other source: a Cargo
+/// configuration file or `--config` setting either of them is caller error,
+/// which leaves the record stale and shows only in the executable digest. Cargo
+/// exposes neither source to a build script, and does not rerun one when they
+/// change, so this crate cannot detect them.
 #[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -38,10 +45,10 @@ pub struct BuildFlags {
     /// Cargo profile name, custom profiles included; `debug` names `dev`.
     pub profile: String,
     pub opt_level: String,
-    /// Link-time optimization value as Cargo configuration spells it; `false`
+    /// Declared link-time optimization value as the manifest spells it; `false`
     /// when the profile leaves it unset.
     pub lto: String,
-    /// Absent when the profile leaves the choice to the compiler.
+    /// Declared count; absent when the profile leaves the choice to the compiler.
     pub codegen_units: Option<u32>,
     pub target: String,
     /// Compiler flags from `RUSTFLAGS` and Cargo configuration, in order.

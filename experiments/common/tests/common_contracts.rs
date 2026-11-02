@@ -252,29 +252,46 @@ fn a_failed_publish_keeps_the_target_and_removes_its_temporary() {
     );
 }
 
+/// Makes `directory` searchable and writable but unreadable for `action`, or
+/// skips it for root, which ignores the mode.
+fn while_unreadable<T>(directory: &Path, action: impl FnOnce() -> T) -> Option<T> {
+    fs::set_permissions(directory, fs::Permissions::from_mode(0o300)).unwrap();
+    let result = fs::read_dir(directory).is_err().then(action);
+    fs::set_permissions(directory, fs::Permissions::from_mode(0o700)).unwrap();
+    result
+}
+
 #[test]
-fn a_directory_sync_failure_after_the_rename_is_distinguished() {
+fn an_unreadable_parent_refuses_before_replacing_the_target() {
     let directory = tempfile::tempdir().unwrap();
     let parent = directory.path().join("parent");
     let target = parent.join("state");
     publish_atomic(&target, b"first").unwrap();
 
-    // Searchable and writable but unreadable: the rename succeeds and opening
-    // the directory for its sync fails. Root ignores the mode.
-    fs::set_permissions(&parent, fs::Permissions::from_mode(0o300)).unwrap();
-    let readable_anyway = fs::read_dir(&parent).is_ok();
-    let error = publish_atomic(&target, b"second");
-    fs::set_permissions(&parent, fs::Permissions::from_mode(0o700)).unwrap();
-    if readable_anyway {
-        return;
+    if let Some(result) = while_unreadable(&parent, || publish_atomic(&target, b"second")) {
+        assert_eq!(
+            result.unwrap_err().kind(),
+            std::io::ErrorKind::PermissionDenied
+        );
     }
-
-    let error = error.unwrap_err();
-    assert!(error
-        .get_ref()
-        .is_some_and(|source| source.is::<DurabilityUnconfirmed>()));
-    assert_eq!(fs::read(&target).unwrap(), b"second");
+    assert_eq!(fs::read(&target).unwrap(), b"first");
     assert_eq!(entries(&parent), ["state"]);
+}
+
+#[test]
+fn an_unreadable_intermediate_ancestor_refuses_a_new_chain() {
+    let directory = tempfile::tempdir().unwrap();
+    let ancestor = directory.path().join("a");
+    fs::create_dir(&ancestor).unwrap();
+    let target = ancestor.join("b/state");
+
+    if let Some(result) = while_unreadable(&ancestor, || publish_atomic(&target, b"bytes")) {
+        assert_eq!(
+            result.unwrap_err().kind(),
+            std::io::ErrorKind::PermissionDenied
+        );
+        assert!(!target.exists());
+    }
 }
 
 #[test]

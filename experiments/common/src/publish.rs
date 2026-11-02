@@ -46,6 +46,14 @@ impl Error for DurabilityUnconfirmed {
 /// then unchanged, except that an error wrapping [`DurabilityUnconfirmed`] means
 /// it was replaced. A crash can leave a hidden `.tmp` sibling behind.
 pub fn publish_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
+    publish_atomic_with(path, bytes, sync_directory)
+}
+
+fn publish_atomic_with(
+    path: &Path,
+    bytes: &[u8],
+    mut sync: impl FnMut(&Path) -> io::Result<()>,
+) -> io::Result<()> {
     let name = path.file_name().ok_or_else(|| {
         io::Error::new(
             io::ErrorKind::InvalidInput,
@@ -56,7 +64,7 @@ pub fn publish_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
         Some(parent) if !parent.as_os_str().is_empty() => parent,
         _ => Path::new("."),
     };
-    create_durable(directory)?;
+    create_durable_with(directory, &mut sync)?;
     let (temporary, mut file) = reserve_sibling(directory, name)?;
     let published = file
         .write_all(bytes)
@@ -66,7 +74,7 @@ pub fn publish_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
         let _ = fs::remove_file(&temporary);
     }
     published?;
-    sync_directory(directory).map_err(|source| {
+    sync(directory).map_err(|source| {
         io::Error::new(
             source.kind(),
             DurabilityUnconfirmed {
@@ -81,17 +89,16 @@ pub fn publish_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
 /// survive a crash once this returns, whichever process created each link.
 ///
 /// Each call syncs every ancestor up to the filesystem root, because a directory
-/// that exists may belong to a creator that has not synced it yet. An ancestor
-/// this process may not open is left unsynced.
+/// that exists may belong to a creator that has not synced it yet. The process
+/// therefore needs read permission on every ancestor.
 ///
 /// # Errors
 ///
-/// Fails when a directory cannot be created or a sync fails.
+/// Fails when a directory cannot be created or an ancestor cannot be opened or
+/// synced, `PermissionDenied` on an unreadable ancestor included. Directories
+/// already created then remain, without confirmed durability.
 pub fn create_durable(directory: &Path) -> io::Result<()> {
-    create_durable_with(directory, |ancestor| match sync_directory(ancestor) {
-        Err(error) if error.kind() == io::ErrorKind::PermissionDenied => Ok(()),
-        synced => synced,
-    })
+    create_durable_with(directory, sync_directory)
 }
 
 fn create_durable_with(
@@ -157,5 +164,35 @@ mod tests {
         for ancestor in canonical.ancestors() {
             assert!(synced.iter().any(|path| path == ancestor), "{ancestor:?}");
         }
+    }
+
+    #[test]
+    fn every_sync_failure_propagates() {
+        let directory = tempfile::tempdir().unwrap();
+        for kind in [io::ErrorKind::PermissionDenied, io::ErrorKind::Other] {
+            let failure = create_durable_with(directory.path(), |_| Err(kind.into()));
+            assert_eq!(failure.unwrap_err().kind(), kind);
+        }
+    }
+
+    #[test]
+    fn a_directory_sync_failure_after_the_rename_is_distinguished() {
+        let directory = tempfile::tempdir().unwrap();
+        let target = directory.path().join("parent/state");
+        publish_atomic(&target, b"first").unwrap();
+
+        let error = publish_atomic_with(&target, b"second", |_| {
+            if fs::read(&target)? == b"second" {
+                Err(io::ErrorKind::Other.into())
+            } else {
+                Ok(())
+            }
+        })
+        .unwrap_err();
+
+        assert!(error
+            .get_ref()
+            .is_some_and(|source| source.is::<DurabilityUnconfirmed>()));
+        assert_eq!(fs::read(&target).unwrap(), b"second");
     }
 }
