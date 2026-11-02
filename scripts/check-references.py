@@ -89,11 +89,14 @@ def excepted(fault: str, exceptions: list[dict[str, str]]) -> bool:
 
 def ignored(root: Path, target: str) -> bool:
     # A directory rule matches only with the trailing slash.
-    check = subprocess.run(
-        ["git", "-C", str(root), "check-ignore", "-q", "--no-index", target, target + "/"],
-        capture_output=True,
+    return any(
+        subprocess.run(
+            ["git", "-C", str(root), "check-ignore", "-q", "--no-index", candidate],
+            capture_output=True,
+        ).returncode
+        == 0
+        for candidate in (target, target + "/")
     )
-    return check.returncode == 0
 
 
 def check(root: Path) -> list[str]:
