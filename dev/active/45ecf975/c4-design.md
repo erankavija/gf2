@@ -4,7 +4,7 @@ Goal: replace `crates/gf2-sim/src/permanent_campaign/` and three bins with `expe
 
 ## Decisions
 
-1. **Statistics are unchanged.** Same estimate, Wilson 95% report interval, one-sided exact floor test at `1/q`, two-sided probability-ordering determinant test at the finite-`n` null `1-prod(1-q^-i)`, Bonferroni split `0.025/K` each, `rejects_at` inclusive, comparison on log scale. Use `gf2_stats::binomial::lower_tail_test(z, n, 1.0/q)`: `permanent_zero_floor_test` is deleted by `@/issue/c251bf43`.
+1. **Statistics are unchanged.** Same estimate, Wilson 95% report interval, one-sided exact floor test at `1/q`, two-sided probability-ordering determinant test at the finite-`n` null `1-prod(1-q^-i)`, Bonferroni level $0.025/K$ within each family, `rejects_at` inclusive, comparison on log scale. Use `gf2_stats::binomial::lower_tail_test(z, n, 1.0/q)`: `permanent_zero_floor_test` is deleted by `@/issue/c251bf43`.
 2. **One Wilson z.** Today `summary.csv` uses `gf2_stats::intervals::Z_95` (1.959964) while the sidecars and analysis script use 1.959963984540054. The config's `wilson_z` (the longer value, matching the target table) is the only one the tool uses.
 3. **Determinant companion stays**, on the same matrices: it holds half the error budget and feeds epic REQ-05 (`@/issue/0665e7be`). Residue histogram stays: it supplies the record consistency check.
 4. **Protocol rules that stay, driven by config:** first-cell gate, serial cell admission, at most `max_shard_attempts` reported failures per shard, every terminal failure halts all other non-terminal cells with the same reason (`Coordinator::terminalize_mechanical`, `halt_other_cells`). These protect `@/inv/falsification-preserved`.
@@ -65,7 +65,7 @@ Goal: replace `crates/gf2-sim/src/permanent_campaign/` and three bins with `expe
    "anchors": [{"q": 3, "n": 1, "stream_index": 0, "permanent_zero_count": 1}]}}
 ```
 
-Cells expand in group order; groups must be sorted and non-overlapping. `stream_index = (cell_ordinal << 32) | shard_id` and shard count is `ceil(matrix_count / shard_size)`, as `generate_manifest_draft.py` does. `accelerator_per_matrix_us` is required exactly for `accelerator` groups. `K` is the cell count. `validate` also checks `backend_supports_cell`, and `first_cell` names a cell. C4 ships `config/small-campaign.json` (cheap cells, CPU backends) for tests; C5 writes the real protocol. `backend_evidence` paths are `ArtifactPath` and are only copied to the manifest.
+Cells expand in group order; groups must be sorted and non-overlapping. `stream_index = (cell_ordinal << 32) | shard_id` and shard count is `ceil(matrix_count / shard_size)`, as `generate_manifest_draft.py` does. `accelerator_per_matrix_us` is required exactly for `accelerator` groups. $K$ is the number of tests in that family: all cells for permanents and only determinant-enabled cells for determinants. `validate` also checks `backend_supports_cell`, and `first_cell` names a cell. C4 ships `config/small-campaign.json` (cheap cells, CPU backends) for tests; C5 writes the real protocol. `backend_evidence` paths are `ArtifactPath` and are only copied to the manifest.
 
 ## Data formats (dataset directory, `schema_version` 3, exact equality only)
 

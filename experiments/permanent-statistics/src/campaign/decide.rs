@@ -9,15 +9,20 @@ use gf2_stats::binomial::{lower_tail_test, two_sided_test};
 pub struct AcceptancePlan {
     /// Permanent-floor rejection level.
     pub permanent_level: f64,
-    /// Determinant rejection level.
+    /// Determinant rejection level; zero when no cell has a companion.
     pub determinant_level: f64,
     /// Wilson critical value.
     pub wilson_z: f64,
 }
 impl AcceptancePlan {
-    /// Allocates each configured family budget across all registered cells.
+    /// Allocates each family budget across its registered tests.
     pub fn for_manifest(manifest: &Manifest) -> Result<Self, CampaignError> {
         let k = manifest.cells.len() as f64;
+        let determinants = manifest
+            .cells
+            .iter()
+            .filter(|cell| cell.determinant_companion)
+            .count();
         let a = &manifest.acceptance;
         if k == 0.0
             || !a.wilson_z.is_finite()
@@ -31,7 +36,11 @@ impl AcceptancePlan {
         }
         Ok(Self {
             permanent_level: a.permanent_family_error / k,
-            determinant_level: a.determinant_family_error / k,
+            determinant_level: if determinants == 0 {
+                0.0
+            } else {
+                a.determinant_family_error / determinants as f64
+            },
             wilson_z: a.wilson_z,
         })
     }

@@ -276,3 +276,91 @@ fn a_logged_rejection_survives_interruption_before_halt_propagation() {
         .all(|l| l.contains("halted,acceptance_failure")));
     assert!(summary.lines().nth(1).unwrap().contains("rejected"));
 }
+
+#[test]
+fn backend_unavailable_failure_halts_even_before_the_halt_event_is_synced() {
+    let config = common::config();
+    let record = common::record(&config);
+    let mut completed = Vec::new();
+    for halt_logged in [false, true] {
+        let directory = tempfile::tempdir().unwrap();
+        run_cell(
+            &config,
+            &record,
+            directory.path(),
+            3,
+            2,
+            &Invocation {
+                max_shards: Some(1),
+                ..Invocation::default()
+            },
+        )
+        .unwrap();
+        append(
+            directory.path(),
+            serde_json::json!({"shard_failed":{
+                "q":3,"n":2,"shard_id":1,"attempt":1,"error":"backend unavailable","halt_reason":"backend_unavailable"
+            }}),
+        );
+        if halt_logged {
+            append(
+                directory.path(),
+                serde_json::json!({"campaign_halted":{
+                    "q":3,"n":2,"reason":"backend_unavailable"
+                }}),
+            );
+        }
+        assert!(run_cell(
+            &config,
+            &record,
+            directory.path(),
+            3,
+            2,
+            &Invocation::default()
+        )
+        .is_err());
+        dataset::finalize(directory.path()).unwrap();
+        dataset::verify(directory.path()).unwrap();
+        assert_eq!(common::shards(directory.path(), 3, 2).len(), 1);
+        for cell in config.cells().iter().skip(1) {
+            assert!(common::shards(directory.path(), cell.q, cell.n).is_empty());
+        }
+        let summary = fs::read_to_string(directory.path().join("summary.csv")).unwrap();
+        assert!(summary
+            .lines()
+            .skip(1)
+            .all(|line| line.contains("halted,backend_unavailable")));
+        completed.push(summary);
+    }
+    assert_eq!(completed[0], completed[1]);
+}
+
+#[test]
+fn determinant_family_counts_only_companions_and_permanent_counts_all_cells() {
+    let mut config = common::config();
+    config.cell_groups.truncate(2);
+    config.cell_groups[0].matrix_count = 12;
+    config.cell_groups[0].shard_size = 12;
+    config.cell_groups[1].determinant_companion = false;
+    let manifest = Manifest::from_config(&config).unwrap();
+    let plan = AcceptancePlan::for_manifest(&manifest).unwrap();
+    let cell = &config.cells()[0];
+    let row = assess_completed_cell(&plan, cell, 12, 4, Some(9)).unwrap();
+    let p_value = row.determinant_log_p_value.unwrap().exp();
+    assert!((p_value - 0.01934).abs() < 0.00001);
+    assert_eq!(row.determinant_verdict, Some(AcceptanceVerdict::Rejected));
+    assert_eq!(
+        plan.permanent_level * 2.0,
+        config.acceptance.permanent_family_error
+    );
+    assert_eq!(
+        plan.determinant_level,
+        config.acceptance.determinant_family_error
+    );
+
+    config.cell_groups[0].determinant_companion = false;
+    let plan = AcceptancePlan::for_manifest(&Manifest::from_config(&config).unwrap()).unwrap();
+    let row = assess_completed_cell(&plan, &config.cells()[0], 12, 4, None).unwrap();
+    assert!(row.determinant_verdict.is_none());
+    assert!(plan.determinant_level.is_finite());
+}
