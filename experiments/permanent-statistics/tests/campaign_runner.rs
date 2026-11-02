@@ -105,7 +105,7 @@ fn only_closed_identity_changes_refuse_resume() {
         ),
         (
             "build",
-            serde_json::json!({"profile":"release","opt_level":"3","target":"test","rustflags":[]}),
+            serde_json::json!({"profile":"release","opt_level":"3","lto":"false","codegen_units":16,"target":"test","rustflags":[]}),
         ),
         (
             "host",

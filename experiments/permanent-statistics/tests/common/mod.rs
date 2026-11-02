@@ -14,7 +14,7 @@ pub fn record(config: &CampaignConfig) -> RunRecord {
     serde_json::from_value(serde_json::json!({
         "identity": {
             "executable_sha256": Sha256Digest::of(b"test executable"),
-            "build": {"profile":"ci-test","opt_level":"3","target":"test","rustflags":[]},
+            "build": {"profile":"ci-test","opt_level":"3","lto":"false","codegen_units":16,"target":"test","rustflags":[]},
             "configuration_sha256": config.digest().unwrap(),"seed":config.root_seed,
             "rng":{"algorithm":"cha_cha20","version":"rand_chacha 0.9.0"},
             "toolchain_version":"rustc 1.95.0",
