@@ -1,5 +1,5 @@
 //! Runs the pinned eBCH(128,64,22) OSD reference campaign (BI-AWGN, BPSK, rate
-//! 1/2, BER versus Eb/N0 in dB) through [`gf2_sim::osd_campaign`]: an order-2
+//! 1/2, BER versus Eb/N0 in dB) through [`osd_ebch::osd_campaign`]: an order-2
 //! target and an order-1 control on the seven `@/citation/Fossorier1994`
 //! abscissas.
 //!
@@ -36,16 +36,13 @@ use gf2_core::gf2m::Gf2mField;
 use gf2_core::{BitMatrix, BitVec};
 use rand08::Rng;
 use rand_chacha08::ChaCha20Rng;
-use sha2::{Digest, Sha256};
 
-use gf2_sim::osd_campaign::{
+use experiments_common::{ArtifactIdentity, RepositoryRoot, RngAlgorithm, RngIdentity, RunRecord};
+use osd_ebch::osd_campaign::{
     BinomialIntervalMethod, BinomialIntervalSpec, OsdBlockContext, OsdBlockOutcome, OsdBlockStream,
     OsdCampaign, OsdCampaignError, OsdCampaignProvenance, OsdCell, OsdCellId, OsdWorkCounters,
 };
-use gf2_sim::osd_identity::{observe_cpu_identity, observe_provenance, repository_top_level};
-use gf2_sim::osd_identity::{
-    ArtifactIdentity, Availability, GitRevision, Provenance, RngAlgorithm, Sha256Digest,
-};
+use osd_ebch::provenance::{Availability, Provenance};
 
 const PINNED_EB_N0_DB: [f64; 7] = [1.55, 2.22, 3.01, 3.47, 3.98, 4.56, 5.23];
 const ORDER_2_DIGITIZATION_PRECISION: [f64; 7] = [0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
@@ -80,7 +77,7 @@ OSD list and tie policy:
   ties use ascending original coordinate index, and source-undefined distance
   ties retain the first generated candidate (implementation decisions).
 
-The library owns the versioned receipt schema, block-sampled confidence
+The experiment owns the versioned receipt schema, block-sampled confidence
 intervals, deterministic cell seeds, checkpoint validation, and resume history.";
 
 #[derive(Debug)]
@@ -132,11 +129,11 @@ fn run() -> Result<(), String> {
         println!("{USAGE}");
         return Ok(());
     };
-    let provenance = campaign_provenance(args.invocation)?;
+    let provenance = campaign_provenance(args.seed, args.invocation)?;
     let campaign = pinned_campaign(args.seed, args.target_block_errors, provenance)
         .map_err(|error| error.to_string())?;
     let code = ebch_128_64();
-    let receipt = gf2_sim::osd_campaign::run_osd_campaign(
+    let receipt = osd_ebch::osd_campaign::run_osd_campaign(
         &args.checkpoint,
         &campaign,
         args.max_samples,
@@ -403,40 +400,56 @@ fn simulate_frame(
     FrameResult { bit_errors, work }
 }
 
-fn campaign_provenance(invocation: Vec<String>) -> Result<OsdCampaignProvenance, String> {
-    let repository = repository_top_level(Path::new(env!("CARGO_MANIFEST_DIR")))
-        .map_err(|error| error.to_string())?;
+fn campaign_provenance(
+    seed: u64,
+    invocation: Vec<String>,
+) -> Result<OsdCampaignProvenance, String> {
+    let directory = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let repository = RepositoryRoot::containing(directory).map_err(|error| error.to_string())?;
     let configuration = artifact_identity(
         &repository,
         "dev/reference_data/osd_ebch_128_64_fossorier1994.md",
     )?;
     let measurement_behavior = artifact_identity(
         &repository,
-        "crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs",
+        "experiments/osd-ebch/src/bin/ebch_osd_awgn_campaign.rs",
     )?;
-    let placeholder_revision = "0000000000000000000000000000000000000000"
-        .parse::<GitRevision>()
-        .expect("static revision");
-    let cpu = observe_cpu_identity().map_err(|error| error.to_string())?;
-    let runtime = observe_provenance(
+    let record = RunRecord::observe(
         &repository,
-        Provenance {
-            git_revision: placeholder_revision,
-            binary_sha256: None,
-            deps_source_revision: None,
-            deps_source_dirty: None,
-            compiler_version: rustc_version(),
-            rng_algorithm: RngAlgorithm::ChaCha20,
-            rng_version: "rand_chacha 0.3.1 (gf2-coding BPSK channel ABI)".to_owned(),
-            invocation,
-            accelerator_runtime: Availability::NotPresent,
-            cpu_model: cpu.model,
-            cpu_physical_cores: Some(cpu.physical_cores),
-            cpu_logical_threads: Some(cpu.logical_threads),
-            gpu_model: Availability::NotPresent,
+        configuration.sha256.clone(),
+        seed,
+        RngIdentity {
+            algorithm: RngAlgorithm::ChaCha20,
+            version: "rand_chacha 0.3.1 (gf2-coding BPSK channel ABI)".to_owned(),
         },
     )
     .map_err(|error| error.to_string())?;
+    let identity = record.identity;
+    let runtime = Provenance {
+        git_revision: record.source_revision,
+        binary_sha256: Some(identity.executable_sha256),
+        deps_source_revision: Some(
+            source_context(directory, &["log", "-1", "--format=%H"])?
+                .parse()
+                .map_err(|error| format!("invalid source revision: {error}"))?,
+        ),
+        deps_source_dirty: Some(
+            !source_context(
+                directory,
+                &["status", "--porcelain", "--untracked-files=all"],
+            )?
+            .is_empty(),
+        ),
+        compiler_version: identity.toolchain_version,
+        rng_algorithm: identity.rng.algorithm,
+        rng_version: identity.rng.version,
+        invocation,
+        accelerator_runtime: Availability::NotPresent,
+        cpu_model: identity.host.cpu.model,
+        cpu_physical_cores: Some(identity.host.cpu.physical_cores),
+        cpu_logical_threads: Some(identity.host.cpu.logical_threads),
+        gpu_model: Availability::NotPresent,
+    };
     Ok(OsdCampaignProvenance {
         runtime,
         configuration,
@@ -444,34 +457,40 @@ fn campaign_provenance(invocation: Vec<String>) -> Result<OsdCampaignProvenance,
     })
 }
 
-fn artifact_identity(repository: &Path, path: &str) -> Result<ArtifactIdentity, String> {
-    let bytes = fs::read(repository.join(path)).map_err(|error| format!("{path}: {error}"))?;
-    let digest = Sha256::digest(bytes);
-    let sha256 = format!("{digest:x}")
-        .parse::<Sha256Digest>()
-        .map_err(|error| format!("{path}: invalid SHA-256 digest: {error}"))?;
-    Ok(ArtifactIdentity {
-        path: path
-            .parse()
-            .map_err(|error| format!("{path}: invalid artifact path: {error}"))?,
-        sha256,
-    })
+// Published source-closure fields are context in the OSD record format.
+fn source_context(directory: &Path, arguments: &[&str]) -> Result<String, String> {
+    let output = std::process::Command::new("git")
+        .current_dir(directory)
+        .args(arguments)
+        .args([
+            "--",
+            ":(top)crates/",
+            ":(top)experiments/",
+            ":(top)Cargo.lock",
+        ])
+        .env("GIT_OPTIONAL_LOCKS", "0")
+        .output()
+        .map_err(|error| error.to_string())?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).into_owned());
+    }
+    String::from_utf8(output.stdout)
+        .map(|text| text.trim_end().to_owned())
+        .map_err(|error| error.to_string())
 }
 
-fn rustc_version() -> String {
-    std::process::Command::new("rustc")
-        .arg("--version")
-        .output()
-        .ok()
-        .filter(|output| output.status.success())
-        .map(|output| String::from_utf8_lossy(&output.stdout).trim().to_owned())
-        .filter(|version| !version.is_empty())
-        .unwrap_or_else(|| "rustc unavailable".to_owned())
+fn artifact_identity(repository: &RepositoryRoot, path: &str) -> Result<ArtifactIdentity, String> {
+    let path = path
+        .parse()
+        .map_err(|error| format!("invalid artifact path: {error}"))?;
+    repository
+        .artifact_identity(&path)
+        .map_err(|error| error.to_string())
 }
 
 fn write_receipt(
     path: &Path,
-    receipt: &gf2_sim::osd_campaign::OsdCampaignReceipt,
+    receipt: &osd_ebch::osd_campaign::OsdCampaignReceipt,
 ) -> Result<(), String> {
     if let Some(parent) = path
         .parent()

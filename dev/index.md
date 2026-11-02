@@ -7,6 +7,12 @@ protocol, configuration, results and small receipts live at
 [`docs/index.md`](../docs/index.md), and [`AGENTS.md`](../AGENTS.md) is the
 engineering contract for all of them.
 
+The [eBCH OSD](../experiments/osd-ebch/README.md) and
+[DVB-T2 AWGN](../experiments/dvb-t2-awgn/README.md) campaign crates live under
+`experiments/`. Their published records remain under
+[`simulation_results/osd-ebch-128-64/`](simulation_results/osd-ebch-128-64/) and
+[`benchmarks/dvb_t2_awgn/`](benchmarks/dvb_t2_awgn/), respectively.
+
 The `[documentation]` table of [`.jit/config.toml`](../.jit/config.toml)
 declares the development root, the archive root, the paths archival relocates
 or retains, and the issue-scoped areas. `jit config get documentation` prints

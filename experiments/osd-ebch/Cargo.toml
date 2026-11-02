@@ -1,0 +1,25 @@
+[package]
+name = "osd-ebch"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+description = "Deterministic resumable eBCH ordered-statistics-decoding campaign"
+
+[dependencies]
+experiments-common = { path = "../common" }
+gf2-coding = { path = "../../crates/gf2-coding" }
+gf2-core = { path = "../../crates/gf2-core" }
+gf2-sim = { path = "../../crates/gf2-sim" }
+gf2-stats = { path = "../../crates/gf2-stats" }
+# The gf2-coding BPSK channel takes rand 0.8; OsdBlockStream uses the same ABI.
+rand08 = { package = "rand", version = "0.8" }
+rand_chacha08 = { package = "rand_chacha", version = "0.3" }
+blake3 = "1"
+serde = { workspace = true }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[dev-dependencies]
+gf2-core = { path = "../../crates/gf2-core", features = ["test-support"] }
+rand_chacha = { workspace = true }
+rand_core = { workspace = true }

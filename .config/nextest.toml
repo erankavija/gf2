@@ -105,7 +105,6 @@ filter = '''
         binary(pipeline_run_cpu) or binary(preset_vs_graph)
         or binary(preset_vs_graph_byte_identity) or binary(determinism)
         or binary(parallel_determinism) or binary(channels_determinism)
-        or binary(campaign_cli_flags)
         or binary(dvb_t2_regression) or binary(stage_driven_byte_identity)
         or binary(hybrid_scheduler) or binary(executor_oom_fallback_run)
         or binary(batch_decode_worker_determinism)
@@ -145,9 +144,9 @@ filter = '''
         or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
         or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
         or binary(determinism) or binary(parallel_determinism)
-        or binary(preset_vs_graph_byte_identity) or binary(campaign_byte_identity)
-        or binary(campaign_cli_flags)
+        or binary(preset_vs_graph_byte_identity)
     ))
+    or (package(dvb-t2-awgn) and (binary(campaign_byte_identity) or binary(campaign_cli_flags)))
     or (package(gf2-algebra) and (
         test(test_simd_vs_scalar_n32) or test(test_parallel_cross_check_n28)
     ))
@@ -156,4 +155,8 @@ test-group = 'slow-serial'
 
 [[profile.ci.overrides]]
 filter = 'package(permanent-statistics) and (binary(campaign_determinism) or binary(campaign_bins))'
+threads-required = 4
+
+[[profile.ci.overrides]]
+filter = 'package(dvb-t2-awgn) and (binary(campaign_cli_flags) or binary(campaign_byte_identity))'
 threads-required = 4

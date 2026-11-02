@@ -3,9 +3,10 @@ use std::num::NonZeroUsize;
 use std::path::Path;
 use std::sync::Mutex;
 
+use experiments_common::{ArtifactIdentity, GitRevision, RngAlgorithm, Sha256Digest};
 use gf2_core::test_scratch::{scratch, Scratch};
 use gf2_sim::checkpoint::{CheckpointPayload, CheckpointReader, CheckpointWriter};
-use gf2_sim::osd_campaign::{
+use osd_ebch::osd_campaign::{
     accepts_published_value, derive_cell_seed, run_osd_campaign, BinomialConfidenceInterval,
     BinomialIntervalMethod, BinomialIntervalSpec, BlockSampleCounts, ConfidenceIntervalEstimator,
     DigitizationPrecisionUnit, IntervalSamplingUnit, OsdBlockContext, OsdBlockOutcome,
@@ -13,9 +14,7 @@ use gf2_sim::osd_campaign::{
     OsdCampaignTermination, OsdCell, OsdCellId, OsdCellTermination, OsdWorkCounters,
     OSD_CAMPAIGN_SCHEMA_VERSION,
 };
-use gf2_sim::osd_identity::{
-    ArtifactIdentity, Availability, GitRevision, Provenance, RngAlgorithm, Sha256Digest,
-};
+use osd_ebch::provenance::{Availability, Provenance};
 use rand_chacha::ChaCha20Rng;
 use rand_core::{RngCore, SeedableRng};
 
@@ -210,7 +209,7 @@ fn write_checkpoint(path: &Path, campaign: &OsdCampaign, checkpoint: &OsdCampaig
 fn tampered_completed_receipt_error(
     label: &str,
     campaign: &OsdCampaign,
-    mutate: impl FnOnce(&mut gf2_sim::osd_campaign::OsdCellReceipt),
+    mutate: impl FnOnce(&mut osd_ebch::osd_campaign::OsdCellReceipt),
 ) -> String {
     let dir = temp_dir(label);
     let checkpoint_path = dir.path().join("checkpoint.json");
@@ -650,7 +649,7 @@ fn receipt_and_checkpoint_schemas_round_trip_with_named_block_intervals() {
         "negative_binomial_clopper_pearson"
     );
     assert_eq!(
-        serde_json::from_value::<gf2_sim::osd_campaign::OsdCampaignReceipt>(receipt_json).unwrap(),
+        serde_json::from_value::<osd_ebch::osd_campaign::OsdCampaignReceipt>(receipt_json).unwrap(),
         receipt
     );
 
@@ -778,10 +777,31 @@ fn recorded_ber_interval_rescales_the_recorded_block_error_interval() {
 }
 
 #[test]
+fn published_receipt_serialization_preserves_record_bytes() {
+    let repository =
+        experiments_common::RepositoryRoot::containing(Path::new(env!("CARGO_MANIFEST_DIR")))
+            .unwrap();
+    let path = repository.resolve(
+        &"dev/simulation_results/osd-ebch-128-64/ebch_osd_awgn.json"
+            .parse()
+            .unwrap(),
+    );
+    let bytes = std::fs::read(path).expect("read published receipt");
+    let receipt: OsdCampaignReceipt =
+        serde_json::from_slice(&bytes).expect("decode published receipt");
+    assert_eq!(serde_json::to_vec_pretty(&receipt).unwrap(), bytes);
+}
+
+#[test]
 fn schema_1_committed_receipt_remains_readable_with_historical_semantics() {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("dev/simulation_results/osd-ebch-128-64/schema1/ebch_osd_awgn.json");
+    let repository =
+        experiments_common::RepositoryRoot::containing(Path::new(env!("CARGO_MANIFEST_DIR")))
+            .unwrap();
+    let path = repository.resolve(
+        &"dev/simulation_results/osd-ebch-128-64/schema1/ebch_osd_awgn.json"
+            .parse()
+            .unwrap(),
+    );
     let receipt: OsdCampaignReceipt =
         serde_json::from_slice(&std::fs::read(path).expect("read committed schema-1 receipt"))
             .expect("schema-1 receipt remains readable");
@@ -1292,7 +1312,7 @@ fn a_precision_beyond_the_decade_range_keeps_the_predicate_total() {
 
 #[test]
 fn nonzero_digitization_precision_uses_log10_decades() {
-    let interval = gf2_sim::osd_campaign::BinomialConfidenceInterval {
+    let interval = osd_ebch::osd_campaign::BinomialConfidenceInterval {
         estimator: ConfidenceIntervalEstimator::ClopperPearson,
         sampling_unit: Some(IntervalSamplingUnit::Block),
         level: 0.95,

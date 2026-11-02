@@ -3,9 +3,10 @@
 Simulation orchestration layer of the gf2 workspace. `gf2-sim` composes the
 codes and modems of [`gf2-coding`](../gf2-coding/README.md) into a `Pipeline`
 of typed `Stage`s and runs seeded, checkpointed error-rate sweeps on CPU
-workers and, with the `hip` feature, on a HIP device. It also holds the
-checkpointed ordered-statistics-decoding campaigns built on `gf2-coding` and
-[`gf2-stats`](../gf2-stats/README.md). Permanent sampling lives in
+workers and, with the `hip` feature, on a HIP device. The checkpointed
+[OSD](../../experiments/osd-ebch/README.md) and
+[DVB-T2 AWGN](../../experiments/dvb-t2-awgn/README.md) campaigns consume these
+APIs from `experiments/`. Permanent sampling lives in
 [`permanent-statistics`](../../experiments/permanent-statistics/README.md).
 
 ## When to choose it

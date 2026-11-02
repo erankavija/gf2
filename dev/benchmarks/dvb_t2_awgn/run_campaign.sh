@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Producer: experiments/dvb-t2-awgn/src/bin/dvb_t2_awgn_campaign.rs
+# Build from the repository root before running:
+# ./scripts/cargo-budget.sh cargo build -p dvb-t2-awgn --release --features hip --bin dvb_t2_awgn_campaign
 # DVB-T2 AWGN production campaign driver (e4849f07).
 #
 # Runs all six in-scope MODCODs sequentially on the GPU (gf2-sim hybrid
