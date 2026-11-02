@@ -1,6 +1,7 @@
 """Repository and artifact paths shared by the comparison tools."""
 
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -11,9 +12,22 @@ ROOT = Path(subprocess.check_output(
     ["git", "-C", str(HERE), "rev-parse", "--show-toplevel"], text=True).strip())
 OUTPUT = ROOT / "target/aff3ct-ldpc-gaps"
 INPUT_VAR = "GF2_LDPC_INPUT_ROOT"
-# The shared campaign library's checkout location, which `cargo -p` and the
-# addendum schema read; every other repository tool is found by `tracked`.
-SUPPORT = ROOT / "dev/tools/tuning-campaign-support"
+
+
+def _resolver():
+    """Loads `repository_files.py`, the one file found by name alone."""
+    listing = subprocess.check_output(
+        ["git", "-C", str(ROOT), "ls-files", "-z", "--", ":(glob)**/repository_files.py"], text=True)
+    found = [entry for entry in listing.split("\0") if entry]
+    if len(found) != 1:
+        raise ValueError(f"expected one tracked repository_files.py, found {len(found)}")
+    spec = importlib.util.spec_from_file_location("repository_files", ROOT / found[0])
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+files = _resolver()
 
 
 def read(path):
@@ -37,15 +51,6 @@ def input_root():
     if not value or not Path(value).is_dir():
         raise ValueError(f"{INPUT_VAR} must name the directory containing bundles/ and quality/")
     return Path(value).resolve()
-
-
-def tracked(name):
-    """The one tracked file named `name`, wherever the repository keeps it."""
-    listing = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "-z"], text=True)
-    found = [ROOT / entry for entry in listing.split("\0") if entry.rsplit("/", 1)[-1] == name]
-    if len(found) != 1:
-        raise ValueError(f"expected one tracked file named {name}, found {len(found)}")
-    return found[0]
 
 
 def repository_relative(path):

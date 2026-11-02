@@ -13,10 +13,10 @@ from pathlib import Path
 import re
 import sys
 
-from campaign import (HERE, ROOT, OUTPUT, INPUT_VAR, SUPPORT, digest, input_root, output_path, read,
-                      repository_relative, tracked, write)
+from campaign import (HERE, ROOT, OUTPUT, INPUT_VAR, digest, files, input_root, output_path, read, write)
 
-spec = importlib.util.spec_from_file_location("campaign_plan", tracked("campaign_plan.py"))
+spec = importlib.util.spec_from_file_location(
+    "campaign_plan", ROOT / files.live_file(ROOT, "campaign_plan.py"))
 projection = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(projection)
 
@@ -29,11 +29,13 @@ def merged(base, overlay):
 
 
 def shared():
-    directory = SUPPORT / "config"
-    schema = read(directory / "addendum.schema.json")
+    schema = read(ROOT / files.live_file(ROOT, "addendum.schema.json"))
     protocol = schema["properties"]["protocol"]["properties"]
     identity = {key: protocol[key]["const"] for key in ("id", "version")}
-    text = (directory / "protocol.md").read_text().split("## Frozen shared settings", 1)[1]
+    # The schema's protocol version selects the live document among its versions.
+    opening = files.PROTOCOL_OPENING + f"{identity['version']}.".encode()
+    document = ROOT / files.document(ROOT, "protocol*.md", opening)
+    text = document.read_text().split("## Frozen shared settings", 1)[1]
     section = text.split("\n## ", 1)[0]
     import json
     settings = {name: json.loads(value) for name, value in
@@ -151,7 +153,7 @@ def generate(declaration, out=None, *, configuration=False, confirmation=False, 
     plan = {"schema": "zen3-benchmark-plan-v1", "campaign_id": campaign["id"],
             "issue": declaration["family"]["issue"], "label": label, "campaign_seed": campaign["seed"],
             "addendum": str(relative / "addendum.json") if configuration else str((out / "addendum.json").relative_to(ROOT)),
-            "lock_path": "/tmp/gf2-ccx1.lock", "wrapper": repository_relative(tracked("ccx1-bench-flock.sh")) + " --full-host",
+            "lock_path": "/tmp/gf2-ccx1.lock", "wrapper": files.live_file(ROOT, "ccx1-bench-flock.sh") + " --full-host",
             "timing_override": None, "arms": dict(sorted(arms.items())), "cells": planned,
             "max_cells_per_session": campaign["max_cells_per_session"]}
     if not confirmation:
