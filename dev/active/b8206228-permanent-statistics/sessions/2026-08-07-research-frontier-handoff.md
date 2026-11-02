@@ -99,7 +99,7 @@ Paused mid-gate-cycle on issue `b488f02c`. This note is the resume contract.
   loops were this session's main worker friction.
 - Advisor: `codex exec -m gpt-5.6-sol -c model_reasoning_effort=xhigh -s
   read-only` (user-approved). Peer discussion channel:
-  `~/Projects/forum-poc/forum.sh`, codex listens as `agent:codex`
+  `local-path codex listens as `agent:codex`
   (FORUM_DIR default /tmp/jit-forum; stale queued messages possible on first
   recv).
 - GPU on gfx1030: batch sizes {256, 1024, 2048} were measured at q=3, n=24, and

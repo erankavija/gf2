@@ -1,6 +1,6 @@
 # JIT issue 7a816262, phase 1 — freeze-feasibility inventory and draft manifest
 
-You are a research worker in /home/vkaskivuo/Projects/gf2 (work from its
+You are a research worker in gf2 (work from its
 root). Do not stage, do not commit, never touch `.jit/` or run state-mutating
 `jit` commands — the lead reviews and commits. Read AGENTS.md and
 `.jit/reference/content-standards.md` first.
@@ -9,7 +9,7 @@ root). Do not stage, do not commit, never touch `.jit/` or run state-mutating
 
 Issue 7a816262 freezes the campaign's root manifest. Its criteria (REQ-01..08)
 are in the issue description; the controlling contract is
-`dev/simulation_results/permanent-zero-fraction/protocol.md` — read it IN FULL,
+`protocol.md` — read it IN FULL,
 especially "Frozen cell universe and sample sizes" (63 cells, two N tiers),
 "Global error budget" (1/2520 per-cell levels), "Backend freeze" (per-cell
 `backend_receipt` = ArtifactIdentity of a committed selection receipt binding
@@ -17,7 +17,7 @@ hashed raw timing receipts, cohort comparability rules, and the three-step
 selection order), "Reproducibility identity", and "Shard validity".
 
 The manifest must deserialize through
-`crates/gf2-sim/src/permanent_campaign/schema.rs::read_manifest`
+`schema.rs::read_manifest`
 (`CampaignManifest`/`CellSpec`/`ShardSpec`/`StreamPurpose`/`Provenance`,
 serde `deny_unknown_fields`; read the validation functions for every
 constraint, including shard/stream-index rules). The integrity mechanism is in
@@ -33,7 +33,7 @@ final freeze)
    committed measurement receipt relevant to backend selection:
    `dev/benchmarks/permanent_campaign/backend-ordering.{md,csv}` (296a41c9;
    four configurations, twelve processes each),
-   `dev/studies/b488f02c/envelope-2026-08-07.csv` and the other b488f02c
+   `envelope-2026-08-07.csv` and the other b488f02c
    artifacts, the determinant timing receipt from jit 8cb4def5 (find it via
    its commits: `git log --oneline --grep 8cb4def5`), and the GPU story
    receipts under `dev/studies/{047b62ed,91605d4d,6c7fcb38}/`. For EVERY one

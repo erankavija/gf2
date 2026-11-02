@@ -64,7 +64,7 @@
 - New exact path: `jit issue show 8ec10dde`
 - Reconciled progress: `dev/active/b8206228-permanent-statistics/progress.json`
 - Prior handoff: `dev/active/b8206228-permanent-statistics/handoff-10.md`
-- Frozen-manifest plan: `dev/active/b8206228-permanent-statistics/premeasure-plan-v1.md`
+- Frozen-manifest plan: `premeasure-plan-v1.md`
 - Durable campaign root: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824`
 - Resume log: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-resume-20260825.log`
 - Collector log and status: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-collect-20260825.log`, `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-collect-20260825.exit.status`

@@ -1666,11 +1666,11 @@
     "worker_sized_reason": "One simulation-crate migration from a cited inventory",
     "footprint": {
      "touches": [
-      "crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs",
-      "crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs",
-      "crates/gf2-sim/tests/ebch_osd_campaign_cli.rs",
+      "ebch_osd_awgn_campaign.rs",
+      "gpu_bch_syndrome_throughput.rs",
+      "ebch_osd_campaign_cli.rs",
       "crates/gf2-sim/tests/gpu_byte_identity.rs",
-      "crates/gf2-sim/tests/osd_campaign_protocol.rs"
+      "osd_campaign_protocol.rs"
      ]
     }
    },
@@ -1758,7 +1758,7 @@
     "footprint": {
      "touches": [
       "crates/gf2-coding/src/bch/core.rs",
-      "crates/gf2-coding/src/bch/extended.rs",
+      "extended.rs",
       "crates/gf2-coding/src/bch/mod.rs"
      ]
     }
@@ -1799,9 +1799,9 @@
     "footprint": {
      "touches": [
       "crates/gf2-coding/README.md",
-      "docs/SYSTEMATIC_ENCODING_CONVENTION.md",
-      "docs/PARALLELIZATION.md",
-      "dev/archive/legacy/crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md"
+      "SYSTEMATIC_ENCODING_CONVENTION.md",
+      "PARALLELIZATION.md",
+      "PRIMITIVE_POLYNOMIALS.md"
      ]
     }
    },
@@ -1844,7 +1844,7 @@
     "worker_sized_reason": "Single sketch document; no proof code",
     "footprint": {
      "creates": [
-      "dev/active/ae03bcd0-general-bch/proof-sketch.md"
+      "proof-sketch.md"
      ]
     }
    },
@@ -2185,7 +2185,7 @@
     "worker_sized_reason": "Single survey document with receipts; no library code",
     "footprint": {
      "creates": [
-      "dev/active/ae03bcd0-general-bch/baseline-survey.md"
+      "baseline-survey.md"
      ]
     }
    },
@@ -2276,7 +2276,7 @@
     "worker_sized_reason": "One measurement-and-receipt campaign over finished benches",
     "footprint": {
      "creates": [
-      "dev/bench_results/ae03bcd0-bch-encode-receipts.md"
+      "ae03bcd0-bch-encode-receipts.md"
      ]
     }
    },

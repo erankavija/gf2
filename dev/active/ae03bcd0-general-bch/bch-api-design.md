@@ -1038,10 +1038,10 @@ construction and encoding use disjoint modules.
 | `cutover-bins-examples` | `crates/gf2-coding/src/bin/sim_runner.rs`, `crates/gf2-coding/src/bin/check_encoding.rs`, `crates/gf2-coding/examples/dvb_t2_bch_demo.rs`, `crates/gf2-coding/examples/block_code_intro.rs` |
 | `cutover-test-suite` | `crates/gf2-coding/tests/bch_tests.rs`, `crates/gf2-coding/tests/dvb_t2_bch_verification.rs`, `crates/gf2-coding/tests/ebch_128_64_reference.rs`, `crates/gf2-coding/tests/backend_integration.rs`, `crates/gf2-coding/tests/grand_phase1_smoke.rs`, `crates/gf2-coding/tests/bch_primitive_verification.rs` |
 | `cutover-benches` | `crates/gf2-coding/benches/bch_parallel.rs`, `crates/gf2-coding/benches/batch_operations.rs` |
-| `cutover-sim` | `crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs`, `crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs`, `crates/gf2-sim/tests/ebch_osd_campaign_cli.rs`, `crates/gf2-sim/tests/gpu_byte_identity.rs`, `crates/gf2-sim/tests/osd_campaign_protocol.rs` |
+| `cutover-sim` | `ebch_osd_awgn_campaign.rs`, `gpu_bch_syndrome_throughput.rs`, `ebch_osd_campaign_cli.rs`, `crates/gf2-sim/tests/gpu_byte_identity.rs`, `osd_campaign_protocol.rs` |
 | `cutover-hip-tests` | `crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs`, `crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs` |
-| `cutover-removal` | `crates/gf2-coding/src/bch/core.rs`, `crates/gf2-coding/src/bch/extended.rs`, and final `crates/gf2-coding/src/bch/mod.rs` cleanup after every consumer group |
-| `legacy-reference-sweep` | `crates/gf2-coding/README.md`, `dev/archive/legacy/crates/gf2-coding/docs/SYSTEMATIC_ENCODING_CONVENTION.md`, `dev/archive/legacy/crates/gf2-coding/docs/PARALLELIZATION.md`, `dev/archive/legacy/crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md` |
+| `cutover-removal` | `crates/gf2-coding/src/bch/core.rs`, `extended.rs`, and final `crates/gf2-coding/src/bch/mod.rs` cleanup after every consumer group |
+| `legacy-reference-sweep` | `crates/gf2-coding/README.md`, `SYSTEMATIC_ENCODING_CONVENTION.md`, `PARALLELIZATION.md`, `PRIMITIVE_POLYNOMIALS.md` |
 
 The direct migration groups are file-disjoint and may run in parallel after
 their graph prerequisites, with one ordered exception: `@/issue/97410c80`

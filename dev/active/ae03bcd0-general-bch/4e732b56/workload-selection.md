@@ -205,8 +205,8 @@ elimination of the repository-column-order generator matrix versus one encode
 per basis vector. The timed-route check shares M4RI's dump helper with the timed
 route; the dump is the timed route's output verbatim, and the verifier compares
 it with no normalization against the repository's row-major `[message | parity]`
-convention. For B2, B3, and T2S, the [generator-matrix agreement
-receipt](../../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt)
+convention. For B2, B3, and T2S, the generator-matrix agreement
+receipt
 records matching dimensions, `bit_exact_identical=True`, and `same_code=True`.
 This gives a consumer an independent check on the shape of the cost curve.
 The elimination route is primary because it is measurably faster at every row
@@ -294,7 +294,7 @@ that T2S and T2N carry their mother codes' generator polynomials, so the
 generator and its degree (168 and 192) are the row's, and only $n$ and $k$ are
 the mother's. The witness is
 `crates/gf2-coding/benches/bch_genmatrix.rs`, whose row table cites this
-subsection, and its receipt is `dev/bench_results/bd0edfa2/`.
+subsection, and its receipt is `bd0edfa2/`.
 
 The measurement cells of §§ 2–8 are unchanged. `perf-receipts` (`fd9d5416`)
 and the external-baseline comparison of § 8 keep $7032 \times 7200$ and

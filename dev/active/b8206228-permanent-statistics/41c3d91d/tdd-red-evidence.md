@@ -42,25 +42,25 @@ CARGO_NET_OFFLINE=true cargo nextest run -p gf2-sim -E 'test(work_item_enumerati
 
 ```text
 error[E0425]: cannot find function `enumerate_work_items` in this scope
-  --> crates/gf2-sim/src/permanent_campaign/schedule.rs:67:19
+  --> schedule.rs:67:19
    |
 67 |         let all = enumerate_work_items(&manifest, None).unwrap();
    |                   ^^^^^^^^^^^^^^^^^^^^ not found in this scope
 
 error[E0425]: cannot find type `WorkItem` in this scope
-  --> crates/gf2-sim/src/permanent_campaign/schedule.rs:69:28
+  --> schedule.rs:69:28
    |
 69 |             all.iter().map(WorkItem::key).collect::<Vec<_>>(),
    |                            ^^^^^^^^ not found in this scope
 
 error[E0425]: cannot find function `run_field` in this scope
-  --> crates/gf2-sim/src/permanent_campaign/schedule.rs:80:19
+  --> schedule.rs:80:19
    |
 80 |         let run = run_field(&campaign, 3).unwrap();
    |                   ^^^^^^^^^ not found in this scope
 
 error[E0425]: cannot find function `emit_field` in this scope
-   --> crates/gf2-sim/src/permanent_campaign/schedule.rs:111:24
+   --> schedule.rs:111:24
     |
 111 |             let q3_paths = emit_field(&root, &campaign, &q3).unwrap();
     |                            ^^^^^^^^^^ not found in this scope
@@ -71,7 +71,7 @@ error: could not compile `gf2-sim` (lib test) due to 41 previous errors; 1 warni
 ## 2026-08-16 — emission-guard red test
 
 Patch 1 added only
-`crates/gf2-sim/tests/permanent_campaign_bin.rs`. The focused command was:
+`permanent_campaign_bin.rs`. The focused command was:
 
 ```console
 cargo nextest run -p gf2-sim --release --profile ci -E 'test(binary_refuses_emission_before_writing_outside_repository)'
@@ -82,7 +82,7 @@ The test failed against the unguarded binary with this captured output:
 ```text
 FAIL [   0.005s] (1/1) gf2-sim::permanent_campaign_bin binary_refuses_emission_before_writing_outside_repository
 
-thread 'binary_refuses_emission_before_writing_outside_repository' panicked at crates/gf2-sim/tests/permanent_campaign_bin.rs:88:5:
+thread 'binary_refuses_emission_before_writing_outside_repository' panicked at permanent_campaign_bin.rs:88:5:
 binary must refuse emission; status ExitStatus(unix_wait_status(0))
 stderr:
 ```
@@ -90,7 +90,7 @@ stderr:
 ## 2026-08-16 — round-2 schedule and emission red tests
 
 Patch 1 added only the three tests in
-`crates/gf2-sim/src/permanent_campaign/schedule.rs`. The focused command was:
+`schedule.rs`. The focused command was:
 
 ```console
 CARGO_NET_OFFLINE=true cargo nextest run -p gf2-sim --release --profile ci -E 'test(permanent_floor_rejection_is_the_preregistered_exact_test) | test(summary_verdict_matches_the_pooled_permanent_floor_decision) | test(re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission)'
@@ -100,21 +100,21 @@ The tests failed before execution because the production decision helper had
 not been added yet. This is the complete captured output:
 
 ```text
-   Compiling gf2-sim v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-sim)
+   Compiling gf2-sim v0.1.0 (gf2-sim)
 error[E0425]: cannot find function `permanent_acceptance` in this scope
-   --> crates/gf2-sim/src/permanent_campaign/schedule.rs:648:20
+   --> schedule.rs:648:20
     |
 648 |         assert_eq!(permanent_acceptance(3, 0, 11, 1), AcceptanceVerdict::Rejected);
     |                    ^^^^^^^^^^^^^^^^^^^^ not found in this scope
 
 error[E0425]: cannot find function `permanent_acceptance` in this scope
-   --> crates/gf2-sim/src/permanent_campaign/schedule.rs:649:20
+   --> schedule.rs:649:20
     |
 649 |         assert_eq!(permanent_acceptance(3, 4, 11, 1), AcceptanceVerdict::Accepted);
     |                    ^^^^^^^^^^^^^^^^^^^^ not found in this scope
 
 error[E0425]: cannot find function `permanent_acceptance` in this scope
-   --> crates/gf2-sim/src/permanent_campaign/schedule.rs:668:13
+   --> schedule.rs:668:13
     |
 668 |             permanent_acceptance(
     |             ^^^^^^^^^^^^^^^^^^^^ not found in this scope
@@ -122,7 +122,7 @@ error[E0425]: cannot find function `permanent_acceptance` in this scope
 For more information about this error, try `rustc --explain E0425`.
 error: could not compile `gf2-sim` (lib test) due to 3 previous errors
 warning: build failed, waiting for other jobs to finish...
-error: command `/home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo test --no-run --message-format json-render-diagnostics --package gf2-sim --release` exited with code 101
+error: command `cargo test --no-run --message-format json-render-diagnostics --package gf2-sim --release` exited with code 101
 ```
 
 The Fix-B test was also replayed against a clean `HEAD` snapshot in
@@ -151,7 +151,7 @@ FAIL [   0.004s] (1/1) gf2-sim permanent_campaign::schedule::tests::re_emitting_
 
   stderr ───
 
-    thread 'permanent_campaign::schedule::tests::re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission' (7882) panicked at crates/gf2-sim/src/permanent_campaign/schedule.rs:718:14:
+    thread 'permanent_campaign::schedule::tests::re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission' (7882) panicked at schedule.rs:718:14:
     re-emitting into an existing dataset must refuse: ["/tmp/campaign-reemit-7881/campaign-test/shards/q3/n02/shard-000000.json", "/tmp/campaign-reemit-7881/campaign-test/summaries/q3.json"]
 
 ────────────

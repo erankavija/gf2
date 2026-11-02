@@ -1,6 +1,6 @@
 Issue fd1ef344 — C4 of umbrella 45ecf975. Implementation handoff.
 
-Worktree: `/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344`. Specification: [c4-design.md](/dev/active/b8206228-permanent-statistics/45ecf975/c4-design.md). Final checks completed before the 03:30 Helsinki cutoff; report generated at Mon Nov  2 02:34:09 EET 2026.
+Worktree: `agent-fd1ef344`. Specification: [c4-design.md](/dev/active/b8206228-permanent-statistics/45ecf975/c4-design.md). Final checks completed before the 03:30 Helsinki cutoff; report generated at Mon Nov  2 02:34:09 EET 2026.
 
 The permanent campaign, dataset, and validation binaries build from `experiments/permanent-statistics`. The gf2-sim campaign layer, continuation/frozen decoders, emission authorization, root_fs, and compiled paper data are removed. OSD retains its byte-compatible identity types in `osd_identity.rs`, with the named exception linked to @/issue/779d1926. The experiment uses one shared execution log, configured cell/shard expansion, exact log-scale decisions, Wilson intervals, per-cell run identities, explicit availability policy, and terminal failure propagation. Validation probes unsampled zero matrices before opening streams, preserves exhaustive backend disagreement, and resumes at terminal anchor boundaries.
 
@@ -10,7 +10,7 @@ The literal criteria are covered as follows:
 
 | Criterion | Evidence |
 |---|---|
-| REQ-01 | Workspace build passes. `git grep -n permanent_campaign -- crates` returns only `crates/gf2-algebra/benches/batched_f3_permanent.rs:455`, the preserved benchmark path. No permanent_* binary source remains in gf2-sim. |
+| REQ-01 | Workspace build passes. `git grep -n permanent_campaign -- crates` returns only `batched_f3_permanent.rs:455`, the preserved benchmark path. No permanent_* binary source remains in gf2-sim. |
 | REQ-02 | The campaign directory and three binaries are deleted from gf2-sim. The analysis script loads the target CSV and literature claim through manifest reference_data paths. The moved target CSV retains identical bytes. |
 | REQ-03 | Resume compares RunIdentity per cell. Source revision is a rebuild pointer; backend evidence paths are copied, never verified. Repository paths use the shared root abstraction. The root-discovery query is noted below. |
 | REQ-04 | One shared campaign contract covers q=3,5,7, supporting CPU backends, workers 1/2/4, bounded resume, accepted-log/checkpoint interruption, explicit fallback, and a device-gated HIP path. The CPU fake dispatcher exercises the production accelerator batching loop. |
@@ -85,54 +85,54 @@ Changed files are listed completely below. `new` denotes an untracked prepared f
 | M | `Cargo.lock` |
 | M | `crates/gf2-sim/Cargo.toml` |
 | M | `crates/gf2-sim/README.md` |
-| M | `crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs` |
-| D | `crates/gf2-sim/src/bin/permanent_campaign.rs` |
-| D | `crates/gf2-sim/src/bin/permanent_dataset.rs` |
-| D | `crates/gf2-sim/src/bin/permanent_validation.rs` |
+| M | `ebch_osd_awgn_campaign.rs` |
+| D | `permanent_campaign.rs` |
+| D | `permanent_dataset.rs` |
+| D | `permanent_validation.rs` |
 | M | `crates/gf2-sim/src/checkpoint/mod.rs` |
 | M | `crates/gf2-sim/src/lib.rs` |
-| M | `crates/gf2-sim/src/osd_campaign.rs` |
-| new | `crates/gf2-sim/src/osd_identity.rs` |
-| D | `crates/gf2-sim/src/permanent_campaign/acceptance.rs` |
-| D | `crates/gf2-sim/src/permanent_campaign/coordinator.rs` |
-| D | `crates/gf2-sim/src/permanent_campaign/coordinator_tests.rs` |
-| D | `crates/gf2-sim/src/permanent_campaign/fixture.rs` |
-| D | `crates/gf2-sim/src/permanent_campaign/launch_cost.rs` |
-| D | `crates/gf2-sim/src/permanent_campaign/mod.rs` |
-| D | `crates/gf2-sim/src/permanent_campaign/provenance.rs` |
-| D | `crates/gf2-sim/src/permanent_campaign/root_fs.rs` |
-| D | `crates/gf2-sim/src/permanent_campaign/schedule.rs` |
-| D | `crates/gf2-sim/src/permanent_campaign/schema.rs` |
-| D | `crates/gf2-sim/src/permanent_campaign/validation.rs` |
-| D | `crates/gf2-sim/tests/compile_fail/no_public_field_sidecar_mutator.rs` |
-| D | `crates/gf2-sim/tests/compile_fail/no_public_field_sidecar_mutator.stderr` |
-| M | `crates/gf2-sim/tests/osd_campaign_protocol.rs` |
-| D | `crates/gf2-sim/tests/permanent_campaign_bin.rs` |
-| D | `crates/gf2-sim/tests/permanent_validation.rs` |
+| M | `osd_campaign.rs` |
+| new | `osd_identity.rs` |
+| D | `acceptance.rs` |
+| D | `coordinator.rs` |
+| D | `coordinator_tests.rs` |
+| D | `fixture.rs` |
+| D | `launch_cost.rs` |
+| D | `mod.rs` |
+| D | `provenance.rs` |
+| D | `root_fs.rs` |
+| D | `schedule.rs` |
+| D | `schema.rs` |
+| D | `validation.rs` |
+| D | `no_public_field_sidecar_mutator.rs` |
+| D | `no_public_field_sidecar_mutator.stderr` |
+| M | `osd_campaign_protocol.rs` |
+| D | `permanent_campaign_bin.rs` |
+| D | `permanent_validation.rs` |
 | M | `dev/index.md` |
 | M | `dev/scripts/permanent-campaign-runner.sh` |
 | M | `dev/scripts/permanent-campaign-runner.test.sh` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/checksum-mismatch/checksums.sha256` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/checksum-mismatch/manifest.json` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/checksum-mismatch/shards/q3/n04/shard-000000.json` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/checksum-mismatch/summaries/q3.json` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/checksum-mismatch/summary.csv` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/golden/valid-completed-and-halted/cells.csv` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/golden/valid-completed-and-halted/curve-q3.svg` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/invalid-q/checksums.sha256` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/invalid-q/manifest.json` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/invalid-q/shards/q9/n04/shard-000000.json` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/invalid-q/summaries/q9.json` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/invalid-q/summary.csv` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/valid-completed-and-halted/checksums.sha256` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/valid-completed-and-halted/manifest.json` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/valid-completed-and-halted/shards/q3/n04/shard-000000.json` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/valid-completed-and-halted/shards/q5/n04/shard-000001.json` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/valid-completed-and-halted/summaries/q3.json` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/valid-completed-and-halted/summaries/q5.json` |
-| D | `dev/simulation_results/permanent-zero-fraction/fixtures/valid-completed-and-halted/summary.csv` |
-| M | `dev/simulation_results/permanent-zero-fraction/protocol.md` |
-| D | `dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv` |
+| D | `checksums.sha256` |
+| D | `manifest.json` |
+| D | `shard-000000.json` |
+| D | `q3.json` |
+| D | `summary.csv` |
+| D | `cells.csv` |
+| D | `curve-q3.svg` |
+| D | `checksums.sha256` |
+| D | `manifest.json` |
+| D | `shard-000000.json` |
+| D | `q9.json` |
+| D | `summary.csv` |
+| D | `checksums.sha256` |
+| D | `manifest.json` |
+| D | `shard-000000.json` |
+| D | `shard-000001.json` |
+| D | `q3.json` |
+| D | `q5.json` |
+| D | `summary.csv` |
+| M | `protocol.md` |
+| D | `scheinerman2024-q3-targets-v1.csv` |
 | M | `experiments/permanent-statistics/Cargo.toml` |
 | M | `experiments/permanent-statistics/README.md` |
 | new | `experiments/permanent-statistics/config/small-campaign.json` |

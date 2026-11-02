@@ -65,11 +65,11 @@
 - Epic: `jit issue show b8206228`
 - Progress and wave plan: `dev/active/b8206228-permanent-statistics/progress.json`
 - Validation prerequisite: `jit issue show 02b8137c`
-- Frozen protocol: `dev/simulation_results/permanent-zero-fraction/protocol.md`
+- Frozen protocol: `protocol.md`
 - Prior validation handoff: `dev/active/b8206228-permanent-statistics/handoff-26.md`
 - Preserved validation WIP: `.agents/worktrees/agent-02b8137c`, branch `worktree-agent-02b8137c`, commit `783d4abb`
 - Existing exact anchors: `crates/gf2-algebra/src/permanent/exact.rs` and `crates/gf2-algebra/tests/permanent_exact_anchors.rs`
-- Shared production path: `crates/gf2-sim/src/permanent_campaign/schedule.rs`
-- Frozen campaign: `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/`
-- Preserved emitter: `/home/vkaskivuo/.local/state/gf2-frozen/permanent_campaign-c9b2307a`
+- Shared production path: `schedule.rs`
+- Frozen campaign: `permanent-zero-fraction-20260829/`
+- Preserved emitter: `permanent_campaign-c9b2307a`
 - Importance-sampling branch: `.agents/worktrees/agent-6639435f` at `49b4d452`

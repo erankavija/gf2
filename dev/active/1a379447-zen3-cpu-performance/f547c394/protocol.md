@@ -2,26 +2,26 @@
 
 Protocol `zen3-benchmark-protocol` version 4. This document is the executable
 shared protocol required by the
-[measurement contract](../1a379447-zen3-cpu-performance/measurement-contract.md)
+measurement contract
 of epic `1a379447`. Every rule below is enforced by a check the acceptance tool
 performs or by a field a receipt must carry; the rule identifiers `P-NN` are the
 finding codes the tool emits. Family and cell settings that the contract leaves
 to families are declared in addenda conforming to
-[`addendum.schema.json`](addendum.schema.json); the shared numeric settings are
+`addendum.schema.json`; the shared numeric settings are
 frozen here. `addendum.schema.json` is the shared path and always describes
 the current protocol version; each earlier version has its own committed
 sibling file named by the version it describes
-([`addendum-v1-initial.schema.json`](addendum-v1-initial.schema.json),
-[`addendum-v1.schema.json`](addendum-v1.schema.json),
-[`addendum-v2.schema.json`](addendum-v2.schema.json),
-[`addendum-v3.schema.json`](addendum-v3.schema.json)), so a frozen addendum of
+(`addendum-v1-initial.schema.json`,
+`addendum-v1.schema.json`,
+`addendum-v2.schema.json`,
+`addendum-v3.schema.json`), so a frozen addendum of
 any version validates against a committed schema from a fresh checkout.
 Version 1 has two sibling files because it was pinned under two digests:
 `addendum-v1-initial.schema.json` is the text the very first pilot and
 confirmation receipts pinned, and `addendum-v1.schema.json` is the text every
 later version-1 receipt pinned after a wording-only edit to the
-`frozen.description` annotation; [amendment-v2.md](amendment-v2.md) records
-the edit. [`schema-versions.json`](schema-versions.json) records which digest
+`frozen.description` annotation; amendment-v2.md records
+the edit. `schema-versions.json` records which digest
 each version's schema file and its pinning receipts carry. The tooling lives
 in the `tuning-campaign-support` workspace crate
 (`dev/tools/tuning-campaign-support`); [design.md](design.md) records why that
@@ -40,8 +40,8 @@ crate is the canonical home.
   `configuration/` directory as unavailable without evaluating it. Git
   revisions, commit ancestry and whole-tree state are navigation metadata and
   do not decide acceptance or resume compatibility.
-- This is version 4. The amendment records of [version 2](amendment-v2.md),
-  [version 3](amendment-v3.md) and [version 4](amendment-v4.md) state what
+- This is version 4. The amendment records of version 2,
+  version 3 and version 4 state what
   each version changed and which rules and evidence it superseded. Receipts
   and negative results of earlier versions remain immutable, and
   each receipt is evaluated under the version it pins. Confirmation under v4
@@ -74,7 +74,7 @@ crate is the canonical home.
 | Bounded resumable runs, execution log announced before the first bounded run, checkpoints not repeated, a cell interrupted mid-run abandoned explicitly and measured again without its abandoned samples | Execution log and checkpoints | P-10, P-11, P-12 |
 | Comparable operations and costs: setup, conversion, batch fill, dispatch in whole-consumer cells; isolated kernels separate | Cell schema | P-17 (conversion costs) |
 | Decoder comparisons: matched-algorithm and fastest quality-compatible arms, quality tolerances, BER/FER intervals, stopping contracts | Decoder cells | P-18, P-19 |
-| Receipts: raw samples, exact commands, seeds, identities, provenance, interpretation and acceptance summary under `dev/bench_results` | Receipt layout | P-01 to P-12, P-23, summary files |
+| Receipts: raw samples, exact commands, seeds, identities, provenance, interpretation and acceptance summary under `bench_results` | Receipt layout | P-01 to P-12, P-23, summary files |
 | Production change needs a fresh pinned before/after measurement | Roles and freezing | P-05 (toolchain and producing digests), P-23 |
 
 ## Roles and freezing
@@ -314,7 +314,7 @@ pairs; a stable endpoint cannot repair a biased or undersampled experiment.
 ## Addenda
 
 An addendum freezes one family. Its schema is
-[`addendum.schema.json`](addendum.schema.json); `protocol::FamilyAddendum`
+`addendum.schema.json`; `protocol::FamilyAddendum`
 decodes it with unknown fields rejected and validates the semantics the schema
 cannot express (P-03). It declares:
 
@@ -487,8 +487,8 @@ A rejected or non-qualifying receipt is committed like any other.
 ## Receipt layout
 
 Each bounded campaign writes one directory under the owning issue's
-`dev/bench_results/<issue>/` area, for example
-`dev/bench_results/f547c394/2026-09-07-f547c394-confirmation/`:
+`bench_results/<issue>/` area, for example
+`2026-09-07-f547c394-confirmation/`:
 
 | File | Content |
 |---|---|

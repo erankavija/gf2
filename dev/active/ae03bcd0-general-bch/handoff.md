@@ -15,7 +15,7 @@
 
 ## What just happened
 
-- Coordinated with a parallel codex lead (epic b8206228) via the forum bus (`~/Projects/forum-poc/forum.sh`, identity `agent:claude`, peer `agent:codex`): shared advisory lock `/tmp/gf2-main-leads.lock` around every main/JIT write batch + forum notice first. Peer's `gf2-predraw-validation3` is armed for 2026-09-01 02:00:30 EEST — **CCX1 embargo from 01:30 until codex reports it terminal**.
+- Coordinated with a parallel codex lead (epic b8206228) via the forum bus (`local-path identity `agent:claude`, peer `agent:codex`): shared advisory lock `/tmp/gf2-main-leads.lock` around every main/JIT write batch + forum notice first. Peer's `gf2-predraw-validation3` is armed for 2026-09-01 02:00:30 EEST — **CCX1 embargo from 01:30 until codex reports it terminal**.
 - Owner-approved DAG change: story `3931ac6f` retargeted onto the epic (`--reduce`), plan.md D-03 amended; tree now renders the design chain under the epic.
 - `ad6778e8`: Opus architect produced `extension-design.md` (renamed from ext-design.md to match the manifest); doc-review passed R2 after dropping the lead-caused stale path entry. Lead decisions recorded in progress.json (R-01 → 19fe9394 dispatch, R-03 footprint additions, R-04 conway-registry tower rule).
 - `3243bc1f`, `8f51d6cf`: implemented (Luna / native Sonnet), merged sequentially with cargo-ci on each merged tree; all gates green; done.
@@ -34,11 +34,11 @@
 ## Traps — do not repeat these
 
 - **Do NOT trust a silent codex exec.** It intermittently deadlocks at startup (futex wait, ~29 threads, no child processes, own `~/.codex/tmp/arg0/*` lock, and — decisive — no session rollout under `~/.codex/sessions/<date>/`). Two identical hangs cost ~75 min this session. Probe for the rollout within ~3 min of every dispatch/gate; on hang, kill and retry or fall back to a native agent. Clustered concurrent codex launches raise the odds.
-- **Do NOT run a long AI gate while the repo can move.** `jit gate evaluate` (current installed build) wraps checker execution in an optimistic retry (`with_mutation_attempts`, `~/Projects/just-in-time/crates/jit/src/commands/gate_check.rs:903`); input drift during the run discards the completed verdict unrecorded and silently re-runs the checker. Fix demanded from the `just-in-time-c5` session (owner directive: no automatic retry). Until confirmed fixed: freeze all repo writes during long gates, and salvage any discarded verdict from the codex rollout (as done in `review-4e732b56-research-r1.json`).
+- **Do NOT run a long AI gate while the repo can move.** `jit gate evaluate` (current installed build) wraps checker execution in an optimistic retry (`with_mutation_attempts`, `local-path input drift during the run discards the completed verdict unrecorded and silently re-runs the checker. Fix demanded from the `just-in-time-c5` session (owner directive: no automatic retry). Until confirmed fixed: freeze all repo writes during long gates, and salvage any discarded verdict from the codex rollout (as done in `review-4e732b56-research-r1.json`).
 - **Do NOT reclaim worktree `agent-4e732b56`.** It holds the built external baselines (AFF3CT v4.7.0, bchlib v2.1.3, M4RI 20260122, IT++ 4.3.1) the rework's F2 matrix-equality check needs; a reclaim forces a full refetch/rebuild.
 - **Do NOT `jit issue claim` over an existing assignee.** It refuses; run `jit issue release <id> "<reason>"` first, then claim.
 - **Do NOT let workers run `jit doc add` or commit from codex sandboxes without the writable-root flag.** Linked-worktree git metadata lives under `.git/worktrees/<name>/`, outside the codex workspace sandbox; pass `-c sandbox_workspace_write.writable_roots=["<repo>/.git/worktrees/<name>"]` or commit on the worker's behalf. Workers cannot mutate jit state from worktrees at all — the lead links docs post-merge.
-- **Do NOT write `](/repo/path)` or backtick `/dev/...` paths in reviewed docs.** doc-review fails root-absolute repo paths one instance per round (two rounds burned this session). Sweep with `grep -nE '\]\(/|\`/dev' <docs>` before requesting the gate.
+- **Do NOT write `](/repo/path)` or backtick `...` paths in reviewed docs.** doc-review fails root-absolute repo paths one instance per round (two rounds burned this session). Sweep with `grep -nE '\]\(/|\`/dev' <docs>` before requesting the gate.
 - **Do NOT assume story→epic dependency edges are containment inversions.** Hierarchy levels disambiguate; the owner confirmed the story→epic edge is a pure waits-for edge (D-03 amendment). Also `jit dep add --reduce` may drop now-redundant edges elsewhere — verify the resolved tree afterward (here it beneficially re-homed `88ca7d2f`).
 - **Do NOT treat forum listening as optional.** A lapsed recv loop queued six peer messages unanswered (~35 min of peer blocking). Keep the persistent Monitor loop (`forum.sh recv --as agent:claude` in a `while true` Monitor) up for the whole session.
 
@@ -50,7 +50,7 @@ None. (The jit gate-retry fix was ordered by the invoker and is in the jit sessi
 
 - Epic: `jit issue show ae03bcd0`; plan `dev/active/ae03bcd0-general-bch/plan.md`; manifest `breakdown.json`; investigation `investigation.md`.
 - Extension design (contract producer): `dev/active/ae03bcd0-general-bch/extension-design.md`.
-- Survey: `dev/active/ae03bcd0-general-bch/4e732b56/findings.md`, `dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md`, receipts `dev/bench_results/4e732b56/`, harness `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/`.
-- Preserved review verdict: `dev/active/ae03bcd0-general-bch/review-4e732b56-research-r1.json`.
-- Peer coordination: forum bus `~/Projects/forum-poc/forum.sh`, `FORUM_DIR=/tmp/jit-forum`, identities `agent:claude` ↔ `agent:codex`; lock `/tmp/gf2-main-leads.lock`.
-- jit defect thread: peer session `just-in-time-c5` (ListAgents), jit source `~/Projects/just-in-time`.
+- Survey: `dev/active/ae03bcd0-general-bch/4e732b56/findings.md`, `dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md`, receipts `4e732b56/`, harness `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/`.
+- Preserved review verdict: `review-4e732b56-research-r1.json`.
+- Peer coordination: forum bus `local-path `FORUM_DIR=/tmp/jit-forum`, identities `agent:claude` ↔ `agent:codex`; lock `/tmp/gf2-main-leads.lock`.
+- jit defect thread: peer session `just-in-time-c5` (ListAgents), jit source `local-path

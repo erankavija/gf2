@@ -4,11 +4,11 @@ Status: draft. This file is the single multi-cell selection receipt bound by the
 
 ## Selection contract
 
-The controlling contract is `dev/simulation_results/permanent-zero-fraction/protocol.md`, section `Backend freeze`. Rule 1 requires shared per-matrix behavioral equivalence and validation-anchor passage. Rule 2 requires host/build safety, capability, launch-duration, and resource conditions. Rule 3 requires a cell-applicable composite draw-pack-evaluate-count receipt; ranking is within one matched cohort only. The exact 296a41c9 cohort uses four configurations, twelve fresh processes per configuration, one initial 90-second machine warm-up, at least 3 seconds of per-configuration warm-up, at least five timed repetitions and five timed seconds, and a fixed 120-second per-process cap.
+The controlling contract is `protocol.md`, section `Backend freeze`. Rule 1 requires shared per-matrix behavioral equivalence and validation-anchor passage. Rule 2 requires host/build safety, capability, launch-duration, and resource conditions. Rule 3 requires a cell-applicable composite draw-pack-evaluate-count receipt; ranking is within one matched cohort only. The exact 296a41c9 cohort uses four configurations, twelve fresh processes per configuration, one initial 90-second machine warm-up, at least 3 seconds of per-configuration warm-up, at least five timed repetitions and five timed seconds, and a fixed 120-second per-process cap.
 
 ## Raw receipts considered
 
-The committed paths and SHA-256 values are listed in [`receipt-inventory.md`](receipt-inventory.md). The 296a41c9 canonical raw receipt is `dev/benchmarks/permanent_campaign/backend-ordering.csv`; the narrative is `backend-ordering.md`. The determinant companion is `dev/benchmarks/permanent_campaign/determinant-cost.csv`, and the b488f02c and GPU-study artifacts provide older, differently timed, or supporting evidence.
+The committed paths and SHA-256 values are listed in [`receipt-inventory.md`](receipt-inventory.md). The 296a41c9 canonical raw receipt is `backend-ordering.csv`; the narrative is `backend-ordering.md`. The determinant companion is `determinant-cost.csv`, and the b488f02c and GPU-study artifacts provide older, differently timed, or supporting evidence.
 
 ## Candidate provenance for the dischargeable cohort
 

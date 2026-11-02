@@ -36,7 +36,7 @@
 
 ## Traps — do not repeat these
 
-- **Do not treat a selected-field execution as manifest-global.** `crates/gf2-sim/src/bin/permanent_campaign.rs:150` requires the cost table if any manifest field has accelerator cells, while the binary selects one field later; independent review demonstrated that this rejects a valid processor-only selected field. Scope admission requirements to `--q` and test the real binary with a mixed manifest.
+- **Do not treat a selected-field execution as manifest-global.** `permanent_campaign.rs:150` requires the cost table if any manifest field has accelerator cells, while the binary selects one field later; independent review demonstrated that this rejects a valid processor-only selected field. Scope admission requirements to `--q` and test the real binary with a mixed manifest.
 - **Do not infer another user's game state from process visibility.** The owner's Baldur's Gate 3 executable is `/data/SteamLibrary/steamapps/common/Baldurs Gate 3/bin/bg3`, but it runs as another user. The authoritative admission rule is the owner's guaranteed 02:00-local safe window unless they say otherwise.
 - **Do not keep measurement recovery state only under ignored `target/`.** The crash erased binaries, receipts, logs, and provenance there. Use the durable `/data/gf2-campaigns/...` root and commit versioned evidence at the protocol's checkpoints.
 - **Do not commit dispatch or rework prompts.** The owner explicitly ruled that prompts are ephemeral coordination material. The accidental session-14 prompt was unlinked and deleted; future dispatches stay outside the repository.
@@ -60,8 +60,8 @@
 - Blocking issue: `jit issue show a39bb161`
 - Long-running freeze: `jit issue show 7a816262`
 - Progress and escalation record: `dev/active/b8206228-permanent-statistics/progress.json`
-- Frozen-manifest plan: `dev/active/b8206228-permanent-statistics/premeasure-plan-v1.md`
+- Frozen-manifest plan: `premeasure-plan-v1.md`
 - Prior recovery handoff: `dev/active/b8206228-permanent-statistics/handoff-9.md`
 - Accelerator repair commits: `7316c062` (worker), `f077c380` (merge)
 - Durable campaign root: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824`
-- Protocol: `dev/simulation_results/permanent-zero-fraction/protocol.md` section Backend freeze
+- Protocol: `protocol.md` section Backend freeze

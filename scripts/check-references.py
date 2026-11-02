@@ -25,6 +25,7 @@ ROOTS = r"(?:benchmarks|contrib|crates|dev|docs|experiments|packages|proofs|scri
 REPOSITORY_PATH = re.compile(rf"(?<![\w./+-])/?({ROOTS}/[\w.+=-]+(?:/[\w.+=-]+)*)")
 MARKDOWN_LINK = re.compile(r"\]\((?!https?:|mailto:|#|/)([^)#\s]+)")
 TEMPLATE = re.compile(r"[<>{}*$]")
+DEVICE = re.compile(r"dev/(?:null|zero|shm|stdin|stdout|stderr|fd|tty|kfd|dri|urandom|random|cpu|mem)\b")
 
 
 def git(root: Path, *args: str) -> str:
@@ -51,6 +52,8 @@ def faults_in(path: str, text: str, known: set[str]) -> list[str]:
             if line[end : end + 1] in ("*", "{", "<", "$"):
                 continue
             target = match.group(1).rstrip(".,:;")
+            if DEVICE.match(target):
+                continue
             if not TEMPLATE.search(target) and target not in known:
                 faults.append(f"{path}:{number}: {target}")
         if path.endswith(".md"):
@@ -74,8 +77,14 @@ def _normal(target: str) -> list[str]:
 
 
 def excepted(fault: str, exceptions: list[dict[str, str]]) -> bool:
-    path = fault.split(":", 1)[0]
-    return any(fnmatch.fnmatch(path, entry["path"]) for entry in exceptions)
+    """An entry exempts its files; with `planned`, only paths of files to come."""
+    path, target = fault.split(":", 1)[0], fault.rsplit(": ", 1)[1]
+    for entry in exceptions:
+        if fnmatch.fnmatch(path, entry["path"]):
+            planned = entry.get("planned")
+            if planned is None or target.startswith(tuple(planned)):
+                return True
+    return False
 
 
 def ignored(root: Path, target: str) -> bool:

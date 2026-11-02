@@ -27,7 +27,7 @@ have no GPU — do not attempt device work.
 actually packs, misattributing a published dataset column.**
 
 - Location: the accelerator shard loop in
-  `crates/gf2-sim/src/permanent_campaign/schedule.rs` — the `PhaseDurations`
+  `schedule.rs` — the `PhaseDurations`
   literal sets `pack: Duration::ZERO`, while `dispatch_accelerator` calls
   `PackedMatrix::new` for every matrix *inside* the span you time as `evaluate`.
 - Why it is wrong: `PhaseDurations.pack` is a published per-shard phase column in
@@ -63,7 +63,7 @@ actually packs, misattributing a published dataset column.**
 
 **F3 [low] — `dispatch_accelerator` re-derives `n` instead of being given it.**
 
-- Location: `crates/gf2-sim/src/permanent_campaign/schedule.rs`,
+- Location: `schedule.rs`,
   `dispatch_accelerator`, which recovers `n` with
   `(1..=63).find(|candidate| candidate * candidate == entries.len())`.
 - What is wrong: `n` is a frozen manifest value and is in hand at the call site
@@ -96,8 +96,8 @@ actually packs, misattributing a published dataset column.**
 Run and paste raw results:
 
 ```
-rg -n "pack" crates/gf2-sim/src/permanent_campaign/schedule.rs
-rg -n "Duration::ZERO" crates/gf2-sim/src/permanent_campaign/
+rg -n "pack" schedule.rs
+rg -n "Duration::ZERO" permanent_campaign/
 ```
 
 Every site that reports a phase duration it did not actually measure is the same

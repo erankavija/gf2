@@ -8,7 +8,7 @@ Migrate the gf2-sim campaign binaries and tests consuming legacy BCH constructor
 
 Gates: `cargo-ci`, `code-review` (the lead runs them on the merged tree).
 
-Inventory (design file group `cutover-sim`): `crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs`, `crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs`, `crates/gf2-sim/tests/ebch_osd_campaign_cli.rs`, `crates/gf2-sim/tests/gpu_byte_identity.rs`, `crates/gf2-sim/tests/osd_campaign_protocol.rs`. `crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs` still holds legacy sites but belongs to the HIP equivalence task (c3cc5226, done): report it as a footprint finding with the exact lines; do not edit it.
+Inventory (design file group `cutover-sim`): `ebch_osd_awgn_campaign.rs`, `gpu_bch_syndrome_throughput.rs`, `ebch_osd_campaign_cli.rs`, `crates/gf2-sim/tests/gpu_byte_identity.rs`, `osd_campaign_protocol.rs`. `crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs` still holds legacy sites but belongs to the HIP equivalence task (c3cc5226, done): report it as a footprint finding with the exact lines; do not edit it.
 
 ## What matters here
 

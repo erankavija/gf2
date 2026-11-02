@@ -43,4 +43,4 @@
 - Phase-1 artifact set + draft manifest: this directory, committed `776858ed`, doc-linked to `7a816262`
 - Premeasurement plan + runner: `dev/benchmarks/permanent_campaign/premeasure-plan-v1.{csv,md}`, `dev/scripts/permanent-campaign-runner.sh` (`premeasure`, `premeasure-collect`), tests `dev/scripts/permanent-campaign-premeasure.test.sh`
 - Overnight log (after 02:00): `target/permanent-campaign/systemd-premeasure.log`; receipts `target/permanent-campaign/premeasure-v1/`
-- Protocol (authoritative): `dev/simulation_results/permanent-zero-fraction/protocol.md` §Backend freeze
+- Protocol (authoritative): `protocol.md` §Backend freeze

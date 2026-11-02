@@ -7,7 +7,7 @@
 | Contract produced | [`workload-selection`](workload-selection.md) |
 | Criteria | REQ-13, REQ-14 of the epic; D-04 (encoding families), D-07 (evidence protocol) |
 | Harness | `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/` |
-| Receipts | `dev/bench_results/4e732b56/` |
+| Receipts | `4e732b56/` |
 | Status | Complete. Both workloads measured, baselines selected, contract fixed; the timed-route matrix check reports bit-identical agreement. |
 
 ## 1. Question
@@ -31,7 +31,7 @@ them against the same codes, and fixing the result as the
 
 ## 2. Why the existing SOTA target matrix does not answer this
 
-The [SOTA target matrix](../../../archive/97bf0879-gf2-core-sota-performance/plans/sota_target_matrix.md) is the repository's reference-selection
+The SOTA target matrix is the repository's reference-selection
 keystone, and this survey follows its pinning and receipt conventions. It does
 not, however, contain a cell for either workload, for three reasons it records
 itself:
@@ -206,8 +206,8 @@ compared on either workload because it implements neither.
 
 ### 3.6 kodo / steinwurf — rejected, not retrievable
 
-A fresh retrieval attempt is recorded in the [Kodo retrieval
-receipt](../../../bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt):
+A fresh retrieval attempt is recorded in the Kodo retrieval
+receipt:
 at 2026-09-01 00:05 EEST, an unauthenticated `curl` against the repository
 page returned HTTP 404, and the anonymous `git clone` exited 128, refusing to
 proceed because it needed a username with terminal prompts disabled. No
@@ -234,8 +234,8 @@ quoted.
 **Worker count.** Every figure in this survey is single-threaded, the worker
 count the contract fixes for baseline comparison. All four baselines are
 single-threaded as built: bchlib and the AFF3CT encoder kernels contain no
-threading, and M4RI was configured without OpenMP. The committed [M4RI
-thread evidence](../../../bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt)
+threading, and M4RI was configured without OpenMP. The committed M4RI
+thread evidence
 contains the installed `m4ri_config.h` (`__M4RI_HAVE_OPENMP 0`) and `ldd`/
 `readelf -d` output showing no OpenMP runtime dependency. No figure here may be
 read as a multi-threaded result.
@@ -265,8 +265,8 @@ splitmix64 in the C and Rust harnesses and `std::mt19937_64` in the C++ one.
 Every row carries an FNV-1a digest of the cell's output, so a re-run that
 produces different numbers can be distinguished from one that produced
 different *results*. A seeded AFF3CT rerun checked 98 W1 and 14 W2 B1/B2
-comparisons against the new survey CSVs; every digest matched in the [determinism
-agreement receipt](../../../bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt).
+comparisons against the new survey CSVs; every digest matched in the determinism
+agreement receipt.
 
 **Reproduction.**
 
@@ -286,7 +286,7 @@ chose to move.
 Full per-cell figures — 128 cells, comprising 126 measured cells and 2
 explicit projections, with trial counts, medians, extrema, and spreads where
 measured — are in the receipt at
-[`dev/bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md`](../../../bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md), rendered
+`2026-09-01-4e732b56-survey-receipt.md`, rendered
 from the committed CSVs. This section quotes only the cells the selection turns
 on.
 
@@ -345,8 +345,8 @@ separates cleanly on its median.
 The timed-route matrix check confirms bit-exact agreement. The M4RI route fills
 and reduces the generator matrix in repository column order, and its output is
 bit-identical to gf2's $G$ in the repository row-major `[message | parity]`
-layout. For B2, B3, and T2S, dimensions match and the [generator-matrix
-agreement receipt](../../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt)
+layout. For B2, B3, and T2S, dimensions match and the generator-matrix
+agreement receipt
 records `bit_exact_identical=True` and `same_code=True`; no verifier
 normalization exists.
 Reducing the repository-column-order generator matrix to reduced row echelon form beats
@@ -460,8 +460,8 @@ the minimal-polynomial table at
 what the AFF3CT harness emits; both DVB-T2 rows agree coefficient by
 coefficient at degrees 168 and 192. The checker is invoked against the same
 `generators.txt` the harnesses consume:
-`2026-09-01-4e732b56-small-generator-agreement.txt`. The W2 comparison is likewise bit-exact: the [generator-matrix
-receipt](../../../bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt)
+`2026-09-01-4e732b56-small-generator-agreement.txt`. The W2 comparison is likewise bit-exact: the generator-matrix
+receipt
 witnesses bit-identical systematic output (`bit_exact_identical=True`) and
 identical canonical RREFs (`same_code=True`) for the M4RI and gf2 routes at B2,
 B3, and T2S.
@@ -558,17 +558,17 @@ overhead for the epic to preserve, and no existing parallelism to regress.
 
 | Finding | Resolution | Evidence at HEAD |
 |---|---|---|
-| R1-F1 invocation/revision provenance | Both survey runs use native per-stage headers and record the fresh gf2 revision. | `dev/bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md` § Per-stage provenance |
-| R1-F2 matrix-equality check | The check is retained; the dump shares the timed helper and the comparison records bit-identical output with no normalization. | `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/m4ri_genmatrix_bench.c`; `dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt` |
+| R1-F1 invocation/revision provenance | Both survey runs use native per-stage headers and record the fresh gf2 revision. | `2026-09-01-4e732b56-survey-receipt.md` § Per-stage provenance |
+| R1-F2 matrix-equality check | The check is retained; the dump shares the timed helper and the comparison records bit-identical output with no normalization. | `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/m4ri_genmatrix_bench.c`; `2026-09-01-4e732b56-generator-matrix-agreement.txt` |
 | R1-F3 5 ms repetition rule | New calibrated logs retain repetition counts; the audit found no measured cell without calibrated repetitions. | `dev/bench_results/4e732b56/2026-09-01-4e732b56-*.log`; `dev/active/ae03bcd0-general-bch/4e732b56/findings.md` § 4 |
-| R1-F4 kodo retrieval evidence | The retrieval failure and scope evidence remain preserved. | `dev/bench_results/4e732b56/2026-08-31-4e732b56-kodo-retrieval.txt` |
-| R1-F5 M4RI thread evidence | The no-OpenMP configuration and dynamic-link evidence remain preserved. | `dev/bench_results/4e732b56/2026-08-31-4e732b56-m4ri-thread-evidence.txt` |
-| R1-F6 nice posture | The denied nice request is recorded in the protocol and run host records. | `dev/active/ae03bcd0-general-bch/4e732b56/findings.md` § 4; `dev/bench_results/4e732b56/2026-09-01-4e732b56-small-host.txt` |
-| R1-F7 dispersion prose | Exact dispersion counts and selection-critical spreads match the new receipt. | `dev/active/ae03bcd0-general-bch/4e732b56/findings.md` § 5; `dev/bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md` |
+| R1-F4 kodo retrieval evidence | The retrieval failure and scope evidence remain preserved. | `2026-08-31-4e732b56-kodo-retrieval.txt` |
+| R1-F5 M4RI thread evidence | The no-OpenMP configuration and dynamic-link evidence remain preserved. | `2026-08-31-4e732b56-m4ri-thread-evidence.txt` |
+| R1-F6 nice posture | The denied nice request is recorded in the protocol and run host records. | `dev/active/ae03bcd0-general-bch/4e732b56/findings.md` § 4; `2026-09-01-4e732b56-small-host.txt` |
+| R1-F7 dispersion prose | Exact dispersion counts and selection-critical spreads match the new receipt. | `dev/active/ae03bcd0-general-bch/4e732b56/findings.md` § 5; `2026-09-01-4e732b56-survey-receipt.md` |
 | R1-F8 counter-claim wording | The selection and falsification prose preserve the speed result and the bit-exact repository-layout matrix agreement. | `dev/active/ae03bcd0-general-bch/4e732b56/findings.md` §§ 5.2, 6.3, 8.1–8.2 |
-| R1-F9 seeded determinism | The seeded AFF3CT rerun has 98 W1 and 14 W2 comparisons with zero digest mismatches against the new CSVs. | `dev/bench_results/4e732b56/2026-09-01-4e732b56-determinism-agreement.txt` |
-| R2-F1 provenance-complete remeasurement | The complete runner reruns are recorded at `2026-09-01T04:13:04Z` and `2026-09-01T04:23:21Z`; all measurement rows use log-header provenance and the fresh gf2 revision `38e0335a`. | `dev/bench_results/4e732b56/2026-09-01-4e732b56-survey-receipt.md` § Per-stage provenance |
-| R2-F2 timed-route equality check | The timed and dump routes share `genmatrix_rref`; the dump is verbatim, no normalization is applied, and the B2/B3/T2S outputs are bit-identical. | `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/m4ri_genmatrix_bench.c`; `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/verify-generator-matrices.py`; `dev/bench_results/4e732b56/2026-09-01-4e732b56-generator-matrix-agreement.txt` |
+| R1-F9 seeded determinism | The seeded AFF3CT rerun has 98 W1 and 14 W2 comparisons with zero digest mismatches against the new CSVs. | `2026-09-01-4e732b56-determinism-agreement.txt` |
+| R2-F1 provenance-complete remeasurement | The complete runner reruns are recorded at `2026-09-01T04:13:04Z` and `2026-09-01T04:23:21Z`; all measurement rows use log-header provenance and the fresh gf2 revision `38e0335a`. | `2026-09-01-4e732b56-survey-receipt.md` § Per-stage provenance |
+| R2-F2 timed-route equality check | The timed and dump routes share `genmatrix_rref`; the dump is verbatim, no normalization is applied, and the B2/B3/T2S outputs are bit-identical. | `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/m4ri_genmatrix_bench.c`; `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/verify-generator-matrices.py`; `2026-09-01-4e732b56-generator-matrix-agreement.txt` |
 
 ## 10. Citations
 

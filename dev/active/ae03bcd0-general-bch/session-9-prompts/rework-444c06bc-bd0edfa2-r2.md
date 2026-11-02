@@ -1,7 +1,7 @@
 # Rework Required — 444c06bc (attempt 2 of 2) and bd0edfa2 (attempt 2 of 2)
 
 You are dispatched to JIT issues 444c06bc (Canonical BCH matrices use the systematic user layout) and bd0edfa2 (Optimize the reference generator-matrix materialization). Your worktree is at:
-  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-bd0edfa2
+  agent-bd0edfa2
 on branch worktree-agent-bd0edfa2. Rework 1 of both issues was merged to main at 8754afc8 and gated there: 444c06bc cargo-ci PASSED, doc-review R2 PASSED, code-review R1 **FAILED** (one finding, below); bd0edfa2 cargo-ci PASSED, code-review R2 result appended at the end of this file. **First command:** `git merge main` (main is at 686830ae or later; expect no conflicts).
 
 Hard rules (worktree-dispatch-protocol):

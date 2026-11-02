@@ -1,6 +1,6 @@
 # Phase-1 freeze-feasibility inventory and draft manifest
 
-> **Superseded phase-1 draft.** The premeasurement this draft calls for has since run and is receipted, and the freeze is complete. The authoritative selection record is `dev/benchmarks/permanent_campaign/backend-selection-v1.md`; the frozen campaign record is `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md`. This draft remains as phase-1 history only and is not a ranking or freeze input.
+> **Superseded phase-1 draft.** The premeasurement this draft calls for has since run and is receipted, and the freeze is complete. The authoritative selection record is `backend-selection-v1.md`; the frozen campaign record is `freeze.md`. This draft remains as phase-1 history only and is not a ranking or freeze input.
 
 Status: draft. This artifact set supports feasibility review for JIT issue `7a816262`; it is not a final freeze and it does not authorize campaign draws.
 
@@ -21,7 +21,7 @@ The stream index is allocated as `((cell_ordinal as u64) << 32) | shard_id`, wit
 The cell counts are the protocol's exact values: q=3 uses 20,000,000 for n=4..20 and 222,223 for n=21..28; q=5 uses 16,000,000 for n=4..16 and 160,000 for n=17..24; q=7 uses 12,244,898 for n=4..16 and 122,449 for n=17..20. The multiplicity is K=63. The permanent-floor and determinant families each use family budget 0.025 and per-cell level 1/2520. The manifest schema has no error-budget fields, so the freeze document binds these protocol values by citation rather than adding unknown JSON fields.
 
 `determinant_companion` is `evaluate` for all 63 cells. The determinant-cost receipt supplies marginal-cost evidence but never acts as a backend ranking receipt.
-`dev/benchmarks/permanent_campaign/determinant-cost.md` §Verdict and §Twelve-hour budget projection record no marginal-cost failures; the largest projected fixed-N addition — measured per-matrix marginal cost extrapolated to the planned sample count, a derived projection rather than a measurement — is 0.014288 h at (q,n)=(3,20), with 0.000328 h at (3,28), 0.000187 h at (5,24), and 0.000098 h at (7,20). The receipt's §Measured ratio and §Twelve-hour budget projection tables record the other measured anchor cells and the fixed-N calculation.
+`determinant-cost.md` §Verdict and §Twelve-hour budget projection record no marginal-cost failures; the largest projected fixed-N addition — measured per-matrix marginal cost extrapolated to the planned sample count, a derived projection rather than a measurement — is 0.014288 h at (q,n)=(3,20), with 0.000328 h at (3,28), 0.000187 h at (5,24), and 0.000098 h at (7,20). The receipt's §Measured ratio and §Twelve-hour budget projection tables record the other measured anchor cells and the fixed-N calculation.
 
 ## Integrity and reproducibility
 
@@ -43,7 +43,7 @@ The draft reader validation is recorded in [`validation.md`](validation.md). It 
 
 | Artifact | SHA-256 | Role |
 |---|---|---|
-| [`manifest.json`](manifest-draft/manifest.json) | `d9bbcd6d8bddd51bab0e232732bb0e16d4710e5dce4ff48932d4879afea00cce` | schema-valid 63-cell draft |
+| `manifest.json` | `d9bbcd6d8bddd51bab0e232732bb0e16d4710e5dce4ff48932d4879afea00cce` | schema-valid 63-cell draft |
 | [`backend-selection-draft.md`](backend-selection-draft.md) | `f009e79b2ae2c4a7ea16415fdc14cd98da9e2e07a2796fde482fdfbd93bc1184` | manifest-bound draft selection receipt |
 | [`receipt-inventory.md`](receipt-inventory.md) | `42ab7d118081fcb7956105dec7a2d4a0872119259c6215331af774bef8c41efd` | committed receipt inventory |
 

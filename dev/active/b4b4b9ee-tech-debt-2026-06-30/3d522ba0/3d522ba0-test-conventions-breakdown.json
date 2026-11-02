@@ -127,7 +127,7 @@
   {
     "key": "test-name-prefix-sim",
     "title": "Add the required test prefix to the gf2-sim campaign binary tests",
-    "description": "Eighteen test functions in the DVB-T2 campaign binary are named without the required prefix, so they do not match the convention the rest of the workspace follows.\n\n## Background\n\nThe project names test functions `test_<operation>_<scenario>`. The affected functions in `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` are named for the scenario alone, so a filtered run that selects on the prefix silently skips them.\n\n## Success Criteria\n\n- [hard] REQ-01: All eighteen test functions in the campaign binary are named `test_<operation>_<scenario>`.\n- [hard] REQ-02: Each renamed function keeps its original assertions; no test is dropped, merged, or weakened.\n- [hard] REQ-03: No test function in the binary lacks the prefix afterwards.\n- [hard] REQ-04: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+    "description": "Eighteen test functions in the DVB-T2 campaign binary are named without the required prefix, so they do not match the convention the rest of the workspace follows.\n\n## Background\n\nThe project names test functions `test_<operation>_<scenario>`. The affected functions in `dvb_t2_awgn_campaign.rs` are named for the scenario alone, so a filtered run that selects on the prefix silently skips them.\n\n## Success Criteria\n\n- [hard] REQ-01: All eighteen test functions in the campaign binary are named `test_<operation>_<scenario>`.\n- [hard] REQ-02: Each renamed function keeps its original assertions; no test is dropped, merged, or weakened.\n- [hard] REQ-03: No test function in the binary lacks the prefix afterwards.\n- [hard] REQ-04: The suite passes, and clippy with warnings denied plus formatting pass.\n",
     "type": "task",
     "priority": "low",
     "labels": [
@@ -155,7 +155,7 @@
         "worker_sized_reason": "Eighteen renames in a single file with no behaviour change.",
         "footprint": {
           "touches": [
-            "crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs"
+            "dvb_t2_awgn_campaign.rs"
           ]
         }
       }

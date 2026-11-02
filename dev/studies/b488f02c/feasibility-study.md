@@ -592,7 +592,7 @@ Four results carry consequences beyond the envelope.
 supporting it. The cause is documented in the kernel itself: the
 SIMD path zero-pads a single Bipedal3 word into a 4-element AVX2 lane, so three
 of four lanes carry no data. The locked
-[provenance-fixed four-matrix receipt](../../benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md)
+provenance-fixed four-matrix receipt
 records scalar/direct-AVX2 pooled-rate ratios of **2.858539x--3.354322x** at
 every $n \in \{8,12,16,20,24,28\}$. The routing fix is that
 [`permanent_bipedal3`](../../../crates/gf2-algebra/src/permanent/bipedal3.rs)
@@ -1032,8 +1032,8 @@ agent working with review, and assume the harness in
 |---|---|---|---|
 | G1 | Uniform $\mathbb{F}_q$ matrix sampler | Landed as [`permanent_statistics::sampler`](../../../experiments/permanent-statistics/src/sampler.rs); prototype retained as historical context | 0.5 d (historical) |
 | G2 | Streaming zero-fraction statistics with CIs | Prototyped, needs checkpointing | 1.0 d |
-| G3 | Campaign runner | Landed as [`gf2_sim::permanent_campaign::schedule`](../../../crates/gf2-sim/src/permanent_campaign/schedule.rs) and the [`permanent_campaign` binary](../../../crates/gf2-sim/src/bin/permanent_campaign.rs); one field arm enumerates, executes, and emits the manifest's work items | 2.0 d (historical) |
-| G4 | Versioned dataset format | Landed as [`gf2_sim::permanent_campaign`](../../../crates/gf2-sim/src/permanent_campaign/), published under [`dev/simulation_results/permanent-zero-fraction/`](../../simulation_results/permanent-zero-fraction/README.md) | 0.5 d (historical) |
+| G3 | Campaign runner | Landed as `gf2_sim::permanent_campaign::schedule` and the `permanent_campaign` binary; one field arm enumerates, executes, and emits the manifest's work items | 2.0 d (historical) |
+| G4 | Versioned dataset format | Landed as `gf2_sim::permanent_campaign`, published under `permanent-zero-fraction/` | 0.5 d (historical) |
 | G5 | Permanental-rank predicate for the rectangular check | Landed as [`permanent::permanental_rank_status`](../../../crates/gf2-algebra/src/permanent/rank.rs); **no new kernel needed** | 1.0 d (historical) |
 | G6 | `permanent_bipedal3` routed single matrices to the slower kernel | Defect, confirmed by measurement; fixed in [`permanent/bipedal3.rs`](../../../crates/gf2-algebra/src/permanent/bipedal3.rs), measurement retained as historical context | 0.5 d (historical) |
 | G7 | No batch-parallel path for any field | Missing | 0.5 d |
@@ -1092,7 +1092,7 @@ tens of kilobytes.
 The delivered form is the typed schema in `gf2_sim::permanent_campaign::schema`
 with its source-identity guard and integrity layer in
 `gf2_sim::permanent_campaign::provenance`; the
-[published dataset README](../../simulation_results/permanent-zero-fraction/README.md)
+published dataset README
 is the canonical description of the layout, the `checksums.sha256` format, and
 the verification procedure. The sketch in §7.4 below is the feasibility-time
 proposal and is superseded by it.
@@ -1160,10 +1160,10 @@ SIMD path zero-pads a single Bipedal3 word into a 4-element AVX2 lane, so three
 of four lanes carry no data. This was already visible in
 `s3_cross_cpu-2026-05-12.csv`; its historical result is not current
 authoritative evidence. The later locked
-[provenance-fixed four-matrix receipt](../../benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md)
+provenance-fixed four-matrix receipt
 records scalar/direct-AVX2 pooled-rate ratios of 3.273668x, 3.302095x, and
 3.354322x at $n = 16, 20, 24$, respectively. The earlier cohort remains
-[provenance-incomplete](../../benchmarks/permanent_campaign/batched-f3-avx2.md)
+provenance-incomplete
 and is not interpreted.
 The public entry point now calls `permanent_bipedal3_singleword` for
 $n \le 63$
@@ -1503,11 +1503,11 @@ row-major, before the packed constructor reorders it into the kernels' storage.
 This section is the feasibility-time proposal. The delivered layout, its file
 names and formats, its raw-versus-derived partition, and its integrity file are
 described once in the
-[published dataset README](../../simulation_results/permanent-zero-fraction/README.md);
+published dataset README;
 read that rather than this sketch for the shape of an actual dataset.
 
 ```text
-dev/campaigns/permanent-zero-fraction/<campaign-id>/
+permanent-zero-fraction/<campaign-id>/
   manifest.toml          root seed, harness source SHA, rustc/ROCm, hardware,
                          grid, per-cell N, shard size, schema version
   shards/q<q>/n<nn>/shard-<index>.csv
@@ -1523,7 +1523,7 @@ directory: a published dataset outlives the issue that produced it, so it does
 not belong in an issue-scoped area like `dev/studies`, and inventing a path
 outside the configured set would put it outside the repository's documentation
 contract. That reasoning held; the area chosen was
-`dev/simulation_results/permanent-zero-fraction/`.
+`permanent-zero-fraction/`.
 
 Shards store the histogram of permanent values over the $q$ residue classes
 rather than the matrices: matrices are regenerable from their stream tuple, so

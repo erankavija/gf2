@@ -11,13 +11,13 @@ python3 dev/studies/91605d4d/analysis.py
 
 | Artifact | Role |
 | --- | --- |
-| [`…-q5-grid.csv`](permanent-campaign-20260814T230032Z-2085453-q5-grid.csv) / [`.log`](permanent-campaign-20260814T230032Z-2085453-q5-grid.log) | End-to-end Ryser timing grid, 75 cells |
-| [`…-q5-gray-update.csv`](permanent-campaign-20260814T230032Z-2085453-q5-gray-update.csv) / [`.log`](permanent-campaign-20260814T230032Z-2085453-q5-gray-update.log) | Dependency-chained Gray-update isolate, five orders |
-| [`…-q5-horizontal-product.csv`](permanent-campaign-20260814T230032Z-2085453-q5-horizontal-product.csv) / [`.log`](permanent-campaign-20260814T230032Z-2085453-q5-horizontal-product.log) | Horizontal-product isolate and zero/nonzero branch frequencies, five orders |
-| [`../047b62ed/…-shared-equivalence.csv`](../047b62ed/permanent-campaign-20260814T230032Z-2085453-shared-equivalence.csv) / [`.log`](../047b62ed/permanent-campaign-20260814T230032Z-2085453-shared-equivalence.log) | Backend-equivalence gate, all fields in one global run |
-| [`…provenance.txt`](permanent-campaign-20260814T230032Z-2085453.provenance.txt) | Revision, toolchain, binary hashes, host inventory, exact commands |
-| [`…run-summary.txt`](permanent-campaign-20260814T230032Z-2085453.run-summary.txt) | Per-step status and exit codes |
-| [`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/`](../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/) | Compiler kernel-resource receipt and per-kernel logs |
+| `…-q5-grid.csv` / `.log` | End-to-end Ryser timing grid, 75 cells |
+| `…-q5-gray-update.csv` / `.log` | Dependency-chained Gray-update isolate, five orders |
+| `…-q5-horizontal-product.csv` / `.log` | Horizontal-product isolate and zero/nonzero branch frequencies, five orders |
+| `../047b62ed/…-shared-equivalence.csv` / `.log` | Backend-equivalence gate, all fields in one global run |
+| `…provenance.txt` | Revision, toolchain, binary hashes, host inventory, exact commands |
+| `…run-summary.txt` | Per-step status and exit codes |
+| `../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/` | Compiler kernel-resource receipt and per-kernel logs |
 | [`analysis.py`](analysis.py) | Derivation of every table here from the artifacts above |
 
 Each CSV carries a `#` preamble that is the authoritative source for the facts
@@ -36,7 +36,7 @@ kernel `7.1.6-arch1-1`. Harness binary SHA-256
 `edb03650bbbfb47064a3a2b5e021ac055394812a4362c577fdad07cdbd997bce`; the
 $\mathbb{F}_5$ prototype executable `f5-wave-device-evidence` SHA-256
 `bee168a131de7ca9f5a916363dee9e827e0136ac556d4153790073b9ce75e088`. Sources:
-[`…provenance.txt`](permanent-campaign-20260814T230032Z-2085453.provenance.txt)
+`…provenance.txt`
 and the `#` preamble of each CSV.
 
 Four binaries carry the measurement: the harness itself and the three prototype
@@ -47,7 +47,7 @@ receipt in one pass from the same `git rev-parse HEAD`
 `:363`), so the receipt's `source_revision`
 `f9224650a780ea8ed98bcdff6e662cdb0d7b94f4` is the revision the binaries were
 built at, with `tracked_worktree_dirty=false` at that moment
-([`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt`](../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt)).
+(`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt`).
 The measure run executes at HEAD `292320d5`, one commit ahead: that commit
 touches tracker state, two gate review prompts, and a package manifest, and no
 file under `crates/` or `dev/research/`. The binaries are not rebuilt across it,
@@ -61,7 +61,7 @@ binaries.
 
 The three commands that produced this field's three CSVs are recorded verbatim
 under `exact_commands_executed:` in
-[`…provenance.txt`](permanent-campaign-20260814T230032Z-2085453.provenance.txt)
+`…provenance.txt`
 and repeated in the `# invocation:` line of each CSV and the `# command:` line
 of each log. The equivalence step of §3 is one global invocation shared by all
 three fields, so its command is recorded in the $\mathbb{F}_3$ study's
@@ -69,7 +69,7 @@ provenance file beside the CSV it wrote, and in that CSV's own `# invocation:`
 line. This field's own run summary carries all four steps that touch it — the
 shared equivalence step and the three $q = 5$ steps — and each reports
 `status=completed exit=0`
-([`…run-summary.txt`](permanent-campaign-20260814T230032Z-2085453.run-summary.txt)).
+(`…run-summary.txt`).
 
 The campaign runs under
 [`dev/scripts/permanent-campaign-runner.sh`](../../scripts/permanent-campaign-runner.sh),
@@ -96,7 +96,7 @@ grids. Every cell still performs its own untimed warm-up of at least 3 s before
 its first timed repetition, which the preamble's `protocol:` line states.
 
 The `tracked_worktree_dirty: true` line in
-[`…provenance.txt`](permanent-campaign-20260814T230032Z-2085453.provenance.txt)
+`…provenance.txt`
 is the state at the moment the provenance block is written, which is mid-run
 and after the runner has already emitted its own outputs under `dev/studies/`
 (`permanent-campaign-runner.sh:179-187`). The pristine condition that gates the
@@ -173,7 +173,7 @@ a process start
 launch geometry is one block per matrix and `active_lanes_for_order(n)` lanes
 per block, with $n^2$ bytes of dynamic shared memory for the byte control and
 $24n$ bytes for the three-plane path
-(`dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip:727-737`), and
+(`f5_wave_equivalence.hip:727-737`), and
 `active_lanes_for_order(n) = 32` for $n \ge 5$
 (`dev/research/permanent_wave_gpu/hip/wave_ryser_mapping.h:29-31`, `:16`). Each
 lane owns a balanced Gray interval
@@ -203,7 +203,7 @@ one. §13 records that reading.
 ## 3. Equivalence gate (REQ-11)
 
 The equivalence step is the first step of the pipeline
-([`…run-summary.txt`](permanent-campaign-20260814T230032Z-2085453.run-summary.txt);
+(`…run-summary.txt`;
 `timestamp_utc: 2026-08-14T23:00:34Z` in the equivalence CSV against
 `2026-08-15T00:59:54Z` in the grid CSV), so it precedes every timing cell of the
 same run, on the same host and the same binary hash.
@@ -260,7 +260,7 @@ order actually has.
 ### 4.1 Recorded fields
 
 REQ-02 asks for a specific field set. Each is a named column of
-[`…-q5-grid.csv`](permanent-campaign-20260814T230032Z-2085453-q5-grid.csv), or a
+`…-q5-grid.csv`, or a
 line of the provenance file for the facts that are constant across the run.
 
 | REQ-02 item | Where recorded |
@@ -440,7 +440,7 @@ evaluation is one dispatch — `gridDim.x = M` blocks of one thread for the
 shipped kernel
 (`crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip:253-254`,
 `:266-270`), `gridDim.x = M` blocks of 32 lanes for the prototypes
-(`dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip:727-737`) — so
+(`f5_wave_equivalence.hip:727-737`) — so
 `reps` is the launch count.
 
 | $n$ | path | $M$ | `reps` | host submission µs/launch | device submission→kernel µs/launch | kernel ms/launch | H2D µs/launch | D2H µs/launch |
@@ -683,7 +683,7 @@ latency chain, not independent-operation throughput. Net duration is
 `(Σ update spans − Σ same-geometry compiler-barrier spans) / (steps × reps)`,
 with CPU rows using paired host spans and HIP rows paired device-event kernel
 spans (preamble of
-[`…-q5-gray-update.csv`](permanent-campaign-20260814T230032Z-2085453-q5-gray-update.csv)).
+`…-q5-gray-update.csv`).
 
 **Both this field's circuits are measured at every order, and no row is
 censored.** All 10 measured rows carry a duration.
@@ -812,7 +812,7 @@ absence is left without a reason of the kind the criterion names.
 ## 7. Kernel resources against design-predicted budgets (REQ-07, REQ-09)
 
 Source: the compiler kernel-resource receipt
-[`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt`](../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt)
+`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt`
 at `source_revision f9224650a780ea8ed98bcdff6e662cdb0d7b94f4`, architecture
 `gfx1030`, flag `-Rpass-analysis=kernel-resource-usage`, every entry
 `exit_status: 0` with source, object, and log SHA-256. The per-kernel logs carry
@@ -854,7 +854,7 @@ The receipt records it as `translation_unit_role: included-fragment` against the
 
 **Lane-owns-interval prototypes (`f5-byte-control`, `f5-three-plane`).** The
 committed HIP translation unit states source-level stable-lane-state models
-before compiler allocation (`dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip:9-15`). `f5_byte_control_kernel` has $n + 20$ bytes
+before compiler allocation (`f5_wave_equivalence.hip:9-15`). `f5_byte_control_kernel` has $n + 20$ bytes
 of stable lane state; beside the `VGPRs` measurement, that byte model is
 $\frac{n+20}{4}$ 32-bit register units, or 8–12 units at the measured orders
 $n \in \{12, 16, 20, 24, 28\}$ (`f5_wave_equivalence.hip:9-12`).
@@ -872,7 +872,7 @@ column tables requested at launch: $n^2$ bytes for byte control and $24n$ bytes
 for the three-plane path.*" (`:154-157`). The launch confirms the sizes:
 `shared_bytes` is `n * n` for the byte control and
 `3 * n * sizeof(std::uint64_t)` for the three-plane path
-(`dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip:727-731`),
+(`f5_wave_equivalence.hip:727-731`),
 backing `extern __shared__ std::uint8_t staged_matrix[]` at `:233` and
 `extern __shared__ std::uint64_t staged_columns[]` at `:296`.
 
@@ -905,7 +905,7 @@ the README is a separate field-scoped statement and is not applied here.
 numeric, and this field's measurement confirms it.** The lane-owns-interval
 design states that "*Each lane owns its complete packed row-sum accumulator in
 registers for the whole of its interval*"
-([`dev/active/0de41c82/plan.md`](../../active/0de41c82/plan.md):38). Both
+(`plan.md`:38). Both
 $\mathbb{F}_5$ prototypes report 0 scratch bytes per lane and zero spills of
 either kind, so on this device and at this architecture nothing of their
 accumulator state is spilled to memory and the claim holds as stated. The
@@ -1112,7 +1112,7 @@ derive from one fixed unconditioned host observation batch per order, addressed
 by $(\text{seed\_root}, q, n, \texttt{horizontal\_product\_timed},
 \text{seed\_index})$; device timing resamples under the canonical warm-up and
 repetition policy and does not alter these counts (preamble of
-[`…-q5-horizontal-product.csv`](permanent-campaign-20260814T230032Z-2085453-q5-horizontal-product.csv)).
+`…-q5-horizontal-product.csv`).
 Every row at one order carries the same counts, which `analysis.py` section 9
 verifies across all fourteen rows per order, so each order's frequency is one
 observation rather than fourteen.
@@ -1232,7 +1232,7 @@ batch sizes $\{256, 1024\}$, with the throughput, phase, and resource figures of
 The lane-owns-interval mapping is `f5_byte_control_kernel` and
 `f5_three_plane_kernel`, each launching one block per matrix with
 `active_lanes_for_order(n)` lanes and a dynamic shared column table
-(`dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip:727-737`), each
+(`f5_wave_equivalence.hip:727-737`), each
 lane owning a balanced Gray interval (`:241-243`,
 `dev/research/permanent_wave_gpu/hip/wave_ryser_mapping.h:33-40`). Both
 specializations are equivalence-confirmed against the CPU oracle at every grid
@@ -1291,7 +1291,7 @@ pressure to bind.
 ## 11. This campaign against the figures it has to confirm or overturn
 
 The comparison target is the prior grid committed as
-[`dev/studies/b488f02c/throughput-2026-08-07.csv`](../b488f02c/throughput-2026-08-07.csv),
+`throughput-2026-08-07.csv`,
 which is the artifact
 [`dev/studies/b488f02c/feasibility-study.md`](../b488f02c/feasibility-study.md)
 §4.4 renders its table from. Every prior rate quoted below is read from that CSV
@@ -1408,7 +1408,7 @@ documents say so independently.** The campaign protocol fixes the frozen cell
 universe as "*every integer $n$ from $4$ through the processor-feasible frontier
 measured in the envelope receipt: $n=28$ for $q=3$, $n=24$ for $q=5$, and
 $n=20$ for $q=7$*"
-([`dev/simulation_results/permanent-zero-fraction/protocol.md`](../../simulation_results/permanent-zero-fraction/protocol.md):51-54),
+(`protocol.md`:51-54),
 and the same document's backend-selection section fixes exactly four
 premeasurement configurations, of which this field's is "*$(5,24)$ on batch
 rayon*" (`:253-255`). The feasibility study reaches $n = 24$ for this field
@@ -1440,13 +1440,13 @@ and this receipt does not invent one.** Deriving a watchdog-safe per-launch work
 bound per field from this study's own measurements is the deliverable of a
 separate issue that has not run; the only committed numeric bound is the
 archived prior calibration in
-[`dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`](../../archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md)
+`r4_gpu_uniformity_resample.md`
 §2.5, which places a hang boundary at "*≈190–200 s*" per launch, reports bounded
 sub-batches holding every launch at "*≈10–117 s*", and sets a $q = 5$ work
 budget of $\text{sub\_batch} \cdot 2^n \le 1.3 \times 10^9$. The campaign plan
 directs that this figure be treated "*as a prior*" rather than as an established
 device property
-([`dev/active/0de41c82/plan.md`](../../active/0de41c82/plan.md):13), because the
+(`plan.md`:13), because the
 one observed hang's attribution to a watchdog timeout was explicitly retracted
 ([`../b488f02c/feasibility-study.md`](../b488f02c/feasibility-study.md):264-268).
 It is cited here on those terms.

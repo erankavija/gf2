@@ -67,11 +67,11 @@
 - Determinant prerequisite: `jit issue show ec22205e`
 - Progress: `dev/active/b8206228-permanent-statistics/progress.json`
 - Prior handoff: `dev/active/b8206228-permanent-statistics/handoff-12.md`
-- Premeasurement receipt: `dev/benchmarks/permanent_campaign/premeasure-v1-receipt.md`
-- Immutable projections: `dev/benchmarks/permanent_campaign/premeasure-v1-ledger.csv`, `premeasure-v1-candidates.csv`, `premeasure-v1-cell-summary.csv`
-- Signal-censor raw evidence: `dev/benchmarks/permanent_campaign/premeasure-v1-censored/process-0539-3-26-A/`
-- Protocol: `dev/simulation_results/permanent-zero-fraction/protocol.md`
-- Strict schema: `crates/gf2-sim/src/permanent_campaign/schema.rs`
-- Determinant evidence: `dev/benchmarks/permanent_campaign/determinant-cost.md`, `determinant-cost.csv`
+- Premeasurement receipt: `premeasure-v1-receipt.md`
+- Immutable projections: `premeasure-v1-ledger.csv`, `premeasure-v1-candidates.csv`, `premeasure-v1-cell-summary.csv`
+- Signal-censor raw evidence: `process-0539-3-26-A/`
+- Protocol: `protocol.md`
+- Strict schema: `schema.rs`
+- Determinant evidence: `determinant-cost.md`, `determinant-cost.csv`
 - Durable external root: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824`
 - Session commits: `2d6d9648` (determinant prerequisite), `5e2799f7` (immutable premeasurement cohort)

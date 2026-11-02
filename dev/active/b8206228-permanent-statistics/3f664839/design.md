@@ -447,9 +447,9 @@ valid and primary.
 ## Randomness, addressing, and restart contract
 
 The addressing authority is the frozen
-[campaign manifest](/dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json)
+campaign manifest
 with campaign id `permanent-zero-fraction-20260829`, interpreted under the
-[frozen protocol](/dev/simulation_results/permanent-zero-fraction/protocol.md)
+frozen protocol
 and the canonical sampler in
 `experiments/permanent-statistics/src/sampler.rs`. Every stochastic coefficient draw uses the
 frozen campaign root
@@ -504,17 +504,17 @@ not only its digest. Its fields are:
 
 - campaign authority: campaign ID
   `permanent-zero-fraction-20260829`; root-manifest repository-relative path
-  `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/manifest.json`
+  `manifest.json`
   and SHA-256
   `5caa384d9c87f24562ee6d91c61c44dbc04674512b3dbe63e761ca0b9480ae57`;
   frozen-protocol repository-relative path
-  `dev/simulation_results/permanent-zero-fraction/protocol.md` and SHA-256
+  `protocol.md` and SHA-256
   `249f3de398cd234cdd9c1f1d352fc909394f3bacf13acda606d95da343693639`;
   root seed `0x7a81626200000001`; purpose name `RareEvent` and tag `4`;
   and address-partition identifier
   `gf2.rare-event-stream-partitions/v1`;
 - preregistration identity: repository-relative path
-  `dev/active/3f664839/design.md`, the pinned preregistration Git revision and
+  `design.md`, the pinned preregistration Git revision and
   blob object ID that resolve those exact committed bytes, and the SHA-256 of
   those bytes; plus the repository-relative immutable configuration path, its
   `gf2.rare-event-configuration/v1` identifier, and its canonical-byte
@@ -1131,18 +1131,18 @@ or decoded JSON values.
    scaled Student-interval APIs in `crates/gf2-stats/src/weighted.rs` and
    re-export the module from `crates/gf2-stats/src/lib.rs`.
 5. Add the addressed proposal and checkpointable trajectory/run composition
-   in `crates/gf2-sim/src/permanent_rare_event/mod.rs`, add the sealed schema,
+   in `mod.rs`, add the sealed schema,
    canonical serialization, identity/checksum verification, runtime-observed
    invocation/hardware collection, attempt lineage, block-set validation, and
    atomic publication APIs in
-   `crates/gf2-sim/src/permanent_rare_event/artifact.rs`, and expose only the
+   `artifact.rs`, and expose only the
    reusable module from `crates/gf2-sim/src/lib.rs`.
 6. Add the complete fast and ignored-slow suite in
-   `crates/gf2-sim/tests/permanent_rare_event.rs`, with literal case tables and
+   `permanent_rare_event.rs`, with literal case tables and
    no runtime case selector; place the eight fixed artifact conformance tests
-   in `crates/gf2-sim/tests/permanent_rare_event_artifacts.rs`.
+   in `permanent_rare_event_artifacts.rs`.
 7. Add a thin artifact consumer in
-   `crates/gf2-sim/src/bin/permanent_rare_event.rs` that accepts the fixed
+   `permanent_rare_event.rs` that accepts the fixed
    `gf2.rare-event-configuration/v1` contract, supervises the worker child
    across the preflight/start/terminal boundaries, persists validated immutable
    checkpoint blocks through `publish_artifact_dir`, and emits the applicable

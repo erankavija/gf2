@@ -67,7 +67,7 @@ derivation from $(\text{root}, q, n, \text{purpose}, \text{index})$
 `0.9.0` from the committed requirement's Cargo range and the crates.io registry
 state observed on 2026-08-17 (`@/citation/RustRandom2025`), while recording that
 the harness lockfile is gitignored
-(`dev/research/permanent-sampling-feas/.gitignore:2`) and absent from the tree at
+(`.gitignore:2`) and absent from the tree at
 both pinned revisions (addendum §4). The manifests themselves are unedited; the
 committed addendum supplies the generator identity and derived version
 alongside them. §6.7 carries forward the requirement for production campaign
@@ -93,7 +93,7 @@ is that those launches completed; it locates no fault boundary.
 boundary at "*≈190–200 s*" per launch and sets per-field work budgets on
 $\text{sub\_batch} \cdot 2^n$ of $4.0 \times 10^9$ at $q = 3$,
 $1.3 \times 10^9$ at $q = 5$, and $3.5 \times 10^8$ at $q = 7$
-(`dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`:225-227),
+(`r4_gpu_uniformity_resample.md`:225-227),
 and it is the figure the field receipts report their operating points against
 ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §16 REQ-19;
 [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12). Its standing is stated
@@ -138,7 +138,7 @@ kernel-only win does not count
 The declared scientifically relevant operating point per field is fixed by the
 campaign protocol, at the processor-feasible frontier of each field: $n = 28$
 for $q = 3$, $n = 24$ for $q = 5$, and $n = 20$ for $q = 7$
-([`../../simulation_results/permanent-zero-fraction/protocol.md`](../../simulation_results/permanent-zero-fraction/protocol.md):51-54).
+(`../../simulation_results/permanent-zero-fraction/protocol.md`:51-54).
 The same protocol fixes four premeasurement configurations: $(3,28)$ on the
 accelerator at $M = 1024$ and on intra-matrix rayon, $(5,24)$ on batch rayon,
 and $(7,20)$ on the accelerator at $M = 1024$ (`protocol.md`:251-254).
@@ -379,7 +379,7 @@ comment citations remaining in the sibling SIMD kernel
 (`crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:119`, `:288`) are tracked as
 JIT issue `59024f1a`. The device prototype uses the same two
 circuits, `add3` and `sub3`
-(`dev/research/permanent_wave_gpu/hip/wave_gf3_equivalence.hip:72-90`). They are
+(`wave_gf3_equivalence.hip:72-90`). They are
 distinct operations: over $\mathbb{F}_2$ addition and subtraction coincide, and
 here they do not — `add3` and `sub3` have different bodies and the Gray walk
 selects between them on the transition direction
@@ -954,7 +954,7 @@ and parallel paths. The coverage this design carries:
    and the sub-batching of §6.3 must be shown not to change which matrix is the
    $i$-th sample, the property the archived chunked path asserts with
    `validate_chunked_equals_unchunked`
-   (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`:239-243).
+   (`r4_gpu_uniformity_resample.md`:239-243).
 5. **The fallback paths are tested paths.** The invariant requires the fallback
    to be *tested*, so each fallback branch is exercised by a test that forces
    it: an unsupported-architecture branch and a recoverable-OOM branch, the
@@ -1005,7 +1005,7 @@ them apart:
   `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean` verifies it.
 - **The permanent-specialized internal state** is the three-plane bit-sliced
   accumulator `ThreePlane { b0, b1, b2 }`
-  (`dev/research/permanent_wave_gpu/hip/wave_gf7_equivalence.hip:75-79`), with
+  (`wave_gf7_equivalence.hip:75-79`), with
   Mersenne-fold add and subtract (`:82-109`) and the plane-reduce row product
   (`:111`). It exists only inside the permanent kernel, holds one lane's column
   sums for the duration of that lane's Gray interval, and never crosses a lane
@@ -1126,7 +1126,7 @@ decision is amended at its source with the permanent-workload evidence and the
 changed verdict.
 
 **The archived decision, and what it rejected.**
-[`dev/archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md`](../../archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md)
+`r2_f7_encoding_decision.md`
 ratifies Candidate A — 3-bit values at 4-bit-aligned slots with $2^{16}$-entry
 binary-op LUTs — as the $\mathbb{F}_7$ packed encoding (`:9-23`, `:220-228`).
 Candidate D is the bit-sliced three-plane canonical $(b_0, b_1, b_2)$ encoding
@@ -1223,7 +1223,7 @@ displaces it and because §7 chooses the internal-state resolution. The amendmen
 records a falsified premise and a scoped changed verdict, not a re-decision of
 the public encoding.
 
-**Status: applied with owner approval (2026-08-17).** `dev/archive/` is
+**Status: applied with owner approval (2026-08-17).** `archive/` is
 permanent repository content and amending it needs the owner's approval
 ([`../../active/b8206228-permanent-statistics/0de41c82/plan.md`](../../active/b8206228-permanent-statistics/0de41c82/plan.md):174); the
 owner approved the drafted text verbatim and the note and pointer stubs of
@@ -1288,7 +1288,7 @@ work budgets, superseded.** It places a hang boundary
 at "*≈190–200 s*" per launch and sets per-field work budgets on
 $\text{sub\_batch} \cdot 2^n$ of $4.0 \times 10^9$ at $q = 3$,
 $1.3 \times 10^9$ at $q = 5$, and $3.5 \times 10^8$ at $q = 7$
-(`dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`:225-227).
+(`r4_gpu_uniformity_resample.md`:225-227).
 It is the figure the field receipts themselves report against: the $\mathbb{F}_7$
 receipt applies the archived $q = 7$ work budget to its own field alongside that
 span boundary under its own REQ-19
@@ -1439,7 +1439,7 @@ calibration's own hang is "*a single 2048-matrix F_5 n=20 launch (≈200 s+)*"
 repeats ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12). The fault
 with a committed operational record is a different configuration: $q = 3$,
 $n = 24$, `gpu_hip` at $M = 4096$, 2026-08-07
-(`dev/studies/b488f02c/gpu-hang-2026-08-07.log`). The explicit retraction of the
+(`gpu-hang-2026-08-07.log`). The explicit retraction of the
 watchdog attribution — "*nothing here attributes the hang to a watchdog
 timeout*" — is in the second one's log, and the supersession note applies it to
 the archived calibration's account

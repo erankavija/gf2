@@ -2,12 +2,12 @@
 
 Protocol `zen3-benchmark-protocol` version 1. This document is the executable
 shared protocol required by the
-[measurement contract](../measurement-contract.md)
+measurement contract
 of epic `1a379447`. Every rule below is enforced by a check the acceptance tool
 performs or by a field a receipt must carry; the rule identifiers `P-NN` are the
 finding codes the tool emits. Family and cell settings that the contract leaves
 to families are declared in addenda conforming to
-[`addendum.schema.json`](addendum.schema.json); the shared numeric settings are
+`addendum.schema.json`; the shared numeric settings are
 frozen here. The tooling lives in the `tuning-campaign-support` workspace crate
 (`dev/tools/tuning-campaign-support`); [design.md](design.md) records why that
 crate is the canonical home.
@@ -48,7 +48,7 @@ crate is the canonical home.
 | Bounded resumable runs, execution log announced before the first bounded run, checkpoints not repeated | Execution log and checkpoints | P-10, P-11, P-12 |
 | Comparable operations and costs: setup, conversion, batch fill, dispatch in whole-consumer cells; isolated kernels separate | Cell schema | P-17 (conversion costs) |
 | Decoder comparisons: matched-algorithm and fastest quality-compatible arms, quality tolerances, BER/FER intervals, stopping contracts | Decoder cells | P-18, P-19 |
-| Receipts: raw samples, exact commands, seeds, identities, provenance, interpretation and acceptance summary under `dev/bench_results` | Receipt layout | P-01 to P-12, P-23, summary files |
+| Receipts: raw samples, exact commands, seeds, identities, provenance, interpretation and acceptance summary under `bench_results` | Receipt layout | P-01 to P-12, P-23, summary files |
 | Production change needs a fresh pinned before/after measurement | Roles and freezing | P-05 (source identity) |
 
 ## Roles and freezing
@@ -216,7 +216,7 @@ the code.
 ## Addenda
 
 An addendum freezes one family. Its schema is
-[`addendum.schema.json`](addendum.schema.json); `protocol::FamilyAddendum`
+`addendum.schema.json`; `protocol::FamilyAddendum`
 decodes it with unknown fields rejected and validates the semantics the schema
 cannot express (P-03). It declares:
 
@@ -333,8 +333,8 @@ A rejected or non-qualifying receipt is committed like any other.
 ## Receipt layout
 
 Each bounded campaign writes one directory under the owning issue's
-`dev/bench_results/<issue>/` area, for example
-`dev/bench_results/f547c394/2026-09-07-f547c394-confirmation/`:
+`bench_results/<issue>/` area, for example
+`2026-09-07-f547c394-confirmation/`:
 
 | File | Content |
 |---|---|

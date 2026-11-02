@@ -11,7 +11,7 @@
 - Open: `fd9d5416` (Committed performance receipts), claimed by agent:worker. Preparation merged: `dev/active/ae03bcd0-general-bch/fd9d5416/receipt-protocol.md` (linked), `render_receipt.py`, `tests/test_render_receipt.py` (6/6 on a synthetic fixture). Gates doc-review, research-review pending.
 - Open escalations: none.
 - Progress file: `progress.json` here (R-55..R-59, session_notes_s11, surfaced_pitfalls).
-- **Queued measurement:** the bench window (timer `gf2-bench-window-20261002`, 2026-10-01T23:00Z) runs `dbd8787d` (epic 6dc81018, ~3 h) and then `d1b4f85e`'s runner from `.agents/worktrees/agent-d1b4f85e-run` (detached at `eb5575495`), writing `dev/bench_results/fd9d5416/2026-10-02-d1b4f85e-w1w2` in that worktree (~105 min). Host idle until ~04:30Z.
+- **Queued measurement:** the bench window (timer `gf2-bench-window-20261002`, 2026-10-01T23:00Z) runs `dbd8787d` (epic 6dc81018, ~3 h) and then `d1b4f85e`'s runner from `.agents/worktrees/agent-d1b4f85e-run` (detached at `eb5575495`), writing `2026-10-02-d1b4f85e-w1w2` in that worktree (~105 min). Host idle until ~04:30Z.
 
 ## What just happened
 
@@ -23,7 +23,7 @@
 
 ## What to do next
 
-- [ ] After the window: confirm `window.log` shows the d1b4f85e job exit 0 and the runner's post-check passed; copy `dev/bench_results/fd9d5416/2026-10-02-d1b4f85e-w1w2` from the run worktree onto main.
+- [ ] After the window: confirm `window.log` shows the d1b4f85e job exit 0 and the runner's post-check passed; copy `2026-10-02-d1b4f85e-w1w2` from the run worktree onto main.
 - [ ] Dispatch fd9d5416 (Opus) to render and commit the receipt with `render_receipt.py` under R-57/R-58, link it, then run doc-review and research-review. If Tier A/B shows a DVB-T2 W1 regression, a33fda32 becomes a prerequisite (REQ-13). If research-review rejects the cross-harness Tier B basis, take option B from the protocol note (legacy encoder re-measured at 74871c6b in its own window).
 - [ ] Epic close: map success criteria, reconcile `surfaced_pitfalls` against criteria, `jit gate evaluate-all ae03bcd0`, completion report, transition, archive.
 - [ ] Reclaim `agent-d1b4f85e-run` after copying its output.
@@ -47,5 +47,5 @@ None.
 
 - Receipt protocol: `dev/active/ae03bcd0-general-bch/fd9d5416/receipt-protocol.md`; renderer `dev/active/ae03bcd0-general-bch/fd9d5416/render_receipt.py`.
 - Runner: `dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh`; smoke evidence `dev/active/ae03bcd0-general-bch/d1b4f85e/smoke-run.md`; contract amendments in `dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md`.
-- Baselines: `dev/bench_results/88ca7d2f/`, survey `dev/active/ae03bcd0-general-bch/4e732b56/findings.md`.
+- Baselines: `88ca7d2f/`, survey `dev/active/ae03bcd0-general-bch/4e732b56/findings.md`.
 - Queue: `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`.

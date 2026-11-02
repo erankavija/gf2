@@ -24,7 +24,7 @@ bash dev/research/permanent_wave_gpu/scripts/compile_arch_evidence.sh
 The script captures revision and clean-worktree provenance before creating
 outputs, uses an isolated target directory, and records the verbose Cargo/build
 and toolchain output in
-`dev/research/permanent_wave_gpu/hip/architecture_compile_evidence-v1.log`,
+`architecture_compile_evidence-v1.log`,
 and writes `architecture_compile_evidence-v1.md` only after every attempt
 finishes. The default receipt claims only `gfx1030`; set
 `PERMANENT_WAVE_GPU_EVIDENCE_ARCHES` to record an explicit extra attempt. The
@@ -142,7 +142,7 @@ The clean compiler capture was:
 The resulting object SHA-256 was
 `463e2b157180b7304b7d71db87bb32d740da41eb1d6261a0b1e3e2a7a5aba520`.
 Its byte-faithful 6,563-byte stderr is
-[`hip/f5_wave_resource_usage.log`](hip/f5_wave_resource_usage.log), SHA-256
+`hip/f5_wave_resource_usage.log`, SHA-256
 `3557d29800abb331d2a429aa3444a368867512554e4677ca9fb00ec634fee88d`.
 The two permanent kernels are separately named in that report:
 
@@ -225,7 +225,7 @@ The resource command was:
 ```
 
 Its byte-faithful stderr is
-[`hip/wave_gf3_resource_usage-initial.log`](hip/wave_gf3_resource_usage-initial.log), SHA-256
+`hip/wave_gf3_resource_usage-initial.log`, SHA-256
 `c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`.
 For `wave_gf3_kernel`, the report gives 22 SGPRs, 22 VGPRs, zero scratch
 bytes/lane, zero SGPR/VGPR spills, and occupancy 16 waves/SIMD. It gives zero
@@ -236,7 +236,7 @@ column table.
 The directly executed prebuilt self-check was:
 
 ```sh
-dev/research/permanent_wave_gpu/target/release/build/permanent-wave-gpu-8352961633a25476/out/wave_gf3_equivalence
+wave_gf3_equivalence
 ```
 
 It exited 0 with no diagnostics. Its SHA-256 was
@@ -260,7 +260,7 @@ The clean compiler command repeated the pre-commit command with output
 `/tmp/de2522d6-wave_gf3_equivalence-clean.o` and stderr
 `/tmp/de2522d6-wave_gf3_resource-clean.log`. Its 2,165-byte stderr was
 byte-identical to the preserved initial raw log
-([`hip/wave_gf3_resource_usage-initial.log`](hip/wave_gf3_resource_usage-initial.log);
+(`hip/wave_gf3_resource_usage-initial.log`;
 `cmp` exit 0; SHA-256
 `c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`),
 so no resource difference was observed. It again reports 22 SGPRs, 22 VGPRs,
@@ -362,7 +362,7 @@ byte-identical to the then-canonical 4,400-byte resource capture, with SHA-256
 `4e052d08dab816ea569f9b0d2251d887cdc1d8db523300608c59a57c0a47ad8c`.
 The paired-fold capture below later superseded that control-only byte copy.
 The historical 2,165-byte initial capture remains
-[`hip/wave_gf3_resource_usage-initial.log`](hip/wave_gf3_resource_usage-initial.log),
+`hip/wave_gf3_resource_usage-initial.log`,
 SHA-256 `c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`.
 
 The default `fixture-oracle` feature retains the corpus and oracle surface,
@@ -412,7 +412,7 @@ The clean resource command was:
 ```
 
 It exited 0 in 1.64 s. Its 6,485-byte stderr is byte-faithfully committed as
-[`hip/wave_gf3_resource_usage.log`](hip/wave_gf3_resource_usage.log), with
+`hip/wave_gf3_resource_usage.log`, with
 SHA-256 `03ba52528a5cd363405409af0545c38348abddc0f01fafb9a34a3d103f36c6cf`.
 The compiler names both specializations: `FoldKindE0` is the halving control
 and `FoldKindE1` is the zero-mask/sign-popcount candidate, following their
@@ -473,7 +473,7 @@ The clean resource command was:
 ```
 
 It exited 0. The 4,341-byte stderr was byte-copied after validation as
-[`hip/wave_gf7_resource_usage.log`](hip/wave_gf7_resource_usage.log), SHA-256
+`hip/wave_gf7_resource_usage.log`, SHA-256
 `45edf675b1f198f407347d6872753684496b37344cdeac5246a449f7f3e65f97`;
 `cmp` against `/tmp/cc162697-wave_gf7_resource.log` succeeded. The object is
 122,896 bytes, SHA-256

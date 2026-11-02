@@ -16,9 +16,9 @@ figure from committed files at render time.
 | Input | Path | Role |
 |---|---|---|
 | Window run | `<run-dir>/` from `run.sh`: `host.txt`, `logs/`, `dispatch.jsonl`, `samples/` | New measurements and dispatch record |
-| Pinned pre-cutover receipt | [`dev/bench_results/88ca7d2f/`](../../../bench_results/88ca7d2f/) | Tier A baseline (Criterion samples) |
+| Pinned pre-cutover receipt | `88ca7d2f/` | Tier A baseline (Criterion samples) |
 | ID mapping | [`dev/active/ae03bcd0-general-bch/591a1c5e/smoke-run.md`](../591a1c5e/smoke-run.md) § ID mapping | Which Tier A cells are comparable |
-| External-baseline survey | [`dev/bench_results/4e732b56/`](../../../bench_results/4e732b56/) CSVs | Tier B baseline (survey `gf2` column) and REQ-02 rows |
+| External-baseline survey | `4e732b56/` CSVs | Tier B baseline (survey `gf2` column) and REQ-02 rows |
 
 ## 2. Statistical rule
 
@@ -146,7 +146,7 @@ The protocol texts that govern re-measurement:
   SOTA target matrix (uncontended, pinned toolchain, committed
   seeds/revision/host)."
 - SOTA reference acceptance protocol § 5
-  ([sota_reference_acceptance_protocol.md](../../../archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md)),
+  (sota_reference_acceptance_protocol.md),
   which the SOTA target matrix applies: "Cross-host runs are permitted; they
   must publish their own `host.txt`, but they cannot displace a Zen-3
   baseline. If the dev host is replaced, every promoted reference must be

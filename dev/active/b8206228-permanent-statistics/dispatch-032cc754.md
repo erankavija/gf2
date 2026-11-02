@@ -1,6 +1,6 @@
 # Task: jit issue 032cc754 — Processor backend selection for campaign cells
 
-Repository: /home/vkaskivuo/Projects/gf2 (Rust workspace, MSRV 1.95).
+Repository: gf2 (Rust workspace, MSRV 1.95).
 You are a worker dispatched by the epic-b8206228 execution lead. Read
 `AGENTS.md` first; it is the binding engineering contract (architecture
 boundaries, correctness/test policy, invariants). Follow it literally.
@@ -43,7 +43,7 @@ not re-asserted here.
 
 ## Current state and the gaps you must close
 
-All work is in `crates/gf2-sim/src/permanent_campaign/schedule.rs` unless noted.
+All work is in `schedule.rs` unless noted.
 
 The manifest side is already correct: `WorkItem.backend` is copied from
 `CellSpec.backend` at `schedule.rs:377`, and `CellSpec.backend` is the frozen
@@ -199,8 +199,8 @@ then implement. Put unit tests in the existing `#[cfg(test)] mod tests` in
     `@/inv/convention-convergence`).
 
 Also check whether any existing test in `schedule.rs`, `driver.rs`,
-`crates/gf2-sim/tests/permanent_campaign_bin.rs`, or
-`crates/gf2-sim/tests/permanent_campaign_resume.rs` asserted the old aliasing
+`permanent_campaign_bin.rs`, or
+`permanent_campaign_resume.rs` asserted the old aliasing
 behaviour, and update it to the new contract rather than working around it.
 
 ## Commands you must run and report verbatim

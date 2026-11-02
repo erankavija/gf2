@@ -18,7 +18,7 @@
 - Ran `jit recover` (one stale claims lock removed). Confirmed both 2026-08-25 timers fired: the resume session ran to its 19,800 s cap (positions 540–1007), the collector exited 7 (valid but incomplete).
 - Diagnosed the 359 `data_row_count_2` positions: the frozen harness grid holds two gpu_hip specs per cell (`GPU_BATCHES=[256,1024]`) and the runner's `--batch-size` override precedes `--only` filtering, so every gpu_hip process measures its cell twice. Verified in the frozen source at `1350d5b4`.
 - Escalated; owner decided: collector accepts dual-row gpu_hip scratch, selects the native-M (second) data row, first row preserved as unused replicate; bounded lead-direct repair; re-arm tonight.
-- Landed the repair on main at `d7493bdc` (parser + premeasure test t11 + deviation record `dev/benchmarks/permanent_campaign/premeasure-v1-deviations.md`, linked to `7a816262`). Cherry-picked onto the pinned collector branch `worktree-agent-389aa4de` at `8811d7b6`; both test suites pass (11/11, 12/12).
+- Landed the repair on main at `d7493bdc` (parser + premeasure test t11 + deviation record `premeasure-v1-deviations.md`, linked to `7a816262`). Cherry-picked onto the pinned collector branch `worktree-agent-389aa4de` at `8811d7b6`; both test suites pass (11/11, 12/12).
 - Discovered a main-side collect run mass-invalidates the cohort (see Traps); re-ran the collector from the amended pinned worktree — ledger now 1008 valid terminal rows, 432 pending, zero invalid.
 - Closed `1947125e`: ran cargo-ci on the merged tree (passed at `51e28a31`), six-tier lead review PASS, closure commit `370eb43a`.
 - Re-armed both transient timers for 2026-08-26 (logs `premeasure-resume-20260826.log`, `premeasure-collect-20260826.log` + `.exit.status` under the durable root).
@@ -47,8 +47,8 @@ None.
 
 - Epic: `jit issue show b8206228`
 - Active freeze issue: `jit issue show 7a816262`
-- Deviation record: `dev/benchmarks/permanent_campaign/premeasure-v1-deviations.md`
-- Premeasure plan: `dev/benchmarks/permanent_campaign/premeasure-plan-v1.md` (+ `.csv`)
+- Deviation record: `premeasure-v1-deviations.md`
+- Premeasure plan: `premeasure-plan-v1.md` (+ `.csv`)
 - Reconciled progress: `dev/active/b8206228-permanent-statistics/progress.json`
 - Durable campaign root: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824`
 - Tonight's logs (after firing): `premeasure-resume-20260826.log`, `premeasure-collect-20260826.log`, `premeasure-collect-20260826.exit.status` under the durable root

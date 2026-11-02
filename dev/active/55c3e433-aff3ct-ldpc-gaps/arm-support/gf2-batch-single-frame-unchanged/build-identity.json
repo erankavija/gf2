@@ -1,6 +1,6 @@
 {
   "schema": "ldpc-batch-arms-build-v3",
-  "build_root": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-10590c11/target/arm-tree",
+  "build_root": "arm-tree",
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2",
   "cargo": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
   "cxx": "c++ (GCC) 16.2.1 20260810",
@@ -11,21 +11,21 @@
   },
   "cargo_configuration": [
     {
-      "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-10590c11/target/arm-tree/.cargo/config.toml",
+      "path": "config.toml",
       "sha256": "5531072b1f017dc9124317782bbd7c1198935e7e931119840e3db1690420768c",
       "env": {
         "RAYON_NUM_THREADS": "4"
       }
     },
     {
-      "path": "/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-10590c11/.cargo/config.toml",
+      "path": "config.toml",
       "sha256": "5531072b1f017dc9124317782bbd7c1198935e7e931119840e3db1690420768c",
       "env": {
         "RAYON_NUM_THREADS": "4"
       }
     },
     {
-      "path": "/home/vkaskivuo/Projects/gf2/.cargo/config.toml",
+      "path": "config.toml",
       "sha256": "5531072b1f017dc9124317782bbd7c1198935e7e931119840e3db1690420768c",
       "env": {
         "RAYON_NUM_THREADS": "4"
@@ -75,7 +75,7 @@
         "repository_files_sha256": "fd4631776cd2922e4f34432b1028014309be7348a02f885bf20529cedec033df",
         "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "linked": {
-          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
           "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
           "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
           "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
@@ -110,7 +110,7 @@
         "repository_files_sha256": "70243418e1e94c260d0bf11e1e479c9ffbc332c45bd7c3d1405b37c2ebd3668c",
         "other_files_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "linked": {
-          "/home/vkaskivuo/.rustup/toolchains/1.95-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
+          "libcompiler_builtins-27cfc16bdf3bb694.rlib": "c2ab63385e3ed4a2b5e9f2dcb58b84bf77c1365a2afb0da0ff528751359af486",
           "/usr/lib/Scrt1.o": "98d76691c6d97233c9e1a062f32ea2d7a89f047632156d1bf7b811727fb19921",
           "/usr/lib/crti.o": "caf7f0c99019735e97e9bfabf52c376e86e1ef92d1b53a63c36a5bc2688e8fcc",
           "/usr/lib/crtn.o": "71236f0a232a3686adf2319f3ae172831e8fd8166b9f0764ed184bc4df11be3c",
@@ -144,12 +144,12 @@
       "executable": "gf2-batch-single-frame-arm",
       "environment": {},
       "package": "ldpc-batch-arms",
-      "path": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target/release/gf2-batch-single-frame-arm",
+      "path": "gf2-batch-single-frame-arm",
       "executable_sha256": "fafd10608c757289db7902262eff4c6dd15d0787a5f093d234695ae1fc946671"
     }
   },
   "isolation": {
-    "target_directory": "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/target"
+    "target_directory": "target"
   },
   "pinned_records": {},
   "pinned_executables": []

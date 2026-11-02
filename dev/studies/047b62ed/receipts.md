@@ -11,13 +11,13 @@ python3 dev/studies/047b62ed/analysis.py
 
 | Artifact | Role |
 | --- | --- |
-| [`…-q3-grid.csv`](permanent-campaign-20260814T230032Z-2085453-q3-grid.csv) / [`.log`](permanent-campaign-20260814T230032Z-2085453-q3-grid.log) | End-to-end Ryser timing grid, 75 cells |
-| [`…-q3-gray-update.csv`](permanent-campaign-20260814T230032Z-2085453-q3-gray-update.csv) / [`.log`](permanent-campaign-20260814T230032Z-2085453-q3-gray-update.log) | Dependency-chained Gray-update isolate, five orders |
-| [`…-q3-horizontal-product.csv`](permanent-campaign-20260814T230032Z-2085453-q3-horizontal-product.csv) / [`.log`](permanent-campaign-20260814T230032Z-2085453-q3-horizontal-product.log) | Horizontal-product isolate and zero/nonzero branch frequencies, five orders |
-| [`…-shared-equivalence.csv`](permanent-campaign-20260814T230032Z-2085453-shared-equivalence.csv) / [`.log`](permanent-campaign-20260814T230032Z-2085453-shared-equivalence.log) | Backend-equivalence gate, all fields in one global run |
-| [`…provenance.txt`](permanent-campaign-20260814T230032Z-2085453.provenance.txt) | Revision, toolchain, binary hashes, host inventory, exact commands |
-| [`…run-summary.txt`](permanent-campaign-20260814T230032Z-2085453.run-summary.txt) | Per-step status and exit codes |
-| [`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/`](../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/) | Compiler kernel-resource receipt and per-kernel logs |
+| `…-q3-grid.csv` / `.log` | End-to-end Ryser timing grid, 75 cells |
+| `…-q3-gray-update.csv` / `.log` | Dependency-chained Gray-update isolate, five orders |
+| `…-q3-horizontal-product.csv` / `.log` | Horizontal-product isolate and zero/nonzero branch frequencies, five orders |
+| `…-shared-equivalence.csv` / `.log` | Backend-equivalence gate, all fields in one global run |
+| `…provenance.txt` | Revision, toolchain, binary hashes, host inventory, exact commands |
+| `…run-summary.txt` | Per-step status and exit codes |
+| `../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/` | Compiler kernel-resource receipt and per-kernel logs |
 | [`analysis.py`](analysis.py) | Derivation of every table here from the artifacts above |
 
 Each CSV carries a `#` preamble that is the authoritative source for the facts
@@ -34,7 +34,7 @@ as recorded by the harness preamble. Host: AMD Ryzen 9 5900X 12-Core Processor,
 `card0`, AMD Radeon RX 6950 XT, `gfx1030`, unique id `0x8cd14d6d8a3c8a73`;
 kernel `7.1.6-arch1-1`. Harness binary SHA-256
 `edb03650bbbfb47064a3a2b5e021ac055394812a4362c577fdad07cdbd997bce`. Sources:
-[`…provenance.txt`](permanent-campaign-20260814T230032Z-2085453.provenance.txt)
+`…provenance.txt`
 and the `#` preamble of each CSV.
 
 Four binaries carry the measurement: the harness itself and the three prototype
@@ -45,7 +45,7 @@ receipt in one pass from the same `git rev-parse HEAD`
 `:363`), so the receipt's `source_revision`
 `f9224650a780ea8ed98bcdff6e662cdb0d7b94f4` is the revision the binaries were
 built at, with `tracked_worktree_dirty=false` at that moment
-([`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt`](../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt)).
+(`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt`).
 The measure run executes at HEAD `292320d5`, one commit ahead: that commit
 touches tracker state, two gate review prompts, and a package manifest, and no
 file under `crates/` or `dev/research/`. The binaries are not rebuilt across it,
@@ -59,10 +59,10 @@ binaries.
 
 The four commands that produced the four CSVs are recorded verbatim under
 `exact_commands_executed:` in
-[`…provenance.txt`](permanent-campaign-20260814T230032Z-2085453.provenance.txt)
+`…provenance.txt`
 and repeated in the `# invocation:` line of each CSV and the `# command:` line
 of each log. All four steps report `status=completed exit=0` in
-[`…run-summary.txt`](permanent-campaign-20260814T230032Z-2085453.run-summary.txt).
+`…run-summary.txt`.
 
 The campaign runs under
 [`dev/scripts/permanent-campaign-runner.sh`](../../scripts/permanent-campaign-runner.sh),
@@ -81,7 +81,7 @@ preamble additionally records a 90 s full-rayon machine warm-up before the
 first timed cell.
 
 The `tracked_worktree_dirty: true` line in
-[`…provenance.txt`](permanent-campaign-20260814T230032Z-2085453.provenance.txt)
+`…provenance.txt`
 is the state at the moment the provenance block is written, which is mid-run
 and after the runner has already emitted its own outputs under `dev/studies/`
 (`permanent-campaign-runner.sh:179-187`). The pristine condition that gates the
@@ -147,7 +147,7 @@ executable's own per-batch device allocation rather than a process start
 (`dev/research/permanent_wave_gpu/src/device_batch.rs:9-13`, `:318-331`). The
 launch geometry is one block per matrix, `active_lanes_for_order(n)` lanes per
 block, and $2n$ packed words of dynamic shared memory
-(`dev/research/permanent_wave_gpu/hip/wave_gf3_equivalence.hip:597-606`), with
+(`wave_gf3_equivalence.hip:597-606`), with
 `active_lanes_for_order(n) = 32` for $n \ge 5$
 (`dev/research/permanent_wave_gpu/hip/wave_ryser_mapping.h:29-31`, `:16`).
 
@@ -162,7 +162,7 @@ reading.
 ## 3. Equivalence gate (REQ-11)
 
 The equivalence step is the first step of the pipeline
-([`…run-summary.txt`](permanent-campaign-20260814T230032Z-2085453.run-summary.txt);
+(`…run-summary.txt`;
 `timestamp_utc: 2026-08-14T23:00:34Z` in the equivalence CSV against
 `2026-08-15T00:35:22Z` in the grid CSV), so it precedes every timing cell of the
 same run, on the same host and the same binary hash.
@@ -212,7 +212,7 @@ actually have.
 ### 4.1 Recorded fields
 
 REQ-02 asks for a specific field set. Each is a named column of
-[`…-q3-grid.csv`](permanent-campaign-20260814T230032Z-2085453-q3-grid.csv), or a
+`…-q3-grid.csv`, or a
 line of the provenance file for the facts that are constant across the run.
 
 | REQ-02 item | Where recorded |
@@ -380,7 +380,7 @@ evaluation is one dispatch — `gridDim.x = M` blocks of one thread for the
 shipped kernel
 (`crates/gf2-kernels-hip/hip/permanent/permanent_bipedal3.hip:334-335`,
 `:347-351`), `gridDim.x = M` blocks of 32 lanes for the prototypes
-(`dev/research/permanent_wave_gpu/hip/wave_gf3_equivalence.hip:597-606`) — so
+(`wave_gf3_equivalence.hip:597-606`) — so
 `reps` is the launch count.
 
 | $n$ | path | $M$ | `reps` | host submission µs/launch | device submission→kernel µs/launch | kernel ms/launch | H2D µs/launch | D2H µs/launch |
@@ -586,7 +586,7 @@ latency chain, not independent-operation throughput. Net duration is
 `(Σ update spans − Σ same-geometry compiler-barrier spans) / (steps × reps)`,
 with CPU rows using paired host spans and HIP rows paired device-event kernel
 spans (preamble of
-[`…-q3-gray-update.csv`](permanent-campaign-20260814T230032Z-2085453-q3-gray-update.csv)).
+`…-q3-gray-update.csv`).
 
 | $n$ | `cpu_scalar` `net_per_operation_s` | `gpu_hip` `update_s` | `gpu_hip` baseline | `gpu_hip` net |
 | ---: | ---: | ---: | ---: | --- |
@@ -685,7 +685,7 @@ around.
 ## 7. Kernel resources against design-predicted budgets (REQ-07, REQ-09)
 
 Source: the compiler kernel-resource receipt
-[`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt`](../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt)
+`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt`
 at `source_revision f9224650a780ea8ed98bcdff6e662cdb0d7b94f4`, architecture
 `gfx1030`, flag `-Rpass-analysis=kernel-resource-usage`, every entry
 `exit_status: 0` with source, object, and log SHA-256. The per-kernel logs carry
@@ -719,7 +719,7 @@ occupancy 16.
 
 `FoldKindE0` is the halving control and `FoldKindE1` the zero-mask/sign-popcount
 candidate, in source declaration order
-(`dev/research/permanent_wave_gpu/hip/wave_gf3_equivalence.hip:157`). The two
+(`wave_gf3_equivalence.hip:157`). The two
 horizontal-product kernels appear in the `permanent_bipedal7.hip` log because
 `horizontal_product_micro.hip` has no translation unit of its own: it is
 included textually so the $\mathbb{F}_7$ lookup circuit reads that unit's
@@ -739,7 +739,7 @@ and one `u32` partial sum: a 9 x 32-bit-register lower bound*" (`:172-174`), and
 bytes per block, which this static-LDS report does not include*" (`:422-423`).
 The launch confirms the second: `2 * n * sizeof(std::uint64_t)` shared bytes for
 both specializations
-(`dev/research/permanent_wave_gpu/hip/wave_gf3_equivalence.hip:597-606`,
+(`wave_gf3_equivalence.hip:597-606`,
 `:353-361`), backing `extern __shared__ std::uint64_t staged_columns[]` at
 `:171`.
 
@@ -924,7 +924,7 @@ derive from one fixed unconditioned host observation batch per order, addressed
 by $(\text{seed\_root}, q, n, \texttt{horizontal\_product\_timed},
 \text{seed\_index})$; device timing resamples under the canonical warm-up and
 repetition policy and does not alter these counts (preamble of
-[`…-q3-horizontal-product.csv`](permanent-campaign-20260814T230032Z-2085453-q3-horizontal-product.csv)).
+`…-q3-horizontal-product.csv`).
 Every row at one order carries the same counts, so each order's frequency is one
 observation rather than fourteen.
 
@@ -1027,7 +1027,7 @@ throughput, phase, and resource figures of §4 and §7.
 The lane-owns-interval mapping is measured across the whole grid as well.
 `wave_gf3_kernel<FoldKind>` launches one block per matrix with
 `active_lanes_for_order(n)` lanes and a $2n$-word dynamic shared column table
-(`dev/research/permanent_wave_gpu/hip/wave_gf3_equivalence.hip:597-606`), each
+(`wave_gf3_equivalence.hip:597-606`), each
 lane owning a balanced Gray interval
 (`dev/research/permanent_wave_gpu/hip/wave_ryser_mapping.h:33-40`). Both
 specializations are equivalence-confirmed against the CPU oracle at every grid
@@ -1075,7 +1075,7 @@ is large enough for that pressure to bind.
 ## 11. This campaign against the figures it has to confirm or overturn
 
 The comparison target is the prior grid committed as
-[`dev/studies/b488f02c/throughput-2026-08-07.csv`](../b488f02c/throughput-2026-08-07.csv),
+`throughput-2026-08-07.csv`,
 which is the artifact
 [`dev/studies/b488f02c/feasibility-study.md`](../b488f02c/feasibility-study.md)
 §4.4 renders its table from. Every prior rate quoted below is read from that CSV

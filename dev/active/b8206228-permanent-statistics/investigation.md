@@ -71,7 +71,7 @@ first:
    (`:307`, parse at `:383`). This is the runner the study calls "the `gf2-sim`
    FEC campaign runner" — it lives in `gf2-coding`, not `gf2-sim`. Fix the
    attribution in any text that repeats it.
-2. `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` — the DVB-T2 BICM campaign
+2. `dvb_t2_awgn_campaign.rs` — the DVB-T2 BICM campaign
    binary from issue `152388f4` (done). CLI-arg driven, not TOML: `--rate`,
    `--modulation`, `--esn0-range`, `--target-errors`, `--max-frames`, `--seed`,
    `--output-dir`, `--resume`, `--heartbeat-frames` (`:226`-`:244`). It writes a
@@ -96,18 +96,18 @@ while `dev/index.md:46` classifies `simulation_results/` as "Campaign
 *configs* and nothing else; the only active consumer is `sim_runner` taking the
 path as an argument, plus a surface test asserting which TOMLs exist
 (`crates/gf2-coding/tests/grand_phase1_smoke.rs:409-413`). So §7.4's proposal to
-publish the *dataset* under `dev/campaigns/permanent-zero-fraction/<id>/`
+publish the *dataset* under `permanent-zero-fraction/<id>/`
 (`dev/studies/b488f02c/feasibility-study.md:1464`) puts an output into the
 definitions area. Either the plan justifies the departure explicitly, or it
-places the dataset under `dev/simulation_results/` (equally permanent, and the
+places the dataset under `simulation_results/` (equally permanent, and the
 index's declared home for campaign outputs). This is worth deciding before
 breakdown — it is the kind of detail doc-review surfaces late.
 
 **No manifest/checksum convention exists anywhere in-tree.** A search for
 `*.sha256`, `checksums*` and `manifest*` under `dev/` and `docs/` returns
 nothing. The closest precedent is the DVB-T2 per-curve `README.md`
-(`dev/benchmarks/dvb_t2_awgn/curve_1_2_16qam/README.md`), generated at
-`crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs:692`, which records invocation,
+(`README.md`), generated at
+`dvb_t2_awgn_campaign.rs:692`, which records invocation,
 configuration, host (`whoami` + `uname -a`, `:661`) and wall-clock — and
 **records no git revision and no toolchain version**. Since
 `@/inv/claims-trace-to-artifacts` demands seeds, source identity, hardware and
@@ -155,7 +155,7 @@ finding:
 - `experiments/permanent-benchmarks/examples/s3_scalar_vs_avx2_sanity.rs` measures the direct
   kernels and records that the single-matrix AVX2 kernel is about three times
   slower than scalar for `n in {16, 20, 24}`.
-- `dev/benchmarks/gf2_algebra_permanent/csvs/s3_cross_cpu.csv` preserves the
+- `s3_cross_cpu.csv` preserves the
   measured scalar-to-AVX2 ratios of 0.317–0.319.
 
 The plan absorbed both parts of the finding: the public dispatcher was moved to
@@ -171,7 +171,7 @@ distinct in both code and prose, as required by `@/inv/single-source-prose`.
 Gray-code walk. The follow-up note is at
 `crates/gf2-algebra/src/parallel.rs:5-7` — note the path: the file is
 `src/parallel.rs`, **not** `src/permanent/parallel.rs` as the study's citation
-implies; `crates/gf2-algebra/src/permanent/parallel.rs` does not exist. The
+implies; `parallel.rs` does not exist. The
 module is described at `:11-14` as "a top-level parallel scaffold for future
 parallel algorithms". `permanent/mod.rs:42-46` gates only `parallel_bipedal3`;
 no F_5/F_7 parallel module is declared.
@@ -248,7 +248,7 @@ determinant companion introduces no reverse dependency.
 ### C12 — issue 76dfd2ff (S3/S5 receipts non-authoritative) — provenance qualification landed
 
 The provenance qualification has landed in the tree. The live
-`dev/benchmarks/gf2_algebra_permanent/README.md` now records that
+`README.md` now records that
 `s3_cross_cpu-2026-05-12.csv` and `s5_gpu_crossover-2026-05-15.csv`, plus their
 `csvs/` snapshots, lack immutable measurement-source provenance and are
 corroboration-only. `ROADMAP.md`, the crate README, S3 rustdoc, and the
@@ -365,12 +365,12 @@ stay conditional on that search (`feasibility-study.md:1571-1575`).
 **`dev/campaigns/`** — 47 campaign definition TOMLs, all coding-domain. No
 permanent-statistics precedent.
 
-**Archive.** `dev/archive/ae82bd73-gf2-algebra-permanent/` holds the epic that
+**Archive.** `ae82bd73-gf2-algebra-permanent/` holds the epic that
 built the kernels: `plans/gf2_algebra_permanent.md` (design), `plans/a9e461de/`
 (S5 GPU crossover writeup), `plans/363556e6/` (S3 cross-CPU), `plans/8e4e19a0/`
 and `plans/.../r3_perm_uniformity_empirical.md` (the perm-vs-det uniformity
 work — relevant to REQ-05 and explicitly distinguished from it at
-`feasibility-study.md:1483-1490`). `dev/archive/6efb756b-grand/` holds the FEC
+`feasibility-study.md:1483-1490`). `6efb756b-grand/` holds the FEC
 campaign-runner history including
 `active/a4d86b3d-configurable-simulation-campaign-runner/a4d86b3d-campaign-runner-plan.md`,
 the plan behind `sim_runner`.
@@ -390,7 +390,7 @@ doc text, and research prototypes:
 | `crates/gf2-algebra/src/permanent/parallel_bipedal3.rs:291,452,472,528` | parallel-vs-serial oracle |
 | `crates/gf2-algebra/tests/gpu_dispatcher.rs:51,108,248` | GPU-vs-CPU equivalence |
 | `crates/gf2-algebra/tests/permanent_vectors.rs:54,313,338,365,397,440` | CAS vector conformance |
-| `crates/gf2-algebra/benches/s1_n36_speedup.rs:54,120,184` | S1 speedup bench |
+| `s1_n36_speedup.rs:54,120,184` | S1 speedup bench |
 | `crates/gf2-algebra/benches/permanent.rs:84` | Criterion suite |
 | `crates/gf2-algebra/examples/permanent_demo.rs:152,254` | headline demo |
 | `crates/gf2-algebra/src/gpu.rs:21,45,223` | rustdoc naming it the CPU equivalent |
@@ -405,7 +405,7 @@ doc text, and research prototypes:
 
 Two consequences. First, the ~3× penalty is currently paid only by benches,
 examples and prototypes — which means the *bench* numbers move when the fix
-lands, and `crates/gf2-algebra/benches/s1_n36_speedup.rs` explicitly labels its
+lands, and `s1_n36_speedup.rs` explicitly labels its
 group "SIMD path" (`:99,109`). Fixing G6 makes that label wrong, and a stale
 label inside a benchmark that feeds committed receipts is exactly the RC1 failure
 mode. Second, the feasibility harness already bypasses the dispatcher
@@ -427,7 +427,7 @@ Only `sim_runner`, and only by argument: it takes the TOML path positionally
 directory is not hard-coded. One test asserts the canonical surface of that
 directory (`crates/gf2-coding/tests/grand_phase1_smoke.rs:409-413`). Active prose
 references are the runner's own usage docs (`sim_runner.rs:11,15,19`) and the
-phase reports under `dev/simulation_results/`. Nothing writes into
+phase reports under `simulation_results/`. Nothing writes into
 `dev/campaigns`. A new subtree there would have no existing tooling to integrate
 with — which weakens the "reuse the conventions" argument for that location.
 
@@ -438,7 +438,7 @@ with — which weakens the "reuse the conventions" argument for that location.
 - `experiments/permanent-benchmarks/scripts/permanent-repro.sh`, `scripts/perm-uniformity-repro.sh`,
   `scripts/perm-uniformity-gpu-repro.sh` — reproduction wrappers for this exact
   problem family.
-- `dev/benchmarks/dvb_t2_awgn/plot.py`, `finalize.py`, `run_campaign.sh`,
+- `plot.py`, `finalize.py`, `run_campaign.sh`,
   `run_extend.sh`, `watch_progress.sh` — the campaign-local script set,
   co-located with the campaign's outputs rather than in `scripts/`.
 - `dev/reference_data/scripts/{compare_results.py,parse_pgfplots.py}` —
@@ -508,7 +508,7 @@ is reusable is the **mechanism**, not the type:
 - Tests: resume-vs-uninterrupted counter equality
   (`crates/gf2-sim/tests/determinism.rs:476`) and a SIGINT/resume byte-identity
   subprocess test on the campaign binary
-  (`crates/gf2-sim/tests/campaign_cli_flags.rs:356-357`, `#[ignore = "sim: …"]`).
+  (`campaign_cli_flags.rs:356-357`, `#[ignore = "sim: …"]`).
 
 The **schema** is unreusable: `CheckpointV2` fields are `esn0_db`,
 `frames_target`, `errors_target`, `errors_accumulated`, `total_iterations`,
@@ -568,7 +568,7 @@ Six real options, with precedents:
    domain (orchestration + `src/bin/` campaign binaries + `checkpoint/`). Best
    fit for the campaign as a whole; largest new surface, and duplicates
    `gf2-sim`'s checkpoint mechanism unless that is generalised first.
-5. **Binary inside `gf2-sim`** — `crates/gf2-sim/src/bin/permanent_zero_fraction.rs`
+5. **Binary inside `gf2-sim`** — `permanent_zero_fraction.rs`
    beside `dvb_t2_awgn_campaign.rs`. Precedent is exact: `gf2-sim` already hosts
    `dvb_t2_awgn_campaign`, `ldpc_bler_sweep`, `checkpoint_sweep`, and owns the
    checkpoint module the driver wants. Requires a **new** dependency edge:
@@ -580,7 +580,7 @@ Six real options, with precedents:
    FEC simulation pipeline … built on gf2-coding"
    (`crates/gf2-sim/Cargo.toml:6`). Cheapest path to reusing checkpointing;
    couples a number-theory campaign to the FEC simulation crate.
-6. **Research prototype — `dev/research/permanent-campaign/`.** Precedent: the
+6. **Research prototype — `permanent-campaign/`.** Precedent: the
    feasibility harness itself, plus `perm_uniformity`, `permanent_gpu_crossover`,
    `permanent_gpu_speedup`. Fastest, no workspace gate cost, and `dev/research` is
    a permanent path. But REQ-02/REQ-03 speak of a harness and a published dataset
@@ -589,7 +589,7 @@ Six real options, with precedents:
    as a staging step with a stated convergence condition. Note the standing rule:
    any new `dev/research/<crate>/` stub needs a `.gitignore` with `target/` and
    `Cargo.lock` before its first commit (both existing prototypes have one:
-   `dev/research/permanent-sampling-feas/.gitignore`).
+   `.gitignore`).
 
 A defensible split, offered as a recommendation rather than a decision: (1) or
 (3) for the sampler and statistics, plus (5) for the driver so the checkpoint
@@ -617,7 +617,7 @@ checkpointing and dataset emission are orchestration-layer concerns — the laye
 (issue `152388f4`, done) is the best model:
 
 ```
-dev/benchmarks/dvb_t2_awgn/
+dvb_t2_awgn/
   run_campaign.sh, run_extend.sh, watch_progress.sh   # drivers
   plot.py, finalize.py                                # analysis
   curve_<modcod>.csv, curve_<modcod>.png              # published curve + figure
@@ -628,10 +628,10 @@ dev/benchmarks/dvb_t2_awgn/
     tracing.jsonl             # structured progress log
 ```
 
-Generated by `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` (layout documented
+Generated by `dvb_t2_awgn_campaign.rs` (layout documented
 at `:154`, README writer at `:692`, host capture at `:661`, CSV header
 `es_n0_db,fer,ber,frames,errors,mean_iters,wall_seconds` at `:612`, hand-written
-`writeln!` rather than the `csv` crate at `:618`). `dev/simulation_results/`
+`writeln!` rather than the `csv` crate at `:618`). `simulation_results/`
 holds the other convention: flat `<name>.csv` + `<name>.json` +
 `<name>.progress.jsonl` triples plus comparison reports.
 
@@ -756,7 +756,7 @@ notes:
 ## 7. Open questions the plan must decide (not answerable from code)
 
 1. Dataset location: `dev/campaigns/` (permanent, but declared for *definitions*)
-   versus `dev/simulation_results/` (permanent, declared for *outputs*). §1/C4.
+   versus `simulation_results/` (permanent, declared for *outputs*). §1/C4.
 2. Checkpoint mechanism: generalise in `gf2-sim`, host the driver in `gf2-sim`,
    or take a named exception. §6.
 3. Crate placement for sampler/statistics/driver. §4d.
@@ -782,5 +782,5 @@ notes:
 | C9 composite hot path liftable | valid-and-open; **`protocol.rs` has no tests** |
 | C10 anchors exist | already-done, but **issue-scoped location** is a live problem |
 | C11 determinant path | already-done (`inverse.rs:494`); **unmeasured at campaign sizes** |
-| C12 76dfd2ff provenance qualification landed | current lifecycle and gate status are authoritative in JIT; durable provenance is `dev/benchmarks/gf2_algebra_permanent/README.md`; archived claim sites carry dated addenda |
+| C12 76dfd2ff provenance qualification landed | current lifecycle and gate status are authoritative in JIT; durable provenance is `README.md`; archived claim sites carry dated addenda |
 | C13 REQ-01 creditable via label | **invalid-as-stated** — no `satisfies:` label *and* no dependency edge |

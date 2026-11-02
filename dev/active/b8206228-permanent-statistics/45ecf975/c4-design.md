@@ -1,6 +1,6 @@
 # C4 design: the small permanent campaign (`@/issue/fd1ef344`)
 
-Goal: replace `crates/gf2-sim/src/permanent_campaign/` and three bins with `experiments/permanent-statistics/src/campaign/`. Budget: src about 2,760 new, tests about 1,580 new, rare_event 1,104 (src 707, tests 397), total about 5,450 code lines against the 6,000 ceiling. Run no timed work; every run below is a test or a queue line.
+Goal: replace `permanent_campaign/` and three bins with `experiments/permanent-statistics/src/campaign/`. Budget: src about 2,760 new, tests about 1,580 new, rare_event 1,104 (src 707, tests 397), total about 5,450 code lines against the 6,000 ceiling. Run no timed work; every run below is a test or a queue line.
 
 ## Decisions
 
@@ -56,7 +56,7 @@ Goal: replace `crates/gf2-sim/src/permanent_campaign/` and three bins with `expe
  "execution": {"first_cell": [7, 20], "max_shard_attempts": 2, "accelerator_launch_cap_ms": 500},
  "cell_groups": [{"q": 3, "n_first": 4, "n_last": 8, "matrix_count": 20000000, "shard_size": 200000,
    "backend": "batch_parallel", "determinant_companion": true,
-   "backend_evidence": "dev/benchmarks/...", "accelerator_per_matrix_us": null}],
+   "backend_evidence": "...", "accelerator_per_matrix_us": null}],
  "reference_data": {"reproduction_targets": "experiments/permanent-statistics/data/scheinerman2024-q3-targets-v1.csv",
    "literature_claim": "experiments/permanent-statistics/data/literature-claim.json"},
  "validation": {"root_seed": 2, "regeneration_matrix_count": 1024, "sample_matrix_count": 400000,
@@ -75,7 +75,7 @@ Cells expand in group order; groups must be sorted and non-overlapping. `stream_
 - `shards/q{q}-n{n:02}.jsonl`: compact lines `{shard_id, stream_index, matrix_count, permanent_zero_count, permanent_histogram, determinant_zero_count: u64|null, executed_backend}`. A projection of the log, published with `publish_atomic` at cell terminal. Partial cells publish what they accepted.
 - `summary.csv`: the current 18 columns of the script's `SUMMARY_FIELDS` plus `permanent_log_p_value`, `determinant_log_p_value`. One row per cell; halted rows pool accepted shards and leave estimates empty.
 - `runs.json`: `[{record: RunRecord, cells: [[q, n]]}]` from the log, for `@/inv/claims-trace-to-artifacts`. `checksums.sha256`: `sha256sum` text over everything above except the checkpoint.
-- `data/literature-claim.json` (committed): `{"fields": [5, 7], "claim": "...", "source": "dev/studies/b488f02c/literature-search-2026-08-08.md", "limitations": "..."}`; text taken from that source. `git mv` the target CSV to `data/`, fixing the link in `dev/simulation_results/permanent-zero-fraction/protocol.md`.
+- `data/literature-claim.json` (committed): `{"fields": [5, 7], "claim": "...", "source": "dev/studies/b488f02c/literature-search-2026-08-08.md", "limitations": "..."}`; text taken from that source. `git mv` the target CSV to `data/`, fixing the link in `protocol.md`.
 
 Validation directory: `execution.jsonl` (`start`, `anchor_terminal {anchor}`, `invocation_end`) and `receipt.json` `{record, configuration, anchors: [{q, n, enumerated, oracle_zero_count, determinant_zero_count, backends: [{backend, status, compared, mismatches}], regeneration: {workers: [1, W], sha256: [a, b], identical}, sample: {matrix_count, zero_count, log_p_value}, verdict}], verdict}`.
 
@@ -113,7 +113,7 @@ Deleted without replacement: receipt forgery and mutation, symlink refusals, emi
 
 ## `osd_campaign.rs` during transition
 
-Add `crates/gf2-sim/src/osd_identity.rs`, about 420 code lines, carrying only what `osd_campaign.rs`, `ebch_osd_awgn_campaign.rs` and `tests/osd_campaign_protocol.rs` import: `ArtifactPath`, `Sha256Digest`, `GitRevision`, their error types, `ArtifactIdentity`, `Availability`, `RngAlgorithm`, `Provenance` (all moved verbatim from `schema.rs`, so OSD checkpoints and receipts keep their bytes), and `observe_cpu_identity`, `observe_provenance`, `repository_top_level` with their private git helpers from `provenance.rs`, returning `io::Error`. No `crates/*` may depend on `experiments/`, so this is a named exception to `@/inv/convention-convergence`: its module comment cites `@/issue/779d1926`, which deletes it. Update the three import sites and the rustdoc at `osd_campaign.rs:407`.
+Add `osd_identity.rs`, about 420 code lines, carrying only what `osd_campaign.rs`, `ebch_osd_awgn_campaign.rs` and `tests/osd_campaign_protocol.rs` import: `ArtifactPath`, `Sha256Digest`, `GitRevision`, their error types, `ArtifactIdentity`, `Availability`, `RngAlgorithm`, `Provenance` (all moved verbatim from `schema.rs`, so OSD checkpoints and receipts keep their bytes), and `observe_cpu_identity`, `observe_provenance`, `repository_top_level` with their private git helpers from `provenance.rs`, returning `io::Error`. No `crates/*` may depend on `experiments/`, so this is a named exception to `@/inv/convention-convergence`: its module comment cites `@/issue/779d1926`, which deletes it. Update the three import sites and the rustdoc at `osd_campaign.rs:407`.
 
 ## Other changes
 
@@ -121,8 +121,8 @@ Add `crates/gf2-sim/src/osd_identity.rs`, about 420 code lines, carrying only wh
 - `.config/nextest.toml`: remove `binary(permanent_campaign_bin)` from the gf2-sim override; add an override `package(permanent-statistics) and (binary(campaign_determinism) or binary(campaign_bins))` with `threads-required = 4`. `@/issue/1634c185` REQ-04 then only confirms this.
 - `scripts/permanent_zero_fraction_analysis.py`: `SCHEMA_VERSION = 3`; `SUMMARY_FIELDS` gains two columns; `_manifest_raw_paths` derives `shards/q{q}-n{n:02}.jsonl` and adds `execution.jsonl`, `runs.json`; delete `_field_summary_terminal_states` and its parameters; `_require_canonical_conformance` runs `-p permanent-statistics --bin permanent_dataset -- verify`; targets and claim paths come from `manifest["reference_data"]`, resolved against `git rev-parse --show-toplevel`; write the claim with its source to `derived/.../literature-claim.json`; update the module docstring.
 - `tests/test_permanent_zero_fraction_analysis.py`: `git mv` fixtures to `experiments/permanent-statistics/tests/fixtures/analysis/`, regenerate from `small-campaign.json` by the tool, refresh golden bytes.
-- `dev/scripts/permanent-campaign-runner.sh`: delete `run_simulation_campaign` and `CAMPAIGN_SIM_*`, with their cases in `permanent-campaign-runner.test.sh` (adjust the pass count). `dev/index.md` rows for `benchmarks/`, `simulation_results/`, `studies/`. Extend `experiments/permanent-statistics/README.md` and `Cargo.toml` description. `dev/simulation_results/permanent-zero-fraction/` otherwise stays for C5 to retire.
-- `crates/gf2-algebra/benches/batched_f3_permanent.rs:455` is a benchmark output path, outside REQ-01; the plan's `git grep permanent_campaign -- crates` check needs that exclusion or a later fix in `@/issue/39e5f643`.
+- `dev/scripts/permanent-campaign-runner.sh`: delete `run_simulation_campaign` and `CAMPAIGN_SIM_*`, with their cases in `permanent-campaign-runner.test.sh` (adjust the pass count). `dev/index.md` rows for `benchmarks/`, `simulation_results/`, `studies/`. Extend `experiments/permanent-statistics/README.md` and `Cargo.toml` description. `permanent-zero-fraction/` otherwise stays for C5 to retire.
+- `batched_f3_permanent.rs:455` is a benchmark output path, outside REQ-01; the plan's `git grep permanent_campaign -- crates` check needs that exclusion or a later fix in `@/issue/39e5f643`.
 
 ## Implementation order
 

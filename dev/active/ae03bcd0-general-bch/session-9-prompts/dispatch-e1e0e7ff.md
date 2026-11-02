@@ -1,5 +1,5 @@
 You are dispatched to JIT issue e1e0e7ff. Your worktree is at:
-  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-e1e0e7ff
+  agent-e1e0e7ff
 on branch worktree-agent-e1e0e7ff, anchored to main's HEAD at dispatch time.
 
 Hard rules for path discipline (worktree-dispatch-protocol):
@@ -10,7 +10,7 @@ Hard rules for path discipline (worktree-dispatch-protocol):
 - The seeded `target` cache may carry a stale `gf2-kernels-simd` rlib; if `cargo` reports `unresolved import gf2_kernels_simd::bch_encode` (or a stale rlib as fresh), run `cargo clean -p gf2-kernels-simd` for the profiles you use (`--profile ci-test`, `--release`, dev) and rebuild. Do not treat it as a source defect.
 - Do the work yourself in this session: no delegation to codex, `codex exec`, or sub-agents, whatever your global CLAUDE.md says. This overrides the global delegation rule.
 - Report to the lead with SendMessage (to: "team-lead") in messages under 2500 characters each, then finish with the same content as your final response.
-- If `dev/tools/tuning-profile-compose/Cargo.lock` is missing, copy it from `/home/vkaskivuo/Projects/gf2/dev/tools/tuning-profile-compose/Cargo.lock` (that one copy is allowed).
+- If `dev/tools/tuning-profile-compose/Cargo.lock` is missing, copy it from `Cargo.lock` (that one copy is allowed).
 
 You are implementing issue e1e0e7ff in the current JIT-managed repository.
 
@@ -40,7 +40,7 @@ Resolve before acting: `jit item show @/issue/e1e0e7ff/requirement/REQ-01 @/issu
 ## What exists — reuse, do not duplicate (`@/invariant/convention-convergence`)
 
 - `gf2_coding::test_support::visit_bch_corpus` / `BchCorpusVisitor` / `bch_corpus_messages` (landed by 3f7edef1) construct every predeclared corpus row in its canonical representation with the seeded messages; the corpus is the row set REQ-01 names.
-- `crates/gf2-coding/tests/bch_property_tests.rs` (or wherever 3243bc1f's binary property tests live — locate with `rg -l "proptest" crates/gf2-coding/tests`) are the baseline invariants; generalize them into the shared suite and remove or redirect duplicates rather than leaving two suites asserting the same law.
+- `bch_property_tests.rs` (or wherever 3243bc1f's binary property tests live — locate with `rg -l "proptest" crates/gf2-coding/tests`) are the baseline invariants; generalize them into the shared suite and remove or redirect duplicates rather than leaving two suites asserting the same law.
 - `traits::block` (`crates/gf2-coding/src/traits.rs`): `BlockCode`, `BlockEncoder`, `GeneratorMatrixAccess` (`is_systematic`), `ParityCheckMatrixAccess`; implementors in gf2-coding: `BchCode<X,S,M>` (packed `BinaryBchCode` and `DenseBchCode`), `LinearBlockCode`, `Shortened<C>`, `Punctured<C>`, `Extended<C>`, `RepetitionCode`, plus boundary-family types on `compat::binary_v1`. REQ-03 means one generic conformance function set, applied to every canonical implementor (a `fn conformance_cases<C>(code: &C, …)` family), with implementation-specific tests left to their own modules.
 - Matrix contract (444c06bc): `G = [I_k | P]`, `is_systematic()`, `H` full row rank with `G Hᵀ = 0`, boundary codes (full-space and zero-dimensional) supported.
 - Transformations (8aa98a25, puncture, 981c5ae3): coordinate maps compose back to the mother; dimensions derive by rank; `information_set()` reports pivots; one-symbol extension adds the coordinate making the symbol sum zero. If 203ee826 (systematic fast path for `Shortened<C>`) has landed on main when you start, cover both of its derivation paths through the same assertions.

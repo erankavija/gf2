@@ -25,11 +25,11 @@ release: 1.95.0
 LLVM version: 22.1.2
 
 ## HIP source inventory
-a938162c22133962b5d8ff40aa8eea9e6c4d0a670d7ed7cd687c7dde107c7d29  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-773a5378/dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip
-44c5cae2af84e8912f5b4216723fe33e32033337bd1c0ab2463e7307303e4e3f  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-773a5378/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip
-c2646135b706bf3a242cd5b0770cc8a283494df003b6b66d9bdff4bdaa2345b9  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-773a5378/dev/research/permanent_wave_gpu/hip/probe.hip
-a21ec7a235bcd277814aa15daaf1d515c9ed892f86d66f78808e5d5fe81ca82a  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-773a5378/dev/research/permanent_wave_gpu/hip/wave_gf3_equivalence.hip
-20b522c24d44103412fe7021b90bb98581e0d8b86b7b9f817ae388330d107f84  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-773a5378/dev/research/permanent_wave_gpu/hip/wave_gf7_equivalence.hip
+a938162c22133962b5d8ff40aa8eea9e6c4d0a670d7ed7cd687c7dde107c7d29  f5_wave_equivalence.hip
+44c5cae2af84e8912f5b4216723fe33e32033337bd1c0ab2463e7307303e4e3f  f7_three_plane_equivalence.hip
+c2646135b706bf3a242cd5b0770cc8a283494df003b6b66d9bdff4bdaa2345b9  probe.hip
+a21ec7a235bcd277814aa15daaf1d515c9ed892f86d66f78808e5d5fe81ca82a  wave_gf3_equivalence.hip
+20b522c24d44103412fe7021b90bb98581e0d8b86b7b9f817ae388330d107f84  wave_gf7_equivalence.hip
 
 ## Architecture attempts
 - architecture: gfx1030

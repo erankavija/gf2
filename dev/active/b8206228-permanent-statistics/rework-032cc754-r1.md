@@ -51,7 +51,7 @@ cell", that the summary "records the failure anyway", or that the case is
 
 **1. An unavailable backend must be fatal and pre-flighted, not quarantined**
 
-- Location: `crates/gf2-sim/src/permanent_campaign/driver.rs:245` (the
+- Location: `driver.rs:245` (the
   `.map_err(|error| error.to_string())` closure in `run_field_checkpointed`) and
   `run_field_checkpointed_inner`.
 - What's wrong: every `ScheduleError` — including `BackendUnavailable` — is
@@ -72,7 +72,7 @@ cell", that the summary "records the failure anyway", or that the case is
   a manifest whose cells name an unresolvable backend; if one does, it was
   relying on the defect — report it and adjust it to the new contract rather
   than weakening the pre-flight.
-- The binary at `crates/gf2-sim/src/bin/permanent_campaign.rs:73` already routes
+- The binary at `permanent_campaign.rs:73` already routes
   a driver `Err` through `failure(error)`; confirm by reading it that this yields
   a non-zero exit and prints the cell and backend. Do not restructure the binary
   if it already does.
@@ -86,7 +86,7 @@ header at `driver.rs:14` carries the same claim. After this change an unavailabl
 backend is refused up front and nothing runs. Amend each so the carve-out is
 stated where the quarantine contract is stated (`@/inv/single-source-prose`,
 `@/inv/present-tense-prose` — describe the current contract, not the change).
-Sweep `crates/gf2-sim/src/permanent_campaign/` for any other prose asserting that
+Sweep `permanent_campaign/` for any other prose asserting that
 every evaluator error quarantines.
 
 ### Tests you must add
@@ -103,7 +103,7 @@ every evaluator error quarantines.
 3. `test_run_field_checkpointed_does_not_quarantine_an_unavailable_backend` —
    assert the refusal path produces no `QuarantinedShard` entry and no
    `ExecutionFailure` record for that cell.
-4. A binary-level assertion in `crates/gf2-sim/tests/permanent_campaign_bin.rs`
+4. A binary-level assertion in `permanent_campaign_bin.rs`
    (which already drives the built binary via `std::process::Command`): the same
    manifest yields a non-zero exit status and stderr naming the cell and backend.
 5. Confirm the existing quarantine tests still pass unchanged — the ordinary
@@ -143,7 +143,7 @@ Keep the naming convention you used in round 1 (`test_<operation>_<scenario>`).
 For finding F1, run and paste the raw results:
 
 ```
-rg -n "to_string\(\)" crates/gf2-sim/src/permanent_campaign/
+rg -n "to_string\(\)" permanent_campaign/
 rg -n "quarantin" crates/gf2-sim/src/ crates/gf2-sim/tests/
 ```
 

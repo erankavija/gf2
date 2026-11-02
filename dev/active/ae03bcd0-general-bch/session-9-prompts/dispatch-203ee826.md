@@ -1,5 +1,5 @@
 You are dispatched to JIT issue 203ee826. Your worktree is at:
-  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-203ee826
+  agent-203ee826
 on branch worktree-agent-203ee826, anchored to main's HEAD at dispatch time.
 
 Hard rules for path discipline (worktree-dispatch-protocol):
@@ -10,7 +10,7 @@ Hard rules for path discipline (worktree-dispatch-protocol):
 - The seeded `target` cache may carry a stale `gf2-kernels-simd` rlib; if `cargo` reports `unresolved import gf2_kernels_simd::bch_encode` (or a stale rlib as fresh), run `cargo clean -p gf2-kernels-simd` for the profiles you use (`--profile ci-test`, `--release`, dev) and rebuild. Do not treat it as a source defect.
 - Do the work yourself in this session: no delegation to codex, `codex exec`, or sub-agents, whatever your global CLAUDE.md says. This overrides the global delegation rule.
 - Report to the lead with SendMessage (to: "team-lead") in messages under 2500 characters each, then finish with the same content as your final response.
-- If `dev/tools/tuning-profile-compose/Cargo.lock` is missing, copy it from `/home/vkaskivuo/Projects/gf2/dev/tools/tuning-profile-compose/Cargo.lock` (that one copy is allowed). If cargo reports a stale rlib as fresh after a pool-seeded build, `find crates/gf2-coding/src -name '*.rs' -exec touch {} +`.
+- If `dev/tools/tuning-profile-compose/Cargo.lock` is missing, copy it from `Cargo.lock` (that one copy is allowed). If cargo reports a stale rlib as fresh after a pool-seeded build, `find crates/gf2-coding/src -name '*.rs' -exec touch {} +`.
 
 You are implementing issue 203ee826 in the current JIT-managed repository.
 

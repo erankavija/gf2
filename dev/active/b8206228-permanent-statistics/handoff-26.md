@@ -30,14 +30,14 @@
 - [ ] Implement one public reusable validation API in `gf2-sim` that reuses the production evaluator/pooling/determinant path. Keep the repository runner thin and campaign constants outside the library.
 - [ ] Commit the preregistration, schema, constants, tests, and implementation before the first fixed validation draw. Then build with Rust 1.95 release and execute the complete 400,000-draw-per-anchor run after 02:00 local under `dev/scripts/ccx1-bench-flock.sh --full-host`.
 - [ ] Preserve the first validation outcome without redraw, link its immutable receipt to `02b8137c`, run `cargo-ci`, `code-review`, `doc-review`, and `research-review`, complete lead review, and close the issue only if every hard criterion and gate passes.
-- [ ] After validation closes, restore `target/release/permanent_campaign` from `/home/vkaskivuo/.local/state/gf2-frozen/permanent_campaign-c9b2307a`, verify SHA-256 `c9b2307a9f1d3ae4fedd5c442bf1ba79786b27727f8b0d99eb96fea23e3c501d`, and execute exact $(q,n)=(7,20)$ to terminal state before any other campaign-purpose cell.
+- [ ] After validation closes, restore `target/release/permanent_campaign` from `permanent_campaign-c9b2307a`, verify SHA-256 `c9b2307a9f1d3ae4fedd5c442bf1ba79786b27727f8b0d99eb96fea23e3c501d`, and execute exact $(q,n)=(7,20)$ to terminal state before any other campaign-purpose cell.
 - [ ] Resolve the separate `6639435f` owner escalation before merging or extending its branch.
 
 ## Traps — do not repeat these
 
 - **Do not launch from the successful dry schedule.** It proves exact selector admission only; the frozen protocol independently requires the complete ten-anchor validation receipt before any campaign-purpose draw.
 - **Do not treat `44534b2f` as the frozen validation run.** `crates/gf2-algebra/tests/permanent_exact_anchors.rs` fixes 4,096 draws and Clopper–Pearson coverage, not the protocol's 1,024 replay plus 400,000-draw probability-ordering exact test.
-- **Do not substitute the older order-3 study receipt.** `dev/studies/b488f02c/order3-anchor-2026-08-08.txt` covers only $n=3$ for three fields and uses a different statistical decision.
+- **Do not substitute the older order-3 study receipt.** `order3-anchor-2026-08-08.txt` covers only $n=3$ for three fields and uses a different statistical decision.
 - **Do not duplicate the production evaluator as a private validation implementation.** Extend and reuse the `gf2-sim::permanent_campaign::schedule` evaluation, determinant, and pooling path through a public library API, preserving library-first generality and crate direction.
 - **Do not use the production evaluator as its own independent oracle.** The exhaustive enumerator must visit every matrix exactly once independently; then compare the production path and each supported selectable backend against it.
 - **Do not run the 400,000-draw phase before committing preregistration and producing code.** Source, constants, addresses, schema, exact rule, and no-redraw policy must predate the first validation draw.
@@ -59,10 +59,10 @@
 - Epic: `jit issue show b8206228`
 - Progress and wave plan: `dev/active/b8206228-permanent-statistics/progress.json`
 - Validation prerequisite: `jit issue show 02b8137c`
-- Frozen protocol: `dev/simulation_results/permanent-zero-fraction/protocol.md`
+- Frozen protocol: `protocol.md`
 - Existing exact-anchor test: `crates/gf2-algebra/tests/permanent_exact_anchors.rs`
-- Production evaluator/pooling path: `crates/gf2-sim/src/permanent_campaign/schedule.rs`
-- Frozen campaign: `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/`
-- Preserved emitter: `/home/vkaskivuo/.local/state/gf2-frozen/permanent_campaign-c9b2307a`
+- Production evaluator/pooling path: `schedule.rs`
+- Frozen campaign: `permanent-zero-fraction-20260829/`
+- Preserved emitter: `permanent_campaign-c9b2307a`
 - Validation worktree: `.agents/worktrees/agent-02b8137c` at `89c7e8cc` (clean, no worker commits)
 - Importance-sampling branch: `.agents/worktrees/agent-6639435f` at `49b4d452`

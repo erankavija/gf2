@@ -26,7 +26,7 @@
 
 - [ ] Obtain the owner's exact uncontended measurement window; reserve 10–15 uninterrupted minutes. Do not start early.
 - [ ] Immediately before launch, verify the current clean HEAD, confirm every path in `RELEVANT_SOURCE_PATHS` is byte-identical to reviewed source commit `015e2cda`, verify the exact binary SHA-256, CPU affinity admission, and absence of v5 receipt/report/scratch paths. Later JIT readiness/handoff commits are outside the source closure; abort if any producing path differs.
-- [ ] Run exactly one locked cohort with `./dev/scripts/ccx1-bench-flock.sh python3 dev/benchmarks/permanent_campaign/determinant_cost_v5.py run --binary target/release/deps/determinant_companion-214102561bb5c0a5 --output dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.csv --scratch-dir /tmp/gf2-ec22205e-determinant-cost-v5`.
+- [ ] Run exactly one locked cohort with `./dev/scripts/ccx1-bench-flock.sh python3 determinant_cost_v5.py run --binary target/release/deps/determinant_companion-214102561bb5c0a5 --output determinant-cost-all-cells-v5.csv --scratch-dir /tmp/gf2-ec22205e-determinant-cost-v5`.
 - [ ] Preserve every process outcome. Do not repair, replace, extend, or rerun based on measurements or censoring.
 - [ ] Render and validate the v5 report, commit immutable CSV/report evidence, update issue links, and run all registered formal gates before closing `ec22205e`.
 - [ ] Resume `7a816262` only after `ec22205e` closes; finalize backend selection and the root campaign manifest under the recorded A/A decisions.
@@ -55,8 +55,8 @@
 - Determinant prerequisite: `jit issue show ec22205e`
 - Progress: `dev/active/b8206228-permanent-statistics/progress.json`
 - Prior handoff: `dev/active/b8206228-permanent-statistics/handoff-15.md`
-- V5 preregistration: `dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v5.md`
-- V5 runner: `dev/benchmarks/permanent_campaign/determinant_cost_v5.py`
-- V5 tests: `dev/benchmarks/permanent_campaign/test_determinant_cost_v5.py`
-- Historical v4 evidence: `dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v4.csv`, `determinant-cost-all-cells-v4.md`
+- V5 preregistration: `determinant-cost-preregistration-v5.md`
+- V5 runner: `determinant_cost_v5.py`
+- V5 tests: `test_determinant_cost_v5.py`
+- Historical v4 evidence: `determinant-cost-all-cells-v4.csv`, `determinant-cost-all-cells-v4.md`
 - Readiness commits: `ac550959` (preregistration), `6348b0c9` (canonical cutover), `1ddcc266` (valid-address truncation), `8af81b55` (short-tail retention), `015e2cda` (explicit-empty rejection)

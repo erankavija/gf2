@@ -1457,7 +1457,7 @@
    "decision": "open"
   },
   {
-   "topic": "33057520 changed snr_checkpoint.rs and executor/drain.rs, listed by source digest in dev/bench_results/3be770d5 receipts",
+   "topic": "33057520 changed snr_checkpoint.rs and executor/drain.rs, listed by source digest in 3be770d5 receipts",
    "decision": "open: revalidate or not"
   }
  ],
@@ -1473,7 +1473,7 @@
  "surfaced_pitfalls": [
   {
    "from": "33057520",
-   "note": "receipts under dev/bench_results/3be770d5 list snr_checkpoint.rs and executor/drain.rs as producing inputs by source digest; both files changed. Snapshot checks pass. Invoker to confirm no revalidation is wanted."
+   "note": "receipts under 3be770d5 list snr_checkpoint.rs and executor/drain.rs as producing inputs by source digest; both files changed. Snapshot checks pass. Invoker to confirm no revalidation is wanted."
   },
   {
    "from": "8342487d",
@@ -1489,7 +1489,7 @@
   },
   {
    "from": "f556d663",
-   "note": "Four benches keep private /proc/cpuinfo readers beside gf2_algebra::testutil::host_fingerprint; F_3 dispatch at n>=64 is tested through the selector only; hard-coded dev/benchmarks paths remain in the S1 bench and scaling example (code-review advisories F1, F2)."
+   "note": "Four benches keep private /proc/cpuinfo readers beside gf2_algebra::testutil::host_fingerprint; F_3 dispatch at n>=64 is tested through the selector only; hard-coded benchmarks paths remain in the S1 bench and scaling example (code-review advisories F1, F2)."
   },
   {
    "from": "5c62bb1c",

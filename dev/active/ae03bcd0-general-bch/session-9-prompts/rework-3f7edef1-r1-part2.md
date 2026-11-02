@@ -1,7 +1,7 @@
 # Rework 3f7edef1 (attempt 1 of 2) — part 2, resumed from a colleague's draft
 
 You are dispatched to JIT issue 3f7edef1 (External oracle and standards-vector agreement). Your worktree is at:
-  /home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-3f7edef1
+  agent-3f7edef1
 on branch worktree-agent-3f7edef1.
 
 Hard rules (worktree-dispatch-protocol):
@@ -18,8 +18,8 @@ Round 1 of this issue was merged to main (fd8bc3d9) and failed three gates: code
 Treat the draft as a colleague's: read it critically (`git show d6f03947`), keep what is right, fix what is not, finish it. First actions in order: (1) `git merge main` (main carries the `DvbVerification2010` citekey, commit b4c201ef, and other issues' merges; expect no conflicts in your footprint); (2) read the full original rework brief and the research-review findings below; (3) `jit item show @/citation/DvbVerification2010 @/citation/SageMath2026 @/citation/GapGroup2026 @/citation/Joyner2026 @/citation/Etsi2015` and the invariants named in the original brief.
 
 The original brief and the research-review findings are in these two files (read both in full):
-  /tmp/claude-1000/-home-vkaskivuo-Projects-gf2/b6ff6d78-3691-40ce-9546-069e618e637c/scratchpad/s8/rework-3f7edef1-r1.md
-  /tmp/claude-1000/-home-vkaskivuo-Projects-gf2/b6ff6d78-3691-40ce-9546-069e618e637c/scratchpad/s8/rework-3f7edef1-r1-research.md
+  temporary-file
+  temporary-file
 
 ## What remains (part 2)
 

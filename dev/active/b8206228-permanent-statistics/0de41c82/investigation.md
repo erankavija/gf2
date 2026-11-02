@@ -176,7 +176,7 @@ implementation is the starting point; `common.rs` supplies the reference" —
 - Provenance preamble: `env.rs:47` `struct HostInfo` with `binary_sha256`
   (`:73`), `cpu_model` (`:76`), `gpu_model` (`:82`), `rocm_version` (`:83`);
   emitted by `csv_preamble` (`env.rs:130`). A live example is the 24-line
-  preamble of `dev/studies/b488f02c/throughput-2026-08-07.csv`.
+  preamble of `throughput-2026-08-07.csv`.
 - Committed receipts under `dev/studies/b488f02c/`: `throughput-2026-08-07.csv`,
   `sustained-2026-08-07.csv`, `envelope-2026-08-07.csv`,
   `zero-fraction-2026-08-07.csv`, `equivalence-2026-08-07.csv`,
@@ -210,7 +210,7 @@ target list suggests.**
   sources today are auto-generated no-op probes (`ensure_probe_source`,
   `build.rs:192`, body at `:204-208`). `kernels/` is entirely gitignored
   (`crates/gf2-kernels-hip/.gitignore`), and `git ls-files
-  crates/gf2-kernels-hip/kernels` returns nothing.
+  kernels` returns nothing.
 
 **Consequence for REQ-04.** "States the supported GPU architecture scope and
 records compile evidence for every architecture claimed to be supported" today
@@ -286,7 +286,7 @@ not only F_3:
 
 The proof targets are pinned to a fixed inherent surface for the
 Charon/Aeneas pipeline (`packed7.rs:485-497`, naming
-`dev/plans/30e98ef1/d6_lean_packed7_sketch.md` §4 and the `packed5.rs:326-401`
+`d6_lean_packed7_sketch.md` §4 and the `packed5.rs:326-401`
 pattern it adapts). **Consequence:** a new *public* packed representation
 attracts a proof obligation by convention, and `AGENTS.md:114-116` requires an
 approved sketch (lemma statements, strategy, exact production path) *before*
@@ -308,33 +308,33 @@ re-derive. Paths are repo-relative; each was opened.
   protocol (`:329-383`), §4.3 cell outcomes with the eight censored GPU cells
   (`:384-433`), §4.4 measured throughput incl. the GPU-vs-CPU table
   (`:563-668`), §4.5 sustained, §5 gap analysis G1–G8 (`:1022-1178`).
-- `dev/studies/b488f02c/throughput-2026-08-07.csv` — 120-cell grid, seven
+- `throughput-2026-08-07.csv` — 120-cell grid, seven
   backends, full provenance preamble. The per-cell receipt format this study
   should extend rather than replace.
-- `dev/studies/b488f02c/sustained-2026-08-07.csv` — steady-state re-measurement
+- `sustained-2026-08-07.csv` — steady-state re-measurement
   of nine configurations; the source of the 1.80 % worst cross-run disagreement
   quoted at `feasibility-study.md:621-625`.
-- `dev/studies/b488f02c/equivalence-2026-08-07.csv` — 72 rows, `reference`
+- `equivalence-2026-08-07.csv` — 72 rows, `reference`
   column recording scalar vs generic oracle per row (66 / 6 split,
   `feasibility-study.md:319-321`).
-- `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv` — the
+- `s5_gpu_crossover-2026-05-15.csv` — the
   2026-05-15 receipt reporting 28.65× / 30.32× at n=24/28, q=3, M=256. Superseded
   in interpretation: `feasibility-study.md:647-659` shows the baseline was the
   *slower* AVX2 single-thread path and restates the same configuration as
   0.46× / 0.44× against the best CPU path.
-- `dev/archive/ae82bd73-gf2-algebra-permanent/plans/a9e461de/s5_gpu_crossover.md`
+- `s5_gpu_crossover.md`
   — the design behind that receipt.
-- `dev/archive/ae82bd73-gf2-algebra-permanent/plans/9480f8a6/s1g_gpu_speedup_results.md`
+- `s1g_gpu_speedup_results.md`
   — the M=80-per-round batching rationale (`permanent_gpu_speedup/src/main.rs:18`)
   and a 7176.9 s single-matrix GPU determinism run.
-- `dev/archive/ae82bd73-gf2-algebra-permanent/active/ae82bd73-w5-gpu-verification.md`
+- `ae82bd73-w5-gpu-verification.md`
   and `.../ae82bd73-w5-gpu-dispatcher-verification.md` — the on-device evidence
   format accepted at review for the three kernels and the dispatcher, including
   the canonical `--manifest-path` build invocation (`:19-25`).
 
 **Watchdog / launch duration — the most directly relevant prior art**
 
-- `dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`
+- `r4_gpu_uniformity_resample.md`
   §2.5 (`:167-185`) — the only *calibrated* watchdog record in the tree: the
   hang boundary is placed at ≈190–200 s per launch; bounded sub-batches keep
   every launch at ≈10–117 s; q-aware work budgets on `sub_batch · 2^n` of
@@ -342,7 +342,7 @@ re-derive. Paths are repo-relative; each was opened.
   Bipedal3 kernel never tripped it "even on a 2300 s single launch at n=32".
 - `dev/research/perm_uniformity_gpu/src/main.rs:100-121` — the executable form
   of that mitigation, with env-overridable budget and cooldown.
-- `dev/studies/b488f02c/gpu-hang-2026-08-07.log` — a single `HW Exception by
+- `gpu-hang-2026-08-07.log` — a single `HW Exception by
   GPU node-1 … reason :GPU Hang` at q=3, n=24, M=4096 (`:52-53`), with an
   explicit retraction of the watchdog attribution (`:36-43`: "nothing here
   attributes the hang to a watchdog timeout … no diagnostic was captured that
@@ -359,33 +359,33 @@ re-derive. Paths are repo-relative; each was opened.
 
 **F_5 / F_7 representation decisions (the record this study re-opens)**
 
-- `dev/archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md`
+- `r2_f7_encoding_decision.md`
   — **F_7 Candidate D was already measured and rejected.** Summary at `:7-22`;
   the workload model that rejected it at `:145-147` ("each Gray-code transition
   does 1 packed add/sub … and ~`n−1` packed muls"); the numbers at `:164-184`
   (D is 9.5× faster on add, ~1.7× slower on mul, Ryser-weighted 0.62×, so A
   wins by 1.61× at n=36). §7 (`:205-211`) explicitly permits a SIMD re-bench of
   A vs D but states it is "**not** a re-decision authority for T19".
-- `dev/archive/ae82bd73-gf2-algebra-permanent/plans/6b3f6054/r1_f5_encoding_decision.md`
+- `r1_f5_encoding_decision.md`
   — F_5 chose Candidate D (three-plane) under the revised §8 rule (`:7-19`);
   this is why `Packed5` is already bit-sliced and `Packed7` is not.
-- `dev/archive/ae82bd73-gf2-algebra-permanent/plans/r2_packed_encoding_generalizations.md`
+- `r2_packed_encoding_generalizations.md`
   — the cross-prime "two algebraic gifts" map (`:11-24`): Fermat-like
   `p − 1 = 2^m` for {3,5,17,257,65537} vs Mersenne-like. The algebraic backing
   for the representation study's "why F_3 is exceptional" section.
-- `dev/archive/ae82bd73-gf2-algebra-permanent/plans/r2_f3_f5_f7_cross_prime_comparison.md`
+- `r2_f3_f5_f7_cross_prime_comparison.md`
   — F_3 bipedal measured 13–22× faster than F_3 LUT-A on the same harness;
   records that F_5/F_7 have no candidate with comparable headroom.
-- `dev/archive/ae82bd73-gf2-algebra-permanent/plans/60c30e2d/r3_multi_word_streaming.md`
+- `r3_multi_word_streaming.md`
   — the multi-word streaming design for n > 64 on F_3 (`N_MAX_MULTIWORD = 255`),
   the precedent for any multi-word F_7 accumulator alternative.
 
 **Lean / proof-obligation precedent**
 
-- `dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d5_lean_packed5_sketch.md`
+- `d5_lean_packed5_sketch.md`
   and `.../d6_lean_packed7_sketch.md` — the approved sketch format a new public
   representation would have to match.
-- `dev/archive/ae82bd73-gf2-algebra-permanent/plans/d3_lean_ryser_sketch.md`,
+- `d3_lean_ryser_sketch.md`,
   `.../a0c0a45f/d2_lean_bipedal3_sketch.md` — same, for the algorithm layer.
 
 **Process / session context**
@@ -397,7 +397,7 @@ re-derive. Paths are repo-relative; each was opened.
   cycle; the failure modes a study of this shape hits at gate time.
 - `dev/studies/b488f02c/literature-search-2026-08-08.md` — external-baseline
   search record; relevant only to the sampling epic, not to kernel design.
-- `dev/archive/806eb14e-hip-gpu-prototype/plans/hip_gpu_prototype_wave.md` — the wave
+- `hip_gpu_prototype_wave.md` — the wave
   plan that established the crate's evidence protocol (`## Evidence protocol`,
   `:51`) and the multi-arch `.co` seam (design doc §6, referenced from
   `build.rs:50` and `host/arch.rs:4`).
@@ -444,7 +444,7 @@ dev/research (all four crates call the API directly):
   `:97`.
 
 Archived docs (no code impact, but any API rename makes them stale):
-`dev/archive/ae82bd73-gf2-algebra-permanent/active/ae82bd73-handoff-13.md:11`,
+`ae82bd73-handoff-13.md:11`,
 `.../active/ae82bd73-w5-gpu-dispatcher-verification.md:31-69`,
 `.../plans/9480f8a6/s1g_gpu_speedup_results.md:13,17,19,147,168,175`,
 `.../plans/a9e461de/s5_gpu_crossover.md:18`,
@@ -518,9 +518,9 @@ Same dev/research and doc consumers as `Packed7`.
   `dev/active/b8206228-permanent-statistics/0de41c82/bipedal-f5-f7-representation-study.md:66,88-89`.
 
 **Two stale doc references found in production rustdoc.** `packed5.rs:45`
-cites `dev/plans/6b3f6054/r1_f5_encoding_decision.md` and `packed7.rs:34`
-cites `dev/plans/f10152f6/r2_f7_encoding_decision.md`; both moved to
-`dev/archive/ae82bd73-gf2-algebra-permanent/plans/…`. The same two paths appear
+cites `r1_f5_encoding_decision.md` and `packed7.rs:34`
+cites `r2_f7_encoding_decision.md`; both moved to
+`plans/…`. The same two paths appear
 in `crates/gf2-algebra/Cargo.toml`'s `f5` / `f7` feature comments and in
 `crates/gf2-kernels-simd/src/bipedal/packed5.rs:3` / `packed7.rs:3`. These are
 `@/inv/single-source-prose` staleness defects that any task touching those
@@ -696,7 +696,7 @@ study directory". Two constraints interact:
 
 - `dev/active` and `dev/studies` are both `managed_paths`
   (`.jit/config.toml:163`) — content there is issue-scoped and archived with the
-  issue. `dev/research` and `dev/archive` are `permanent_paths` (`:164`).
+  issue. `dev/research` and `archive` are `permanent_paths` (`:164`).
 - The b488f02c precedent put the study document and all CSV receipts under
   `dev/studies/b488f02c/` while its *code* prototype went to
   `dev/research/permanent-sampling-feas/`.
@@ -705,7 +705,7 @@ study directory". Two constraints interact:
 resolved doc directory (matching what `jit doc dir` returns at authoring time,
 which is `dev/active/b8206228-permanent-statistics/0de41c82/` today), executable prototypes under
 `dev/research/<new-crate>/`, and every doc attached with `jit doc add` rather
-than referenced by an inline `dev/...` path.
+than referenced by an inline `...` path.
 
 ---
 
@@ -741,7 +741,7 @@ Three surfaces are exposed:
    states the D-vs-A re-bench is "not a re-decision authority". If this study
    concludes D is right for the permanent, the decision document must be amended
    at its source with the new workload evidence — not silently contradicted by a
-   new document. Note the archived R2 doc lives under `dev/archive`, a
+   new document. Note the archived R2 doc lives under `archive`, a
    `permanent_path`; amending it is a deliberate act requiring approval.
 3. **A parallel GPU dispatch mechanism.** Building persistent buffers or streams
    for the permanent path while `host::{DeviceBuffer, HipStreamPool,
@@ -804,7 +804,7 @@ equivalence check and the grid, which is the cheapest compliant path.
   `gf2-kernels-hip` may hold production `unsafe`, each boundary carrying an
   explicit safety contract. A `dev/research` prototype is not production, but
   anything promoted must land in the HIP crate.
-- `@/inv/single-source-prose` — see the stale `dev/plans/...` citations in §3.
+- `@/inv/single-source-prose` — see the stale `...` citations in §3.
 
 ### Gate implications for the breakdown
 
@@ -859,5 +859,5 @@ plus prototypes.
     file: `gpu_dispatcher.rs:24` states "gfx1030's 36 compute units" against the
     receipted 80; `packed7.rs:468` claims LUT lookups the body does not perform;
     `packed5.rs:45`, `packed7.rs:34`, `gf2-algebra/Cargo.toml`, and both
-    `gf2-kernels-simd/src/bipedal/packed{5,7}.rs:3` cite `dev/plans/…` paths that
-    now live under `dev/archive/ae82bd73-gf2-algebra-permanent/plans/…`.
+    `gf2-kernels-simd/src/bipedal/packed{5,7}.rs:3` cite `plans/…` paths that
+    now live under `plans/…`.

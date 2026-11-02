@@ -59,6 +59,6 @@ None.
 - Plan: `dev/active/b8206228-permanent-statistics/plan.md`
 - Analysis narrative: `dev/active/b8206228-permanent-statistics/investigation.md`
 - Feasibility study (gap table G1–G8; G1/G4/G5/G6 now landed): `dev/studies/b488f02c/feasibility-study.md`
-- Dataset home and verification procedure: `dev/simulation_results/permanent-zero-fraction/README.md`
-- Preregistration: `dev/simulation_results/permanent-zero-fraction/protocol.md`
+- Dataset home and verification procedure: `README.md`
+- Preregistration: `protocol.md`
 - Execution batching guidance: `dev/active/b8206228-permanent-statistics/execution-batching.md`

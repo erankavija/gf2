@@ -95,7 +95,7 @@ quoted below as it printed them.
 | nextest summary | `Summary [   1.846s] 1 test run: 1 passed, 31 skipped` |
 
 ```
-dvb-vectors: resolved_directory=/home/vkaskivuo/dvb_test_vectors
+dvb-vectors: resolved_directory=dvb_test_vectors
 dvb-vectors: stream_set=VV001-CR35
 dvb-vectors: tp04=VV001-CR35_CSP/TestPoint04/VV001-CR35_TP04_CSP.txt sha256=c658dc04cacebe24a86a42a89f8ffe588f1e269506b6da05eae7d6582d8570b8
 dvb-vectors: tp05=VV001-CR35_CSP/TestPoint05/VV001-CR35_TP05_CSP.txt sha256=f4aaf105b01768b1269d21accef923de09d0040cba073a73909d8f814f3ed929

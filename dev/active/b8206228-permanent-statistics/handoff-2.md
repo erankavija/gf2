@@ -23,13 +23,13 @@
 ## What else happened this session
 
 - **Profile drift resolved (owner pre-flight ask):** jit-default's `namespaces:type`/`component` adoption drift made `jit validate` fail and would have blocked the epic's `repo-validate` gate. jit 1.0.0 has no bless path (confirmed with the jit lead over the forum; fixed on jit main, not yet released). Restored the package-published values; re-localization tracked as `ec3971f3` under the tech-debt umbrella (`86b9c719`).
-- **jit adopter feedback loop:** consolidated field report sent to the jit lead (agent:codex via ~/Projects/forum-poc, FORUM_DIR=/tmp/jit-forum, identity agent:gf2-lead); their owner opened customer epic `4a559332` in the jit repo (worktree-fork prevention, durable gate evidence, machine-readable profile remedies, selector discovery). They may ping the agent:gf2-lead mailbox for adopter testing.
+- **jit adopter feedback loop:** consolidated field report sent to the jit lead (agent:codex via local-path FORUM_DIR=/tmp/jit-forum, identity agent:gf2-lead); their owner opened customer epic `4a559332` in the jit repo (worktree-fork prevention, durable gate evidence, machine-readable profile remedies, selector discovery). They may ping the agent:gf2-lead mailbox for adopter testing.
 - **Flaky test filed:** `398f0691` (gf2-sim kill_mid_write_randomized_defense_in_depth fails under load, passes solo) under the tech-debt umbrella. It cost one cargo-ci gate round.
 - e0251af3's description was amended (owner-approved) to cite [GGK2025]/[Scheinerman2024] inline — the research-review tier-1 checker requires every `cites:` key in the gate context to appear as a `[Key]` token in the issue text.
 
 ## Traps — do not repeat these
 
-- **Do NOT run jit or git state commands with the shell parked in a worker worktree.** jit materializes state into whichever checkout runs it, and `git add .jit && git commit` then lands on the worker's branch. This session created issue 2ddf2f4b that way; the state was briefly destroyed by a cleanup and recovered from the dangling commit `6ae316c4` by hand-merging event logs (recovery commit `09aa8b66`). The harness shell's cwd persists across calls unpredictably — start every state-touching command with `cd /home/vkaskivuo/Projects/gf2 &&` or explicit `git -C`/absolute paths.
+- **Do NOT run jit or git state commands with the shell parked in a worker worktree.** jit materializes state into whichever checkout runs it, and `git add .jit && git commit` then lands on the worker's branch. This session created issue 2ddf2f4b that way; the state was briefly destroyed by a cleanup and recovered from the dangling commit `6ae316c4` by hand-merging event logs (recovery commit `09aa8b66`). The harness shell's cwd persists across calls unpredictably — start every state-touching command with `cd gf2 &&` or explicit `git -C`/absolute paths.
 - **Do NOT run merge/cleanup chains cd'd into the worktree being merged or removed.** `git merge <branch>` while ON that branch is a silent no-op, and `git worktree remove` of your own cwd strands the shell ("Unable to read current working directory"). Merge from the repo root; verify with `git log --oneline` on main afterwards.
 - **Do NOT assume `jit doc add` with a new path replaces an old link.** It is idempotent per path — re-pointing evidence requires `jit doc remove <old>` first. A stale link to a deleted file is a doc-review blocker (burned one round).
 - **Do NOT leave superseded run evidence committed once the producing tool changes.** Reviewers require the linked smoke/run evidence to come from the final tool revision; `git rm` the superseded run directories and re-point the link in the same commit (burned another round).
@@ -47,6 +47,6 @@ None pending. (Owner directives this session: campaigns run overnight via the de
 
 - Progress: `progress.json` here (wave plan re-derived 2026-08-13; `created_during_execution` carries 2ddf2f4b; `surfaced_pitfalls` has 15 entries incl. the preregistration-timing advisory that binds the aspirational estimator issues)
 - Runner: `dev/scripts/permanent-campaign-runner.sh` (+ `.test.sh`, 8 stub tests), smoke evidence linked on `2ddf2f4b`
-- Rank-deficiency receipt: `dev/bench_results/e0251af3-rank-event-rates.md`
-- Accumulator: `crates/gf2-stats/src/accumulator.rs` + `tests/accumulator_contract.rs`
-- Exact anchors: `crates/gf2-algebra/src/permanent/exact.rs`, `dev/benchmarks/permanent_campaign/exact-anchors.csv`
+- Rank-deficiency receipt: `e0251af3-rank-event-rates.md`
+- Accumulator: `accumulator.rs` + `tests/accumulator_contract.rs`
+- Exact anchors: `crates/gf2-algebra/src/permanent/exact.rs`, `exact-anchors.csv`

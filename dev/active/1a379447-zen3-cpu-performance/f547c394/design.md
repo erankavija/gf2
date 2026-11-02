@@ -3,7 +3,7 @@
 This note records where the deliverables of issue `f547c394` live, why each
 home is the canonical one under `@/inv/convention-convergence`, and the named
 exception it leaves. The normative rules are in [protocol.md](protocol.md);
-the schema is [`addendum.schema.json`](addendum.schema.json).
+the schema is `addendum.schema.json`.
 
 ## Canonical homes
 
@@ -16,7 +16,7 @@ the schema is [`addendum.schema.json`](addendum.schema.json).
 | Acceptance tool (`benchmark-acceptance`) | Rust binary in the crate rather than a generalization of `dev/scripts/validate-tuning-extent-campaign.py` | The Python validator is deliberately specific to the a835 campaign: it hard-codes cell counts, grids, defaults and owner protocols. It keeps its convention of trusting no producer counter, which the Rust tool follows by recomputing every digest, interval and decision from raw samples. A Rust home lets the deterministic fixtures run in the fast test tier through the existing crate steps of `scripts/cargo-ci.sh`. |
 | Protocol runner (`benchmark-ab-runner`) and the smoke arm (`ab-smoke-workload`) | Thin binaries over the library primitives | Binaries stay consumers: the runner owns only plan parsing, cell iteration and receipt assembly; every durable-evidence rule comes from `journal`, `process`, `host`, `abtest` and `receipt`. |
 | Protocol, schema, addenda | `dev/active/1a379447-zen3-cpu-performance/f547c394/` | The owning development directory named by `jit doc dir`; receipts carry immutable local snapshots and bind each source path and exact byte digest. |
-| Smoke receipt | `dev/bench_results/f547c394/` | The owning issue's receipt area named by the measurement contract. |
+| Smoke receipt | `f547c394/` | The owning issue's receipt area named by the measurement contract. |
 
 ## Named exception: session lifecycle store
 
@@ -44,7 +44,7 @@ connections and the derived checkpoint identities.
 ## Decisions worth knowing
 
 - **Versioned acceptance.** [Protocol v4](protocol.md) and its
-  [amendment record](amendment-v4.md) specify current measurement behavior.
+  amendment record specify current measurement behavior.
   The shared evaluator keeps the named v1 evidence boundary while committed
   v1 receipts require reproducible evaluation. Producing new evidence requires
   the current document version to match the addendum before measurement.
@@ -108,10 +108,10 @@ left for its owner; it is reported rather than patched here.
 
 ## Validation evidence
 
-The [validation report](rework-validation-r5.md) identifies the release
+The validation report identifies the release
 evaluator, records the focused tests, and verifies the frozen
-[v3 r2 pilot](../../../bench_results/f547c394/v3-r2-pilot/receipt.json) and
-[confirmation](../../../bench_results/f547c394/v3-r2-confirmation/receipt.json)
+v3 r2 pilot and
+confirmation
 receipts. Both evidence collections contain their complete frozen inputs and
 report zero acceptance findings. These receipts exercise the protocol pipeline
 without claiming a gf2 speedup. The version-4 interrupted-cell rule is
@@ -119,7 +119,7 @@ exercised by the runner contract tests in `tests/protocol_contracts.rs`, which
 kill a session inside a cell and carry the resumed campaign through
 acceptance.
 
-The [findings](findings.md) carry the version-3 research rework and its
+The findings carry the version-3 research rework and its
 cumulative review resolutions; each amendment record carries its version's
 changes. The v1 and v2 collections remain preserved under their pinned
 rules, and the v3 r1 collection remains preserved as falsified evidence.

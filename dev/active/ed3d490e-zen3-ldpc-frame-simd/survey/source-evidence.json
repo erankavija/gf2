@@ -589,7 +589,7 @@
     {
       "project": "gf2",
       "commit": "8cfd6e6cc4d33f7d175d549547fbce344f0f17ce",
-      "path": "dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/harness/src/bin/ldpc-make-inputs.rs",
+      "path": "ldpc-make-inputs.rs",
       "line": 132,
       "verbatim": "    let sigma = (1.0 / (2.0 * 10_f64.powf(args.esn0_db / 10.0))).sqrt();",
       "occurrences": 1,
