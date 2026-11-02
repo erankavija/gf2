@@ -6,8 +6,7 @@ use gf2_core::tuning::{
 const MEASURED_OWNER: &str =
     include_str!("../../data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json");
 const MEASURED_PROFILE_ID: &str = "gf2-63bad95d-20261006t230547z-2073085";
-const MEASURED_RECEIPT: &str =
-    "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md";
+const MEASURED_RECEIPT: &str = "experiments/tuning-calibration/benches/core.rs";
 
 /// Strictly reopens the measured owner and verifies which codec-known fields
 /// of `family` it states and which it omits.

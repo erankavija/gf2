@@ -120,7 +120,7 @@ def main() -> int:
     ap.add_argument(
         "--generators",
         type=pathlib.Path,
-        default=REPO / "dev/bench_results/4e732b56/generators.txt",
+        default=REPO / "target/bench_results/4e732b56/generators.txt",
     )
     ap.add_argument(
         "--m4ri-bin",

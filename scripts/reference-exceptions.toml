@@ -16,3 +16,11 @@ reason = "fixtures of the documentation check"
 [[exception]]
 path = "scripts/check-references.py"
 reason = "its self-test names unresolvable paths"
+
+[[exception]]
+path = "packages/*"
+reason = "installable rule packs name paths of the projects that adopt them"
+
+[[exception]]
+path = "dev/active/b8206228-permanent-statistics/45ecf975/*"
+reason = "history rewrite runbook names the paths it strips; remove when 45ecf975 closes"

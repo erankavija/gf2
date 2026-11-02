@@ -10,7 +10,7 @@
 
 [campaign]
 name = "phase2_fig4_verify"
-output_dir = "dev/simulation_results"
+output_dir = "target/simulation_results"
 
 [[curve]]
 name = "fig4_verify_crc_product"

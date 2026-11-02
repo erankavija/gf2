@@ -960,7 +960,7 @@
   {
    "issue": "b8206228",
    "source": "session-15 reconciliation",
-   "finding": "progress.json and handoff-10 predated the owner graph amendment, new task 8ec10dde, both active claims, the durable premeasurement session, and the transient resume/collector timers. A sandboxed systemctl --user call also failed until the explicit /run/user/1000 bus was supplied.",
+   "finding": "progress.json and handoff-10 predated the owner graph amendment, new task 8ec10dde, both active claims, the durable premeasurement session, and the transient resume/collector timers. A sandboxed systemctl --user call also failed until the explicit /run/user/<uid> bus was supplied.",
    "disposition": "Re-derived waves 8-13 from the live dependency graph without changing JIT edges, recorded both active claims and the 540 durable terminal receipts, and verified both timers against the explicit user bus. A user-bus access failure must not be interpreted as evidence that no timers exist."
   },
   {

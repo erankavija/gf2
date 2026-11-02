@@ -1,31 +1,4 @@
-// benchmarks/reference/linbox_sparse_bench.cpp
-//
-// Sparse reference harness for LinBox 1.7.1, scoped to the cells where
-// LinBox is the canonical reference per `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md`
-// § 4:
-//
-//   - `sparse-elim × GF(2)` and `sparse-elim × GF(p)` (canonical LinBox
-//     `Method::SparseElimination`, the `linbox/algorithms/gauss-*.h` path).
-//   - `spmv × GF(2)` cross-check (canonical = gf2-core self; LinBox is
-//     the cross-library oracle at the n=16 smoke layer).
-//
-// The CSV schema and seed-helper contract match `fflas_sparse_bench.cpp`
-// and `fflas_bench.cpp` so the rows merge without `analyze.py` source
-// changes.
-//
-// Implementation note: LinBox's `SparseMatrix<Modular<int>, …>` API is
-// non-trivial; we use the `SparseMatrix` template with the
-// `Field, Storage = SparseSeq` defaults and call `setEntry` / `apply`
-// directly. The Gauss elimination path is via the
-// `linbox/algorithms/gauss.h` `GaussDomain<Field>` class, which is the
-// underlying engine `Method::SparseElimination` dispatches to. We use
-// `GaussDomain` directly for two reasons:
-//
-//   1. It's the same code path so the timing is representative.
-//   2. The high-level `solutions/echelon.h` API in LinBox 1.7.1 has a
-//      narrower coverage of sparse storage variants.
-//
-// CLI: --seed N --warmup K --iters K --smoke
+// Seeded LinBox sparse reference harness.
 
 #include <chrono>
 #include <cstdint>
@@ -247,21 +220,6 @@ static void bench_spmv(const Field& F,
     emit_csv("spmv", field_label, n, n, 1, regime_buf, seed, mean_ns, tput);
 }
 
-// ----- sparse×dense over GF(p) (LinBox cross-check; canonical fflas-ffpack)
-//
-// Uses the `SparseMatrix<Field, SparseMatrixFormat::TPL>` triples-format
-// matrix because `applyLeft(Y, X)` (sparse × dense → dense) is only
-// declared on the TPL specialisation in LinBox 1.7.1
-// (`linbox/matrix/sparsematrix/sparse-tpl-matrix.h:112`). The CSR
-// specialisation has a `SparseMatrixDomain` wrapper that exposes
-// `applyLeft(Y, X, alpha)` but its OOO/AVX dispatch path is gated on
-// `Givaro::Modular<double>` only — for the int64-modular fields used by
-// this harness it falls back to the same underlying saxpy loop, so
-// timing parity with the TPL path is acceptable.
-//
-// The triples are walked once per `applyLeft` and dispatched via
-// `MatrixDomain::saxpyin(Y_row, t.elt, X_row)`, matching the row-block
-// strategy in `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md:169`.
 template <typename Field>
 static void bench_sparse_dense(const Field& F,
                                const char* field_label,
@@ -468,19 +426,6 @@ int main(int argc, char** argv) {
                   sizes, elim_sizes, sparse_dense_sizes);
     }
 
-    // GF(2) cells via Givaro::Modular<int64_t>(2) — uses a one-bit value
-    // space which both LinBox and gf2-core handle as a regular GF(p) cell.
-    // The dedicated `linbox/algorithms/gauss-gf2.h` would be faster but its
-    // public header surface is narrower; the int64-mod-2 path runs through
-    // the same GaussDomain code generator and produces numbers comparable
-    // to the GF(p) cells.
-    //
-    // sparse-elim and sparse_dense are both wired for GF(2). The design doc
-    // (`dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md:168`) names LinBox as canonical
-    // for `sparse×dense × GF(2)`; this provides the LinBox-canonical row.
-    // Throughput-unit comparison vs gf2-core's bit-packed `SpBitMatrix::matmat`
-    // requires normalisation (LinBox counts byte ops, gf2-core counts bit ops
-    // in u64 packed words) — the scorecard documents the comparator unit.
     {
         using Field = Givaro::Modular<int64_t>;
         Field F(2);

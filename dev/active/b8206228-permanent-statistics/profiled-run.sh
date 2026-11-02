@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 # Paired profiled evidence run for JIT 6c7fcb38 (amended REQ-16/REQ-17).
 #
 # Pass structure: every pass wraps exactly one device-executing workload.
@@ -10,7 +11,7 @@
 # profiled as their own passes: the micro kernels and their compiler-barrier
 # baselines execute only there, never in grid mode.
 set -uo pipefail
-REPO=/home/vkaskivuo/Projects/gf2
+REPO=${REPO_ROOT}
 BIN=$REPO/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas
 MANIFEST=$REPO/target/permanent-campaign/manifest-v1.txt
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)

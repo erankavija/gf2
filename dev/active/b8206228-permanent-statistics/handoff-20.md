@@ -25,7 +25,7 @@
 
 ## What to do next
 
-- [ ] **Morning: read `local-path (runner transcript: `runner.log` beside it; run log + CSV under `dev/benchmarks/permanent_campaign/backend-selection-v1-equivalence.{csv,log}`). Expected: `rows=124 q3=50 q5=41 q7=33 mismatches=0 unexecuted=0`. Clean up the transient unit if still listed (`systemctl --user reset-failed gf2-equivalence-s24.service` if needed; env: `XDG_RUNTIME_DIR=/run/user/1000`, `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus`).
+- [ ] **Morning: read `local-path (runner transcript: `runner.log` beside it; run log + CSV under `backend-selection-v1-equivalence{csv,log}`). Expected: `rows=124 q3=50 q5=41 q7=33 mismatches=0 unexecuted=0`. Clean up the transient unit if still listed (`systemctl --user reset-failed gf2-equivalence-s24.service` if needed; env: `XDG_RUNTIME_DIR=/run/user/<uid>`, `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/<uid>/bus`).
 - [ ] If the receipt is clean: commit CSV+log, fill every `TO FILL AFTER RUN:` in `backend-selection-v1-equivalence-addendum.md`, and update its runbook to the executed closure-scoped procedure (the committed draft still shows the over-broad whole-tree `test -z "$(git status --porcelain)"` line). A mismatch or unexecuted nomination is falsifying evidence: retain it, do not re-run, escalate.
 - [ ] `jit doc add 86185f88` for the receipt CSV, log, and addendum; evaluate `code-review` + `doc-review` on `86185f88`; lead six-tier review; close.
 - [ ] Then evaluate `research-review` AND `doc-review` on `7a816262` (both must re-run at final content; research-review F3 closes via the receipt). Lead six-tier review; close the freeze. Rework is at MAX — any failure escalates.

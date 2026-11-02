@@ -983,7 +983,7 @@ on 2026-08-17 (`@/citation/RustRandom2025`); the harness lockfile remains
 gitignored and absent at both pinned revisions. A manifest
 that records the algorithm and version directly, and a committed lockfile, are
 what remove both indirections at the source that publishes the numbers, which is
-what `@/inv/claims-trace-to-artifacts` asks of a committed artifact recording
+what the evidence identity rule asks of a committed artifact recording
 seeds, revision, hardware, and toolchain. The determinism obligation of §6.6
 item 4 rests on the same identity: a fixed seed reproduces a run only against a
 named generator.
@@ -1148,7 +1148,7 @@ committed raw artifact: the harness source is in the tree
 beside it. The document's own renderings of D's mul cost also disagree with each
 other where they meet (`:120-121`, `:181`, `:252`, `:261`). A figure that traces
 to conflicting prose and no run artifact fails
-`@/inv/claims-trace-to-artifacts`, so this document names the direction of the
+the evidence identity rule, so this document names the direction of the
 archived rationale and republishes none of its numbers. Nothing below depends on
 their magnitudes; what Strand 1 contradicts is the weighting, which the archived
 document states in its own words above. The document states that a re-bench "*is

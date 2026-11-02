@@ -56,7 +56,7 @@
 set -euo pipefail
 
 MANIFEST="dev/research/perm_uniformity_gpu/Cargo.toml"
-OUT_DIR="dev/benchmarks/perm_uniformity"
+OUT_DIR="target/benchmarks/perm_uniformity"
 CSV="$OUT_DIR/results-2026-05-17-gpu.csv"
 
 echo "=== perm-uniformity-gpu repro (JIT b293af5a) ==="

@@ -5,7 +5,7 @@
 # Runs, each under dev/scripts/ccx1-bench-flock.sh:
 #   1. the baseline-comparable groups of batch_operations.rs and
 #      bch_parallel.rs (Criterion filter `bch_`), full host, default features:
-#      the configuration of dev/bench_results/88ca7d2f/run.sh;
+#      the baseline-comparable configuration;
 #   2. bch_encode_w1.rs (workload W1), CCX1 pin, `parallel` feature,
 #      RAYON_NUM_THREADS=6;
 #   3. bch_genmatrix.rs (workload W2), CCX1 pin, GF2_BENCH=1.

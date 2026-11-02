@@ -45,8 +45,7 @@ $$
 
 ## Cells and sample sizes
 
-The universe is every integer $n$ from $4$ through the frontier of the
-[envelope receipt](/dev/studies/b488f02c/envelope-2026-08-07.csv): $n=28$ for
+The universe is every integer $n$ from $4$ through the configured frontier: $n=28$ for
 $q=3$, $n=24$ for $q=5$, and $n=20$ for $q=7$, which is $K=63$ cells. The
 extension family is empty, and the determinant companion runs on all cells.
 
@@ -151,9 +150,7 @@ prevent launch. Every anchor reaches a terminal record. A dispatch error during
 validation is a terminal failure of its anchor. A failed anchor is not redrawn: it stays failed on resume, blocks campaign draws, and requires a
 diagnosed correction and a new validation protocol run. A killed
 process reruns its unterminated anchor at the same address, drawing the same
-matrices. The draw count and order-three truth carry forward the
-[anchor receipt](/dev/studies/b488f02c/order3-anchor-2026-08-08.txt) and
-[exact anchors](/dev/benchmarks/permanent_campaign/exact-anchors.csv).
+matrices.
 
 A change to the tool's measurement behaviour (sampling, evaluation, timing,
 output semantics) after the receipt requires a new validation. The tool does not
@@ -163,7 +160,7 @@ validation task enforces this gate.
 ```sh
 ./scripts/cargo-budget.sh cargo run --release -p permanent-statistics --features hip \
   --bin permanent_validation -- --config experiments/permanent-statistics/config/campaign.json \
-  --output experiments/permanent-statistics/results/permanent-zero-fraction-20261102-validation \
+  --output target/simulation_results/permanent-zero-fraction-20261102-validation \
   --workers W
 ```
 
@@ -176,26 +173,11 @@ After validation passes, $(q,n)=(7,20)$ runs alone as the first cell, at its
 fixed $N=122\,449$. No other campaign-purpose matrix is drawn before it is
 terminal, and cells then run one at a time.
 
-The reason for ordering, not an input to its verdict, is the timing by-product
-in [zero-fraction-2026-08-07.csv](/dev/studies/b488f02c/zero-fraction-2026-08-07.csv):
-$2\,438$ zeros in $17\,819$ matrices, $\widehat p=0.136820$, 95% Wilson interval
-$[0.131853,0.141944]$, normal planning score $-2.30$ relative to $1/7$. That run
-had no preregistered $N$ or stopping policy and is not pooled with the campaign.
-It stays cited and unchanged whatever the resample shows; a contradictory
-resample is recorded beside it. The feasibility study's stream-reuse and shared
-warm-up-counter defects, which produced and then retracted an apparent signal,
-remain part of the record.
-
 ## Backends
 
-Each cell's backend is the one nominated in the
-[backend selection receipt](/dev/benchmarks/permanent_campaign/backend-selection-v1.md),
-which `backend_evidence` cites. Selection applied that receipt's rules to timing
-only: permanent or determinant values, counts, intervals, and test outcomes never
-entered it. It is not remeasured, and a backend later found faster does not
-replace the configured one. Accelerator cells carry their sizing input from
-[accelerator-launch-costs-v1.csv](/dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv)
-under the configured launch cap. Launch size changes batching and no result.
+Each cell's backend and accelerator sizing input are fixed by the configuration.
+`backend_evidence` cites the evaluation harness. The configured launch cap bounds
+batching; launch size does not change a cell's mathematical result.
 
 When a cell's backend is unusable in this build or on this host, the operator
 chooses per invocation with `--on-unavailable`:
@@ -279,60 +261,9 @@ are preserved under `@/inv/falsification-preserved`.
 
 ## Convergence-shape comparison
 
-The shape analysis is the
-[preregistered comparison](/dev/simulation_results/permanent-zero-fraction/protocol.md#preregistered-convergence-shape-comparison),
-applied unchanged to this campaign's finalized dataset: its candidate families,
+The shape analysis uses the campaign's finalized dataset: its candidate families,
 domains, likelihood, `shape-fit-v1` optimizer, descriptive support contour,
 `binomial-v1` bootstrap of $20\,000$ replicates with its seeding from the root
 seed and the manifest and checksum digests, prefix table, and distinguishability
 rule. It runs only when every cell is completed, spends none of the error budget,
 and cannot overrule an acceptance rejection.
-
-## Conditional novelty statement
-
-The bounded
-[literature-search receipt](/dev/studies/b488f02c/literature-search-2026-08-08.md)
-records a 2026-08-08 search for exact or Monte Carlo estimates at $q\in\{5,7\}$,
-using ten queries in one general web index and direct retrieval of available arXiv
-abstracts and full texts. MathSciNet, zbMATH, Web of Science, and paywalled full
-text were not searched; the full text of `@/citation/GGK2025` was not exhaustively
-checked; and `@/citation/Budrevich2018`, `@/citation/BudrevichGuterman2012`, and
-`@/citation/Bassalygo2013` were not read in full.
-
-The strongest licensed wording is: **the recorded search found no prior numerics
-for $q\in\{5,7\}$, subject to its stated limits**. The campaign does not say that
-none exist, that every cell is new, or that it has priority.
-
-## Differences from the prior protocol
-
-The [prior protocol](/dev/simulation_results/permanent-zero-fraction/protocol.md)
-governed the draft `permanent-zero-fraction-20260829`, which drew no campaign
-matrix. Cells, sample sizes, tests, levels, anchors, and validation counts are
-unchanged. These rules differ:
-
-| Difference | Reason |
-|---|---|
-| New campaign id, campaign root seed, and validation addresses. | The prior protocol bound its arms to emitter `c9b2307a`, which the rebuilt tool replaces, and a changed protocol requires a new id. |
-| One Wilson z, the configuration's `wilson_z`, for every report. | The prior tool's summary used a shorter constant than its sidecars and script. |
-| A killed process spends no attempt; a caught panic does. | A rerun of the same address redraws identical matrices, while a panic is a reported failure. |
-| A failed attempt is a `shard_failed` log entry with its message; no quarantine file or attempt bytes persist. | The log is the authoritative record, and a retry redraws the same matrices. |
-| `shard_size` is $200\,000$ in precision tiers, was $50\,000$. | Shard count and log size fit `@/inv/committed-evidence-budget`. Counts and tests are untouched; a shard is the unit of repeated work on interruption. |
-| The twelve-hour cell ceiling is removed. | Bounded runs are resumable under `@/inv/campaign-resumability`, the tool has no timer, and a wall-clock stop would make completion depend on the host. Cells stop only at $N_{q,n}$ or a named halt. |
-| Identical-source-revision and clean-closure clauses are removed; resume and acceptance compare the closed set. | `@/inv/behavioral-evidence-validity`. |
-| Protocol and backend evidence are cited paths, not digests verified by a tool, and the manifest stores no provenance or shard list. | The configuration digest is in the closed set; the rest is outside it. The manifest size fits the same budget. |
-| Selection is copied from the prior receipt without a same-cohort remeasurement on this tool. | Selection affects speed only; validation and shared suites establish equal results. |
-| An explicit `--on-unavailable` per invocation replaces "halt the cell", with `fallback=` limited to validated backends. | A fallback draws the same addresses and is recorded. The default remains a refusal, and no substitution is silent. |
-| Any terminal failure propagates its own reason to other cells, where the prior text named `acceptance_failure`. | The reason then states what stopped the campaign. |
-| Validation compares each backend per matrix and leaves shard pooling to the crate's tests; a regeneration mismatch fails the anchor without skipping the draw. | The tool has one evaluation loop. The verdict is unchanged: a mismatch fails. |
-| A killed anchor reruns at its address, where the prior journal failed it permanently. | A nonterminal anchor recorded no result, and the rerun draws identical matrices. |
-| Validation gating is by tracker dependency, not a receipt check in the tool. | The tool holds no such checker under `@/inv/behavioral-evidence-validity`. |
-| `summary.csv` adds `permanent_log_p_value` and `determinant_log_p_value`. | Decisions are on the log scale, and the columns expose them. |
-
-## Registered literature
-
-- `@/citation/GGK2025`
-- `@/citation/HKS2026`
-- `@/citation/Scheinerman2024`
-- `@/citation/Bassalygo2013`
-- `@/citation/BudrevichGuterman2012`
-- `@/citation/Budrevich2018`

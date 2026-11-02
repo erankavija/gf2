@@ -38,7 +38,7 @@ permanent computation, `gf2-stats` for interval statistics, and
 ./scripts/cargo-budget.sh cargo doc -p gf2-sim --no-deps
 ```
 
-Rendered output: [Rustdoc](../../target/doc/gf2_sim/index.html).
+Rendered output: Rustdoc.
 
 ## License
 

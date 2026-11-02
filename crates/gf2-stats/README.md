@@ -8,4 +8,4 @@ finite-field research. Its public modules are `binomial`, `intervals`, and
 ./scripts/cargo-budget.sh cargo doc -p gf2-stats --no-deps
 ```
 
-Rendered output: [Rustdoc](../../target/doc/gf2_stats/index.html).
+Rendered output: Rustdoc.

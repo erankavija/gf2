@@ -1,0 +1,61 @@
+{
+  "schema": "zen3-benchmark-addendum-v1",
+  "protocol": { "id": "zen3-benchmark-protocol", "version": 1 },
+  "family": {
+    "id": "protocol-smoke-pilot",
+    "issue": "f547c394",
+    "purpose": "kernel-family",
+    "description": "Exploratory XOR-fold arms used only to estimate the protocol smoke measurement resolution before the confirmatory smoke addendum is frozen."
+  },
+  "frozen": {
+    "frozen_utc": "2026-09-07T00:00:00Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.5,
+    "rationale": "The two-pass baseline provides a visible exploratory effect for the pipeline pilot.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "The identical-arm pilot estimates noise near the later non-regression margin.",
+    "material_gap_threshold": 1.5,
+    "material_gap_rationale": "Unused by the exploratory smoke cells."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": 0,
+    "maintenance_rationale": "The protocol smoke pilot adopts no implementation."
+  },
+  "family_wise": { "alpha": 0.05, "prior_confirmatory_trials": 0, "prior_trials": [] },
+  "search_budget": { "max_pilot_trials_per_cell": 1, "max_confirmatory_attempts_per_candidate": 1 },
+  "holdout": { "required": false, "cells": [] },
+  "cells": [
+    {
+      "cell_id": "xor-fold-double-pass-1core",
+      "objective": "improvement",
+      "role": "exploratory",
+      "workload": { "identity": "xor-fold", "size": { "words": 65536 }, "seed": 1 },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": { "declared": 1, "nested_pools_allowed": false },
+      "cache_state": "warm",
+      "builds": { "baseline": "conservative-portable", "candidate": "conservative-portable" },
+      "conversion_costs_included": false,
+      "decoder": null
+    },
+    {
+      "cell_id": "xor-fold-identical-1core",
+      "objective": "non-regression",
+      "role": "exploratory",
+      "workload": { "identity": "xor-fold", "size": { "words": 65536 }, "seed": 2 },
+      "metric_kind": "kernel-isolated",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": { "declared": 1, "nested_pools_allowed": false },
+      "cache_state": "warm",
+      "builds": { "baseline": "conservative-portable", "candidate": "conservative-portable" },
+      "conversion_costs_included": false,
+      "decoder": null
+    }
+  ]
+}

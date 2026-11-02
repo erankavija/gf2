@@ -3,9 +3,11 @@
 
 import importlib.util
 import json
+import statistics
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 SURVEY = Path(__file__).resolve().parent
@@ -98,6 +100,10 @@ class ConstructedCampaignTest(unittest.TestCase):
                        for index, name in enumerate(("conservative", "native", "external"))]}
 
     def setUp(self):
+        interval = mock.patch.object(tables, "median_interval", side_effect=lambda values:
+                                     (statistics.median(values), min(values), max(values), 1.0))
+        interval.start()
+        self.addCleanup(interval.stop)
         scratch = tempfile.TemporaryDirectory()
         self.addCleanup(scratch.cleanup)
         self.scratch = Path(scratch.name)
@@ -171,22 +177,6 @@ class ConstructedCampaignTest(unittest.TestCase):
         self.assertIn("without a row of the record: `tuned`", text)
 
 
-class SeriesLogTest(unittest.TestCase):
-    def test_a_series_without_its_terminal_record_stops(self):
-        summarizer = tables.summarizer(tables.profile_summary())
-        with tempfile.TemporaryDirectory() as scratch:
-            root = Path(scratch)
-            (root / "rep-01").mkdir()
-            sessions = "rep-01 start 0 identity load=[0]\nrep-01 done 0 load=[0]\n"
-            for log, verifies in ((sessions + "series done 0 sessions=1\n", True),
-                                  (sessions, False),
-                                  (sessions + "series done 0 sessions=2\n", False)):
-                (root / "repetitions.log").write_text(log, encoding="utf-8")
-                if verifies:
-                    self.assertEqual(len(summarizer.verified_sessions(root)), 1)
-                else:
-                    with self.assertRaises(SystemExit):
-                        summarizer.verified_sessions(root)
 
 
 if __name__ == "__main__":

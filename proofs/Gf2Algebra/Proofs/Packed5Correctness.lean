@@ -1,33 +1,4 @@
-/-
-  Gf2Algebra.Proofs.Packed5Correctness — D5 packed F_5 correctness
-
-  Implements the 23 lemmas of the D5 proof sketch
-  (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d5_lean_packed5_sketch.md`) for JIT issue 30e98ef1.
-
-  Proof target (sketch §4): the four inherent wrappers
-  `Packed5.{add,sub,mul,neg}_inherent` defined in
-  `crates/gf2-algebra/src/packed/packed5.rs`. Each wrapper delegates a
-  single tail call to the corresponding `PackedField<Fp<5>>` trait method
-  on `Packed5`; the bit-sliced Boolean circuit (decode → cross-product →
-  encode) lives in the trait impl. Targeting the inherent wrappers gives a
-  stable, non-dispatch-indirected name (same convention as the V1 bipedal
-  proof in `Bipedal3Correctness.lean`).
-
-  `Packed5` packs 64 independent F_5 lanes into three `u64` bit-planes
-  `(b0, b1, b2)`; lane `i` decodes to the canonical value
-  `bit_i(b0) | (bit_i(b1) << 1) | (bit_i(b2) << 2)`. Canonical codepoints
-  are `0..=4`; the three redundant codepoints `5,6,7` decode to `0`
-  (matching `Packed5::lane`, packed5.rs:566-583). The 64 lanes are
-  mutually independent (every op is a fixed straight-line bitwise circuit
-  on the three planes), so every per-op correctness theorem reduces to a
-  single-lane truth table over the 8 Bool-triples, lifted to all 64 lanes
-  by the `BitVec.getLsbD_{and,or,not}` simp set.
-
-  The `*_word` lemmas are stated against the *exact composed bitwise
-  expressions* produced by the Aeneas-extracted `decode5`/`*_circuit`/
-  `encode5` functions in `Gf2Algebra/Funs.lean` (Array-of-5 selector
-  model), so they are load-bearing — not generic `getLsbD` distributors.
--/
+/- Correctness of the extracted Packed5 element arithmetic (@/issue/30e98ef1). -/
 import Aeneas
 import Mathlib.Data.ZMod.Basic
 import Gf2Algebra.Funs

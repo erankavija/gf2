@@ -67,9 +67,8 @@ release mode.
   may contain `unsafe`. Every unsafe boundary requires an explicit safety
   contract. Other production crates deny unsafe code.
 - `proofs/` owns Lean verification of selected arithmetic and algorithm paths.
-- `experiments/<name>/` holds an experiment's code, protocol, configuration,
-  results and small receipts, and `experiments/common` the mechanics several
-  share. No `crates/*/Cargo.toml` depends on `experiments/`.
+- `experiments/<name>/` holds an experiment's code, protocol and configuration,
+  and `experiments/common` the mechanics several share. No `crates/*/Cargo.toml` depends on `experiments/`.
 
 Keep mathematical primitives, coding-domain behavior, orchestration, and
 machine-specific kernels separated. Dependencies point inward; a lower layer
@@ -106,15 +105,12 @@ Do not widen a wall-clock assertion to accommodate a busy runner.
 
 ## Performance and research evidence
 
-Profile before optimizing. A performance, crossover, or scalability claim must
-name a reproducible benchmark protocol and cite its committed receipt from a
-suitable uncontended host. Machine-dependent assertions are benchmark gates,
-not ordinary tests. Use `GF2_BENCH=1` only on a prepared benchmark host and use
-the applicable lock wrapper under `dev/scripts/`.
-
-A receipt's digests and source revision name its rebuild inputs; copied inputs
-and raw output stay out of the repository. Acceptance reads the frozen
-`configuration/`, and reports a receipt without one as unavailable, not rejected.
+Profile before optimizing. Make performance claims sparingly: a claim names the
+harness and configuration that reproduce it, under
+`@/inv/benchmark-backed-performance`. Machine-dependent assertions are benchmark
+gates, not ordinary tests. Use `GF2_BENCH=1` only on a prepared benchmark host
+and use the applicable lock wrapper under `dev/scripts/`. Runs write to `target/`
+or another untracked location; their output is never committed.
 
 Keep permanent documentation under `README.md`, crate-level rustdoc, or
 `docs/`. Prefer citations or generated projections over copied facts. See
@@ -165,18 +161,18 @@ Keep permanent documentation under `README.md`, crate-level rustdoc, or
 - **unsafe-kernel-isolation** — Production unsafe code is isolated to gf2-kernels-simd and gf2-kernels-hip, with explicit safety contracts at every unsafe boundary.
 - **crate-dependency-direction** — Crate dependencies point from domain orchestration toward mathematical primitives and isolated kernels; mathematical, coding-domain, simulation, and kernel layers do not acquire reverse production dependencies.
 - **deterministic-seeded-execution** — A fixed seed and configuration produce identical observable results across supported worker counts, scheduling paths, checkpoint/resume boundaries, and accelerator fallbacks.
-- **benchmark-backed-performance** — Performance and crossover claims cite a reproducible benchmark protocol and committed receipt from a suitable uncontended host; estimates are identified as estimates.
+- **benchmark-backed-performance** — Performance, crossover and scalability claims are rare and name the reproducible harness and configuration that demonstrate them. A value measured on one host appears only as an example labelled with that host and supports no claim; estimates are identified as estimates.
 - **test-tier-budgets** — Every test respects its tier's configured time budget: release-mode fast-tier tests within the per-test and suite budgets, ignored slow and simulation tests within the nightly budget or through an explicitly serialized or host-gated execution path; slower work carries a descriptive ignore tier.
 - **convention-convergence** — A shared convention or abstraction has one form: work that finds it harmful or ill-fitting changes it at its source, or reports the mismatch as a blocking concern before proceeding. A local parallel variant, a private helper duplicating a shared mechanism, or a bypass around an abstraction is a defect unless it is a named, cited exception with a tracked convergence condition.
 - **present-tense-prose** — Permanent artifacts describe the current state of the system; change-relative narration — old/new contrasts, previously/now framing, legacy markers, migration history — lives in commit messages and issue history.
 - **library-first-generality** — New generic behavior lands as a reusable API in the layer-appropriate library crate, generic over its natural domain; binaries, simulations, and orchestration stay thin consumers. A generic capability implemented privately inside a consumer that a library layer could own is a defect unless cited as a tracked exception.
-- **committed-evidence-budget** — Copied source and inputs, raw single-host output and third-party archives are never committed; a measurement commits its results, configuration and digests. `scripts/check-tracked-budget.py` enforces the file, commit and tree limits, which only fall.
+- **committed-evidence-budget** — Measurements, receipts, execution logs, result tables, copied source and inputs, and third-party archives are never committed; the repository holds harnesses and their configuration, and a run writes outside the tracked tree. `scripts/check-tracked-budget.py` enforces this and the file, commit and tree limits, which only fall.
 - **experiment-library-separation** — Library crates contain only capabilities applicable to several experiments. An experiment's protocol, constants, records, validation and orchestration live with that experiment outside the library crates and consume library APIs.
 - **no-deferred-defects** — Quality defects surfaced while implementing a change are fixed in that change or filed as a tracked issue before completion; a TODO or FIXME marker without a tracked issue is a defect.
-- **claims-trace-to-artifacts** — Every published scientific number traces to a committed artifact that records the closed identity set of `behavioral-evidence-validity`. A stochastic estimate states its sample count and confidence interval, and plots and tables of stochastic results carry error bars or interval columns. A reproduction target or externally sourced number cites a key resolving in the citation registry.
+- **resolvable-references** — Tracked text names only what a fresh clone resolves: no host-local path and no repository path that does not exist. `scripts/check-references.py` enforces this.
 - **falsification-preserved** — Data that contradicts a criterion, hypothesis, or cited claim is recorded together with the contradiction; silent rework of the falsified statement is a defect.
 - **campaign-resumability** — A campaign is a resumable sequence of bounded runs: completed cells persist as checkpointed evidence, an interrupted, censored or budget-exhausted run continues without repeating completed work, and no protocol step requires one uninterrupted session. Each campaign writes one append-only execution log, opened before its first run, that records cell progress and terminal status and is the authoritative record of the run.
-- **behavioral-evidence-validity** — Committed measurement evidence pins a closed identity set: the executable digest, the build flags, the frozen configuration, the seed, the RNG implementation and version, the toolchain version, and the host facts the tool observes at run time. Evidence is invalidated only by a change to that set or to the producing tool's measurement behavior (sampling, evaluation, timing, output semantics). The source revision is recorded as a pointer for rebuilding; Git commit IDs, clean/dirty status, source line numbers and documentation changes never decide acceptance, invalidation or resume. Tools and records state only run-time observations, the tool's own labelled constants, and citations of committed records. Pinning or verifying anything outside the closed set, or adding a ledger, schema, checker or protocol version, is a defect unless a success criterion names it.
+- **behavioral-evidence-validity** — A measurement record pins a closed identity set: the executable digest, the build flags, the frozen configuration, the seed, the RNG implementation and version, the toolchain version, and the host facts the tool observes at run time. Evidence is invalidated only by a change to that set or to the producing tool's measurement behavior (sampling, evaluation, timing, output semantics). The source revision is recorded as a pointer for rebuilding; Git commit IDs, clean/dirty status, source line numbers and documentation changes never decide acceptance, invalidation or resume. Tools and records state only run-time observations, the tool's own labelled constants, and citations of tracked files. Pinning or verifying anything outside the closed set, or adding a ledger, schema, checker or protocol version, is a defect unless a success criterion names it.
 - **caller-trusted-fast-paths** — API contracts trust the caller: validation exists to catch mistakes and to amortize cost, never to defend against an adversary. A path that skips validation for performance is a distinct method under the _unchecked naming convention with its precondition documented, and violating that precondition is caller error with unspecified mathematical results — never grounds for sealing types, policing evidence provenance, or other adversarial hardening in a library that does HPC, not security.
 - **non-obvious-comments** — Comments and rustdoc carry only what the code leaves non-obvious — a contract, an invariant, the reason for a choice, or a pointer to evidence — in the shortest form that conveys it and without restating code, signatures, or other documentation; a module-level orientation is at most one short paragraph.
 - **current-state-scope** — Documentation states the current behavior and limits of the system only; speculation, future promises, non-goals, and deferrals are omitted, and planned work lives in JIT issues.

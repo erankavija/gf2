@@ -1,5 +1,4 @@
-//! Benchmarks GF(2^m) polynomial arithmetic. Benchmarks marked `[SAGE_CMP]`
-//! have counterparts in `scripts/sage_benchmarks.py`.
+//! Benchmarks GF(2^m) polynomial arithmetic.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use gf2_core::gf2m::{Gf2mField, Gf2mPoly};

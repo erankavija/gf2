@@ -10,21 +10,18 @@
     allow(dead_code)
 )]
 
-/// `bit_backend.simd_min_words`, from the calibration receipt
-/// `dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md`
-/// and the measured core owner
-/// `crates/gf2-core/data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json`
-/// with SHA-256 `1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33`.
+/// `bit_backend.simd_min_words`, from the measured core owner
+/// `crates/gf2-core/data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json`.
 pub(crate) const SIMD_MIN_WORDS: usize = 4;
 
 /// `bit_matrix.matvec_simd_min_words`, mirroring
-/// `crate::matrix::MATVEC_SIMD_MIN_WORDS`, from the receipt cited at
+/// `crate::matrix::MATVEC_SIMD_MIN_WORDS`, from the measured owner cited at
 /// [`SIMD_MIN_WORDS`]: its non-monotone lane sweep keeps the conservative
 /// value.
 pub(crate) const MATVEC_SIMD_MIN_WORDS: usize = 8;
 
 /// `gemm.row_tile`, mirroring `crate::field::matrix::GEMM_ROW_TILE` and
-/// selected jointly with [`GEMM_COL_TILE`] by the receipt cited at
+/// selected jointly with [`GEMM_COL_TILE`] by the measured owner at
 /// [`SIMD_MIN_WORDS`].
 pub(crate) const GEMM_ROW_TILE: usize = 32;
 
@@ -33,7 +30,7 @@ pub(crate) const GEMM_ROW_TILE: usize = 32;
 pub(crate) const GEMM_COL_TILE: usize = 64;
 
 /// `field_vec.dot_chunk_len`, mirroring `crate::field::vec::DOT_CHUNK_LEN`,
-/// from the receipt cited at [`SIMD_MIN_WORDS`].
+/// from the measured owner cited at [`SIMD_MIN_WORDS`].
 pub(crate) const DOT_CHUNK_LEN: usize = 256;
 
 /// `prime_route.f32_min_prime`, mirroring
@@ -73,7 +70,7 @@ mod tests {
     fn current_measured_owner_has_the_pinned_content_hash() {
         assert_eq!(
             format!("{:x}", Sha256::digest(MEASURED_FORMAT2)),
-            "1d57b541bbd0b3745733ebe1731251388cafe8831c92f1d2fdfb586886189e33"
+            "28bf94e6ab240c1732c08cd3fb91dbd78c8b03edb57a33bedf7b62c45e4f330b"
         );
     }
 

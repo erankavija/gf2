@@ -46,7 +46,7 @@
 - **Do not reuse `run-validation-0200.sh`.** It runs from mutable main, names the superseded v1 receipt, and omits the explicit continuation authority. The committed runbook is `run-validation-v2-continuation.sh` on `worktree-agent-02b8137c-run` at `fa8a9d9c`.
 - **Do not run the evidence binary from mutable main.** `observe_provenance` resolves runtime HEAD and the latest `crates/`/`Cargo.lock` revision. Main advanced during coordination, so a main-based run could claim source identities different from the built binary. The pinned clean worktree closes that provenance gap.
 - **Do not rebuild, test, merge into, reset, or reclaim `.agents/worktrees/agent-02b8137c-run` before the timer is terminal.** The service pins HEAD `fa8a9d9c` and binary `d0d67480...`; any change must cause pre-draw refusal, not be worked around.
-- **Do not treat a transient timer as reboot-safe.** `gf2-predraw-validation3.timer` lives under `/run/user/1000/systemd/transient` and disappears on reboot. Verify it is active/waiting before relying on the schedule; if it vanished, inspect the journal and log before considering a new timer.
+- **Do not treat a transient timer as reboot-safe.** `gf2-predraw-validation3.timer` lives under `/run/user/<uid>/systemd/transient` and disappears on reboot. Verify it is active/waiting before relying on the schedule; if it vanished, inspect the journal and log before considering a new timer.
 - **Do not diagnose a user-bus sandbox denial as a timer or permission failure.** The earlier timer fired and ran for 17m36s. `systemctl --user` needs host access in this environment; retry the inspection with approval.
 - **Do not alter, delete, or redraw the original five terminals or any later partial start.** The continuation authority binds all 22 producer-0 prefix files byte-for-byte, and the protocol's no-redraw rule makes every durable start final evidence.
 - **Do not publish the final schema-v2 receipt at the old v1 path.** `pre-draw-validation-v1-receipt.json` is superseded historical prose only; the canonical path is `pre-draw-validation-v2-receipt.json`.
@@ -70,7 +70,7 @@
 - Preregistration: `pre-draw-validation-v1.md` and `pre-draw-validation-v1-preregistration.json`
 - Continuation authority: `pre-draw-validation-v2-continuation.md` and `pre-draw-validation-v2-continuation.json`
 - Preserved journal: `validation-journal/`
-- Pinned runbook: `.agents/worktrees/agent-02b8137c-run/dev/active/02b8137c/run-validation-v2-continuation.sh`
+- Pinned runbook: `.agents/worktrees/agent-02b8137c-run/run-validation-v2-continuation.sh`
 - Timer: `gf2-predraw-validation3.timer`; service: `gf2-predraw-validation3.service`
 - External log: `validation-v2-continuation-20260901.log`
 - Key commits: `3fd2893b` journal preservation; `2e760af7` float repair; `e0c3959a` continuation merge; `8ac6a9d3` document links; `47cadfdb` timer record; `fa8a9d9c` pinned execution runbook

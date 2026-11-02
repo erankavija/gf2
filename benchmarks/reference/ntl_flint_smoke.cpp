@@ -1,46 +1,4 @@
-// benchmarks/reference/ntl_flint_smoke.cpp
-//
-// Cross-equality oracle for NTL and FLINT on the per-operation
-// contracts in dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md § 6.
-//
-// At n=16, for each (operation, field) cell that BOTH libraries cover,
-// this binary fills the same SplitMix64-derived input matrix in both
-// libraries' native types, runs the operation, and asserts bitwise
-// equality of the canonical-form output.
-//
-// Operations smoke-checked:
-//   * fgemm (mul / nmod_mat_mul)
-//   * inv (zz_p inv / nmod_mat_inv)
-//   * solve (NTL solve / nmod_mat_solve)
-//   * charpoly (NTL CharPoly / nmod_mat_charpoly)
-//
-// Operations only one library covers (FLINT pluq / echelon / minpoly)
-// are smoke-checked against an internal idempotency invariant rather
-// than cross-library equality:
-//   * pluq idempotency: nmod_mat_lu reports rank == n on a uniform
-//     square matrix over GF(p) (probabilistically full-rank).
-//   * echelon idempotency: nmod_mat_rref(A) is fixed-point under a
-//     second nmod_mat_rref call (RREF is unique).
-//   * minpoly: minpoly | charpoly (the minimal polynomial divides the
-//     characteristic polynomial — the canonical Cayley-Hamilton check).
-//
-// Exit non-zero on any mismatch. Prints a one-line "ok"/"fail" per
-// cell to stderr; emits no stdout (so the smoke runner can ignore
-// this binary's output entirely).
-//
-// Singular-resample policy (inv, solve): a uniform-random n×n matrix
-// over GF(p) is non-singular with probability ∏_{i=1}^n (1 - p^{-i}).
-// At n=16 this product converges close to its n→∞ asymptote,
-// 1 - P_∞ where P_∞ = 1 - ∏_{i=1}^∞ (1 - p^{-i}) is the singularity
-// rate. For the worst-case prime in scope (GF(7)) P_∞ ≈ 0.163, so
-// triple-miss probability ≈ 0.163³ ≈ 4·10^-3; smaller primes have
-// smaller bounds (GF(251) ≈ 4·10^-3 → 6·10^-8; larger still for
-// GF(65521) and GF(2^31-1)). To eliminate silent skips we re-derive
-// the seed via SplitMix64 and retry up to 3 times; if all 3 attempts
-// are singular the cell counts as FAIL — a triple miss is treated as
-// a real bug, not a non-event.
-//
-// Build: see benchmarks/reference/Makefile target ntl_flint_smoke.
+// Checks seeded NTL and FLINT results for algebraic equality.
 
 #include <NTL/lzz_p.h>
 #include <NTL/lzz_pX.h>

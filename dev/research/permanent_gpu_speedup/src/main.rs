@@ -5,7 +5,7 @@
 //
 // Methodology: the reference timings at every n are LOADED AT RUNTIME from the S1
 // speedup CSV produced by the same one-command repro run
-// (`dev/benchmarks/gf2_algebra_permanent/s1_speedup-<SA_DATE|today>.csv`, rows
+// (`target/benchmarks/gf2_algebra_permanent/s1_speedup-<SA_DATE|today>.csv`, rows
 // impl=permanent_mod3_reference; falls back to the newest s1_speedup-*.csv). They
 // are NOT hard-coded — this keeps the one-command repro SSOT/end-to-end (S1g
 // speedup derives from THIS run's S1 measurement). Given the committed
@@ -85,7 +85,7 @@ mod harness {
     //
     // The reference wall-clock times are NOT hard-coded. They are read at
     // runtime from the S1 speedup CSV produced by the same one-command repro
-    // run (dev/benchmarks/gf2_algebra_permanent/s1_speedup-<DATE>.csv, rows
+    // run (target/benchmarks/gf2_algebra_permanent/s1_speedup-<DATE>.csv, rows
     // impl=permanent_mod3_reference, mean_us column, µs → s). This mirrors
     // the S3 Part-A precedent in experiments/permanent-benchmarks/scripts/permanent-repro.sh (read the S1 CSV
     // at runtime instead of embedding copied numbers) so the one-command
@@ -93,7 +93,7 @@ mod harness {
     // THIS run's S1 measurement, not a stale snapshot.
     //
     // CSV resolution (same approach as the S3 Part-A reader):
-    //   1. dev/benchmarks/gf2_algebra_permanent/s1_speedup-<SA_DATE|today>.csv
+    //   1. target/benchmarks/gf2_algebra_permanent/s1_speedup-<SA_DATE|today>.csv
     //   2. fall back to the newest s1_speedup-*.csv in that directory.
     // Given the committed s1_speedup-2026-05-11.csv the loaded values are
     // {1.473800, 27.360000, 500.027842, 9030.740871} s, identical to the
@@ -121,7 +121,7 @@ mod harness {
     /// A missing reference row is a hard SSOT failure — the harness must not
     /// silently substitute a stale or guessed value.
     fn load_ref_times_s(workspace_root: &std::path::Path) -> (Vec<f64>, String) {
-        let bench_dir = workspace_root.join("dev/benchmarks/gf2_algebra_permanent");
+        let bench_dir = workspace_root.join("target/benchmarks/gf2_algebra_permanent");
 
         // 1. Prefer the SA_DATE/today dated file (same env var the rest of
         //    the repro uses via testutil::today_yyyy_mm_dd()).
@@ -245,7 +245,7 @@ mod harness {
         .unwrap();
         writeln!(
             f,
-            "# s1_csv: dev/benchmarks/gf2_algebra_permanent/{s1_csv_basename}"
+            "# s1_csv: target/benchmarks/gf2_algebra_permanent/{s1_csv_basename}"
         )
         .unwrap();
     }
@@ -262,7 +262,7 @@ mod harness {
 
         // CSV output path.
         let date = gf2_algebra::testutil::today_yyyy_mm_dd();
-        let csv_dir = "dev/benchmarks/gf2_algebra_permanent";
+        let csv_dir = "target/benchmarks/gf2_algebra_permanent";
         let csv_path = format!("{csv_dir}/s1g_gpu_speedup-{date}.csv");
 
         // Resolve workspace root from manifest dir (3 levels up from

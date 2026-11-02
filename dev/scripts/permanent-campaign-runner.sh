@@ -2,14 +2,14 @@
 # permanent-campaign-runner.sh — deterministic overnight receipt campaigns.
 #
 # One-shot scheduling (2026-08-14 02:00, canonical repository):
-#   systemd-run --user --on-calendar='2026-08-14 02:00' --unit=gf2-permanent-campaign.timer /bin/bash -lc '/home/vkaskivuo/Projects/gf2/dev/scripts/permanent-campaign-runner.sh measure >> /home/vkaskivuo/Projects/gf2/target/permanent-campaign/systemd-measure.log 2>&1'
+#   systemd-run --user --on-calendar='2026-08-14 02:00' --unit=gf2-permanent-campaign.timer /bin/bash -lc 'dev/scripts/permanent-campaign-runner.sh measure >> target/permanent-campaign/systemd-measure.log 2>&1'
 #   systemctl --user list-timers 'gf2-permanent-campaign*'
 #   systemctl --user status gf2-permanent-campaign.timer
 #   systemctl --user stop gf2-permanent-campaign.timer
 #   systemctl --user stop gf2-permanent-campaign.service  # stop an already-running instance
 #
 # at(1) alternative:
-#   echo '/home/vkaskivuo/Projects/gf2/dev/scripts/permanent-campaign-runner.sh measure >> /home/vkaskivuo/Projects/gf2/target/permanent-campaign/at-measure.log 2>&1' | at 02:00 2026-08-14
+#   echo 'dev/scripts/permanent-campaign-runner.sh measure >> target/permanent-campaign/at-measure.log 2>&1' | at 02:00 2026-08-14
 #
 # The outer logs live under target/, which prepare creates and git ignores. The
 # per-step logs and CSV outputs are created under dev/studies/ only after the
@@ -40,7 +40,7 @@ if [[ "${1:-}" == premeasure || "${1:-}" == premeasure-collect || "${1:-}" == __
 else
     RUN_ID="${CAMPAIGN_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
 fi
-PREMEASURE_PLAN="${CAMPAIGN_PREMEASURE_PLAN:-$REPO_ROOT/dev/benchmarks/permanent_campaign/premeasure-plan-v1.csv}"
+PREMEASURE_PLAN="${CAMPAIGN_PREMEASURE_PLAN:-$REPO_ROOT/target/benchmarks/permanent_campaign/premeasure-plan-v1.csv}"
 PREMEASURE_DEFAULT_SESSION_CAP=43200
 
 # The production permanent kernels the campaign measures, listed as the
@@ -1080,7 +1080,7 @@ parse_premeasure_scratch() {
         # decision on jit:7a816262 (2026-08-25), the native-M grid slot — the
         # second data row — is the process measurement; the first row is a
         # recorded, unused replicate. See
-        # dev/benchmarks/permanent_campaign/premeasure-v1-deviations.md.
+        # target/benchmarks/permanent_campaign/premeasure-v1-deviations.md.
         data_line="$second_data_line"
     elif [[ "$data_count" -ne 1 ]]; then
         scratch_reason "data_row_count_${data_count}"

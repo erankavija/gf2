@@ -10,8 +10,6 @@ and receipt format. It consumes `gf2-sim::checkpoint`, worker scheduling and
     --checkpoint /tmp/osd/checkpoint.json --receipt /tmp/osd/receipt.json
 ```
 
-The [published dataset](../../dev/simulation_results/osd-ebch-128-64/README.md)
-describes the statistical contract and evidence. `provenance.rs` preserves its
-published serialization under @/issue/779d1926, using identity types from
+`provenance.rs` defines the campaign serialization under @/issue/779d1926, using identity types from
 `experiments-common`. The invocation vector is non-identity metadata retained
 for every contributing invocation.

@@ -1,19 +1,20 @@
 # Limits for scripts/check-tracked-budget.py. The numbers may only fall.
 max_file_bytes = 1048576
 max_commit_added_bytes = 5242880
-max_tree_bytes = 490000000
+max_tree_bytes = 36653288
 
 forbidden_paths = [
   '(^|/)(inputs|source-inputs|test-logs)/',
   '\.(log|err|zst|data|tar\.gz|tgz|tar\.xz)$',
   '(^|/)perf\.data',
+  '(^|/)receipt\.json$',
+  '(^|/)(execution|journal)[^/]*\.(log|jsonl)$',
+  '^dev/(bench_results|benchmarks|simulation_results|archive)/',
 ]
-allowed_paths = ['execution[^/]*\.log$', 'journal[^/]*\.log$']
+[[exception]]
+path = "experiments/*/tests/fixtures/*"
+reason = "behavioral test fixtures"
 
 [[exception]]
 path = ".jit/events.jsonl"
 reason = "append-only tracker log; grows with the tracker"
-
-[[exception]]
-path = "dev/active/55c3e433-aff3ct-ldpc-gaps/*"
-reason = "pinned arm support of the running epic; remove when 55c3e433 closes"

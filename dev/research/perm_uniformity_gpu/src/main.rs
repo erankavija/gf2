@@ -28,7 +28,7 @@
 // matrices for a cell are generated in strict seed order *before* any chunking,
 // so the i-th matrix is identical regardless of chunk size.
 //
-// Output: dev/benchmarks/perm_uniformity/results-2026-05-17-gpu.csv  (the
+// Output: target/benchmarks/perm_uniformity/results-2026-05-17-gpu.csv  (the
 // exact 8e4e19a0 column schema, with a hardware-fingerprint + seed `#` header;
 // does NOT overwrite the committed CPU results-2026-05-15.csv).
 //
@@ -809,10 +809,10 @@ mod harness {
     }
 
     /// Directory holding the committed SSOT CSV (and the default OUTPUT_DIR).
-    const SSOT_DIR: &str = "dev/benchmarks/perm_uniformity";
+    const SSOT_DIR: &str = "target/benchmarks/perm_uniformity";
 
     /// Normalize a directory path for comparison: strip a leading `./` and
-    /// any trailing `/` so `dev/x`, `./dev/x`, and `dev/x/` compare equal.
+    /// any trailing `/` so `target/x`, `./target/x`, and `target/x/` compare equal.
     fn normalize_dir(s: &str) -> String {
         let s = s.strip_prefix("./").unwrap_or(s);
         s.trim_end_matches('/').to_string()
@@ -835,12 +835,12 @@ mod harness {
     /// # Examples
     ///
     /// ```ignore
-    /// assert!(ssot_overwrite_guard(false, "dev/benchmarks/perm_uniformity",
-    ///                              "dev/benchmarks/perm_uniformity").is_ok());
+    /// assert!(ssot_overwrite_guard(false, "target/benchmarks/perm_uniformity",
+    ///                              "target/benchmarks/perm_uniformity").is_ok());
     /// assert!(ssot_overwrite_guard(true,  "/tmp/pug_resume",
-    ///                              "dev/benchmarks/perm_uniformity").is_ok());
-    /// assert!(ssot_overwrite_guard(true,  "dev/benchmarks/perm_uniformity",
-    ///                              "dev/benchmarks/perm_uniformity").is_err());
+    ///                              "target/benchmarks/perm_uniformity").is_ok());
+    /// assert!(ssot_overwrite_guard(true,  "target/benchmarks/perm_uniformity",
+    ///                              "target/benchmarks/perm_uniformity").is_err());
     /// ```
     fn ssot_overwrite_guard(
         cells_filtered: bool,
@@ -1231,10 +1231,10 @@ mod harness {
 
         #[test]
         fn normalize_dir_strips_dot_slash_and_trailing_slash() {
-            assert_eq!(normalize_dir("dev/x"), "dev/x");
-            assert_eq!(normalize_dir("./dev/x"), "dev/x");
-            assert_eq!(normalize_dir("dev/x/"), "dev/x");
-            assert_eq!(normalize_dir("./dev/x///"), "dev/x");
+            assert_eq!(normalize_dir("target/x"), "target/x");
+            assert_eq!(normalize_dir("./target/x"), "target/x");
+            assert_eq!(normalize_dir("target/x/"), "target/x");
+            assert_eq!(normalize_dir("./target/x///"), "target/x");
         }
 
         #[test]

@@ -24,7 +24,7 @@ later version-1 receipt pinned after a wording-only edit to the
 the edit. `schema-versions.json` records which digest
 each version's schema file and its pinning receipts carry. The tooling lives
 in the `tuning-campaign-support` workspace crate
-(`dev/tools/tuning-campaign-support`); [design.md](design.md) records why that
+(`dev/tools/tuning-campaign-support`); design.md records why that
 crate is the canonical home.
 
 ## Identity and versioning
@@ -74,7 +74,7 @@ crate is the canonical home.
 | Bounded resumable runs, execution log announced before the first bounded run, checkpoints not repeated, a cell interrupted mid-run abandoned explicitly and measured again without its abandoned samples | Execution log and checkpoints | P-10, P-11, P-12 |
 | Comparable operations and costs: setup, conversion, batch fill, dispatch in whole-consumer cells; isolated kernels separate | Cell schema | P-17 (conversion costs) |
 | Decoder comparisons: matched-algorithm and fastest quality-compatible arms, quality tolerances, BER/FER intervals, stopping contracts | Decoder cells | P-18, P-19 |
-| Receipts: raw samples, exact commands, seeds, identities, provenance, interpretation and acceptance summary under `bench_results` | Receipt layout | P-01 to P-12, P-23, summary files |
+| Receipts: raw samples, exact commands, seeds, identities, provenance, interpretation and acceptance summary under `target/bench_results` | Receipt layout | P-01 to P-12, P-23, summary files |
 | Production change needs a fresh pinned before/after measurement | Roles and freezing | P-05 (toolchain and producing digests), P-23 |
 
 ## Roles and freezing
@@ -487,8 +487,8 @@ A rejected or non-qualifying receipt is committed like any other.
 ## Receipt layout
 
 Each bounded campaign writes one directory under the owning issue's
-`bench_results/<issue>/` area, for example
-`2026-09-07-f547c394-confirmation/`:
+`target/bench_results/<issue>/` area, for example
+`target/bench_results/f547c394/2026-09-07-f547c394-confirmation/`:
 
 | File | Content |
 |---|---|

@@ -514,7 +514,7 @@ fn fixture_pilot_receipt(repo: &Path, addendum: ArtifactPin) -> BenchmarkReceipt
             lock_path: "/tmp/gf2-ccx1.lock".into(),
             holder_pid: 4242,
             observation: "fixture".into(),
-            wrapper: "scripts/bench-flock.sh".into(),
+            wrapper: "dev/scripts/ccx1-bench-flock.sh".into(),
         },
         workers: WorkerReport {
             environment_rayon_threads: None,
@@ -830,7 +830,7 @@ fn build_receipt_with_history(
         "campaign_seed": CAMPAIGN_SEED,
         "addendum": ADDENDUM_DOC,
         "lock_path": "/tmp/gf2-ccx1.lock",
-        "wrapper": "scripts/bench-flock.sh",
+        "wrapper": "dev/scripts/ccx1-bench-flock.sh",
         "timing_override": null,
         "arms": plan_arms,
         "cells": specs.iter().map(|spec| {
@@ -1149,7 +1149,7 @@ fn build_receipt_with_history(
             wrapper: if addendum.protocol.version >= 3 {
                 String::new()
             } else {
-                "scripts/bench-flock.sh".into()
+                "dev/scripts/ccx1-bench-flock.sh".into()
             },
         },
         workers: WorkerReport {
@@ -1211,7 +1211,7 @@ fn addendum_schema_accepts_the_frozen_smoke_addendum_and_rejects_unknown_fields(
         serde_json::from_slice(&committed("addendum*.schema.json", V1_SCHEMA_SHA256)).unwrap();
     let bytes = committed(
         "addendum-protocol-smoke.json",
-        "307b6a2baf2da5025a26820ed44be55a212747440f3d9d00e09bdaf8b1d8a69c",
+        "6c8897df8290da0c8eb74d615330baa178ae916dc98d493153f183e33e580234",
     );
     let instance: Value = serde_json::from_slice(&bytes).unwrap();
     assert!(schema::validate(&schema_value, &instance).is_empty());

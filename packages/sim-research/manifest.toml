@@ -790,7 +790,7 @@ identity = "benchmark-backed-performance"
 
 [contribution.value]
 id = "benchmark-backed-performance"
-statement = "Performance and crossover claims cite a reproducible benchmark protocol and committed receipt from a suitable uncontended host; estimates are identified as estimates."
+statement = "Performance, crossover and scalability claims are rare and name the reproducible harness and configuration that demonstrate them. A value measured on one host appears only as an example labelled with that host and supports no claim; estimates are identified as estimates."
 kind = "enforced"
 enforced-by = "@/gate/code-review"
 

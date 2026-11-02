@@ -1,7 +1,7 @@
 # Test alpha ramping for dRM turbo convergence
 [campaign]
 name = "drm_alpha_ramp"
-output_dir = "dev/simulation_results/drm_waterfall"
+output_dir = "target/simulation_results/drm_waterfall"
 
 # Gradual alpha ramp: 0.0 → 0.5 over 20 iterations
 [[curve]]

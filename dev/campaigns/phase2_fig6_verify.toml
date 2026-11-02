@@ -4,7 +4,7 @@
 
 [campaign]
 name = "phase2_fig6_verify"
-output_dir = "dev/simulation_results"
+output_dir = "target/simulation_results"
 
 [[curve]]
 name = "fig6_verify_ebch_product"

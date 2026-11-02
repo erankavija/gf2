@@ -6,7 +6,7 @@
 
 [campaign]
 name = "verify_fix_fig1"
-output_dir = "dev/simulation_results/verify"
+output_dir = "target/simulation_results/verify"
 
 [[curve]]
 name = "fig1_drm_fixed"

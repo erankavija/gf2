@@ -10,5 +10,4 @@ brackets, per-SNR checkpoints, CSV output and tracing. Its `hip` feature enables
 
 [Run a simulation campaign](../../docs/how-to/run-simulation-campaigns.md)
 describes flags, output and resume. The
-[production drivers and plotting script](../../dev/benchmarks/dvb_t2_awgn/)
-consume this binary and its CSV output.
+plotting script `plot.py` consumes its CSV output.

@@ -2,7 +2,7 @@
 //!
 //! The repository requires that a published number trace to an artifact
 //! recording seeds, source identity, hardware, and toolchain
-//! (`@/inv/claims-trace-to-artifacts`). This module collects the non-seed part
+//! (`@/inv/behavioral-evidence-validity`). This module collects the non-seed part
 //! of that record; seeds come from [`crate::sampler`].
 
 use std::fmt::Write as _;

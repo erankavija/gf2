@@ -1,28 +1,5 @@
-/*
- * benchmarks/reference/m4rie_one_cell.c
- *
- * Single-cell driver pinned to **matmul × GF(2^16) × n=1024 × uniform**,
- * the in-scope cell chosen for the M4RIE promotion perf-stat capture
- * (`dev/bench_results/2026-05-04-507b0036-m4rie-perf-stat.txt`,
- * jit:507b0036).
- *
- * The full sweep harness `m4rie_bench.c` runs ~30 seconds end-to-end
- * which is too coarse for a `perf stat -r N` capture; this driver
- * isolates a single cell so the perf-stat numbers reflect the actual
- * hot path of `mzed_mul` rather than the surrounding setup.
- *
- * Build (host or container):
- *   gcc -O3 -march=native -std=c11 m4rie_one_cell.c -lm4rie -lm4ri -lm \
- *       -o m4rie_one_cell
- *
- * Run:
- *   ./m4rie_one_cell [iters]   # default iters=10
- *
- * Inputs are seeded deterministically via SplitMix64. The driver pulls
- * the canonical implementation from `seed_helpers.h` (single source of
- * truth shared with `m4rie_bench.c`, `m4ri_bench.c`, `fflas_bench.cpp`,
- * etc.) — see jit:507b0036 R2 (rework against e3592fe code-review).
- */
+/* M4RIE single-cell matrix multiplication harness. */
+
 #define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdint.h>

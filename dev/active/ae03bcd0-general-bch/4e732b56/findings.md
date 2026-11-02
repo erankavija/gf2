@@ -560,7 +560,7 @@ overhead for the epic to preserve, and no existing parallelism to regress.
 |---|---|---|
 | R1-F1 invocation/revision provenance | Both survey runs use native per-stage headers and record the fresh gf2 revision. | `2026-09-01-4e732b56-survey-receipt.md` § Per-stage provenance |
 | R1-F2 matrix-equality check | The check is retained; the dump shares the timed helper and the comparison records bit-identical output with no normalization. | `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/m4ri_genmatrix_bench.c`; `2026-09-01-4e732b56-generator-matrix-agreement.txt` |
-| R1-F3 5 ms repetition rule | New calibrated logs retain repetition counts; the audit found no measured cell without calibrated repetitions. | `dev/bench_results/4e732b56/2026-09-01-4e732b56-*.log`; `dev/active/ae03bcd0-general-bch/4e732b56/findings.md` § 4 |
+| R1-F3 5 ms repetition rule | New calibrated logs retain repetition counts; the audit found no measured cell without calibrated repetitions. | `2026-09-01-4e732b56-*.log`; `dev/active/ae03bcd0-general-bch/4e732b56/findings.md` § 4 |
 | R1-F4 kodo retrieval evidence | The retrieval failure and scope evidence remain preserved. | `2026-08-31-4e732b56-kodo-retrieval.txt` |
 | R1-F5 M4RI thread evidence | The no-OpenMP configuration and dynamic-link evidence remain preserved. | `2026-08-31-4e732b56-m4ri-thread-evidence.txt` |
 | R1-F6 nice posture | The denied nice request is recorded in the protocol and run host records. | `dev/active/ae03bcd0-general-bch/4e732b56/findings.md` § 4; `2026-09-01-4e732b56-small-host.txt` |

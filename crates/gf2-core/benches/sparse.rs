@@ -1,5 +1,4 @@
-//! Benchmarks sparse matrix operations over GF(2). Benchmarks marked
-//! `[SAGE_CMP]` have counterparts in `scripts/sage_benchmarks.py`.
+//! Benchmarks sparse matrix operations over GF(2).
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::matrix::BitMatrix;

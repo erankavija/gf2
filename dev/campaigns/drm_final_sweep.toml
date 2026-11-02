@@ -1,7 +1,7 @@
 # Final parameter sweep: low alpha + many iterations
 [campaign]
 name = "drm_final_sweep"
-output_dir = "dev/simulation_results/drm_waterfall"
+output_dir = "target/simulation_results/drm_waterfall"
 
 # Low alpha ramp with many iterations
 [[curve]]

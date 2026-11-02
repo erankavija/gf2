@@ -6,7 +6,7 @@ SCRIPT="$THIS_DIR/permanent-campaign-runner.sh"
 ROOT="$(cd "$THIS_DIR/../.." && pwd)"
 WORK="$(mktemp -d)"
 REPO="$WORK/fixture"
-PLAN="$ROOT/dev/benchmarks/permanent_campaign/premeasure-plan-v1.csv"
+PLAN="$ROOT/target/benchmarks/permanent_campaign/premeasure-plan-v1.csv"
 mkdir -p "$REPO"
 git -C "$REPO" init --quiet
 git -C "$REPO" config user.email test@example.invalid

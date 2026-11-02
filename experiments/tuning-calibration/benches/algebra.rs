@@ -1960,7 +1960,7 @@ mod tests {
                     cpu_features: vec!["test".to_owned()],
                     os_kernel: "test-kernel".to_owned(),
                     governor: "performance".to_owned(),
-                    receipt: "dev/benchmarks/tuning_profiles/test.md".to_owned(),
+                    receipt: "target/benchmarks/tuning_profiles/test.md".to_owned(),
                 })
                 .unwrap(),
             },

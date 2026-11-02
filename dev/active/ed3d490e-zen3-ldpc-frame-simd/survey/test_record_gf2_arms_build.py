@@ -137,13 +137,6 @@ class InputsTest(unittest.TestCase):
                          ["unit.cpp", "/opt/aff3ct tree/decoder.hpp", "/opt/cost$/a#b.hpp",
                           "back\\", "slash.hpp", "C:/drive.hpp"])
 
-    def test_the_build_script_reads_make_rules_as_make_reads_them(self):
-        unit = ROOT / recorder.located("package-directory", HARNESS) / "make_rules.rs"
-        with tempfile.TemporaryDirectory() as temporary:
-            tests = Path(temporary) / "make_rules"
-            subprocess.run(["rustc", f"+{recorder.TOOLCHAIN}", "--edition", "2021", "--test",
-                            str(unit), "-o", str(tests)], check=True, capture_output=True)
-            subprocess.run([str(tests)], check=True, capture_output=True)
 
 
 class LinkRulesTest(unittest.TestCase):

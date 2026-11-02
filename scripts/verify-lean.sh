@@ -24,8 +24,7 @@
 #     and the `pretty/fmt_with_ctx.rs` assert removal) are now OBSOLETE —
 #     upstream Charon handles those cases, and gfpn extraction is clean without
 #     them (2 residual `FiniteField::Wide` warnings on the opaque `field`
-#     trait are benign). Patch preserved at
-#     `dev/archive/legacy/dev/active/charon-patch-backup-2026-05-15/implied-clause-rebased-487f0320.patch`.
+#     trait are benign).
 #   * Aeneas: upstream HEAD `5220259c`, unmodified. Links charon-ml from the
 #     nested charon submodule, so that submodule must be at the same 487f0320
 #     pin before `dune build` (else `TTraitType` arity mismatch).
@@ -138,11 +137,11 @@ echo ""
 echo "=== Step 1b: Charon extraction (gf2-algebra) ==="
 #
 # Extract gf2-algebra::packed::bipedal3 for the D2 bipedal F_3 correctness
-# proof (JIT issue f05ffbe1; sketch at dev/archive/ae82bd73-gf2-algebra-permanent/plans/a0c0a45f/d2_lean_bipedal3_sketch.md),
+# proof (@/issue/f05ffbe1),
 # gf2-algebra::packed::packed5 for the D5 F_5 correctness proof (JIT issue
-# 30e98ef1; sketch at dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d5_lean_packed5_sketch.md), and
+# @/issue/30e98ef1), and
 # gf2-algebra::packed::packed7 for the D6 F_7 correctness proof (JIT issue
-# 30e98ef1; sketch at dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d6_lean_packed7_sketch.md). The `f5` and
+# @/issue/30e98ef1). The `f5` and
 # `f7` features are enabled so the `#[cfg(feature = "f5")]`-gated packed5 and
 # `#[cfg(feature = "f7")]`-gated packed7 modules are compiled into the LLBC.
 # Everything else in the crate is opaque — the proofs target only the

@@ -61,10 +61,7 @@ PROTOTYPES = ("f5-byte-control", "f5-three-plane")
 # the orders this campaign measures: active_lanes_for_order(n) = 32 for n >= 5
 # (dev/research/permanent_wave_gpu/hip/wave_ryser_mapping.h:29-31, :16).
 WAVE_LANES = 32
-# Archived per-launch work budget for this field, carried as a prior rather
-# than as an established device property: sub_batch * 2^n <= 1.3e9 at q=5
-# (dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/
-# r4_gpu_uniformity_resample.md section 2.5).
+# Configured prior calibration bounds.
 ARCHIVED_Q5_WORK_BUDGET = 1.3e9
 # The same archived calibration places the hang boundary at ~190-200 s per
 # launch and reports bounded sub-batches holding every launch at ~10-117 s.
@@ -187,7 +184,7 @@ def prototype_shared_bytes(backend: str, n: int) -> int:
 
     `n * n` for the byte control's staged matrix and `3 * n * 8` for the
     three-plane path's staged column planes
-    (dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip:727-737).
+    (crates/gf2-kernels-hip/kernels/f5_wave_equivalence.hip:727-737).
     """
     if backend == "f5-byte-control":
         return n * n

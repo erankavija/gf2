@@ -1,7 +1,7 @@
 # Chase-Pyndiah for dRM(32,21) with different p values
 [campaign]
 name = "cp_drm_p_sweep"
-output_dir = "dev/simulation_results/chase_pyndiah"
+output_dir = "target/simulation_results/chase_pyndiah"
 
 [[curve]]
 name = "cp_drm_p5"

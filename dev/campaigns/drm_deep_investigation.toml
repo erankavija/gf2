@@ -1,7 +1,7 @@
 # Deep investigation: SOGRAND vs BCJR turbo for dRM, alpha sweep
 [campaign]
 name = "drm_deep_investigation"
-output_dir = "dev/simulation_results/drm_waterfall"
+output_dir = "target/simulation_results/drm_waterfall"
 
 # SOGRAND turbo (paper's approach)
 [[curve]]

@@ -95,7 +95,7 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
             assert!(!source_dirty);
             assert_eq!(
                 harness.as_str(),
-                "crates/gf2-core/benches/tuning_calibration.rs"
+                "experiments/tuning-calibration/benches/core.rs"
             );
             assert_eq!(harness_schema.as_str(), CoreTuningCodec::HARNESS_SCHEMA);
             assert_eq!(
@@ -104,7 +104,7 @@ fn committed_measured_owner_is_canonical_and_states_the_declared_campaign() {
             );
             assert_eq!(
                 receipt.as_str(),
-                "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md"
+                "experiments/tuning-calibration/benches/core.rs"
             );
         }
         MeasurementProvenance::Inherited => panic!("measured owner is not inherited"),

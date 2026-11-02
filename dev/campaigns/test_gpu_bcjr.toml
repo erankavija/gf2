@@ -3,7 +3,7 @@
 
 [campaign]
 name = "test_gpu_bcjr"
-output_dir = "dev/simulation_results/align"
+output_dir = "target/simulation_results/align"
 
 [[curve]]
 name = "gpu_bcjr_drm"

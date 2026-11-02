@@ -4,14 +4,14 @@
 # Runs the V0 (single-shot loop) and V3+V4 (batched VPCLMULQDQ-YMM) paths
 # back-to-back at m ∈ {8, 16, 32} via the gf2m_mul_strategies bench
 # entrypoint, capturing IPC, branch-misses, and cycles for both. Saves the
-# combined stat output to dev/bench_results/2026-04-28-c1-perf-stat.txt.
+# combined stat output to target/bench_results/2026-04-28-c1-perf-stat.txt.
 #
 # Usage:
 #   ./dev/scripts/perf-stat-c1.sh
 
 set -euo pipefail
 
-OUT="${OUT:-dev/bench_results/2026-04-28-c1-perf-stat.txt}"
+OUT="${OUT:-target/bench_results/2026-04-28-c1-perf-stat.txt}"
 mkdir -p "$(dirname "$OUT")"
 
 PATH="$HOME/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin:$PATH" \

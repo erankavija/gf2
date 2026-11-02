@@ -60,8 +60,8 @@ fn provenance() -> OsdCampaignProvenance {
             cpu_logical_threads: Some(8),
             gpu_model: Availability::NotPresent,
         },
-        configuration: artifact("dev/campaigns/osd-reference.json", 'a'),
-        measurement_behavior: artifact("dev/receipts/osd-behavior.json", 'b'),
+        configuration: artifact("target/osd-reference.json", 'a'),
+        measurement_behavior: artifact("target/osd-behavior.json", 'b'),
     }
 }
 
@@ -777,74 +777,6 @@ fn recorded_ber_interval_rescales_the_recorded_block_error_interval() {
 }
 
 #[test]
-fn published_receipt_serialization_preserves_record_bytes() {
-    let repository =
-        experiments_common::RepositoryRoot::containing(Path::new(env!("CARGO_MANIFEST_DIR")))
-            .unwrap();
-    let path = repository.resolve(
-        &"dev/simulation_results/osd-ebch-128-64/ebch_osd_awgn.json"
-            .parse()
-            .unwrap(),
-    );
-    let bytes = std::fs::read(path).expect("read published receipt");
-    let receipt: OsdCampaignReceipt =
-        serde_json::from_slice(&bytes).expect("decode published receipt");
-    assert_eq!(serde_json::to_vec_pretty(&receipt).unwrap(), bytes);
-}
-
-#[test]
-fn schema_1_committed_receipt_remains_readable_with_historical_semantics() {
-    let repository =
-        experiments_common::RepositoryRoot::containing(Path::new(env!("CARGO_MANIFEST_DIR")))
-            .unwrap();
-    let path = repository.resolve(
-        &"dev/simulation_results/osd-ebch-128-64/schema1/ebch_osd_awgn.json"
-            .parse()
-            .unwrap(),
-    );
-    let receipt: OsdCampaignReceipt =
-        serde_json::from_slice(&std::fs::read(path).expect("read committed schema-1 receipt"))
-            .expect("schema-1 receipt remains readable");
-
-    assert_eq!(receipt.schema_version, 1);
-    assert_eq!(receipt.digitization_precision_unit, None);
-    assert_eq!(receipt.target_block_errors, None);
-    assert!(receipt.invocation_history.is_empty());
-    assert_eq!(receipt.provenance.runtime.cpu_physical_cores, None);
-    assert_eq!(receipt.provenance.runtime.cpu_logical_threads, None);
-    assert_eq!(receipt.provenance.runtime.cpu_model, "linux-x86_64");
-    assert_eq!(
-        receipt.provenance.runtime.invocation,
-        ["ebch_osd_awgn_campaign"]
-    );
-    assert!(receipt.cell_results.iter().all(|result| {
-        result.invocation_index.is_none()
-            && result.ber_confidence_interval.is_some()
-            && result.bler_confidence_interval.is_some()
-            && result
-                .ber_confidence_interval
-                .expect("schema-1 BER interval")
-                .sampling_unit
-                .is_none()
-            && result
-                .bler_confidence_interval
-                .expect("schema-1 BLER interval")
-                .sampling_unit
-                .is_none()
-            && result
-                .ber_confidence_interval
-                .expect("schema-1 BER interval")
-                .estimator
-                == ConfidenceIntervalEstimator::ClopperPearson
-            && result
-                .bler_confidence_interval
-                .expect("schema-1 BLER interval")
-                .estimator
-                == ConfidenceIntervalEstimator::ClopperPearson
-    }));
-}
-
-#[test]
 fn resume_ignores_source_metadata_but_keeps_campaign_identity_checks() {
     let dir = temp_dir("resume-source-metadata");
     let checkpoint_path = dir.path().join("checkpoint.json");
@@ -890,8 +822,7 @@ fn resume_ignores_source_metadata_but_keeps_campaign_identity_checks() {
     assert_eq!(resumed.invocation_history.len(), 2);
 
     let mut changed_configuration_provenance = updated_provenance.clone();
-    changed_configuration_provenance.configuration =
-        artifact("dev/campaigns/osd-reference.json", 'd');
+    changed_configuration_provenance.configuration = artifact("target/osd-reference.json", 'd');
     let changed_configuration = OsdCampaign::new(
         17,
         vec![cell.clone()],
@@ -911,7 +842,7 @@ fn resume_ignores_source_metadata_but_keeps_campaign_identity_checks() {
 
     let mut changed_executable_provenance = updated_provenance;
     changed_executable_provenance.runtime.binary_sha256 =
-        Some(artifact("dev/executables/osd-campaign", 'd').sha256);
+        Some(artifact("target/osd-campaign", 'd').sha256);
     let changed_executable = OsdCampaign::new(
         17,
         vec![cell],

@@ -199,9 +199,9 @@ class RefusalTest(unittest.TestCase):
         self.assertFalse(fixture.ledger.exists())
 
     def test_every_session_holds_the_full_host_once_whatever_the_wrapper_carries(self):
-        for wrapper in ("dev/wrapper.sh", "dev/wrapper.sh --full-host"):
+        for wrapper in ("fixture/wrapper.sh", "fixture/wrapper.sh --full-host"):
             command = launcher.session_command({"wrapper": wrapper}, "runner", "stage", "plan")
-            self.assertEqual(command, [str(ROOT / "dev/wrapper.sh"), "--full-host", "runner",
+            self.assertEqual(command, [str(ROOT / "fixture/wrapper.sh"), "--full-host", "runner",
                                        "run", "stage", "plan"], wrapper)
 
     def test_a_campaign_outside_the_benchmark_window_is_refused(self):

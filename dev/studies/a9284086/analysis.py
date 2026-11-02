@@ -59,13 +59,11 @@ AGENT_FIELDS = (
 # slack for the counter's rounding.
 LAUNCH_TOLERANCE = 0.01
 
-# Archived prior calibration, cited as a prior rather than as an established
-# device property (dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/
-# r4_gpu_uniformity_resample.md section 2.5).
+# Configured prior calibration bounds.
 ARCHIVED_SPAN_BOUNDARY_S = 190.0
 ARCHIVED_WORK_BUDGET = {3: 4.0e9, 5: 1.3e9, 7: 3.5e8}
 # The one recorded device fault, q=3 n=24 M=4096 on the shipped kernel
-# (dev/studies/b488f02c/gpu-hang-2026-08-07.log), whose attribution to a
+# (gpu-hang-2026-08-07.log), whose attribution to a
 # watchdog timeout that file explicitly retracts.
 FAULT_Q, FAULT_N, FAULT_M = 3, 24, 4096
 

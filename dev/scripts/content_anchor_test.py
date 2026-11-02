@@ -16,7 +16,7 @@ sys.dont_write_bytecode = True
 
 from content_anchor import Anchor, history_blob, sha256  # noqa: E402
 
-PACKAGE = "crates/pkg"
+PACKAGE = "fixture/pkg"
 SOURCE = f"{PACKAGE}/src/lib.rs"
 
 

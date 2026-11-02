@@ -1,7 +1,7 @@
 # Direct SOGRAND vs BCJR comparison for dRM at key SNR points
 [campaign]
 name = "drm_sogrand_vs_bcjr"
-output_dir = "dev/simulation_results/drm_waterfall"
+output_dir = "target/simulation_results/drm_waterfall"
 
 # SOGRAND turbo — reduced queries for speed
 [[curve]]

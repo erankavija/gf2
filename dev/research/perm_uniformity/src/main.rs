@@ -14,7 +14,7 @@
 //   separately gives the 95th-percentile of the difference distribution;
 //   PASS when that quantile is < 0.
 //
-// Output: dev/benchmarks/perm_uniformity/results-2026-05-15.csv
+// Output: target/benchmarks/perm_uniformity/results-2026-05-15.csv
 //
 // Determinism: uses gf2_core::rng::Lcg with a fixed seed per cell.
 // Same seed -> bit-identical CSV (statistical columns) across runs.
@@ -781,7 +781,7 @@ fn write_plot(results: &[CellResult], path: &str) {
 
 fn main() {
     let output_dir = std::env::var("OUTPUT_DIR")
-        .unwrap_or_else(|_| "dev/benchmarks/perm_uniformity".to_string());
+        .unwrap_or_else(|_| "target/benchmarks/perm_uniformity".to_string());
     fs::create_dir_all(&output_dir).expect("cannot create output dir");
 
     let csv_path = format!("{output_dir}/results-2026-05-15.csv");

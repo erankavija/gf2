@@ -15,7 +15,7 @@
 
 use gf2_coding::ldpc::QuasiCyclicLdpc;
 
-// Canonical config (receipt: dev/benchmarks/gf2-sim/5g-nr-realtime.md).
+// Canonical config (receipt: target/benchmarks/gf2-sim/5g-nr-realtime.md).
 const BG: u8 = 1;
 const TARGET_N: usize = 16896; // E (transmitted)
 const TARGET_K: usize = 8448; // K (transport block)

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 # Paired profiled evidence run for JIT a9284086 — runtime qualification of the
 # retained F_3 and F_5 GPU permanent paths.
 #
@@ -34,7 +35,7 @@
 # provenance records rocprofv2 and legacy rocprof aborting this workload under
 # their interception on this host.
 set -uo pipefail
-REPO=/home/vkaskivuo/Projects/gf2
+REPO=${REPO_ROOT}
 BIN=$REPO/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas
 MANIFEST=$REPO/target/permanent-campaign/manifest-v1.txt
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
@@ -80,7 +81,7 @@ fail=0
 # Cells: each field's retained device paths at three orders — the two orders
 # the F_7 counter evidence uses (12 and 20) plus that field's declared
 # operating point from
-# dev/simulation_results/permanent-zero-fraction/protocol.md:51-54
+# target/simulation_results/permanent-zero-fraction/protocol.md:51-54
 # (n=28 for q=3, n=24 for q=5). The q=5, n=24 gpu_hip cells are censored before
 # running in the timing grid, so that cell would dispatch nothing and is not a
 # pass.

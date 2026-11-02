@@ -3,7 +3,7 @@
 
 [campaign]
 name = "quick_fig1"
-output_dir = "dev/simulation_results/quick"
+output_dir = "target/simulation_results/quick"
 
 [[curve]]
 name = "fig1_drm_product"

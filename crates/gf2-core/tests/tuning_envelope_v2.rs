@@ -186,7 +186,7 @@ fn calibrated_core_measurement() -> MeasurementProvenance {
         measured_at: Rfc3339Utc::parse("2026-08-25T18:00:00Z").unwrap(),
         source_revision: GitRevision::parse("0123456789abcdef0123456789abcdef01234567").unwrap(),
         source_dirty: false,
-        harness: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs").unwrap(),
+        harness: RepoRelPath::parse("experiments/tuning-calibration/benches/core.rs").unwrap(),
         harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA).unwrap(),
         binary_sha256: Sha256::parse(
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -198,7 +198,7 @@ fn calibrated_core_measurement() -> MeasurementProvenance {
         cpu_features: vec!["avx2".to_owned()],
         os_kernel: "Linux 6.test".to_owned(),
         governor: "performance".to_owned(),
-        receipt: RepoRelPath::parse("dev/benchmarks/tuning_profiles/test.md").unwrap(),
+        receipt: RepoRelPath::parse("experiments/tuning-calibration/benches/core.rs").unwrap(),
     }
 }
 

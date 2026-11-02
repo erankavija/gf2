@@ -3,7 +3,7 @@
 
 [campaign]
 name = "phase1_fig3_smoke"
-output_dir = "dev/simulation_results"
+output_dir = "target/simulation_results"
 
 [[curve]]
 name = "fig3_smoke_ebch_product"

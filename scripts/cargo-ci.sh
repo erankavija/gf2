@@ -286,16 +286,9 @@ run_step tuning-campaign-support-build "$BUDGET" cargo nextest run -p tuning-cam
 run_step tuning-campaign-support-nextest "$BUDGET" --test cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
 run_step tuning-campaign-validator python3 dev/scripts/validate-tuning-extent-campaign.py --self-test
 run_step repository-files-self-test python3 dev/scripts/repository_files_test.py
-run_step campaign-producing-closure-self-test python3 dev/scripts/check-campaign-producing-closure.py --self-test
-run_step campaign-producing-closure python3 dev/scripts/check-campaign-producing-closure.py
 # The checker is located through the shared file locator, which git finds by
 # name; -B keeps the steps from writing bytecode into the repository.
 repository_files=$(git ls-files -- ':(glob)**/repository_files.py')
-family_closures=$(python3 -B "$repository_files" file check-family-producing-closures.py)
-run_step family-producing-closures-self-test python3 -B "$family_closures" --self-test
-run_step family-producing-closures python3 -B "$family_closures"
-campaign_records=$(python3 -B "$repository_files" file validate_tuning_extent_campaign_test.py)
-run_step tuning-campaign-records python3 -B "$campaign_records"
 # The batch decoder survey tooling lies beside its shared smoke module. Its
 # `build_runner` compiles the campaign runner and the binaries the tests run
 # beside it here, so the test steps' clocks time no compilation.
@@ -312,10 +305,10 @@ done
 for survey_tool in $(git grep -l -F '["--self-test"]' -- ":(glob)$survey/**/*.py"); do
   run_step "survey-${survey_tool#"$survey"/}-self-test" python3 -B "$survey_tool" --self-test
 done
+run_step reference-check-self-test python3 -B scripts/check-references.py --self-test
+run_step reference-check python3 -B scripts/check-references.py
 run_step tracked-budget-self-test python3 -B scripts/check-tracked-budget.py --self-test
 run_step tracked-budget python3 -B scripts/check-tracked-budget.py
-run_step addendum-schema-versions-self-test python3 dev/scripts/check-addendum-schema-versions.py --self-test
-run_step addendum-schema-versions python3 dev/scripts/check-addendum-schema-versions.py
 run_step docs-mechanical-self-test python3 contrib/gates/tests/docs-mechanical-test.py
 run_step tuning-campaign-launcher-syntax bash -n dev/scripts/tuning-extent-campaign.sh
 run_step tuning-lifecycle-cargo "$BUDGET" cargo test -p gf2-core --profile ci-test --no-default-features --test tuning_process_lifecycle
@@ -342,9 +335,8 @@ else
 fi
 run_step doc-coding env RUSTDOCFLAGS="-D warnings" "$BUDGET" cargo doc -p gf2-coding --release --no-deps $CODING_DOC_FEAT_FLAGS
 
-# Baked selector fields (DEC-G, and the follow-on families of
-# dev/active/7d824b2f/design.md §2.2): the gf2_tuning_baked cfg is not a Cargo
-# feature, so --all-features never builds it; this scoped step executes the
+# The gf2_tuning_baked cfg is not a Cargo feature, so --all-features never
+# builds it; this scoped step executes the
 # baked routing witnesses and drift tests. Each baked family names its witness
 # target here. The frozen selector non-regression harness is excluded
 # deliberately: its self-tests bracket the default configuration's threshold

@@ -23,7 +23,7 @@
       "shard_size": 40,
       "backend": "batch_parallel",
       "determinant_companion": true,
-      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "accelerator_per_matrix_us": null
     },
     {
@@ -34,7 +34,7 @@
       "shard_size": 40,
       "backend": "batch_parallel",
       "determinant_companion": true,
-      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "accelerator_per_matrix_us": null
     },
     {
@@ -45,7 +45,7 @@
       "shard_size": 40,
       "backend": "batch_parallel",
       "determinant_companion": true,
-      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "accelerator_per_matrix_us": null
     }
   ],

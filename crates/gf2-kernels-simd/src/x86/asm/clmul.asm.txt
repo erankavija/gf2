@@ -18,7 +18,7 @@
 ; symbol: gf2_kernels_simd::x86::clmul::clmul_u64
 ;==========================================================
 
-   Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-7d44b71f/crates/gf2-kernels-simd)
+   Compiling gf2-kernels-simd v0.1.0 (crates/gf2-kernels-simd)
 
     Finished `release` profile [optimized] target(s) in 2.90s
 gf2_kernels_simd::x86::clmul::clmul_u64:

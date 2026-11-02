@@ -63,7 +63,7 @@ Store assets in a directory named after the document so they move with it:
 **Markdown reference:**
 
 ```markdown
-![Latency histogram](encoder-timing-closure/latency-histogram.png)
+![Latency histogram](<asset-path>)
 ```
 
 The planner discovers the assets a document references and carries them in the
@@ -102,13 +102,13 @@ External URLs are preserved and reported as warnings; they are not bundled.
 **Same directory:**
 
 ```markdown
-See [the completion report](completion-report.md).
+See [the completion report](<document-path>).
 ```
 
 **Per-document assets:**
 
 ```markdown
-![Crossover](gpu-crossover-decision/crossover.png)
+![Crossover](<asset-path>)
 ```
 
 **Single-level parent, to a sibling issue directory:**
@@ -141,7 +141,7 @@ warns, because nothing schedules that file to move alongside. Attach it with
 
 ### Avoid
 
-**Absolute filesystem paths** — `/home/user/gf2/dev/plan.md` resolves on one
+**Absolute filesystem paths** — `/home/example/project/plan.md` resolves on one
 machine.
 
 **Paths escaping the repository** — `../../../other-repo/doc.md`.
@@ -150,14 +150,8 @@ machine.
 short id in prose and attach the document to it with `jit doc add`; the
 attachment carries the association, and the path does not survive a move.
 
-## Receipts and Evidence
+## Performance evidence
 
-A performance, crossover, or scalability claim cites a committed receipt, per
-[`AGENTS.md`](../AGENTS.md). Receipts belong in `bench_results/`, which is
-issue-scoped, so a receipt lands in the directory of the issue whose claim it
-supports and archives with that issue's container.
-
-Keep a receipt's provenance header intact. When a re-run supersedes a receipt,
-replace the file rather than leaving the study citing a name that no longer
-exists, and re-run the whole set the document cites if the narrative compares
-them — receipts from different harness commits do not compare cleanly.
+A performance, crossover, or scalability claim cites its reproducible harness
+and configuration. Generated measurements live below `target/`; the repository
+contains no measurement artifacts.

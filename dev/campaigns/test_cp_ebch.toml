@@ -2,7 +2,7 @@
 
 [campaign]
 name = "test_cp_ebch"
-output_dir = "dev/simulation_results/chase_pyndiah"
+output_dir = "target/simulation_results/chase_pyndiah"
 
 [[curve]]
 name = "cp_ebch_16_11"

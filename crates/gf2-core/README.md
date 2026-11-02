@@ -35,7 +35,7 @@ estimators are available from [`gf2-stats`](../gf2-stats/README.md).
 ./scripts/cargo-budget.sh cargo doc -p gf2-core --no-deps
 ```
 
-Rendered output: [Rustdoc](../../target/doc/gf2_core/index.html).
+Rendered output: Rustdoc.
 
 ## License
 

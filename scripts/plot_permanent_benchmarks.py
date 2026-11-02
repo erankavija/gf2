@@ -4,13 +4,13 @@
 Design: Option A -- single script with subcommands (speedup|parallel|cross_cpu|gpu_crossover|all).
 Rendering: matplotlib (Python), Agg backend (non-interactive, deterministic PNG output).
 
-Input CSVs (default: dev/benchmarks/gf2_algebra_permanent/):
+Input CSVs (default: target/benchmarks/gf2_algebra_permanent/):
   s1_speedup-2026-05-11.csv       -- S1 single-thread speedup vs reference (F_3 perm log-time vs n)
   s2_parallel_scaling-2026-05-11.csv -- S2 parallel scaling
   s3_cross_cpu-2026-05-12.csv     -- S3 cross-CPU bars (AVX2-only on dev host; AVX-512 N/A)
   s5_gpu_crossover-2026-05-15.csv -- S5 GPU-vs-CPU crossover
 
-Output figures (default: dev/benchmarks/gf2_algebra_permanent/figures/):
+Output figures (default: target/benchmarks/gf2_algebra_permanent/figures/):
   s1_perm_log_time_vs_n.png       -- Fig (a) log-time vs n for F_3 permanent paths
   s2_parallel_scaling.png         -- Fig (b) parallel-scaling vs core count
   s3_cross_cpu_bars.png           -- Fig (c) AVX2-vs-scalar bars (AVX-512 N/A gracefully)
@@ -517,14 +517,14 @@ def main() -> None:
     parser.add_argument(
         "--input-dir",
         type=Path,
-        default=Path("dev/benchmarks/gf2_algebra_permanent"),
-        help="Directory containing input CSVs (default: dev/benchmarks/gf2_algebra_permanent/)",
+        default=Path("target/benchmarks/gf2_algebra_permanent"),
+        help="Directory containing input CSVs (default: target/benchmarks/gf2_algebra_permanent/)",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("dev/benchmarks/gf2_algebra_permanent/figures"),
-        help="Directory to write figures (default: dev/benchmarks/gf2_algebra_permanent/figures/)",
+        default=Path("target/benchmarks/gf2_algebra_permanent/figures"),
+        help="Directory to write figures (default: target/benchmarks/gf2_algebra_permanent/figures/)",
     )
     args = parser.parse_args()
 

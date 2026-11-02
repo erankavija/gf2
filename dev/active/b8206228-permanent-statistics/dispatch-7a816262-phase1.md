@@ -31,7 +31,7 @@ final freeze)
 
 1. **Receipt inventory against the protocol's cohort rules.** Enumerate every
    committed measurement receipt relevant to backend selection:
-   `dev/benchmarks/permanent_campaign/backend-ordering.{md,csv}` (296a41c9;
+   `backend-ordering{md,csv}` (296a41c9;
    four configurations, twelve processes each),
    `envelope-2026-08-07.csv` and the other b488f02c
    artifacts, the determinant timing receipt from jit 8cb4def5 (find it via

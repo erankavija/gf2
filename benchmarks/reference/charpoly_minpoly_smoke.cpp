@@ -1,45 +1,4 @@
-// benchmarks/reference/charpoly_minpoly_smoke.cpp
-//
-// Cross-library bitwise-equality oracle for the charpoly + minpoly cells
-// promoted in issue c3e79272 (Wave 3 of epic 97bf0879). Complements
-// `ntl_flint_smoke.cpp` (which already covers `charpoly` between NTL
-// and FLINT) by adding bitwise polynomial-coefficient equality for
-// minpoly (which NTL does not expose at the user-facing API level —
-// see dev/archive/026fc832-gf2-core-sota-stretch/plans/ntl_promotion_evidence.md § Scope of promotion).
-//
-// Per `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6
-// *Correctness-oracle harness*, every promoted (operation, field) cell
-// must be smoke-asserted at n=16 against a fixed-seeded input. The
-// existing per-library smokes cover internal contracts (LinBox:
-// Cayley-Hamilton p(A)=0; FLINT: minpoly | charpoly idempotency); this
-// binary adds the cross-library bitwise-equality contract that the
-// protocol § 6 row for `charpoly` and `minpoly` requires:
-//
-//   "Equality of the characteristic [/ minimal] polynomial as a vector
-//    of coefficients in canonical form, leading coefficient = 1, monic."
-//
-// Operations smoke-checked, at n=16, across LinBox + FLINT, for each
-// of the four reference primes {GF(7), GF(251), GF(65521), GF(2^31-1)}:
-//
-//   * charpoly: bitwise equality of coefficient vectors, deg=n,
-//     monic-leading-coefficient verified on both sides.
-//   * minpoly: bitwise equality of coefficient vectors, deg≤n,
-//     monic-leading-coefficient verified on both sides.
-//
-// The seed for each cell is derived via the shared
-// `gf2_bench_derive_seed(master, tag, op_idx, size_idx, regime_idx)`
-// helper from `seed_helpers.h` with the same `(op_idx, size_idx,
-// regime_idx)` triples (and per-field master XOR pattern) that
-// `linbox_bench` and `flint_bench` use for their n=64 timing rows. The
-// smoke uses `size_idx = 0` (the slot that maps to `n=16` in the smoke
-// configuration) so the cross-library seed and matrix bytes line up
-// without re-implementing the index→size map.
-//
-// Exit non-zero on any mismatch with a per-cell stderr breadcrumb
-// naming the (op, field, n) tuple that diverged.
-//
-// Build: see `benchmarks/reference/Makefile` target
-// `charpoly_minpoly_smoke`. Linked against both LinBox and FLINT.
+// Checks seeded characteristic- and minimal-polynomial identities across reference libraries.
 
 #include <linbox/ring/modular.h>
 #include <linbox/matrix/dense-matrix.h>

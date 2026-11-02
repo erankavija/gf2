@@ -1,72 +1,4 @@
-// benchmarks/reference/ntl_bench.cpp
-//
-// Reference reproducibility harness for NTL 11.6.0 (Victor Shoup,
-// http://www.shoup.net). Emits CSV rows on stdout in the same schema
-// shared with fflas_bench / m4ri_bench:
-//
-//   lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
-//
-// Scope of this harness — kept narrow so the per-cell smoke at n=16
-// directly maps to gf2-core's `FieldMatrix::gemm` / `charpoly`:
-//
-//   * `zz_p` single-precision modular field (NTL_SP_BOUND ≥ 2^31-1
-//     covers all four reference primes: 7, 251, 65521, 2^31-1).
-//   * Operations: `mul` (matrix multiply, alias `fgemm` in CSV),
-//     `inv`, `solve`, `charpoly`. NTL gauss / RREF entry returns the
-//     rank but mutates `mat_zz_p` in place; we expose it as `echelon`
-//     for parity with fflas. PLUQ is NOT exposed by NTL at this level
-//     of the API — `LU` is internal — so we skip the `pluq` cell and
-//     document the gap in dev/archive/026fc832-gf2-core-sota-stretch/plans/ntl_promotion_evidence.md.
-//   * Sizes: 16 (smoke only) and 64 by default. Larger sizes (256,
-//     1024) opt in via --large; per-cell wall-clock is capped at
-//     kCellBudgetNs to avoid runaway on hosts where NTL is materially
-//     slower than fflas-ffpack on the same cell.
-//
-// GF(2^32) extension lane (jit:b13799ac, 2026-05-04)
-// --------------------------------------------------
-// In addition to the four GF(p) primes, this harness emits one
-// `matmul × GF(2^32)` row per size via NTL's `mat_GF2E` type. The
-// extension field is initialised from the GF(2^32) Conway polynomial
-// hard-coded in `crates/gf2-core/src/primitive_polys.rs::standard(32)`
-// (`x^32 + x^15 + x^9 + x^7 + x^4 + x^3 + 1`, hex `0x1_0000_8299`),
-// the same polynomial gf2-core's production `Gf2mWide<1, _>` path uses
-// when an external reference is built against this harness. Because
-// both libraries store an extension element as a polynomial of degree
-// < 32 with coefficient `c_i` at bit `i`, **no basis-change matrix is
-// required** — gf2-core element bytes load directly into NTL via
-// `GF2XFromBytes`. See `dev/archive/026fc832-gf2-core-sota-stretch/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md`
-// for the criterion #3 evidence.
-//
-// Determinism: NTL `zz_p` arithmetic is deterministic; the only
-// random step (CharPoly's internal Las-Vegas variant in some NTL
-// versions) is seeded via NTL::SetSeed so output is bit-stable across
-// reruns at the same master seed. Matrix entries are filled from the
-// shared SplitMix64 stream so this harness, fflas_bench and the gf2
-// criterion benches all agree on the input matrix at seed equality.
-//
-// CLI:
-//   ntl_bench [--seed N] [--warmup K] [--iters K]
-//             [--smoke] [--large]
-//
-// --smoke runs only n=16 cells with warmup=0,iters=1 and prints CSV
-//         rows. The bitwise-equality oracle for the GF(2^32) lane is
-//         delegated to the standalone `ntl_gf2pow32_smoke` binary
-//         (built alongside this one) — R2 rewrite (jit:b13799ac): direct
-//         gf2-core ↔ NTL byte-equality via the ground-truth file
-//         `benchmarks/expected/gf2pow32_smoke_n16.bin` emitted by the
-//         Cargo example
-//         `crates/gf2-coding/examples/gf2pow32_smoke_emit_expected.rs`.
-//         The C++ smoke loads the file and asserts byte-equality between
-//         NTL `mat_GF2E::mul` output and the gf2-core ground-truth
-//         (no scalar intermediary). The Rust test
-//         `crates/gf2-core/tests/gf2pow32_matmul.rs` is retained as a
-//         separate Rust-internal gf2-core ↔ scalar witness, but is no
-//         longer load-bearing for the cross-language smoke contract.
-//         See dev/archive/026fc832-gf2-core-sota-stretch/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md
-//         § "Smoke transcript" and § "Implementation note: smoke
-//         architecture (R2 rewrite)" for the rationale.
-// --large enables n=256, 1024 cells. Off by default because at n=1024
-//         a single charpoly cell on NTL takes 60–120 s on Zen 3.
+// Seeded NTL reference harness with canonical polynomial-residue bit indexing.
 
 #include <chrono>
 #include <cstdint>
@@ -406,11 +338,6 @@ static void bench_mul_gf2pow32(long n, uint64_t seed,
     emit_csv("matmul", "GF(2^32)", n, n, n, "uniform", seed, mean_ns, tput);
 }
 
-// Driver for the GF(2^32) lane: emits one `matmul,GF(2^32)` row per
-// size in `dense_sizes`. The lane covers matmul only — see
-// `dev/archive/97bf0879-gf2-core-sota-performance/plans/gf2m_reference_lane_selection.md` for the Wave-3 scope
-// decision (b13799ac promotes matmul; non-matmul GF(2^m) cells were
-// excluded under `no-independent-oracle`).
 static void run_gf2pow32(uint64_t master_seed,
                          int warmup, int iters,
                          const std::vector<long>& dense_sizes) {

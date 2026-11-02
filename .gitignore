@@ -5,9 +5,8 @@ target/
 # Lockfiles for the standalone dev/ experiment crates and sub-crates, each of
 # which resolves its own dependency graph outside the workspace.
 Cargo.lock
-# The workspace root lockfile is tracked: the workspace ships 15 binaries, and
-# `claims-trace-to-artifacts` (AGENTS.md) requires a benchmark receipt to pin
-# the dependency versions its numbers were produced with.
+# The workspace root lockfile is tracked: a harness reproduces with the
+# dependency versions it pins.
 !/Cargo.lock
 
 # IDE and editor files
@@ -91,9 +90,6 @@ benchmarks/reference/ntl_gf2pow32_smoke
 .agents/ext/
 .agents/scratch/
 
-# sim_runner transient progress logs (final results live in
-# .csv / .json next to them)
-dev/simulation_results/*.progress.jsonl
 benchmarks/reference/fflas_sparse_bench
 benchmarks/reference/linbox_sparse_bench
 benchmarks/reference/sparse_smoke

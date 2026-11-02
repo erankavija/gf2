@@ -4,8 +4,8 @@
 # Reproducible end-to-end runner for the perm-vs-det uniformity sweep
 # (JIT issue 8e4e19a0).
 #
-# Regenerates dev/benchmarks/perm_uniformity/results-2026-05-15.csv and
-# dev/benchmarks/perm_uniformity/tvd_vs_n.png deterministically.
+# Regenerates target/benchmarks/perm_uniformity/results-2026-05-15.csv and
+# target/benchmarks/perm_uniformity/tvd_vs_n.png deterministically.
 #
 # Usage:
 #   bash scripts/perm-uniformity-repro.sh
@@ -40,7 +40,7 @@
 set -euo pipefail
 
 MANIFEST="dev/research/perm_uniformity/Cargo.toml"
-OUT_DIR="dev/benchmarks/perm_uniformity"
+OUT_DIR="target/benchmarks/perm_uniformity"
 
 echo "=== perm-uniformity repro ==="
 echo "  building with --manifest-path (not -p; crate is workspace-excluded)..."

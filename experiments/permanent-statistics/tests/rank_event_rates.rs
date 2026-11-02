@@ -1,7 +1,7 @@
 //! Reproducible rare-event estimates for permanental rank deficiency. The
 //! ignored test is an explicitly invoked campaign. It uses the production rank
 //! predicate, the campaign's domain-separated sampler and the production exact
-//! binomial interval implementation, then writes the committed receipt.
+//! binomial interval implementation, then writes the receipt.
 
 use std::fmt::Write as _;
 use std::path::PathBuf;
@@ -18,7 +18,7 @@ use permanent_statistics::sampler::{
 const ROOT: u64 = 0xE025_1AF3_2026_0813;
 const INTERVAL_LEVEL: f64 = 0.95;
 const NORMAL_95_Z: f64 = 1.96;
-const RECEIPT_FILE: &str = "dev/bench_results/e0251af3-rank-event-rates.md";
+const RECEIPT_FILE: &str = "target/bench_results/e0251af3-rank-event-rates.md";
 
 /// Preregistered cells. Stream indices are unique within the `RareEvent`
 /// purpose and are never shared with validation or campaign-cell draws.
@@ -285,12 +285,13 @@ fn make_receipt(rows: &[ResultRow]) -> String {
 }
 
 #[test]
-#[ignore = "sim: preregistered rare-event rate campaign writes a committed receipt"]
+#[ignore = "sim: preregistered rare-event rate campaign writes a receipt"]
 fn rank_event_rate_receipt() {
     let rows: Vec<_> = CELLS.iter().copied().map(dispatch).collect();
     let receipt_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../")
         .join(RECEIPT_FILE);
+    std::fs::create_dir_all(receipt_path.parent().unwrap()).unwrap();
     std::fs::write(&receipt_path, make_receipt(&rows))
         .unwrap_or_else(|error| panic!("failed to write {}: {error}", receipt_path.display()));
     println!("wrote {}", receipt_path.display());
