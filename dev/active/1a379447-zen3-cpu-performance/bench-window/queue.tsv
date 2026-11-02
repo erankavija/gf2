@@ -125,3 +125,5 @@ d06a99ed	.	20	bash dev/active/1a379447-zen3-cpu-performance/d06a99ed/measurement
 31727c57	.agents/worktrees/agent-31727c57	2	bash dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/batch-fill/pilot-cells/window.sh
 1d787ed3	.agents/worktrees/agent-1d787ed3	40	bash dev/active/55c3e433-aff3ct-ldpc-gaps/pilot/window.sh
 a72f2b3f	.agents/worktrees/agent-a72f2b3f	25	bash dev/active/55c3e433-aff3ct-ldpc-gaps/check-variants/window.sh
+# 67194d70 new pre-draw validation; est_minutes is an estimate from the September run over the same anchors
+67194d70	.agents/worktrees/agent-67194d70	20	bash experiments/permanent-statistics/validation-window.sh
