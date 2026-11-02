@@ -12,7 +12,7 @@ Main is at the commit carrying this file. The owner authorized one more rework r
 
 - The batch-decoder survey, whose Cargo paths no longer resolved, and its CI steps. The `55c3e433` handoff states where it survives.
 - `fd9d5416`'s receipt renderer and its test, which needed a removed baseline.
-- `dev/authoring-conventions.md`, which described archival.
+- `authoring-conventions.md`, which described archival.
 - `dev/scripts`: `resume_identity`, `verify-campaign-log`, `verify-source-evidence`, `campaign_inputs`, `campaign_tables`, `crate_functions`, `check-addendum-schema-versions`, `check-family-producing-closures`, `pin-prior-receipt` and `validate_tuning_extent_campaign_test`. Some of these were in `506f76d4`'s scope, which shrinks accordingly.
 
 ## Traps
