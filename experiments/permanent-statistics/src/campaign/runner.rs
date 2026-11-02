@@ -11,7 +11,7 @@ use crate::sampler::StreamPurpose;
 use experiments_common::{RunIdentity, RunRecord};
 use gf2_sim::checkpoint::{CheckpointPayload, CheckpointReader, CheckpointWriter};
 use serde::{Deserialize, Serialize};
-use std::{fs, path::Path};
+use std::path::Path;
 
 /// Explicit policy for an unavailable configured backend.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -92,6 +92,7 @@ pub(crate) enum Event {
         shard_id: u64,
         attempt: u32,
         error: String,
+        halt_reason: Option<HaltReason>,
     },
     CellTerminal {
         q: u8,
@@ -217,7 +218,10 @@ pub(crate) fn replay(directory: &Path, manifest: &Manifest) -> Result<State, Cam
                 state.progressed = true;
             }
             Event::ShardFailed {
-                shard_id, attempt, ..
+                shard_id,
+                attempt,
+                halt_reason,
+                ..
             } => {
                 if p.identity.is_none()
                     || p.terminal.is_some()
@@ -227,6 +231,9 @@ pub(crate) fn replay(directory: &Path, manifest: &Manifest) -> Result<State, Cam
                     return invalid("failure out of order");
                 }
                 p.failures = attempt;
+                if let Some(reason) = halt_reason {
+                    state.halted = Some(reason);
+                }
                 state.progressed = true;
             }
             Event::CellTerminal { row, .. } => {
@@ -348,7 +355,6 @@ pub fn run_cell(
             _ => None,
         }
     };
-    fs::create_dir_all(directory)?;
     let mut log = ExecutionLog::open(&directory.join("execution.jsonl"))?;
     let result = (|| {
         manifest.publish(directory)?;
@@ -468,21 +474,22 @@ pub fn run_cell(
                 }
                 Err(error) => {
                     state.cells[i].failures += 1;
+                    let halt_reason = if matches!(error, CampaignError::BackendUnavailable) {
+                        Some(HaltReason::BackendUnavailable)
+                    } else if state.cells[i].failures >= config.execution.max_shard_attempts {
+                        Some(HaltReason::ExecutionFailure)
+                    } else {
+                        None
+                    };
                     log.append(&Event::ShardFailed {
                         q,
                         n,
                         shard_id: shard.shard_id,
                         attempt: state.cells[i].failures,
                         error: error.to_string(),
+                        halt_reason,
                     })?;
-                    if matches!(error, CampaignError::BackendUnavailable)
-                        || state.cells[i].failures >= config.execution.max_shard_attempts
-                    {
-                        let reason = if matches!(error, CampaignError::BackendUnavailable) {
-                            HaltReason::BackendUnavailable
-                        } else {
-                            HaltReason::ExecutionFailure
-                        };
+                    if let Some(reason) = halt_reason {
                         halt(directory, &mut log, &cells, &mut state, i, reason)?;
                     }
                 }

@@ -57,7 +57,7 @@ pub struct Sample {
     /// Probability-ordering exact test evidence.
     pub log_p_value: f64,
 }
-/// Terminal anchor evidence; exact failures omit regeneration and sampling.
+/// Terminal anchor evidence; a dispatch failure retains completed checks.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AnchorResult {
     /// Field order.
@@ -76,6 +76,8 @@ pub struct AnchorResult {
     pub regeneration: Option<Regeneration>,
     /// Exact-null draw check, only after exact checks pass.
     pub sample: Option<Sample>,
+    /// Dispatch diagnostic for a terminal mechanical failure.
+    pub failure: Option<String>,
     /// All anchor checks pass.
     pub verdict: bool,
 }
@@ -174,6 +176,8 @@ fn draws<const Q: u64>(
     workers: usize,
     mut observer: impl FnMut(&[Fp<Q>], u64, Option<u64>),
 ) -> Result<super::dataset::ShardRecord, CampaignError> {
+    #[cfg(test)]
+    tests::before_draw()?;
     let cell = validation_cell(config, anchor, count);
     evaluate_shard::<Q, _>(
         config.validation.root_seed,
@@ -296,54 +300,62 @@ fn exact_anchor<const Q: u64>(
         backends,
         regeneration: None,
         sample: None,
+        failure: None,
         verdict: exact_pass,
     };
     if !exact_pass {
         return Ok(result);
     }
-    let mut digests = Vec::new();
-    for w in [1, workers] {
-        let mut bytes = Vec::new();
-        draws::<Q>(
+    let sampled = super::guard_dispatch(|| {
+        let mut digests = Vec::new();
+        for w in [1, workers] {
+            let mut bytes = Vec::new();
+            draws::<Q>(
+                config,
+                anchor,
+                config.validation.regeneration_matrix_count,
+                w,
+                |entries, p, _| {
+                    bytes.extend(entries.iter().map(|e| e.value() as u8));
+                    bytes.push(p as u8);
+                },
+            )?;
+            digests.push(Sha256Digest::of(&bytes));
+        }
+        let identical = digests[0] == digests[1];
+        result.regeneration = Some(Regeneration {
+            workers: [1, workers],
+            sha256: [digests[0].clone(), digests[1].clone()],
+            identical,
+        });
+        let sample = draws::<Q>(
             config,
             anchor,
-            config.validation.regeneration_matrix_count,
-            w,
-            |entries, p, _| {
-                bytes.extend(entries.iter().map(|e| e.value() as u8));
-                bytes.push(p as u8);
-            },
+            config.validation.sample_matrix_count,
+            workers,
+            |_, _, _| {},
         )?;
-        digests.push(Sha256Digest::of(&bytes));
+        let test = two_sided_test(
+            sample.permanent_zero_count,
+            sample.matrix_count,
+            oracle_zero_count as f64 / enumerated as f64,
+        );
+        result.sample = Some(Sample {
+            matrix_count: sample.matrix_count,
+            zero_count: sample.permanent_zero_count,
+            log_p_value: test.log_p_value(),
+        });
+        result.verdict = identical && !test.rejects_at(config.validation.level);
+        Ok(())
+    });
+    if let Err(error) = sampled {
+        result.failure = Some(error.to_string());
+        result.verdict = false;
     }
-    let identical = digests[0] == digests[1];
-    result.regeneration = Some(Regeneration {
-        workers: [1, workers],
-        sha256: [digests[0].clone(), digests[1].clone()],
-        identical,
-    });
-    let sample = draws::<Q>(
-        config,
-        anchor,
-        config.validation.sample_matrix_count,
-        workers,
-        |_, _, _| {},
-    )?;
-    let test = two_sided_test(
-        sample.permanent_zero_count,
-        sample.matrix_count,
-        oracle_zero_count as f64 / enumerated as f64,
-    );
-    result.sample = Some(Sample {
-        matrix_count: sample.matrix_count,
-        zero_count: sample.permanent_zero_count,
-        log_p_value: test.log_p_value(),
-    });
-    result.verdict = identical && !test.rejects_at(config.validation.level);
     Ok(result)
 }
 /// Resumes at anchor boundaries; a terminal failure remains failed and is never redrawn.
-/// A killed anchor starts again at its identical validation address. Campaign
+/// A killed anchor without a terminal outcome restarts at its identical address. Campaign
 /// addresses are never opened. Refuses a changed closed identity or backend unavailability.
 pub fn run_validation(
     config: &CampaignConfig,
@@ -407,7 +419,19 @@ pub fn run_validation(
                 5 => exact_anchor::<5>(config, anchor, workers),
                 7 => exact_anchor::<7>(config, anchor, workers),
                 _ => unreachable!(),
-            })?;
+            })
+            .unwrap_or_else(|error| AnchorResult {
+                q: anchor.q,
+                n: anchor.n,
+                enumerated: 0,
+                oracle_zero_count: 0,
+                determinant_zero_count: 0,
+                backends: Vec::new(),
+                regeneration: None,
+                sample: None,
+                failure: Some(error.to_string()),
+                verdict: false,
+            });
             log.append(&Event::AnchorTerminal {
                 anchor: result.clone(),
             })?;
@@ -440,4 +464,85 @@ pub fn run_validation(
         },
     })?;
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cell::Cell as LocalCell;
+
+    thread_local! {
+        static DRAW_FAILURE: LocalCell<Option<(usize, bool)>> = const { LocalCell::new(None) };
+    }
+
+    pub(super) fn before_draw() -> Result<(), CampaignError> {
+        DRAW_FAILURE.with(|fault| match fault.get() {
+            Some((0, panic)) => {
+                fault.set(None);
+                if panic {
+                    panic!("injected draw failure");
+                }
+                invalid("injected draw failure")
+            }
+            Some((remaining, panic)) => {
+                fault.set(Some((remaining - 1, panic)));
+                Ok(())
+            }
+            None => Ok(()),
+        })
+    }
+
+    #[test]
+    fn regeneration_and_sampling_dispatch_failures_are_terminal_on_resume() {
+        let mut config: CampaignConfig =
+            serde_json::from_str(include_str!("../../config/small-campaign.json")).unwrap();
+        config.validation.anchors.truncate(1);
+        let root =
+            experiments_common::RepositoryRoot::containing(Path::new(env!("CARGO_MANIFEST_DIR")))
+                .unwrap();
+        let record = RunRecord::observe(
+            &root,
+            config.digest().unwrap(),
+            config.validation.root_seed,
+            crate::sampler_rng(),
+        )
+        .unwrap();
+        for draw in 0..3 {
+            for panic in [false, true] {
+                let directory = tempfile::tempdir().unwrap();
+                DRAW_FAILURE.with(|fault| fault.set(Some((draw, panic))));
+                assert_eq!(
+                    run_validation(&config, &record, directory.path(), 2, None).unwrap(),
+                    ValidationStatus::Failed,
+                    "draw {draw}, panic {panic}"
+                );
+                let path = directory.path().join("receipt.json");
+                let bytes = std::fs::read(&path).unwrap();
+                let receipt: Receipt = serde_json::from_slice(&bytes).unwrap();
+                let anchor = &receipt.anchors[0];
+                assert!(!anchor.verdict);
+                assert_eq!(anchor.enumerated, 3);
+                assert_eq!(anchor.oracle_zero_count, 1);
+                assert!(anchor
+                    .failure
+                    .as_ref()
+                    .unwrap()
+                    .contains("injected draw failure"));
+                assert_eq!(anchor.regeneration.is_some(), draw == 2);
+                assert!(anchor.sample.is_none());
+                assert_eq!(
+                    run_validation(&config, &record, directory.path(), 2, None).unwrap(),
+                    ValidationStatus::Failed
+                );
+                assert_eq!(std::fs::read(&path).unwrap(), bytes);
+                let terminals =
+                    ExecutionLog::read::<Event>(&directory.path().join("execution.jsonl"))
+                        .unwrap()
+                        .into_iter()
+                        .filter(|event| matches!(event, Event::AnchorTerminal { .. }))
+                        .count();
+                assert_eq!(terminals, 1);
+            }
+        }
+    }
 }
