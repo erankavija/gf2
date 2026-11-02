@@ -121,6 +121,29 @@ fn reduction_matches_the_scalar_reference_on_extrema_and_non_finite() {
 }
 
 #[test]
+fn reduction_matches_short_rows_with_interleaved_nan_and_minima() {
+    let values = [
+        f32::NAN,
+        f32::INFINITY,
+        f32::NEG_INFINITY,
+        0.0,
+        -0.0,
+        1.0,
+        -1.0,
+        2.0,
+        f32::from_bits(1),
+        -f32::from_bits(1),
+    ];
+    for a in values {
+        for b in values {
+            for c in values {
+                assert_row_matches_reference(&[a, b, c]);
+            }
+        }
+    }
+}
+
+#[test]
 fn reduction_handles_degree_one_and_degree_zero() {
     for rule in RULES {
         let mut outputs = [Llr::new(7.0)];
