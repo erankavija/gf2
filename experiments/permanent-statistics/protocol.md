@@ -73,7 +73,10 @@ restated multiplicity allocation.
 ## Error budget and exact decisions
 
 The family-wise false-alarm budget is $0.05$, spent once. Bonferroni bounds the
-combined probability without an independence assumption between the counts.
+combined probability without an independence assumption between the counts. The
+permanent budget divides over all cells and the determinant budget over the
+determinant-enabled cells; here every cell has a companion, so both divide by
+$63$.
 
 | Family | Family budget | Tests | Per-cell level |
 |---|---:|---:|---:|
@@ -144,8 +147,8 @@ For each anchor, in order:
    value exceeds $0.001$, so equality fails.
 
 This budget is separate from the scientific one, because validation can only
-prevent launch. Every anchor reaches a terminal record. A failed anchor is not
-redrawn: it stays failed on resume, blocks campaign draws, and requires a
+prevent launch. Every anchor reaches a terminal record. A dispatch error during
+validation is a terminal failure of its anchor. A failed anchor is not redrawn: it stays failed on resume, blocks campaign draws, and requires a
 diagnosed correction and a new validation protocol run. A killed
 process reruns its unterminated anchor at the same address, drawing the same
 matrices. The draw count and order-three truth carry forward the
@@ -311,7 +314,6 @@ unchanged. These rules differ:
 |---|---|
 | New campaign id, campaign root seed, and validation addresses. | The prior protocol bound its arms to emitter `c9b2307a`, which the rebuilt tool replaces, and a changed protocol requires a new id. |
 | One Wilson z, the configuration's `wilson_z`, for every report. | The prior tool's summary used a shorter constant than its sidecars and script. |
-| Each family budget divides over all cells, $K$. | The prior tool divided the determinant budget by determinant-enabled cells. Every cell has a companion, so the level stays $1/2520$. |
 | A killed process spends no attempt; a caught panic does. | A rerun of the same address redraws identical matrices, while a panic is a reported failure. |
 | A failed attempt is a `shard_failed` log entry with its message; no quarantine file or attempt bytes persist. | The log is the authoritative record, and a retry redraws the same matrices. |
 | `shard_size` is $200\,000$ in precision tiers, was $50\,000$. | Shard count and log size fit `@/inv/committed-evidence-budget`. Counts and tests are untouched; a shard is the unit of repeated work on interruption. |
