@@ -36,6 +36,7 @@
 - **Do NOT merge a purge or tool deletion without unlinking first.** `jit validate` fails on issue documents whose file is gone, twice this session. Check after each deletion.
 - **Do NOT commit in the same command as a test whose result you only print.** `a23c2eafa` and `42dde1744` landed broken this way. Gate the commit on the result.
 - **Do NOT `cd` into a worker's worktree from the lead.** The harness moved a teammate's directory with it.
+- **Do NOT file an issue with `--orphan`.** It fails whole-repository validation until wired; wire it to its epic in the same step.
 - **Do NOT run gates while workers build.** `cargo-ci` hit its 900-second limit, and whole test binaries timed out; `49b040e6` tracks why. A failed verdict is cached by input digest until an input changes.
 - **Do NOT treat a passing gate round as final after changing shared code.** `experiments/common` changed after `e3370140` and `779d1926` first passed.
 - Traps in handoff-30 about the September validation no longer apply: that path is rejected.
