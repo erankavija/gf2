@@ -16,6 +16,8 @@ gf2-algebra = { path = "../../crates/gf2-algebra" }
 gf2-core = { path = "../../crates/gf2-core" }
 gf2-sim = { path = "../../crates/gf2-sim" }
 gf2-stats = { path = "../../crates/gf2-stats" }
+rand_chacha = { workspace = true }
+rand_core = { workspace = true }
 serde = { workspace = true }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 

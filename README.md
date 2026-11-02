@@ -16,10 +16,10 @@ equivalents within a declared numerical contract.
 | [`gf2-coding`](crates/gf2-coding/README.md) | Code constructions, decoders, modems and channel models, including the DVB-T2 (`@/citation/Etsi2015`) and 5G NR (`@/citation/ThreeGpp2017`) codes ([standards conformance](docs/reference/standards-conformance.md)) |
 | [`gf2-algebra`](crates/gf2-algebra/README.md) | Packed arithmetic over $\mathbb{F}_3$, $\mathbb{F}_5$ and $\mathbb{F}_7$ and matrix permanents over those fields |
 | [`gf2-sim`](crates/gf2-sim/README.md) | Seeded, checkpointed error-rate sweeps and campaigns over pipelines of `gf2-coding` stages, on CPU workers and, with the `hip` feature, a HIP device |
-| [`gf2-stats`](crates/gf2-stats/README.md) | Seeded matrix sampling, binomial intervals and exact binomial tests for campaigns |
+| [`gf2-stats`](crates/gf2-stats/README.md) | Binomial tests, confidence intervals and exact weighted-run reduction |
 
-`gf2-coding`, `gf2-algebra` and `gf2-stats` depend on `gf2-core`; `gf2-sim`
-depends on all four.
+`gf2-coding`, `gf2-algebra` and `gf2-sim` depend on `gf2-core`; `gf2-sim`
+also uses `gf2-stats` for interval estimates.
 
 Two backend crates hold the workspace's production `unsafe` code and are
 reached through the library crates' Cargo features

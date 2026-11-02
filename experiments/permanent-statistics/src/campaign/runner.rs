@@ -7,9 +7,9 @@ use super::{
     CampaignConfig, CampaignError, Cell,
 };
 use crate::execution_log::ExecutionLog;
+use crate::sampler::StreamPurpose;
 use experiments_common::{RunIdentity, RunRecord};
 use gf2_sim::checkpoint::{CheckpointPayload, CheckpointReader, CheckpointWriter};
-use gf2_stats::sampler::StreamPurpose;
 use serde::{Deserialize, Serialize};
 use std::{fs, path::Path};
 

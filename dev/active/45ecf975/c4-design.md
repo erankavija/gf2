@@ -15,7 +15,7 @@ Goal: replace `crates/gf2-sim/src/permanent_campaign/` and three bins with `expe
 9. **Closed identity only (REQ-03).** Resume and acceptance compare `experiments_common::RunIdentity`. The only git read is `RunRecord::observe` taking the rebuild pointer. Backend evidence is a cited path, never verified. Worker count and fallback are logged run-time observations outside identity.
 10. **Identity binds per cell.** A cell's first `start` fixes its identity; resuming it under a different identity refuses. Other cells may use another build (hip and non-hip) or host, but `configuration_sha256` is campaign-wide.
 11. **No time ceiling in the tool.** None exists today (no timer in `coordinator.rs`); bounded runs replace it, and C5 states the 12-hour clause as an operator rule or removes it.
-12. **Sampler import** is `gf2_stats::sampler`; if `@/issue/c251bf43` lands first it is `crate::sampler`. Only `use` lines differ.
+12. **Sampler import** within the experiment crate is `crate::sampler`; integration tests use `permanent_statistics::sampler`.
 13. **Advisory lock:** `File::try_lock` on the log, as `acquire_execution_lock` does today, catches a double launch in three lines. No symlink or fd-anchored defence.
 
 ## Modules

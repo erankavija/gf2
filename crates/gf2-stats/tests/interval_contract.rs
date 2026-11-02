@@ -108,7 +108,7 @@ fn clopper_pearson_matches_independent_binomial_tail_inversion() {
 }
 
 #[test]
-fn clopper_pearson_is_well_formed_at_campaign_maximum() {
+fn clopper_pearson_is_well_formed_at_large_counts() {
     let (lower, upper) = clopper_pearson_interval(2_857_143, 20_000_000, LEVEL_95);
     assert!(lower.is_finite() && upper.is_finite());
     assert!(0.0 <= lower && lower <= upper && upper <= 1.0);

@@ -1,10 +1,10 @@
 mod common;
-use gf2_stats::sampler::StreamPurpose;
 use permanent_statistics::campaign::{
     evaluate_shard,
     validation::{run_validation, BackendStatus, Receipt, ValidationStatus},
     Backend, CampaignConfig,
 };
+use permanent_statistics::sampler::StreamPurpose;
 use std::fs;
 
 fn record(config: &CampaignConfig) -> experiments_common::RunRecord {
@@ -163,7 +163,7 @@ fn validation_only_binds_closed_identity() {
 #[test]
 fn equality_at_the_exact_sample_threshold_fails_the_anchor() {
     use gf2_core::gfp::Fp;
-    use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex};
+    use permanent_statistics::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex};
     let mut config = common::config();
     config.validation.anchors.truncate(1);
     config.validation.sample_matrix_count = 1;

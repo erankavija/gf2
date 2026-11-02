@@ -5,12 +5,12 @@ use gf2_algebra::permanent::{
     Vector3,
 };
 use gf2_core::gfp::Fp;
-use gf2_stats::sampler::{FieldOrder, MatrixAddress, StreamIndex, StreamPurpose};
 use gf2_stats::weighted::{ExponentHistogram, WeightedRuns};
 use permanent_statistics::rare_event::{
     checkpoint_trajectory, resume_trajectory, sample_trajectories_in_order, sample_trajectory,
     ProposalSupport,
 };
+use permanent_statistics::sampler::{FieldOrder, MatrixAddress, StreamIndex, StreamPurpose};
 
 fn address(q: FieldOrder, rows: usize, index: u64) -> MatrixAddress {
     MatrixAddress::new(

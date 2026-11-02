@@ -4,12 +4,13 @@ use super::{
     Anchor, Backend, CampaignConfig, CampaignError, Cell, Kernel, ShardSpec,
 };
 use crate::execution_log::ExecutionLog;
+use crate::sampler::StreamPurpose;
 use experiments_common::{publish_atomic, RunRecord, Sha256Digest};
 use gf2_algebra::permanent::{
     determinant_singular_probability, try_visit_permanent_anchor_matrices,
 };
 use gf2_core::gfp::Fp;
-use gf2_stats::{binomial::two_sided_test, sampler::StreamPurpose};
+use gf2_stats::binomial::two_sided_test;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 

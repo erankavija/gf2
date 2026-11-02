@@ -1,6 +1,4 @@
-use gf2_stats::binomial::{
-    bonferroni_level, lower_tail_test, permanent_zero_floor_test, two_sided_test,
-};
+use gf2_stats::binomial::{bonferroni_level, lower_tail_test, two_sided_test};
 
 const TOLERANCE: f64 = 2e-11;
 
@@ -40,7 +38,7 @@ fn assert_log_p_value_matches(actual_log_p_value: f64, expected_p_value: f64) {
 }
 
 #[test]
-fn floor_test_matches_an_independent_lower_tail_sum() {
+fn lower_tail_at_field_floor_matches_an_independent_sum() {
     for (successes, trials, field_order) in [
         (0, 20, 3),
         (4, 20, 3),
@@ -50,7 +48,7 @@ fn floor_test_matches_an_independent_lower_tail_sum() {
     ] {
         let probability = 1.0 / field_order as f64;
         let expected = binomial_lower_tail(successes, trials, probability);
-        let actual = permanent_zero_floor_test(successes, trials, field_order);
+        let actual = lower_tail_test(successes, trials, 1.0 / field_order as f64);
         assert_log_p_value_matches(actual.log_p_value(), expected);
     }
 }
@@ -122,17 +120,17 @@ fn bonferroni_level_splits_a_global_error_budget() {
 }
 
 #[test]
-fn campaign_scale_floor_decisions_keep_a_finite_log_p_value() {
+fn large_sample_floor_decisions_keep_a_finite_log_p_value() {
     const TRIALS: u64 = 20_000_000;
     let level = bonferroni_level(0.05, 63);
 
-    let below_threshold = permanent_zero_floor_test(6_000_000, TRIALS, 3);
+    let below_threshold = lower_tail_test(6_000_000, TRIALS, 1.0 / 3.0);
     assert!(below_threshold.log_p_value().is_finite());
     assert!(below_threshold.log_p_value() < f64::MIN_POSITIVE.ln());
     assert_eq!(below_threshold.log_p_value().exp(), 0.0);
     assert!(below_threshold.rejects_at(level));
 
-    let above_threshold = permanent_zero_floor_test(6_662_000, TRIALS, 3);
+    let above_threshold = lower_tail_test(6_662_000, TRIALS, 1.0 / 3.0);
     assert!(above_threshold.log_p_value().is_finite());
     assert!(!above_threshold.rejects_at(level));
 }

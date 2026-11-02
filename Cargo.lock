@@ -494,6 +494,8 @@ dependencies = [
  "gf2-stats",
  "num-bigint",
  "proptest",
+ "rand_chacha 0.9.0",
+ "rand_core 0.9.3",
  "rayon",
  "serde",
  "serde_json",
@@ -604,12 +606,7 @@ dependencies = [
 name = "gf2-stats"
 version = "0.1.0"
 dependencies = [
- "gf2-core",
  "num-bigint",
- "rand_chacha 0.9.0",
- "rand_core 0.9.3",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -893,6 +890,8 @@ dependencies = [
  "gf2-core",
  "gf2-sim",
  "gf2-stats",
+ "rand_chacha 0.9.0",
+ "rand_core 0.9.3",
  "rayon",
  "serde",
  "serde_json",

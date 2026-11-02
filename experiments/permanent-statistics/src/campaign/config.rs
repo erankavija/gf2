@@ -261,7 +261,7 @@ impl CampaignConfig {
             if !matches!(anchor.q, 3 | 5 | 7)
                 || anchor.n == 0
                 || anchor.n > if anchor.q == 3 { 4 } else { 3 }
-                || anchor.stream_index >= gf2_stats::sampler::STREAM_INDEX_LIMIT
+                || anchor.stream_index >= crate::sampler::STREAM_INDEX_LIMIT
                 || !addresses.insert((anchor.q, anchor.n, anchor.stream_index))
                 || !backend_supports_cell(v.sample_backend, anchor.q, anchor.n)
             {

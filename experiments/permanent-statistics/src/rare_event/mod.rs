@@ -4,9 +4,9 @@
 
 use std::fmt;
 
+use crate::sampler::{MatrixAddress, MatrixSampler, SamplerError, StreamPurpose};
 use gf2_algebra::permanent::{CompressedRankState, SupportedPrimeField, Vector3};
 use gf2_core::gfp::Fp;
-use gf2_stats::sampler::{MatrixAddress, MatrixSampler, SamplerError, StreamPurpose};
 
 pub mod runner;
 

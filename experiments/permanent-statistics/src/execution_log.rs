@@ -51,7 +51,7 @@ impl ExecutionLog {
 }
 
 pub(crate) mod field_order {
-    use gf2_stats::sampler::FieldOrder;
+    use crate::sampler::FieldOrder;
     use serde::Deserialize;
     use serde::{Deserializer, Serializer};
 

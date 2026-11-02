@@ -9,10 +9,15 @@ use gf2_algebra::permanent::{
 };
 use gf2_core::gfp::Fp;
 use gf2_stats::intervals::clopper_pearson_interval;
-use gf2_stats::sampler::{FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose};
+
+#[path = "support/matrix_draw.rs"]
+mod matrix_draw;
+
+use matrix_draw::MatrixDraw;
 
 const VALIDATION_ROOT: u64 = 0x4453_4B2F_0000_0001;
 const VALIDATION_STREAM: u64 = 0;
+const VALIDATION_PURPOSE_TAG: u8 = 1;
 const VALIDATION_DRAWS_PER_CELL: u64 = 4_096;
 const VALIDATION_INTERVAL_LEVEL: f64 = 0.999;
 
@@ -181,29 +186,19 @@ fn determinant_enumeration_matches_the_finite_n_formula() {
     }
 }
 
-fn field_order(field_order: u64) -> FieldOrder {
-    match field_order {
-        3 => FieldOrder::F3,
-        5 => FieldOrder::F5,
-        7 => FieldOrder::F7,
-        _ => unreachable!("anchor cells use only the supported prime fields"),
-    }
-}
-
-fn sampled_zero_count<const Q: u64>(field_order: FieldOrder, dimension: usize) -> u64 {
-    let address = MatrixAddress::new(
+fn sampled_zero_count<const Q: u64>(field_order: u64, dimension: usize) -> u64 {
+    let mut sampler = MatrixDraw::addressed(
         VALIDATION_ROOT,
         field_order,
         dimension,
-        StreamPurpose::Validation,
-        StreamIndex::new(VALIDATION_STREAM).expect("validation stream fits in 56 bits"),
+        VALIDATION_PURPOSE_TAG,
+        VALIDATION_STREAM,
     );
-    let mut sampler = MatrixSampler::<Q>::new(address).expect("field order matches sampler");
     let mut entries = [Fp::<Q>::new(0); 16];
     let mut zero_count = 0_u64;
     for _ in 0..VALIDATION_DRAWS_PER_CELL {
         let matrix = &mut entries[..(dimension * dimension)];
-        sampler.fill_next_matrix(matrix);
+        sampler.fill_matrix(matrix);
         zero_count += u64::from(permanent_ryser(matrix, dimension) == Fp::<Q>::new(0));
     }
     zero_count
@@ -213,9 +208,9 @@ fn sampled_zero_count<const Q: u64>(field_order: FieldOrder, dimension: usize) -
 fn validation_stream_sampler_and_clopper_pearson_cover_every_exact_anchor() {
     for &(order, dimension) in ANCHOR_CELLS {
         let zero_count = match order {
-            3 => sampled_zero_count::<3>(field_order(order), dimension),
-            5 => sampled_zero_count::<5>(field_order(order), dimension),
-            7 => sampled_zero_count::<7>(field_order(order), dimension),
+            3 => sampled_zero_count::<3>(order, dimension),
+            5 => sampled_zero_count::<5>(order, dimension),
+            7 => sampled_zero_count::<7>(order, dimension),
             _ => unreachable!("anchor cells use only the supported prime fields"),
         };
         let exact = expected_permanent_anchor(order, dimension);
@@ -237,10 +232,9 @@ fn validation_stream_sampler_and_clopper_pearson_cover_every_exact_anchor() {
         assert!(
             lower <= exact_as_f64 && exact_as_f64 <= upper,
             "validation interval {lower:?}..={upper:?} excluded exact {}/{} at q={order}, n={dimension}; \
-             root={VALIDATION_ROOT:#x}, purpose={:?}, stream={VALIDATION_STREAM}, draws={VALIDATION_DRAWS_PER_CELL}, level={VALIDATION_INTERVAL_LEVEL}",
+             root={VALIDATION_ROOT:#x}, purpose_tag={VALIDATION_PURPOSE_TAG}, stream={VALIDATION_STREAM}, draws={VALIDATION_DRAWS_PER_CELL}, level={VALIDATION_INTERVAL_LEVEL}",
             exact.zero_count(),
             exact.matrix_count(),
-            StreamPurpose::Validation,
         );
     }
 }
