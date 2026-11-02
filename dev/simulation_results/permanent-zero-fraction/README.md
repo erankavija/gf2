@@ -1,5 +1,7 @@
 # Permanent zero-fraction datasets
 
+Retired history: the draft dataset `permanent-zero-fraction-20260829` was never used, and the current campaign lives in [experiments/permanent-statistics](/experiments/permanent-statistics/protocol.md).
+
 This directory is the permanent home for published campaign outputs that
 measure permanent-zero fractions over small prime fields. Each child directory
 is one immutable, versioned dataset:
@@ -367,7 +369,7 @@ verdict; halted cells retain only counts and their mechanical reason.
 The Wilson computation is a Python transliteration of the campaign's fixed
 interval convention, using $z=1.959963984540054$, rather than a second
 statistical policy. Its $q=3$ comparison columns read the versioned
-[`scheinerman2024-q3-targets-v1.csv`](scheinerman2024-q3-targets-v1.csv)
+[`scheinerman2024-q3-targets-v1.csv`](/experiments/permanent-statistics/data/scheinerman2024-q3-targets-v1.csv)
 source-count table beside this README; they recompute source points and source
 intervals from those counts. For a completed row with a source comparison,
 `precision_classification` is `prior_exact` when the source evidence is exact
