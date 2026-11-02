@@ -1447,7 +1447,7 @@ def forced_hashes(owner: str, selectors: Any) -> dict[str,str]:
     section={'schema_version':1,'measurement':{'kind':'inherited'},'selectors':sorted_json(selectors)}
     content=envelope_content(profile_id,{section_id:section})
     assembly={'kind':'assembled','assembled_at':'1970-01-01T00:00:00Z','source_revision':'0'*40,
-              'source_dirty':False,'tool':f'crates/{owner}/benches/tuning_calibration.rs',
+              'source_dirty':False,'tool':f'experiments/tuning-calibration/benches/{owner.removeprefix("gf2-")}.rs',
               'tool_sha256':'0'*64,'content_sha256':content}
     document=compact({'profile_format_version':2,'profile_id':profile_id,'assembly':assembly,'sections':{section_id:section}})+b'\n'
     return {'section':digest(compact(sorted_json(section))),'content':content,'envelope':digest(document)}
@@ -1495,7 +1495,7 @@ def validate_published_provenance(envelope: Any, owner: str, request: Any, confi
     measurement={'kind':'calibrated','measured_at':request['measurement']['observed_utc'],
                  'source_revision':config['identity']['source_revision'],
                  'source_dirty':runtime['source_dirty'],
-                 'harness':f'crates/{owner}/benches/tuning_calibration.rs','harness_schema':behavior,
+                 'harness':f'experiments/tuning-calibration/benches/{owner.removeprefix("gf2-")}.rs','harness_schema':behavior,
                  'binary_sha256':config['identity']['executable_sha256'][process],
                  'toolchain':runtime['toolchain'],'host':config['identity']['host_identity'],
                  **{key:runtime[key] for key in ['cpu_model','cpu_features','os_kernel','governor','receipt']}}
@@ -3653,7 +3653,7 @@ def validate_owner_publication(stage: Path, campaign: str, name: str, owner: str
     require_keys(assembly_runtime, ["source_dirty", "tool", "tool_sha256"],
                  f"{name} assembly runtime")
     require(assembly_runtime == {"source_dirty": recorded_source_dirty(config),
-                                 "tool": f"crates/gf2-{name}/benches/tuning_calibration.rs",
+                                 "tool": f"experiments/tuning-calibration/benches/{name}.rs",
                                  "tool_sha256": producer["executable_sha256"]},
             f"{name} assembly runtime mismatch")
     response_path = directory / "response.json"
@@ -5432,7 +5432,7 @@ def coding_owner_self_test() -> None:
                                          "decode": coding_selectors(field, closed, 4)}) == {
                 "section": "e3b8ecd633a7f2f7b3dbcc5d08a762507ba3176487ece0e0688973b0bc1e5728",
                 "content": "53985d141a50c071f8578458823b618741f277f15989b3b9d85082f2cd3bf949",
-                "envelope": "41c27acfca2c56af86709368f001f0c053bfe867b761c58231ba1f6c084beb28"},
+                "envelope": "3eac220507460d2e00dd31389a55ba3ea7d9254d257eafb1f24da19a8358a1ab"},
             "coding forced profile golden receipt")
     require(coding_schedule(field, closed, 4, "avx2")
                 == {"route": "single-frame", "task_frames": 32, "tasks": 4}

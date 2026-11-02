@@ -71,7 +71,7 @@ const PROCESS: &str = "coding-producer";
 const FRAME_ROLE: u64 = 0x0d00;
 const POOL_THREADS: usize = 4;
 const FORCED_PROFILE_ID: &str = "coding-decode-forced";
-const HARNESS_PATH: &str = "crates/gf2-coding/benches/tuning_calibration.rs";
+const HARNESS_PATH: &str = "experiments/tuning-calibration/benches/coding.rs";
 const DIRECT_ENTRY: &str = "ldpc-batch-decoder";
 const POOLED_ENTRY: &str = "pooled-ldpc-batch-decoder";
 
@@ -1653,7 +1653,11 @@ fn fixture_generator() -> Result<FixtureGenerator, String> {
     FixtureGenerator::locked::<StdRng>(
         BUILD_LOCK,
         env!("CARGO_PKG_NAME"),
-        &[&["rand"], &["rand", "rand_chacha"], &["rand_distr"]],
+        &[
+            &["rand"],
+            &["rand", "rand_chacha"],
+            &["gf2-coding", "rand_distr"],
+        ],
     )
     .map_err(|error| error.to_string())
 }

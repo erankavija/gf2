@@ -160,3 +160,8 @@ threads-required = 4
 [[profile.ci.overrides]]
 filter = 'package(dvb-t2-awgn) and (binary(campaign_cli_flags) or binary(campaign_byte_identity))'
 threads-required = 4
+
+# Calibration probes create dedicated four-worker pools.
+[[profile.ci.overrides]]
+filter = 'package(tuning-calibration)'
+threads-required = 4

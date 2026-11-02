@@ -160,7 +160,7 @@ fn main() {
         let workspace_root = {
             let manifest_dir = env!("CARGO_MANIFEST_DIR");
             std::path::Path::new(manifest_dir)
-                .parent() // → crates/
+                .parent() // → experiments/
                 .and_then(|p| p.parent()) // → workspace root
                 .unwrap_or(std::path::Path::new("."))
                 .to_path_buf()

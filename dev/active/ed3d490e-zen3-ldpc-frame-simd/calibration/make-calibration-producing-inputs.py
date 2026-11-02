@@ -43,7 +43,7 @@ LIFECYCLE = [
 
 BEHAVIOR_EXTRA = [
     *LIFECYCLE,
-    f"{CODING}/benches/tuning_calibration.rs",
+    "experiments/tuning-calibration/benches/coding.rs",
     f"{SHARED}/validate-tuning-extent-campaign.py",
 ]
 
@@ -51,6 +51,7 @@ BUILD_EXTRA = [
     ".cargo/config.toml",
     "Cargo.lock",
     "Cargo.toml",
+    "experiments/tuning-calibration/Cargo.toml",
     *(f"{crate}/Cargo.toml" for crate in CRATES),
     f"{TOOL}/Cargo.toml",
     f"{COMPOSER}/Cargo.lock",

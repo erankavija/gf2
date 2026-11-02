@@ -38,8 +38,6 @@ tempfile = "3.8"
 thiserror = "1.0"
 num_cpus = "1.17.0"
 serde_json = "1.0"
-# Campaign mechanics of the `tuning_calibration` owner producer.
-tuning-campaign-support = { workspace = true }
 # Per-thread counting allocator of the allocation-witness tests.
 thread-allocations = { workspace = true }
 # Digests the ETSI verification streams the oracle-agreement suite reads, so
@@ -51,10 +49,6 @@ sha2 = "0.10"
 # `default-features = false` keeps `simd` out of a `--no-default-features` test
 # build; the features of the build come from the command line.
 gf2-coding = { path = ".", default-features = false, features = ["test-support"] }
-# SVG plot generation for the d4851c3d presentation figures example only.
-# Default-features disabled: we only need the SVG backend, not the bitmap
-# / font backends, which keeps the build lean.
-plotters = { version = "0.3", default-features = false, features = ["svg_backend", "line_series", "histogram"] }
 
 [features]
 default = ["simd", "sim-observability"]
@@ -66,8 +60,7 @@ visualization = ["gf2-core/visualization"]
 # (`GpuBchSyndrome` / `BchFieldTables`), gated behind that feature there,
 # resolve for the `compute_syndromes_batch_gpu` / `correct_batch_gpu` hooks.
 hip = ["dep:gf2-kernels-hip", "gf2-kernels-hip/hip"]
-# Bench-csv emitter support (jit:47698404). Pulls in `gf2-core/test-support`
-# which exposes the `bench_seed` module used by the sparse CSV harness.
+# Seeded external-oracle fixtures use `gf2-core::bench_seed`.
 bench-csv = ["gf2-core/test-support"]
 # Observability and resume support for long-running campaigns.
 # Enables: per-SNR JSON checkpoints, SIGINT/SIGTERM flush via `ctrlc`,
@@ -96,17 +89,10 @@ test-support = ["gf2-kernels-simd/test-support"]
 # - validate_ldpc_cache: Comprehensive LDPC validation with error correction
 # - check_encoding: Quick encoding sanity check
 
-# Sparse-side CSV emitter for the post-PPC scorecard (jit:47698404).
-# Mirrors the dense emitter's example layout in `crates/gf2-core/examples/`.
-[[example]]
-name = "bench_sparse_csv_emitter"
-required-features = ["bench-csv"]
-
 # Sparse-smoke ground-truth emitter (jit:96fde7c7). Emits the binary
 # `benchmarks/expected/sparse_smoke_n16.bin` consumed by the C++
-# `benchmarks/reference/sparse_smoke.cpp` cross-equality oracle. Same
-# `bench-csv` gate as the CSV emitter so both share the
-# `gf2-core/test-support` (bench_seed module) dependency.
+# `benchmarks/reference/sparse_smoke.cpp` cross-equality oracle. The
+# `bench-csv` gate supplies `gf2-core::bench_seed`.
 [[example]]
 name = "sparse_smoke_emit_expected"
 required-features = ["bench-csv"]
@@ -198,16 +184,3 @@ harness = false
 [[example]]
 name = "ldpc_parallel_batch"
 required-features = ["parallel"]
-
-# Owner producer of the offline tuning campaign; its features are the
-# campaign's feature contract.
-[[bench]]
-name = "tuning_calibration"
-harness = false
-required-features = ["parallel", "simd", "tuning-profile", "test-support"]
-
-# Runs the `#[cfg(test)]` module of the `tuning_calibration` bench, which a
-# `harness = false` target does not execute.
-[[test]]
-name = "tuning_calibration_harness"
-required-features = ["parallel", "simd", "tuning-profile", "test-support"]

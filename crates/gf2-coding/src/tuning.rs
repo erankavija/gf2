@@ -353,7 +353,7 @@ pub struct CodingTuningCodec;
 #[cfg(feature = "tuning-profile")]
 impl CodingTuningCodec {
     /// Measurement-behavior token accepted for calibrated coding sections,
-    /// the token the `tuning_calibration` bench of this crate produces under.
+    /// the token the coding producer in `experiments/tuning-calibration` uses.
     pub const HARNESS_SCHEMA: &'static str = CODING_HARNESS_SCHEMA;
 }
 

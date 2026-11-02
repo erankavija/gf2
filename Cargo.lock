@@ -509,9 +509,7 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
- "sha2",
  "tempfile",
- "tuning-campaign-support",
 ]
 
 [[package]]
@@ -527,7 +525,6 @@ dependencies = [
  "gf2-kernels-simd",
  "num_cpus",
  "once_cell",
- "plotters",
  "proptest",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
@@ -542,7 +539,6 @@ dependencies = [
  "toml 0.8.23",
  "tracing",
  "tracing-subscriber",
- "tuning-campaign-support",
 ]
 
 [[package]]
@@ -788,6 +784,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "nr-5g-realtime"
+version = "0.1.0"
+dependencies = [
+ "gf2-coding",
+ "gf2-core",
+ "gf2-kernels-hip",
+ "gf2-sim",
+]
+
+[[package]]
 name = "nu-ansi-term"
 version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -907,7 +913,9 @@ dependencies = [
 name = "permanent-benchmarks"
 version = "0.1.0"
 dependencies = [
+ "criterion",
  "gf2-algebra",
+ "gf2-core",
  "gf2-kernels-simd",
  "rayon",
  "tuning-campaign-support",
@@ -1627,6 +1635,23 @@ dependencies = [
  "target-triple",
  "termcolor",
  "toml 1.1.2+spec-1.1.0",
+]
+
+[[package]]
+name = "tuning-calibration"
+version = "0.1.0"
+dependencies = [
+ "gf2-algebra",
+ "gf2-coding",
+ "gf2-core",
+ "gf2-kernels-simd",
+ "rand 0.8.5",
+ "rayon",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "tuning-campaign-support",
 ]
 
 [[package]]

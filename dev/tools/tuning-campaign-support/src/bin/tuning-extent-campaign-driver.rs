@@ -2220,8 +2220,8 @@ fn emit(
                 runtime: CanonicalJson::from_serializable(&AssemblyRuntime {
                     source_dirty: config.runtime.decode::<MeasurementRuntime>()?.source_dirty,
                     tool: format!(
-                        "crates/{}/benches/tuning_calibration.rs",
-                        owner.name.crate_name()
+                        "experiments/tuning-calibration/benches/{}.rs",
+                        owner.name.crate_name().trim_start_matches("gf2-")
                     ),
                     tool_sha256: producer.executable_sha256.as_str().into(),
                 })?,

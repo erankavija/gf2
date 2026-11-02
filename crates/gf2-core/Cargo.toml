@@ -325,13 +325,6 @@ name = "selector_non_regression"
 harness = false
 required-features = ["simd"]
 
-# Hand-rolled CSV emitter that writes T1-compatible rows; sister of the
-# criterion suite above. Lives under `examples/` so it builds with
-# `cargo build --release --example bench_csv_emitter`.
-[[example]]
-name = "bench_csv_emitter"
-required-features = ["rand"]
-
 # ── Issue `e8fe47f5` (epic `6dc81018`) — runs the pinned selector
 # non-regression harness's own `#[cfg(test)]` module, which a
 # `harness = false` bench target does not otherwise execute. Gated on the same
@@ -507,24 +500,6 @@ required-features = ["tuning-profile"]
 [[test]]
 name = "gemm_tiles_baked"
 required-features = ["tuning-profile"]
-
-# ── Issue `eaae1b56` — explicit host-calibration action ─────────────────
-#
-# `harness = false` keeps calibration an explicit action. `tuning-profile`
-# supplies strict format-2 reopen/install, `parallel` supplies the SoA worker
-# gate, `simd` supplies the compared accelerated arms, and `test-support`
-# supplies the bounded effective-route witnesses required by the protocol.
-[[bench]]
-name = "tuning_calibration"
-harness = false
-required-features = ["parallel", "simd", "test-support", "tuning-profile"]
-
-# Runs the calibration harness's own `#[cfg(test)]` module, which a
-# `harness = false` bench target does not otherwise execute. It uses the exact
-# same four-feature protocol configuration as the producer.
-[[test]]
-name = "tuning_calibration_harness"
-required-features = ["parallel", "simd", "test-support", "tuning-profile"]
 
 [[test]]
 name = "ple_panel_effective_no_simd"
