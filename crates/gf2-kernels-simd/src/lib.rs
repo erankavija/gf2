@@ -37,6 +37,7 @@ pub mod gf2m_batch;
 pub mod gf2m_gemm;
 pub mod gf2m_wide;
 pub mod ldpc_lanes;
+pub mod ldpc_qc;
 pub mod llr;
 pub mod m4rm;
 pub mod mersenne;
