@@ -13,7 +13,7 @@ name = "fig9_ebch_product"
 type = "product"
 component = "ebch_32_26"
 turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 100000, list_bler_threshold = 1e-4 }
-channel = { kind = "rician", preset = "fig9" }
+channel = { kind = "rician", k_factor = 8.0, coherence_block = 256, taps = 2 }
 snr = { start = 0.0, stop = 8.0, step = 1.0 }
 min_errors = 30
 max_frames = 5000
@@ -26,7 +26,7 @@ n = 1024
 k = 676
 algorithm = "nms"
 scale = 0.75
-channel = { kind = "rician", preset = "fig9" }
+channel = { kind = "rician", k_factor = 8.0, coherence_block = 256, taps = 2 }
 snr = { start = 0.0, stop = 8.0, step = 1.0 }
 min_errors = 30
 max_frames = 5000
@@ -38,7 +38,7 @@ base_graph = 2
 n = 1024
 k = 676
 algorithm = "sum_product"
-channel = { kind = "rician", preset = "fig9" }
+channel = { kind = "rician", k_factor = 8.0, coherence_block = 256, taps = 2 }
 snr = { start = 0.0, stop = 8.0, step = 1.0 }
 min_errors = 30
 max_frames = 5000

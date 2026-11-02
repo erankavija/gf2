@@ -24,7 +24,7 @@
 #   scripts/perm-uniformity-repro.sh — uniformity sweep (JIT 8e4e19a0)
 #
 # Usage:
-#   bash scripts/permanent-repro.sh
+#   bash experiments/permanent-benchmarks/scripts/permanent-repro.sh
 #
 # Requirements:
 #   - Rust toolchain (MSRV 1.95+) with cargo, cargo-nextest optional
@@ -100,7 +100,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 cd "${REPO_ROOT}"
 
 ARTEFACT_DIR="dev/benchmarks/gf2_algebra_permanent"
@@ -212,8 +212,8 @@ fi
 
 echo ""
 echo "=== step 3a: S2 — parallel scaling sweep (n=28/32/36, ~15 min) ==="
-echo "    cargo run -p gf2-algebra --release --features 'parallel test-support' --example parallel_scaling_sweep"
-cargo run -p gf2-algebra \
+echo "    cargo run --manifest-path experiments/permanent-benchmarks/Cargo.toml --release --features 'parallel test-support' --example parallel_scaling_sweep"
+cargo run --manifest-path experiments/permanent-benchmarks/Cargo.toml \
     --release \
     --features "parallel test-support" \
     --example parallel_scaling_sweep
@@ -231,7 +231,7 @@ cargo run -p gf2-algebra \
 
 echo ""
 echo "=== step 3b: S3 — assemble s3_cross_cpu CSV (sanity sweep n=16/20/24, ~1 min) ==="
-echo "    cargo run -p gf2-algebra --release --features 'simd test-support' --example s3_scalar_vs_avx2_sanity"
+echo "    cargo run --manifest-path experiments/permanent-benchmarks/Cargo.toml --release --features 'simd test-support' --example s3_scalar_vs_avx2_sanity"
 
 # Locate the S1 CSV that supplies Part A. Prefer the SA_DATE/today dated file
 # (just written by step 2); fall back to the newest s1_speedup-*.csv present.
@@ -253,7 +253,7 @@ echo "    S3 Part A source (S1 AVX2 rows): ${S1_CSV}"
 
 # Capture the sanity example stdout (Part B source).
 S3_SANITY_OUT="${ARTEFACT_DIR}/s3_sanity_rows-${S3_DATE}.txt"
-cargo run -p gf2-algebra \
+cargo run --manifest-path experiments/permanent-benchmarks/Cargo.toml \
     --release \
     --features "simd test-support" \
     --example s3_scalar_vs_avx2_sanity \
@@ -329,7 +329,7 @@ header = [
     f"# avx2_throughput_source: re-used from dev/benchmarks/gf2_algebra_permanent/{s1_basename}",
     "#   (rows: permanent_bipedal3_simd at n=24/28/32/36, reformatted to impl=permanent_bipedal3_avx2)",
     "#   s1 seed_base: 0xc98ed60300000000",
-    "# scalar_vs_avx2_sanity: measured fresh via crates/gf2-algebra/examples/s3_scalar_vs_avx2_sanity.rs",
+    "# scalar_vs_avx2_sanity: measured fresh via experiments/permanent-benchmarks/examples/s3_scalar_vs_avx2_sanity.rs",
     "#   n in {16, 20, 24}, 5 samples per cell, seed = 0x363556e600000000 ^ n ^ sample",
     "#   Note: scalar is faster than AVX2 at small n (W=1 word). This is expected: the",
     "#   singleword SIMD path zero-pads to a 4-element AVX2 lane (documented in bipedal3.rs",
@@ -589,7 +589,7 @@ except Exception as e:
 prov["artefact_assembly_commit"] = "${_HEAD_SHA}"
 prov["rustc"] = "${_RUSTC}"
 prov["os"] = "${_OS}"
-prov["repro_script"] = "scripts/permanent-repro.sh"
+prov["repro_script"] = "experiments/permanent-benchmarks/scripts/permanent-repro.sh"
 prov["repro_timestamp_utc"] = "${_NOW}"
 
 with open(prov_path, "w") as f:

@@ -36,8 +36,7 @@
 #![deny(unsafe_code)]
 
 use gf2_coding::dvb_t2_bicm_harness::{
-    mod_str, parse_baseline_csv, rate_display as rate_str, rate_f64, BaselineCellResult,
-    BicmAwgnChannel, BicmFecEncoder, BASELINE_MATRIX_CELL_COUNT,
+    mod_str, rate_display as rate_str, rate_f64, BicmAwgnChannel, BicmFecEncoder,
 };
 use gf2_coding::info_theory::esn0_to_ebn0;
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
@@ -55,6 +54,97 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
+#[derive(Debug, Clone)]
+struct BaselineCellResult {
+    rate: String,
+    modulation: String,
+    es_n0_db: f64,
+    decoder: String,
+    demap: String,
+    frames: usize,
+    wall_seconds: f64,
+    frames_per_sec: f64,
+    mean_iters: f64,
+    ber: f64,
+    fer: f64,
+    commit_sha: String,
+    date: String,
+}
+
+impl BaselineCellResult {
+    fn csv_header() -> &'static str {
+        "rate,modulation,es_n0_db,decoder,demap,frames,wall_seconds,frames_per_sec,mean_iters,ber,fer,commit_sha,date"
+    }
+
+    fn to_csv_row(&self) -> String {
+        format!(
+            "{},{},{:.2},{},{},{},{:.3},{:.4},{:.3},{:.6},{:.6},{},{}",
+            self.rate,
+            self.modulation,
+            self.es_n0_db,
+            self.decoder,
+            self.demap,
+            self.frames,
+            self.wall_seconds,
+            self.frames_per_sec,
+            self.mean_iters,
+            self.ber,
+            self.fer,
+            self.commit_sha,
+            self.date,
+        )
+    }
+}
+
+fn parse_baseline_csv(content: &str) -> Vec<BaselineCellResult> {
+    let mut out = Vec::new();
+    for line in content.lines().skip(1) {
+        let f: Vec<&str> = line.split(',').collect();
+        if f.len() < 13 {
+            continue;
+        }
+        let Ok(es_n0_db) = f[2].parse::<f64>() else {
+            continue;
+        };
+        let Ok(frames) = f[5].parse::<usize>() else {
+            continue;
+        };
+        let Ok(wall_seconds) = f[6].parse::<f64>() else {
+            continue;
+        };
+        let Ok(frames_per_sec) = f[7].parse::<f64>() else {
+            continue;
+        };
+        let Ok(mean_iters) = f[8].parse::<f64>() else {
+            continue;
+        };
+        let Ok(ber) = f[9].parse::<f64>() else {
+            continue;
+        };
+        let Ok(fer) = f[10].parse::<f64>() else {
+            continue;
+        };
+        out.push(BaselineCellResult {
+            rate: f[0].to_string(),
+            modulation: f[1].to_string(),
+            es_n0_db,
+            decoder: f[3].to_string(),
+            demap: f[4].to_string(),
+            frames,
+            wall_seconds,
+            frames_per_sec,
+            mean_iters,
+            ber,
+            fer,
+            commit_sha: f[11].to_string(),
+            date: f[12].to_string(),
+        });
+    }
+    out
+}
+
+const BASELINE_MATRIX_CELL_COUNT: usize = 27;
+
 fn decoder_str(alg: &DecoderAlgorithm) -> String {
     match alg {
         DecoderAlgorithm::SumProduct => "SumProduct".to_string(),
@@ -71,8 +161,6 @@ fn demap_str(d: DemapMethod) -> &'static str {
     }
 }
 
-// CellResult is provided by gf2_coding::dvb_t2_bicm_harness::BaselineCellResult.
-// Use the shared type directly to avoid duplication.
 type CellResult = BaselineCellResult;
 
 // ---------------------------------------------------------------------------
@@ -430,5 +518,48 @@ fn main() {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod baseline_csv_tests {
+    use super::*;
+
+    #[test]
+    fn parser_skips_malformed_rows_and_round_trips_results() {
+        let original = BaselineCellResult {
+            rate: "1/2".into(),
+            modulation: "16qam".into(),
+            es_n0_db: 6.25,
+            decoder: "SumProduct".into(),
+            demap: "ExactLogMap".into(),
+            frames: 200,
+            wall_seconds: 123.456,
+            frames_per_sec: 1.6216,
+            mean_iters: 32.1,
+            ber: 0.0005,
+            fer: 0.05,
+            commit_sha: "abc1234567".into(),
+            date: "2026-06-07".into(),
+        };
+        let csv = format!(
+            "{}\nbad,row\n{}\n",
+            BaselineCellResult::csv_header(),
+            original.to_csv_row()
+        );
+        let parsed = parse_baseline_csv(&csv);
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(parsed[0].rate, original.rate);
+        assert_eq!(parsed[0].modulation, original.modulation);
+        assert_eq!(parsed[0].frames, original.frames);
+        assert_eq!(parsed[0].commit_sha, original.commit_sha);
+        assert_eq!(parsed[0].date, original.date);
+        assert!((parsed[0].es_n0_db - original.es_n0_db).abs() < 0.01);
+        assert!((parsed[0].frames_per_sec - original.frames_per_sec).abs() < 0.001);
+    }
+
+    #[test]
+    fn matrix_cell_count_matches_the_sweep() {
+        assert_eq!(BASELINE_MATRIX_CELL_COUNT, 3 * 3 * 3);
     }
 }

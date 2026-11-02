@@ -81,33 +81,6 @@ pub struct RicianConfig {
 }
 
 impl RicianConfig {
-    /// `@/citation/Yuan2025` channel K = 5, N_c = 128, t = 4: a 1024-bit frame.
-    pub fn fig8() -> Self {
-        RicianConfig {
-            k_factor: 5.0,
-            coherence_block: 128,
-            taps: 4,
-        }
-    }
-
-    /// `@/citation/Yuan2025` channel K = 8, N_c = 256, t = 2: a 1024-bit frame.
-    pub fn fig9() -> Self {
-        RicianConfig {
-            k_factor: 8.0,
-            coherence_block: 256,
-            taps: 2,
-        }
-    }
-
-    /// `@/citation/Yuan2025` channel K = 6, N_c = 256, t = 8: a 4096-bit frame.
-    pub fn fig10() -> Self {
-        RicianConfig {
-            k_factor: 6.0,
-            coherence_block: 256,
-            taps: 8,
-        }
-    }
-
     /// Returns the total number of bits per frame: `N = 2·t·N_c`.
     pub fn frame_bits(&self) -> usize {
         2 * self.taps * self.coherence_block
@@ -368,55 +341,23 @@ fn generate_permutation(length: usize, seed: u64) -> Vec<usize> {
 }
 
 #[cfg(test)]
+fn generic_rician_config() -> RicianConfig {
+    RicianConfig {
+        k_factor: 2.0,
+        coherence_block: 64,
+        taps: 2,
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_rician_config_fig8_params() {
-        let cfg = RicianConfig::fig8();
-        assert_eq!(cfg.k_factor, 5.0);
-        assert_eq!(cfg.coherence_block, 128);
-        assert_eq!(cfg.taps, 4);
-    }
-
-    #[test]
-    fn test_rician_config_fig8_frame_bits() {
-        let cfg = RicianConfig::fig8();
-        assert_eq!(cfg.frame_bits(), 1024);
-    }
-
-    #[test]
-    fn test_rician_config_fig8_frame_symbols() {
-        let cfg = RicianConfig::fig8();
-        assert_eq!(cfg.frame_symbols(), 512);
-    }
-
-    #[test]
-    fn test_rician_config_fig9_params() {
-        let cfg = RicianConfig::fig9();
-        assert_eq!(cfg.k_factor, 8.0);
-        assert_eq!(cfg.coherence_block, 256);
-        assert_eq!(cfg.taps, 2);
-    }
-
-    #[test]
-    fn test_rician_config_fig9_frame_bits() {
-        let cfg = RicianConfig::fig9();
-        assert_eq!(cfg.frame_bits(), 1024);
-    }
-
-    #[test]
-    fn test_rician_config_fig10_params() {
-        let cfg = RicianConfig::fig10();
-        assert_eq!(cfg.k_factor, 6.0);
-        assert_eq!(cfg.coherence_block, 256);
-        assert_eq!(cfg.taps, 8);
-    }
-
-    #[test]
-    fn test_rician_config_fig10_frame_bits() {
-        let cfg = RicianConfig::fig10();
-        assert_eq!(cfg.frame_bits(), 4096);
+    fn config_frame_sizes_follow_symbol_layout() {
+        let cfg = generic_rician_config();
+        assert_eq!(cfg.frame_bits(), 256);
+        assert_eq!(cfg.frame_symbols(), 128);
     }
 
     #[test]
@@ -467,7 +408,7 @@ mod tests {
 
     #[test]
     fn test_rician_channel_coefficient_is_finite() {
-        let channel = RicianChannel::new(RicianConfig::fig8());
+        let channel = RicianChannel::new(generic_rician_config());
         let mut rng = rand::thread_rng();
         for _ in 0..100 {
             let h = channel.sample_coefficient(&mut rng);
@@ -478,7 +419,7 @@ mod tests {
 
     #[test]
     fn test_rician_channel_mean_power_near_one() {
-        let channel = RicianChannel::new(RicianConfig::fig8());
+        let channel = RicianChannel::new(generic_rician_config());
         let mut rng = rand::thread_rng();
         let n = 100_000;
         let mean_power: f64 = (0..n)
@@ -493,7 +434,7 @@ mod tests {
 
     #[test]
     fn test_rician_channel_mean_real_part() {
-        let cfg = RicianConfig::fig8();
+        let cfg = generic_rician_config();
         let channel = RicianChannel::new(cfg);
         let expected_mean_re = (cfg.k_factor / (cfg.k_factor + 1.0)).sqrt();
         let mut rng = rand::thread_rng();
@@ -510,7 +451,7 @@ mod tests {
 
     #[test]
     fn test_rician_channel_mean_imag_near_zero() {
-        let channel = RicianChannel::new(RicianConfig::fig8());
+        let channel = RicianChannel::new(generic_rician_config());
         let mut rng = rand::thread_rng();
         let n = 100_000;
         let mean_im: f64 = (0..n)
@@ -525,7 +466,7 @@ mod tests {
 
     #[test]
     fn test_rician_channel_generate_frame_gains_length() {
-        let cfg = RicianConfig::fig8();
+        let cfg = generic_rician_config();
         let channel = RicianChannel::new(cfg);
         let mut rng = rand::thread_rng();
         let gains = channel.generate_frame_gains(&mut rng);
@@ -534,7 +475,7 @@ mod tests {
 
     #[test]
     fn test_rician_channel_block_fading_constant_within_block() {
-        let cfg = RicianConfig::fig8();
+        let cfg = generic_rician_config();
         let channel = RicianChannel::new(cfg);
         let mut rng = rand::thread_rng();
         let gains = channel.generate_frame_gains(&mut rng);
@@ -551,7 +492,7 @@ mod tests {
 
     #[test]
     fn test_rician_channel_transmit_length() {
-        let channel = RicianChannel::new(RicianConfig::fig8());
+        let channel = RicianChannel::new(generic_rician_config());
         let mut rng = rand::thread_rng();
         let symbols: Vec<Complex> = (0..8).map(|_| Complex::new(1.0, 0.0)).collect();
         let gains = vec![Complex::new(1.0, 0.0); 8];
@@ -561,7 +502,7 @@ mod tests {
 
     #[test]
     fn test_rician_channel_transmit_is_finite() {
-        let channel = RicianChannel::new(RicianConfig::fig8());
+        let channel = RicianChannel::new(generic_rician_config());
         let mut rng = rand::thread_rng();
         let symbols: Vec<Complex> = (0..16).map(|_| Complex::new(1.0, -1.0)).collect();
         let gains = vec![Complex::new(0.8, 0.3); 16];
@@ -575,9 +516,17 @@ mod tests {
     fn test_rician_channel_all_configs() {
         let mut rng = rand::thread_rng();
         for cfg in [
-            RicianConfig::fig8(),
-            RicianConfig::fig9(),
-            RicianConfig::fig10(),
+            generic_rician_config(),
+            RicianConfig {
+                k_factor: 0.5,
+                coherence_block: 8,
+                taps: 1,
+            },
+            RicianConfig {
+                k_factor: 4.0,
+                coherence_block: 16,
+                taps: 3,
+            },
         ] {
             let channel = RicianChannel::new(cfg);
             let gains = channel.generate_frame_gains(&mut rng);
@@ -835,14 +784,14 @@ mod channel_model_tests {
 
     #[test]
     fn test_qpsk_rician_channel_model_preconditions() {
-        let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
-        assert_eq!(channel.config.frame_bits(), 1024);
+        let channel = QpskRicianChannelModel::new(generic_rician_config());
+        assert_eq!(channel.config.frame_bits(), 256);
     }
 
     #[test]
     #[should_panic(expected = "even codeword length")]
     fn test_qpsk_rician_rejects_odd_length() {
-        let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
+        let channel = QpskRicianChannelModel::new(generic_rician_config());
         let bits = gf2_core::BitVec::zeros(7);
         let mut rng = rand::thread_rng();
         channel.transmit_and_demodulate(&bits, 6.0, 0.5, &mut rng);
@@ -856,7 +805,7 @@ mod channel_model_tests {
             .expect("extended BCH parity matrix");
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
 
-        let channel = QpskRicianChannelModel::new(RicianConfig::fig9());
+        let channel = QpskRicianChannelModel::new(generic_rician_config());
 
         let mut config = SimulationConfig::quick_test();
         config.eb_n0_range_db = vec![10.0];
@@ -906,7 +855,7 @@ mod modem_framework_calibration_tests {
             );
         }
 
-        let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
+        let channel = QpskRicianChannelModel::new(generic_rician_config());
         let n_bits = 64;
         let mut codeword = BitVec::zeros(n_bits);
         for i in 0..n_bits {
@@ -941,7 +890,7 @@ mod modem_framework_calibration_tests {
             .parity_check_matrix()
             .expect("extended BCH parity matrix");
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
-        let channel = QpskRicianChannelModel::new(RicianConfig::fig9());
+        let channel = QpskRicianChannelModel::new(generic_rician_config());
 
         let mut config = SimulationConfig::quick_test();
         config.eb_n0_range_db = vec![12.0];

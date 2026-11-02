@@ -20,7 +20,7 @@ name = "fig8_drm_product"
 type = "product"
 component = "drm_32_21"
 turbo = { max_iterations = 20, alpha = 0.5, list_size = 4, max_queries = 100000, list_bler_threshold = 1e-4 }
-channel = { kind = "rician", preset = "fig8" }
+channel = { kind = "rician", k_factor = 5.0, coherence_block = 128, taps = 4 }
 snr = { start = 0.0, stop = 8.0, step = 1.0 }
 min_errors = 30
 max_frames = 5000
@@ -33,7 +33,7 @@ n = 1024
 k = 441
 algorithm = "nms"
 scale = 0.75
-channel = { kind = "rician", preset = "fig8" }
+channel = { kind = "rician", k_factor = 5.0, coherence_block = 128, taps = 4 }
 snr = { start = 0.0, stop = 8.0, step = 1.0 }
 min_errors = 30
 max_frames = 5000
@@ -45,7 +45,7 @@ base_graph = 2
 n = 1024
 k = 441
 algorithm = "sum_product"
-channel = { kind = "rician", preset = "fig8" }
+channel = { kind = "rician", k_factor = 5.0, coherence_block = 128, taps = 4 }
 snr = { start = 0.0, stop = 8.0, step = 1.0 }
 min_errors = 30
 max_frames = 5000

@@ -906,6 +906,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "permanent-benchmarks"
+version = "0.1.0"
+dependencies = [
+ "gf2-algebra",
+ "gf2-kernels-simd",
+ "rayon",
+ "tuning-campaign-support",
+]
+
+[[package]]
 name = "permanent-statistics"
 version = "0.1.0"
 dependencies = [

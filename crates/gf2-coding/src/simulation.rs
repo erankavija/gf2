@@ -4073,7 +4073,11 @@ mod tests {
     fn test_run_uncoded_ber_with_channel_handles_ragged_tail_for_qpsk_rician() {
         use crate::fading::{QpskRicianChannelModel, RicianConfig};
 
-        let channel = QpskRicianChannelModel::new(RicianConfig::fig8());
+        let channel = QpskRicianChannelModel::new(RicianConfig {
+            k_factor: 2.0,
+            coherence_block: 256,
+            taps: 2,
+        });
         assert_eq!(
             channel.batch_alignment(),
             2,
