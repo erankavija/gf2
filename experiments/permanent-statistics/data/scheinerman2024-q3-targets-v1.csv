@@ -1,6 +1,5 @@
 # schema: scheinerman2024-q3-reproduction-targets-v1
 # source: @/citation/Scheinerman2024 (arXiv:2407.20205v2), Tables 3 and 4
-# transcription_cross_check: dev/research/permanent-sampling-feas/src/prior.rs
 # scope: every q=3 core campaign cell, n=4..28
 # p_hat_from_source_counts: source_zero_count/source_n; this is not a separately measured value
 # reference_precision: exact rows have zero sampling error; Monte Carlo rows use the binomial plug-in standard error sqrt(p_hat*(1-p_hat)/source_n), derived here because the source reports no confidence interval

@@ -8,7 +8,7 @@ Status: draft. This artifact set supports feasibility review for JIT issue `7a81
 
 The draft enumerates all 63 protocol cells, uses the two fixed N tiers, evaluates the determinant companion on every cell, and parses through the real `CampaignManifest` reader. Exactly three cells are dischargeable now: q=3 has 1, q=5 has 1, and q=7 has 1. The remaining 60 cells carry `generic_ryser` only as a schema-valid placeholder and are listed in the gap document. The protocol's same-cohort remeasurement clause therefore still blocks final freeze.
 
-The selected cells are q3 n=28, q5 n=24, and q7 n=20 from the exact 296a41c9 cohort. The q3 GPU-study n=16,20,24 interior window remains the confounded `fold-gf3` finding in `dev/studies/0dffa759/findings.md` §3.2; §3 records the q3 no-go, so no q3 accelerator configuration is retained. Owner decision (2026-08-17), recorded by the owner: retained `f5-three-plane` and `f7-three-plane-permanent` study-cohort prototypes are not selectable at freeze, and their cells remain gaps settled empirically by premeasurement. Their factual receipt rows remain in the inventory. The selection receipt records the candidate provenance and within-cohort ranking for the three selected groups; exclusion records distinguish rule 1, rule 2, and rule 3 exclusions.
+The selected cells are q3 n=28, q5 n=24, and q7 n=20 from the exact 296a41c9 cohort. The q3 GPU-study n=16,20,24 interior window remains the confounded `fold-gf3` finding in `findings.md` §3.2; §3 records the q3 no-go, so no q3 accelerator configuration is retained. Owner decision (2026-08-17), recorded by the owner: retained `f5-three-plane` and `f7-three-plane-permanent` study-cohort prototypes are not selectable at freeze, and their cells remain gaps settled empirically by premeasurement. Their factual receipt rows remain in the inventory. The selection receipt records the candidate provenance and within-cohort ranking for the three selected groups; exclusion records distinguish rule 1, rule 2, and rule 3 exclusions.
 
 ## Draft identity and addressing
 
@@ -27,7 +27,7 @@ The cell counts are the protocol's exact values: q=3 uses 20,000,000 for n=4..20
 
 The draft uses the implemented integrity contract: `manifest.json` carries no self-hash field; `provenance::manifest_content_hash` recomputes SHA-256 from the manifest bytes, and `recorded_manifest_hash` reads the `manifest.json` entry from `checksums.sha256`. The draft sidecar records that digest. A final freeze generates the complete raw-data integrity file through `permanent_dataset checksums`, and verification compares the recomputed manifest hash with the sidecar entry. No new hash mechanism is introduced.
 
-The manifest records `rng_algorithm` as the schema token `cha_cha20` (ChaCha20), `rng_version` as `rand_chacha 0.9.0`, and an argument-token invocation. The exact patch-version derivation is `dev/active/b8206228-permanent-statistics/studies/0dffa759/rng-provenance-addendum.md` §4 and `@/citation/RustRandom2025`.
+The manifest records `rng_algorithm` as the schema token `cha_cha20` (ChaCha20), `rng_version` as `rand_chacha 0.9.0`, and an argument-token invocation. The exact patch-version derivation is `rng-provenance-addendum.md` §4 and `@/citation/RustRandom2025`.
 
 REQ-07 is a freeze rule: adding a cell after this draft requires a new campaign id and a restated multiplicity adjustment; the added cell does not reuse this campaign identity or its 63-cell correction.
 

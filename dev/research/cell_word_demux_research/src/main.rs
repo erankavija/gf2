@@ -10,7 +10,7 @@ fn count_diffs(a: &BitVec, b: &BitVec) -> usize {
 }
 
 fn main() {
-    let base = std::path::PathBuf::from("/data/specs/dvb/t2/streams");
+    let base = std::path::PathBuf::from(std::env::var("DVB_T2_STREAMS").expect("DVB_T2_STREAMS names the DVB-T2 stream directory"));
     let config_dir = base.join("VV007-16KFFT_CSP");
 
     let tp04 = parse_tp_blocks(&tp_path_for(&config_dir, "04"));

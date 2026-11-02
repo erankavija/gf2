@@ -17,7 +17,7 @@
 
 - Recovered after the host crash with `jit recover` clean and `jit validate` passing; no surviving premeasure process receipt or campaign shard was credited.
 - Audited the failed 2026-08-19 timer: it exited immediately with infrastructure status 2; all 1,440 preregistered processes therefore restart as a fresh `premeasure-v1` cohort.
-- Created durable recovery root `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824`; fresh prepare and measurement have not run.
+- Created durable recovery root `<local path>`; fresh prepare and measurement have not run.
 - Recycled `.agents/worktrees/agent-a39bb161` for difficult rework-2; worker commit `7316c062` converged the public field API on `AcceleratorCostTable`, added a two-cell behavioural test, and completed the Rustdoc without GPU work.
 - Leak-check passed; merged the worker as `f077c380`; retained the clean worktree for reuse as requested.
 - Independent review failed `a39bb161`: `permanent_campaign` checks the whole manifest when deciding whether `--accelerator-cost-table` is mandatory, although `--q` executes only one field. A mixed manifest therefore rejects a selected processor-only field because another field uses an accelerator.
@@ -30,15 +30,15 @@
 - [ ] Resolve the `a39bb161` escalation. Recommended owner decision: approve one bounded lead-direct repair that scopes the CLI cost-table requirement to the selected field and adds a real-binary mixed-manifest regression.
 - [ ] After approval, apply the repair in the retained worktree, leak-check, merge, then rerun the merged-tree `cargo-ci` and `code-review` gates and confirm persisted gate status before six-tier closure.
 - [ ] Do no GPU-heavy work before 02:00 local. At or after 02:00 the owner guarantees the device is safe unless they say otherwise; do not depend on cross-user process visibility.
-- [ ] Once `a39bb161` is reviewed and main is clean, run fresh campaign `prepare` with `CAMPAIGN_TARGET_ROOT=/data/gf2-campaigns/b8206228/premeasure-recovery-20260824` and stable `CAMPAIGN_RUN_ID=premeasure-v1`, verify all 120 rows against the real binary's admission path, then run `premeasure --session-cap 19800` under the full-host lock.
+- [ ] Once `a39bb161` is reviewed and main is clean, run fresh campaign `prepare` with `CAMPAIGN_TARGET_ROOT=<local path>` and stable `CAMPAIGN_RUN_ID=premeasure-v1`, verify all 120 rows against the real binary's admission path, then run `premeasure --session-cap 19800` under the full-host lock.
 - [ ] Persist raw premeasure state outside ignored `target/`; collect and resume from the durable root until all 1,440 processes have terminal receipts, then finish `7a816262` phase 3 and its doc/research gates.
 - [ ] Before dispatching `53d8e438`, obtain owner approval either to amend REQ-03 to the protocol's interval-aware delta-AIC rule (recommended) or to preregister a concrete standard-error multiple before data exist.
 
 ## Traps — do not repeat these
 
 - **Do not treat a selected-field execution as manifest-global.** `permanent_campaign.rs:150` requires the cost table if any manifest field has accelerator cells, while the binary selects one field later; independent review demonstrated that this rejects a valid processor-only selected field. Scope admission requirements to `--q` and test the real binary with a mixed manifest.
-- **Do not infer another user's game state from process visibility.** The owner's Baldur's Gate 3 executable is `/data/SteamLibrary/steamapps/common/Baldurs Gate 3/bin/bg3`, but it runs as another user. The authoritative admission rule is the owner's guaranteed 02:00-local safe window unless they say otherwise.
-- **Do not keep measurement recovery state only under ignored `target/`.** The crash erased binaries, receipts, logs, and provenance there. Use the durable `/data/gf2-campaigns/...` root and commit versioned evidence at the protocol's checkpoints.
+- **Do not infer another user's game state from process visibility.** The owner's Baldur's Gate 3 executable is `<local path> Gate 3/bin/bg3`, but it runs as another user. The authoritative admission rule is the owner's guaranteed 02:00-local safe window unless they say otherwise.
+- **Do not keep measurement recovery state only under ignored `target/`.** The crash erased binaries, receipts, logs, and provenance there. Use the durable `<local path>` root and commit versioned evidence at the protocol's checkpoints.
 - **Do not commit dispatch or rework prompts.** The owner explicitly ruled that prompts are ephemeral coordination material. The accidental session-14 prompt was unlinked and deleted; future dispatches stay outside the repository.
 - **Do not absorb unrelated shared JIT materialization.** `.jit/events.jsonl` and `.jit/issues/312200e4-dce9-44d3-8b55-c20c610e1c03.json` belong to another participant; stage only explicit epic handoff/progress paths until those changes are resolved.
 - All unresolved traps from sessions 3–12 remain in force; start with `handoff-9.md` and follow its prior-handoff chain.
@@ -63,5 +63,5 @@
 - Frozen-manifest plan: `premeasure-plan-v1.md`
 - Prior recovery handoff: `dev/active/b8206228-permanent-statistics/handoff-9.md`
 - Accelerator repair commits: `7316c062` (worker), `f077c380` (merge)
-- Durable campaign root: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824`
+- Durable campaign root: `<local path>`
 - Protocol: `protocol.md` section Backend freeze

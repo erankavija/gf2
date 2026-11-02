@@ -57,5 +57,5 @@
 - Epic: `jit issue show b8206228`; freeze: `jit issue show 7a816262`; closed receipt task: `jit issue show 86185f88`
 - Receipt: `backend-selection-v1-equivalence{csv,log}`, addendum alongside
 - Derivation record: `probe-costs-de5f7414.csv`
-- Provenance implementation: `dev/research/permanent-sampling-feas/src/env.rs`
+- Provenance implementation: `env.rs`
 - Progress: `dev/active/b8206228-permanent-statistics/progress.json` (`session_25_state`)

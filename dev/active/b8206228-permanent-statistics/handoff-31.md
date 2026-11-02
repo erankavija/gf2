@@ -46,7 +46,7 @@
 1. **Force-push confirmation.** Rewrites all history, changes every commit ID, breaks old clones and needs the `Main protected` bypass. Recorded IDs resolve through a committed map, and the bytes stay in an off-repo backup. Recommendation: confirm once `55c3e433`'s pilots land.
 2. **Validation window and campaign go.** Arm a window for `67194d70`; the first campaign draw needs a separate go.
 3. **Protocol differences made on defaults in `1634c185`, all stated in `experiments/permanent-statistics/protocol.md`:** Wilson intervals only with one z constant; shard size 200,000 in precision tiers; a killed process no longer uses a retry; the 12-hour ceiling; `--on-unavailable` modes. Recommendation: accept.
-4. **Remaining 485 MB.** `bench_results` still holds about 340 MB of JSON, TSV and summaries, and 227 older files sit in the budget baseline, including `archive`, `dev/studies` and `dev/research` logs. Recommendation: move to a summary-only layout in a separate issue.
+4. **Remaining 485 MB.** `bench_results` still holds about 340 MB of JSON, TSV and summaries, and 227 older files sit in the budget baseline, including `archive`, `studies` and `dev/research` logs. Recommendation: move to a summary-only layout in a separate issue.
 5. **Server-side enforcement is unavailable.** GitHub refuses push rulesets on a public, user-owned repository, so `--no-verify` can bypass the hooks and CI reports only afterwards. Recommendation: accept, or move the repository to an organization.
 6. **`build_profile.rs` is more machinery than I'd like.** Code review drove it through five rounds, past the two-retry policy, and the flags rest on a documented caller precondition. Recommendation: revisit it when `74f8cf16` converges the shared code.
 

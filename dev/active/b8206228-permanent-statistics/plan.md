@@ -7,7 +7,7 @@
 
 | Criterion | Approach | Evidence / open gap |
 |---|---|---|
-| REQ-01 | Credited twice, for two different things. The completed feasibility study issue delivers it and carries `satisfies:REQ-01` with a direct epic dependency edge. In-manifest, the preregistration protocol carries the same label for its contribution: it takes the study's campaign design and binds it to one campaign's cell universe, sample sizes, error budget and failure rules, revising it where measurement since has moved. The study's envelope, frontier and unresolved orderings are also cited as design input by the frozen manifest and the backend re-measurement. | `dev/studies/b488f02c/feasibility-study.md` (GO verdict; §4.6 envelope and frontier, §7.2 sampling plan, §4.4 unresolved ordering); `.jit/config.toml` `satisfies` namespace ("the label denotes contribution, not sole delivery"); investigation C13 on the label and edge the external credit depends on. |
+| REQ-01 | Credited twice, for two different things. The completed feasibility study issue delivers it and carries `satisfies:REQ-01` with a direct epic dependency edge. In-manifest, the preregistration protocol carries the same label for its contribution: it takes the study's campaign design and binds it to one campaign's cell universe, sample sizes, error budget and failure rules, revising it where measurement since has moved. The study's envelope, frontier and unresolved orderings are also cited as design input by the frozen manifest and the backend re-measurement. | `feasibility-study.md` (GO verdict; §4.6 envelope and frontier, §7.2 sampling plan, §4.4 unresolved ordering); `.jit/config.toml` `satisfies` namespace ("the label denotes contribution, not sole delivery"); investigation C13 on the label and edge the external credit depends on. |
 | REQ-02 | Split by layer rather than by feature: a narrow crate owns the reproducible sampler, the interval and exact-test estimators, and the pooling accumulator; the simulation crate owns scheduling, checkpointed resume, backend policy, same-matrix determinant evaluation, and the standing acceptance checks. The checkpoint mechanism is generalised at its source rather than copied. | Study §5 G1–G3, G7; investigation C1 (no domain-separated production sampler), C2 (Wilson only, no accumulator), C3 (no permanent campaign runner; the modulation campaign binary is the structural precedent), C9 (the composite loop's module has no tests), §4a (version convergence for `rand_chacha`), §4b (checkpoint mechanism reusable, schema not), C11 (the determinant routine exists and sits below the algebra layer). |
 | REQ-03 | Four stages, each with one writer: the layout and manifest schema land before the freeze; three field arms execute only frozen cells and write only their own field's files; a finalizer pools field summaries and checksums the raw data; the analysis pipeline is built and tested against fixtures, then run against the finalized dataset to materialise the published curves and tables; the report carries every interpretive sentence. | Study §7.4 (storage), §7.6 (prior-art delta), §4.6 (envelope and frontier); investigation C4 (no manifest or checksum convention exists; the proposed location conflicts with the declared purpose of `dev/campaigns`); RCA RC1 (interpretive prose in generated receipts) and RC2 (self-hash without build-state guard). |
 | REQ-04 | Correctness and rates are separated: the predicate ships with an exhaustive-enumeration oracle and independent brute-force conformance, a companion leaf estimates the observable small-$k$ rates against their known values with a cost receipt, and the re-sited exact anchors validate the sampler and estimator against exactly known zero fractions. | Study §5 G5 (predicate decomposes into square permanents; the theorem's regime is unreachable by sampling); investigation C5 (no rank routine in-tree), C10 (existing anchors live in an issue-scoped area and are archival candidates); RCA RC5 (hard-criterion literalism). |
@@ -20,7 +20,7 @@
 
 Matrices are addressed by a 32-byte ChaCha20 seed block of four little-endian
 `u64` words — campaign root, $q$, $n$, and a fourth word — as
-`dev/studies/b488f02c/feasibility-study.md` §7.3 fixes it, with the fourth word's
+`feasibility-study.md` §7.3 fixes it, with the fourth word's
 encoding pinned here rather than left to the implementer: its **top 8 bits hold
 the purpose tag and its low 56 bits hold the stream index**, and derivation
 asserts the stream index is below $2^{56}$. The map from
@@ -34,7 +34,7 @@ Separation is a property of addresses and generator state, never of output
 values: two disjoint streams may legitimately draw the same small matrix, so
 tests assert distinct derived seed blocks, divergent generator output, and
 committed golden vectors. The prototype derivation is
-`dev/research/permanent-sampling-feas/src/sampler.rs:97-104`.
+`sampler.rs:97-104`.
 
 ### `shard-record-format` [plan-fixed] — Per-shard record schema
 
@@ -43,7 +43,7 @@ permanent zero count, the histogram of permanent values over the $q$ residue
 classes, and the determinant companion expressed as a sample count with a zero
 count or as an explicit not-evaluated state — extending the shape the
 feasibility harness emits
-(`dev/research/permanent-sampling-feas/src/protocol.rs:315-343`) with the
+(`protocol.rs:315-343`) with the
 companion quantity. The absent state is load-bearing: a numeric zero would be
 indistinguishable from a cell that evaluated every matrix and found none
 singular. Records carry counts and states only; estimates, intervals and
@@ -331,13 +331,13 @@ superseded text are named, since the study's record stands unedited.
 
 - [Investigation](investigation.md) — exhaustive consumers, file inventories, and
   claim-by-claim verdicts remain there.
-- Design SSOT: `dev/studies/b488f02c/feasibility-study.md` — envelope §4.6,
+- Design SSOT: `feasibility-study.md` — envelope §4.6,
   sampling plan §7.2, seeding §7.3, storage §7.4, analysis §7.5, prior-art delta
   §7.6.
 - Review cost analysis: `dev/active/b8206228-permanent-statistics/sessions/2026-08-08-b488f02c-review-rca.md`.
 - Standing decisions: `dev/active/b8206228-permanent-statistics/sessions/2026-08-07-research-frontier-handoff.md`.
 - Recorded literature search:
-  `dev/studies/b488f02c/literature-search-2026-08-08.md`.
+  `literature-search-2026-08-08.md`.
 
 Source identifiers used in `planning.source_refs`: `REQ-01`–`REQ-06` are the
 epic's success criteria; `G1`–`G8` are the feasibility study's §5 gaps;

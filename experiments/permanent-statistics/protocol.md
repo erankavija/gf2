@@ -4,7 +4,7 @@ Campaign id: `permanent-zero-fraction-20261102`. This protocol is committed
 before any draw under that id. [config/campaign.json](config/campaign.json) is
 the machine authority for every constant the tool consumes; its digest is the
 `configuration_sha256` in each run record. The pre-draw manifest is
-[config/permanent-zero-fraction-20261102-manifest.json](config/permanent-zero-fraction-20261102-manifest.json),
+[config/permanent-zero-fraction-20261102/manifest.json](config/permanent-zero-fraction-20261102/manifest.json),
 a projection of that configuration which the tool compares before writing. A
 changed protocol, cell, sample size, test, or exclusion rule defines a new
 campaign id and requires a new preregistration before that campaign's first
@@ -28,7 +28,7 @@ values of $n$. The conjecture $\Pr[\operatorname{per}(A)=0]=1/q+o(1)$ concerns
 $n\to\infty$; an asymptotic statement is compatible with every finite prefix, so
 no finite grid confirms or contradicts it. Conclusions are restricted to the
 measured cells, following the study's
-[finite-$n$ interpretation](/dev/studies/b488f02c/feasibility-study.md#71-what-this-campaign-can-and-cannot-establish)
+finite-$n$ interpretation
 of `@/citation/GGK2025` and `@/citation/HKS2026`.
 
 For each cell the raw quantities are the permanent zero count $Z_{q,n}$ and the

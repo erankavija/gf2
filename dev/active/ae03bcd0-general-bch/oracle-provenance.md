@@ -19,7 +19,7 @@ in. The run that produced the committed fixtures is recorded in
 | SageMath oracle | [`oracle/sage_oracle.py`](oracle/sage_oracle.py) |
 | GAP/GUAVA oracle | [`oracle/gap_oracle.g`](oracle/gap_oracle.g) |
 | Runner | [`oracle/run.sh`](oracle/run.sh) |
-| B4 code-object attempt at a 50 GiB heap | [`oracle/attempts/2026-09-02-b4-heap-50g/`](oracle/attempts/2026-09-02-b4-heap-50g/) |
+| B4 code-object attempt at a 50 GiB heap | the first attempt |
 | Corpus fixture | [`../../../crates/gf2-coding/tests/data/bch_oracle/corpus.json`](../../../crates/gf2-coding/tests/data/bch_oracle/corpus.json) |
 | SageMath fixture | [`../../../crates/gf2-coding/tests/data/bch_oracle/sage.json`](../../../crates/gf2-coding/tests/data/bch_oracle/sage.json) |
 | GAP/GUAVA fixture | [`../../../crates/gf2-coding/tests/data/bch_oracle/gap.json`](../../../crates/gf2-coding/tests/data/bch_oracle/gap.json) |
@@ -324,7 +324,7 @@ generator annihilates, recorded as `generator_divides_x_n_minus_one` and
 The fixture generation runs its B4 attempt at the `ORACLE_GAP_HEAP` default,
 which keeps regeneration reproducible on an ordinary host. A larger bounded
 attempt is recorded separately, outside the fixture generation, under
-[`oracle/attempts/2026-09-02-b4-heap-50g/`](oracle/attempts/2026-09-02-b4-heap-50g/).
+the first attempt.
 It ran on `fraktaali`, the host the receipt names, through the `gap` on that
 host's path. The probe recorded no identity of its own for that binary, for
 GUAVA and SONATA, or for the CPU and kernel; the receipt's **Oracle identity**
@@ -339,13 +339,13 @@ below are the scope's. Every figure below is read from that record.
 
 | Property | Observation | Record |
 |---|---|---|
-| Invocation | `systemd-run --user --scope -p MemoryMax=52G --unit=gf2-gap-b4-$$ timeout 1200 gap -q -A -T -o 50g -c '...CALL_WITH_CATCH(BCHCode,[65535,1,25,GF(2)])...'` | [`gap-b4-probe.sh`](oracle/attempts/2026-09-02-b4-heap-50g/gap-b4-probe.sh) |
-| Outcome | `built=false` | [`gap.out`](oracle/attempts/2026-09-02-b4-heap-50g/gap.out) |
+| Invocation | `systemd-run --user --scope -p MemoryMax=52G --unit=gf2-gap-b4-$$ timeout 1200 gap -q -A -T -o 50g -c '...CALL_WITH_CATCH(BCHCode,[65535,1,25,GF(2)])...'` | `gap-b4-probe.sh` |
+| Outcome | `built=false` | `gap.out` |
 | GAP diagnostic | `Error, reached the pre-set memory limit` and `(change it with the -o command line option)` | ``gap.err`` |
-| GAP processor time | `cpu_ms=273885` | [`gap.out`](oracle/attempts/2026-09-02-b4-heap-50g/gap.out) |
-| Memory free at launch, MiB | `total=64196 used=15544 avail=48651` | [`timeline.txt`](oracle/attempts/2026-09-02-b4-heap-50g/timeline.txt) |
-| Scope processor time and wall clock | `9min 14.018s CPU time over 9min 17.296s wall clock time` | [`scope.txt`](oracle/attempts/2026-09-02-b4-heap-50g/scope.txt) |
-| Scope memory and swap peaks | `52G memory peak, 15.6G memory swap peak` | [`scope.txt`](oracle/attempts/2026-09-02-b4-heap-50g/scope.txt) |
+| GAP processor time | `cpu_ms=273885` | `gap.out` |
+| Memory free at launch, MiB | `total=64196 used=15544 avail=48651` | `timeline.txt` |
+| Scope processor time and wall clock | `9min 14.018s CPU time over 9min 17.296s wall clock time` | `scope.txt` |
+| Scope memory and swap peaks | `52G memory peak, 15.6G memory swap peak` | `scope.txt` |
 
 `rss.log` samples `VmRSS` and `VmHWM` every five seconds from the first
 process `pgrep -x gap` names, without recording that process's PID, so its

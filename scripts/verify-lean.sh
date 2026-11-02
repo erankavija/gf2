@@ -15,7 +15,7 @@
 #
 # Toolchain (as of the 2026-06-30 Aeneas/Charon upgrade):
 #   * Charon: upstream `487f0320` (the commit pinned by Aeneas main via
-#     `/data/aeneas-build/charon-pin`) + 1 project-local patch: implied-clause
+#     its `charon-pin`) + 1 project-local patch: implied-clause
 #     constraint propagation in `expand_associated_types.rs`
 #     `compute_trait_modifications` (propagates supertrait associated-type
 #     values; eliminates 86 "Could not compute the value of ...Output" warnings
@@ -378,7 +378,22 @@ cd "$PROOFS_DIR"
 if [ -n "${AENEAS_LEAN_DIR:-}" ]; then
   echo "Patching aeneas path → $AENEAS_LEAN_DIR"
   sed -i "s|require aeneas from .*|require aeneas from \"$AENEAS_LEAN_DIR\"|" lakefile.lean
-  sed -i "s|\"dir\": \".*backends/lean\"|\"dir\": \"$AENEAS_LEAN_DIR\"|" lake-manifest.json
+  python3 - "$AENEAS_LEAN_DIR" <<'PATCH'
+import json
+import sys
+
+with open("lake-manifest.json") as file:
+    manifest = json.load(file)
+for index, package in enumerate(manifest["packages"]):
+    if package["name"] == "aeneas":
+        manifest["packages"][index] = {
+            "type": "path", "scope": "", "name": "aeneas",
+            "manifestFile": "lake-manifest.json", "inherited": False,
+            "dir": sys.argv[1], "configFile": "lakefile.lean",
+        }
+with open("lake-manifest.json", "w") as file:
+    json.dump(manifest, file, indent=1)
+PATCH
   rm -rf .lake/packages/aeneas
 fi
 

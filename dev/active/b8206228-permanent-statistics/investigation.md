@@ -1,7 +1,7 @@
 # Investigation — epic b8206228 (empirical permanent statistics)
 
 Read-only verification of the current tree against the claims carried into
-planning from `dev/studies/b488f02c/feasibility-study.md` (GO verdict,
+planning from `feasibility-study.md` (GO verdict,
 2026-08-08). Every finding below cites a file and line checked in this session;
 where a claim could not be settled from code that is said explicitly.
 
@@ -10,17 +10,17 @@ only in `.jit/` (events log and the b8206228 issue file).
 
 ## 1. Claim classification
 
-### C1 — sampler prototyped in `dev/research/permanent-sampling-feas/`; no production uniform F_q sampler
+### C1 — sampler prototyped in `permanent-sampling-feas/`; no production uniform F_q sampler
 
 **Valid, with one correction that matters for the plan.**
 
 Prototype confirmed. `MatrixSampler` draws by exact rejection over ChaCha20
-(`dev/research/permanent-sampling-feas/src/sampler.rs:107`, RNG constructed at
+(`sampler.rs:107`, RNG constructed at
 `:147`), with `accept_bound` at `:87` and the 32-byte `(root, q, n, stream)`
 little-endian seed block assembled in `derive_seed`
-(`dev/research/permanent-sampling-feas/src/sampler.rs:97-104`). The crate pins
+(`sampler.rs:97-104`). The crate pins
 `rand_chacha = "0.9"` and `rand_core = "0.9"`
-(`dev/research/permanent-sampling-feas/Cargo.toml:49-51`). Entry-uniformity and
+(`Cargo.toml:49-51`). Entry-uniformity and
 stream-separation tests exist: `entries_are_uniform_within_sampling_error`
 (`sampler.rs:311`, six binomial standard errors over 3e5 draws per field for
 q ∈ {3,5,7}) and `streams_are_reproducible_and_domain_separated`
@@ -49,7 +49,7 @@ read the study's phrasing as falsified.
 ### C2 — Wilson intervals in `stats.rs`; no checkpointable accumulator; no Clopper–Pearson in-tree
 
 **Valid.** `wilson_interval` at
-`dev/research/permanent-sampling-feas/src/stats.rs:38`, `Z_95` at `:52`. The
+`stats.rs:38`, `Z_95` at `:52`. The
 module has no accumulator type and no serde: `EnvelopeRow` derives only
 `Clone, Debug` (`stats.rs:69-70`) and leaves the crate through a
 `to_csv_row() -> String` method (`stats.rs:108`). A repo-wide search for
@@ -97,7 +97,7 @@ while `dev/index.md:46` classifies `simulation_results/` as "Campaign
 path as an argument, plus a surface test asserting which TOMLs exist
 (`crates/gf2-coding/tests/grand_phase1_smoke.rs:409-413`). So §7.4's proposal to
 publish the *dataset* under `permanent-zero-fraction/<id>/`
-(`dev/studies/b488f02c/feasibility-study.md:1464`) puts an output into the
+(`feasibility-study.md:1464`) puts an output into the
 definitions area. Either the plan justifies the departure explicitly, or it
 places the dataset under `simulation_results/` (equally permanent, and the
 index's declared home for campaign outputs). This is worth deciding before
@@ -190,7 +190,7 @@ path. Drop the qualifier and the claim is false.
 ### C9 — composite hot path exists in the harness and is liftable
 
 **Valid.** `one_rep` in
-`dev/research/permanent-sampling-feas/src/protocol.rs:315` times the four phases
+`protocol.rs:315` times the four phases
 in order: `generate` → `evaluate` → `histogram` (`:293`) + `count_zeros` →
 shard line `writeln!` + `flush` (`:335-343`). The shard record is
 `q,n,m,stream,zeros,<q histogram bins>`. The module docs state the same
@@ -203,7 +203,7 @@ most wants to productionise — sampler and stats — are the tested ones, and t
 composite loop is not. Budget test-first work for the driver rather than
 treating it as a transcription.
 
-### C10 — exact-enumeration anchors exist under `dev/studies/b488f02c/`
+### C10 — exact-enumeration anchors exist under `b488f02c/`
 
 **Valid.** `order3-anchor-check.py` and its committed output
 `order3-anchor-2026-08-08.txt`; `determinant-anchor-check.py` and
@@ -212,7 +212,7 @@ whose `main.rs:15-27` links the harness library and pins `SEED_ROOT =
 0xB488_F02C`, `STREAM = 12_345`, `DRAWS = 400_000`, `N = 3`. The exact-count
 function it calls is `permanent_sampling_feas::equivalence::exact_zero_count_order3`.
 
-**Placement problem the plan must solve.** `dev/studies` is in
+**Placement problem the plan must solve.** `studies` is in
 `issue_scoped_areas` (`.jit/config.toml`), so these anchors are attached to the
 closed study `b488f02c` and are archival candidates. The campaign's REQ-04
 ("validated by exact enumeration and cross-implementation agreement") needs
@@ -305,7 +305,7 @@ before anyone applies them.
 
 ## 2. Prior-art sweep
 
-**`dev/studies/b488f02c/feasibility-study.md`** (1585 lines) is the design SSOT.
+**`feasibility-study.md`** (1585 lines) is the design SSOT.
 The parts the plan must carry verbatim rather than paraphrase: §4.6 envelope
 table (`:761-777`) and the frontier sentence at `:779-782`; §7.2 sampling plan
 including the Bonferroni rule (`:1403-1410`, K = 63, per-cell one-sided level
@@ -357,7 +357,7 @@ file, with G6 "as a gf2-algebra bug". Its GPU note (`:105-113`) records that
 M = 4096 faulted once, cause never established — avoid 4096 on cost-of-fault
 grounds, not on a known threshold.
 
-**`dev/studies/b488f02c/literature-search-2026-08-08.md`** (105 lines) is the
+**`literature-search-2026-08-08.md`** (105 lines) is the
 recorded search behind the q ∈ {5,7} novelty claim, including its limits (one
 general web index, three unread candidate works). The plan's novelty wording must
 stay conditional on that search (`feasibility-study.md:1571-1575`).
@@ -409,7 +409,7 @@ lands, and `s1_n36_speedup.rs` explicitly labels its
 group "SIMD path" (`:99,109`). Fixing G6 makes that label wrong, and a stale
 label inside a benchmark that feeds committed receipts is exactly the RC1 failure
 mode. Second, the feasibility harness already bypasses the dispatcher
-(`feasibility-study.md:371-374`; `dev/research/permanent-sampling-feas/src/backend.rs`
+(`feasibility-study.md:371-374`; `backend.rs`
 calls `permanent_bipedal3_singleword` and `..._simd` directly), so the campaign
 does not depend on the fix — it is a repository-hygiene item that the campaign
 surfaced.
@@ -462,7 +462,7 @@ productionising are the well-tested ones.
 Dependencies are clean for a lift. `permanent-sampling-feas` depends on
 `gf2-algebra` (features `simd,parallel,f5,f7`), `gf2-core`, `gf2-kernels-simd`,
 `rayon 1.10`, `rand_chacha 0.9`, `rand_core 0.9`, `libc 0.2`
-(`dev/research/permanent-sampling-feas/Cargo.toml:35-53`). `sampler.rs` itself
+(`Cargo.toml:35-53`). `sampler.rs` itself
 needs only `gf2_core::gfp::Fp`, `rand_chacha::ChaCha20Rng` and `rand_core`
 (`sampler.rs:55-57`); `stats.rs` needs nothing outside `std` plus the crate's own
 `prior` module.
@@ -552,7 +552,7 @@ Six real options, with precedents:
 2. **Module in `gf2-algebra`** — e.g. `gf2_algebra::sampling` producing packed
    matrices directly. Precedent: `testutil.rs` is already the crate's matrix
    generator and `packed::*::from_row_major` is the constructor the harness uses
-   (`dev/research/permanent-sampling-feas/src/protocol.rs:267`). Cheapest
+   (`protocol.rs:267`). Cheapest
    integration with the kernels; but a statistics/campaign layer inside an
    algebra crate strains `AGENTS.md:44-46` ("may dispatch to isolated kernels
    without becoming a kernel layer itself" — by the same logic, not an
@@ -598,7 +598,7 @@ mechanism is reused rather than re-implemented.
 ## 5. Architecture fit
 
 **Reusable primitives.** Wilson interval and sample-size planning
-(`dev/research/permanent-sampling-feas/src/stats.rs:11,27,38`); the seed
+(`stats.rs:11,27,38`); the seed
 derivation and rejection sampler (`sampler.rs:87,97,184`); the four-phase
 composite loop (`protocol.rs:315`); per-matrix GPU batch results
 (`crates/gf2-algebra/src/gpu.rs:264,361,467`); the F_q determinant
@@ -764,7 +764,7 @@ notes:
    rustdoc already promises. §1/C6.
 5. Whether `b8206228 → b488f02c` dependency + `satisfies:REQ-01` label are added
    (needs user approval; blocks `coverage-preview` on `f3dc1bb1`). §1/C13.
-6. Where the exact-enumeration anchors live once `dev/studies/b488f02c/` is
+6. Where the exact-enumeration anchors live once `b488f02c/` is
    archived. §1/C10.
 
 ## 8. Claim classification summary

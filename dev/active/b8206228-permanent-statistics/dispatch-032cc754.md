@@ -84,7 +84,7 @@ Confirmed defects:
    the *single-word* path, and the premeasurement cohort that froze these
    selections measured `cpu_scalar` = `permanent_bipedal3_singleword` directly
    (see the same reasoning recorded at
-   `dev/research/permanent-sampling-feas/src/backend.rs:1-26`). Call the
+   `backend.rs:1-26`). Call the
    single-word entry points directly and range-check `n` yourself.
 
 ## Required design

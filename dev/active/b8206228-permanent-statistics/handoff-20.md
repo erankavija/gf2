@@ -33,7 +33,7 @@
 
 ## Traps — do not repeat these
 
-- **Do NOT gate a shared-repo run on a whole-tree pristine check.** `git status --porcelain` conflates "receipt provenance is reproducible" with "nobody in gf2 has uncommitted work"; another user's unrelated edits would abort the run while a running build (the actual hazard) passes it. Scope the gate to the built source closure — `dev/research/permanent-sampling-feas`, `dev/research/permanent_wave_gpu`, `crates/` — and leave exclusivity to `ccx1-bench-flock.sh --full-host` plus the owner's window. The harness itself records `git_dirty` as informational and `harness_dirty`/`deps_dirty` as the provenance flags (`env.rs:49-68`).
+- **Do NOT gate a shared-repo run on a whole-tree pristine check.** `git status --porcelain` conflates "receipt provenance is reproducible" with "nobody in gf2 has uncommitted work"; another user's unrelated edits would abort the run while a running build (the actual hazard) passes it. Scope the gate to the built source closure — `permanent-sampling-feas`, `dev/research/permanent_wave_gpu`, `crates/` — and leave exclusivity to `ccx1-bench-flock.sh --full-host` plus the owner's window. The harness itself records `git_dirty` as informational and `harness_dirty`/`deps_dirty` as the provenance flags (`env.rs:49-68`).
 - **Do NOT schedule a window-gated run without verifying clock sync.** This host's clock was 36 min 40 s ahead with `NTP service: inactive` (sntp offset −2200.48 s); a fixed `sleep $((target-now))` anchored to it would have launched GPU work ~37 min before the real 02:00 window (REQ-04 violation). Verify with `sntp <pool-host>` (read-only) first; schedule with wall-clock `OnCalendar` systemd timers, which also survive session end and later clock adjustments.
 - **`env.rs` provenance flags do not cover the sibling path-dep.** `harness_dirty` pins the crate dir and `deps_dirty` pins `crates/`, but `dev/research/permanent_wave_gpu` is covered by neither (`env.rs:98-102`). Include it explicitly in any closure gate; a fix belongs in a follow-up, not a silent edit.
 - **Workers repeat the GNU-time trap.** Sol's runbook used `/usr/bin/time -p`; GNU time is not installed (handoff-4). Sweep worker runbooks for it before commit.
@@ -48,7 +48,7 @@ None. The owner's standing 02:00 window admission rule is satisfied by the timer
 
 - Epic: `jit issue show b8206228`; freeze: `jit issue show 7a816262`; receipt task: `jit issue show 86185f88`
 - Armed run: `systemctl --user list-timers gf2-equivalence-s24.timer`; runner + results: `local-path
-- Harness extension: `dev/research/permanent-sampling-feas/src/campaign_selection.rs` (authority parsing + budgets), commit `4e847a3f`
+- Harness extension: `campaign_selection.rs` (authority parsing + budgets), commit `4e847a3f`
 - Addendum draft: `backend-selection-v1-equivalence-addendum.md`
 - 6dfb1b5e evidence: `driver.rs:738` test; `README.md` §manifest identities
 - Progress: `dev/active/b8206228-permanent-statistics/progress.json` (`session_24_state`)

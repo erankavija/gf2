@@ -73,5 +73,5 @@
 - Protocol: `protocol.md`
 - Strict schema: `schema.rs`
 - Determinant evidence: `determinant-cost.md`, `determinant-cost.csv`
-- Durable external root: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824`
+- Durable external root: `<local path>`
 - Session commits: `2d6d9648` (determinant prerequisite), `5e2799f7` (immutable premeasurement cohort)

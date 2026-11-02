@@ -17,7 +17,7 @@
 
 - The frozen campaign invocation was repaired and revalidated without changing the 63-cell scientific manifest.
 - `2c1ae813` committed the exact 15-cell accelerator launch-cost table plus Rust preflight/validation. Every configured gate passed.
-- `3f664839` produced the binding rare-event design at `dev/active/b8206228-permanent-statistics/3f664839/design.md`, including exact weighting, address partitions, immutable schemas, attempt/checkpoint lineage, no-replace publication, fixed target/coverage allocations, and runtime provenance. Two review cycles closed artifact-schema and execution-provenance findings; all gates passed.
+- `3f664839` produced the binding rare-event design at `design.md`, including exact weighting, address partitions, immutable schemas, attempt/checkpoint lineage, no-replace publication, fixed target/coverage allocations, and runtime provenance. Two review cycles closed artifact-schema and execution-provenance findings; all gates passed.
 - `8ec10dde` added exact arbitrary-precision compressed-state propagation in `gf2-algebra`; all gates passed. A pre-existing stale rustdoc-link defect is tracked as `049a89af`.
 - The high-tier `6639435f` branch now contains ten commits from `570ff55c` through `49b4d452`: exact weighted statistics, the canonical addressed nullspace proposal, closed artifact schemas, strict lineage validation, immutable publication/lifecycle APIs, and deterministic final-receipt regeneration.
 - The required `rare_event_artifact_final_receipt_regeneration` test passes in 2.466 s. It covers all 24 target and 27 coverage worker/resume layouts, all fixed boundaries, exact 2,048/19,200 checkpoint-reference sets, distinct execution provenance, stable result payload/digest, distinct outer receipts, and byte-identical regeneration. Focused Rust 1.95 clippy, format, and diff checks pass.
@@ -76,7 +76,7 @@ Options:
 - Epic: `jit issue show b8206228`
 - Open implementation issues: `jit issue show 73317b2e`, `jit issue show 6639435f`
 - Progress and escalations: `dev/active/b8206228-permanent-statistics/progress.json`
-- Rare-event design: `dev/active/b8206228-permanent-statistics/3f664839/design.md`
+- Rare-event design: `design.md`
 - Frozen campaign: `permanent-zero-fraction-20260829/`
 - Accelerator costs: `accelerator-launch-costs-v1.csv`
 - Importance worktree: `.agents/worktrees/agent-6639435f` at `49b4d452`

@@ -63,7 +63,7 @@ Paused mid-gate-cycle on issue `b488f02c`. This note is the resume contract.
   amendment a66d42f8); epic b8206228 Background/REQ-04 amended per 1364c050
   (permanental-rank event, Scheinerman prior-art, GGK regime k ≤ 0.1√n).
 - 12 h campaign wall-clock budget; harness lives in
-  `dev/research/permanent-sampling-feas/` (standalone crate).
+  `permanent-sampling-feas/` (standalone crate).
 
 ## Open items beyond b488f02c
 
@@ -108,6 +108,6 @@ Paused mid-gate-cycle on issue `b488f02c`. This note is the resume contract.
   established — a watchdog timeout is one hypothesis, not a finding. Nothing
   beyond that one attempt was explored. Keep avoiding 4096 on the strength of
   what a fault costs, not of a known threshold. *(Requalified 2026-08-08 to
-  match `dev/studies/b488f02c/feasibility-study.md` §4.5 and
+  match `feasibility-study.md` §4.5 and
   `gpu-hang-2026-08-07.log`, which record what was and was not captured; the
   original line asserted a watchdog limit and an unscoped optimum.)*

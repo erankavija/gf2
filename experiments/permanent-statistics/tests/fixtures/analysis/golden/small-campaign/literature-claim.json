@@ -4,6 +4,6 @@
     7
   ],
   "claim": "This search found no published numerical estimates of Pr[per(A) = 0] over F5 or F7, exact or Monte Carlo.",
-  "source": "dev/studies/b488f02c/literature-search-2026-08-08.md",
+  "source": "literature search of 2026-08-08 under @/issue/b488f02c",
   "limitations": "No paywalled full text was read. GGK2025's full text was not exhaustively checked for an appendix of numerics. A general web index is not a systematic bibliographic search. The claim is about what this search found, not about what exists."
 }

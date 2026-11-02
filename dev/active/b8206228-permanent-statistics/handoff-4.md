@@ -46,4 +46,4 @@ None. (Session-6 decisions were routine implementation choices within the amende
 
 - e31b1918 closure: commits `de5f7414`, `0c0f525f`, `089d268e`, `7174718d`; validation CSV `e31b1918-equiv-host-full.csv` here
 - Campaign runner: `permanent-campaign-runner.sh` (+ `.test.sh`, 10 tests); smoke run 20260814T171042Z-1587314 under each study's `smoke/`
-- Overnight evidence to supersede tomorrow: `dev/studies/{047b62ed,91605d4d,6c7fcb38}/permanent-campaign-20260813T230032Z-1321576*` and `receipts.md` + `analysis.py`
+- Overnight evidence to supersede tomorrow: `studies/{047b62ed,91605d4d,6c7fcb38}/permanent-campaign-20260813T230032Z-1321576*` and `receipts.md` + `analysis.py`

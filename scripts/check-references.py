@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import json
 import re
 import subprocess
 import sys
@@ -19,18 +20,22 @@ from pathlib import Path
 EXCEPTIONS = "scripts/reference-exceptions.toml"
 MAX_TEXT_BYTES = 4 * 1024 * 1024
 HOST_LOCAL = re.compile(
-    r"/home/(?!example\b)[a-z_][\w-]*/|/Users/[A-Za-z]\w*/|/run/user/\d|/tmp/claude-|/mnt/\w|/root/"
+    r"(?<![\w.-])/home/(?!example\b)[a-z_][\w-]*/|/Users/[A-Za-z]\w*/|/run/user/\d|/tmp/claude-"
+    r"|(?<![\w.-])/(?:mnt|root|data|scratch)/\w"
     r"|(?:~|\$HOME|\$\{HOME\})/(?:\.local|\.cache|\.claude|\.codex|\.gap|Projects)\b"
 )
 ROOTS = r"(?:benchmarks|contrib|crates|dev|docs|experiments|packages|proofs|scripts)"
 REPOSITORY_PATH = re.compile(rf"(?<![\w./+-])/?({ROOTS}/[\w.+=-]+(?:/[\w.+=-]+)*)")
 RELATIVE_PATH = re.compile(r"(?<![\w./+-])((?:\.\./)+[\w.+=-]+(?:/[\w.+=-]+)*)")
 INLINE_PATH = re.compile(r"`((?!10\.\d)[\w.+=-]+(?:/[\w.+=-]+)*/[\w+=-]+\.\w+)`")
-MARKDOWN_LINK = re.compile(r"\]\((?!https?:|mailto:|#|/)([^)#\s]+)")
+MARKDOWN_LINK = re.compile(r"\]\((?!https?:|mailto:|#)([^)#\s]+)")
+RUST_INCLUDE = re.compile(r"""include(?:_str|_bytes)?!\(\s*"([^"]+)"\s*\)""")
+DOT_PATH = re.compile(r"(?<![\w./+-])\./([\w.+=-]+(?:/[\w.+=-]+)+)")
 TEMPLATE = re.compile(r"[<>{}*$]")
 DEVICE = re.compile(r"dev/(?:null|zero|shm|stdin|stdout|stderr|fd|tty|kfd|dri|urandom|random|cpu|mem)\b")
 
 
+OPEN_STATES = {"backlog", "ready", "in_progress"}
 # Code resolves `../` from its working directory at run time, so only prose is read.
 CODE_SUFFIXES = (".rs", ".py", ".sh", ".toml", ".c", ".cpp", ".h", ".lean", ".json", ".jsonl", ".yml")
 
@@ -63,6 +68,14 @@ def faults_in(path: str, text: str, known: set[str]) -> list[str]:
                 continue
             if not TEMPLATE.search(target) and target not in known:
                 faults.append(f"{path}:{number}: {target}")
+        if path.endswith(".rs"):
+            for included in RUST_INCLUDE.findall(line):
+                target = str(Path(*_normal(f"{Path(path).parent}/{included}")))
+                if target not in known:
+                    faults.append(f"{path}:{number}: {target}")
+        for dotted in DOT_PATH.findall(line):
+            if dotted not in known and not path.endswith(CODE_SUFFIXES):
+                faults.append(f"{path}:{number}: {dotted}")
         for relative in RELATIVE_PATH.findall(line):
             target = str(Path(*_normal(f"{Path(path).parent}/{relative}")))
             if not path.endswith(CODE_SUFFIXES) and target not in known:
@@ -72,7 +85,7 @@ def faults_in(path: str, text: str, known: set[str]) -> list[str]:
                 if ".." not in inline and not _suffix_known(inline.removeprefix("./"), known):
                     faults.append(f"{path}:{number}: {inline}")
             for link in MARKDOWN_LINK.findall(line):
-                target = str(Path(path).parent / link)
+                target = link[1:] if link.startswith("/") else f"{Path(path).parent}/{link}"
                 normal = str(Path(*_normal(target)))
                 if not TEMPLATE.search(link) and normal not in known:
                     faults.append(f"{path}:{number}: {link}")
@@ -94,15 +107,19 @@ def _normal(target: str) -> list[str]:
     return parts or ["."]
 
 
-def excepted(fault: str, exceptions: list[dict[str, str]]) -> bool:
+def excepted(root: Path, fault: str, exceptions: list[dict[str, str]]) -> bool:
     """An entry exempts its files; with `planned`, only paths of files to come."""
     path, target = fault.split(":", 1)[0], fault.rsplit(": ", 1)[1]
     for entry in exceptions:
         if fnmatch.fnmatch(path, entry["path"]):
             planned = entry.get("planned")
-            if planned is None or target.startswith(tuple(planned)):
+            if planned is None or (target.startswith(tuple(planned)) and _open_issue(root, path)):
                 return True
     return False
+
+
+def _open_issue(root: Path, path: str) -> bool:
+    return json.loads((root / path).read_text()).get("state") in OPEN_STATES
 
 
 def ignored(root: Path, target: str) -> bool:
@@ -137,7 +154,7 @@ def check(root: Path) -> list[str]:
             continue
         faults += [
             fault for fault in faults_in(path, text, known)
-            if not excepted(fault, exceptions)
+            if not excepted(root, fault, exceptions)
             and not ignored(root, fault.rsplit(": ", 1)[1])
         ]
     return faults
@@ -153,7 +170,11 @@ def self_test() -> None:
         (root / "docs/gone.md").write_text("see dev/gone/file.json\n")
         (root / "docs/relative.md").write_text("see ../missing/file.txt and ../docs/good.md\n")
         (root / "docs/inline.md").write_text("see `gone/file.json` and `docs/good.md`\n")
-        (root / "docs/home.md").write_text("see $HOME/.local/share/x\n")
+        (root / "docs/home.md").write_text("see $HOME/.local/share/x and crates/a/data/b and ../data/c\n")
+        (root / "docs/dot.md").write_text("run ./scripts/absent.sh\n")
+        (root / "docs/rooted.md").write_text("[a](/docs/absent.md) [b](/docs/good.md)\n")
+        (root / "src").mkdir()
+        (root / "src/lib.rs").write_text('const A: &str = include_str!("../docs/absent.txt");\n')
         (root / ".gitignore").write_text("dev/ignored/\n")
         (root / "docs/ignored.md").write_text("see dev/ignored/file\n")
         git(root, "add", ".")
@@ -161,6 +182,10 @@ def self_test() -> None:
     assert any("bad-link.md" in f for f in faults), faults
     assert sum("host-local" in f for f in faults) == 2, faults
     assert any("missing/file.txt" in f for f in faults), faults
+    assert any("scripts/absent.sh" in f for f in faults), faults
+    assert any("rooted.md" in f and "absent.md" in f for f in faults), faults
+    assert not any("rooted.md" in f and "good.md" in f for f in faults), faults
+    assert any("src/lib.rs" in f and "docs/absent.txt" in f for f in faults), faults
     assert not any("../docs/good.md" in f for f in faults), faults
     assert any("gone/file.json" in f and "inline" in f for f in faults), faults
     assert not any("docs/good.md" in f and "inline" in f for f in faults), faults

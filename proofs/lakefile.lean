@@ -2,7 +2,7 @@ import Lake
 open Lake DSL
 
 -- Aeneas standard library (provides `Aeneas`, `Aeneas.Std`, etc.)
-require aeneas from "/data/aeneas-build" / "backends" / "lean"
+require aeneas from git "https://github.com/AeneasVerif/aeneas.git" @ "5220259c236e10b7abadc086fdd1b2c507f9e6bb" / "backends" / "lean"
 
 -- Mathlib (also a transitive dep via Aeneas, declared explicitly for clarity)
 require mathlib from git

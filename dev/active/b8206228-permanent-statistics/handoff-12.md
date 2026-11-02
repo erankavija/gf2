@@ -50,6 +50,6 @@ None.
 - Deviation record: `premeasure-v1-deviations.md`
 - Premeasure plan: `premeasure-plan-v1.md` (+ `.csv`)
 - Reconciled progress: `dev/active/b8206228-permanent-statistics/progress.json`
-- Durable campaign root: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824`
+- Durable campaign root: `<local path>`
 - Tonight's logs (after firing): `premeasure-resume-20260826.log`, `premeasure-collect-20260826.log`, `premeasure-collect-20260826.exit.status` under the durable root
 - Relevant commits: `370eb43a` (1947125e closure), `d7493bdc` (main repair), `8811d7b6` (pinned collector branch repair), `51e28a31` (679cf170 closure by gf2-a1)

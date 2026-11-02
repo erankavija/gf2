@@ -8,7 +8,7 @@
 
 - Epic: `b8206228` — state: backlog (children executing); wave 1 of 13 nearly complete
 - Closed this session: `047b62ed` (F_3 receipts, 2 rework rounds, both gates passed), `91605d4d` (F_5 receipts, zero rework, both gates first-round), `a2c0db52` (two mis-rounded feasibility-table cells + recorded check + F_3 receipts §11.1 correction)
-- Open, near close: `6c7fcb38` (F_7) — receipts committed at `093b846e` (16/19 MET; §12 REQ-16 partial, §13 REQ-17 unmet, both written to current evidence and designed to be replaced); claimed `agent:worker`. **Blocked on the lead's paired profiled evidence run** (see below). ALSO: the worker left an unexplained uncommitted 94+/52− delta on `dev/studies/6c7fcb38/{receipts.md,analysis.py}` after its commit — ask `worker-6c7fcb38` (or diff it) before doing anything; do not commit it blind and do not discard it blind.
+- Open, near close: `6c7fcb38` (F_7) — receipts committed at `093b846e` (16/19 MET; §12 REQ-16 partial, §13 REQ-17 unmet, both written to current evidence and designed to be replaced); claimed `agent:worker`. **Blocked on the lead's paired profiled evidence run** (see below). ALSO: the worker left an unexplained uncommitted 94+/52− delta on `6c7fcb38/{receipts.md,analysis.py}` after its commit — ask `worker-6c7fcb38` (or diff it) before doing anything; do not commit it blind and do not discard it blind.
 - Open: `4fdd781a` (stopping-rule daggers in the prior study) — round-1 fix committed (`7a0af9ab`, codex luna), but doc-review FAILED with 3 findings (run record at `294e1fc9`): F1 the envelope table (feasibility-study.md:775) republishes the q=5,n=28 rayon rate 0.648 unmarked; F2 the q=3,n=28 GPU M=1024 rate 19.27 feeds a projection (line 1573) without the qualification; F3 the check scans §4.4 only and misses downstream renderings. Rework (Luna): dagger EVERY rendering of the two nonconforming rates across the study, and widen `verify-rendered-stopping-rule.py` to scan every rendering (or the whole document for the two rates), red-demonstrated. Then re-gate, confirm status, review, close. Rework count set to 1.
 - Overnight evidence: run `20260814T230032Z-2085453` landed per issue (`6f5a23ac`, `93e5760a`, `55eabd95`), superseding the 20260813 run + v1 receipts per the standing rule. Shared equivalence 102/102 identical.
 - Criterion amendments this session (all owner-approved, logged in `progress.json` escalations): REQ-04, REQ-03, REQ-07 on all three campaigns; REQ-16/REQ-17 on `6c7fcb38` (paired profiled run design).
@@ -17,7 +17,7 @@
 
 ## The paired profiled evidence run (the one blocker for wave 1)
 
-Owner-approved design (amended REQ-16/17 on `6c7fcb38`, commit `afa665d9`): per-kernel durations and achieved-occupancy counters from rocprofv3 over the SAME hash-pinned binaries and cells as the timing run, committed as its own artifact under `dev/studies/6c7fcb38/`, kept separate from the timing run (counter collection perturbs timing — state this in the provenance). Smoke-validated recipe (lead-run, device work) — EXECUTABLE at `dev/active/b8206228-permanent-statistics/profiled-run.sh` (verifies the manifest hash, runs all six passes under the bench lock, writes `dev/studies/6c7fcb38/profiled-<UTC>/` with run.log; on success: write the provenance file per step 5, commit, `jit doc add`, message worker-6c7fcb38 per step 6). Prose recipe:
+Owner-approved design (amended REQ-16/17 on `6c7fcb38`, commit `afa665d9`): per-kernel durations and achieved-occupancy counters from rocprofv3 over the SAME hash-pinned binaries and cells as the timing run, committed as its own artifact under `6c7fcb38/`, kept separate from the timing run (counter collection perturbs timing — state this in the provenance). Smoke-validated recipe (lead-run, device work) — EXECUTABLE at `dev/active/b8206228-permanent-statistics/profiled-run.sh` (verifies the manifest hash, runs all six passes under the bench lock, writes `dev/studies/6c7fcb38/profiled-<UTC>/` with run.log; on success: write the provenance file per step 5, commit, `jit doc add`, message worker-6c7fcb38 per step 6). Prose recipe:
 
 1. Verify the binary: `sha256sum target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas` must equal the manifest value in `target/permanent-campaign/manifest-v1.txt` (edb03650…; matched this session).
 2. Kernel-trace pass (per cell set):
@@ -53,7 +53,7 @@ None. All five criterion collisions were escalated and resolved this session (de
 
 ## Reference artefacts
 
-- F_3 receipts: `receipts.md` + `analysis.py` (gates passed at `5222f61c`); F_5: `dev/studies/91605d4d/` (passed at `1de2b950`); F_7: `dev/studies/6c7fcb38/` at `093b846e` + uncommitted delta (see above)
-- Published-table checks: `dev/studies/b488f02c/verify-published-table.py`, `verify-rendered-stopping-rule.py`
+- F_3 receipts: `receipts.md` + `analysis.py` (gates passed at `5222f61c`); F_5: `91605d4d/` (passed at `1de2b950`); F_7: `6c7fcb38/` at `093b846e` + uncommitted delta (see above)
+- Published-table checks: `verify-published-table.py`, `verify-rendered-stopping-rule.py`
 - Profiling smoke output (scratch, session-local): kernel-stats format validated; recipe above is self-contained
 - Escalation log, pitfalls, rework counts: `progress.json` here

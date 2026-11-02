@@ -45,7 +45,7 @@ None pending. (The c3d5cea5 rework is within the cap; everything else is queue w
 ## Reference artefacts
 
 - progress.json (current, this directory); plan.md; breakdown.json; bch-api-design.md; extension-design.md.
-- Survey deliverables: dev/active/ae03bcd0-general-bch/4e732b56/{findings.md,workload-selection.md}, 4e732b56/ (receipt + evidence receipts).
+- Survey deliverables: 4e732b56/{findings.md,workload-selection.md}, 4e732b56/ (receipt + evidence receipts).
 - Live teammate: `worker-c3d5cea5` (Opus, rework in flight); its worktree .agents/worktrees/agent-c3d5cea5.
 - Peer: forum bus local-path FORUM_DIR=/tmp/jit-forum, agent:claude ↔ agent:codex, lock /tmp/gf2-main-leads.lock.
 - 389aa4de facilitation stages: /tmp/gf2-389aa4de-20260901-{035703-2726638,035952-2735653,040229-2742533} (fail, fail, success).

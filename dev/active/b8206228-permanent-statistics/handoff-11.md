@@ -24,7 +24,7 @@
 - Closed `a39bb161` after cargo-ci, code-review, and lead review; closure commit is `fbe7bef1`.
 - Resolved `1947125e`'s impossible all-five-backends wording through the owner-approved field-scoped amendment at `b9c50d97`. Its shared conformance implementation is present through `d8f6cb01`; code-review passed with zero findings, while cargo-ci intentionally waits for the measurement host to become quiescent.
 - Replaced the estimator-only rare-event line with the owner-approved exact compressed-state path and independent importance-sampling cross-check at `b9c50d97`; hard criteria were strengthened at `0bf6e7a1`.
-- Prepared a fresh frozen cohort at source revision `1350d5b4`, harness binary hash prefix `1198cce4`, under `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824`.
+- Prepared a fresh frozen cohort at source revision `1350d5b4`, harness binary hash prefix `1198cce4`, under `<local path>`.
 - The first durable session wrote 539 completed receipts and one terminal signal-censored receipt. Position 539 is `q=3,n=26,A`, `accelerator/gpu_hip`, with `exit.status` 130; 900 positions remain.
 - Hardened collection at main commit `1cb1bc47` so bounded signal interruption remains censored evidence instead of being retried or discarded.
 - Verified `gf2-b8206228-premeasure-frozen.timer` and `gf2-b8206228-premeasure-collect.timer` through the explicit user bus. Their services are inactive until their timers fire, and both referenced worktrees are clean.
@@ -65,7 +65,7 @@
 - Reconciled progress: `dev/active/b8206228-permanent-statistics/progress.json`
 - Prior handoff: `dev/active/b8206228-permanent-statistics/handoff-10.md`
 - Frozen-manifest plan: `premeasure-plan-v1.md`
-- Durable campaign root: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824`
-- Resume log: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-resume-20260825.log`
-- Collector log and status: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-collect-20260825.log`, `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-collect-20260825.exit.status`
+- Durable campaign root: `<local path>`
+- Resume log: `<local path>`
+- Collector log and status: `<local path>`, `<local path>`
 - Relevant commits: `b9c50d97`, `0bf6e7a1`, `d8f6cb01`, `fbe7bef1`, `1cb1bc47`

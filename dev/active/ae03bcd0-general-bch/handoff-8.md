@@ -16,7 +16,7 @@
 ## What just happened
 
 - Gate re-runs closed b1bd75ca, 3f7edef1. Code-review reworks closed 5ee83cd3, 97410c80 (generic `LayoutView`; 113ae672 delivered and closed), e1e0e7ff (production DVB-T2 and `ExtendedBchComponent` in the roster).
-- Wave 12 (591a1c5e, ef8ff9c4, 0c21cb1e, 227ac5c8) and 94597a51 (Lean O-5) closed; 591a1c5e renamed non-comparable bench IDs (mapping in `dev/active/ae03bcd0-general-bch/591a1c5e/smoke-run.md`).
+- Wave 12 (591a1c5e, ef8ff9c4, 0c21cb1e, 227ac5c8) and 94597a51 (Lean O-5) closed; 591a1c5e renamed non-comparable bench IDs (mapping in `smoke-run.md`).
 - 4a2baa12 deleted the superseded surface (`BchCode::new/dvb_t2`, legacy encoder/decoder, `ExtendedBchCode`).
 - f759d724 closed under invoker DEC-01 (archives out of scope). d1b4f85e closed (W1/W2 cells, dispatch records with digests, window runner). 4ad869d6 closed (bch module guide, two runnable examples, `tests/bch_examples.rs`).
 - Invoker deleted-as-obsolete: all ROADMAP files, Copilot instructions and agent config (R-59). Filed cbd1eb28 (user-layout decode) outside the epic.
@@ -46,6 +46,6 @@ None.
 ## Reference artefacts
 
 - Receipt protocol: `receipt-protocol.md`; renderer `dev/active/ae03bcd0-general-bch/fd9d5416/render_receipt.py`.
-- Runner: `dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh`; smoke evidence `dev/active/ae03bcd0-general-bch/d1b4f85e/smoke-run.md`; contract amendments in `dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md`.
-- Baselines: `88ca7d2f/`, survey `dev/active/ae03bcd0-general-bch/4e732b56/findings.md`.
+- Runner: `run.sh`; smoke evidence `smoke-run.md`; contract amendments in `workload-selection.md`.
+- Baselines: `88ca7d2f/`, survey `findings.md`.
 - Queue: `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`.

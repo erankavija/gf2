@@ -756,7 +756,7 @@
     "Document-only addendum",
     "Leave the gate red"
    ],
-   "lead_recommendation": "Addendum + rebuild proof. Lead pre-verified: the retained binary at /data/gf2-campaigns/b8206228/premeasure-recovery-20260824/permanent-sampling-feas-hip/release/permanent_sampling_feas hashes to the receipt digest 1198cce4..., the build tree dep-info pins rand_chacha 0.9.0 (plus a 0.3.1 elsewhere in the graph to attribute), and Cargo.lock survives untracked."
+   "lead_recommendation": "Addendum + rebuild proof. Lead pre-verified: the retained binary at <local path> hashes to the receipt digest 1198cce4..., the build tree dep-info pins rand_chacha 0.9.0 (plus a 0.3.1 elsewhere in the graph to attribute), and Cargo.lock survives untracked."
   },
   {
    "issue": "73317b2e",
@@ -870,7 +870,7 @@
   "Run cargo-ci before code-review for code-bearing leaves: the reviewer treats pending executable evidence as a procedural failure even when the implementation diff is otherwise reviewable.",
   "The documentation gate will not tolerate a planned temporary live-prose contradiction across a dependency edge: the dispatcher leaf must repair blocking crate README, benchmark-label, and example-header fallout before the broader downstream narrative sweep can become eligible.",
   "breakdown.json in the epic's artefact directory copies the issue descriptions whose authoritative source is the .jit/ issue store, and reviewers read it as live prose: each entry's background paragraph states its pre-change condition, so it reads as false the moment that leaf lands. Five review rounds were burned on it. Every justification written for excluding it \u2014 frozen, historical, faithful to the store, snapshotted at a revision \u2014 became the next round's target, because each was a checkable claim the reviewer could and did falsify. Settled only when the owner recorded the exclusion as a decision in the issue description itself, explicitly not contingent on any property of the file. The lesson generalises: an exclusion defended by an assertion about the excluded thing invites verification of that assertion; an exclusion recorded as a decision does not. Do not edit the manifest and do not resynchronise it.",
-  "A recorded audit command is only as good as its pattern breadth. The round-one 240b7618 audit required the words public and dispatcher to be adjacent and searched two paths, so it returned a false all-clear over bare-symbol occurrences of the same claim living in dev/studies. When a criterion asks for a recorded repository search, run the recorded command against the known-bad text before accepting it, and escape a literal token in the pattern so the command text cannot match itself.",
+  "A recorded audit command is only as good as its pattern breadth. The round-one 240b7618 audit required the words public and dispatcher to be adjacent and searched two paths, so it returned a false all-clear over bare-symbol occurrences of the same claim living in studies. When a criterion asks for a recorded repository search, run the recorded command against the known-bad text before accepting it, and escape a literal token in the pattern so the command text cannot match itself.",
   "Prose the lead writes about a stale-framing sweep is itself swept. Two surfaced-pitfall entries in this file quoted the superseded claims verbatim and turned up as live occurrences in 240b7618's own audit. Describe a retired claim rather than reproducing it.",
   "A cargo-ci gate run reported 'Passed gate cargo-ci for issue 175972df' while persisting no record under .jit/gate-runs/, on a tree that the next identical invocation failed on clippy and that a direct cargo clippy run independently failed. Treat a gate pass with no corresponding run record as no evidence at all: after every jit gate evaluate, confirm the recorded status with jit gate status before acting on the verdict. The repository has a prior false-pass incident of a different mechanism recorded in scripts/cargo-ci.sh (jit issue 941d1528).",
   "jit keeps authoritative state in the shared .git/jit/ store and materialises it into whichever checkout a jit command runs from, so a worker's .jit/*.json and .jit/events.jsonl acquire modifications carrying other issues' gate transitions. A worker committing with git add -A sweeps the lead's state into its branch; one worker caught and reverted exactly that. Brief workers to stage explicit paths, and check every worker commit for .jit/ paths before merging.",
@@ -917,7 +917,7 @@
   {
    "issue": "032cc754",
    "surfaced": "2026-08-20",
-   "finding": "dev/research/permanent-sampling-feas/src/backend.rs:9-17 states that permanent_bipedal3 dispatches internally to permanent_bipedal3_singleword_simd when the simd feature is active and AVX2 is detected. That is false at HEAD: permanent_bipedal3 (bipedal3.rs:178-197) branches only on n (<=63 singleword, else multiword), and permanent_bipedal3_singleword performs no SIMD dispatch \u2014 permanent_bipedal3_singleword_simd takes an explicit fns argument. The harness's own code is correct (it imports permanent_bipedal3_singleword directly); only the justifying prose is stale. Not filed as an issue per the owner's session-13 choice to hand off rather than run a defect-filing sweep; one jit issue create closes it.",
+   "finding": "backend.rs:9-17 states that permanent_bipedal3 dispatches internally to permanent_bipedal3_singleword_simd when the simd feature is active and AVX2 is detected. That is false at HEAD: permanent_bipedal3 (bipedal3.rs:178-197) branches only on n (<=63 singleword, else multiword), and permanent_bipedal3_singleword performs no SIMD dispatch \u2014 permanent_bipedal3_singleword_simd takes an explicit fns argument. The harness's own code is correct (it imports permanent_bipedal3_singleword directly); only the justifying prose is stale. Not filed as an issue per the owner's session-13 choice to hand off rather than run a defect-filing sweep; one jit issue create closes it.",
    "classification": "stale prose, no behavioural impact",
    "status": "FILED as 5deee377"
   },
@@ -943,7 +943,7 @@
    "issue": "7a816262",
    "source": "2026-08-24 host-crash recovery",
    "finding": "The transient target/permanent-campaign tree and premeasure-v1 process receipts are absent after the host crash. No durable artifact proves that the re-armed 2026-08-19 run completed, so none of its intended measurements can be credited.",
-   "disposition": "Resolved operationally by a fresh prepare at revision 1350d5b4 into /data/gf2-campaigns/b8206228/premeasure-recovery-20260824. The first session persisted 539 completed receipts and one valid signal-censored receipt; 900 positions remain. Resume and collector timers are armed for 2026-08-25, and all evidence stays outside target."
+   "disposition": "Resolved operationally by a fresh prepare at revision 1350d5b4 into <local path> The first session persisted 539 completed receipts and one valid signal-censored receipt; 900 positions remain. Resume and collector timers are armed for 2026-08-25, and all evidence stays outside target."
   },
   {
    "issue": "53d8e438",
@@ -1059,8 +1059,8 @@
    "armed_at": "2026-08-24T05:59:28Z",
    "unit": "direct lead session under ccx1-bench-flock --full-host",
    "fires": "2026-08-24T08:59:28+03:00",
-   "command": "CAMPAIGN_TARGET_ROOT=/data/gf2-campaigns/b8206228/premeasure-recovery-20260824 CAMPAIGN_RUN_ID=premeasure-v1 permanent-campaign-runner.sh premeasure --session-cap 19800",
-   "durable_root": "/data/gf2-campaigns/b8206228/premeasure-recovery-20260824",
+   "command": "CAMPAIGN_TARGET_ROOT=<local path> CAMPAIGN_RUN_ID=premeasure-v1 permanent-campaign-runner.sh premeasure --session-cap 19800",
+   "durable_root": "<local path>",
    "run_id": "premeasure-v1",
    "cohort_binary": "1198cce4",
    "source_revision": "1350d5b4",
@@ -1078,11 +1078,11 @@
    "unit": "gf2-b8206228-premeasure-frozen.timer",
    "fires": "2026-08-25T02:00:00+03:00",
    "command": "permanent-campaign-runner.sh premeasure --session-cap 19800",
-   "durable_root": "/data/gf2-campaigns/b8206228/premeasure-recovery-20260824",
+   "durable_root": "<local path>",
    "run_id": "premeasure-v1",
    "worktree": ".agents/worktrees/agent-a39bb161",
    "source_revision": "1350d5b4",
-   "log": "/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-resume-20260825.log",
+   "log": "<local path>",
    "status": "active_waiting",
    "note": "Transient user unit; disappears on reboot. The service is inactive until the timer fires. Preserve the frozen clean worktree."
   },
@@ -1091,12 +1091,12 @@
    "unit": "gf2-b8206228-premeasure-collect.timer",
    "fires": "2026-08-25T07:40:00+03:00",
    "command": "permanent-campaign-runner.sh premeasure-collect",
-   "durable_root": "/data/gf2-campaigns/b8206228/premeasure-recovery-20260824",
+   "durable_root": "<local path>",
    "run_id": "premeasure-v1",
    "worktree": ".agents/worktrees/agent-389aa4de",
    "source_revision": "3014ad87",
-   "log": "/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-collect-20260825.log",
-   "exit_status": "/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-collect-20260825.exit.status",
+   "log": "<local path>",
+   "exit_status": "<local path>",
    "status": "active_waiting",
    "note": "Transient user unit; exits 75 while the resume service is active and otherwise preserves the signal-censored receipt under the collector hardening equivalent to main commit 1cb1bc47. The service is inactive until the timer fires."
   },
@@ -1105,7 +1105,7 @@
    "unit": "gf2-b8206228-premeasure-frozen.timer",
    "fires": "2026-08-26T02:00:00+03:00",
    "command": "permanent-campaign-runner.sh premeasure --session-cap 19800",
-   "durable_root": "/data/gf2-campaigns/b8206228/premeasure-recovery-20260824",
+   "durable_root": "<local path>",
    "run_id": "premeasure-v1",
    "worktree": ".agents/worktrees/agent-a39bb161",
    "log": "premeasure-resume-20260826.log"
@@ -1115,7 +1115,7 @@
    "unit": "gf2-b8206228-premeasure-collect.timer",
    "fires": "2026-08-26T07:40:00+03:00",
    "command": "permanent-campaign-runner.sh premeasure-collect",
-   "durable_root": "/data/gf2-campaigns/b8206228/premeasure-recovery-20260824",
+   "durable_root": "<local path>",
    "run_id": "premeasure-v1",
    "worktree": ".agents/worktrees/agent-389aa4de (branch worktree-agent-389aa4de at 8811d7b6)",
    "log": "premeasure-collect-20260826.log",
@@ -1124,8 +1124,8 @@
   {
    "armed_at": "2026-08-29T10:17:00+03:00",
    "unit": "direct lead recovery collection from temporary pinned worktree",
-   "command": "CAMPAIGN_TARGET_ROOT=/data/gf2-campaigns/b8206228/premeasure-recovery-20260824 CAMPAIGN_RUN_ID=premeasure-v1 permanent-campaign-runner.sh premeasure-collect",
-   "durable_root": "/data/gf2-campaigns/b8206228/premeasure-recovery-20260824",
+   "command": "CAMPAIGN_TARGET_ROOT=<local path> CAMPAIGN_RUN_ID=premeasure-v1 permanent-campaign-runner.sh premeasure-collect",
+   "durable_root": "<local path>",
    "run_id": "premeasure-v1",
    "collector_revision": "8811d7b6",
    "status": "complete_with_terminal_censor",

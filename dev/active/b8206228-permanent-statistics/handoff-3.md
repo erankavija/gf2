@@ -50,5 +50,5 @@ None. (Owner directives this session: wire-and-rerun with criteria amendments as
 - Epic: `jit issue show b8206228`; wave plan + escalation log: `progress.json` here
 - e31b1918 implementation: commit `3933338a`; partial device validation: `e31b1918-equiv-host-check-partial.csv` here (74 identical, 0 mismatches)
 - F_3 receipts v1 (template for the rerun): `receipts.md` + `analysis.py` (`6eb364e9`) — superseded once the rerun lands
-- Campaign runner: `permanent-campaign-runner.sh` (+ `.test.sh`, now 10 tests); harness: `dev/research/permanent-sampling-feas/`; prototypes: `dev/research/permanent_wave_gpu/`
-- Overnight evidence (to be superseded by the rerun): `dev/studies/{047b62ed,91605d4d,6c7fcb38}/permanent-campaign-20260813T230032Z-1321576*`
+- Campaign runner: `permanent-campaign-runner.sh` (+ `.test.sh`, now 10 tests); harness: `permanent-sampling-feas/`; prototypes: `dev/research/permanent_wave_gpu/`
+- Overnight evidence (to be superseded by the rerun): `studies/{047b62ed,91605d4d,6c7fcb38}/permanent-campaign-20260813T230032Z-1321576*`

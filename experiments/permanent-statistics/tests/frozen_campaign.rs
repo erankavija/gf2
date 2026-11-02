@@ -196,7 +196,7 @@ fn tractable_preregistered_zero_counts_match_enumeration() {
 #[test]
 fn the_committed_manifest_is_the_configuration_projection() {
     let config = config();
-    let directory = crate_dir().join("results").join(&config.campaign_id);
+    let directory = crate_dir().join("config").join(&config.campaign_id);
     assert_eq!(
         Manifest::load(&directory).unwrap(),
         Manifest::from_config(&config).unwrap()

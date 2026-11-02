@@ -25,7 +25,7 @@
   2. `campaign_prefix` accepted any in-repository path as the campaign root; the repository root yields an empty exemption prefix, exempting **every** tracked source file from the source-identity check. Fixed with a production `DATASET_HOME` constant and a `CampaignPathFault` vocabulary.
   Closed with 18 tests.
 - `240b7618` (narrative sweep) — five review rounds on REQ-05, escalated twice. Resolved below.
-- Build infrastructure (owner-directed, outside the epic): `sccache` installed, cache at `/data/sccache` (150 GiB cap); wired into `scripts/cargo-ci.sh` behind an availability guard; `cargo-ci` failure summariser fixed (it anchored `^FAIL` while nextest indents, so failing gates recorded no diagnostics); host build lock changed to `${XDG_RUNTIME_DIR:-/tmp}/cargo-ci.lock`, shared with the jit repo by agreement with its lead; `cargo-ci` gate `timeout_seconds` raised 300 → 900 (owner-approved) after a cold build measured 304 s. `cargo clean` reclaimed 51.7 GiB; `/` went 92% → 87%.
+- Build infrastructure (owner-directed, outside the epic): `sccache` installed, cache at `<local path>` (150 GiB cap); wired into `scripts/cargo-ci.sh` behind an availability guard; `cargo-ci` failure summariser fixed (it anchored `^FAIL` while nextest indents, so failing gates recorded no diagnostics); host build lock changed to `${XDG_RUNTIME_DIR:-/tmp}/cargo-ci.lock`, shared with the jit repo by agreement with its lead; `cargo-ci` gate `timeout_seconds` raised 300 → 900 (owner-approved) after a cold build measured 304 s. `cargo clean` reclaimed 51.7 GiB; `/` went 92% → 87%.
 
 ## What to do next
 
@@ -58,7 +58,7 @@ None.
 - Artefact directory guide: `dev/active/b8206228-permanent-statistics/README.md`
 - Plan: `dev/active/b8206228-permanent-statistics/plan.md`
 - Analysis narrative: `dev/active/b8206228-permanent-statistics/investigation.md`
-- Feasibility study (gap table G1–G8; G1/G4/G5/G6 now landed): `dev/studies/b488f02c/feasibility-study.md`
+- Feasibility study (gap table G1–G8; G1/G4/G5/G6 now landed): `feasibility-study.md`
 - Dataset home and verification procedure: `README.md`
 - Preregistration: `protocol.md`
 - Execution batching guidance: `dev/active/b8206228-permanent-statistics/execution-batching.md`

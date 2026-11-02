@@ -38,7 +38,7 @@
 - **Do NOT reclaim worktree `agent-4e732b56`.** It holds the built external baselines (AFF3CT v4.7.0, bchlib v2.1.3, M4RI 20260122, IT++ 4.3.1) the rework's F2 matrix-equality check needs; a reclaim forces a full refetch/rebuild.
 - **Do NOT `jit issue claim` over an existing assignee.** It refuses; run `jit issue release <id> "<reason>"` first, then claim.
 - **Do NOT let workers run `jit doc add` or commit from codex sandboxes without the writable-root flag.** Linked-worktree git metadata lives under `.git/worktrees/<name>/`, outside the codex workspace sandbox; pass `-c sandbox_workspace_write.writable_roots=["<repo>/.git/worktrees/<name>"]` or commit on the worker's behalf. Workers cannot mutate jit state from worktrees at all — the lead links docs post-merge.
-- **Do NOT write `](/repo/path)` or backtick `...` paths in reviewed docs.** doc-review fails root-absolute repo paths one instance per round (two rounds burned this session). Sweep with `grep -nE '\]\(/|\`/dev' <docs>` before requesting the gate.
+- **Do NOT write root-absolute Markdown links or backtick `...` paths in reviewed docs.** doc-review fails root-absolute repo paths one instance per round (two rounds burned this session). Sweep with `grep -nE '\]\(/|\`/dev' <docs>` before requesting the gate.
 - **Do NOT assume story→epic dependency edges are containment inversions.** Hierarchy levels disambiguate; the owner confirmed the story→epic edge is a pure waits-for edge (D-03 amendment). Also `jit dep add --reduce` may drop now-redundant edges elsewhere — verify the resolved tree afterward (here it beneficially re-homed `88ca7d2f`).
 - **Do NOT treat forum listening as optional.** A lapsed recv loop queued six peer messages unanswered (~35 min of peer blocking). Keep the persistent Monitor loop (`forum.sh recv --as agent:claude` in a `while true` Monitor) up for the whole session.
 
@@ -50,7 +50,7 @@ None. (The jit gate-retry fix was ordered by the invoker and is in the jit sessi
 
 - Epic: `jit issue show ae03bcd0`; plan `dev/active/ae03bcd0-general-bch/plan.md`; manifest `breakdown.json`; investigation `investigation.md`.
 - Extension design (contract producer): `dev/active/ae03bcd0-general-bch/extension-design.md`.
-- Survey: `dev/active/ae03bcd0-general-bch/4e732b56/findings.md`, `dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md`, receipts `4e732b56/`, harness `dev/active/ae03bcd0-general-bch/4e732b56/baseline-survey/`.
+- Survey: `findings.md`, `workload-selection.md`, receipts `4e732b56/`, harness `baseline-survey/`.
 - Preserved review verdict: `review-4e732b56-research-r1.json`.
 - Peer coordination: forum bus `local-path `FORUM_DIR=/tmp/jit-forum`, identities `agent:claude` ↔ `agent:codex`; lock `/tmp/gf2-main-leads.lock`.
 - jit defect thread: peer session `just-in-time-c5` (ListAgents), jit source `local-path

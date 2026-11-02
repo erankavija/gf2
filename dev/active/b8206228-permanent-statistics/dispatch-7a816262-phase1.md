@@ -36,7 +36,7 @@ final freeze)
    `envelope-2026-08-07.csv` and the other b488f02c
    artifacts, the determinant timing receipt from jit 8cb4def5 (find it via
    its commits: `git log --oneline --grep 8cb4def5`), and the GPU story
-   receipts under `dev/studies/{047b62ed,91605d4d,6c7fcb38}/`. For EVERY one
+   receipts under `studies/{047b62ed,91605d4d,6c7fcb38}/`. For EVERY one
    of the 63 cells, state which backends have cell-applicable,
    cohort-comparable committed evidence under the protocol's rules
    (host/build/workload/timing comparability), which backends are excluded by
@@ -56,7 +56,7 @@ final freeze)
    tags, determinant_companion Evaluate on all cells per the protocol,
    provenance fields with the RNG identity — algorithm ChaCha20, crate
    rand_chacha, resolved version 0.9.0 per the registry derivation in
-   `dev/active/b8206228-permanent-statistics/studies/0dffa759/rng-provenance-addendum.md` §4 and
+   `rng-provenance-addendum.md` §4 and
    `@/citation/RustRandom2025`). Backends: fill cells whose selection is
    dischargeable now; mark undischargeable cells explicitly in the
    accompanying document (the draft may carry a placeholder backend but the
