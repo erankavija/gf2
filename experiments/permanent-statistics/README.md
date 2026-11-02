@@ -75,8 +75,8 @@ worker counts and fallback choices are invocation observations.
 
 Permanent decisions use the one-sided exact binomial lower tail at `1/q`.
 Determinants use the probability-ordering two-sided exact test at
-`1 - product(1 - q^-i, i=1..n)`. Each family allocates its configured budget
-across every registered cell. Decisions compare log p-values inclusively;
+`1 - product(1 - q^-i, i=1..n)`. The permanent budget divides across every
+registered cell and the determinant budget across companion-enabled cells. Decisions compare log p-values inclusively;
 reports use the configuration's Wilson critical value. The analysis script
 reads target counts and the literature claim from the manifest's committed
 reference-data paths.
