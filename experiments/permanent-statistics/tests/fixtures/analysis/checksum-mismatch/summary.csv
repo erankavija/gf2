@@ -1,0 +1,5 @@
+schema_version,q,n,matrix_count,permanent_zero_count,permanent_point_estimate,permanent_interval_lower,permanent_interval_upper,permanent_verdict,determinant_state,determinant_sample_count,determinant_zero_count,determinant_point_estimate,determinant_interval_lower,determinant_interval_upper,determinant_verdict,terminal_state,halt_reason,permanent_log_p_value,determinant_log_p_value
+3,3,2,120,53,0.44166666666666665,0.3559974669953786,0.5309547690868035,accepted,evaluated,120,51,0.425,0.34023039219273576,0.5144224827700699,accepted,completed,,-0.005172084530443499,-0.34139686696934024
+3,5,2,120,31,0.25833333333333336,0.18837396318660649,0.3432853005824337,accepted,evaluated,120,29,0.24166666666666667,0.1738584121753525,0.325501490474311,accepted,completed,,-0.04816697367906997,-0.18786434365661697
+3,7,2,120,22,0.18333333333333332,0.12430300356014223,0.2620091351717033,accepted,evaluated,120,21,0.175,0.11740535944566463,0.25275709872649266,accepted,completed,,-0.08864643899171024,-0.4778927495876557
+

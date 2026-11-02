@@ -42,10 +42,8 @@ use gf2_sim::osd_campaign::{
     BinomialIntervalMethod, BinomialIntervalSpec, OsdBlockContext, OsdBlockOutcome, OsdBlockStream,
     OsdCampaign, OsdCampaignError, OsdCampaignProvenance, OsdCell, OsdCellId, OsdWorkCounters,
 };
-use gf2_sim::permanent_campaign::provenance::{
-    observe_cpu_identity, observe_provenance, repository_top_level,
-};
-use gf2_sim::permanent_campaign::schema::{
+use gf2_sim::osd_identity::{observe_cpu_identity, observe_provenance, repository_top_level};
+use gf2_sim::osd_identity::{
     ArtifactIdentity, Availability, GitRevision, Provenance, RngAlgorithm, Sha256Digest,
 };
 

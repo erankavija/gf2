@@ -13,7 +13,7 @@ use gf2_sim::osd_campaign::{
     OsdCampaignTermination, OsdCell, OsdCellId, OsdCellTermination, OsdWorkCounters,
     OSD_CAMPAIGN_SCHEMA_VERSION,
 };
-use gf2_sim::permanent_campaign::schema::{
+use gf2_sim::osd_identity::{
     ArtifactIdentity, Availability, GitRevision, Provenance, RngAlgorithm, Sha256Digest,
 };
 use rand_chacha::ChaCha20Rng;

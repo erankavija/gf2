@@ -41,10 +41,10 @@ use serde::{Deserialize, Deserializer, Serialize};
 use crate::checkpoint::{
     CheckpointLoadError, CheckpointPayload, CheckpointReader, CheckpointWriter,
 };
+use crate::osd_identity::{ArtifactIdentity, Provenance};
 use crate::parallel::{
     map_indices_in_order, worker_offset, DEBUG_ASSERT_WORD_MARGIN, FRAME_STRIDE,
 };
-use crate::permanent_campaign::schema::{ArtifactIdentity, Provenance};
 
 /// The schema version shared by OSD checkpoints, receipts, and cell records.
 pub const OSD_CAMPAIGN_SCHEMA_VERSION: u32 = 2;
@@ -404,8 +404,8 @@ pub struct BinomialConfidenceInterval {
 /// Mechanical provenance attached to an OSD campaign receipt.
 ///
 /// This deliberately composes the permanent-campaign schema's canonical
-/// [`crate::permanent_campaign::schema::Provenance`] and
-/// [`crate::permanent_campaign::schema::ArtifactIdentity`] types. `runtime`
+/// [`crate::osd_identity::Provenance`] and
+/// [`crate::osd_identity::ArtifactIdentity`] types. `runtime`
 /// records the git revision, compiler, invocation, and hardware observed by
 /// the producer; the two artifact identities bind the exact campaign
 /// configuration and the measurement behavior that gives prior receipts their

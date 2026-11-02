@@ -105,7 +105,7 @@ filter = '''
         binary(pipeline_run_cpu) or binary(preset_vs_graph)
         or binary(preset_vs_graph_byte_identity) or binary(determinism)
         or binary(parallel_determinism) or binary(channels_determinism)
-        or binary(campaign_cli_flags) or binary(permanent_campaign_bin)
+        or binary(campaign_cli_flags)
         or binary(dvb_t2_regression) or binary(stage_driven_byte_identity)
         or binary(hybrid_scheduler) or binary(executor_oom_fallback_run)
         or binary(batch_decode_worker_determinism)
@@ -153,3 +153,7 @@ filter = '''
     ))
 '''
 test-group = 'slow-serial'
+
+[[profile.ci.overrides]]
+filter = 'package(permanent-statistics) and (binary(campaign_determinism) or binary(campaign_bins))'
+threads-required = 4

@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 /// `IDENTITY` distinguishes unrelated payload families even when their JSON
 /// happens to have the same shape. It must be stable across compatible program
 /// versions, non-empty, and globally unambiguous within the application (for
-/// example, `"permanent-campaign/shard-progress"`). `SCHEMA_VERSION` describes
+/// example, `"experiment/shard-progress"`). `SCHEMA_VERSION` describes
 /// the serialized meaning of this payload and must change when an older reader
 /// cannot safely interpret the new representation.
 ///

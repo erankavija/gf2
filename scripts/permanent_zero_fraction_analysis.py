@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
-"""Render deterministic permanent-zero-fraction campaign analysis artefacts.
+"""Render schema-3 permanent campaign comparisons from committed reference data.
 
-The campaign schema and integrity implementation live in
-``gf2_sim::permanent_campaign``.  This small stdlib-only consumer is a
-deliberate transliteration of its published boundary: it verifies the manifest
-declared checksum membership before reading the pooled summary, then derives
-the reported Wilson intervals from the pooled counts.  It does not change the
-campaign's interval convention or manufacture acceptance verdicts.
+The experiment's permanent_dataset verifier checks pooled evidence before this
+consumer renders Wilson intervals, literature claims, and target comparisons.
 """
 
 from __future__ import annotations
@@ -24,7 +20,7 @@ from pathlib import Path, PurePosixPath
 from typing import Iterable
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 3
 Z_95 = 1.959963984540054
 CAMPAIGN_ID_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 CHECKSUM_RE = re.compile(r"([0-9a-f]{64}) (?: |\*)(.+)\Z")
@@ -47,6 +43,8 @@ SUMMARY_FIELDS = (
     "determinant_verdict",
     "terminal_state",
     "halt_reason",
+    "permanent_log_p_value",
+    "determinant_log_p_value",
 )
 OUTPUT_FIELDS = (
     "campaign_id",
@@ -141,8 +139,6 @@ def _safe_relative_path(value: str) -> str:
 
 
 def _dataset_root(dataset: Path) -> Path:
-    if dataset.is_symlink():
-        raise _error("dataset root must not be a symlink")
     try:
         root = dataset.resolve(strict=True)
     except OSError as exc:
@@ -153,22 +149,7 @@ def _dataset_root(dataset: Path) -> Path:
 
 
 def _declared_path(root: Path, relative_path: str) -> Path:
-    """Return one declared path after proving no component traverses a symlink."""
-
-    current = root
-    for part in PurePosixPath(relative_path).parts:
-        current = current / part
-        if current.is_symlink():
-            raise _error(f"checksummed path has a symlinked component: {relative_path}")
-    try:
-        resolved = current.resolve(strict=False)
-    except OSError as exc:
-        raise _error(f"cannot resolve checksummed path {relative_path}: {exc}") from exc
-    try:
-        resolved.relative_to(root)
-    except ValueError as exc:
-        raise _error(f"checksummed path resolves outside the dataset: {relative_path}") from exc
-    return current
+    return root / _safe_relative_path(relative_path)
 
 
 def _read_declared_file(root: Path, relative_path: str) -> bytes:
@@ -181,96 +162,38 @@ def _read_declared_file(root: Path, relative_path: str) -> bytes:
         raise _error(f"cannot read checksummed path {relative_path}: {exc}") from exc
 
 
-def _manifest_raw_paths(manifest: object) -> tuple[str, set[str], dict[tuple[int, int], set[str]]]:
-    if not isinstance(manifest, dict):
-        raise _error("manifest.json must contain an object")
-    if _integer(manifest.get("schema_version"), "manifest schema_version") != SCHEMA_VERSION:
+def _manifest_raw_paths(manifest: object) -> tuple[str, set[str]]:
+    if not isinstance(manifest, dict) or manifest.get("schema_version") != SCHEMA_VERSION:
         raise _error("manifest schema_version is not supported")
-
     campaign_id = manifest.get("campaign_id")
     if not isinstance(campaign_id, str) or not CAMPAIGN_ID_RE.fullmatch(campaign_id):
         raise _error("manifest campaign_id is invalid")
-
     cells = manifest.get("cells")
     if not isinstance(cells, list) or not cells:
         raise _error("manifest cells must be a non-empty array")
-
-    paths = {"manifest.json", "summary.csv"}
-    planned_shards: dict[tuple[int, int], set[str]] = {}
-    seen_cells: set[tuple[int, int]] = set()
-    fields: set[int] = set()
+    paths = {"manifest.json", "summary.csv", "execution.jsonl", "runs.json"}
+    seen: set[tuple[int, int]] = set()
     for index, cell in enumerate(cells):
         if not isinstance(cell, dict):
             raise _error(f"manifest cell {index} must be an object")
-        q = _integer(cell.get("q"), f"manifest cell {index} q")
-        n = _integer(cell.get("n"), f"manifest cell {index} n")
-        if q not in SUPPORTED_FIELDS:
-            raise _error(f"manifest cell {index} has unsupported field order q={q}")
-        if n <= 0 or (q, n) in seen_cells:
-            raise _error(f"manifest cell {index} has an invalid or duplicate (q,n)")
-        seen_cells.add((q, n))
-        fields.add(q)
-        cell_shards: set[str] = set()
-        shards = cell.get("shards")
-        if not isinstance(shards, list):
-            raise _error(f"manifest cell {index} shards must be an array")
-        shard_ids: set[int] = set()
-        for shard in shards:
-            if not isinstance(shard, dict):
-                raise _error(f"manifest cell {index} shard must be an object")
-            shard_id = _integer(shard.get("shard_id"), f"manifest cell {index} shard_id")
-            if shard_id < 0 or shard_id in shard_ids:
-                raise _error(f"manifest cell {index} has an invalid or duplicate shard_id")
-            shard_ids.add(shard_id)
-            cell_shards.add(f"shards/q{q}/n{n:02}/shard-{shard_id:06}.json")
-        planned_shards[(q, n)] = cell_shards
-    paths.update(f"summaries/q{q}.json" for q in fields)
-    return campaign_id, paths, planned_shards
-
-
-def _checksum_membership(
-    dataset: Path,
-    base_paths: set[str],
-    planned_shards: dict[tuple[int, int], set[str]],
-    field_terminals: dict[tuple[int, int], tuple[str, str]],
-) -> set[str]:
-    """Derive the canonical raw set after authenticated terminal-state reads."""
-
-    required = set(base_paths)
-    all_planned = set().union(*planned_shards.values())
-    for cell, paths in planned_shards.items():
-        state, _ = field_terminals[cell]
-        for relative_path in paths:
-            path = _declared_path(dataset, relative_path)
-            if state == "completed" or path.is_file():
-                required.add(relative_path)
-
-    shard_root = dataset / "shards"
-    if shard_root.is_symlink():
-        raise _error("checksummed path has a symlinked component: shards")
-    if shard_root.is_dir():
-        for path in shard_root.rglob("*"):
-            if not path.is_file() and not path.is_symlink():
-                continue
-            relative_path = path.relative_to(dataset).as_posix()
-            _declared_path(dataset, relative_path)
-            if relative_path not in all_planned:
-                raise _error(f"unmanifested shard path {relative_path}")
-            required.add(relative_path)
-    return required
+        q = _integer(cell.get("q"), "manifest q")
+        n = _integer(cell.get("n"), "manifest n")
+        if q not in SUPPORTED_FIELDS or n <= 0 or (q, n) in seen:
+            raise _error("invalid manifest cell")
+        seen.add((q, n))
+        paths.add(f"shards/q{q}-n{n:02}.jsonl")
+    return campaign_id, paths
 
 
 def verify_checksums(
     dataset: Path,
-) -> tuple[str, str, object, dict[tuple[int, int], tuple[str, str]]]:
+) -> tuple[str, str, object]:
     """Verify the manifest-defined raw integrity set and return its manifest."""
 
     root = _dataset_root(dataset)
     manifest_path = _declared_path(root, "manifest.json")
     manifest = _read_json(manifest_path)
-    campaign_id, base_paths, planned_shards = _manifest_raw_paths(manifest)
-    if root.name != campaign_id:
-        raise _error("manifest campaign_id differs from the dataset directory")
+    campaign_id, base_paths = _manifest_raw_paths(manifest)
 
     checksum_path = _declared_path(root, "checksums.sha256")
     try:
@@ -300,8 +223,7 @@ def verify_checksums(
         if actual_digest != expected_digest:
             raise _error(f"checksum mismatch for {relative_path}")
 
-    field_terminals = _field_summary_terminal_states(root, manifest)
-    required_paths = _checksum_membership(root, base_paths, planned_shards, field_terminals)
+    required_paths = base_paths
     missing = sorted(required_paths.difference(recorded))
     unexpected = sorted(set(recorded).difference(required_paths))
     if missing:
@@ -313,20 +235,20 @@ def verify_checksums(
         actual_digest = hashlib.sha256(_read_declared_file(root, relative_path)).hexdigest()
         if actual_digest != expected_digest:
             raise _error(f"checksum mismatch for {relative_path}")
-    return campaign_id, recorded["manifest.json"], manifest, field_terminals
+    return campaign_id, recorded["manifest.json"], manifest
 
 
-def wilson_95(zero_count: int, sample_count: int) -> tuple[float, float, float]:
+def wilson_95(zero_count: int, sample_count: int, z: float = Z_95) -> tuple[float, float, float]:
     """Return p-hat and the protocol's two-sided 95% Wilson score interval."""
 
     if sample_count <= 0 or zero_count < 0 or zero_count > sample_count:
         raise _error("Wilson counts must satisfy 0 <= zero_count <= sample_count and N > 0")
     estimate = zero_count / sample_count
-    z_squared = Z_95 * Z_95
+    z_squared = z * z
     denominator = 1.0 + z_squared / sample_count
     centre = (estimate + z_squared / (2.0 * sample_count)) / denominator
     half_width = (
-        Z_95
+        z
         * math.sqrt(
             estimate * (1.0 - estimate) / sample_count
             + z_squared / (4.0 * sample_count * sample_count)
@@ -355,65 +277,11 @@ def _require_empty(row: dict[str, str], names: Iterable[str], row_number: int) -
             raise _error(f"summary.csv halted row {row_number} must leave {name} empty")
 
 
-def _field_summary_terminal_states(dataset: Path, manifest: object) -> dict[tuple[int, int], tuple[str, str]]:
-    """Return the typed field-summary terminal outcome for every manifest cell."""
-
-    if not isinstance(manifest, dict):
-        raise _error("manifest.json must contain an object")
-    cells = manifest["cells"]
-    terminals: dict[tuple[int, int], tuple[str, str]] = {}
-    expected_by_q: dict[int, set[tuple[int, int]]] = {}
-    for cell in cells:
-        q = _integer(cell["q"], "manifest q")
-        n = _integer(cell["n"], "manifest n")
-        expected_by_q.setdefault(q, set()).add((q, n))
-    for q, expected_cells in expected_by_q.items():
-        path = dataset / "summaries" / f"q{q}.json"
-        summary = _read_json(path)
-        if not isinstance(summary, dict) or summary.get("schema_version") != SCHEMA_VERSION:
-            raise _error(f"field summary q={q} has an invalid schema version")
-        if summary.get("q") != q or not isinstance(summary.get("rows"), list):
-            raise _error(f"field summary q={q} has an invalid identity or rows")
-        seen: set[tuple[int, int]] = set()
-        for row in summary["rows"]:
-            if not isinstance(row, dict):
-                raise _error(f"field summary q={q} contains a non-object row")
-            row_q = _integer(row.get("q"), f"field summary q={q} row q")
-            n = _integer(row.get("n"), f"field summary q={q} row n")
-            terminal = row.get("terminal_state")
-            if (
-                row.get("schema_version") != SCHEMA_VERSION
-                or (row_q, n) not in expected_cells
-                or (row_q, n) in seen
-                or not isinstance(terminal, dict)
-                or terminal.get("state") not in {"completed", "halted"}
-            ):
-                raise _error(f"field summary q={q} has a row without a valid terminal state")
-            if terminal["state"] == "completed":
-                if set(terminal) != {
-                    "state",
-                    "permanent_estimate",
-                    "permanent_verdict",
-                    "determinant_estimate",
-                }:
-                    raise _error(f"field summary q={q} has an invalid completed terminal state")
-                terminals[(row_q, n)] = ("completed", "")
-            else:
-                if set(terminal) != {"state", "reason"} or terminal["reason"] not in HALT_REASONS:
-                    raise _error(f"field summary q={q} has an invalid halted terminal state")
-                terminals[(row_q, n)] = ("halted", terminal["reason"])
-            seen.add((row_q, n))
-        if seen != expected_cells:
-            raise _error(f"field summary q={q} does not give every cell a terminal state")
-    return terminals
-
-
 def read_summary(
     dataset: Path,
     campaign_id: str,
     manifest_sha256: str,
     manifest: object,
-    field_terminals: dict[tuple[int, int], tuple[str, str]],
     prior_rows: dict[tuple[int, int], PriorRow],
 ) -> list[CompletedCell | dict[str, str]]:
     """Read every terminal pooled row after the raw data has authenticated."""
@@ -459,9 +327,7 @@ def read_summary(
                 raise _error(f"summary.csv completed row {row_number} lacks terminal metrics")
             if row["permanent_verdict"] not in VERDICTS:
                 raise _error(f"summary.csv completed row {row_number} has an invalid verdict")
-            if field_terminals[(q, n)] != ("completed", ""):
-                raise _error(f"summary.csv row {row_number} terminal state differs from its field summary")
-            estimate, lower, upper = wilson_95(zero_count, sample_count)
+            estimate, lower, upper = wilson_95(zero_count, sample_count, manifest["acceptance"]["wilson_z"])
             result.append(
                 CompletedCell(
                     campaign_id=campaign_id,
@@ -481,8 +347,6 @@ def read_summary(
             _require_empty(row, completed_fields, row_number)
             if row["halt_reason"] not in HALT_REASONS:
                 raise _error(f"summary.csv halted row {row_number} has an invalid halt reason")
-            if field_terminals[(q, n)] != ("halted", row["halt_reason"]):
-                raise _error(f"summary.csv row {row_number} terminal state differs from its field summary")
             result.append(
                 {
                     "campaign_id": campaign_id,
@@ -502,12 +366,12 @@ def read_summary(
     return result
 
 
-def _source_table_path() -> Path:
-    return _repository_root() / "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv"
-
-
 def _repository_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        ["git", "-C", str(Path(__file__).parent), "rev-parse", "--show-toplevel"],
+        text=True, capture_output=True, check=True,
+    )
+    return Path(result.stdout.strip())
 
 
 def _require_canonical_conformance(dataset: Path) -> None:
@@ -516,17 +380,18 @@ def _require_canonical_conformance(dataset: Path) -> None:
     try:
         result = subprocess.run(
             [
+                str(_repository_root() / "scripts/cargo-budget.sh"),
                 "cargo",
                 "+1.95.0",
                 "run",
                 "--quiet",
                 "-p",
-                "gf2-sim",
+                "permanent-statistics",
                 "--release",
                 "--bin",
                 "permanent_dataset",
                 "--",
-                "conform",
+                "verify",
                 str(dataset),
             ],
             cwd=_repository_root(),
@@ -541,10 +406,10 @@ def _require_canonical_conformance(dataset: Path) -> None:
         raise _error(f"canonical dataset conformance refused: {detail}")
 
 
-def load_prior_rows(path: Path | None = None) -> dict[tuple[int, int], PriorRow]:
+def load_prior_rows(path: Path) -> dict[tuple[int, int], PriorRow]:
     """Load versioned q=3 source counts without embedding a duplicate table."""
 
-    source_path = path or _source_table_path()
+    source_path = path
     try:
         lines = source_path.read_text(encoding="utf-8").splitlines()
     except OSError as exc:
@@ -771,17 +636,19 @@ def analyse(dataset: Path) -> Path:
     """Verify a dataset, derive its analysis artefacts, and return their directory."""
 
     root = _dataset_root(dataset)
-    campaign_id, manifest_sha256, manifest, field_terminals = verify_checksums(root)
+    campaign_id, manifest_sha256, manifest = verify_checksums(root)
     _require_canonical_conformance(root)
     cells = read_summary(
         root,
         campaign_id,
         manifest_sha256,
         manifest,
-        field_terminals,
-        load_prior_rows(),
+        load_prior_rows(_repository_root() / _safe_relative_path(manifest["reference_data"]["reproduction_targets"])),
     )
-    return write_outputs(root, cells)
+    output = write_outputs(root, cells)
+    claim = _read_json(_repository_root() / _safe_relative_path(manifest["reference_data"]["literature_claim"]))
+    (output / "literature-claim.json").write_text(json.dumps(claim, indent=2) + "\n", encoding="utf-8")
+    return output
 
 
 def main(argv: list[str] | None = None) -> int:

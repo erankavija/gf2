@@ -5,7 +5,7 @@
 use std::path::Path;
 use std::process::ExitCode;
 
-use experiments_common::{RepositoryRoot, RngAlgorithm, RngIdentity, RunRecord};
+use experiments_common::{RepositoryRoot, RunRecord};
 use permanent_statistics::rare_event::runner::{
     execute_frozen_run, Configuration, RunError, RunStatus,
 };
@@ -51,10 +51,7 @@ fn run(
         &root,
         configuration.digest()?,
         configuration.root_seed,
-        RngIdentity {
-            algorithm: RngAlgorithm::ChaCha20,
-            version: "rand_chacha 0.9.0".into(),
-        },
+        permanent_statistics::sampler_rng(),
     )?;
     let outcome = execute_frozen_run(&configuration, &record, directory, budget)?;
     println!(

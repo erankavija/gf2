@@ -4,9 +4,13 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.95"
 publish = false
-description = "Resumable importance sampling for permanental rank"
+description = "Resumable permanent sampling, validation, and exact statistical decisions"
+
+[features]
+hip = ["gf2-algebra/hip"]
 
 [dependencies]
+rayon = "1"
 experiments-common = { path = "../common" }
 gf2-algebra = { path = "../../crates/gf2-algebra" }
 gf2-core = { path = "../../crates/gf2-core" }

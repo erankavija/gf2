@@ -1,24 +1,22 @@
-"""Black-box fixture coverage for permanent-zero-fraction analysis."""
-
+"""Black-box schema-3 analysis coverage from tool-produced experiment fixtures."""
 from __future__ import annotations
 
 import csv
+import hashlib
+import importlib.util
+import json
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
-import importlib.util
-import hashlib
-import re
-from pathlib import Path
-
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 SCRIPT = REPOSITORY / "scripts/permanent_zero_fraction_analysis.py"
-FIXTURES = REPOSITORY / "dev/simulation_results/permanent-zero-fraction/fixtures"
-GOLDEN = FIXTURES / "golden/valid-completed-and-halted"
+FIXTURES = REPOSITORY / "experiments/permanent-statistics/tests/fixtures/analysis"
+GOLDEN = FIXTURES / "golden/small-campaign"
 SPEC = importlib.util.spec_from_file_location("permanent_zero_fraction_analysis", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 ANALYSIS = importlib.util.module_from_spec(SPEC)
@@ -28,145 +26,92 @@ SPEC.loader.exec_module(ANALYSIS)
 
 class PermanentZeroFractionAnalysisTests(unittest.TestCase):
     def run_analysis(self, dataset: Path) -> subprocess.CompletedProcess[str]:
-        environment = dict(os.environ)
-        environment["CARGO_TARGET_DIR"] = str(
-            Path(tempfile.gettempdir()) / "gf2-permanent-dataset-python-tests"
-        )
-        return subprocess.run(
-            [sys.executable, str(SCRIPT), str(dataset)],
-            cwd=REPOSITORY,
-            text=True,
-            capture_output=True,
-            check=False,
-            env=environment,
-        )
+        environment = dict(os.environ, CARGO_NET_OFFLINE="true", CARGO_CI_NO_SCCACHE="1")
+        return subprocess.run([sys.executable, str(SCRIPT), str(dataset)], cwd=REPOSITORY,
+                              text=True, capture_output=True, check=False, env=environment)
 
     def refresh_checksum(self, dataset: Path, relative_path: str) -> None:
         path = dataset / relative_path
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         checksum_path = dataset / "checksums.sha256"
-        lines = []
-        for line in checksum_path.read_text(encoding="utf-8").splitlines():
-            _, recorded_path = line.split("  ", 1)
-            lines.append(f"{digest}  {recorded_path}" if recorded_path == relative_path else line)
-        checksum_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        checksum_path.write_text("".join(
+            f"{digest if recorded == relative_path else old}  {recorded}\n"
+            for old, recorded in (line.split("  ", 1) for line in checksum_path.read_text().splitlines())
+        ))
 
-    def assert_fixture_checksums_match(self, dataset: Path) -> None:
-        for line in (dataset / "checksums.sha256").read_text(encoding="utf-8").splitlines():
-            expected, relative_path = line.split("  ", 1)
-            self.assertEqual(hashlib.sha256((dataset / relative_path).read_bytes()).hexdigest(), expected)
+    def copy_fixture(self, parent: str, name: str = "small-campaign") -> Path:
+        dataset = Path(parent) / name
+        shutil.copytree(FIXTURES / name, dataset)
+        return dataset
 
     def test_valid_dataset_matches_golden_bytes_and_reruns_identically(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            dataset = Path(temporary) / "valid-completed-and-halted"
-            shutil.copytree(FIXTURES / "valid-completed-and-halted", dataset)
+            dataset = self.copy_fixture(temporary)
             first = self.run_analysis(dataset)
             self.assertEqual(first.returncode, 0, first.stderr)
-            output = dataset / "derived/valid-completed-and-halted/zero-fraction-analysis"
-            first_bytes = {path.name: path.read_bytes() for path in sorted(output.iterdir())}
-            self.assertEqual(first_bytes["cells.csv"], (GOLDEN / "cells.csv").read_bytes())
-            self.assertEqual(first_bytes["curve-q3.svg"], (GOLDEN / "curve-q3.svg").read_bytes())
-
+            output = dataset / "derived/small-campaign/zero-fraction-analysis"
+            first_bytes = {p.name: p.read_bytes() for p in output.iterdir()}
+            self.assertEqual(first_bytes, {p.name: p.read_bytes() for p in GOLDEN.iterdir()})
             second = self.run_analysis(dataset)
             self.assertEqual(second.returncode, 0, second.stderr)
-            self.assertEqual(first_bytes, {path.name: path.read_bytes() for path in sorted(output.iterdir())})
+            self.assertEqual(first_bytes, {p.name: p.read_bytes() for p in output.iterdir()})
+            rows = list(csv.DictReader(first_bytes["cells.csv"].decode().splitlines()))
+            self.assertEqual({int(r["q"]) for r in rows}, {3, 5, 7})
+            self.assertTrue(all(r["terminal_state"] == "completed" for r in rows))
+            claim = json.loads(first_bytes["literature-claim.json"])
+            self.assertEqual(claim["fields"], [5, 7])
+            self.assertTrue((REPOSITORY / claim["source"]).is_file())
 
-            table = first_bytes["cells.csv"].decode("utf-8")
-            completed, halted = list(csv.DictReader(table.splitlines()))
-            self.assertEqual(completed["dataset_permanent_verdict"], "accepted")
-            self.assertEqual(completed["prior_zero_count"], "17116353")
-            self.assertEqual(completed["prior_sample_count"], "43046721")
-            self.assertEqual(completed["prior_point_estimate"], "0.397622690007")
-            self.assertEqual(completed["prior_interval_kind"], "exact_no_sampling_uncertainty")
-            self.assertEqual(completed["precision_classification"], "prior_exact")
-            self.assertEqual(completed["prior_interval_relation"], "disjoint")
-            self.assertEqual(completed["interval_excludes_published"], "true")
-            self.assertEqual(halted["halt_reason"], "backend_unavailable")
-            self.assertEqual(halted["pooled_sample_count"], "10")
-            self.assertEqual(halted["pooled_permanent_zero_count"], "2")
-            self.assertEqual(
-                [halted[field] for field in list(halted)[8:]],
-                [""] * 16,
-            )
-
-            svg = first_bytes["curve-q3.svg"].decode("utf-8")
-            self.assertEqual(re.findall(r"<text[^>]*>([^<]*)</text>", svg), ["n", "p_hat"])
-            self.assertEqual(
-                re.findall(r"<title>([^<]*)</title>", svg),
-                [
-                    "campaign_id=valid-completed-and-halted; q=3; 95% Wilson error bars",
-                    "n=4; N=10; p_hat=0.000000000000; "
-                    "wilson_95=[0.000000000000,0.277532799863]",
-                ],
-            )
-            self.assertIn('data-sample-count="10"', svg)
-            self.assertIn('data-wilson-95-upper="0.277532799863"', svg)
+    def test_halted_cells_retain_counts_and_no_estimates(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            dataset = self.copy_fixture(temporary, "small-campaign-halted")
+            result = self.run_analysis(dataset)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            with (dataset / "derived/small-campaign-halted/zero-fraction-analysis/cells.csv").open() as handle:
+                rows = list(csv.DictReader(handle))
+            self.assertEqual(rows[0]["terminal_state"], "completed")
+            for row in rows[1:]:
+                self.assertEqual(row["terminal_state"], "halted")
+                self.assertEqual(row["halt_reason"], "backend_unavailable")
+                self.assertEqual(row["pooled_sample_count"], "0")
+                self.assertEqual(row["estimate"], "")
 
     def test_checksum_mismatch_refuses_without_derived_output(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            dataset = Path(temporary) / "checksum-mismatch"
-            shutil.copytree(FIXTURES / "checksum-mismatch", dataset)
+            dataset = self.copy_fixture(temporary, "checksum-mismatch")
             result = self.run_analysis(dataset)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("checksum mismatch", result.stderr)
             self.assertFalse((dataset / "derived").exists())
 
-    def test_missing_terminal_state_refuses_after_checksum_verification(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            dataset = Path(temporary) / "valid-completed-and-halted"
-            shutil.copytree(FIXTURES / "valid-completed-and-halted", dataset)
-            summary_path = dataset / "summary.csv"
-            summary_path.write_text(
-                summary_path.read_text(encoding="utf-8").replace(",completed,\n", ",,\n", 1),
-                encoding="utf-8",
-            )
-            self.refresh_checksum(dataset, "summary.csv")
-
-            result = self.run_analysis(dataset)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("canonical dataset conformance refused", result.stderr)
-            self.assertIn("unknown terminal_state", result.stderr)
-            self.assertFalse((dataset / "derived").exists())
-
-    def test_aggregate_mismatch_refuses_after_checksum_verification(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            dataset = Path(temporary) / "valid-completed-and-halted"
-            shutil.copytree(FIXTURES / "valid-completed-and-halted", dataset)
-            summary_path = dataset / "summary.csv"
-            summary_path.write_text(
-                summary_path.read_text(encoding="utf-8").replace(",10,0,0.0,", ",10,1,0.0,", 1),
-                encoding="utf-8",
-            )
-            self.refresh_checksum(dataset, "summary.csv")
-
-            result = self.run_analysis(dataset)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("canonical dataset conformance refused", result.stderr)
-            self.assertIn("pooled summary must equal the field-summary rows", result.stderr)
-            self.assertFalse((dataset / "derived").exists())
+    def test_terminal_or_aggregate_mismatch_refuses_after_checksum_verification(self) -> None:
+        for column, value in [("terminal_state", ""), ("permanent_zero_count", "1")]:
+            with self.subTest(column=column), tempfile.TemporaryDirectory() as temporary:
+                dataset = self.copy_fixture(temporary)
+                path = dataset / "summary.csv"
+                with path.open() as handle:
+                    reader = csv.DictReader(handle)
+                    fields, rows = reader.fieldnames, list(reader)
+                rows[0][column] = value
+                with path.open("w", newline="") as handle:
+                    writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
+                    writer.writeheader()
+                    writer.writerows(rows)
+                self.refresh_checksum(dataset, "summary.csv")
+                result = self.run_analysis(dataset)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("canonical dataset conformance refused", result.stderr)
+                self.assertFalse((dataset / "derived").exists())
 
     def test_unsupported_field_fixture_refuses_after_its_checksums_verify(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            dataset = Path(temporary) / "invalid-q"
-            shutil.copytree(FIXTURES / "invalid-q", dataset)
-            self.assert_fixture_checksums_match(dataset)
+            dataset = self.copy_fixture(temporary, "invalid-q")
+            for line in (dataset / "checksums.sha256").read_text().splitlines():
+                expected, path = line.split("  ", 1)
+                self.assertEqual(hashlib.sha256((dataset / path).read_bytes()).hexdigest(), expected)
             result = self.run_analysis(dataset)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("unsupported field order q=9", result.stderr)
-            self.assertFalse((dataset / "derived").exists())
-
-    def test_symlinked_shard_parent_refuses_without_derived_output(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            temporary_path = Path(temporary)
-            dataset = temporary_path / "valid-completed-and-halted"
-            shutil.copytree(FIXTURES / "valid-completed-and-halted", dataset)
-            outside = temporary_path / "outside-q3"
-            shutil.move(str(dataset / "shards/q3"), outside)
-            os.symlink(outside, dataset / "shards/q3", target_is_directory=True)
-
-            result = self.run_analysis(dataset)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("symlinked component", result.stderr)
+            self.assertIn("invalid manifest cell", result.stderr)
             self.assertFalse((dataset / "derived").exists())
 
     def test_wilson_transliteration_matches_versioned_source_interval(self) -> None:

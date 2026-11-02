@@ -1,0 +1,45 @@
+{
+  "schema_version": 3,
+  "campaign_id": "small-campaign-halted",
+  "root_seed": 1,
+  "configuration_sha256": "a6d8c933d2882e2f1226793312711ebde76123d291e5cb715cbf7fff233ca6eb",
+  "purpose_tag": 3,
+  "acceptance": {
+    "permanent_family_error": 0.025,
+    "determinant_family_error": 0.025,
+    "wilson_z": 1.959963984540054
+  },
+  "reference_data": {
+    "reproduction_targets": "experiments/permanent-statistics/data/scheinerman2024-q3-targets-v1.csv",
+    "literature_claim": "experiments/permanent-statistics/data/literature-claim.json"
+  },
+  "cells": [
+    {
+      "q": 3,
+      "n": 2,
+      "matrix_count": 120,
+      "shard_size": 40,
+      "backend": "batch_parallel",
+      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
+      "determinant_companion": true
+    },
+    {
+      "q": 5,
+      "n": 2,
+      "matrix_count": 120,
+      "shard_size": 40,
+      "backend": "accelerator",
+      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
+      "determinant_companion": true
+    },
+    {
+      "q": 7,
+      "n": 2,
+      "matrix_count": 120,
+      "shard_size": 40,
+      "backend": "batch_parallel",
+      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
+      "determinant_companion": true
+    }
+  ]
+}

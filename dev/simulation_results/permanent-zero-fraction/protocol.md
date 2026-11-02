@@ -425,7 +425,7 @@ campaign incomplete. Finalization must refuse such a dataset.
 `@/citation/Scheinerman2024` reports exact zero counts through $n=5$ and Monte
 Carlo counts through $n=30$. This campaign stops at $n=28$, so it does not extend
 the published $q=3$ curve in $n$. The versioned
-[reproduction target table](./scheinerman2024-q3-targets-v1.csv) transcribes the
+[reproduction target table](../../../experiments/permanent-statistics/data/scheinerman2024-q3-targets-v1.csv) transcribes the
 source zero count and $N$ for every core $q=3$ cell, $n=4\ldots28$, and derives
 the comparison point estimate from those counts. Table 3 rows are exact
 enumerations and therefore have zero sampling error. For Table 4 rows the
@@ -696,7 +696,7 @@ for a different question and supplies no zero-fraction cell to this campaign.
 | Exact floor and determinant rules | [Feasibility study §7.2](/dev/studies/b488f02c/feasibility-study.md#72-sampling-plan), revised here by the reviewed global-budget decision |
 | Enumeration and sampler anchors | [Order-three anchor receipt](/dev/studies/b488f02c/order3-anchor-2026-08-08.txt) and [determinant anchor receipt](/dev/studies/b488f02c/determinant-anchor-2026-08-08.txt) |
 | First $q=7,n=20$ resample and preserved reading | [Raw by-product receipt](/dev/studies/b488f02c/zero-fraction-2026-08-07.csv) and [study §4.7](/dev/studies/b488f02c/feasibility-study.md#47-zero-fractions-observed-in-passing) |
-| $q=3$ reproduction boundary and complete target values | [Versioned target table](./scheinerman2024-q3-targets-v1.csv), [Study §1.1](/dev/studies/b488f02c/feasibility-study.md#11-prior-numerics-exist-for-q--3), and `@/citation/Scheinerman2024` |
+| $q=3$ reproduction boundary and complete target values | [Versioned target table](../../../experiments/permanent-statistics/data/scheinerman2024-q3-targets-v1.csv), [Study §1.1](/dev/studies/b488f02c/feasibility-study.md#11-prior-numerics-exist-for-q--3), and `@/citation/Scheinerman2024` |
 | Backend selection and sampler identity | Manifest `CellSpec.backend_receipt` plus root `rng_algorithm`, `rng_version`, and `invocation` provenance, as bound by [Backend freeze](#backend-freeze) and [Reproducibility identity](#reproducibility-identity) |
 | Likelihood rather than weighted-least-squares comparison | Reviewed [campaign plan](/dev/active/b8206228-permanent-statistics/plan.md#material-risks-and-owner-decisions) |
 | Conditional $q\in\{5,7\}$ novelty wording | [Recorded literature search](/dev/studies/b488f02c/literature-search-2026-08-08.md) and registry-resolving citations above |

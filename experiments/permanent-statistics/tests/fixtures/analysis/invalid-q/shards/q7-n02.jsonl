@@ -1,0 +1,3 @@
+{"shard_id":0,"stream_index":8589934592,"matrix_count":40,"permanent_zero_count":5,"permanent_histogram":[5,7,4,11,4,5,4],"determinant_zero_count":5,"executed_backend":"batch_parallel"}
+{"shard_id":1,"stream_index":8589934593,"matrix_count":40,"permanent_zero_count":6,"permanent_histogram":[6,4,5,9,8,5,3],"determinant_zero_count":4,"executed_backend":"batch_parallel"}
+{"shard_id":2,"stream_index":8589934594,"matrix_count":40,"permanent_zero_count":11,"permanent_histogram":[11,6,4,5,4,3,7],"determinant_zero_count":12,"executed_backend":"batch_parallel"}

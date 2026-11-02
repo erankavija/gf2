@@ -13,7 +13,6 @@ rust-version = "1.95"
 [dependencies]
 gf2-core = { path = "../gf2-core" }
 gf2-coding = { path = "../gf2-coding" }
-gf2-algebra = { path = "../gf2-algebra" }
 gf2-stats = { path = "../gf2-stats" }
 gf2-kernels-hip = { path = "../gf2-kernels-hip", optional = true }
 rayon = "1"
@@ -35,17 +34,10 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1.0", features = ["float_roundtrip"] } # v2 checkpoint and evidence (de)serialisation
 ctrlc = "3" # for SIGINT handler in 5f12e7ff
 blake3 = "1" # for v2 checkpoint config_hash
-# The published permanent-campaign dataset fixes SHA-256 as its integrity
-# algorithm (`checksums.sha256`, `Sha256Digest`), so that layer cannot reuse the
-# blake3 checkpoint hash above.
+# OSD receipts record SHA-256 executable and artifact digests.
 sha2 = "0.10"
-# Safe no-follow opens bind accepted raw evidence to regular files without
-# introducing unsafe code outside the isolated kernel crates.
-rustix = { version = "1.1", features = ["fs"] }
-
 [dev-dependencies]
 gf2-core = { path = "../gf2-core", features = ["test-support"] }
-gf2-algebra = { path = "../gf2-algebra", features = ["test-support"] }
 # `test_support::ldpc_batch_routes` enumerates the decode routes the
 # batch-decode determinism suite runs.
 gf2-coding = { path = "../gf2-coding", features = ["test-support"] }
@@ -62,7 +54,7 @@ tempfile = "3"
 gf2-sim = { path = ".", features = ["test-support"] }
 
 [features]
-hip = ["dep:gf2-kernels-hip", "gf2-coding/hip", "gf2-algebra/hip"]
+hip = ["dep:gf2-kernels-hip", "gf2-coding/hip"]
 
 # Exposes the canonical test/bench-only deterministic AWGN channel-LLR source
 # (`testutil::AwgnLlrSource`) to integration tests, benches, and comparison

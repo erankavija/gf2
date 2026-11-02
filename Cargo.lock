@@ -579,7 +579,6 @@ version = "0.1.0"
 dependencies = [
  "blake3",
  "ctrlc",
- "gf2-algebra",
  "gf2-coding",
  "gf2-core",
  "gf2-kernels-hip",
@@ -592,7 +591,6 @@ dependencies = [
  "rand_chacha 0.9.0",
  "rand_core 0.9.3",
  "rayon",
- "rustix",
  "serde",
  "serde_json",
  "sha2",
@@ -895,6 +893,7 @@ dependencies = [
  "gf2-core",
  "gf2-sim",
  "gf2-stats",
+ "rayon",
  "serde",
  "serde_json",
  "tempfile",

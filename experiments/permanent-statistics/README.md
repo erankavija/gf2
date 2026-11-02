@@ -39,3 +39,53 @@ On completion, `result.json` contains the run record, configuration, sample
 and independent-run counts, exact decimal ratios, and interval endpoints.
 The execution log records each invocation's terminal status. The sampler and
 runner belong to `@/issue/e3370140`.
+
+
+`campaign` draws uniformly sampled square matrices over F₃, F₅, and F₇,
+compares specialized, generic Ryser, and optional HIP implementations, and
+records permanent residue histograms with optional paired determinants.
+[config/small-campaign.json](config/small-campaign.json) demonstrates the
+JSON configuration. Its cells and sample counts are test inputs.
+
+```sh
+CARGO_NET_OFFLINE=true CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-budget.sh cargo run \
+  --release -p permanent-statistics --bin permanent_campaign -- \
+  --config experiments/permanent-statistics/config/small-campaign.json \
+  --output /tmp/small-campaign --q 3 --n 2 --workers 4 --max-shards 1
+```
+
+Repeat an invocation returning status 10 to finish its cell, then select the
+remaining cells in configuration order. The configured first cell must
+terminate before another starts; admission allows only one active cell. A
+reported dispatch error spends a retry, while an interrupted draw restarts
+at the same address. An exact rejection or exhausted retry allocation halts
+remaining cells and preserves accepted counts. The default unavailable-backend
+policy refuses without writing. `--on-unavailable halt` records a terminal
+mechanical halt; `--on-unavailable fallback=batch_parallel` explicitly selects
+a supporting CPU implementation. Each shard records its executed backend.
+
+Schema 3 stores a compact `manifest.json`, one synced `execution.jsonl`, one
+`shards/qQ-nNN.jsonl` per cell, and a recoverable `checkpoint.json`. The
+manifest contains no shard inventory. `permanent_dataset finalize DIR`
+requires terminal cells and publishes `summary.csv`, `runs.json`, and
+`checksums.sha256`; `permanent_dataset verify DIR` checks these projections
+against the log and pooled shard evidence. Checkpoints are excluded from
+integrity membership. Per-cell resume compares the closed run identity;
+worker counts and fallback choices are invocation observations.
+
+Permanent decisions use the one-sided exact binomial lower tail at `1/q`.
+Determinants use the probability-ordering two-sided exact test at
+`1 - product(1 - q^-i, i=1..n)`. Each family allocates its configured budget
+across every registered cell. Decisions compare log p-values inclusively;
+reports use the configuration's Wilson critical value. The analysis script
+reads target counts and the literature claim from the manifest's committed
+reference-data paths.
+
+`permanent_validation --config PATH --output DIR --workers W` runs independent
+fixed-expansion exact anchors, determinant counts, fresh-stream regeneration,
+and sampled exact-null tests on `StreamPurpose::Validation`. The optional
+`--max-anchors K` bounds an invocation; terminal anchors are adopted on resume,
+including failures. Status 0 means passed, 1 means failed or error, 10 means
+anchors remain, and 2 means invalid arguments. The `hip` feature enables
+accelerator dispatch and requires the ROCm toolchain. These campaign contracts
+belong to `@/issue/fd1ef344`.

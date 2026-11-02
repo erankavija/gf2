@@ -4,10 +4,10 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
-use std::fs::{self, File, OpenOptions};
-use std::io::Write;
+use std::fs::File;
 use std::path::Path;
 
+use crate::execution_log::{self, ExecutionLog};
 use experiments_common::{publish_atomic, RunIdentity, RunRecord, Sha256Digest};
 use gf2_algebra::permanent::SupportedPrimeField;
 use gf2_core::gfp::Fp;
@@ -95,23 +95,7 @@ impl Configuration {
     }
 }
 
-mod field_order {
-    use super::*;
-    use serde::{Deserializer, Serializer};
-
-    pub fn serialize<S: Serializer>(value: &FieldOrder, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_u64(value.as_u64())
-    }
-
-    pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<FieldOrder, D::Error> {
-        match u8::deserialize(deserializer)? {
-            3 => Ok(FieldOrder::F3),
-            5 => Ok(FieldOrder::F5),
-            7 => Ok(FieldOrder::F7),
-            _ => Err(serde::de::Error::custom("field order must be 3, 5, or 7")),
-        }
-    }
-}
+use execution_log::field_order;
 
 /// A sampling, configuration, persistence, or reduction failure.
 #[derive(Debug)]
@@ -231,43 +215,17 @@ enum ExecutionEvent {
     Failed { error: String },
 }
 
-struct ExecutionLog(File);
-
-impl ExecutionLog {
-    fn append(&mut self, event: &ExecutionEvent) -> Result<(), RunError> {
-        // A leading newline separates this record from an interrupted append.
-        let mut bytes = vec![b'\n'];
-        serde_json::to_writer(&mut bytes, event)?;
-        bytes.push(b'\n');
-        self.0.write_all(&bytes)?;
-        self.0.sync_all()?;
-        Ok(())
-    }
-}
-
 fn logged_progress(path: &Path, identity: &RunIdentity) -> Result<Option<Progress>, RunError> {
-    let bytes = match fs::read(path) {
-        Ok(bytes) => bytes,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => return Err(error.into()),
-    };
     let mut latest = None;
-    for line in bytes
-        .split(|&byte| byte == b'\n')
-        .filter(|line| !line.is_empty())
-    {
-        // A process can stop partway through a record. Complete records after
-        // that torn line are still readable because every append starts a line.
-        match serde_json::from_slice::<ExecutionEvent>(line) {
-            Ok(ExecutionEvent::Start { record }) if &record.identity != identity => {
+    for event in ExecutionLog::read::<ExecutionEvent>(path)? {
+        match event {
+            ExecutionEvent::Start { record } if &record.identity != identity => {
                 return Err(RunError::Configuration(
                     "execution log run identity differs".into(),
                 ));
             }
-            Ok(ExecutionEvent::Progress { progress }) => latest = Some(progress),
-            Err(error) if error.is_eof() => {}
-            Err(error) => return Err(error.into()),
-            Ok(_) => {}
+            ExecutionEvent::Progress { progress } => latest = Some(progress),
+            _ => {}
         }
     }
     Ok(latest)
@@ -325,12 +283,7 @@ pub fn execute_frozen_run(
         }
     };
     let writer = CheckpointWriter::for_payload(path, hash)?;
-    let mut log = ExecutionLog(
-        OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(directory.join("execution.jsonl"))?,
-    );
+    let mut log = ExecutionLog::open(&directory.join("execution.jsonl"))?;
     File::open(directory)?.sync_all()?;
     log.append(&ExecutionEvent::Start {
         record: Box::new(record.clone()),
