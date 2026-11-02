@@ -1,0 +1,55 @@
+[package]
+name = "tuning-calibration"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+description = "Offline calibration protocols for gf2 tuning campaigns"
+
+[dependencies]
+gf2-core = { path = "../../crates/gf2-core" }
+gf2-coding = { path = "../../crates/gf2-coding", default-features = false }
+gf2-algebra = { path = "../../crates/gf2-algebra", default-features = false }
+gf2-kernels-simd = { path = "../../crates/gf2-kernels-simd" }
+tuning-campaign-support = { workspace = true }
+rand = { workspace = true }
+rayon = { workspace = true, optional = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = "0.10"
+
+[dev-dependencies]
+tempfile = "3"
+
+[features]
+parallel = ["dep:rayon", "gf2-core/parallel", "gf2-coding/parallel", "gf2-algebra/parallel"]
+simd = ["gf2-core/simd", "gf2-coding/simd", "gf2-algebra/simd"]
+tuning-profile = ["gf2-core/tuning-profile", "gf2-coding/tuning-profile", "gf2-algebra/tuning-profile"]
+test-support = ["gf2-core/test-support", "gf2-coding/test-support", "gf2-algebra/test-support"]
+
+[[bench]]
+name = "core"
+harness = false
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]
+
+[[test]]
+name = "core_calibration_harness"
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]
+
+[[bench]]
+name = "coding"
+harness = false
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]
+
+[[test]]
+name = "coding_calibration_harness"
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]
+
+[[bench]]
+name = "algebra"
+harness = false
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]
+
+[[test]]
+name = "algebra_calibration_harness"
+required-features = ["parallel", "simd", "tuning-profile", "test-support"]

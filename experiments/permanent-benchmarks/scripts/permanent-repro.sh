@@ -173,8 +173,8 @@ cargo build \
 
 echo ""
 echo "=== step 2: S1 — criterion bench s1_n36_speedup (n=24, n=28; ~4 min) ==="
-echo "    cargo bench -p gf2-algebra --features 'simd test-support' --bench s1_n36_speedup"
-cargo bench -p gf2-algebra --features "simd test-support" --bench s1_n36_speedup
+echo "    cargo bench -p permanent-benchmarks --features 'simd test-support' --bench s1_n36_speedup"
+cargo bench -p permanent-benchmarks --features "simd test-support" --bench s1_n36_speedup
 
 # ---------------------------------------------------------------------------
 # Step 2b: S1 offline cells (n=32, n=36) — opt-in only
@@ -184,18 +184,18 @@ if [[ "${offline_n32}" == "1" ]]; then
     if [[ "${offline_n36}" == "1" ]]; then
         echo ""
         echo "=== step 2b: S1 offline n=32 + n=36 (~10+ hr total) ==="
-        echo "    S1_OFFLINE=1 cargo bench -p gf2-algebra --features 'simd test-support' --bench s1_n36_speedup -- --nocapture"
+        echo "    S1_OFFLINE=1 cargo bench -p permanent-benchmarks --features 'simd test-support' --bench s1_n36_speedup -- --nocapture"
         S1_OFFLINE=1 cargo bench \
-            -p gf2-algebra \
+            -p permanent-benchmarks \
             --features "simd test-support" \
             --bench s1_n36_speedup \
             -- --nocapture
     else
         echo ""
         echo "=== step 2b: S1 offline n=32 only (~20 min) ==="
-        echo "    S1_OFFLINE=1 S1_OFFLINE_MAX_N=32 cargo bench -p gf2-algebra --features 'simd test-support' --bench s1_n36_speedup -- --nocapture"
+        echo "    S1_OFFLINE=1 S1_OFFLINE_MAX_N=32 cargo bench -p permanent-benchmarks --features 'simd test-support' --bench s1_n36_speedup -- --nocapture"
         S1_OFFLINE=1 S1_OFFLINE_MAX_N=32 cargo bench \
-            -p gf2-algebra \
+            -p permanent-benchmarks \
             --features "simd test-support" \
             --bench s1_n36_speedup \
             -- --nocapture

@@ -45,7 +45,7 @@
 # starts: the benchmark runner and the calibration harness refuse to measure
 # without an inherited descriptor for the held lock (`host::inherited_lock` in
 # dev/tools/tuning-campaign-support, `observed_lock_file` in
-# crates/gf2-core/benches/tuning_calibration.rs). A flock lock is released by
+# experiments/tuning-calibration/benches/core.rs). A flock lock is released by
 # an unlock or once every copy of its descriptor is closed, so an inherited
 # copy in a daemon the command leaves running — a compiler-cache server is the
 # case that arises in practice — would hold the mutex for as long as that

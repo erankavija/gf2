@@ -69,7 +69,7 @@ const POOL_THREADS: usize = 4;
 const REQUIRED_FEATURES: &str = FEATURE_CONTRACT;
 const REQUIRED_TOOLCHAIN: &str = TOOLCHAIN_CONTRACT;
 const FORCED_PROFILE_ID: &str = "a835-algebra-forced";
-const HARNESS_PATH: &str = "crates/gf2-algebra/benches/tuning_calibration.rs";
+const HARNESS_PATH: &str = "experiments/tuning-calibration/benches/algebra.rs";
 const CANDIDATES: [usize; 5] = [4_096, 16_384, 65_536, 262_144, 1_048_576];
 const DIMENSIONS: [usize; 3] = [20, 22, 24];
 

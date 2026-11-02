@@ -213,7 +213,7 @@ def load_validator():
 
 USIZE_MAX = 2**64 - 1
 CODING_ISSUE = "c0d1f1ed"
-CODING_HARNESS = "crates/gf2-coding/benches/tuning_calibration.rs"
+CODING_HARNESS = "experiments/tuning-calibration/benches/coding.rs"
 # The coding producer's grid, spelled apart from the validator's tables. A code
 # is (name, frame length, edges, per-mille noise deviation).
 CODING_CODES = [("nr5g-bg2-z16", 832, 3152, 1200), ("dvb-t2-short-r1-2", 16200, 48599, 800),

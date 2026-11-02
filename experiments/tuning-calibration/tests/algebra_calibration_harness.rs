@@ -2,5 +2,5 @@
 
 #![allow(dead_code)]
 
-#[path = "../benches/tuning_calibration.rs"]
+#[path = "../benches/algebra.rs"]
 mod tuning_calibration;

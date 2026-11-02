@@ -1,7 +1,6 @@
 {
   "schema": "tuning-campaign-producing-inputs-v1",
   "behavior_sources": [
-    "crates/gf2-algebra/benches/tuning_calibration.rs",
     "crates/gf2-algebra/src/gray.rs",
     "crates/gf2-algebra/src/lib.rs",
     "crates/gf2-algebra/src/packed/bipedal3.rs",
@@ -11,7 +10,6 @@
     "crates/gf2-algebra/src/permanent/mod.rs",
     "crates/gf2-algebra/src/permanent/parallel_bipedal3.rs",
     "crates/gf2-algebra/src/tuning.rs",
-    "crates/gf2-core/benches/tuning_calibration.rs",
     "crates/gf2-core/src/alg/gauss.rs",
     "crates/gf2-core/src/alg/m4rm.rs",
     "crates/gf2-core/src/alg/matmul.rs",
@@ -114,7 +112,9 @@
     "dev/tools/tuning-campaign-support/src/statistics.rs",
     "dev/tools/tuning-campaign-support/src/timing.rs",
     "dev/tools/tuning-campaign-support/src/transport.rs",
-    "dev/tools/tuning-profile-compose/src/main.rs"
+    "dev/tools/tuning-profile-compose/src/main.rs",
+    "experiments/tuning-calibration/benches/algebra.rs",
+    "experiments/tuning-calibration/benches/core.rs"
   ],
   "lifecycle_sources": [
     "dev/scripts/ccx1-bench-flock.sh",
@@ -132,7 +132,6 @@
     "Cargo.lock",
     "Cargo.toml",
     "crates/gf2-algebra/Cargo.toml",
-    "crates/gf2-algebra/benches/tuning_calibration.rs",
     "crates/gf2-algebra/src/gpu.rs",
     "crates/gf2-algebra/src/gray.rs",
     "crates/gf2-algebra/src/lib.rs",
@@ -156,7 +155,6 @@
     "crates/gf2-algebra/src/testutil.rs",
     "crates/gf2-algebra/src/tuning.rs",
     "crates/gf2-core/Cargo.toml",
-    "crates/gf2-core/benches/tuning_calibration.rs",
     "crates/gf2-core/src/alg/gauss.rs",
     "crates/gf2-core/src/alg/m4rm.rs",
     "crates/gf2-core/src/alg/matmul.rs",
@@ -314,6 +312,9 @@
     "dev/tools/tuning-profile-compose/Cargo.lock",
     "dev/tools/tuning-profile-compose/Cargo.toml",
     "dev/tools/tuning-profile-compose/src/main.rs",
+    "experiments/tuning-calibration/Cargo.toml",
+    "experiments/tuning-calibration/benches/algebra.rs",
+    "experiments/tuning-calibration/benches/core.rs",
     "scripts/cargo-budget.sh"
   ]
 }

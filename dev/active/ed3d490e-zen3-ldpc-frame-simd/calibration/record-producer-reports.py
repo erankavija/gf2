@@ -24,18 +24,18 @@ ENVIRONMENT = {"RUSTUP_TOOLCHAIN": TOOLCHAIN, "RAYON_NUM_THREADS": "4"}
 
 
 def main():
-    producer = f"{package('gf2-coding')}/benches/tuning_calibration.rs"
+    producer = "experiments/tuning-calibration/benches/coding.rs"
     environment = {**os.environ, **ENVIRONMENT}
     build = subprocess.run(
         ["nice", "-n", "19", "./scripts/cargo-budget.sh", "cargo", f"+{TOOLCHAIN}", "build",
-         "--release", "-p", "gf2-coding", "--bench", "tuning_calibration",
+         "--release", "-p", "tuning-calibration", "--bench", "coding",
          "--features", FEATURES, "--message-format=json"],
         cwd=ROOT, capture_output=True, check=True, text=True, env=environment,
     ).stdout
     executables = {
         message["executable"] for message in map(json.loads, build.splitlines())
         if message.get("reason") == "compiler-artifact" and message.get("executable")
-        and message["target"]["name"] == "tuning_calibration"
+        and message["target"]["name"] == "coding"
     }
     if len(executables) != 1:
         raise SystemExit(f"{len(executables)} producer executables built")

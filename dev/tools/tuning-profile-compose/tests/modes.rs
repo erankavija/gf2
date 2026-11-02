@@ -17,7 +17,7 @@ const PROFILE_ID: &str = "campaign";
 const ASSEMBLED_AT: &str = "2026-08-25T19:00:00Z";
 const SOURCE_REVISION: &str = "0123456789abcdef0123456789abcdef01234567";
 const TOOL_SHA256: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-const HARNESS: &str = "crates/gf2-coding/benches/tuning_calibration.rs";
+const HARNESS: &str = "experiments/tuning-calibration/benches/coding.rs";
 const PRODUCER_SHA256: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
 /// Outputs of the `core-owner`, `algebra-owner` and two-owner `complete`

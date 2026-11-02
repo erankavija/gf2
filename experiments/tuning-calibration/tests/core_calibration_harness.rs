@@ -5,5 +5,5 @@
 
 #![allow(dead_code)] // The included benchmark contains its production entry point too.
 
-#[path = "../benches/tuning_calibration.rs"]
+#[path = "../benches/core.rs"]
 mod tuning_calibration;

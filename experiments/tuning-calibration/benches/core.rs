@@ -3753,7 +3753,7 @@ fn forced_profile_digests(profile: &PreparedEnvelope) -> Result<ForcedProfileDig
         source_revision: GitRevision::parse(&"0".repeat(40))
             .map_err(|error| format!("identity revision is invalid: {error}"))?,
         source_dirty: false,
-        tool: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs")
+        tool: RepoRelPath::parse("experiments/tuning-calibration/benches/core.rs")
             .map_err(|error| format!("identity tool path is invalid: {error}"))?,
         tool_sha256: Sha256::parse(&"0".repeat(64))
             .map_err(|error| format!("identity tool digest is invalid: {error}"))?,
@@ -3808,7 +3808,7 @@ fn install_prepared_profile(
         assembled_at: Rfc3339Utc::parse("1970-01-01T00:00:00Z").map_err(|e| e.to_string())?,
         source_revision: GitRevision::parse(&"0".repeat(40)).map_err(|e| e.to_string())?,
         source_dirty: false,
-        tool: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs")
+        tool: RepoRelPath::parse("experiments/tuning-calibration/benches/core.rs")
             .map_err(|e| e.to_string())?,
         tool_sha256: Sha256::parse(&"0".repeat(64)).map_err(|e| e.to_string())?,
     };
@@ -5658,7 +5658,7 @@ mod tests {
             measured_at: Rfc3339Utc::parse("2026-08-20T00:00:00Z").unwrap(),
             source_revision: GitRevision::parse(&"a".repeat(40)).unwrap(),
             source_dirty: false,
-            harness: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs").unwrap(),
+            harness: RepoRelPath::parse("experiments/tuning-calibration/benches/core.rs").unwrap(),
             harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA).unwrap(),
             binary_sha256: Sha256::parse(&"b".repeat(64)).unwrap(),
             toolchain: "rustc 1.95.0".to_owned(),
@@ -10680,7 +10680,7 @@ mod campaign_owner {
             || !provenance
                 .identity
                 .behavior_sha256
-                .contains_key("crates/gf2-core/benches/tuning_calibration.rs")
+                .contains_key("experiments/tuning-calibration/benches/core.rs")
         {
             return Err("owner measurement feature/thread/behavior contract mismatch".to_owned());
         }
@@ -10732,7 +10732,7 @@ mod campaign_owner {
         }
         let facts = runtime_facts(&request.measurement)?;
         let assembly_runtime: AssemblyRuntime = request.assembly.runtime.decode().map_err(err)?;
-        if assembly_runtime.tool != "crates/gf2-core/benches/tuning_calibration.rs" {
+        if assembly_runtime.tool != "experiments/tuning-calibration/benches/core.rs" {
             return Err("owner assembly tool identity mismatch".to_owned());
         }
         let binary = request
@@ -10751,7 +10751,7 @@ mod campaign_owner {
             source_revision: GitRevision::parse(&request.measurement.identity.source_revision)
                 .map_err(err)?,
             source_dirty: facts.source_dirty,
-            harness: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs")
+            harness: RepoRelPath::parse("experiments/tuning-calibration/benches/core.rs")
                 .map_err(err)?,
             harness_schema: HarnessSchema::parse(CoreTuningCodec::HARNESS_SCHEMA).map_err(err)?,
             binary_sha256: actual.clone(),
@@ -10768,7 +10768,7 @@ mod campaign_owner {
             source_revision: GitRevision::parse(&request.assembly.identity.source_revision)
                 .map_err(err)?,
             source_dirty: assembly_runtime.source_dirty,
-            tool: RepoRelPath::parse("crates/gf2-core/benches/tuning_calibration.rs")
+            tool: RepoRelPath::parse("experiments/tuning-calibration/benches/core.rs")
                 .map_err(err)?,
             tool_sha256: actual,
         };
@@ -10877,7 +10877,7 @@ mod campaign_owner {
     const BUILD_LOCK: &str = include_str!("../../../Cargo.lock");
     /// The generator of every retained and extent fixture.
     fn fixture_generator() -> Result<seed::FixtureGenerator, String> {
-        seed::FixtureGenerator::locked::<Lcg>(BUILD_LOCK, env!("CARGO_PKG_NAME"), &[&[]])
+        seed::FixtureGenerator::locked::<Lcg>(BUILD_LOCK, env!("CARGO_PKG_NAME"), &[&["gf2-core"]])
             .map_err(err)
     }
     impl CapabilityReport {
@@ -11459,7 +11459,7 @@ mod campaign_owner {
                 executable_sha256: [("core-producer".to_owned(), binary.as_str().to_owned())]
                     .into(),
                 behavior_sha256: [(
-                    "crates/gf2-core/benches/tuning_calibration.rs".to_owned(),
+                    "experiments/tuning-calibration/benches/core.rs".to_owned(),
                     "0".repeat(64),
                 )]
                 .into(),
@@ -11499,7 +11499,7 @@ mod campaign_owner {
                     observed_utc: "2026-09-05T00:01:00Z".to_owned(),
                     runtime: CanonicalJson::from_serializable(&AssemblyRuntime {
                         source_dirty,
-                        tool: "crates/gf2-core/benches/tuning_calibration.rs".to_owned(),
+                        tool: "experiments/tuning-calibration/benches/core.rs".to_owned(),
                         tool_sha256: binary.as_str().to_owned(),
                     })
                     .unwrap(),
@@ -11515,7 +11515,7 @@ mod campaign_owner {
             emit.assembly.identity.source_sha256 = "1".repeat(64);
             let mut changed = emit.clone();
             changed.assembly.identity.behavior_sha256.insert(
-                "crates/gf2-core/benches/tuning_calibration.rs".to_owned(),
+                "experiments/tuning-calibration/benches/core.rs".to_owned(),
                 "1".repeat(64),
             );
             let refused = publish_owner(&changed).unwrap_err();
@@ -11602,10 +11602,8 @@ mod campaign_owner {
                     == (dot.effective_chunk == dot.candidate_chunk)));
             report.ordinary_companions.validate().unwrap();
             assert_eq!(report.rng.implementation, "gf2_core::rng::Lcg");
-            assert_eq!(
-                report.rng.version,
-                concat!("gf2-core ", env!("CARGO_PKG_VERSION"))
-            );
+            let version = report.rng.version.strip_prefix("gf2-core ").unwrap();
+            assert!(version.starts_with(|first: char| first.is_ascii_digit()));
         }
         #[test]
         fn capability_preflight_rejects_every_missing_mandatory_prerequisite() {

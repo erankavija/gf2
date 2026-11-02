@@ -1,0 +1,20 @@
+[package]
+name = "nr-5g-realtime"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+description = "NR 5G GPU real-time decode-rate experiment"
+
+[dependencies]
+gf2-core = { path = "../../crates/gf2-core" }
+gf2-coding = { path = "../../crates/gf2-coding" }
+gf2-sim = { path = "../../crates/gf2-sim", features = ["test-support"] }
+gf2-kernels-hip = { path = "../../crates/gf2-kernels-hip", optional = true }
+
+[features]
+hip = ["gf2-sim/hip", "dep:gf2-kernels-hip"]
+
+[[bench]]
+name = "nr_5g_realtime"
+harness = false

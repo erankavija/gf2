@@ -75,11 +75,3 @@ required-features = ["test-support"]
 [[example]]
 name = "gpu_hybrid"
 required-features = ["hip"]
-
-# 5G NR LDPC GPU real-time decode-rate tuning sweep (issue 23d3525f). Custom
-# main (harness = false): a BLER + decoded-throughput cell sweep, not a
-# Criterion micro-benchmark. Builds on non-ROCm hosts (no-hip is a no-op main);
-# the GPU sweep requires `--features hip` and a gfx1030 device.
-[[bench]]
-name = "nr_5g_realtime"
-harness = false

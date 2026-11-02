@@ -132,7 +132,7 @@ PY_SOURCE
   observe_source before
   ./scripts/cargo-budget.sh cargo +1.95.0 build --release -p tuning-campaign-support --bin tuning-extent-campaign-driver --message-format=json >"$stage/build/driver.jsonl" 2>>"$stage/build/build.log"
   for owner in $producers; do
-    ./scripts/cargo-budget.sh cargo +1.95.0 build --release -p "gf2-$owner" --bench tuning_calibration --features parallel,simd,tuning-profile,test-support --message-format=json >"$stage/build/$owner.jsonl" 2>>"$stage/build/build.log"
+    ./scripts/cargo-budget.sh cargo +1.95.0 build --release -p tuning-calibration --bench "$owner" --features parallel,simd,tuning-profile,test-support --message-format=json >"$stage/build/$owner.jsonl" 2>>"$stage/build/build.log"
   done
   ./scripts/cargo-budget.sh cargo +1.95.0 build --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml --message-format=json >"$stage/build/composer.jsonl" 2>>"$stage/build/build.log"
   observe_source after
@@ -141,7 +141,7 @@ import hashlib, json, os, pathlib, sys
 stage=pathlib.Path(sys.argv[1])
 executables={}
 builds=[('driver','driver','tuning-extent-campaign-driver')]
-builds+=[(owner,f'{owner}-producer','tuning_calibration') for owner in sys.argv[2:]]
+builds+=[(owner,f'{owner}-producer',owner) for owner in sys.argv[2:]]
 builds+=[('composer','composer','tuning-profile-compose')]
 for source,dest,target in builds:
     rows=[json.loads(line) for line in (stage/'build'/f'{source}.jsonl').read_text().splitlines()]
