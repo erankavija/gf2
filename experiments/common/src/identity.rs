@@ -113,15 +113,6 @@ impl Sha256Digest {
     }
 }
 
-/// Content identity of a file in the repository.
-#[allow(missing_docs)]
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ArtifactIdentity {
-    pub path: ArtifactPath,
-    pub sha256: Sha256Digest,
-}
-
 fn is_lowercase_hex(value: &str, length: usize) -> bool {
     value.len() == length
         && value

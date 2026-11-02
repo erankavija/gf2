@@ -19,7 +19,6 @@
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
 
-use std::fs;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -37,7 +36,11 @@ use gf2_core::{BitMatrix, BitVec};
 use rand08::Rng;
 use rand_chacha08::ChaCha20Rng;
 
-use experiments_common::{ArtifactIdentity, RepositoryRoot, RngAlgorithm, RngIdentity, RunRecord};
+use experiments_common::{
+    publish_atomic, ArtifactPath, RepositoryRoot, RngAlgorithm, RngIdentity, RunRecord,
+    Sha256Digest,
+};
+use osd_ebch::osd_campaign::ArtifactIdentity;
 use osd_ebch::osd_campaign::{
     BinomialIntervalMethod, BinomialIntervalSpec, OsdBlockContext, OsdBlockOutcome, OsdBlockStream,
     OsdCampaign, OsdCampaignError, OsdCampaignProvenance, OsdCell, OsdCellId, OsdWorkCounters,
@@ -481,24 +484,40 @@ fn source_context(directory: &Path, arguments: &[&str]) -> Result<String, String
 
 fn artifact_identity(repository: &RepositoryRoot, path: &str) -> Result<ArtifactIdentity, String> {
     let path = path
-        .parse()
+        .parse::<ArtifactPath>()
         .map_err(|error| format!("invalid artifact path: {error}"))?;
-    repository
-        .artifact_identity(&path)
-        .map_err(|error| error.to_string())
+    Ok(ArtifactIdentity {
+        sha256: Sha256Digest::of_file(&repository.resolve(&path))
+            .map_err(|error| error.to_string())?,
+        path,
+    })
 }
 
 fn write_receipt(
     path: &Path,
     receipt: &osd_ebch::osd_campaign::OsdCampaignReceipt,
 ) -> Result<(), String> {
-    if let Some(parent) = path
-        .parent()
-        .filter(|parent| !parent.as_os_str().is_empty())
-    {
-        fs::create_dir_all(parent).map_err(|error| format!("create receipt directory: {error}"))?;
-    }
     let bytes = serde_json::to_vec_pretty(receipt)
         .map_err(|error| format!("serialize receipt: {error}"))?;
-    fs::write(path, bytes).map_err(|error| format!("write receipt {}: {error}", path.display()))
+    publish_atomic(path, &bytes)
+        .map_err(|error| format!("write receipt {}: {error}", path.display()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn artifact_identity_records_the_repository_path_and_content_digest() {
+        let repository = RepositoryRoot::containing(Path::new(env!("CARGO_MANIFEST_DIR")))
+            .expect("find the repository root");
+        let identity = artifact_identity(&repository, "experiments/osd-ebch/Cargo.toml")
+            .expect("read the OSD package manifest");
+
+        assert_eq!(identity.path.as_str(), "experiments/osd-ebch/Cargo.toml");
+        assert_eq!(
+            identity.sha256,
+            Sha256Digest::of_file(&repository.resolve(&identity.path)).unwrap()
+        );
+    }
 }

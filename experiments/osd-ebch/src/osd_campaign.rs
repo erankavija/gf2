@@ -38,8 +38,8 @@ use rand08::SeedableRng;
 use rand_chacha08::ChaCha20Rng;
 use serde::{Deserialize, Deserializer, Serialize};
 
+pub use crate::provenance::ArtifactIdentity;
 use crate::provenance::Provenance;
-use experiments_common::ArtifactIdentity;
 use gf2_sim::checkpoint::{
     CheckpointLoadError, CheckpointPayload, CheckpointReader, CheckpointWriter,
 };
@@ -405,7 +405,7 @@ pub struct BinomialConfidenceInterval {
 /// Mechanical provenance attached to an OSD campaign receipt.
 ///
 /// Composes the published [`crate::provenance::Provenance`] representation
-/// with shared [`experiments_common::ArtifactIdentity`] types. `runtime`
+/// with OSD artifact identities. `runtime`
 /// records the git revision, compiler, invocation, and hardware observed by
 /// the producer; the two artifact identities bind the exact campaign
 /// configuration and the measurement behavior that gives prior receipts their

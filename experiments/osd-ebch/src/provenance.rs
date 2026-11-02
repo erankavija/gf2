@@ -1,8 +1,17 @@
-//! Published OSD receipt representation, retained under `@/issue/779d1926`.
-//! Identity tokens come from `experiments_common`; invocation is metadata.
+//! Published OSD receipt representation. Identity tokens use canonical types
+//! from `experiments_common`; invocation is metadata.
 
-use experiments_common::{GitRevision, RngAlgorithm, Sha256Digest};
+use experiments_common::{ArtifactPath, GitRevision, RngAlgorithm, Sha256Digest};
 use serde::{Deserialize, Deserializer, Serialize};
+
+/// Content identity of a file used by the OSD campaign.
+#[allow(missing_docs)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ArtifactIdentity {
+    pub path: ArtifactPath,
+    pub sha256: Sha256Digest,
+}
 
 /// Explicit availability state for optional mechanical provenance.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

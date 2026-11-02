@@ -3,7 +3,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::identity::{ArtifactIdentity, ArtifactPath, GitRevision, Sha256Digest};
+use crate::identity::{ArtifactPath, GitRevision};
 
 /// The one root that repository paths resolve through.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -23,18 +23,6 @@ impl RepositoryRoot {
     /// Returns the filesystem location of `artifact`.
     pub fn resolve(&self, artifact: &ArtifactPath) -> PathBuf {
         self.0.join(artifact.as_str())
-    }
-
-    /// Digests the file at `artifact`.
-    ///
-    /// # Errors
-    ///
-    /// Fails when the file cannot be read.
-    pub fn artifact_identity(&self, artifact: &ArtifactPath) -> io::Result<ArtifactIdentity> {
-        Ok(ArtifactIdentity {
-            path: artifact.clone(),
-            sha256: Sha256Digest::of_file(&self.resolve(artifact))?,
-        })
     }
 
     /// Returns the revision checked out at this root.

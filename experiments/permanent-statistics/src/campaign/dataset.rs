@@ -2,11 +2,9 @@
 use super::{
     invalid, AcceptanceConfig, Backend, CampaignConfig, CampaignError, Cell, ReferenceData,
 };
-use experiments_common::{
-    is_interrupted_publish, publish_atomic, ArtifactPath, RunRecord, Sha256Digest,
-};
+use experiments_common::{publish_atomic, ArtifactPath, RunRecord, Sha256Digest};
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, fs, path::Path};
+use std::{collections::BTreeSet, ffi::OsStr, fs, path::Path};
 
 /// The only supported dataset representation.
 pub const SCHEMA_VERSION: u32 = 3;
@@ -464,6 +462,20 @@ fn remove_interrupted_writes(directory: &Path) -> Result<(), CampaignError> {
     }
     Ok(())
 }
+
+fn is_interrupted_publish(candidate: &Path) -> bool {
+    let name = candidate.file_name().map(OsStr::to_string_lossy);
+    name.as_deref()
+        .and_then(|name| name.strip_prefix('.')?.strip_suffix(".tmp"))
+        .and_then(|rest| {
+            let (rest, sequence) = rest.rsplit_once('.')?;
+            let (published, process) = rest.rsplit_once('.')?;
+            let numeric = process.parse::<u32>().is_ok() && sequence.parse::<u64>().is_ok();
+            Some(numeric && !published.is_empty())
+        })
+        .unwrap_or(false)
+}
+
 /// Publishes pooled summaries, run observations, and integrity digests, and
 /// removes temporaries of interrupted writes. No run may be active.
 /// Refuses until every cell has a logged terminal row.
@@ -608,4 +620,18 @@ pub fn validate_summary_aggregate(
         return invalid("terminal assessment differs from pooled evidence");
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_interrupted_publish;
+    use std::path::Path;
+
+    #[test]
+    fn only_a_reserved_sibling_is_an_interrupted_publish() {
+        assert!(is_interrupted_publish(Path::new(".a.b.123.4.tmp")));
+        for name in ["a.b", ".a.b", "a.1.2.tmp", ".a.x.2.tmp", ".1.2.tmp"] {
+            assert!(!is_interrupted_publish(Path::new(name)), "{name}");
+        }
+    }
 }
