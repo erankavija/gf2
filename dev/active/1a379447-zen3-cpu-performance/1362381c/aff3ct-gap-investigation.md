@@ -1,6 +1,6 @@
 # AFF3CT gap investigation
 
-Read-only investigation by Codex `gpt-6-astra` at high effort, 2026-11-01, over the FI-3 confirmation in [1358d6ab/outcome.md](../1358d6ab/outcome.md). Effects and sizes are estimates unless a cited artifact records them. No plan has been adopted from it.
+Read-only investigation by Codex `gpt-6-astra` at high effort, 2026-11-01, over the FI-3 confirmation in 1358d6ab/outcome.md. Effects and sizes are estimates unless a cited artifact records them. No plan has been adopted from it.
 
 **Assessment:** QC-aware intra-frame SIMD is the NR lead, on descriptive results and without a valid confirmation.  
 The check update is the only DVB-T2 lead.  

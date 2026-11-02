@@ -18,7 +18,7 @@ All backed up at `charon-patch-backup-2026-05-15/`:
 1. HRTB-erase (3 sites) — `expand_associated_types.rs`
 2. SelfClause / Local(0,0) fallback in `lookup_type_replacement` — `expand_associated_types.rs`
 3. implied-clause constraint propagation — `expand_associated_types.rs`
-4. obsolete-asserts removal in `DynPredicate::fmt_with_ctx` — `pretty/fmt_with_ctx.rs`
+4. obsolete-asserts removal in `DynPredicate::fmt_with_ctx` — `fmt_with_ctx.rs`
 
 Plus 3 untracked UI test files: `hrtb-associated-types.rs`, `trait-default-method-assoc-type.rs`, `implied-clause-assoc-type-constraint.rs`.
 
@@ -37,7 +37,7 @@ Pre-verified 2026-05-31: the working-tree diff of patches 1-4 applies cleanly to
 
 ## Known risk
 
-Aeneas Lean backend churn (+1829 / −475, 25 files) between `5fc8fdf2` and `0f99a049`: `Std/WP.lean`, `Std/Scalar/Core.lean`, `Std/Scalar/OverflowingOps/*`, `Tactic/Setup.lean`, `Tactic/Step/Step.lean`, `SimpScalar`/`SimpLists`. Likely breakage in `proofs/Gf2Core/Proofs/MontgomeryRoundtrip.lean` wrapping-op lemma chains and possibly `FunsExternal.lean` hand defs. Fix in-place; never weaken a theorem or add a sorry to make the build pass.
+Aeneas Lean backend churn (+1829 / −475, 25 files) between `5fc8fdf2` and `0f99a049`: `WP.lean`, `Core.lean`, `Std/Scalar/OverflowingOps/*`, `Setup.lean`, `Step.lean`, `SimpScalar`/`SimpLists`. Likely breakage in `proofs/Gf2Core/Proofs/MontgomeryRoundtrip.lean` wrapping-op lemma chains and possibly `FunsExternal.lean` hand defs. Fix in-place; never weaken a theorem or add a sorry to make the build pass.
 
 ## Migration result (2026-05-31, completed)
 

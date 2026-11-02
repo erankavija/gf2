@@ -24,3 +24,23 @@ reason = "installable rule packs name paths of the projects that adopt them"
 [[exception]]
 path = "dev/active/b8206228-permanent-statistics/45ecf975/*"
 reason = "history rewrite runbook names the paths it strips; remove when 45ecf975 closes"
+
+[[exception]]
+path = "dev/studies/0dffa759/findings.md"
+reason = "cites source files of third-party RNG libraries"
+
+[[exception]]
+path = "crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md"
+reason = "cites files of the upstream Sionna repository"
+
+[[exception]]
+path = "dev/active/55c3e433-aff3ct-ldpc-gaps/*"
+reason = "names pilot files in the worktrees awaiting collection; remove when 55c3e433 lands them"
+
+[[exception]]
+path = ".agents/skills/*"
+reason = "skill text gives illustrative paths of the projects that use it"
+
+[[exception]]
+path = "dev/authoring-conventions.md"
+reason = "its link examples name illustrative paths"

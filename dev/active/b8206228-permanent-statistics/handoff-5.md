@@ -53,7 +53,7 @@ None. All five criterion collisions were escalated and resolved this session (de
 
 ## Reference artefacts
 
-- F_3 receipts: `dev/studies/047b62ed/receipts.md` + `analysis.py` (gates passed at `5222f61c`); F_5: `dev/studies/91605d4d/` (passed at `1de2b950`); F_7: `dev/studies/6c7fcb38/` at `093b846e` + uncommitted delta (see above)
+- F_3 receipts: `receipts.md` + `analysis.py` (gates passed at `5222f61c`); F_5: `dev/studies/91605d4d/` (passed at `1de2b950`); F_7: `dev/studies/6c7fcb38/` at `093b846e` + uncommitted delta (see above)
 - Published-table checks: `dev/studies/b488f02c/verify-published-table.py`, `verify-rendered-stopping-rule.py`
 - Profiling smoke output (scratch, session-local): kernel-stats format validated; recipe above is self-contained
 - Escalation log, pitfalls, rework counts: `progress.json` here

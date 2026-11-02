@@ -19,13 +19,20 @@ from pathlib import Path
 EXCEPTIONS = "scripts/reference-exceptions.toml"
 MAX_TEXT_BYTES = 4 * 1024 * 1024
 HOST_LOCAL = re.compile(
-    r"/home/(?!example\b)[a-z_][\w-]*/|/Users/[A-Za-z]\w*/|/run/user/\d|/tmp/claude-|~/(?:\.local|\.cache|Projects)\b"
+    r"/home/(?!example\b)[a-z_][\w-]*/|/Users/[A-Za-z]\w*/|/run/user/\d|/tmp/claude-|/mnt/\w|/root/"
+    r"|(?:~|\$HOME|\$\{HOME\})/(?:\.local|\.cache|\.claude|\.codex|\.gap|Projects)\b"
 )
 ROOTS = r"(?:benchmarks|contrib|crates|dev|docs|experiments|packages|proofs|scripts)"
 REPOSITORY_PATH = re.compile(rf"(?<![\w./+-])/?({ROOTS}/[\w.+=-]+(?:/[\w.+=-]+)*)")
+RELATIVE_PATH = re.compile(r"(?<![\w./+-])((?:\.\./)+[\w.+=-]+(?:/[\w.+=-]+)*)")
+INLINE_PATH = re.compile(r"`((?!10\.\d)[\w.+=-]+(?:/[\w.+=-]+)*/[\w+=-]+\.\w+)`")
 MARKDOWN_LINK = re.compile(r"\]\((?!https?:|mailto:|#|/)([^)#\s]+)")
 TEMPLATE = re.compile(r"[<>{}*$]")
 DEVICE = re.compile(r"dev/(?:null|zero|shm|stdin|stdout|stderr|fd|tty|kfd|dri|urandom|random|cpu|mem)\b")
+
+
+# Code resolves `../` from its working directory at run time, so only prose is read.
+CODE_SUFFIXES = (".rs", ".py", ".sh", ".toml", ".c", ".cpp", ".h", ".lean", ".json", ".jsonl", ".yml")
 
 
 def git(root: Path, *args: str) -> str:
@@ -56,13 +63,24 @@ def faults_in(path: str, text: str, known: set[str]) -> list[str]:
                 continue
             if not TEMPLATE.search(target) and target not in known:
                 faults.append(f"{path}:{number}: {target}")
+        for relative in RELATIVE_PATH.findall(line):
+            target = str(Path(*_normal(f"{Path(path).parent}/{relative}")))
+            if not path.endswith(CODE_SUFFIXES) and target not in known:
+                faults.append(f"{path}:{number}: {target}")
         if path.endswith(".md"):
+            for inline in INLINE_PATH.findall(line):
+                if ".." not in inline and not _suffix_known(inline.removeprefix("./"), known):
+                    faults.append(f"{path}:{number}: {inline}")
             for link in MARKDOWN_LINK.findall(line):
                 target = str(Path(path).parent / link)
                 normal = str(Path(*_normal(target)))
                 if not TEMPLATE.search(link) and normal not in known:
                     faults.append(f"{path}:{number}: {link}")
     return faults
+
+
+def _suffix_known(inline: str, known: set[str]) -> bool:
+    return inline in known or any(path.endswith("/" + inline) for path in known)
 
 
 def _normal(target: str) -> list[str]:
@@ -133,12 +151,19 @@ def self_test() -> None:
         (root / "docs/good.md").write_text("[a](bad-link.md) docs/good.md\n")
         (root / "docs/host.md").write_text("see /home/alice/x and /home/example/y\n")
         (root / "docs/gone.md").write_text("see dev/gone/file.json\n")
+        (root / "docs/relative.md").write_text("see ../missing/file.txt and ../docs/good.md\n")
+        (root / "docs/inline.md").write_text("see `gone/file.json` and `docs/good.md`\n")
+        (root / "docs/home.md").write_text("see $HOME/.local/share/x\n")
         (root / ".gitignore").write_text("dev/ignored/\n")
         (root / "docs/ignored.md").write_text("see dev/ignored/file\n")
         git(root, "add", ".")
         faults = check(root)
     assert any("bad-link.md" in f for f in faults), faults
-    assert sum("host-local" in f for f in faults) == 1, faults
+    assert sum("host-local" in f for f in faults) == 2, faults
+    assert any("missing/file.txt" in f for f in faults), faults
+    assert not any("../docs/good.md" in f for f in faults), faults
+    assert any("gone/file.json" in f and "inline" in f for f in faults), faults
+    assert not any("docs/good.md" in f and "inline" in f for f in faults), faults
     assert any("dev/gone/file.json" in f for f in faults), faults
     assert not any("ignored.md" in f for f in faults), faults
 

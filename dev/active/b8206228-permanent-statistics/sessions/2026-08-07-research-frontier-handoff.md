@@ -26,7 +26,7 @@ Paused mid-gate-cycle on issue `b488f02c`. This note is the resume contract.
 - **In flight when paused:** the round-5 sweep retired the superseded censoring
   rule *from code* (`12bb1e3b`), which changes `binary_sha256`, so the worker
   was REGENERATING all receipts with the new binary. The worktree is
-  intentionally dirty: `envelope/sustained/zero-fraction-2026-08-07.csv`
+  intentionally dirty: `zero-fraction-2026-08-07.csv`
   deleted, `throughput-2026-08-07.csv` partially rewritten,
   `feasibility-study.md` mid-edit. Last consistent committed state:
   `12bb1e3b` (code) on top of `a9d5b1c5` (pooled counts, all 13 cells satisfy

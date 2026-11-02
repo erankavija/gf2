@@ -51,7 +51,7 @@ document already carries — the 2026-08-16 supersession note above
 >    $(6/7)^n$ — 0.157267 at $n = 12$, 0.045821 at $n = 20$, and 0.013350 at
 >    $n = 28$, each confirmed inside a two-sided Wilson 95 % interval on 4 096
 >    samples and again on 6.8–7.8 million timed operations
->    (`dev/studies/6c7fcb38/receipts.md` §9). At $n = 20$ the complete reduction
+>    (`receipts.md` §9). At $n = 20$ the complete reduction
 >    runs on 4.58 % of Gray steps, not on every one of them. §6's weighted
 >    comparison and the margin it derives for A at $n = 36$ from that weighting
 >    (§6) therefore rest on
@@ -66,7 +66,7 @@ document already carries — the 2026-08-16 supersession note above
 >    (`wave_gf7_equivalence.hip:25-29`) —
 >    and `f7-three-plane-permanent` is Candidate D. Composite throughput of D
 >    over A is 0.4524, 2.0661, 20.5474, 168.1439, and 66.1022 at
->    $n = 12, 16, 20, 24, 28$ (`dev/studies/6c7fcb38/receipts.md` §4.2). Both
+>    $n = 12, 16, 20, 24, 28$ (`receipts.md` §4.2). Both
 >    are equivalence-identical against the CPU oracle at every order, with zero
 >    mismatches (§3), and D is exact above the sixteen-lane bound the packed
 >    CPU kernel stops at (§14).
@@ -75,7 +75,7 @@ document already carries — the 2026-08-16 supersession note above
 >    cell sizes its own batch from a single-matrix probe, so the ratios mix the
 >    circuit effect with a device-parallelism effect spanning a factor of 5 833;
 >    the $n = 12$ reversal in A's favour is itself a batch artefact, A running
->    5 833 matrices against D's 46 (`dev/studies/6c7fcb38/receipts.md` §4.5,
+>    5 833 matrices against D's 46 (`receipts.md` §4.5,
 >    §17.5, §17.6). The one comparison at matched launch geometry is the
 >    horizontal-product isolate, where D's reduction measures
 >    $6.00 \times 10^{-10}$ s against A's $1.4005 \times 10^{-8}$ s at
@@ -88,7 +88,7 @@ document already carries — the 2026-08-16 supersession note above
 >    measurements of a scalar Rust prototype on the Ryzen 9 5900X host, and
 >    nothing in the accelerator study re-measures them: that study measures HIP
 >    device kernels on `gfx1030` only, on one host
->    (`dev/studies/a9284086/receipt.md` §12.8). **Candidate A remains the
+>    (`receipt.md` §12.8). **Candidate A remains the
 >    ratified public packed $\mathbb{F}_7$ encoding**, and `Packed7`
 >    (`crates/gf2-algebra/src/packed/packed7.rs:211`) is unchanged. The
 >    accelerator study's synthesis reaches the same conclusion on the same
@@ -114,8 +114,8 @@ document already carries — the 2026-08-16 supersession note above
 > What none of it disturbs is the measurement record itself: the per-element
 > figures of §4 stand as measured, and the 41 correctness tests of §3 stand.
 >
-> Evidence: `dev/studies/6c7fcb38/receipts.md` §3, §4.2, §4.5, §6.2, §9, §14,
-> §17.5–§17.8; `dev/studies/a9284086/receipt.md` §12.8; synthesis and its
+> Evidence: `receipts.md` §3, §4.2, §4.5, §6.2, §9, §14,
+> §17.5–§17.8; `receipt.md` §12.8; synthesis and its
 > reasoning at `dev/studies/0dffa759/findings.md` §5, §7, §8.
 
 ## 3. Pointer stub (insertions B and C), verbatim

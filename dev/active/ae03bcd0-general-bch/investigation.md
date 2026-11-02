@@ -235,7 +235,7 @@ Direct code/tests/benches/examples and simulation consumers:
 
 `crates/gf2-coding/src/bch/core.rs`, `src/bch/mod.rs`,
 `src/bch/dvb_t2/mod.rs`, `src/bch/dvb_t2/generators.rs`,
-`src/bch/dvb_t2/params.rs`, `src/bch/extended.rs`,
+`src/bch/dvb_t2/params.rs`, `extended.rs`,
 `src/ldpc/dvb_t2/concat.rs`, `src/lib.rs`, `src/product/mod.rs`,
 `src/product/chase_pyndiah.rs`, `src/grand/orbgrand.rs`,
 `src/grand/sogrand.rs`, `src/fading.rs`, `src/gldpc/mod.rs`,
@@ -302,7 +302,7 @@ Exact source/test/bench/example consumers of `BlockEncoder` or
 `GeneratorMatrixAccess` are:
 
 `crates/gf2-coding/src/traits.rs`, `src/linear.rs`, `src/bch/core.rs`,
-`src/bch/mod.rs`, `src/bch/extended.rs`, `src/bch/dvb_t2/mod.rs`,
+`src/bch/mod.rs`, `extended.rs`, `src/bch/dvb_t2/mod.rs`,
 `src/bcjr/mod.rs`, `src/crc.rs`, `src/drm.rs`, `src/dvb_t2_bicm_harness.rs`,
 `src/gldpc/mod.rs`, `src/ldpc/core.rs`, `src/ldpc/dvb_t2/concat.rs`,
 `src/ldpc/encoding/cache.rs`, `src/ldpc/encoding/ira.rs`,
@@ -317,7 +317,7 @@ Exact source/test/bench/example consumers of `BlockEncoder` or
 `examples/block_code_intro.rs`, `examples/dvb_t2_bch_demo.rs`,
 `examples/hamming_basic.rs`, `examples/ldpc_cache_file_io.rs`,
 `examples/ldpc_encoding_with_cache.rs`, `examples/ldpc_mother_check.rs`,
-`examples/sogrand_crc_probe.rs`, `examples/visualize_large_matrices.rs`,
+`sogrand_crc_probe.rs`, `examples/visualize_large_matrices.rs`,
 and the corresponding coding tests in `tests/backend_integration.rs`,
 `bch_tests.rs`, `dvb_t2_bch_verification.rs`,
 `dvb_t2_ldpc_verification.rs`, `dvb_t2_ldpc_verification_suite.rs`,

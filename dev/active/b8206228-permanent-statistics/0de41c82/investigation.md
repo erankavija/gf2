@@ -184,7 +184,7 @@ implementation is the starting point; `common.rs` supplies the reference" —
   scripts and outputs — all git-tracked.
 
 The harness CLI has five subcommands (`main.rs:51-55`): `equivalence`, `grid`,
-`sustained`, `envelope`, `zerofrac`, documented in `src/usage.txt`. The GPU
+`sustained`, `envelope`, `zerofrac`, documented in `usage.txt`. The GPU
 backend degrades to "unsupported" without `--features hip`
 (`backend.rs:169-171`; `Cargo.toml` feature `hip = ["gf2-algebra/hip"]`).
 

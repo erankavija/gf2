@@ -117,7 +117,7 @@ Cargo resolves the workspace members from either source:
 gf2-core = { git = "https://github.com/erankavija/gf2" }
 gf2-coding = { git = "https://github.com/erankavija/gf2", features = ["parallel"] }
 # or, from a checkout:
-# gf2-core = { path = "../gf2/crates/gf2-core" }
+# gf2-core = { path = "/path/to/gf2/crates/gf2-core" }
 ```
 
 Pin a `rev` for reproducible builds.

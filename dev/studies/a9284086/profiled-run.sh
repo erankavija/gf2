@@ -20,13 +20,13 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 #   * counters are collected over early dispatch iterations only. The F_7 run
 #     established that rocprofv3's full-pass derived occupancy counters divide
 #     by a GRBM_GUI_ACTIVE window that drifts with cumulative dispatch count
-#     (dev/studies/6c7fcb38/receipts.md section 13), so this run collects the
+#     (study 6c7fcb38), so this run collects the
 #     round-2 counter set from the start and never the full-pass one.
 #     OccupancyPercent reads zero under iteration-range collection on this
 #     stack and is omitted.
 #
 # Admissibility of a counter reading is the policy committed in
-# dev/studies/6c7fcb38/receipts.md section 13: MeanOccupancyPerCU inside
+# study 6c7fcb38: MeanOccupancyPerCU inside
 # (0, 32], and resident waves no more than the dispatch's own
 # Grid_Size/Workgroup_Size launch geometry, with one-percent rounding slack.
 # SQ_WAVES is recorded but is not an admissibility test.

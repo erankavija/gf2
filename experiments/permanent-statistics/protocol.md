@@ -4,7 +4,7 @@ Campaign id: `permanent-zero-fraction-20261102`. This protocol is committed
 before any draw under that id. [config/campaign.json](config/campaign.json) is
 the machine authority for every constant the tool consumes; its digest is the
 `configuration_sha256` in each run record. The pre-draw manifest is
-[results/permanent-zero-fraction-20261102/manifest.json](results/permanent-zero-fraction-20261102/manifest.json),
+[config/permanent-zero-fraction-20261102-manifest.json](config/permanent-zero-fraction-20261102-manifest.json),
 a projection of that configuration which the tool compares before writing. A
 changed protocol, cell, sample size, test, or exclusion rule defines a new
 campaign id and requires a new preregistration before that campaign's first

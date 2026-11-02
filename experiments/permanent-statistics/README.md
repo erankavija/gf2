@@ -65,7 +65,7 @@ mechanical halt; `--on-unavailable fallback=batch_parallel` explicitly selects
 a supporting CPU implementation. Each shard records its executed backend.
 
 Schema 3 stores a compact `manifest.json`, one synced `execution.jsonl`, one
-`shards/qQ-nNN.jsonl` per cell, and a recoverable `checkpoint.json`. The
+one `qQ-nNN.jsonl` under `shards` per cell, and a recoverable `checkpoint.json`. The
 manifest contains no shard inventory. `permanent_dataset finalize DIR`
 requires terminal cells and publishes `summary.csv`, `runs.json`, and
 `checksums.sha256`; `permanent_dataset verify DIR` checks these projections
@@ -84,7 +84,7 @@ reference-data paths.
 The campaign `permanent-zero-fraction-20261102` is governed by
 [protocol.md](protocol.md), with [config/campaign.json](config/campaign.json),
 [preregistration.json](preregistration.json), and a pre-draw manifest under
-`results/`. `permanent_validation --check PATH` parses a configuration and
+`config/`. `permanent_validation --check PATH` parses a configuration and
 reports it without opening a stream, a device, or a file.
 
 `permanent_validation --config PATH --output DIR --workers W` runs independent

@@ -7,7 +7,7 @@ against two external oracles, what each oracle was given, where its field
 presentation coincides with gf2's and where an explicit isomorphism carries the
 construction across, and which authoritative standards vectors the suite wires
 in. The run that produced the committed fixtures is recorded in
-[`oracle-receipt.md`](oracle-receipt.md).
+`oracle-receipt.md`.
 
 ## Sources of truth
 
@@ -26,7 +26,7 @@ in. The run that produced the committed fixtures is recorded in
 | Agreement suite | [`../../../crates/gf2-coding/tests/bch_oracle_agreement.rs`](../../../crates/gf2-coding/tests/bch_oracle_agreement.rs) |
 | Stream reader | [`../../../crates/gf2-coding/tests/test_vectors/mod.rs`](../../../crates/gf2-coding/tests/test_vectors/mod.rs) |
 | ETSI verification streams | host data under `VV001-CR35_CSP/TestPoint04` and `TestPoint05`, located by `DVB_TEST_VECTORS_PATH` |
-| Run receipt | [`oracle-receipt.md`](oracle-receipt.md) |
+| Run receipt | `oracle-receipt.md` |
 
 Every number below is read out of those fixtures or out of the receipt. The
 receipt carries the versions, the host, the revision the fixtures were
@@ -421,7 +421,7 @@ plan's `evidence-protocol` section fixes.
 
 [`oracle/run.sh`](oracle/run.sh) runs this case as a stage of its own, so the
 figures it observes reach a committed record instead of this prose. The
-receipt's [**Standards vectors**](oracle-receipt.md#standards-vectors) section
+receipt's **Standards vectors** section
 carries that stage's exact invocation, its wall clock, nextest's verdict, and
 the lines the case printed: the directory it resolved, the SHA-256 of each of
 the two [DvbVerification2010] stream files it read, the frame and per-frame
@@ -451,7 +451,7 @@ dev/active/ae03bcd0-general-bch/oracle/run.sh
 The runner builds the corpus emitter, runs both oracles over the corpus it
 writes, runs the standards-vector case against the streams
 `test_vectors_path()` resolves, and rewrites
-[`oracle-receipt.md`](oracle-receipt.md) from what the run observed.
+`oracle-receipt.md` from what the run observed.
 Re-running from the revision the receipt names rewrites `corpus.json` and
 `sage.json` byte for byte, and rewrites `gap.json` byte for byte apart from
 `bchcode_attempt_cpu_ms`, `bchcode_attempt_peak_rss_kib` and

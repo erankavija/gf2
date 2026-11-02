@@ -52,7 +52,7 @@ AGENT_FIELDS = (
     "Gfx_Target_Version",
 )
 # Round-2 admissibility, the policy committed in
-# `dev/studies/6c7fcb38/receipts.md` section 13 and made authoritative by the
+# study 6c7fcb38 and made authoritative by the
 # 2026-08-16 amendment in that run's `provenance.txt`: a reading counts when
 # `MeanOccupancyPerCU` lies inside (0, Max_Waves_Per_Cu] and puts no more waves
 # resident than the dispatch's own launch geometry supplies, with a one-percent
@@ -405,7 +405,7 @@ def occupancy_readings(pass_name: str, kernel: Kernel, agent: dict[str, str]):
     """Per-dispatch occupancy readings for one kernel, split by admissibility.
 
     A reading is admissible under the policy committed in
-    `dev/studies/6c7fcb38/receipts.md` section 13: `MeanOccupancyPerCU` inside
+    study 6c7fcb38: `MeanOccupancyPerCU` inside
     (0, Max_Waves_Per_Cu] and resident waves no more than the dispatch's own
     launch geometry supplies, with one-percent rounding slack.
     """

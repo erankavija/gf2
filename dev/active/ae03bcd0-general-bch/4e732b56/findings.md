@@ -66,7 +66,7 @@ executable: `baseline-survey/fetch-build.sh` carries them.
 
 | Candidate | Version | Pin | Disposition |
 |---|---|---|---|
-| bchlib (userspace `lib/bch.c`) | v2.1.3 | commit `8d0656ab8f37e734428635501738d360ad80eebd` | **Measured** — W1 |
+| bchlib (userspace `bch.c`) | v2.1.3 | commit `8d0656ab8f37e734428635501738d360ad80eebd` | **Measured** — W1 |
 | AFF3CT | v4.7.0 | commit `e8a65c5047262d97a15563b9edc961f69b2792cc` | **Measured** — W1, W2 |
 | M4RI | 20260122 | tarball sha256 `7e033ca1…46404` | **Measured** — W2 |
 | IT++ | 4.3.1 | tarball sha256 `50717621…3b877` | **Measured** — W1, full-length rows only |
@@ -75,11 +75,11 @@ executable: `baseline-survey/fetch-build.sh` carries them.
 
 ### 3.1 bchlib v2.1.3 — table-driven remainder over packed bytes
 
-`bchlib/src/bch.c` is a dual-target source: under `__KERNEL__` it includes
+`bch.c` is a dual-target source: under `__KERNEL__` it includes
 `<linux/bch.h>` and compiles as the Linux kernel's generic BCH library
 (`bch.c:68-77`), and without it as a freestanding userspace translation unit.
 Copyright Ivan Djelic / Parrot S.A., GPL-2.0 [Djelic2011]. The survey compiles
-only `src/bch.c`; the Python extension is not built.
+only `bch.c`; the Python extension is not built.
 
 Its encoder is the `table-remainder` family, stated in its own header comment
 at `bch.c:45-46`: "Encoding is performed by processing 32 input bits in

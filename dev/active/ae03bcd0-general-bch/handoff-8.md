@@ -8,7 +8,7 @@
 
 - Epic `ae03bcd0` — state: backlog (container); claimed by agent:jit-execution-lead.
 - Wave in progress: wave 14 (`current_wave` = 14). Every child except `fd9d5416` is done (direct deps 5/6).
-- Open: `fd9d5416` (Committed performance receipts), claimed by agent:worker. Preparation merged: `dev/active/ae03bcd0-general-bch/fd9d5416/receipt-protocol.md` (linked), `render_receipt.py`, `tests/test_render_receipt.py` (6/6 on a synthetic fixture). Gates doc-review, research-review pending.
+- Open: `fd9d5416` (Committed performance receipts), claimed by agent:worker. Preparation merged: `receipt-protocol.md` (linked), `render_receipt.py`, `tests/test_render_receipt.py` (6/6 on a synthetic fixture). Gates doc-review, research-review pending.
 - Open escalations: none.
 - Progress file: `progress.json` here (R-55..R-59, session_notes_s11, surfaced_pitfalls).
 - **Queued measurement:** the bench window (timer `gf2-bench-window-20261002`, 2026-10-01T23:00Z) runs `dbd8787d` (epic 6dc81018, ~3 h) and then `d1b4f85e`'s runner from `.agents/worktrees/agent-d1b4f85e-run` (detached at `eb5575495`), writing `2026-10-02-d1b4f85e-w1w2` in that worktree (~105 min). Host idle until ~04:30Z.
@@ -45,7 +45,7 @@ None.
 
 ## Reference artefacts
 
-- Receipt protocol: `dev/active/ae03bcd0-general-bch/fd9d5416/receipt-protocol.md`; renderer `dev/active/ae03bcd0-general-bch/fd9d5416/render_receipt.py`.
+- Receipt protocol: `receipt-protocol.md`; renderer `dev/active/ae03bcd0-general-bch/fd9d5416/render_receipt.py`.
 - Runner: `dev/active/ae03bcd0-general-bch/d1b4f85e/run.sh`; smoke evidence `dev/active/ae03bcd0-general-bch/d1b4f85e/smoke-run.md`; contract amendments in `dev/active/ae03bcd0-general-bch/4e732b56/workload-selection.md`.
 - Baselines: `88ca7d2f/`, survey `dev/active/ae03bcd0-general-bch/4e732b56/findings.md`.
 - Queue: `dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv`.

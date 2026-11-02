@@ -71,7 +71,7 @@ Do not restructure `resolve_processor_path`, `ProcessorPath`, or
 `evaluate_permanent` beyond adding this arm; they passed review under `032cc754`.
 
 **D4 — REQ-03 is satisfied by invoking the campaign through the wrapper.**
-`dev/scripts/permanent-campaign-runner.sh` currently drives the feasibility
+`permanent-campaign-runner.sh` currently drives the feasibility
 harness and the wave-evidence binaries, **not** the `gf2-sim` campaign binary
 (`permanent_campaign.rs`), so the campaign binary has no
 lock integration today. Add one, invoking the binary through
@@ -172,7 +172,7 @@ property tests keep `prop_*`.
 7. A determinism test: one shard evaluated at two different launch sizes yields
    identical values in identical order. Drive it through the same seam so it runs
    without a device.
-8. A shell test for REQ-03 in `dev/scripts/permanent-campaign-runner.test.sh`
+8. A shell test for REQ-03 in `permanent-campaign-runner.test.sh`
    (follow the existing tests there), asserting the campaign binary is invoked
    through `ccx1-bench-flock.sh --full-host` and never directly.
 
@@ -186,8 +186,8 @@ From the repository root, one at a time:
 4. `cargo nextest run -p gf2-algebra --all-features --release --profile ci`
 5. `cargo build --workspace --all-features`
 6. `cargo doc -p gf2-sim -p gf2-algebra --all-features --no-deps`
-7. `bash dev/scripts/permanent-campaign-runner.test.sh`
-8. `shellcheck dev/scripts/permanent-campaign-runner.sh` (if shellcheck is present)
+7. `bash permanent-campaign-runner.test.sh`
+8. `shellcheck permanent-campaign-runner.sh` (if shellcheck is present)
 
 REQ-05 needs an explicit no-accelerator check — run it and report it:
 

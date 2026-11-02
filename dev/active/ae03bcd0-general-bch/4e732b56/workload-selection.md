@@ -189,7 +189,7 @@ Selection rationale, per-cell numbers, and the rejected candidates are in
 
 | Workload | Role | Library | Version | Commit / checksum | Build configuration |
 |---|---|---|---|---|---|
-| W1 | Primary | bchlib (userspace `lib/bch.c`, Ivan Djelic / Parrot S.A.) | v2.1.3 | `8d0656ab8f37e734428635501738d360ad80eebd` | `gcc -std=c11 -O3 -march=native`, `bch_init(m, t, prim, swap_bits=false)` |
+| W1 | Primary | bchlib (userspace `bch.c`, Ivan Djelic / Parrot S.A.) | v2.1.3 | `8d0656ab8f37e734428635501738d360ad80eebd` | `gcc -std=c11 -O3 -march=native`, `bch_init(m, t, prim, swap_bits=false)` |
 | W1 | Secondary | AFF3CT `Encoder_BCH_inter<int>` | v4.7.0 | `e8a65c5047262d97a15563b9edc961f69b2792cc` | `g++ -std=gnu++11 -O3 -march=native -funroll-loops`, `-DAFF3CT_MULTI_PREC -DAFF3CT_EXT_STRINGS -DAFF3CT_POLAR_BIT_PACKING -DMIPP_ENABLE_BACKTRACE -DSPU_COLORS -DSPU_STACKTRACE -DNDEBUG` |
 | W2 | Primary | M4RI `mzd_echelonize_m4ri` over the repository-column-order generator matrix | 20260122 | tarball sha256 `7e033ca1fd36be8861e2f67d9d124c398fc0d830209bb0226462485876346404` | `./configure --disable-static`, `CFLAGS="-O3 -march=native -fPIC"` |
 | W2 | Secondary | AFF3CT `Encoder_BCH<int>`, basis-vector materialization | v4.7.0 | `e8a65c5047262d97a15563b9edc961f69b2792cc` | as above |

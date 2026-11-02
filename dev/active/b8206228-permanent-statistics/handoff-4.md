@@ -26,7 +26,7 @@
 ## What to do next
 
 - [ ] Morning checklist per `handoff-2.md`: `systemctl --user status gf2-permanent-campaign.service`, read `target/permanent-campaign/systemd-measure.log` and the three `*-run-summary.txt`, then commit study outputs per issue.
-- [ ] In the same commits that land the new evidence: supersede run `20260813T230032Z-1321576` raw evidence AND `dev/studies/047b62ed/receipts.md` v1 + `analysis.py` (`6eb364e9`), re-pointing links (standing rule; the v1 receipts structure and `analysis.py` are a sound template for the rerun).
+- [ ] In the same commits that land the new evidence: supersede run `20260813T230032Z-1321576` raw evidence AND `receipts.md` v1 + `analysis.py` (`6eb364e9`), re-pointing links (standing rule; the v1 receipts structure and `analysis.py` are a sound template for the rerun).
 - [ ] Drive the campaigns serially F_3 → F_5 → F_7 against the amended criteria (REQ-01 corpus clause: identical sampler on preregistered disjoint streams for timing; literally identical corpus for equivalence).
 - [ ] Wave 1 completes with the three campaigns; `41c3d91d` (wave 2) stays undelivered until then per wave discipline.
 
@@ -45,5 +45,5 @@ None. (Session-6 decisions were routine implementation choices within the amende
 ## Reference artefacts
 
 - e31b1918 closure: commits `de5f7414`, `0c0f525f`, `089d268e`, `7174718d`; validation CSV `e31b1918-equiv-host-full.csv` here
-- Campaign runner: `dev/scripts/permanent-campaign-runner.sh` (+ `.test.sh`, 10 tests); smoke run 20260814T171042Z-1587314 under each study's `smoke/`
-- Overnight evidence to supersede tomorrow: `dev/studies/{047b62ed,91605d4d,6c7fcb38}/permanent-campaign-20260813T230032Z-1321576*` and `dev/studies/047b62ed/receipts.md` + `analysis.py`
+- Campaign runner: `permanent-campaign-runner.sh` (+ `.test.sh`, 10 tests); smoke run 20260814T171042Z-1587314 under each study's `smoke/`
+- Overnight evidence to supersede tomorrow: `dev/studies/{047b62ed,91605d4d,6c7fcb38}/permanent-campaign-20260813T230032Z-1321576*` and `receipts.md` + `analysis.py`

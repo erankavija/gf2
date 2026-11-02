@@ -5,7 +5,7 @@
 Scratch checkout: `/tmp/gf2-41c3d91d-red-8jCazb`, detached at
 `8a2f8746~1` (`009d5a8099d6c59da47ccc87b810b0e6c1b1cc5c`). The only source
 addition was the `schedule.rs` test module, with a test-only module declaration
-in `permanent_campaign/mod.rs` so Cargo could compile it. No scheduling
+in `mod.rs` so Cargo could compile it. No scheduling
 implementation was present.
 
 Command, verbatim:

@@ -112,7 +112,7 @@ defect as F1. Fix all of them, and add rows for any the review did not cite.
 5. `cargo build -p gf2-sim` (default features, no hip) and
    `cargo nextest run -p gf2-sim --release --profile ci`
 6. `cargo doc -p gf2-sim -p gf2-algebra --all-features --no-deps`
-7. `bash dev/scripts/permanent-campaign-runner.test.sh`
+7. `bash permanent-campaign-runner.test.sh`
 
 ### Report back
 

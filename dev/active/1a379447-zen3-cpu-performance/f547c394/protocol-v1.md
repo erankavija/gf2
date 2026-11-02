@@ -87,7 +87,7 @@ host affinity. Git revision strings remain informational.
 The addendum pin names immutable receipt-local bytes. Resolution evidence names a
 repository-relative pilot `receipt.json` and its SHA-256. Before opening the
 campaign log, the runner captures that receipt at
-`inputs/resolution-evidence/receipt.json`; the acceptance tool verifies the
+`receipt.json`; the acceptance tool verifies the
 snapshot's digest and `pilot` label and rejects missing, self-referential or
 non-pilot evidence (P-03). Thus the pilot evidence and all settings derived
 from it are frozen before confirmation begins. A run with a timing override

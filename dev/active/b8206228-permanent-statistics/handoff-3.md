@@ -26,10 +26,10 @@
 ## What to do next
 
 - [ ] Resolve the equivalence overnight-budget defect on `e31b1918` before anything else: the `EQUIVALENCE_SIZES` counts (n=24: 32, n=28: 4) were derived from q=3 `cpu_scalar` probe costs, but slow backends (`cpu_ryser_generic`, F5/F7 scalar) dominate — the q=5,n=28 cell alone exceeded 12 minutes. Either bound slow backends' equivalence orders with honest unsupported/budget reasons, or shrink counts, then measure the true full-step duration on the host. This is REQ-04 feedback ("chosen against the overnight budget"), fix before gates.
-- [ ] Run `dev/scripts/permanent-campaign-runner.sh prepare` then `smoke` on the committed revision (REQ-07). Smoke outputs land under each campaign study's `smoke/` dir and supersede the 2ddf2f4b-era smoke evidence linked on closed `2ddf2f4b` — `git rm` superseded evidence and re-point `jit doc` links in the same commit (standing rule).
+- [ ] Run `permanent-campaign-runner.sh prepare` then `smoke` on the committed revision (REQ-07). Smoke outputs land under each campaign study's `smoke/` dir and supersede the 2ddf2f4b-era smoke evidence linked on closed `2ddf2f4b` — `git rm` superseded evidence and re-point `jit doc` links in the same commit (standing rule).
 - [ ] Evaluate gates on `e31b1918` (`code-review`, `permanent-sampling-feas-ci`, `permanent-wave-gpu-ci`), confirm each with `jit gate status` (false-pass trap), full lead review per `lead-review-protocol.md`, close.
 - [ ] Re-arm the overnight runner (one-shot `systemd-run --user --on-calendar='<next day> 02:00'` per the runner header) on a pristine tree; verify timer state with `systemctl --user list-timers` from a login shell (no DBUS in the harness shell).
-- [ ] Morning after: checklist per `handoff-2.md`; commit evidence per issue; supersede run `20260813T230032Z-1321576` raw evidence AND `dev/studies/047b62ed/receipts.md` v1 + `analysis.py` in the same commits that land the new evidence/receipts, re-pointing any links.
+- [ ] Morning after: checklist per `handoff-2.md`; commit evidence per issue; supersede run `20260813T230032Z-1321576` raw evidence AND `receipts.md` v1 + `analysis.py` in the same commits that land the new evidence/receipts, re-pointing any links.
 - [ ] Then drive the campaigns serially F_3 → F_5 → F_7 against the amended criteria; the F_3 receipts v1 structure and its `analysis.py` are a sound template.
 
 ## Traps — do not repeat these
@@ -49,6 +49,6 @@ None. (Owner directives this session: wire-and-rerun with criteria amendments as
 
 - Epic: `jit issue show b8206228`; wave plan + escalation log: `progress.json` here
 - e31b1918 implementation: commit `3933338a`; partial device validation: `e31b1918-equiv-host-check-partial.csv` here (74 identical, 0 mismatches)
-- F_3 receipts v1 (template for the rerun): `dev/studies/047b62ed/receipts.md` + `analysis.py` (`6eb364e9`) — superseded once the rerun lands
-- Campaign runner: `dev/scripts/permanent-campaign-runner.sh` (+ `.test.sh`, now 10 tests); harness: `dev/research/permanent-sampling-feas/`; prototypes: `dev/research/permanent_wave_gpu/`
+- F_3 receipts v1 (template for the rerun): `receipts.md` + `analysis.py` (`6eb364e9`) — superseded once the rerun lands
+- Campaign runner: `permanent-campaign-runner.sh` (+ `.test.sh`, now 10 tests); harness: `dev/research/permanent-sampling-feas/`; prototypes: `dev/research/permanent_wave_gpu/`
 - Overnight evidence (to be superseded by the rerun): `dev/studies/{047b62ed,91605d4d,6c7fcb38}/permanent-campaign-20260813T230032Z-1321576*`

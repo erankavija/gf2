@@ -12,10 +12,10 @@ artifacts disagree, §10 records the disagreement rather than choosing silently.
 
 | Evidence | Role |
 | --- | --- |
-| [`../047b62ed/receipts.md`](../047b62ed/receipts.md) | $\mathbb{F}_3$ preregistered receipt campaign |
-| [`../91605d4d/receipts.md`](../91605d4d/receipts.md) | $\mathbb{F}_5$ preregistered receipt campaign |
-| [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) | $\mathbb{F}_7$ preregistered receipt campaign, with its paired profiled evidence run |
-| [`../a9284086/receipt.md`](../a9284086/receipt.md) | Device-wide runtime qualification: wave utilization, occupancy, launch-duration envelopes |
+| `../047b62ed/receipts.md` | $\mathbb{F}_3$ preregistered receipt campaign |
+| `../91605d4d/receipts.md` | $\mathbb{F}_5$ preregistered receipt campaign |
+| `../6c7fcb38/receipts.md` | $\mathbb{F}_7$ preregistered receipt campaign, with its paired profiled evidence run |
+| `../a9284086/receipt.md` | Device-wide runtime qualification: wave utilization, occupancy, launch-duration envelopes |
 | [`../b488f02c/feasibility-study.md`](../b488f02c/feasibility-study.md) | Prior feasibility study and its gap table |
 | [`../../research/permanent_wave_gpu/`](../../research/permanent_wave_gpu/README.md) | The executable prototype: shared mapping header, three per-field equivalence units |
 | [`../../active/b8206228-permanent-statistics/0de41c82/investigation.md`](../../active/b8206228-permanent-statistics/0de41c82/investigation.md), [`plan.md`](../../active/b8206228-permanent-statistics/0de41c82/plan.md) | The study's own survey of this ground |
@@ -24,9 +24,9 @@ artifacts disagree, §10 records the disagreement rather than choosing silently.
 
 All three field campaigns and the runtime qualification measure one host and one
 architecture: AMD Ryzen 9 5900X, AMD Radeon RX 6950 XT, `gfx1030`, ROCm 7.2.4
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §1). Nothing here claims
+(`../047b62ed/receipts.md` §1). Nothing here claims
 anything about another architecture
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §12.8).
+(`../a9284086/receipt.md` §12.8).
 
 ## 1. The decision rule, and what each verdict has to clear
 
@@ -44,7 +44,7 @@ Four conditions, and this document takes each literally.
 **Exact equivalence** is the campaigns' shared gate: one global invocation run as
 the first step of the pipeline, before any timing cell, comparing every executing
 path against the field's CPU oracle on one literally identical matrix corpus per
-$(q, n)$ ([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §3).
+$(q, n)$ (`../047b62ed/receipts.md` §3).
 
 **Reproducible receipts** are the campaigns' own provenance, and what those
 manifests pin is stated exactly. They record the measurement revision, the Rust
@@ -52,7 +52,7 @@ toolchain and device compiler, the host inventory, the harness binary SHA-256
 re-verified three times per campaign, the exact commands, and the campaign seed
 root with each cell's reserved stream-index block, under the repository's
 canonical benchmark mutex, with `analysis.py` regenerating every table from
-committed artifacts ([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §1).
+committed artifacts (`../047b62ed/receipts.md` §1).
 They do not record the RNG algorithm and version. That omission is closed by a
 committed record rather than left to a reader's reconstruction:
 [`rng-provenance-addendum.md`](../../active/b8206228-permanent-statistics/studies/0dffa759/rng-provenance-addendum.md) supplements all three
@@ -95,11 +95,11 @@ $\text{sub\_batch} \cdot 2^n$ of $4.0 \times 10^9$ at $q = 3$,
 $1.3 \times 10^9$ at $q = 5$, and $3.5 \times 10^8$ at $q = 7$
 (`r4_gpu_uniformity_resample.md`:225-227),
 and it is the figure the field receipts report their operating points against
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §16 REQ-19;
-[`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12). Its standing is stated
+(`../6c7fcb38/receipts.md` §15, §16 REQ-19;
+`../91605d4d/receipts.md` §12). Its standing is stated
 in place rather than assumed away: the boundary derives from the one recorded
 device fault, whose watchdog attribution was retracted
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.1), and the archived
+(`../a9284086/receipt.md` §9.1), and the archived
 document carries a dated supersession note over it — "*The budgets below are
 therefore not a necessary condition for safe operation of these kernels on this
 host, and the boundary below is not a measured device property*"
@@ -111,7 +111,7 @@ and nothing more, and this document uses it on exactly those terms.
 envelope.* It is "*the largest per-launch work and the longest per-launch span at
 which a launch of a retained path completed without device fault, on this host,
 at the pinned binary*", each figure carried by a named cell with its outcome and
-its launch count ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2):
+its launch count (`../a9284086/receipt.md` §9.2):
 per-launch work to $2.7488 \times 10^{11}$ and per-launch span to 53.077521 s at
 $q = 3$; to $1.0737 \times 10^{9}$ and 115.452922 s at $q = 5$; and to
 $1.0737 \times 10^{9}$ and 21.722805 s at $q = 7$ (§9.4). Its scope is a
@@ -133,7 +133,7 @@ composite-throughput comparison of each campaign's §4.2, with the best CPU path
 identified per order from that run's own data rather than assumed. "Composite"
 charges generation, evaluation, reduction, and store — an operator-only or
 kernel-only win does not count
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.2, §4.3).
+(`../047b62ed/receipts.md` §4.2, §4.3).
 
 The declared scientifically relevant operating point per field is fixed by the
 campaign protocol, at the processor-feasible frontier of each field: $n = 28$
@@ -156,7 +156,7 @@ owns only the mapping (`wave_ryser_mapping.h:1-6`).
 One block owns one matrix. The block's active lane count is
 `active_lanes_for_order(n)`, which is $2^n$ below $n = 5$ and 32 at and above it
 (`wave_ryser_mapping.h:29-31`), so it is 32 at every order these campaigns
-measure ([`../a9284086/receipt.md`](../a9284086/receipt.md) §3).
+measure (`../a9284086/receipt.md` §3).
 
 **The per-lane Gray interval.** `balanced_interval(total, lane, lanes)` gives
 lane $i$ the contiguous half-open range starting at
@@ -165,10 +165,10 @@ plus one more when $i < T \bmod L$ (`wave_ryser_mapping.h:33-40`). Every walk
 kernel calls it with $T = 2^n$ and $L =$ `blockDim.x`:
 `wave_gf3_equivalence.hip:196-198`, `f5_wave_equivalence.hip:243`, `:312`,
 `wave_gf7_equivalence.hip:185`, `:298`. The intervals are contiguous, disjoint,
-and cover $[0, 2^n)$ by construction. At every measured order
+and cover $0, 2^n)$ by construction. At every measured order
 $2^n \bmod 32 = 0$, so the remainder term is zero and all 32 lanes own exactly
 $2^{n-5}$ indices — 128 at $n = 12$ up to 8 388 608 at $n = 28$, with no
-tail-interval idleness ([`../a9284086/receipt.md`](../a9284086/receipt.md) §3,
+tail-interval idleness ([`../a9284086/receipt.md` §3,
 where `analysis.py` section 3 asserts the divisibility).
 
 **The per-lane accumulator initialization.** A lane does not walk from index 0.
@@ -215,12 +215,12 @@ The one retained device path whose kernel is not a Gray walk is the
 $\mathbb{F}_7$ bit-plane transpose `prepare_three_plane_columns`
 (`wave_gf7_equivalence.hip:134-163`), which stages bytes into planes before the
 walk and occupies $n$ of 32 lanes
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §3).
+(`../a9284086/receipt.md` §3).
 
 This mapping is what the wave-utilization figures rest on: the lane-owns-interval
 mapping makes 32 of 32 lanes active, against 3.1250 % for the shipped
 one-thread-per-matrix mapping, each exact by construction and cited to its
-launch site ([`../a9284086/receipt.md`](../a9284086/receipt.md) §3).
+launch site (`../a9284086/receipt.md` §3).
 
 ## 3. $\mathbb{F}_3$ — no-go
 
@@ -232,28 +232,28 @@ $M = 1024$ — is censored, leaving its ordering against the CPU open (§3.1,
 any kind at that order is the shipped `gpu_hip` at $M = 256$, 8.5448 matrices/s,
 which is **0.4390×** `cpu_rayon_intra_matrix` at 19.4629 matrices/s; the best
 prototype cell is `fold-gf3` at $M = 3$, 3.9630 matrices/s, **0.2036×** the same
-baseline ([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.2).
+baseline (`../047b62ed/receipts.md` §4.2).
 
 The equivalence and reproducibility conditions are met — all 48 $q = 3$
 comparison cells report `mismatches = 0` and `status = identical`, both
 prototypes included, at every order the grid times
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §3) — and so is the
+(`../047b62ed/receipts.md` §3) — and so is the
 safe-launch-duration condition at the declared operating point, discharged on
 the point's own receipted clean completions: no $q = 3$ cell failed with a device
 fault, the $M = 256$ cell completed five launches at 29.954639 s of device kernel
 time each, and the $M = 1024$ cell completed three at 53.02–53.20 s
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.3). Against the
+(`../a9284086/receipt.md` §9.2, §9.3). Against the
 reference limits: both spans sit below the archived calibration's ≈190–200 s
 figure, while their per-launch work sits above its $q = 3$ budget — at
 $6.8719 \times 10^{10}$ and $2.7488 \times 10^{11}$ units of $M \cdot 2^n$ they
 run 17.18× and 68.72× the
 archived $4.0 \times 10^9$, and complete without fault, which is the
 qualification's own record that the budget is not a necessary condition for this
-kernel on this host ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2,
+kernel on this host (`../a9284086/receipt.md` §9.2,
 §9.3, §10.2). Those same two cells are where the $q = 3$ observed
 clean-completion envelope of $2.7488 \times 10^{11}$ work units and 53.077521 s
 per launch is read
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2). The condition
+(`../a9284086/receipt.md` §9.2). The condition
 that fails is the end-to-end crossover, at the order the campaign protocol
 declares.
 
@@ -266,7 +266,7 @@ nothing between, so a crossing is located no more finely than the measured pair
 whose ratios straddle 1, and no crossing is placed anywhere the measured pairs do
 not straddle it. Composite throughput ratios against the
 best applicable in-tree CPU path at each order
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.2):
+(`../047b62ed/receipts.md` §4.2):
 
 | $n$ | best in-tree CPU path | rate | best prototype / CPU | best shipped GPU / CPU |
 | ---: | --- | ---: | ---: | ---: |
@@ -289,13 +289,13 @@ all, and the campaign says so.** The $n = 28$, $M = 1024$ cell — which is one 
 the protocol's own four premeasurement configurations — is censored: the 120 s
 cap ended timing after three repetitions of 53.02–53.20 s, before the protocol's
 five-repetition and five-second minimums, and the cell carries `NaN` for both
-throughput columns ([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §5).
+throughput columns (`../047b62ed/receipts.md` §5).
 Its projection is 16.720265 matrices/s from $n = 24$; the same file's own
 measured $24 \rightarrow 28$ bias on the $M = 256$ `gpu_hip` chain is $-14.0\%$,
 which carried across puts the cell near 19.4 against the CPU's 19.4629. That is
 an extrapolation from a neighbouring batch size, not a measurement, and the
 campaign asserts no ordering at $n = 28$ between those two
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §11, §13.5).
+(`../047b62ed/receipts.md` §11, §13.5).
 
 So the no-go rests on what is measured — every measured $n = 28$ device cell
 loses to the CPU — and the one cell that could overturn it is censored and is
@@ -309,18 +309,18 @@ leads every path in the campaign at $n \in \{16, 20, 24\}$, and its best
 operating point is $n = 20$, $M = 448$ at 69 485.2981 matrices/s against
 `cpu_rayon_intra_matrix` at 2 966.4439 — a ratio of 23.4238× at 4.6442 µs of
 device launch overhead per launch
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.4).
+(`../047b62ed/receipts.md` §4.4).
 
 That headline is confounded and the campaign quantifies the confound rather than
 smoothing it: the cell runs 448 matrices and 14 336 active lanes against the
 shipped path's 1 024, no prototype cell in the campaign runs at the control's
 batch sizes, and nothing in the run separates the fold circuit from the batch
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.5, §13.1, §13.2). The
+(`../047b62ed/receipts.md` §4.5, §13.1, §13.2). The
 comparison the campaign does support at matched geometry is the resource one:
 control at 19 `VGPRs` / 27 `TotalSGPRs` / 1 040 scratch bytes per lane against
 the two prototype folds at 22 and 25 `VGPRs` / 22 `TotalSGPRs` / zero scratch,
 every one of them at the architectural ceiling of 16 waves/SIMD
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §7, §8).
+(`../047b62ed/receipts.md` §7, §8).
 
 ### 3.3 Why the $\mathbb{F}_3$ Boolean representation is valid for a permanent over $\mathbb{F}_3$ (REQ-04)
 
@@ -418,7 +418,7 @@ observations are functions of $q = 3$ specifically and both hold. The
 horizontal-product branch frequencies match the exact marginal $1 - (2/3)^n$ and
 $(2/3)^n$ at all five orders, inside two-sided Wilson 95 % intervals on 4 096
 samples and again on the 7.3–9.1 million timed operations of the same file
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §9): the zero-fast
+(`../047b62ed/receipts.md` §9): the zero-fast
 expectation is 0.992292653371 at $n = 12$ against an observed 0.992187500, and
 0.999988266036 at $n = 28$.
 
@@ -440,7 +440,7 @@ Second, the fraction of sampled matrices whose permanent is zero is 0.333714 on
 6 676 136 sampled matrices — 2 227 919 of them zero — with Wilson 95 % interval
 [0.333356, 0.334072] at $n = 12$, and it stays near $1/3$ at every order, on
 1 531 565, 456 236, 14 353, and 2 771 matrices at $n = 16$ through 28
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §9.1) — the
+(`../047b62ed/receipts.md` §9.1) — the
 $\mathbb{F}_3$ value. Those counts are by-products of the timing protocol with
 no preregistered $N$: each cell contributes whatever its repetition policy
 required, pooled across cells at one order, which the same receipt states with
@@ -450,7 +450,7 @@ them.
 compared per matrix against `permanent_bipedal3_singleword`, on 512 matrices at
 $n \in \{8, 12, 16, 20\}$, 32 at $n = 24$, and 4 at $n = 28$, with zero
 mismatches and identical zero counts throughout
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §3). That oracle is an
+(`../047b62ed/receipts.md` §3). That oracle is an
 $\mathbb{F}_3$ kernel whose element type is `Fp<3>` and which runs the
 repository's shared field-law conformance suite
 (`@/inv/finite-field-laws`). The equivalence gate would not close if the device
@@ -466,10 +466,10 @@ orders carry no measured ratio for it and its ordering there is unresolved
 (§4.1, §10, F.3). At the declared operating point $n = 24$, `f5-three-plane` at
 $M = 17$ measures 211.9399 matrices/s against `cpu_rayon_batch_scalar` at
 $M = 96$ measuring 10.7539 — a factor of **19.7082×**
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12). The equivalence gate
+(`../91605d4d/receipts.md` §12). The equivalence gate
 closes on all 30 $q = 5$ comparison cells with `mismatches = 0`, both prototypes
 included, at every order the grid times and at $n = 8$ below them
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §3).
+(`../91605d4d/receipts.md` §3).
 
 **The safe-launch-duration condition is discharged on this operating point's own
 receipted clean completions.** The point's own cell is the evidence:
@@ -477,13 +477,13 @@ receipted clean completions.** The point's own cell is the evidence:
 on $2.852 \times 10^{8}$ units of $M \cdot 2^n$ over 63 launches, and no cell of
 that run failed with a device fault, every step reporting
 `status=completed exit=0`
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12). The two reference
+(`../91605d4d/receipts.md` §12). The two reference
 limits of §1 are reported beside it and neither certifies it. Against the
 archived calibration, superseded by its own source's note, the cell is 0.0004 of
 the ≈190–200 s figure and 0.2194 of the $q = 5$ work budget, both read from that
 receipt (§12). Against the runtime qualification's $q = 5$ observed
 clean-completion envelope — 115.452922 s per launch and $1.0737 \times 10^{9}$
-work units ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4) — the
+work units (`../a9284086/receipt.md` §9.4) — the
 point's figures are 0.00069 and 0.266, computed in §9 from those two sources;
 that envelope is a per-field extremum over retained paths whose $q = 5$ span
 figure belongs to `f5_byte_control_kernel` and whose work figure belongs to
@@ -497,7 +497,7 @@ of adjacent orders brackets a crossing**: `f5-three-plane` leads the best
 applicable in-tree CPU path at all five, from 3.1191× to 37.5365×. Where the
 ratio crosses 1 below $n = 12$, or whether it does, is outside the grid and this
 document locates no crossing for it
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §4.2):
+(`../91605d4d/receipts.md` §4.2):
 
 | $n$ | best in-tree CPU path | rate | `f5-three-plane` / CPU | shipped `gpu_hip` / CPU |
 | ---: | --- | ---: | ---: | ---: |
@@ -511,7 +511,7 @@ document locates no crossing for it
 crossing either.** Its ratio is 0.3412, 0.3208, and 0.3236 at the three orders it
 is measured, and all four of its cells at $n \in \{24, 28\}$ are censored before
 running because the projected repetition exceeds the 120 s cap
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §4.4, §5), so the two
+(`../91605d4d/receipts.md` §4.4, §5), so the two
 largest orders carry no measured ratio for it at all.
 
 Three qualifications travel with the prototype column, all from the campaign's
@@ -519,15 +519,15 @@ own record. The $n = 28$ denominator is `cpu_scalar` rather than batch rayon,
 because the batch-rayon cell at that order is censored; the ratio against that
 cell's projection would be 2.7386× if the projection held, and no ordering at
 $n = 28$ is asserted from either number
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §14.8). Every prototype
+(`../91605d4d/receipts.md` §14.8). Every prototype
 cell sizes itself from a one-matrix probe, giving
 $M \in \{1, 2, 6, 17, 41, 44, 45, 102\}$ against the control's 256 or 1024, so
 no ratio separates the mapping effect from a device-parallelism effect spanning
-a factor of 102 ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §4.5,
+a factor of 102 (`../91605d4d/receipts.md` §4.5,
 §14.2). And the packed CPU baseline is uniformly slower in this run than in the
 prior one, on all nine comparable pairs, mean $-6.34\%$ — so at $n = 20$ the
 ratio is 37.5365 against this run's baseline and would be 34.7008 against the
-prior run's ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §11). The
+prior run's (`../91605d4d/receipts.md` §11). The
 verdict survives all three: the smallest prototype ratio anywhere in the field
 is 3.1191×.
 
@@ -535,7 +535,7 @@ is 3.1191×.
 
 Both planned $\mathbb{F}_5$ representations execute on the device, are
 equivalence-identical, and are measured before either is selected
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §2, §3).
+(`../91605d4d/receipts.md` §2, §3).
 
 | | `f5-byte-control` | `f5-three-plane` |
 | --- | --- | --- |
@@ -546,16 +546,16 @@ equivalence-identical, and are measured before either is selected
 | occupancy waves/SIMD | 12 | 12 |
 | composite matrices/s, $n = 12 \ldots 28$ | 42 476.2230, 5 252.2160, 17.2007, 0.1560, censored | 207 146.4078, 66 125.0000, 7 415.9777, 211.9399, 1.5777 |
 
-Resource figures from [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §7,
+Resource figures from `../91605d4d/receipts.md` §7,
 throughputs from §4.2 and §10, shared-memory formulas from §4.5.
 
 The three-plane path leads the byte control at every order both are measured, by
 4.8768, 12.5899, 431.1439, and 1358.5891 at $n = 12, 16, 20, 24$
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §4.2). The two large
+(`../91605d4d/receipts.md` §4.2). The two large
 figures are batch-confounded — at $n = 20$ the byte control's batch collapses
 from 102 to 6 matrices because its probe cost rises 19.9× and the calibration
 under-sizes it, dropping it from 3 264 active lanes to 192
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §4.5).
+(`../91605d4d/receipts.md` §4.5).
 
 **The one comparison of the two circuits at matched geometry is the
 horizontal-product isolate**, where every row launches
@@ -564,11 +564,11 @@ horizontal-product isolate**, where every row launches
 the nonzero-slow branch — the complete reduction — the three-plane circuit is
 cheaper at every order both are timed, and its advantage grows with $n$: 2.0530×
 at $n = 16$, 3.3964× at $n = 20$, 3.7922× at $n = 24$, and 5.0907× at $n = 28$
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §6.2). Its zero-fast
+(`../91605d4d/receipts.md` §6.2). Its zero-fast
 branch is censored at every order because the early exit runs faster than its
 own same-geometry barrier baseline, and both its branches are censored at
 $n = 12$; each censoring carries its reason verbatim
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §6.2).
+(`../91605d4d/receipts.md` §6.2).
 
 **Selection: `f5-three-plane`.** It leads on end-to-end throughput at every
 order, it is the only $\mathbb{F}_5$ path measured at all five orders, it costs
@@ -582,11 +582,11 @@ measurements and its one censored cell rather than removed (§10).
 **Verdict: go**, for `f7-three-plane-permanent` under the lane-owns-interval
 mapping. At the declared operating point $n = 20$ it measures 8 397.8509
 matrices/s at $M = 41$ against `cpu_ryser_generic` at 15.3900 — a factor of
-**545.6693×** ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15). The
+**545.6693×** (`../6c7fcb38/receipts.md` §15). The
 equivalence gate closes on all 24 $q = 7$ comparison cells with
 `mismatches = 0`, both executing prototypes included, at every order the grid
 times and at $n = 8$ below them
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §3).
+(`../6c7fcb38/receipts.md` §3).
 
 **The safe-launch-duration condition is discharged on this operating point's own
 receipted clean completions.** The point's own cell is the evidence:
@@ -594,13 +594,13 @@ receipted clean completions.** The point's own cell is the evidence:
 per launch on $4.299 \times 10^{7}$ units of $M \cdot 2^n$ over 1 023 launches,
 and no cell of that run failed with a device fault, every step reporting
 `status=completed exit=0`
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15). The two reference
+(`../6c7fcb38/receipts.md` §15). The two reference
 limits of §1 are reported beside it and neither certifies it. Against the
 archived calibration, superseded by its own source's note, the cell is 0.00002 of
 the ≈190–200 s figure and 0.1228 of the $q = 7$ work budget, both read from that
 receipt (§15, §16 REQ-19). Against the runtime qualification's $q = 7$ observed
 clean-completion envelope — 21.722805 s per launch and $1.0737 \times 10^{9}$
-work units ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4) — the
+work units (`../a9284086/receipt.md` §9.4) — the
 point's figures are 0.000215 and 0.040, computed in §9 from those two sources;
 that envelope is a per-field extremum over retained paths whose $q = 7$ span
 figure belongs to `wave_gf7_lookup_table_kernel<2>` and whose work figure belongs
@@ -615,7 +615,7 @@ pair of adjacent orders brackets a crossing for either**; where the ratio crosse
 locates no crossing for it. **The shipped path is the one $\mathbb{F}_7$ column
 that does bracket a crossing**, upward between the measured $n = 16$ and
 $n = 20$, which the campaign reports as beating the CPU "*at exactly one order*"
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §4.2):
+(`../6c7fcb38/receipts.md` §4.2):
 
 | $n$ | best in-tree CPU path | rate | best prototype / CPU | shipped `gpu_hip` / CPU |
 | ---: | --- | ---: | ---: | ---: |
@@ -631,11 +631,11 @@ states the mechanism outright: nothing about the
 kernel changes at that step; what changes is that batch rayon leaves the
 comparison, because `permanent_bipedal7` asserts
 $n \le \texttt{Packed7::LANES} = 16$ and no rayon permanent path exists for this
-field at all ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §2, §4.2).
+field at all (`../6c7fcb38/receipts.md` §2, §4.2).
 The same change of denominator inflates the prototype column at $n \ge 20$: the
 545.6693× is measured against a single-threaded generic Ryser driver, where the
 81.4163× at $n = 16$ is measured against 24 rayon workers on a packed kernel
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §4.2, §17.7). The
+(`../6c7fcb38/receipts.md` §4.2, §17.7). The
 *ordering* is robust to that — the prototype leads at $n = 12$ and $n = 16$ too,
 where a packed parallel CPU path exists — but the *magnitude* at $n \ge 20$ is a
 statement about the missing CPU path as much as about the device. That absence
@@ -658,24 +658,24 @@ paths and are measured; the third is recorded with its falsification (§10, F.1)
 | occupancy waves/SIMD | 16 on both instantiations | 16 on both kernels |
 | composite matrices/s, $n = 12 \ldots 28$ | 630 625.0668, 145 932.9173, 408.7068, 1.5792, 0.0460 | 285 266.5608, 301 514.5246, 8 397.8509, 265.5329, 3.0407 |
 
-Resource figures from [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §7,
+Resource figures from `../6c7fcb38/receipts.md` §7,
 throughputs from §4.2 and §10, shared-memory formulas from §4.5 and §7.1.
 
 The bit-sliced path leads the lookup control at four of five orders — 2.0661,
 20.5474, 168.1439, and 66.1022 at $n = 16, 20, 24, 28$ — and loses the fifth,
-0.4524 at $n = 12$ ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §4.2).
+0.4524 at $n = 12$ (`../6c7fcb38/receipts.md` §4.2).
 The campaign records the $n = 12$ reversal as a batch artefact as much as a
 circuit result: the lookup control runs 5 833 matrices and 186 656 active lanes
 there against the bit-sliced path's 46 and 1 472, and nothing in the run
 isolates how much of the reversal is the circuit
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §4.5, §17.6). The three
+(`../6c7fcb38/receipts.md` §4.5, §17.6). The three
 largest of the four wins carry the same confound in the other direction
 (§4.5, §17.5).
 
 **The closest the campaign comes to matched geometry is $n = 16$**, where the
 bit-sliced cell runs $M = 1109$ against the control mapping's 1 024 — 8.3 %
 apart — and measures 271.7700× that mapping's rate
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §10). Against the lookup
+(`../6c7fcb38/receipts.md` §10). Against the lookup
 control at the same order the ratio is 2.0661×, at batches 1 109 against 695.
 
 **Bit-plane preparation is measured and is small.** The host-side portion is
@@ -684,13 +684,13 @@ byte-to-plane transpose runs on the device as its own kernel — and the
 device-side portion, resolved by the paired profiled run, is 8.4207 %, 0.7347 %,
 0.0571 %, and 0.0045 % of the two-kernel pair at $n = 12, 16, 20, 24$. At the
 declared operating point staging costs 0.0571 % of the device time the path
-spends per launch ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §12).
+spends per launch (`../6c7fcb38/receipts.md` §12).
 
 **The bit-sliced path operates exactly above the sixteen-lane packed bound.** It
 is `measured` and `identical` with zero mismatches at $n = 16$, 20, and 24, on
 512, 512, and 32 matrices, against an oracle that is the independent generic
 Ryser driver at the two orders where the packed CPU kernel refuses to run
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §14).
+(`../6c7fcb38/receipts.md` §14).
 
 **Selection: `f7-three-plane-permanent`.** It leads end to end at four of five
 orders including the declared operating point, it is measured at all five, it
@@ -731,7 +731,7 @@ receipts: the host-side residual around each dispatch is 70.0 % of `eval_s` at
 $n = 12$, $M = 256$ on the shipped $\mathbb{F}_3$ path, and the campaign
 attributes it to the dispatcher's per-call allocation, serialisation, and free
 rather than to transfer or launch
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.3).
+(`../047b62ed/receipts.md` §4.3).
 
 ### 6.1 Input layout
 
@@ -742,7 +742,7 @@ the field representation happens on the device, not the host: for
 $\mathbb{F}_7$ the byte-to-plane transpose is its own kernel
 (`wave_gf7_equivalence.hip:134-163`), which is why the host-side preparation
 cost is zero by construction and not merely unmeasured
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §12). Keeping the host
+(`../6c7fcb38/receipts.md` §12). Keeping the host
 layout at canonical bytes preserves that property and keeps the public
 `Packed5Matrix` and `Packed7Matrix` surfaces
 (`crates/gf2-algebra/src/packed/packed5.rs:1420`,
@@ -755,7 +755,7 @@ orders. The largest request over every retained path and measured order is
 784 B, and 32 such blocks — the device's own per-CU wave-slot cap — request
 25 088 B against 65 536 B of LDS per compute unit, so shared memory does not
 limit the occupancy of any retained path at any measured order
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §4).
+(`../a9284086/receipt.md` §4).
 
 ### 6.2 Persistent device buffers and streams
 
@@ -777,7 +777,7 @@ with `new(device_id, n)` (`:266`) and acquired per launch with `acquire` or
 own drain points. This replaces the dispatcher's current internal device-wide
 `hipDeviceSynchronize` per call (`permanent/mod.rs:2300-2304`), which the
 campaigns record as a per-call serialisation the shipped path pays at every
-order ([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.3).
+order (`../047b62ed/receipts.md` §4.3).
 
 Launch geometry is `LaunchDims`
 (`crates/gf2-kernels-hip/src/host/launch.rs:43`). The lane-owns-interval mapping
@@ -791,7 +791,7 @@ Device-side timing uses `HipEvent` and `HipEventSpan`
 (`crates/gf2-kernels-hip/src/host/events.rs:22`, `:148`), which is the same
 device-event instrumentation the campaigns' `kernel_device_s`, `h2d_device_s`,
 `d2h_device_s`, and `device_submission_to_kernel_s` columns rest on
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.3).
+(`../047b62ed/receipts.md` §4.3).
 
 ### 6.3 Bounded-duration launches
 
@@ -807,7 +807,7 @@ measured per-launch spans run from 0.117988 s to 115.452922 s — a factor of
 978.5 — so a budget on $M \cdot 2^n$ does not bound per-launch device time
 across paths, and any use of the archived per-field work budgets outside the
 single kernel they were calibrated on carries that error
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §8, §9.4). The design
+(`../a9284086/receipt.md` §8, §9.4). The design
 therefore takes a configured per-launch span target, calibrates $M$ against it
 from a measured span rather than from a single-matrix probe, and re-calibrates
 when the observed span drifts from the target.
@@ -823,7 +823,7 @@ work budgets is the point of the preceding paragraph, and the budgets' own
 standing is recorded rather than assumed: six committed device cells run above
 their field's budget without fault, to 68.72× at $q = 3$, so the budget is not a
 necessary condition for these kernels on this host
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §10.2). The observed
+(`../a9284086/receipt.md` §9.2, §10.2). The observed
 clean-completion envelope is the second reference limit — per-launch spans to
 115.452922 s complete without fault at $q = 5$ and to 21.722805 s at $q = 7$,
 each on the one retained path that carries the field's longest span, a
@@ -831,15 +831,15 @@ conservative lower bound on the safe region rather than a located boundary
 (§9.4). The two go operating points run far below both figures, at 0.0800 s per
 launch at $q = 5$, $n = 24$ and 0.004672 s at $q = 7$, $n = 20$, and their own
 cells' launches complete cleanly there
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12,
-[`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15; §4, §5), so the
+(`../91605d4d/receipts.md` §12,
+`../6c7fcb38/receipts.md` §15; §4, §5), so the
 constraint the target actually binds at the measured points is device
 utilization rather than safety. The nearest counter
 readings are 0.3515 % of the device's 2 560 wave slots for
 `f5_three_plane_kernel` on a 9-wave launch at $q = 5$, $n = 24$
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §5) and 0.5043 % for
+(`../a9284086/receipt.md` §5) and 0.5043 % for
 `wave_gf7_three_plane_kernel` on a 13-wave launch at $q = 7$, $n = 20$
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §13); both come from
+(`../6c7fcb38/receipts.md` §13); both come from
 profiled cells that re-calibrate their own batches and carry no timing
 authority, so they bound utilization at those cells rather than at the timing
 cells' batches. §12 records that this design cannot be validated at a wide grid
@@ -848,7 +848,7 @@ from the current evidence.
 An explicit host cooldown between sub-batches is *not* carried into this design.
 The archived calibration's 400 ms cooldown is derived from the watchdog
 mechanism whose attribution is retracted
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.1), and no committed
+(`../a9284086/receipt.md` §9.1), and no committed
 measurement in this study supports or refutes it. It is a configuration knob
 defaulting to zero, with the archived prior cited as the reason it exists.
 
@@ -868,7 +868,7 @@ sequence entirely.
 
 Initialization is where the architecture check happens, once, rather than per
 call. The committed architecture scope of this study is one target, `gfx1030`
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §12.8), so
+(`../a9284086/receipt.md` §12.8), so
 `GfxTarget::detect_device` returning anything else is an unsupported capability
 and takes the fallback path of §6.5 rather than reaching a launch.
 
@@ -886,7 +886,7 @@ returning a target with no compiled blob, or returning
 $\mathbb{F}_5$ (`crates/gf2-algebra/src/permanent/bipedal5.rs:108`) and
 `permanent_ryser` over `Fp<7>` for $\mathbb{F}_7$ above the sixteen-lane bound,
 which is the oracle the $\mathbb{F}_7$ equivalence gate already uses at those
-orders ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §3).
+orders (`../6c7fcb38/receipts.md` §3).
 
 **Recoverable resource failure selects the CPU path.** Allocation goes through
 `DeviceBuffer::new_with_fallback`
@@ -905,7 +905,7 @@ launch or from a synchronize that is not an out-of-memory condition propagates
 as `Err(HipError::Hip { .. })` to the caller. It does not silently retry and it
 does not silently fall back, because a driver fault of unidentified cause is
 exactly the condition this study's one recorded device fault leaves unexplained
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.3). What changes from
+(`../a9284086/receipt.md` §9.3). What changes from
 today is the mechanism, not the visibility: the `assert_eq!(rc, 0, ...)` sites
 at `permanent/mod.rs:2295`, `:2302`, `:2391`, `:2398`, `:2497`, and `:2505`
 become typed errors, so a caller can observe and record the fault instead of
@@ -936,11 +936,11 @@ and parallel paths. The coverage this design carries:
    `permanent_bipedal7` for $\mathbb{F}_7$ at $n \le 16$ with `permanent_ryser`
    above it, which is the switch the $\mathbb{F}_7$ equivalence file already
    makes and states in its own preamble
-   ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §3).
+   (`../6c7fcb38/receipts.md` §3).
 3. **Representation-boundary orders.** The binding boundaries for the permanent
    are the representation limits the receipts already exercise — $n = 16$, where
    `permanent_bipedal7` asserts and the oracle switches
-   ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §2), and $n = 63$, the
+   (`../6c7fcb38/receipts.md` §2), and $n = 63$, the
    single-word ceiling both packed CPU kernels assert on
    (`crates/gf2-algebra/src/permanent/bipedal5.rs:117-123`) — plus $n < 5$,
    where `active_lanes_for_order` returns $2^n$ rather than 32
@@ -971,7 +971,7 @@ A campaign run against this design writes a provenance manifest that records the
 RNG algorithm and its version directly, beside the measurement revision,
 toolchain, host inventory, binary SHA-256, exact commands, and seed root the
 existing manifests already carry
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §1).
+(`../047b62ed/receipts.md` §1).
 The manifests behind this study's receipts record the seed root and each cell's
 stream-index block but leave the generator's identity to the harness source at
 the pinned revision (§1), so a reader holding the manifest alone cannot name the
@@ -1022,18 +1022,18 @@ option 2).
 changing `Packed7` at its source — is conditioned on "*broader `PackedField`
 evidence*" (same source, option 1), and this study's evidence is not broader in
 the ways that matter. It is one architecture, `gfx1030`, on one host
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §12.8). It is device
+(`../a9284086/receipt.md` §12.8). It is device
 evidence only: nothing here re-measures the CPU packed encoding, which is the
 surface `Packed7` actually is, and the archived decision that chose the LUT
 encoding was decided on a scalar CPU prototype (§8). Almost no prototype cell is
 measured near the control's batch sizes, so the end-to-end ratios mix the
 mapping effect with a device-parallelism effect spanning a factor of 5 833
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §17.5). And the campaign
+(`../6c7fcb38/receipts.md` §17.5). And the campaign
 declines to order the two $\mathbb{F}_7$ arithmetic circuits against each other:
 the three-plane circuit yields a nonzero-branch duration at exactly two cells,
 with the partner branches censored, so the 23.3× and 312× gaps against the
 lookup circuit are reported as the two figures they are and no ordering is
-asserted from them ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §17.8).
+asserted from them (`../6c7fcb38/receipts.md` §17.8).
 Changing a canonical public representation on evidence the producing receipts
 decline to order it on would be a change the record does not support.
 
@@ -1093,7 +1093,7 @@ other way. That is the same decision §8 addresses.
 > equivalence gate against the same CPU oracle as every other backend, on one
 > identical corpus per $(q, n)$ (§6.6), and its results are `identical` with
 > zero mismatches at every order the grid times
-> ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §3, §14).
+> (`../6c7fcb38/receipts.md` §3, §14).
 >
 > **Tracked convergence condition.** The exception is discharged, and the two
 > representations converge on one form, when *either* of the following holds:
@@ -1101,7 +1101,7 @@ other way. That is the same decision §8 addresses.
 > 1. **Convergence upward.** A committed receipt orders the three-plane and
 >    lookup $\mathbb{F}_7$ arithmetic circuits against each other at matched
 >    launch geometry — the comparison
->    [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §17.8 declines to make
+>    `../6c7fcb38/receipts.md` §17.8 declines to make
 >    — *and* a CPU-side re-measurement on the `PackedField` surface reproduces
 >    the ordering, on the workload the archived decision weighted (§8). Both
 >    together are the "broader `PackedField` evidence" option 1 is conditioned
@@ -1177,7 +1177,7 @@ campaign where an observed branch frequency and its exact marginal are
 inconsistent at the stated coverage, and states its reading: one order of five
 under a nominal 95 % procedure with no multiplicity adjustment, with the other
 four at $|z| \le 1.24$ and the 4 096-sample observation at $n = 24$ covering
-comfortably ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §9, §17; §10,
+comfortably (`../6c7fcb38/receipts.md` §9, §17; §10,
 F.10 here). So at $n = 20$ — an order both observations cover, at $z = -0.85$ on
 the tighter one — the complete reduction runs on 4.58 % of Gray steps, not on
 every one of them.
@@ -1191,10 +1191,10 @@ matched geometry.* On the horizontal-product isolate, which launches
 three-plane reduction measures $6.00 \times 10^{-10}$ s against the lookup
 circuit's $1.4005 \times 10^{-8}$ s at $n = 24$, and $9.6 \times 10^{-11}$ s
 against $2.9996 \times 10^{-8}$ s at $n = 28$ — 23.3× and 312× apart
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §6.2). **This strand is
+(`../6c7fcb38/receipts.md` §6.2). **This strand is
 explicitly not an ordering.** Those are two cells whose partner branches are
 censored, and the campaign asserts no ordering of the circuits from them
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §17.8). It is carried here
+(`../6c7fcb38/receipts.md` §17.8). It is carried here
 because it is the only matched-geometry comparison in the record and because its
 direction is the opposite of the archived model's mul prediction, not because it
 settles anything.
@@ -1202,7 +1202,7 @@ settles anything.
 *Strand 3 — end to end, on the permanent workload, on the device.* The
 bit-sliced path leads the lookup control at $n = 16$, 20, 24, and 28 by 2.0661,
 20.5474, 168.1439, and 66.1022, and loses at $n = 12$ by 0.4524
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §4.2). The lookup control
+(`../6c7fcb38/receipts.md` §4.2). The lookup control
 here *is* the archived Candidate A: it "*retains the current canonical
 two-nibble F_7 table layout*" and receives "*all three public canonical Rust
 `Packed7` table byte arrays over stdin and uploads those exact bytes before a
@@ -1245,8 +1245,8 @@ shortfall.**
 
 | field | declared point | best prototype | its rate | best applicable in-tree CPU path | its rate | measured factor | receipt |
 | --- | ---: | --- | ---: | --- | ---: | ---: | --- |
-| $\mathbb{F}_5$ | $n = 24$ | `f5-three-plane`, $M = 17$ | 211.9399 | `cpu_rayon_batch_scalar`, $M = 96$ | 10.7539 | **19.7082×** | [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12 |
-| $\mathbb{F}_7$ | $n = 20$ | `f7-three-plane-permanent`, $M = 41$ | 8 397.8509 | `cpu_ryser_generic`, $M = 31$ | 15.3900 | **545.6693×** | [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15 |
+| $\mathbb{F}_5$ | $n = 24$ | `f5-three-plane`, $M = 17$ | 211.9399 | `cpu_rayon_batch_scalar`, $M = 96$ | 10.7539 | **19.7082×** | `../91605d4d/receipts.md` §12 |
+| $\mathbb{F}_7$ | $n = 20$ | `f7-three-plane-permanent`, $M = 41$ | 8 397.8509 | `cpu_ryser_generic`, $M = 31$ | 15.3900 | **545.6693×** | `../6c7fcb38/receipts.md` §15 |
 
 Both exceed 1.5×; there is no shortfall to record on either. The $\mathbb{F}_7$
 magnitude carries §5.1's caveat: its denominator is a single-threaded generic
@@ -1275,8 +1275,8 @@ configuration:
 
 | field | declared configuration | span per launch | launches | outcome | receipt |
 | --- | --- | ---: | ---: | --- | --- |
-| $\mathbb{F}_5$ | $n = 24$, `f5-three-plane`, $M = 17$ | 0.0800 s | 63 | cell `measured`; no cell of the run failed with a device fault, every step `status=completed exit=0` | [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12, §2, §4.3 |
-| $\mathbb{F}_7$ | $n = 20$, `f7-three-plane-permanent`, $M = 41$ | 0.004672 s | 1 023 | cell `measured`; no cell of the run failed with a device fault, every step `status=completed exit=0` | [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §14 |
+| $\mathbb{F}_5$ | $n = 24$, `f5-three-plane`, $M = 17$ | 0.0800 s | 63 | cell `measured`; no cell of the run failed with a device fault, every step `status=completed exit=0` | `../91605d4d/receipts.md` §12, §2, §4.3 |
+| $\mathbb{F}_7$ | $n = 20$, `f7-three-plane-permanent`, $M = 41$ | 0.004672 s | 1 023 | cell `measured`; no cell of the run failed with a device fault, every step `status=completed exit=0` | `../6c7fcb38/receipts.md` §15, §14 |
 
 That is an observation at the point itself, on the kernel the verdict is for, at
 the batch the verdict is for. It transfers nothing from another kernel or
@@ -1292,19 +1292,19 @@ $1.3 \times 10^9$ at $q = 5$, and $3.5 \times 10^8$ at $q = 7$
 It is the figure the field receipts themselves report against: the $\mathbb{F}_7$
 receipt applies the archived $q = 7$ work budget to its own field alongside that
 span boundary under its own REQ-19
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §16 REQ-19), and the
+(`../6c7fcb38/receipts.md` §15, §16 REQ-19), and the
 $\mathbb{F}_5$ receipt reports its operating point against the same boundary and
-the $q = 5$ budget ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12).
+the $q = 5$ budget (`../91605d4d/receipts.md` §12).
 
 | field | span share of the ≈190 s boundary | work share of the field's budget | receipt |
 | --- | ---: | ---: | --- |
-| $\mathbb{F}_5$, $n = 24$ | 0.0004 | 0.2194 of $1.3 \times 10^9$ | [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12 |
-| $\mathbb{F}_7$, $n = 20$ | 0.00002 | 0.1228 of $3.5 \times 10^8$ | [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15 |
+| $\mathbb{F}_5$, $n = 24$ | 0.0004 | 0.2194 of $1.3 \times 10^9$ | `../91605d4d/receipts.md` §12 |
+| $\mathbb{F}_7$, $n = 20$ | 0.00002 | 0.1228 of $3.5 \times 10^8$ | `../6c7fcb38/receipts.md` §15 |
 
 **Its evidentiary status, stated with it and not softened: superseded, and not a
 measured device property.** The boundary derives from the one recorded device
 fault, whose watchdog attribution was retracted
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.1), and the archived
+(`../a9284086/receipt.md` §9.1), and the archived
 document carries a dated supersession note over it: "*The budgets below are
 therefore not a necessary condition for safe operation of these kernels on this
 host, and the boundary below is not a measured device property*"
@@ -1312,21 +1312,21 @@ host, and the boundary below is not a measured device property*"
 $\mathbb{F}_7$ receipt preserves beside its application of the budget (F.4), and
 the qualification's own record that six committed device cells run above their
 field's budget without fault, to 68.72× at $q = 3$
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §10.2). Sitting below
+(`../a9284086/receipt.md` §9.2, §10.2). Sitting below
 this figure is therefore a comparison against a superseded operational limit, and
 this document draws no safety conclusion from it.
 
 **(c) Reference limit — the runtime qualification's observed clean-completion
-envelope** ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.4):
+envelope** (`../a9284086/receipt.md` §9.2, §9.4):
 
 | field | point's span per launch | field's observed span envelope | share | point's $M \cdot 2^n$ | field's observed work envelope | share |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | $\mathbb{F}_5$, $n = 24$ | 0.0800 s | 115.452922 s | 0.00069 | $2.852 \times 10^{8}$ | $1.0737 \times 10^{9}$ | 0.266 |
 | $\mathbb{F}_7$, $n = 20$ | 0.004672 s | 21.722805 s | 0.000215 | $4.299 \times 10^{7}$ | $1.0737 \times 10^{9}$ | 0.040 |
 
-Spans and works from [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12
-and [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15; envelopes from
-[`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4. The two share columns
+Spans and works from `../91605d4d/receipts.md` §12
+and `../6c7fcb38/receipts.md` §15; envelopes from
+`../a9284086/receipt.md` §9.4. The two share columns
 are computed here from those two sources. The envelope's scope is a per-field
 extremum over that field's retained paths, and its two axes are two different
 kernels in both go fields: at $q = 5$ the work figure is
@@ -1355,8 +1355,8 @@ completions at its declared configuration: 63 launches at $\mathbb{F}_5$,
 $n = 24$, `f5-three-plane`, $M = 17$, and 1 023 launches at $\mathbb{F}_7$,
 $n = 20$, `f7-three-plane-permanent`, $M = 41$, with no cell of either run
 failing with a device fault
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12,
-[`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15). Both reference limits
+(`../91605d4d/receipts.md` §12,
+`../6c7fcb38/receipts.md` §15). Both reference limits
 are reported beside that discharge with the status each carries — the archived
 calibration superseded by its own source and denied as a measured device
 property, the envelope observed and cross-kernel — and neither certifies either
@@ -1372,7 +1372,7 @@ than derived and is a conservative lower bound, because no launch in the evidenc
 was run to failure. The longest span the study observes anywhere is 115.452922 s
 against the archived ≈190–200 s figure that nothing here probes above, and the
 one recorded fault's cause and span remain unknown
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4, §12.1, §12.2). Locating
+(`../a9284086/receipt.md` §9.4, §12.1, §12.2). Locating
 a boundary needs a launch run to failure, which no committed run performs; it is
 an open deliverable and §12.1 carries it.
 
@@ -1389,7 +1389,7 @@ or resource failure: its HIP source compiles clean for `gfx1030` — the resourc
 receipt carries `f7_three_plane_equivalence` at 40 `TotalSGPRs` and 2 `VGPRs` —
 but the translation unit holds a single-thread arithmetic conformance probe
 rather than a full-permanent batch kernel
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §2). It is retained in the
+(`../6c7fcb38/receipts.md` §2). It is retained in the
 record and appears in the horizontal-product isolate, because that isolate times
 a circuit rather than a path.
 
@@ -1401,15 +1401,15 @@ rather than dropped (§3.2).
 **F.3 — Censored cells carry no rate, and their projections are not uniformly
 conservative.** One $q = 3$ cell, six $q = 5$ cells, and four $q = 7$ cells are
 censored; each states its reason and carries `NaN` for both throughput columns
-([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §5,
-[`../91605d4d/receipts.md`](../91605d4d/receipts.md) §5,
-[`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §5). The grid preamble's
+(`../047b62ed/receipts.md` §5,
+`../91605d4d/receipts.md` §5,
+`../6c7fcb38/receipts.md` §5). The grid preamble's
 "*lands LOW at every step*" projection claim holds on the fixed-batch `gpu_hip`
 chains and fails on the probe-calibrated prototype chains, where projections
 land high by up to 1685.3 %. The $\mathbb{F}_3$ campaign predicted this before
 any such cell existed; the $\mathbb{F}_5$ campaign has one, `f5-byte-control` at
 $n = 28$, on exactly such a chain
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §5, §14).
+(`../91605d4d/receipts.md` §5, §14).
 
 **F.4 — The $\mathbb{F}_7$ receipt carries a falsified premise about the archived
 $q = 7$ work budget beside its correction, and this synthesis is where the
@@ -1418,7 +1418,7 @@ $\text{sub\_batch} \cdot 2^n$ — "*q=3: 4.0e9; q=5: 1.3e9; q=7: 3.5e8 — the F
 LUT kernel is ≈5× slower so it gets a lower budget*"
 (`r4_gpu_uniformity_resample.md`:225-227) — and the runtime qualification
 tabulates the $q = 7$ figure of $3.5 \times 10^8$ and records it exceeded 3.07×
-without fault ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.1, §9.2,
+without fault (`../a9284086/receipt.md` §9.1, §9.2,
 §10.2). The $\mathbb{F}_7$ receipt's §15 holds the contradicting premise —
 the budget "*is stated for $q = 5$; no $q = 7$ work budget is committed*" —
 preserved verbatim under a dated **Correction (2026-08-17)** heading that states
@@ -1426,7 +1426,7 @@ it false and cites the archived line (`@/inv/falsification-preserved`). That §1
 applies the archived $q = 7$ budget to its own field alongside the archived span
 boundary, records the 3.07× exceedance with the runtime qualification's
 citations, and scopes its inside-with-margin claim to the span boundary
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15). The defect is this
+(`../6c7fcb38/receipts.md` §15). The defect is this
 study's finding, filed as JIT issue `e1c96c9c` and discharged in the producing
 receipt rather than here. No verdict in this document turns on the budget either
 way: applying it only tightens §9's statement, since the $\mathbb{F}_7$ operating
@@ -1436,14 +1436,14 @@ point's $4.299 \times 10^7$ is 0.1228 of it.
 differently, and the retraction attaches to one of them.** The archived
 calibration's own hang is "*a single 2048-matrix F_5 n=20 launch (≈200 s+)*"
 (`r4_gpu_uniformity_resample.md`:231-232), which the $\mathbb{F}_5$ campaign
-repeats ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12). The fault
+repeats (`../91605d4d/receipts.md` §12). The fault
 with a committed operational record is a different configuration: $q = 3$,
 $n = 24$, `gpu_hip` at $M = 4096$, 2026-08-07
 (`gpu-hang-2026-08-07.log`). The explicit retraction of the
 watchdog attribution — "*nothing here attributes the hang to a watchdog
 timeout*" — is in the second one's log, and the supersession note applies it to
 the archived calibration's account
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.1). The archived $q = 5$
+(`../a9284086/receipt.md` §9.1). The archived $q = 5$
 hang has no separate committed artifact beyond the archived prose. Recorded
 because §9's reading of the archived calibration as a reference limit rests on
 which observation the retraction covers.
@@ -1453,7 +1453,7 @@ the prior feasibility grid are published `measured` below the protocol's
 five-repetition minimum — $q = 5$, $n = 28$ batch rayon at one repetition, and
 $q = 3$, $n = 28$ `gpu_hip` $M = 1024$ at three — and both now carry a dagger
 and footnote under bug `4fdd781a`
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §11.1). Both are cells
+(`../6c7fcb38/receipts.md` §11.1). Both are cells
 this study's runs censor. The first is why the $\mathbb{F}_5$ $n = 28$
 denominator is `cpu_scalar` here (§4.1).
 
@@ -1468,7 +1468,7 @@ compiler's realised per-lane vector-register allocation, which exceeds every
 stated budget by 2.44× to 9.62×; and where *achieved* occupancy falls below the
 per-SIMD ceiling, which is everywhere in the study, the limiting quantity is the
 launch width the batch calibration supplies
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §6).
+(`../a9284086/receipt.md` §6).
 
 **F.8 — The runtime record shares the compiler's dynamic-LDS blind spot.**
 `rocprofv3` reports `LDS_Block_Size` 0 for every dispatch, including launches
@@ -1477,13 +1477,13 @@ of a dynamic table anywhere in the study is a `rocprofv2` capability probe that
 read `LDS_Per_Workgroup` 512 for `wave_gf7_three_plane_kernel` at $n = 20$ — the
 design's 480-byte prediction at a 128-byte granularity — in four dispatches
 before aborting. Tracked as JIT issue `023233c5`
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §4, §10.5).
+(`../a9284086/receipt.md` §4, §10.5).
 
 **F.9 — Nine of twelve round-1 occupancy readings fail the counters' own
 definitions**, by factors of 3.182 to $1.28 \times 10^4$, and are tabulated as
 failures rather than repaired; the $\mathbb{F}_7$ three-plane pair has no
 admissible reading at $n = 12$ in either round
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §13, §17.2).
+(`../6c7fcb38/receipts.md` §13, §17.2).
 
 **F.10 — Two branch-frequency observations miss their exact marginal at the
 stated coverage.** The $\mathbb{F}_5$ timed-operation observation at $n = 28$,
@@ -1493,15 +1493,15 @@ on the slow branch, at $z = +2.85$ — both outside their Wilson 95 % intervals,
 on all backends that resample the same addresses. Two orders out of ten under a
 nominal 95 % procedure with no multiplicity adjustment; the other eight sit at
 $|z| \le 1.24$
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §9,
-[`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §9).
+(`../91605d4d/receipts.md` §9,
+`../6c7fcb38/receipts.md` §9).
 
 **F.11 — The packed CPU baseline is uniformly slower than in the prior run**, on
 all nine comparable $\mathbb{F}_5$ pairs, mean $-6.34\%$, $p = 0.004$ under a
 two-sided sign test, while the generic Ryser path on the same host moves by
 under 0.8 %. Neither artifact isolates the cause. Its consequence for this
 document is stated where it bites, in §4.1
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §11).
+(`../91605d4d/receipts.md` §11).
 
 **F.12 — Rejected candidates are retained with their measurements.**
 `f5-byte-control` and `f7-lookup-table-control` are not selected (§4.2, §5.2)
@@ -1530,17 +1530,17 @@ operation. §3.3's validity argument is independent of the historical claim.
 
 | REQ | Where addressed | Status |
 | --- | --- | --- |
-| REQ-01 | §3, §4, §5 | **Satisfied.** A verdict per field, each with a receipt citation: $\mathbb{F}_3$ no-go, on [`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.2 — every measured device cell falls below the CPU at the declared operating point $n = 28$, with the censored $M = 1024$ cell's ordering left open (§3.1, §12.6); $\mathbb{F}_5$ go on `f5-three-plane`, on [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12 and §3; $\mathbb{F}_7$ go on `f7-three-plane-permanent`, on [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §3, and §14. Each verdict is checked against the study's own four-part decision rule, quoted in §1, including the safe-launch-duration condition: each field's section discharges that condition on its declared operating point's own receipted clean completions at the declared configuration, and reports the two reference limits beside it with their status — the archived calibration's span boundary and per-field work budget, superseded by its own source's note and denied there as a measured device property (`r4_gpu_uniformity_resample.md`:225-227, `:176-215`), and the runtime qualification's observed clean-completion envelope, observed and cross-kernel ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.4). Neither limit certifies a verdict. Where a declared point's work sits above the archived budget, at $\mathbb{F}_3$ $n = 28$, §3 states it with the completions that contradict the budget's necessity. |
-| REQ-02 | §3.1, §4.1, §5.1 | **Satisfied, with every crossing located only as a bracketing between two adjacent measured orders.** $\mathbb{F}_3$: the prototype's ratio brackets a crossing upward between $n = 12$ and $n = 16$ (0.7568 to 2.2149) and downward between $n = 24$ and $n = 28$ (1.5561 to 0.2036), and the shipped path's brackets the same two on the same two pairs (0.7118 to 1.5547, 1.0527 to 0.4390); the better shipped configuration's downward crossing is unlocated because the $n = 28$, $M = 1024$ cell is censored, and its projection is labelled an extrapolation. $\mathbb{F}_5$: the prototype's ratio is above 1 at all five measured orders and the shipped path's below 1 at the three it is measured, so neither column brackets a crossing and none is placed below $n = 12$. $\mathbb{F}_7$: neither prototype column brackets a crossing for the same reason; the shipped path is the one $\mathbb{F}_7$ column that does, upward between $n = 16$ and $n = 20$, which [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §4.2 reports as beating the CPU at exactly one order, stated here with its mechanism — the CPU denominator changing at the packed kernel's sixteen-lane bound. Each statement names the best applicable in-tree CPU path per order, identified from the run's own data. |
+| REQ-01 | §3, §4, §5 | **Satisfied.** A verdict per field, each with a receipt citation: $\mathbb{F}_3$ no-go, on `../047b62ed/receipts.md` §4.2 — every measured device cell falls below the CPU at the declared operating point $n = 28$, with the censored $M = 1024$ cell's ordering left open (§3.1, §12.6); $\mathbb{F}_5$ go on `f5-three-plane`, on `../91605d4d/receipts.md` §12 and §3; $\mathbb{F}_7$ go on `f7-three-plane-permanent`, on `../6c7fcb38/receipts.md` §15, §3, and §14. Each verdict is checked against the study's own four-part decision rule, quoted in §1, including the safe-launch-duration condition: each field's section discharges that condition on its declared operating point's own receipted clean completions at the declared configuration, and reports the two reference limits beside it with their status — the archived calibration's span boundary and per-field work budget, superseded by its own source's note and denied there as a measured device property (`r4_gpu_uniformity_resample.md`:225-227, `:176-215`), and the runtime qualification's observed clean-completion envelope, observed and cross-kernel (`../a9284086/receipt.md` §9.2, §9.4). Neither limit certifies a verdict. Where a declared point's work sits above the archived budget, at $\mathbb{F}_3$ $n = 28$, §3 states it with the completions that contradict the budget's necessity. |
+| REQ-02 | §3.1, §4.1, §5.1 | **Satisfied, with every crossing located only as a bracketing between two adjacent measured orders.** $\mathbb{F}_3$: the prototype's ratio brackets a crossing upward between $n = 12$ and $n = 16$ (0.7568 to 2.2149) and downward between $n = 24$ and $n = 28$ (1.5561 to 0.2036), and the shipped path's brackets the same two on the same two pairs (0.7118 to 1.5547, 1.0527 to 0.4390); the better shipped configuration's downward crossing is unlocated because the $n = 28$, $M = 1024$ cell is censored, and its projection is labelled an extrapolation. $\mathbb{F}_5$: the prototype's ratio is above 1 at all five measured orders and the shipped path's below 1 at the three it is measured, so neither column brackets a crossing and none is placed below $n = 12$. $\mathbb{F}_7$: neither prototype column brackets a crossing for the same reason; the shipped path is the one $\mathbb{F}_7$ column that does, upward between $n = 16$ and $n = 20$, which `../6c7fcb38/receipts.md` §4.2 reports as beating the CPU at exactly one order, stated here with its mechanism — the CPU denominator changing at the packed kernel's sixteen-lane bound. Each statement names the best applicable in-tree CPU path per order, identified from the run's own data. |
 | REQ-03 | §2 | **Satisfied.** The per-lane Gray interval (`wave_ryser_mapping.h:33-40`), the per-lane accumulator initialization by prefix reconstruction at $g(\text{interval.start})$ (`wave_ryser_mapping.h:42-44`, with the per-field loops cited), the lane-local row-product reduction (five circuits cited by field and representation), and the cross-lane partial-sum reduction in fixed increasing lane order (`wave_ryser_mapping.h:67-78`) are each specified with the source that implements them, and the executable prototype is linked. |
 | REQ-04 | §3.3 | **Satisfied.** The two-bit `(mag, sgn)` encoding carries three values under three equivalence classes, a clear `mag` bit being field zero whatever `sgn` holds, and validity rests on those classes rather than on a canonical form: every decode in the crate and both device fold circuits read the class, and `add`, `sub`, `mul`, and `neg` map class to class on all sixteen codeword pairs, the alternative zero included as an input. The historical doc-comment claim that the alternative zero is never produced is contradicted by three of those four operations and is corrected in `65dae3bf`; current rustdoc states the class semantics, with one producing case per affected operation pinned by tests. The validity argument never relies on that claim (§10, F.13); `add` and `sub` are distinct operations, which excludes $\mathbb{F}_2$; the two algebraic facts that make the encoding Boolean are $q = 3$-specific — $3 = 2^2 - 1$ and $\mathbb{F}_3^* \cong \mathbb{Z}/2$, the latter used directly by the sign-popcount fold; the Ryser sign is nontrivial in $\mathbb{F}_3$ and is applied twice over, where over $\mathbb{F}_2$ it would vanish and the permanent would collapse onto the determinant; and two committed measurements are functions of $q = 3$ specifically and hold — the branch marginal $1 - (2/3)^n$ at all five orders and the permanent-zero fraction near $1/3$ — with the $q = 2$ alternative excluded by the committed intervals at three of five orders on the 4 096-sample observation and at all five on the timed-operation observation, coverage stated per cell rather than claimed uniformly. The result is checked per matrix against an `Fp<3>` oracle that runs the shared field-law suite. |
-| REQ-05 | §4.2, §5.2 | **Satisfied.** $\mathbb{F}_5$: `f5-byte-control` and `f5-three-plane`, each with lane state, row-product circuit, shared-memory formula, measured `VGPRs`/`TotalSGPRs`/scratch, occupancy, and composite rate at five orders, cited to [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §4.2, §6.2, §7, §10, before the selection. $\mathbb{F}_7$: `f7-lookup-table-control` and `f7-three-plane-permanent`, the same fields, cited to [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §4.2, §7, §10, §12, before the selection; the third planned candidate is recorded with its structural falsification (§10, F.1). |
+| REQ-05 | §4.2, §5.2 | **Satisfied.** $\mathbb{F}_5$: `f5-byte-control` and `f5-three-plane`, each with lane state, row-product circuit, shared-memory formula, measured `VGPRs`/`TotalSGPRs`/scratch, occupancy, and composite rate at five orders, cited to `../91605d4d/receipts.md` §4.2, §6.2, §7, §10, before the selection. $\mathbb{F}_7$: `f7-lookup-table-control` and `f7-three-plane-permanent`, the same fields, cited to `../6c7fcb38/receipts.md` §4.2, §7, §10, §12, before the selection; the third planned candidate is recorded with its structural falsification (§10, F.1). |
 | REQ-06 | §6 | **Satisfied.** For both go verdicts: input layout (§6.1, canonical row-major bytes, device-side packing, shared-table sizes); persistent device buffers and streams named as the existing `DeviceBuffer`, `HipStreamPool`, and `LaunchDims` of `crates/gf2-kernels-hip/src/host/`, each cited to its defining line, with `PinnedHostBuffer`, `HipStream`, `HipEvent`, `HipEventSpan`, and `GfxTarget` beside them (§6.2); bounded-duration launches sized against a per-launch span target rather than a work budget, with the 978.5× measurement that rules out the work-budget form (§6.3); per-device initialization through `GfxTarget::detect_device` and blob loading, once per device (§6.4); error propagation selecting a tested CPU fallback for unsupported capabilities and recoverable resource failures through `DeviceBuffer::new_with_fallback` and the `UnsupportedArch` and `OutOfMemory` variants, while fatal device failures propagate as typed errors instead of the current asserts (§6.5); and behavioral-equivalence coverage on the shared field-law suite, the per-matrix oracle gate, the representation-boundary orders, determinism across the fallback boundary, and tests that force each fallback branch (§6.6). §6.7 adds the provenance requirement the determinism obligation rests on: a production campaign manifest records the RNG algorithm and version directly rather than leaving it to be reconstructed from the pinned revision's source (§1). The gap each element closes is cited to the dispatcher line that currently bypasses it. |
 | REQ-07 | §7, §7.1 | **Satisfied.** The public packed-field representation `Packed7` (`packed7.rs:211`, `:216`) and the permanent-specialized internal state `ThreePlane` (`wave_gf7_equivalence.hip:75-79`) are named as distinct surfaces with their scopes. The second compliant resolution is chosen — public representation unchanged, three-plane state internal — grounded in the committed evidence's single architecture, device-only scope, unresolved batch confound, and the campaign's own refusal to order the two circuits, and in `@/inv/convention-convergence` together with the proof-obligation asymmetry. §7.1 records the named exception `permanent-f7-internal-three-plane` with its scope, its shared behavioral tests, and a tracked convergence condition with two discharge routes. $\mathbb{F}_5$ needs no exception because `Packed5` is already three-plane (`packed5.rs:208-212`). |
 | REQ-08 | §8 | **Satisfied.** The receipts support the three-plane $\mathbb{F}_7$ candidate under the permanent workload, on three strands of which the strongest is the falsified weighting: the archived model charges the complete row-product reduction on every Gray step, and the measured exact marginal $(6/7)^n$ puts it at 4.58 % of steps at $n = 20$. The amendment, drafted at [`req08-amendment-draft.md`](../../active/b8206228-permanent-statistics/studies/0dffa759/req08-amendment-draft.md), is **applied to the archived file with owner approval (2026-08-17)**: a dated additive note above its §1 and two pointer stubs, no existing sentence edited. `Packed7` remains Candidate A and §7's choice is consistent with that. |
 | REQ-09 | §10 | **Satisfied.** Thirteen entries, each recorded with the evidence contradicting the statement it bears on rather than replacing it: the non-executing candidate, the $\mathbb{F}_3$ crossover closing before the operating point, the censoring record and the non-conservative projection chains, the archived $q = 7$ budget premise the $\mathbb{F}_7$ receipt preserves beside its correction (filed by this study as `e1c96c9c`), the two distinct fault observations, the prior sub-minimum published cells, the falsified occupancy hypothesis, the dynamic-LDS blind spot, the failed occupancy readings, the two branch-frequency interval misses, the packed-CPU run-to-run shift, the retained rejected candidates, and the historical $\mathbb{F}_3$ alternative-zero doc-comment claim with its correction in `65dae3bf`. |
 | REQ-10 | throughout | **Satisfied.** Every quantitative claim carries the receipt file and section, or the in-tree source path and line, it resolves to. Where this document computes a figure or a fact the sources do not print — §9's envelope share columns, §3.3's $q = 2$ marginal against the committed Wilson intervals, and §3.3's enumeration of the four bipedal operations over all sixteen codeword pairs — it names its inputs with their sources and states that the result is computed here. Two claims that resolved only to uncommitted or conflicting sources are handled rather than restated: the campaign RNG's identity resolves to the committed [`rng-provenance-addendum.md`](../../active/b8206228-permanent-statistics/studies/0dffa759/rng-provenance-addendum.md), whose §4 derives the resolved patch version as `0.9.0` from the committed requirement and cited registry state, while the local lockfile confirms that derivation; the archived $\mathbb{F}_7$ decision's per-operation CPU speedups are described by direction only in §8, because they resolve to conflicting prose and no committed run artifact. |
-| REQ-11 | §9 | **Satisfied, against the criterion as amended 2026-08-17 and quoted in §9.** Both factors are recorded with their receipts — 19.7082× at $\mathbb{F}_5$, $n = 24$ and 545.6693× at $\mathbb{F}_7$, $n = 20$ — and both exceed 1.5×, so there is no throughput shortfall to record. The safe-launch-duration condition is discharged at each point by that point's own receipted clean completions at its declared configuration: 63 launches on `f5-three-plane` at $M = 17$ and 1 023 launches on `f7-three-plane-permanent` at $M = 41$, with no cell of either run failing with a device fault ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12, [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15). Both reference limits are cited with their evidentiary status and neither certifies a verdict: the archived calibration, at 0.0004 and 0.00002 of its span boundary and 0.2194 and 0.1228 of its per-field work budgets, derives from the one recorded fault whose mechanism attribution was retracted and carries a supersession note denying it is a measured device property (`r4_gpu_uniformity_resample.md`:225-227, `:176-215`); the observed clean-completion envelope, at 0.00069 and 0.000215 of the span figures and 0.266 and 0.040 of the work figures ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.4), is observed rather than derived, is a conservative lower bound, and is a per-field extremum whose two axes are different kernels. No located fault boundary is claimed, and locating one is recorded as an open deliverable (§12.1). |
+| REQ-11 | §9 | **Satisfied, against the criterion as amended 2026-08-17 and quoted in §9.** Both factors are recorded with their receipts — 19.7082× at $\mathbb{F}_5$, $n = 24$ and 545.6693× at $\mathbb{F}_7$, $n = 20$ — and both exceed 1.5×, so there is no throughput shortfall to record. The safe-launch-duration condition is discharged at each point by that point's own receipted clean completions at its declared configuration: 63 launches on `f5-three-plane` at $M = 17$ and 1 023 launches on `f7-three-plane-permanent` at $M = 41$, with no cell of either run failing with a device fault (`../91605d4d/receipts.md` §12, `../6c7fcb38/receipts.md` §15). Both reference limits are cited with their evidentiary status and neither certifies a verdict: the archived calibration, at 0.0004 and 0.00002 of its span boundary and 0.2194 and 0.1228 of its per-field work budgets, derives from the one recorded fault whose mechanism attribution was retracted and carries a supersession note denying it is a measured device property (`r4_gpu_uniformity_resample.md`:225-227, `:176-215`); the observed clean-completion envelope, at 0.00069 and 0.000215 of the span figures and 0.266 and 0.040 of the work figures (`../a9284086/receipt.md` §9.2, §9.4), is observed rather than derived, is a conservative lower bound, and is a per-field extremum whose two axes are different kernels. No located fault boundary is claimed, and locating one is recorded as an open deliverable (§12.1). |
 
 ## 12. What this synthesis does not establish
 
@@ -1556,7 +1556,7 @@ Collected so a reader does not have to reassemble it.
    lower bound on the safe region. The longest
    span this study observes anywhere is 115.452922 s, 0.61 of the archived
    ≈190–200 s figure, and nothing in the evidence probes above it
-   ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4, §12.1). Locating a
+   (`../a9284086/receipt.md` §9.4, §12.1). Locating a
    boundary needs a launch run to failure, which no committed run performs; it
    is an open deliverable, and until it lands the safe region is known to
    include the envelope and its upper extent is unmeasured.
@@ -1567,8 +1567,8 @@ Collected so a reader does not have to reassemble it.
    kernel holds most or all of the waves it launches resident, so nothing here
    approaches the per-SIMD residency ceiling, and no cell in the study tests the
    register-pressure prediction
-   ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §17.3,
-   [`../a9284086/receipt.md`](../a9284086/receipt.md) §12.4). A production
+   (`../6c7fcb38/receipts.md` §17.3,
+   `../a9284086/receipt.md` §12.4). A production
    dispatcher calibrating $M$ against a span target will run wider than anything
    measured, and its behaviour there is untested.
 3. **No measurement separates the mapping from the batch.** Almost no prototype
@@ -1576,13 +1576,13 @@ Collected so a reader does not have to reassemble it.
    $\mathbb{F}_7$ three-plane cell at $M = 1109$ against 1 024. Every
    prototype-over-control ratio in §3 through §5 mixes the two effects, over a
    factor of 224 at $\mathbb{F}_3$, 102 at $\mathbb{F}_5$, and 5 833 at
-   $\mathbb{F}_7$ ([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §13.1,
-   [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §14.2,
-   [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §17.5).
+   $\mathbb{F}_7$ (`../047b62ed/receipts.md` §13.1,
+   `../91605d4d/receipts.md` §14.2,
+   `../6c7fcb38/receipts.md` §17.5).
 4. **The two $\mathbb{F}_7$ arithmetic circuits are not ordered**, which is why
    §7 chooses the internal-state resolution and why §8's strand 2 is carried as
    two figures rather than a finding
-   ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §17.8).
+   (`../6c7fcb38/receipts.md` §17.8).
 5. **Nothing here re-measures any CPU packed encoding.** The $\mathbb{F}_7$
    amendment of §8 is scoped to the permanent workload on the device for exactly
    this reason, and the "broader `PackedField` evidence" that option 1 of §7
@@ -1591,24 +1591,24 @@ Collected so a reader does not have to reassemble it.
    of the protocol's four premeasurement configurations and is censored here;
    the prior study's 0.984× figure for it is neither confirmed nor overturned,
    and this document asserts no ordering at that cell
-   ([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §11, §13.5).
+   (`../047b62ed/receipts.md` §11, §13.5).
 7. **The $\mathbb{F}_5$ $n = 28$ ordering against batch rayon is open**, because
    that cell is censored here and published in the prior run from a single
    repetition its own protocol would censor
-   ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §14.8).
+   (`../91605d4d/receipts.md` §14.8).
 8. **The largest orders rest on weak correctness gates.** The equivalence cells
    compare 4 matrices at $\mathbb{F}_3$ $n = 28$, 32 and 2 at $\mathbb{F}_5$
    $n = 24$ and $n = 28$, and 32 and 4 at $\mathbb{F}_7$ $n = 24$ and $n = 28$,
    against 512 at the smaller orders — including the $n = 24$ gate the
    $\mathbb{F}_7$ above-sixteen-lane demonstration depends on
-   ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §17.12).
+   (`../6c7fcb38/receipts.md` §17.12).
 9. **The dynamic shared column tables are unmeasured** at every kernel but one,
    so the design's per-block shared-memory figures in §6.1 are launch formulas
    rather than observations
-   ([`../a9284086/receipt.md`](../a9284086/receipt.md) §12.5).
+   (`../a9284086/receipt.md` §12.5).
 10. **Architecture scope is one device.** Every figure is `gfx1030`, and the
     production design's per-device initialization in §6.4 has one target to
-    resolve to ([`../a9284086/receipt.md`](../a9284086/receipt.md) §12.8).
+    resolve to (`../a9284086/receipt.md` §12.8).
 11. **The production design of §6 is a design, not an implementation.** No code
     in `crates/` is changed by this document, nothing in it is compiled, and the
     behavioral-equivalence coverage of §6.6 is an obligation rather than a

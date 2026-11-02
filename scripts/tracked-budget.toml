@@ -7,10 +7,21 @@ forbidden_paths = [
   '(^|/)(inputs|source-inputs|test-logs)/',
   '\.(log|err|zst|data|tar\.gz|tgz|tar\.xz)$',
   '(^|/)perf\.data',
-  '(^|/)receipt\.json$',
+  '(^|/)[^/]*receipts?[^/]*\.(json|md|txt|csv|tsv)$',
+  '(^|/)outcomes?[^/]*\.(json|md|csv|tsv)$',
+  '^dev/(active|studies|research)/.*\.(csv|tsv|jsonl)$',
+  '^experiments/[^/]+/results/',
   '(^|/)(execution|journal)[^/]*\.(log|jsonl)$',
   '^dev/(bench_results|benchmarks|simulation_results|archive)/',
 ]
+[[exception]]
+path = "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
+reason = "the overnight window's job list"
+
+[[exception]]
+path = "dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/*"
+reason = "digitization of published figures, not a measurement of this code"
+
 [[exception]]
 path = "experiments/*/tests/fixtures/*"
 reason = "behavioral test fixtures"

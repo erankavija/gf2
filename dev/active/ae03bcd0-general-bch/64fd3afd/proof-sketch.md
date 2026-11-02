@@ -353,7 +353,7 @@ Prove L1.5 first; everything else is short or already a Mathlib one-liner.
   by L1.1. A subset of size $q$ inside a set of size at most $q$ is the whole
   set. The alternative route through `IsGalois.fixedField_fixingSubgroup`
   (`Mathlib/FieldTheory/Galois/Basic.lean:315`) and the finite-field Galois
-  results in `Mathlib/FieldTheory/Finite/Extension.lean` (notably
+  results in `Extension.lean` (notably
   `exists_forall_apply_eq_pow` at `:141`) is available but pulls in more
   instance plumbing; the counting argument is the recommended first attempt.
 - **L1.6** — L1.5 plus injectivity.

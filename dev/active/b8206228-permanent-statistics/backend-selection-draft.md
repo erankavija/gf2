@@ -8,7 +8,7 @@ The controlling contract is `protocol.md`, section `Backend freeze`. Rule 1 requ
 
 ## Raw receipts considered
 
-The committed paths and SHA-256 values are listed in [`receipt-inventory.md`](receipt-inventory.md). The 296a41c9 canonical raw receipt is `backend-ordering.csv`; the narrative is `backend-ordering.md`. The determinant companion is `determinant-cost.csv`, and the b488f02c and GPU-study artifacts provide older, differently timed, or supporting evidence.
+The committed paths and SHA-256 values are listed in `receipt-inventory.md`. The 296a41c9 canonical raw receipt is `backend-ordering.csv`; the narrative is `backend-ordering.md`. The determinant companion is `determinant-cost.csv`, and the b488f02c and GPU-study artifacts provide older, differently timed, or supporting evidence.
 
 ## Candidate provenance for the dischargeable cohort
 

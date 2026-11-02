@@ -3,11 +3,11 @@
 Issue `a83583e0` supplies the success criteria.
 
 This declaration applies the selector convention in
-`7d824b2f/design.md`, its appended extent amendment,
+`design.md`, its appended extent amendment,
 and the ownership, strict-envelope, installation, and composition contract in
-`3fa7c9d0/design.md`. The retained core threshold
+`design.md`. The retained core threshold
 experiment is the exact experiment in
-`eaae1b56/premeasurement-protocol.md`
+`premeasurement-protocol.md`
 and its executed receipt.
 Those historical artifacts remain immutable. This campaign takes fresh samples;
 it does not copy their measured values into a different measurement wrapper.
@@ -918,7 +918,7 @@ publishable partial campaign.
 Repository publication requires a `complete` terminal whose session is
 checksummed and retired, followed by a passing full independent validation.
 `publish-campaign` records that validation output and journals a plan at
-`stage/repository-publication/plan.json` before touching any destination.
+`plan.json` before touching any destination.
 The plan maps each stage file onto the table above. The owner, complete and
 receipt files take their own rows. A declared list of small records (build
 source observations, staging manifest, preflight reports, composition record)

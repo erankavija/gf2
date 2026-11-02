@@ -12,9 +12,9 @@ committed record carrying what they omit.
 
 | Manifest | Provenance block |
 | --- | --- |
-| [`dev/studies/047b62ed/receipts.md`](../../../../studies/047b62ed/receipts.md) | §1, $\mathbb{F}_3$ campaign |
-| [`dev/studies/91605d4d/receipts.md`](../../../../studies/91605d4d/receipts.md) | §1, $\mathbb{F}_5$ campaign |
-| [`dev/studies/6c7fcb38/receipts.md`](../../../../studies/6c7fcb38/receipts.md) | §1, $\mathbb{F}_7$ campaign |
+| `receipts.md` | §1, $\mathbb{F}_3$ campaign |
+| `receipts.md` | §1, $\mathbb{F}_5$ campaign |
+| `receipts.md` | §1, $\mathbb{F}_7$ campaign |
 
 ## 2. The revisions each campaign pins
 
@@ -27,7 +27,7 @@ All three campaigns pin the same pair, each stating it in its own §1:
   `tracked_worktree_dirty=false` at that moment. The intervening commit touches
   tracker state, two gate review prompts, and a package manifest, and no file
   under `crates/` or `dev/research/`
-  ([`dev/studies/047b62ed/receipts.md`](../../../../studies/047b62ed/receipts.md) §1).
+  (`receipts.md` §1).
 
 The generator sources named below are byte-identical at both revisions and in
 the current worktree, so the identity is the same whichever of the two a reader

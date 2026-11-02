@@ -115,7 +115,7 @@ load and available memory in `session_hosts` and the journal; those three
 informational fields can vary. All material fields must match the first session
 before measurements resume. Git revision strings remain informational.
 
-The addendum pin names the frozen `configuration/family-addendum.json`. Resolution
+The addendum pin names the frozen `family-addendum.json`. Resolution
 evidence names a repository-relative pilot `receipt.json` and its SHA-256. Before
 reserving a ledger attempt, the runner checks that digest and the pilot's addendum
 and ledger prefix against the pilot's pins; the acceptance tool verifies the

@@ -41,6 +41,6 @@
 
 - Progress + escalations + statuses: `progress.json` here (current through the armed timer)
 - Phase-1 artifact set + draft manifest: this directory, committed `776858ed`, doc-linked to `7a816262`
-- Premeasurement plan + runner: `premeasure-plan-v1{csv,md}`, `dev/scripts/permanent-campaign-runner.sh` (`premeasure`, `premeasure-collect`), tests `dev/scripts/permanent-campaign-premeasure.test.sh`
+- Premeasurement plan + runner: `premeasure-plan-v1{csv,md}`, `permanent-campaign-runner.sh` (`premeasure`, `premeasure-collect`), tests `permanent-campaign-premeasure.test.sh`
 - Overnight log (after 02:00): `target/permanent-campaign/systemd-premeasure.log`; receipts `target/permanent-campaign/premeasure-v1/`
 - Protocol (authoritative): `protocol.md` §Backend freeze

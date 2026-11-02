@@ -15,7 +15,7 @@
 
 ## The overnight campaign run (2026-08-14 02:00 EEST)
 
-- systemd user timer `gf2-permanent-campaign.timer` fires 02:00 and runs `dev/scripts/permanent-campaign-runner.sh measure >> target/permanent-campaign/systemd-measure.log`, a deterministic AI-free runner (owner directive). It refuses a non-pristine tree (tracked AND untracked) both before and after acquiring the full-host bench mutex — **main must stay pristine overnight; do not leave worktrees or untracked files.**
+- systemd user timer `gf2-permanent-campaign.timer` fires 02:00 and runs `permanent-campaign-runner.sh measure >> target/permanent-campaign/systemd-measure.log`, a deterministic AI-free runner (owner directive). It refuses a non-pristine tree (tracked AND untracked) both before and after acquiring the full-host bench mutex — **main must stay pristine overnight; do not leave worktrees or untracked files.**
 - It runs, serially per field q=3,5,7: one global backend-equivalence run (gating each field's timing on its per-q verdict), the timing grid, gray-update and horizontal-product isolation — outputs and provenance land directly in `dev/studies/047b62ed`, `dev/studies/91605d4d`, `dev/studies/6c7fcb38`. Exit 0 = all steps completed; exit 7 = censored (per-step evidence in the run-summary files); exit 2 = refused/infrastructure.
 - Morning checklist: `systemctl --user status gf2-permanent-campaign.service`; read `target/permanent-campaign/systemd-measure.log` and the three `*-run-summary.txt`; commit the study outputs per issue; then drive each campaign issue's receipts/report against its REQ-01..15 (the runner produces raw evidence, the issues own the committed receipts/analysis), gates `code-review` + `doc-review`, serially F_3 → F_5 → F_7.
 - Kernel resource receipts (REQ-07 inputs) are in `target/permanent-campaign/hip-resource-usage-*/receipt.txt` from the final `prepare` — copy/commit the relevant receipt contents with the campaign receipts; target/ is transient.
@@ -46,7 +46,7 @@ None pending. (Owner directives this session: campaigns run overnight via the de
 ## Reference artefacts
 
 - Progress: `progress.json` here (wave plan re-derived 2026-08-13; `created_during_execution` carries 2ddf2f4b; `surfaced_pitfalls` has 15 entries incl. the preregistration-timing advisory that binds the aspirational estimator issues)
-- Runner: `dev/scripts/permanent-campaign-runner.sh` (+ `.test.sh`, 8 stub tests), smoke evidence linked on `2ddf2f4b`
+- Runner: `permanent-campaign-runner.sh` (+ `.test.sh`, 8 stub tests), smoke evidence linked on `2ddf2f4b`
 - Rank-deficiency receipt: `e0251af3-rank-event-rates.md`
-- Accumulator: `accumulator.rs` + `tests/accumulator_contract.rs`
+- Accumulator: `accumulator.rs` + `accumulator_contract.rs`
 - Exact anchors: `crates/gf2-algebra/src/permanent/exact.rs`, `exact-anchors.csv`

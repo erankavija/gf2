@@ -170,7 +170,7 @@ distinct in both code and prose, as required by `@/inv/single-source-prose`.
 `crates/gf2-algebra/src/permanent/parallel_bipedal3.rs:102` splits one matrix's
 Gray-code walk. The follow-up note is at
 `crates/gf2-algebra/src/parallel.rs:5-7` — note the path: the file is
-`src/parallel.rs`, **not** `src/permanent/parallel.rs` as the study's citation
+`src/parallel.rs`, **not** `parallel.rs` as the study's citation
 implies; `parallel.rs` does not exist. The
 module is described at `:11-14` as "a top-level parallel scaffold for future
 parallel algorithms". `permanent/mod.rs:42-46` gates only `parallel_bipedal3`;
@@ -366,13 +366,13 @@ stay conditional on that search (`feasibility-study.md:1571-1575`).
 permanent-statistics precedent.
 
 **Archive.** `ae82bd73-gf2-algebra-permanent/` holds the epic that
-built the kernels: `plans/gf2_algebra_permanent.md` (design), `plans/a9e461de/`
+built the kernels: `gf2_algebra_permanent.md` (design), `plans/a9e461de/`
 (S5 GPU crossover writeup), `plans/363556e6/` (S3 cross-CPU), `plans/8e4e19a0/`
 and `plans/.../r3_perm_uniformity_empirical.md` (the perm-vs-det uniformity
 work — relevant to REQ-05 and explicitly distinguished from it at
 `feasibility-study.md:1483-1490`). `6efb756b-grand/` holds the FEC
 campaign-runner history including
-`active/a4d86b3d-configurable-simulation-campaign-runner/a4d86b3d-campaign-runner-plan.md`,
+`a4d86b3d-campaign-runner-plan.md`,
 the plan behind `sim_runner`.
 
 ## 3. Consumer sweep

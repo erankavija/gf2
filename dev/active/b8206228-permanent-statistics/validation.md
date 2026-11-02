@@ -2,7 +2,7 @@
 
 Status: draft validation record.
 
-The temporary reader test invokes the public `gf2_sim::permanent_campaign::schema::read_manifest` function against `manifest-draft/manifest.json` and checks the 63-cell count, the three resolved backends, the 60 `generic_ryser` placeholders, and `Evaluate` on every cell.
+The temporary reader test invokes the public `gf2_sim::permanent_campaign::schema::read_manifest` function against `manifest.json` and checks the 63-cell count, the three resolved backends, the 60 `generic_ryser` placeholders, and `Evaluate` on every cell.
 
 ```text
 flock -o "${XDG_RUNTIME_DIR:-/tmp}/cargo-ci.lock" cargo test -p gf2-sim --test phase1_manifest_reader --release

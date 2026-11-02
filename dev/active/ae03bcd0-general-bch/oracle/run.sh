@@ -38,7 +38,7 @@ cd "$root"
 fixtures="crates/gf2-coding/tests/data/bch_oracle"
 sage_script="dev/active/ae03bcd0-general-bch/oracle/sage_oracle.py"
 gap_script="dev/active/ae03bcd0-general-bch/oracle/gap_oracle.g"
-receipt="dev/active/ae03bcd0-general-bch/oracle-receipt.md"
+receipt="target/oracle/oracle-receipt.md"
 
 corpus="$fixtures/corpus.json"
 sage_out="$fixtures/sage.json"

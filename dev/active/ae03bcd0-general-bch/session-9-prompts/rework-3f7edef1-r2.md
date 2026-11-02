@@ -22,7 +22,7 @@ for path in glob.glob(".jit/gate-runs/*/result.json"):
         for f in (r.get("findings") or {}).get("findings",[]):
             print(r["gate_key"], r.get("completed_at","")[:16], "[{}] {}: {} ({}:{})".format(f.get("severity"),f.get("id"),f.get("summary"),f.get("file"),f.get("line")))'
 jit doc list 3f7edef1
-grep -inE '\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|punt(ed)?)\b' dev/active/ae03bcd0-general-bch/oracle-provenance.md dev/active/ae03bcd0-general-bch/oracle-receipt.md dev/active/ae03bcd0-general-bch/oracle/*.{sh,py,g} crates/gf2-coding/tests/bch_oracle_agreement.rs
+grep -inE '\b(deferred|todo|future work|open question|not (yet )?implemented|follow-?up|out of scope|punt(ed)?)\b' dev/active/ae03bcd0-general-bch/oracle-provenance.md oracle-receipt.md dev/active/ae03bcd0-general-bch/oracle/*.{sh,py,g} crates/gf2-coding/tests/bch_oracle_agreement.rs
 ```
 (The gate-runs directory exists only in the main checkout; if the scan is empty in your worktree, the findings below are the verbatim record.)
 
@@ -49,7 +49,7 @@ Resolve: `jit item show @/issue/3f7edef1/requirement/REQ-01 @/issue/3f7edef1/req
 1. The audit block above: one resolution-table row per finding across all rounds and gates (code-review R1 F1–F3, R2 F1; doc-review R1 F1, R2 F1; research-review R1 F1–F5, R2 F1–F5).
 2. Deferred-item grep (audit block) over every touched file, including the new attempts directory.
 3. `rg -n "predeclar|808|largest heap|48\.6|40 GiB|25\.7" dev/active/ae03bcd0-general-bch crates/gf2-coding/tests/bch_oracle_agreement.rs crates/gf2-coding/src/test_support.rs` — every remaining match is either read from a committed artifact the sentence cites or is removed.
-4. `grep -nE '\]\(/|`/dev' dev/active/ae03bcd0-general-bch/oracle-provenance.md dev/active/ae03bcd0-general-bch/oracle-receipt.md` (no root-absolute links); present tense; no dates in prose beyond receipt fields, artifact directory names, and amendment headings.
+4. `grep -nE '\]\(/|`/dev' dev/active/ae03bcd0-general-bch/oracle-provenance.md oracle-receipt.md` (no root-absolute links); present tense; no dates in prose beyond receipt fields, artifact directory names, and amendment headings.
 
 ## Verification (paste outputs)
 
