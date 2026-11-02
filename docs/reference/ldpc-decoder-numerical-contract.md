@@ -39,7 +39,7 @@ ascending index.
 
 ## Check-node update
 
-Every check writes its outgoing messages through
+The canonical decoder writes each check's outgoing messages through
 `gf2_coding::ldpc::min_sum_check_row`
 ([`min_sum.rs`](../../crates/gf2-coding/src/ldpc/min_sum.rs)). For the output
 on edge $e$ of check $c$, the *other inputs* are the messages $\mu_{e'}$ on
@@ -93,6 +93,14 @@ hold for every setting of the `simd` cargo feature and every host capability.
 The decoder does not reach the AVX2 kernel of `Llr::boxplus_minsum_n`, whose
 vector lanes take the sign bit and so disagree with the sign rule; the rustdoc
 of `min_sum_check_row` states the divergence.
+
+The explicitly constructed `QcDecoder`
+([`qc.rs`](../../crates/gf2-coding/src/ldpc/qc.rs)) applies these same rules
+with lanes representing lifted checks within one frame. Its portable and AVX2
+kernels preserve each check's edge order and each variable's accumulation order.
+[`ldpc_qc_contract`](../../crates/gf2-coding/tests/ldpc_qc_contract.rs) compares
+posterior bits, words and outcomes with the canonical decoder on both paths,
+including zero caps, reuse, special values and both stopping modes.
 
 ## Channel scaling and saturation
 

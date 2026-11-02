@@ -1,0 +1,124 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::ldpc_qc::check_block_avx2_unchecked
+; output        : crates/gf2-kernels-simd/src/x86/asm/ldpc_qc.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : 89e8a3004
+; regenerated   : 2026-11-02T23:50:40Z
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::ldpc_qc::check_block_avx2_unchecked
+;==========================================================
+
+gf2_kernels_simd::x86::ldpc_qc::check_block_avx2_unchecked:
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	mov rax, qword ptr [rsp + 48]
+	lea r10, [r9 - 2147483648]
+	cmp r10, -2147483646
+	jae .LBB127_2
+	xor r10d, r10d
+	jmp .LBB127_15
+.LBB127_2:
+	mov r10, rax
+	shr r10, 3
+	je .LBB127_14
+	vbroadcastss ymm1, xmm0
+	lea r11, [4*rax]
+	vbroadcastss ymm2, dword ptr [rip + .LCPI127_0]
+	vbroadcastss ymm3, dword ptr [rip + .LCPI127_1]
+	xor ebx, ebx
+	vxorps xmm4, xmm4, xmm4
+	vbroadcastss ymm5, dword ptr [rip + .LCPI127_2]
+	vbroadcastss ymm6, dword ptr [rip + .LCPI127_3]
+	mov r14, rcx
+	mov r15, rsi
+	jmp .LBB127_4
+.LBB127_13:
+	add r15, 32
+	add r14, 32
+	cmp rbx, r10
+	je .LBB127_14
+.LBB127_4:
+	inc rbx
+	vpcmpeqd ymm7, ymm7, ymm7
+	mov r12, r15
+	vmovaps ymm8, ymm3
+	xor r13d, r13d
+	vmovaps ymm9, ymm2
+	vmovaps ymm10, ymm3
+.LBB127_5:
+	vmovups ymm11, ymmword ptr [r12]
+	vcmpnge_uqps ymm12, ymm11, ymm4
+	vxorps ymm13, ymm9, ymm5
+	vblendvps ymm9, ymm9, ymm13, ymm12
+	vandps ymm11, ymm11, ymm6
+	vcmpltps ymm12, ymm11, ymm8
+	vcmpltps ymm13, ymm11, ymm10
+	vblendvps ymm10, ymm10, ymm11, ymm13
+	vblendvps ymm10, ymm10, ymm8, ymm12
+	vblendvps ymm8, ymm8, ymm11, ymm12
+	vmovd xmm11, r13d
+	vpbroadcastd ymm11, xmm11
+	vpblendvb ymm7, ymm7, ymm11, ymm12
+	inc r13
+	add r12, r11
+	cmp r9, r13
+	jne .LBB127_5
+	vxorps ymm11, ymm9, ymm5
+	xor r12d, r12d
+	xor r13d, r13d
+	jmp .LBB127_7
+.LBB127_11:
+	vmulps ymm12, ymm13, ymm12
+.LBB127_12:
+	inc r13
+	vmovups ymmword ptr [r14 + r12], ymm12
+	add r12, r11
+	cmp r9, r13
+	je .LBB127_13
+.LBB127_7:
+	vmovups ymm12, ymmword ptr [r15 + r12]
+	vcmpnge_uqps ymm12, ymm12, ymm4
+	vblendvps ymm12, ymm9, ymm11, ymm12
+	vmovd xmm13, r13d
+	vpbroadcastd ymm13, xmm13
+	vpcmpeqd ymm13, ymm13, ymm7
+	vblendvps ymm13, ymm8, ymm10, ymm13
+	test edi, edi
+	je .LBB127_11
+	cmp edi, 1
+	jne .LBB127_9
+	vmulps ymm12, ymm13, ymm12
+	vmulps ymm12, ymm12, ymm1
+	jmp .LBB127_12
+.LBB127_9:
+	vsubps ymm13, ymm13, ymm1
+	vmaxps ymm13, ymm13, ymm4
+	vmulps ymm12, ymm12, ymm13
+	jmp .LBB127_12
+.LBB127_14:
+	mov r10, rax
+	and r10, -8
+.LBB127_15:
+	push r10
+	push rax
+	vzeroupper
+	call qword ptr [rip + gf2_kernels_simd::ldpc_qc::check_block_scalar@GOTPCREL]
+	add rsp, 16
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	ret

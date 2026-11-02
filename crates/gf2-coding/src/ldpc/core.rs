@@ -14,6 +14,7 @@ use gf2_core::BitVec;
 pub struct LdpcCode {
     /// Sparse parity-check matrix in dual representation
     h: SpBitMatrixDual,
+    qc: Option<std::sync::Arc<QuasiCyclicLdpc>>,
     /// Number of variable nodes (codeword length)
     n: usize,
     /// Number of check nodes (parity checks)
@@ -33,6 +34,7 @@ impl LdpcCode {
         let h = SpBitMatrixDual::from_coo(m, n, edges);
         Self {
             h,
+            qc: None,
             n,
             m,
             cached_generator: std::sync::Arc::new(std::sync::Mutex::new(None)),
@@ -84,7 +86,16 @@ impl LdpcCode {
         let edges = qc.to_edges();
         let m = qc.expanded_rows();
         let n = qc.expanded_cols();
-        Self::from_edges(m, n, &edges)
+        let mut code = Self::from_edges(m, n, &edges);
+        code.qc = Some(std::sync::Arc::new(qc.clone()));
+        code
+    }
+
+    /// The QC description retained by [`Self::from_quasi_cyclic`].
+    ///
+    /// Returns `None` for other constructors; structure is not inferred from edges.
+    pub fn quasi_cyclic(&self) -> Option<&QuasiCyclicLdpc> {
+        self.qc.as_deref()
     }
 
     /// Creates a DVB-T2 short frame LDPC code (n=16200) from the

@@ -63,7 +63,7 @@ pub enum LaneMinSumRule {
 
 impl LaneMinSumRule {
     #[inline]
-    fn apply(self, sign: f32, magnitude: f32) -> f32 {
+    pub(crate) fn apply(self, sign: f32, magnitude: f32) -> f32 {
         match self {
             Self::Plain => sign * magnitude,
             Self::Normalized(alpha) => alpha * (sign * magnitude),
