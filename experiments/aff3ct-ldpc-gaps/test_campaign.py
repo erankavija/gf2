@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -124,17 +125,18 @@ def test_resume_recognizes_only_a_complete_terminal_record(tmp_path):
 
 
 def test_sessions_hold_the_full_host_without_duplicating_flags():
-    command = runner.session_command({"wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host"},
+    command = runner.session_command({"wrapper": "tools/lock.sh --full-host"},
                                      "runner", Path("stage"), Path("plan"))
     assert command.count("--full-host") == 1
     assert command[-4:] == ["runner", "run", "stage", "plan"]
 
 
 @pytest.mark.parametrize("dropped_width,supplied,accepted", [(0.01, None, True), (0.3, 0.02, False)])
-def test_freezer_uses_dropped_cells_in_its_resolution_floor(tmp_path, dropped_width, supplied, accepted):
+def test_freezer_uses_dropped_cells_in_its_resolution_floor(request, tmp_path, dropped_width, supplied, accepted):
     # All fixture data is synthesized; no campaign evidence is checked in.
-    pilot = tmp_path / "pilot"
-    pilot.mkdir()
+    pilot = ROOT / "target" / f"freezer-pilot-{tmp_path.name}"
+    pilot.mkdir(parents=True)
+    request.addfinalizer(lambda: shutil.rmtree(pilot, ignore_errors=True))
     write(pilot / "receipt.json", {"family_id": "fixture"})
     summary = {"schema": "zen3-benchmark-acceptance-v2", "receipt_sha256": digest(pilot / "receipt.json"),
                "label": "pilot", "verdict": "accepted", "campaign_id": "fixture-pilot",
@@ -185,3 +187,42 @@ def test_confirmation_plans_only_retained_cells_and_preserves_the_freeze(tmp_pat
     assert [cell["cell_id"] for cell in plan["cells"]] == [frozen["cells"][0]["cell_id"]]
     assert plan["label"] == "confirmation"
     assert all(cell["pilot_pairs"] is None for cell in plan["cells"])
+
+
+def literal_relative(path):
+    """The shared validator's rule for a repository path in an addendum."""
+    parts = Path(path).parts
+    return bool(path) and not Path(path).is_absolute() and all(
+        part not in ("..", ".", "/") for part in parts) and not any(c in path for c in "*?[]")
+
+
+def test_frozen_addendum_names_an_absolute_pilot_by_repository_relative_path():
+    import tempfile
+    (ROOT / "target").mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=ROOT / "target") as scratch:
+        scratch = Path(scratch)
+        pilot = scratch / "pilot"
+        pilot.mkdir()
+        write(pilot / "receipt.json", {"family_id": "fixture"})
+        write(pilot / "acceptance-summary.json", {
+            "schema": "zen3-benchmark-acceptance-v2", "receipt_sha256": digest(pilot / "receipt.json"),
+            "label": "pilot", "verdict": "accepted", "campaign_id": "fixture-pilot",
+            "family": {"family_id": "fixture", "comparisons": 1, "family_alpha": 0.05,
+                       "attempt_alpha": 0.05, "corrected_alpha": 0.05, "per_comparison_confidence": 0.95},
+            "cells": [{"cell_id": "keep", "pairs": 12,
+                       "interval": {"estimate": 1.0, "lower": 0.99, "upper": 1.01}}]})
+        write(scratch / "pilot-addendum.json", {
+            "family": {"id": "fixture"}, "frozen": {},
+            "effect": {"worthwhile_speedup": 1.1, "equivalence_margin": 1.1, "material_gap_threshold": None},
+            "cells": [{"cell_id": "keep", "role": "exploratory"}]})
+        result = subprocess.run([sys.executable, str(HERE / "freeze-confirmation.py"),
+                                 "--pilot-addendum", str(scratch / "pilot-addendum.json"),
+                                 "--pilot", str(pilot.resolve()), "--frozen-utc", "2026-11-03T00:00:00Z",
+                                 "--output", str(scratch / "addendum.json"),
+                                 "--record", str(scratch / "derivation.txt")],
+                                capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+        evidence = read(scratch / "addendum.json")["effect"]["resolution_evidence"]
+        assert literal_relative(evidence["receipt"]), evidence["receipt"]
+        assert (ROOT / evidence["receipt"]).read_bytes() == (pilot / "receipt.json").read_bytes()
+        assert len(evidence["sha256"]) == 64

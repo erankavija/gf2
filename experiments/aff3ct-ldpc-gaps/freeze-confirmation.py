@@ -11,7 +11,8 @@ import copy
 import hashlib
 import json
 import math
-from campaign import output_path
+from pathlib import Path
+from campaign import output_path, repository_relative
 
 
 def main():
@@ -51,11 +52,15 @@ def main():
         if value is not None and rationale is None:
             raise SystemExit(f"replacing {name} needs a rationale")
 
-    receipt_path = f"{args.pilot.rstrip('/')}/receipt.json"
-    with open(receipt_path, "rb") as handle:
+    pilot_dir = Path(args.pilot).resolve()
+    try:
+        receipt_path = repository_relative(pilot_dir / "receipt.json")
+    except ValueError as error:
+        raise SystemExit(str(error))
+    with open(pilot_dir / "receipt.json", "rb") as handle:
         receipt_bytes = handle.read()
     receipt_sha = hashlib.sha256(receipt_bytes).hexdigest()
-    with open(f"{args.pilot.rstrip('/')}/acceptance-summary.json") as handle:
+    with open(pilot_dir / "acceptance-summary.json") as handle:
         summary = json.load(handle)
     with open(args.pilot_addendum) as handle:
         addendum = json.load(handle)

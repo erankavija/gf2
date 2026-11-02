@@ -5,7 +5,6 @@
   "label": "pilot",
   "campaign_seed": 3674285378,
   "addendum": "target/aff3ct-ldpc-gaps/55c3e433-check-variants/pilot/addendum.json",
-  "producing_manifest": "dev/tools/tuning-campaign-support/config/producing-inputs.json",
   "lock_path": "/tmp/gf2-ccx1.lock",
   "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
   "timing_override": null,
