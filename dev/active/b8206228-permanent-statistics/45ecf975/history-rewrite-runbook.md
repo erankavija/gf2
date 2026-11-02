@@ -52,5 +52,4 @@ The force-push waits for the owner's confirmation in `@/issue/45ecf975`.
 | `jit validate` after mapping | | passes |
 | Compressed commit map | | 468 KB |
 
-Full CI on the rewritten checkout awaits a quiet host. The run during the
-rehearsal failed with timeouts while two workers loaded the host.
+Full `./scripts/cargo-ci.sh` passes on the rewritten checkout on a quiet host.
