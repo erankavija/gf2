@@ -1,0 +1,19 @@
+[package]
+name = "dvb-t2-awgn"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+description = "DVB-T2 BICM AWGN calibration and error-rate campaign"
+
+[features]
+hip = ["gf2-sim/hip"]
+
+[dependencies]
+gf2-coding = { path = "../../crates/gf2-coding" }
+gf2-sim = { path = "../../crates/gf2-sim" }
+tracing = "0.1"
+
+[dev-dependencies]
+gf2-core = { path = "../../crates/gf2-core", features = ["test-support"] }
+serde_json = { workspace = true }

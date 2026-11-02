@@ -19,7 +19,12 @@ equivalents within a declared numerical contract.
 | [`gf2-stats`](crates/gf2-stats/README.md) | Seeded matrix sampling, binomial intervals and exact binomial tests for campaigns |
 
 `gf2-coding`, `gf2-algebra` and `gf2-stats` depend on `gf2-core`; `gf2-sim`
-depends on all four.
+depends on `gf2-core` and `gf2-coding`.
+
+The [eBCH OSD](experiments/osd-ebch/README.md) and
+[DVB-T2 AWGN](experiments/dvb-t2-awgn/README.md) experiment crates consume
+`gf2-sim` checkpoints and pipelines and `gf2-coding` APIs. Shared experiment
+identity types live in [`experiments/common`](experiments/common/).
 
 Two backend crates hold the workspace's production `unsafe` code and are
 reached through the library crates' Cargo features

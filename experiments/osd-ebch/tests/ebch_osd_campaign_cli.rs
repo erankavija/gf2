@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
 use gf2_core::test_scratch::{scratch, Scratch};
-use gf2_sim::osd_campaign::{OsdCampaignReceipt, OsdCellTermination};
+use osd_ebch::osd_campaign::{OsdCampaignReceipt, OsdCellTermination};
 
 fn temp_dir(label: &str) -> Scratch {
     scratch(&format!("gf2-ebch-osd-cli-{label}"))

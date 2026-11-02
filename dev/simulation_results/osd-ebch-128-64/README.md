@@ -20,7 +20,7 @@ reproduction target.
 
 The receipt and checkpoint are **schema version 2**
 (`schema_version`; `OSD_CAMPAIGN_SCHEMA_VERSION` at
-`crates/gf2-sim/src/osd_campaign.rs:121`). Every number below is a projection of
+`experiments/osd-ebch/src/osd_campaign.rs`). Every number below is a projection of
 `ebch_osd_awgn.json`, of [`comparison.json`](comparison.json) — which `plot.py`
 derives from that receipt and the dataset — of the committed reference dataset
 [`osd_ebch_128_64_fossorier1994.csv`](../../reference_data/osd_ebch_128_64_fossorier1994.csv),
@@ -34,9 +34,11 @@ All fourteen cells hold a completed result, every completed cell holds exactly
 
 ## What was run
 
-The producer is `crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs`, built as the
-`gf2-sim` release binary `ebch_osd_awgn_campaign` and driven by the reusable
-protocol in `gf2_sim::osd_campaign`.
+Build the producer with
+`./scripts/cargo-budget.sh cargo build -p osd-ebch --release --bin ebch_osd_awgn_campaign`.
+The producer is `experiments/osd-ebch/src/bin/ebch_osd_awgn_campaign.rs`, built as the
+`osd-ebch` release binary `ebch_osd_awgn_campaign` and driven by the reusable
+protocol in `osd_ebch::osd_campaign`.
 
 One invocation produced the whole campaign. The receipt's `invocation_history`
 holds a single entry with `first_attempt_index = 0` and `attempt_count = 14`,
@@ -58,7 +60,7 @@ twice: seven order-2 target cells and seven order-1 control cells (`cells`). The
 campaign root seed is `0xC8322EFF` (`campaign_seed` $= 3358732031$), and each
 cell's stream seed is derived from that root and the cell's stable identity
 through domain-separated BLAKE3 (`derive_cell_seed`,
-`crates/gf2-sim/src/osd_campaign.rs:1081`), so grid order cannot change a cell's
+`experiments/osd-ebch/src/osd_campaign.rs`), so grid order cannot change a cell's
 samples. A cell completes at its 100th block error
 (`target_block_errors` $= 100$).
 
@@ -67,7 +69,7 @@ most-reliable-independent positions, lexicographically ascending within a
 weight. The source leaves reliability ties and equal-distance ties undefined:
 this implementation breaks a reliability tie by ascending original coordinate
 index and retains the first generated candidate at an equal metric
-(`crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs:24-30`). Those are
+(`experiments/osd-ebch/src/bin/ebch_osd_awgn_campaign.rs`). Those are
 implementation decisions, not source claims.
 
 The campaign binary evaluates a cell's blocks on many workers (`258be082`).
@@ -76,7 +78,7 @@ its cell, cell seed, and block index, and the protocol commits worker outcomes
 in block-index order, so for a fixed campaign and seed every counter, the
 stopping index, and the receipt payload are byte-identical across worker counts,
 with the single-worker run as the reference
-(`crates/gf2-sim/src/osd_campaign.rs:12-40`, `@/inv/deterministic-seeded-execution`).
+(`experiments/osd-ebch/src/osd_campaign.rs`, `@/inv/deterministic-seeded-execution`).
 The worker count is invocation-local: it is excluded from the campaign
 configuration identity and reaches the receipt only through the recorded
 argument vector. That invariance is witnessed end to end on this evaluator by
@@ -106,10 +108,10 @@ Each row names the receipt field it projects.
 | Configuration hash | `blake3:add07016…` | `configuration_hash` |
 
 The revision is observed at run start and recorded as context rather than as the
-dataset's identity (`crates/gf2-sim/src/permanent_campaign/schema.rs:623-625`),
+dataset's identity (`experiments/osd-ebch/src/provenance.rs`),
 so it names the revision the campaign ran at rather than the commit that carries
-these files. The source-closure revision is the revision of `crates/` and
-`Cargo.lock` (`schema.rs:630-633`).
+these files. The receipt records the source-closure revision of `crates/` and
+`Cargo.lock` in `provenance.runtime.deps_source_revision`.
 
 The receipt's `cpu_model` names the processor but not the host. The host
 identity is committed beside the receipt as [`host-lscpu.txt`](host-lscpu.txt),
@@ -139,8 +141,8 @@ value exactly when
 
 $$p \in \left[L \cdot 10^{-\delta},\; U \cdot 10^{+\delta}\right],$$
 
-which is the predicate `gf2_sim::osd_campaign::accepts_published_value`
-(`crates/gf2-sim/src/osd_campaign.rs:1105-1131`). The gap column is
+which is the predicate `osd_ebch::osd_campaign::accepts_published_value`
+(`experiments/osd-ebch/src/osd_campaign.rs`). The gap column is
 $\log_{10}(\widehat{\text{BER}} / p)$ and carries no verdict; it is reported so
 the strength of each agreement is visible independently of the accept/reject
 outcome (`@/inv/uncertainty-reported`).
@@ -397,36 +399,36 @@ it, and no acceptance verdict is recorded or claimed for any order-1 cell.
 ## Statistical contract
 
 The authoritative statement of this contract is the module documentation at
-`crates/gf2-sim/src/osd_campaign.rs:42-100`. What follows projects it.
+`experiments/osd-ebch/src/osd_campaign.rs`. What follows projects it.
 
 **Stopping design.** A cell stops at its $K$-th block error, with
 $K = $ `target_block_errors` $ = 100$. The protocol accepts a completed cell only
 with exactly $K$ block errors and refuses an evaluator result carrying more or
-fewer (`validate_cell_run`, `crates/gf2-sim/src/osd_campaign.rs:1611-1622`). The
+fewer (`validate_cell_run`, `experiments/osd-ebch/src/osd_campaign.rs`). The
 rule is enforced structurally rather than by an evaluator's cooperation: workers
 evaluate blocks speculatively and out of order, and the protocol commits their
 outcomes in block-index order, completing the cell at the smallest block index
 whose in-order cumulative block-error count reaches $K$. Outcomes past that
 index are discarded and contribute to no counter, so an evaluator cannot choose
 termination, report aggregate counters, or skip, reorder, or double-count blocks
-(`crates/gf2-sim/src/osd_campaign.rs:21-29`). The total block count $N$ is
+(`experiments/osd-ebch/src/osd_campaign.rs`). The total block count $N$ is
 therefore a stopping time and the design is inverse-binomial.
 
 **Why the intervals are what they are.** BER factors over that design as
 $\text{BER} = \text{BLER} \cdot \mu$, where $\mu$ is the mean information-bit
 error fraction of a failing block. For a requested two-sided level
 $1 - \alpha = 0.95$, each factor is bounded at the component level
-$1 - \alpha/2 = 0.975$ (`OsdIntervalSpec::component_level`,
-`crates/gf2-sim/src/osd_campaign.rs:394`):
+$1 - \alpha/2 = 0.975$ (`BinomialIntervalSpec::component_level`,
+`experiments/osd-ebch/src/osd_campaign.rs`):
 
 - **BLER** uses the equal-tailed exact inversion of the inverse-binomial
   sampling distribution, recorded as `negative_binomial_clopper_pearson`
-  (`crates/gf2-sim/src/osd_campaign.rs:403-412`). Its endpoints are the ones
+  (`experiments/osd-ebch/src/osd_campaign.rs`). Its endpoints are the ones
   tabulated above, at level $0.975$.
 - **$\mu$** uses the Maurer-Pontil empirical-Bernstein bound [MaurerPontil2009]
   over the $K$ per-failing-block error fractions, intersected with the domain
   $[1/k, 1]$ for information-block length $k = 64$
-  (`crates/gf2-sim/src/osd_campaign.rs:63-72`, `:338`; the implementation and
+  (`experiments/osd-ebch/src/osd_campaign.rs`; the implementation and
   its one-sided coverage statement are at
   `crates/gf2-stats/src/intervals.rs:218-235`). $K$ is fixed by the
   stopping rule, so this fixed-sample bound applies. The bound is
@@ -438,7 +440,7 @@ $1 - \alpha/2 = 0.975$ (`OsdIntervalSpec::component_level`,
 The recorded BER interval is the endpoint product
 $[L_{\text{BLER}} \cdot L_\mu,\; U_{\text{BLER}} \cdot U_\mu]$, recorded as
 `block_ratio_product_interval` at level $0.95$
-(`crates/gf2-sim/src/osd_campaign.rs:439-452`). All four endpoints are
+(`experiments/osd-ebch/src/osd_campaign.rs`). All four endpoints are
 non-negative, so the product contains BER whenever both factor intervals contain
 their factors; **by a union bound over the two failure events** its coverage is
 at least $1 - \alpha/2 - \alpha/2 = 1 - \alpha$. That is Boole's inequality over
@@ -456,14 +458,14 @@ the inverse-binomial estimator it actually dispatched rather than a
 Clopper-Pearson one. The protocol refuses to configure a live campaign with the
 fixed-trial method at all — "a block-error stopping rule leaves the block count
 a stopping time and requires the inverse-binomial exact interval"
-(`validate_campaign`, `crates/gf2-sim/src/osd_campaign.rs:1342-1346`, called
-from `OsdCampaign::new` at `:966`). That variant survives only for reading
-schema-1 evidence (`crates/gf2-sim/src/osd_campaign.rs:248-253`). The coverage
+(`validate_campaign`, `experiments/osd-ebch/src/osd_campaign.rs`, called
+from `OsdCampaign::new`). That variant survives only for reading
+schema-1 evidence (`experiments/osd-ebch/src/osd_campaign.rs`). The coverage
 statement also applies **only to a completed cell**: an attempt that stopped for
 any other
 reason retains its cumulative counters but records no intervals, because its
 block-error count is not the design's fixed $K$
-(`crates/gf2-sim/src/osd_campaign.rs:81-85`).
+(`experiments/osd-ebch/src/osd_campaign.rs`).
 
 **The intervals are wide, and that is the cost of the budget.** At $K = 100$
 block errors the recorded BER interval spans a factor of $5.70$ to $7.89$ end to
@@ -516,13 +518,13 @@ The contract (`@/inv/campaign-resumability`):
 - An invocation skips every cell already holding a **terminal** result and never
   re-evaluates it. Completed, censored, exhausted, and contradictory results are
   all terminal; only `interrupted` is not
-  (`settled_cell_ids`, `crates/gf2-sim/src/osd_campaign.rs:1527`;
-  `is_terminal`, `:577`). Completed work is therefore never repeated.
+  (`settled_cell_ids`, `experiments/osd-ebch/src/osd_campaign.rs`;
+  `is_terminal`). Completed work is therefore never repeated.
 - Reaching `--max-samples` for a pending cell records an **interrupted** attempt
   holding that cell's cumulative counters. A later invocation restores them and
   continues at the next block index under the same cell seed, reaching the
   evidence an uninterrupted run would have
-  (`crates/gf2-sim/src/osd_campaign.rs:32-34`, `latest_resume` at `:1384`). The
+  (`experiments/osd-ebch/src/osd_campaign.rs`, `latest_resume`). The
   bound is consulted without reference to any outcome, so the censoring it
   causes is independent of the sampled values and a resumed completed cell still
   holds exactly $K$ failing blocks drawn under the same design.
@@ -536,7 +538,7 @@ validates the checkpoint's payload identity, schema version, and complete
 configuration hash before restoring anything, and refuses on any mismatch
 (`crates/gf2-sim/src/checkpoint/mod.rs:396-408`). `OsdCampaign::config_hash`
 covers the whole validated campaign including its runtime provenance
-(`crates/gf2-sim/src/osd_campaign.rs:1007-1013`), so a resume is gated on two
+(`experiments/osd-ebch/src/osd_campaign.rs`), so a resume is gated on two
 identities beyond the campaign configuration itself:
 
 - `provenance.runtime.git_revision` — a resume is accepted only while the
@@ -555,7 +557,7 @@ b1015246dfff6a4459921bfc658fee257a4e542bbf439e2f5000924d64ea7f86
 The invocation argument vector is deliberately excluded from the hash, because
 `--max-samples` is an invocation-local bound and may differ across resumptions;
 every full vector is retained in `invocation_history`
-(`crates/gf2-sim/src/osd_campaign.rs:999-1002`).
+(`experiments/osd-ebch/src/osd_campaign.rs`).
 
 ## Figures and the derived comparison
 
@@ -623,7 +625,7 @@ coverage assumes bit independence that clustered block-burst decoder errors
 violate, and its stopping rule is a cumulative bit-error target, which leaves
 its block count a stopping time so that the fixed-trial Clopper-Pearson coverage
 its BLER intervals state is not exact either
-(`crates/gf2-sim/src/osd_campaign.rs:87-95`). Schema-1 receipts remain
+(`experiments/osd-ebch/src/osd_campaign.rs`). Schema-1 receipts remain
 deserializable as historical evidence and that set is retained unchanged; it is
 not re-derived, because the difference is a change of measurement behavior and
 reproducing those cells under the current tool is a new campaign

@@ -594,7 +594,7 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         return Err(
             "--gpu requires a build with --features hip (the HIP/ROCm GPU backend). \
              This binary was compiled WITHOUT the hip feature, so there is no device \
-             path to dispatch to. Rebuild with `cargo run -p gf2-sim --release \
+             path to dispatch to. Rebuild with `cargo run -p dvb-t2-awgn --release \
              --features hip --bin dvb_t2_awgn_campaign -- ... --gpu`, or drop --gpu \
              to run the CPU-parallel path."
                 .to_string(),

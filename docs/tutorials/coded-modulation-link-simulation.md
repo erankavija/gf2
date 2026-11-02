@@ -5,7 +5,7 @@ This tutorial simulates the DVB-T2 bit-interleaved coded modulation link of
 with confidence intervals. The chain is the BCH and LDPC normal-frame code,
 bit interleaving, 16-QAM mapping, AWGN, soft demapping and belief-propagation
 decoding. The program is the campaign binary
-[`dvb_t2_awgn_campaign.rs`](../../crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs),
+[`dvb_t2_awgn_campaign.rs`](../../experiments/dvb-t2-awgn/src/bin/dvb_t2_awgn_campaign.rs),
 which builds the chain with the `gf2-sim` DVB-T2 preset and checkpoints every
 point. Supported code configurations are in
 [Standards conformance](../reference/standards-conformance.md#dvb-t2);
@@ -55,7 +55,7 @@ library caller sets the same fields and calls `Pipeline::run_checkpointed`.
 ## Run the sweep
 
 ```bash
-./scripts/cargo-budget.sh cargo run --release -p gf2-sim --bin dvb_t2_awgn_campaign -- \
+./scripts/cargo-budget.sh cargo run --release -p dvb-t2-awgn --bin dvb_t2_awgn_campaign -- \
     --rate 1/2 --modulation 16qam --esn0-range 5.9:6.2:0.1 \
     --decoder sumproduct --demap exactlogmap \
     --target-errors 50 --max-frames 300 --heartbeat-frames 50 \
@@ -70,7 +70,7 @@ frames. Every frame's outcome is a function of the seed, the point index and
 the frame index, so the deterministic CSV columns are identical across worker
 counts ([`parallel_determinism.rs`](../../crates/gf2-sim/tests/parallel_determinism.rs))
 and across repeated runs
-([`campaign_byte_identity.rs`](../../crates/gf2-sim/tests/campaign_byte_identity.rs)).
+([`campaign_byte_identity.rs`](../../experiments/dvb-t2-awgn/tests/campaign_byte_identity.rs)).
 
 `dvb_r12_16qam/curve_1_2_16qam.csv` holds one row per point:
 

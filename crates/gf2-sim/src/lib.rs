@@ -56,8 +56,6 @@ pub mod frame_sim;
 pub mod gpu;
 pub mod graph;
 pub mod observability;
-pub mod osd_campaign;
-pub mod osd_identity;
 pub mod parallel;
 pub mod pipeline;
 pub mod presets;

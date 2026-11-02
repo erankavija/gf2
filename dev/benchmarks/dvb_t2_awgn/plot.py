@@ -2,7 +2,8 @@
 """Plot a single DVB-T2 BICM AWGN campaign curve against ETSI TS 102 831 reference points.
 
 Reads:
-  - ``<output_dir>/curve_<rate>_<mod>.csv``  (produced by dvb_t2_awgn_campaign)
+  - ``<output_dir>/curve_<rate>_<mod>.csv``
+    (producer: ``experiments/dvb-t2-awgn/src/bin/dvb_t2_awgn_campaign.rs``)
   - ``<reference_toml>``                      (crates/gf2-coding/data/dvb_t2_tr102831_reference.toml)
 
 Produces:

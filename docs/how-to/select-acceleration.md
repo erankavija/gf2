@@ -257,7 +257,7 @@ GPU paths run only where the caller selects them:
 | BCH syndromes and decoding | `BinaryBchDecoder::compute_syndromes_batch_gpu` or `correct_batch_gpu` in place of the CPU batch calls |
 | Max-log soft demapping of Gray-QAM presets | `GpuGrayQamSoftDemapper::new(spec, max_batch)` as the `BatchSoftDemapper<f32>` |
 | Product-code SISO decoding | `TurboDecoderConfig::use_gpu_bcjr`, or `use_gpu_bcjr = true` in the `turbo` table of a `sim_runner` curve |
-| DVB-T2 (`@/citation/Etsi2015`) LDPC decoding and demapping in `gf2-sim` | `with_gpu(true)` on the `gf2_sim::presets::dvb_t2` builder, or `dvb_t2_awgn_campaign --gpu` |
+| DVB-T2 (`@/citation/Etsi2015`) LDPC decoding and demapping in `gf2-sim` | `with_gpu(true)` on the `gf2_sim::presets::dvb_t2` builder, or `dvb_t2_awgn_campaign --gpu` from `experiments/dvb-t2-awgn` |
 
 The consumers handle HIP failures differently
 ([HIP backend](../concepts/acceleration-architecture.md#hip-backend)).

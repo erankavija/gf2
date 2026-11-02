@@ -2,8 +2,9 @@
 
 A campaign produces BER and BLER curves over an Eb/N0 or Es/N0 sweep. Two
 runners cover it: `sim_runner` in `gf2-coding` executes a TOML campaign file of
-LDPC, product-code and GLDPC curves, and `dvb_t2_awgn_campaign` in `gf2-sim`
-runs the DVB-T2 (`@/citation/Etsi2015`) BICM chain with per-SNR checkpoints.
+LDPC, product-code and GLDPC curves. `dvb_t2_awgn_campaign` in
+`experiments/dvb-t2-awgn` runs the DVB-T2 (`@/citation/Etsi2015`) BICM chain
+with per-SNR checkpoints.
 
 ## Configure a campaign file
 
@@ -102,7 +103,7 @@ curves run with `--parallel` reuse no rows and recompute every point.
 `dvb_t2_awgn_campaign` takes its configuration on the command line:
 
 ```bash
-./scripts/cargo-budget.sh cargo run -p gf2-sim --release --bin dvb_t2_awgn_campaign -- \
+./scripts/cargo-budget.sh cargo run -p dvb-t2-awgn --release --bin dvb_t2_awgn_campaign -- \
     --rate 1/2 --modulation 16qam --esn0-range 4.0:7.0:0.5 \
     --target-errors 100 --max-frames 10000000 \
     --output-dir dvb_r12_16qam --seed 42
@@ -117,7 +118,7 @@ over the run configuration and the link, and a resume whose identity differs
 fails with a configuration-hash mismatch. The identity excludes
 `--output-dir`. A run without `--resume` deletes existing checkpoints. The deterministic CSV columns of a resumed run equal, byte for
 byte, those of an uninterrupted run with that seed
-([`campaign_cli_flags.rs`](../../crates/gf2-sim/tests/campaign_cli_flags.rs)).
+([`campaign_cli_flags.rs`](../../experiments/dvb-t2-awgn/tests/campaign_cli_flags.rs)).
 
 The output directory also holds `curve_<rate>_<modulation>.csv` with columns
 `es_n0_db`, `fer`, `ber`, `frames`, `errors`, `mean_iters` and `wall_seconds`,

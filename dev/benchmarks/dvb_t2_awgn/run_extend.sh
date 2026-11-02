@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Producer: experiments/dvb-t2-awgn/src/bin/dvb_t2_awgn_campaign.rs
+# Build from the repository root before running:
+# ./scripts/cargo-budget.sh cargo build -p dvb-t2-awgn --release --features hip --bin dvb_t2_awgn_campaign
 # Extension sweeps: five configs whose initial window stopped just above the
 # FER=1e-4 crossing (cliff underestimated). These add the missing sub-1e-4
 # points so the crossing is bracketed by MEASURED data. Output goes to
