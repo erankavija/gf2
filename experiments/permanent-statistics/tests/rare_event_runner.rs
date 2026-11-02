@@ -61,6 +61,22 @@ fn persisted_prefix_resume_matches_uninterrupted_results_in_each_field() {
 }
 
 #[test]
+fn a_run_creates_its_missing_output_directories_and_resumes_there() {
+    let mut configuration = configuration(FieldOrder::F3);
+    configuration.rows = 3;
+    configuration.prefix_rows = 2;
+    let record = record(&configuration);
+    let parent = tempfile::tempdir().unwrap();
+    let nested = parent.path().join("a/b");
+    let stopped = execute_frozen_run(&configuration, &record, &nested, Some(1)).unwrap();
+    assert_eq!(stopped.status, RunStatus::Incomplete);
+    let resumed = execute_frozen_run(&configuration, &record, &nested, None).unwrap();
+    assert_eq!(resumed.status, RunStatus::Complete);
+    assert!(resumed.completed_trajectories > stopped.completed_trajectories);
+    assert!(nested.join("result.json").is_file());
+}
+
+#[test]
 fn completed_trajectories_survive_repeated_bounded_runs() {
     let mut configuration = configuration(FieldOrder::F3);
     configuration.rows = 3;

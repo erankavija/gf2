@@ -10,6 +10,10 @@ description = "Identity types, run identity observation and atomic publish share
 serde = { workspace = true }
 sha2 = "0.10"
 
+[build-dependencies]
+toml = "0.8"
+
 [dev-dependencies]
 serde_json = { workspace = true }
 tempfile = "3"
+toml = "0.8"

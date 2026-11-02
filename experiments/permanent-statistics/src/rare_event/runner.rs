@@ -8,7 +8,7 @@ use std::fs::File;
 use std::path::Path;
 
 use crate::execution_log::{self, ExecutionLog};
-use experiments_common::{publish_atomic, RunIdentity, RunRecord, Sha256Digest};
+use experiments_common::{create_durable, publish_atomic, RunIdentity, RunRecord, Sha256Digest};
 use gf2_algebra::permanent::SupportedPrimeField;
 use gf2_core::gfp::Fp;
 use gf2_sim::checkpoint::{
@@ -282,6 +282,7 @@ pub fn execute_frozen_run(
             ))
         }
     };
+    create_durable(directory)?;
     let writer = CheckpointWriter::for_payload(path, hash)?;
     let mut log = ExecutionLog::open(&directory.join("execution.jsonl"))?;
     File::open(directory)?.sync_all()?;

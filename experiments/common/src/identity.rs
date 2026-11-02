@@ -114,12 +114,11 @@ impl Sha256Digest {
 }
 
 /// Content identity of a file in the repository.
+#[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ArtifactIdentity {
-    /// Location from the repository root.
     pub path: ArtifactPath,
-    /// Digest of the file's bytes.
     pub sha256: Sha256Digest,
 }
 

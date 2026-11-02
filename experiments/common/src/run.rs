@@ -9,49 +9,53 @@ use crate::identity::{GitRevision, Sha256Digest};
 use crate::repository::RepositoryRoot;
 
 /// Deterministic random-number generator algorithm of a run.
+#[allow(missing_docs)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RngAlgorithm {
-    /// ChaCha20.
     ChaCha20,
 }
 
 /// Random-number generator implementation of a run.
+#[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RngIdentity {
-    /// Algorithm.
     pub algorithm: RngAlgorithm,
     /// Implementation and version, for example `rand_chacha 0.9.0`.
     pub version: String,
 }
 
-/// Build flags stamped when this crate compiled. Cargo compiles the crate under
-/// the profile and flags of the executable that links it, apart from a
-/// per-package profile override. LTO and codegen units come from the named
-/// profile; an environment override of them shows only in the executable digest.
+/// Effective build flags of the executable, stamped when this crate compiled.
+/// The build of this crate fails on a package override of the profile, so the
+/// flags describe every crate the executable links. A `--config` override on the
+/// Cargo command line stays invisible to the stamp and shows only in the
+/// executable digest.
+#[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BuildFlags {
-    /// Cargo profile name, custom profiles included.
+    /// Cargo profile name, custom profiles included; `debug` names `dev`.
     pub profile: String,
-    /// Optimization level.
     pub opt_level: String,
-    /// Target triple.
+    /// Link-time optimization value as Cargo configuration spells it; `false`
+    /// when the profile leaves it unset.
+    pub lto: String,
+    /// Absent when the profile leaves the choice to the compiler.
+    pub codegen_units: Option<u32>,
     pub target: String,
     /// Compiler flags from `RUSTFLAGS` and Cargo configuration, in order.
     pub rustflags: Vec<String>,
 }
 
 /// Processor identity and topology of the host.
+#[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CpuIdentity {
     /// Model string reported by the operating system.
     pub model: String,
-    /// Distinct physical cores.
     pub physical_cores: u32,
-    /// Logical threads.
     pub logical_threads: u32,
 }
 
@@ -66,42 +70,39 @@ pub struct AcceleratorIdentity {
 }
 
 /// Host facts observed at run time.
+#[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct HostFacts {
-    /// Processor.
     pub cpu: CpuIdentity,
-    /// Accelerator.
     pub accelerator: AcceleratorIdentity,
 }
 
 /// The closed identity set of `@/inv/behavioral-evidence-validity`. Equality of
 /// two values is equality of that set; only a change to it invalidates evidence.
+#[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RunIdentity {
     /// Digest of the running executable.
     pub executable_sha256: Sha256Digest,
-    /// Build flags of the executable.
     pub build: BuildFlags,
     /// Digest of the frozen configuration.
     pub configuration_sha256: Sha256Digest,
     /// Root seed.
     pub seed: u64,
-    /// Random-number generator implementation.
     pub rng: RngIdentity,
     /// Version of the compiler that built this crate.
     pub toolchain_version: String,
-    /// Host facts.
     pub host: HostFacts,
 }
 
 /// What a run records about itself: its identity, and the source revision as a
 /// pointer for rebuilding that takes no part in the identity.
+#[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RunRecord {
-    /// Closed identity set.
     pub identity: RunIdentity,
     /// Revision to rebuild from.
     pub source_revision: GitRevision,
@@ -144,6 +145,8 @@ impl BuildFlags {
         Self {
             profile: env!("EXPERIMENTS_BUILD_PROFILE").to_owned(),
             opt_level: env!("EXPERIMENTS_BUILD_OPT_LEVEL").to_owned(),
+            lto: env!("EXPERIMENTS_BUILD_LTO").to_owned(),
+            codegen_units: env!("EXPERIMENTS_BUILD_CODEGEN_UNITS").parse().ok(),
             target: env!("EXPERIMENTS_BUILD_TARGET").to_owned(),
             rustflags: env!("EXPERIMENTS_BUILD_RUSTFLAGS")
                 .split('\x1f')
