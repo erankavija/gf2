@@ -81,6 +81,12 @@ reports use the configuration's Wilson critical value. The analysis script
 reads target counts and the literature claim from the manifest's committed
 reference-data paths.
 
+The campaign `permanent-zero-fraction-20261102` is governed by
+[protocol.md](protocol.md), with [config/campaign.json](config/campaign.json),
+[preregistration.json](preregistration.json), and a pre-draw manifest under
+`results/`. `permanent_validation --check PATH` parses a configuration and
+reports it without opening a stream, a device, or a file.
+
 `permanent_validation --config PATH --output DIR --workers W` runs independent
 fixed-expansion exact anchors, determinant counts, fresh-stream regeneration,
 and sampled exact-null tests on `StreamPurpose::Validation`. The optional

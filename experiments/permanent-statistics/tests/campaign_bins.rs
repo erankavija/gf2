@@ -11,6 +11,36 @@ fn campaign(config: &Path, output: &Path, args: &[&str]) -> std::process::Output
         .unwrap()
 }
 #[test]
+fn validation_check_parses_and_reports_without_touching_a_stream() {
+    let validation = || Command::new(env!("CARGO_BIN_EXE_permanent_validation"));
+    let dir = tempfile::tempdir().unwrap();
+    let config = dir.path().join("config.json");
+    let parameters = common::config();
+    fs::write(&config, serde_json::to_vec(&parameters).unwrap()).unwrap();
+    let report = validation()
+        .current_dir(dir.path())
+        .arg("--check")
+        .arg(&config)
+        .output()
+        .unwrap();
+    assert_eq!(report.status.code(), Some(0));
+    let stdout = String::from_utf8(report.stdout).unwrap();
+    assert!(stdout.contains(&parameters.digest().unwrap().to_string()));
+    assert!(stdout.contains(&parameters.campaign_id));
+    assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
+
+    let missing = dir.path().join("missing.json");
+    let refused = validation().arg("--check").arg(&missing).output().unwrap();
+    assert_eq!(refused.status.code(), Some(1));
+    let mixed = validation()
+        .arg("--check")
+        .arg(&config)
+        .args(["--workers", "1"])
+        .output()
+        .unwrap();
+    assert_eq!(mixed.status.code(), Some(2));
+}
+#[test]
 fn campaign_and_dataset_exit_codes_follow_bounded_progress() {
     let dir = tempfile::tempdir().unwrap();
     let config = dir.path().join("config.json");

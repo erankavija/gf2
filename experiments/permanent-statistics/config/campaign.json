@@ -1,0 +1,330 @@
+{
+  "campaign_id": "permanent-zero-fraction-20261102",
+  "root_seed": 1600116544598179841,
+  "acceptance": {
+    "permanent_family_error": 0.025,
+    "determinant_family_error": 0.025,
+    "wilson_z": 1.959963984540054
+  },
+  "execution": {
+    "first_cell": [
+      7,
+      20
+    ],
+    "max_shard_attempts": 2,
+    "accelerator_launch_cap_ms": 500
+  },
+  "cell_groups": [
+    {
+      "q": 3,
+      "n_first": 4,
+      "n_last": 6,
+      "matrix_count": 20000000,
+      "shard_size": 200000,
+      "backend": "generic_ryser",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": null
+    },
+    {
+      "q": 3,
+      "n_first": 7,
+      "n_last": 15,
+      "matrix_count": 20000000,
+      "shard_size": 200000,
+      "backend": "batch_parallel",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": null
+    },
+    {
+      "q": 3,
+      "n_first": 16,
+      "n_last": 16,
+      "matrix_count": 20000000,
+      "shard_size": 200000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 18.0
+    },
+    {
+      "q": 3,
+      "n_first": 17,
+      "n_last": 17,
+      "matrix_count": 20000000,
+      "shard_size": 200000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 31.0
+    },
+    {
+      "q": 3,
+      "n_first": 18,
+      "n_last": 18,
+      "matrix_count": 20000000,
+      "shard_size": 200000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 56.0
+    },
+    {
+      "q": 3,
+      "n_first": 19,
+      "n_last": 19,
+      "matrix_count": 20000000,
+      "shard_size": 200000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 107.0
+    },
+    {
+      "q": 3,
+      "n_first": 20,
+      "n_last": 20,
+      "matrix_count": 20000000,
+      "shard_size": 200000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 207.0
+    },
+    {
+      "q": 3,
+      "n_first": 21,
+      "n_last": 21,
+      "matrix_count": 222223,
+      "shard_size": 50000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 407.0
+    },
+    {
+      "q": 3,
+      "n_first": 22,
+      "n_last": 22,
+      "matrix_count": 222223,
+      "shard_size": 50000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 807.0
+    },
+    {
+      "q": 3,
+      "n_first": 23,
+      "n_last": 23,
+      "matrix_count": 222223,
+      "shard_size": 50000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 1608.0
+    },
+    {
+      "q": 3,
+      "n_first": 24,
+      "n_last": 24,
+      "matrix_count": 222223,
+      "shard_size": 50000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 3212.0
+    },
+    {
+      "q": 3,
+      "n_first": 25,
+      "n_last": 25,
+      "matrix_count": 222223,
+      "shard_size": 50000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 6440.0
+    },
+    {
+      "q": 3,
+      "n_first": 26,
+      "n_last": 27,
+      "matrix_count": 222223,
+      "shard_size": 50000,
+      "backend": "intra_matrix_parallel",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": null
+    },
+    {
+      "q": 3,
+      "n_first": 28,
+      "n_last": 28,
+      "matrix_count": 222223,
+      "shard_size": 50000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 51654.0
+    },
+    {
+      "q": 5,
+      "n_first": 4,
+      "n_last": 16,
+      "matrix_count": 16000000,
+      "shard_size": 200000,
+      "backend": "batch_parallel",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": null
+    },
+    {
+      "q": 5,
+      "n_first": 17,
+      "n_last": 24,
+      "matrix_count": 160000,
+      "shard_size": 50000,
+      "backend": "batch_parallel",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": null
+    },
+    {
+      "q": 7,
+      "n_first": 4,
+      "n_last": 16,
+      "matrix_count": 12244898,
+      "shard_size": 200000,
+      "backend": "batch_parallel",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": null
+    },
+    {
+      "q": 7,
+      "n_first": 17,
+      "n_last": 17,
+      "matrix_count": 122449,
+      "shard_size": 50000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 1895.0
+    },
+    {
+      "q": 7,
+      "n_first": 18,
+      "n_last": 18,
+      "matrix_count": 122449,
+      "shard_size": 50000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 3965.0
+    },
+    {
+      "q": 7,
+      "n_first": 19,
+      "n_last": 19,
+      "matrix_count": 122449,
+      "shard_size": 50000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 8274.0
+    },
+    {
+      "q": 7,
+      "n_first": 20,
+      "n_last": 20,
+      "matrix_count": 122449,
+      "shard_size": 50000,
+      "backend": "accelerator",
+      "determinant_companion": true,
+      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "accelerator_per_matrix_us": 17271.0
+    }
+  ],
+  "reference_data": {
+    "reproduction_targets": "experiments/permanent-statistics/data/scheinerman2024-q3-targets-v1.csv",
+    "literature_claim": "experiments/permanent-statistics/data/literature-claim.json"
+  },
+  "validation": {
+    "root_seed": 1600116544598179842,
+    "regeneration_matrix_count": 1024,
+    "sample_matrix_count": 400000,
+    "level": 0.001,
+    "exact_batch_matrix_count": 8192,
+    "sample_backend": "batch_parallel",
+    "selectable_backends": [
+      "batch_parallel",
+      "intra_matrix_parallel",
+      "generic_ryser",
+      "accelerator"
+    ],
+    "anchors": [
+      {
+        "q": 3,
+        "n": 1,
+        "stream_index": 1,
+        "permanent_zero_count": 1
+      },
+      {
+        "q": 3,
+        "n": 2,
+        "stream_index": 2,
+        "permanent_zero_count": 33
+      },
+      {
+        "q": 3,
+        "n": 3,
+        "stream_index": 3,
+        "permanent_zero_count": 8163
+      },
+      {
+        "q": 3,
+        "n": 4,
+        "stream_index": 4,
+        "permanent_zero_count": 17116353
+      },
+      {
+        "q": 5,
+        "n": 1,
+        "stream_index": 5,
+        "permanent_zero_count": 1
+      },
+      {
+        "q": 5,
+        "n": 2,
+        "stream_index": 6,
+        "permanent_zero_count": 145
+      },
+      {
+        "q": 5,
+        "n": 3,
+        "stream_index": 7,
+        "permanent_zero_count": 439525
+      },
+      {
+        "q": 7,
+        "n": 1,
+        "stream_index": 8,
+        "permanent_zero_count": 1
+      },
+      {
+        "q": 7,
+        "n": 2,
+        "stream_index": 9,
+        "permanent_zero_count": 385
+      },
+      {
+        "q": 7,
+        "n": 3,
+        "stream_index": 10,
+        "permanent_zero_count": 6188455
+      }
+    ]
+  }
+}

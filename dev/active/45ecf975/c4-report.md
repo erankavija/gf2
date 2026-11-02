@@ -1,6 +1,6 @@
 Issue fd1ef344 — C4 of umbrella 45ecf975. Implementation handoff.
 
-Worktree: `/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344`. Specification: [c4-design.md](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/dev/active/45ecf975/c4-design.md). Final checks completed before the 03:30 Helsinki cutoff; report generated at Mon Nov  2 02:34:09 EET 2026.
+Worktree: `/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344`. Specification: [c4-design.md](/dev/active/45ecf975/c4-design.md). Final checks completed before the 03:30 Helsinki cutoff; report generated at Mon Nov  2 02:34:09 EET 2026.
 
 The permanent campaign, dataset, and validation binaries build from `experiments/permanent-statistics`. The gf2-sim campaign layer, continuation/frozen decoders, emission authorization, root_fs, and compiled paper data are removed. OSD retains its byte-compatible identity types in `osd_identity.rs`, with the named exception linked to @/issue/779d1926. The experiment uses one shared execution log, configured cell/shard expansion, exact log-scale decisions, Wilson intervals, per-cell run identities, explicit availability policy, and terminal failure propagation. Validation probes unsampled zero matrices before opening streams, preserves exhaustive backend disagreement, and resumes at terminal anchor boundaries.
 
@@ -20,49 +20,49 @@ Code lines by module follow. Counts use every Rust file in the experiment and th
 
 | Module | Code lines |
 |---|---:|
-| [src/bin/permanent_campaign.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/bin/permanent_campaign.rs) | 84 |
-| [src/bin/permanent_dataset.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/bin/permanent_dataset.rs) | 20 |
-| [src/bin/permanent_rare_event.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/bin/permanent_rare_event.rs) | 58 |
-| [src/bin/permanent_validation.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/bin/permanent_validation.rs) | 54 |
-| [src/bin/support/mod.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/bin/support/mod.rs) | 38 |
-| [src/campaign/config.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/campaign/config.rs) | 203 |
-| [src/campaign/dataset.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/campaign/dataset.rs) | 517 |
-| [src/campaign/decide.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/campaign/decide.rs) | 87 |
-| [src/campaign/evaluate.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/campaign/evaluate.rs) | 402 |
-| [src/campaign/mod.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/campaign/mod.rs) | 67 |
-| [src/campaign/runner.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/campaign/runner.rs) | 515 |
-| [src/campaign/validation.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/campaign/validation.rs) | 399 |
-| [src/execution_log.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/execution_log.rs) | 64 |
-| [src/lib.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/lib.rs) | 11 |
-| [src/rare_event/mod.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/rare_event/mod.rs) | 257 |
-| [src/rare_event/runner.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/src/rare_event/runner.rs) | 346 |
-| [tests/campaign_bins.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/tests/campaign_bins.rs) | 135 |
-| [tests/campaign_dataset.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/tests/campaign_dataset.rs) | 128 |
-| [tests/campaign_determinism.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/tests/campaign_determinism.rs) | 203 |
-| [tests/campaign_evaluate.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/tests/campaign_evaluate.rs) | 286 |
-| [tests/campaign_runner.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/tests/campaign_runner.rs) | 274 |
-| [tests/campaign_validation.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/tests/campaign_validation.rs) | 222 |
-| [tests/common/mod.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/tests/common/mod.rs) | 58 |
-| [tests/permanent_rare_event.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/tests/permanent_rare_event.rs) | 194 |
-| [tests/rare_event_runner.rs](/home/vkaskivuo/Projects/gf2/.agents/worktrees/agent-fd1ef344/experiments/permanent-statistics/tests/rare_event_runner.rs) | 203 |
+| [src/bin/permanent_campaign.rs](/experiments/permanent-statistics/src/bin/permanent_campaign.rs) | 84 |
+| [src/bin/permanent_dataset.rs](/experiments/permanent-statistics/src/bin/permanent_dataset.rs) | 20 |
+| [src/bin/permanent_rare_event.rs](/experiments/permanent-statistics/src/bin/permanent_rare_event.rs) | 58 |
+| [src/bin/permanent_validation.rs](/experiments/permanent-statistics/src/bin/permanent_validation.rs) | 54 |
+| [src/bin/support/mod.rs](/experiments/permanent-statistics/src/bin/support/mod.rs) | 38 |
+| [src/campaign/config.rs](/experiments/permanent-statistics/src/campaign/config.rs) | 203 |
+| [src/campaign/dataset.rs](/experiments/permanent-statistics/src/campaign/dataset.rs) | 517 |
+| [src/campaign/decide.rs](/experiments/permanent-statistics/src/campaign/decide.rs) | 87 |
+| [src/campaign/evaluate.rs](/experiments/permanent-statistics/src/campaign/evaluate.rs) | 402 |
+| [src/campaign/mod.rs](/experiments/permanent-statistics/src/campaign/mod.rs) | 67 |
+| [src/campaign/runner.rs](/experiments/permanent-statistics/src/campaign/runner.rs) | 515 |
+| [src/campaign/validation.rs](/experiments/permanent-statistics/src/campaign/validation.rs) | 399 |
+| [src/execution_log.rs](/experiments/permanent-statistics/src/execution_log.rs) | 64 |
+| [src/lib.rs](/experiments/permanent-statistics/src/lib.rs) | 11 |
+| [src/rare_event/mod.rs](/experiments/permanent-statistics/src/rare_event/mod.rs) | 257 |
+| [src/rare_event/runner.rs](/experiments/permanent-statistics/src/rare_event/runner.rs) | 346 |
+| [tests/campaign_bins.rs](/experiments/permanent-statistics/tests/campaign_bins.rs) | 135 |
+| [tests/campaign_dataset.rs](/experiments/permanent-statistics/tests/campaign_dataset.rs) | 128 |
+| [tests/campaign_determinism.rs](/experiments/permanent-statistics/tests/campaign_determinism.rs) | 203 |
+| [tests/campaign_evaluate.rs](/experiments/permanent-statistics/tests/campaign_evaluate.rs) | 286 |
+| [tests/campaign_runner.rs](/experiments/permanent-statistics/tests/campaign_runner.rs) | 274 |
+| [tests/campaign_validation.rs](/experiments/permanent-statistics/tests/campaign_validation.rs) | 222 |
+| [tests/common/mod.rs](/experiments/permanent-statistics/tests/common/mod.rs) | 58 |
+| [tests/permanent_rare_event.rs](/experiments/permanent-statistics/tests/permanent_rare_event.rs) | 194 |
+| [tests/rare_event_runner.rs](/experiments/permanent-statistics/tests/rare_event_runner.rs) | 203 |
 | **Total** | **4,825** |
 
 Verification commands and results are listed below. Cargo commands and test invocations set `CARGO_NET_OFFLINE=true` and `CARGO_CI_NO_SCCACHE=1`. No timed measurement was run.
 
 | Command | Result | Output |
 |---|---|---|
-| `./scripts/cargo-budget.sh cargo build --workspace --all-features` | PASS | [build](/tmp/c4-final-build.log) |
-| `./scripts/cargo-budget.sh --test cargo nextest run -p permanent-statistics -p gf2-sim --all-features --cargo-profile ci-test --profile ci` | PASS: 489 passed, 53 skipped | [tests](/tmp/c4-final-tests.log) |
-| `./scripts/cargo-budget.sh cargo clippy -p permanent-statistics -p gf2-sim --all-targets --all-features -- -D warnings` | PASS | [clippy](/tmp/c4-final-clippy.log) |
-| `./scripts/cargo-budget.sh cargo fmt --all -- --check` | PASS | [format](/tmp/c4-final-fmt.log) |
-| `./scripts/cargo-ci.sh` | PASS: all configured steps; workspace 6,372 passed, 246 skipped; scalar lane 2,321 passed, 170 skipped | [full CI](/tmp/c4-cargo-ci-final.log) |
-| `./scripts/cargo-budget.sh cargo build -p permanent-statistics --features hip` | PASS | [HIP feature build](/tmp/c4-hip-build.log) |
-| `./scripts/cargo-budget.sh cargo +1.95.0 build -p permanent-statistics --release --bins` | PASS; Rust 1.95 release binaries used to regenerate analysis fixtures | [MSRV release build](/tmp/c4-release.log) |
-| `python -m unittest discover -s tests -p test_permanent_zero_fraction_analysis.py` | PASS: 6 tests | [analysis tests](/tmp/c4-final-python.log) |
-| `bash dev/scripts/permanent-campaign-runner.test.sh` | PASS: 10/10 | [shell tests](/tmp/c4-shell-tests.log) |
+| `./scripts/cargo-budget.sh cargo build --workspace --all-features` | PASS | build |
+| `./scripts/cargo-budget.sh --test cargo nextest run -p permanent-statistics -p gf2-sim --all-features --cargo-profile ci-test --profile ci` | PASS: 489 passed, 53 skipped | tests |
+| `./scripts/cargo-budget.sh cargo clippy -p permanent-statistics -p gf2-sim --all-targets --all-features -- -D warnings` | PASS | clippy |
+| `./scripts/cargo-budget.sh cargo fmt --all -- --check` | PASS | format |
+| `./scripts/cargo-ci.sh` | PASS: all configured steps; workspace 6,372 passed, 246 skipped; scalar lane 2,321 passed, 170 skipped | full CI |
+| `./scripts/cargo-budget.sh cargo build -p permanent-statistics --features hip` | PASS | HIP feature build |
+| `./scripts/cargo-budget.sh cargo +1.95.0 build -p permanent-statistics --release --bins` | PASS; Rust 1.95 release binaries used to regenerate analysis fixtures | MSRV release build |
+| `python -m unittest discover -s tests -p test_permanent_zero_fraction_analysis.py` | PASS: 6 tests | analysis tests |
+| `bash dev/scripts/permanent-campaign-runner.test.sh` | PASS: 10/10 | shell tests |
 | `git diff --check` | PASS | No whitespace errors |
 | `git grep -n permanent_campaign -- crates` | PASS: benchmark path string only | `batched_f3_permanent.rs:455` |
-| `./scripts/cargo-budget.sh cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml` | BLOCKED by offline dependency cache | [standalone HIP attempt](/tmp/c4-hip-crate-build.log) |
+| `./scripts/cargo-budget.sh cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml` | BLOCKED by offline dependency cache | standalone HIP attempt |
 
 Test-first evidence includes the missing experiment API, rejection replay after an interruption before halt propagation, and invalid validation preflight. Those cases failed before implementation/fix and pass in the final suites. Dispatch panic diagnostics are tested through the same guard used by campaign execution and validation.
 
