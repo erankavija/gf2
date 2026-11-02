@@ -7,17 +7,12 @@ use gf2_algebra::permanent::{
     determinant_singular_probability, enumerate_permanent_zero_probability, permanent_ryser,
     ExactProbability,
 };
+use gf2_algebra::testutil::random_matrix_with_rng;
 use gf2_core::gfp::Fp;
+use gf2_core::rng::Lcg;
 use gf2_stats::intervals::clopper_pearson_interval;
 
-#[path = "support/matrix_draw.rs"]
-mod matrix_draw;
-
-use matrix_draw::MatrixDraw;
-
-const VALIDATION_ROOT: u64 = 0x4453_4B2F_0000_0001;
-const VALIDATION_STREAM: u64 = 0;
-const VALIDATION_PURPOSE_TAG: u8 = 1;
+const VALIDATION_SEED: u64 = 0x4453_4B2F_0000_0001;
 const VALIDATION_DRAWS_PER_CELL: u64 = 4_096;
 const VALIDATION_INTERVAL_LEVEL: f64 = 0.999;
 
@@ -186,31 +181,23 @@ fn determinant_enumeration_matches_the_finite_n_formula() {
     }
 }
 
-fn sampled_zero_count<const Q: u64>(field_order: u64, dimension: usize) -> u64 {
-    let mut sampler = MatrixDraw::addressed(
-        VALIDATION_ROOT,
-        field_order,
-        dimension,
-        VALIDATION_PURPOSE_TAG,
-        VALIDATION_STREAM,
-    );
-    let mut entries = [Fp::<Q>::new(0); 16];
+fn sampled_zero_count<const Q: u64>(dimension: usize) -> u64 {
+    let mut rng = Lcg::new(VALIDATION_SEED);
     let mut zero_count = 0_u64;
     for _ in 0..VALIDATION_DRAWS_PER_CELL {
-        let matrix = &mut entries[..(dimension * dimension)];
-        sampler.fill_matrix(matrix);
-        zero_count += u64::from(permanent_ryser(matrix, dimension) == Fp::<Q>::new(0));
+        let matrix = random_matrix_with_rng::<Q>(&mut rng, dimension);
+        zero_count += u64::from(permanent_ryser(&matrix, dimension) == Fp::<Q>::new(0));
     }
     zero_count
 }
 
 #[test]
-fn validation_stream_sampler_and_clopper_pearson_cover_every_exact_anchor() {
+fn seeded_draws_and_clopper_pearson_cover_every_exact_anchor() {
     for &(order, dimension) in ANCHOR_CELLS {
         let zero_count = match order {
-            3 => sampled_zero_count::<3>(order, dimension),
-            5 => sampled_zero_count::<5>(order, dimension),
-            7 => sampled_zero_count::<7>(order, dimension),
+            3 => sampled_zero_count::<3>(dimension),
+            5 => sampled_zero_count::<5>(dimension),
+            7 => sampled_zero_count::<7>(dimension),
             _ => unreachable!("anchor cells use only the supported prime fields"),
         };
         let exact = expected_permanent_anchor(order, dimension);
@@ -232,7 +219,7 @@ fn validation_stream_sampler_and_clopper_pearson_cover_every_exact_anchor() {
         assert!(
             lower <= exact_as_f64 && exact_as_f64 <= upper,
             "validation interval {lower:?}..={upper:?} excluded exact {}/{} at q={order}, n={dimension}; \
-             root={VALIDATION_ROOT:#x}, purpose_tag={VALIDATION_PURPOSE_TAG}, stream={VALIDATION_STREAM}, draws={VALIDATION_DRAWS_PER_CELL}, level={VALIDATION_INTERVAL_LEVEL}",
+             seed={VALIDATION_SEED:#x}, draws={VALIDATION_DRAWS_PER_CELL}, level={VALIDATION_INTERVAL_LEVEL}",
             exact.zero_count(),
             exact.matrix_count(),
         );
