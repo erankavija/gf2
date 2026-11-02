@@ -46,14 +46,23 @@ impl Error for DurabilityUnconfirmed {
 /// then unchanged, except that an error wrapping [`DurabilityUnconfirmed`] means
 /// it was replaced. A crash can leave a hidden `.tmp` sibling behind.
 pub fn publish_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
-    publish_atomic_with(path, bytes, sync_directory)
+    let (name, directory) = publish_target(path)?;
+    create_durable(directory)?;
+    publish_prepared(path, name, directory, bytes, sync_directory)
 }
 
+#[cfg(test)]
 fn publish_atomic_with(
     path: &Path,
     bytes: &[u8],
     mut sync: impl FnMut(&Path) -> io::Result<()>,
 ) -> io::Result<()> {
+    let (name, directory) = publish_target(path)?;
+    create_durable_with(directory, &mut sync)?;
+    publish_prepared(path, name, directory, bytes, sync)
+}
+
+fn publish_target(path: &Path) -> io::Result<(&OsStr, &Path)> {
     let name = path.file_name().ok_or_else(|| {
         io::Error::new(
             io::ErrorKind::InvalidInput,
@@ -64,7 +73,16 @@ fn publish_atomic_with(
         Some(parent) if !parent.as_os_str().is_empty() => parent,
         _ => Path::new("."),
     };
-    create_durable_with(directory, &mut sync)?;
+    Ok((name, directory))
+}
+
+fn publish_prepared(
+    path: &Path,
+    name: &OsStr,
+    directory: &Path,
+    bytes: &[u8],
+    mut sync: impl FnMut(&Path) -> io::Result<()>,
+) -> io::Result<()> {
     let (temporary, mut file) = reserve_sibling(directory, name)?;
     let published = file
         .write_all(bytes)
@@ -120,23 +138,6 @@ fn sync_directory(directory: &Path) -> io::Result<()> {
     File::open(directory)?.sync_all()
 }
 
-/// Whether `candidate` is the hidden sibling an interrupted [`publish_atomic`]
-/// left behind. Nothing reads such a file, so a caller with no publish running
-/// may remove it.
-#[must_use]
-pub fn is_interrupted_publish(candidate: &Path) -> bool {
-    let name = candidate.file_name().map(OsStr::to_string_lossy);
-    name.as_deref()
-        .and_then(|name| name.strip_prefix('.')?.strip_suffix(".tmp"))
-        .and_then(|rest| {
-            let (rest, sequence) = rest.rsplit_once('.')?;
-            let (published, process) = rest.rsplit_once('.')?;
-            let numeric = process.parse::<u32>().is_ok() && sequence.parse::<u64>().is_ok();
-            Some(numeric && !published.is_empty())
-        })
-        .unwrap_or(false)
-}
-
 fn reserve_sibling(directory: &Path, name: &OsStr) -> io::Result<(PathBuf, File)> {
     loop {
         let mut temporary = OsString::from(".");
@@ -180,16 +181,6 @@ mod tests {
         let canonical = fs::canonicalize(&nested).unwrap();
         for ancestor in canonical.ancestors() {
             assert!(synced.iter().any(|path| path == ancestor), "{ancestor:?}");
-        }
-    }
-
-    #[test]
-    fn only_a_reserved_sibling_is_an_interrupted_publish() {
-        let directory = tempfile::tempdir().unwrap();
-        let (temporary, _file) = reserve_sibling(directory.path(), OsStr::new("a.b")).unwrap();
-        assert!(is_interrupted_publish(&temporary));
-        for name in ["a.b", ".a.b", "a.1.2.tmp", ".a.x.2.tmp", ".1.2.tmp"] {
-            assert!(!is_interrupted_publish(Path::new(name)), "{name}");
         }
     }
 

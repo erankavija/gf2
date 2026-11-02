@@ -3,16 +3,16 @@ use std::num::NonZeroUsize;
 use std::path::Path;
 use std::sync::Mutex;
 
-use experiments_common::{ArtifactIdentity, GitRevision, RngAlgorithm, Sha256Digest};
+use experiments_common::{GitRevision, RngAlgorithm, Sha256Digest};
 use gf2_core::test_scratch::{scratch, Scratch};
 use gf2_sim::checkpoint::{CheckpointPayload, CheckpointReader, CheckpointWriter};
 use osd_ebch::osd_campaign::{
-    accepts_published_value, derive_cell_seed, run_osd_campaign, BinomialConfidenceInterval,
-    BinomialIntervalMethod, BinomialIntervalSpec, BlockSampleCounts, ConfidenceIntervalEstimator,
-    DigitizationPrecisionUnit, IntervalSamplingUnit, OsdBlockContext, OsdBlockOutcome,
-    OsdBlockStream, OsdCampaign, OsdCampaignCheckpoint, OsdCampaignProvenance, OsdCampaignReceipt,
-    OsdCampaignTermination, OsdCell, OsdCellId, OsdCellTermination, OsdWorkCounters,
-    OSD_CAMPAIGN_SCHEMA_VERSION,
+    accepts_published_value, derive_cell_seed, run_osd_campaign, ArtifactIdentity,
+    BinomialConfidenceInterval, BinomialIntervalMethod, BinomialIntervalSpec, BlockSampleCounts,
+    ConfidenceIntervalEstimator, DigitizationPrecisionUnit, IntervalSamplingUnit, OsdBlockContext,
+    OsdBlockOutcome, OsdBlockStream, OsdCampaign, OsdCampaignCheckpoint, OsdCampaignProvenance,
+    OsdCampaignReceipt, OsdCampaignTermination, OsdCell, OsdCellId, OsdCellTermination,
+    OsdWorkCounters, OSD_CAMPAIGN_SCHEMA_VERSION,
 };
 use osd_ebch::provenance::{Availability, Provenance};
 use rand_chacha::ChaCha20Rng;

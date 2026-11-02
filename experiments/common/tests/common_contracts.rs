@@ -132,9 +132,6 @@ fn the_repository_root_is_independent_of_the_starting_depth() {
 
     let input: ArtifactPath = "input".parse().unwrap();
     assert_eq!(fs::read(from_depth.resolve(&input)).unwrap(), b"bytes");
-    let identity = from_depth.artifact_identity(&input).unwrap();
-    assert_eq!(identity.path, input);
-    assert_eq!(identity.sha256, Sha256Digest::of(b"bytes"));
 }
 
 #[test]
