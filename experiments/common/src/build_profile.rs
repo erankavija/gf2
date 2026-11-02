@@ -26,9 +26,9 @@ pub struct ProfileSettings {
 /// # Errors
 ///
 /// Fails when a value has an unrecognized form, or when the settings can't
-/// describe the whole executable: a package override in the inheritance chain,
-/// or LTO or codegen units set on the `test` or `bench` profile, which share an
-/// output directory with `dev` and `release`.
+/// describe the whole executable: a package override in the inheritance chain or
+/// on the `test` or `bench` profile, or LTO or codegen units set on those two,
+/// which share an output directory with `dev` and `release`.
 pub fn resolve(
     directory: &str,
     manifest: &toml::Table,
@@ -44,6 +44,7 @@ pub fn resolve(
         name => (name, None),
     };
     if let Some(sibling) = indistinguishable {
+        source.refuse_package_override(sibling)?;
         for (key, _) in SETTINGS {
             if source.value(sibling, key).is_some() {
                 return Err(format!(
@@ -219,6 +220,14 @@ mod tests {
             "1".to_owned(),
         )]);
         assert!(resolve("gate", &manifest, &environment).is_err());
+    }
+
+    #[test]
+    fn a_package_override_on_a_directory_sibling_is_refused() {
+        let bench = layer("[profile.bench.package.member]\nopt-level = 1");
+        assert!(resolve("release", &bench, &no_environment()).is_err());
+        let test = layer("[profile.test.package.member]\nopt-level = 1");
+        assert!(resolve("debug", &test, &no_environment()).is_err());
     }
 
     #[test]
