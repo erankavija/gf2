@@ -130,7 +130,7 @@ fn calibration() -> MeasurementProvenance {
         cpu_features: vec!["avx2".to_owned()],
         os_kernel: "kernel".to_owned(),
         governor: "performance".to_owned(),
-        receipt: RepoRelPath::parse("dev/benchmarks/tuning_profiles/receipt.md").unwrap(),
+        receipt: RepoRelPath::parse("target/benchmarks/tuning_profiles/receipt.md").unwrap(),
     }
 }
 

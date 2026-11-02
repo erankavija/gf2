@@ -1,7 +1,0 @@
-# started on Wed Oct 28 05:10:07 2026
-
-127941899,,cycles:u,27209467,100.00,,
-280226171,,instructions:u,27209467,100.00,,
-72093711,,branches:u,27209467,100.00,,
-2113561,,branch-misses:u,27209467,100.00,,
-8055554,,stalled-cycles-frontend:u,27209467,100.00,,

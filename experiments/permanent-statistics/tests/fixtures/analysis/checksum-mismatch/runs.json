@@ -11,7 +11,7 @@
           "target": "x86_64-unknown-linux-gnu",
           "rustflags": []
         },
-        "configuration_sha256": "c7b55fc0eae72ae6fa1d6efd58987a0559307cab0810d44d21008cf584386fcb",
+        "configuration_sha256": "98c89d80ff74aacda689447792bd801bf010e618ada69f8367750c982148c1a6",
         "seed": 1,
         "rng": {
           "algorithm": "cha_cha20",

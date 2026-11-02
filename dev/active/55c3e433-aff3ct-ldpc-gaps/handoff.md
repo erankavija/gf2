@@ -35,7 +35,7 @@
 
 - [ ] After the window, read `.agents/bench-window/window.log`. Check `job exit` rc for both jobs and the load recorded at each `job start`. Other sessions were asked to hold, but nothing enforces it. A loaded start goes to the owner before the receipts are used.
 - [ ] Tell `just-in-time-c9` the window finished or overran, so held sessions resume. c9 asked for this, and `gf2-00` is waiting on it too.
-- [ ] Commit in each worktree: the receipt directory under `dev/bench_results/55c3e433/`, plus `iterations.jsonl` for the pilot. `window.sh` commits nothing. The `iterations.jsonl` extractor is untested on a timed log.
+- [ ] Commit in each worktree: the receipt directory under `55c3e433/`, plus `iterations.jsonl` for the pilot. `window.sh` commits nothing. The `iterations.jsonl` extractor is untested on a timed log.
 - [ ] Merge main into both branches, after timing only. Run `jit validate` after each merge. On duplicates or failure, stop and tell `just-in-time-aa`.
 - [ ] `1d787ed3`: write the decision record (issue REQ-03, REQ-04, REQ-05), applying `qc-go-rule` from `plan.md`. Merge, run the gates and complete it.
 - [ ] `a72f2b3f`: write the nomination record (issue REQ-05), applying the rule in contract `check-variants`. Merge, run the gates and complete it.
@@ -71,4 +71,4 @@ None blocking. The owner may still overrule the plan's comparator-family boundar
 - Arm evidence: `arm-support/` in this directory
 - NR pilot, on `worktree-agent-1d787ed3`: `pilot/window.sh`, `pilot/nr-route-pilot.json`, `pilot/qc-bits/result.txt`
 - Variants, on `worktree-agent-a72f2b3f`: `check-variants/README.md`, `check-variants/assembly.md`, `check-variants/posterior-comparison.txt`
-- Expected receipts: `dev/bench_results/55c3e433/pilot/` and `dev/bench_results/55c3e433/check-variants/`
+- Expected receipts: `pilot/` and `check-variants/`

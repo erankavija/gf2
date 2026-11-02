@@ -2494,8 +2494,8 @@ mod tests {
     fn repository_relative_paths_resolve_from_the_repository_root() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         assert_eq!(
-            resolve_repository_path(Path::new("dev/benchmarks/tuning_profiles/receipt.csv")),
-            root.join("dev/benchmarks/tuning_profiles/receipt.csv")
+            resolve_repository_path(Path::new("target/benchmarks/tuning_profiles/receipt.csv")),
+            root.join("target/benchmarks/tuning_profiles/receipt.csv")
         );
         let absolute = Path::new("/tmp/gf2-selector-non-regression-absolute.csv");
         assert_eq!(resolve_repository_path(absolute), absolute);

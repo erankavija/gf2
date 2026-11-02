@@ -1,6 +1,5 @@
 //! Benchmarks primitive-polynomial verification: the full primitivity test and
-//! the irreducibility test of `@/citation/Rabin1980` alone. Benchmarks marked
-//! `[SAGE_CMP]` have counterparts in `scripts/sage_benchmarks.py`.
+//! the irreducibility test of `@/citation/Rabin1980` alone.
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use gf2_core::gf2m::Gf2mField;

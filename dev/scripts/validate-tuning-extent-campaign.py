@@ -125,7 +125,7 @@ OWNER_DECISIONS = "owner-decisions.json"
 EVIDENCE_INDEX = "repository-publication/evidence-index.md"
 REPOSITORY_PLAN_SCHEMA = "tuning-campaign-repository-plan-v2"
 REPOSITORY_REOPEN_SCHEMA = "tuning-campaign-repository-reopen-v1"
-TUNING_EVIDENCE = "dev/benchmarks/tuning_profiles"
+TUNING_EVIDENCE = "target/benchmarks/tuning_profiles"
 # Git-ignored bulk evidence archive; the committed checksum manifest pins it.
 EVIDENCE_ARCHIVE = ".agents/campaign-evidence"
 # Hard upper bound on every committed publication destination.
@@ -3944,7 +3944,7 @@ def validate_envelopes(stage: Path, campaign: str, responses: dict[str, Any],
     require(all(complete["sections"][sections[name]] == envelopes[name]["sections"][sections[name]]
                 for name in owners),
             "composer changed canonical owner section wrappers")
-    expected_receipt = f"dev/benchmarks/tuning_profiles/{campaign}.md"
+    expected_receipt = f"target/benchmarks/tuning_profiles/{campaign}.md"
     for name in owners:
         measurement = envelopes[name]["sections"][sections[name]]["measurement"]
         imported = imported_owner(declaration, name)
@@ -4746,7 +4746,7 @@ def validate_stage(stage_arg: str, preterminal: bool) -> dict[str, Any]:
         require_sha(recorded["sha256"], f"campaign {name} digest")
     require(campaign_config["protocol"]["sha256"] == protocol_sha,
             "campaign protocol ArtifactIdentity mismatch")
-    require(campaign_config["receipt"] == f"dev/benchmarks/tuning_profiles/{campaign}.md",
+    require(campaign_config["receipt"] == f"target/benchmarks/tuning_profiles/{campaign}.md",
             "campaign receipt destination mismatch")
     runtime = embedded(campaign_config["runtime"], "campaign runtime")
     require_keys(runtime, ["source_dirty", "toolchain", "cpu_model", "cpu_features",

@@ -4,7 +4,7 @@
 # One-command end-to-end reproduction driver for the gf2-algebra-permanent epic
 # benchmark artefact (JIT issue 7cd9afdb).
 #
-# Reproduces dev/benchmarks/gf2_algebra_permanent/ including:
+# Reproduces target/benchmarks/gf2_algebra_permanent/ including:
 #   S1  — single-thread AVX2 speedup (Criterion bench s1_n36_speedup, n=24/28;
 #           offline n=32/36 gated by S1_OFFLINE_N32 / S1_OFFLINE_N36)
 #   S2  — parallel scaling 1..12 cores (example parallel_scaling_sweep)
@@ -103,7 +103,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 cd "${REPO_ROOT}"
 
-ARTEFACT_DIR="dev/benchmarks/gf2_algebra_permanent"
+ARTEFACT_DIR="target/benchmarks/gf2_algebra_permanent"
 
 # ---------------------------------------------------------------------------
 # GPU detection
@@ -326,7 +326,7 @@ header = [
     "# avx2: yes, avx512: no",
     "# seed_base: 0x363556e600000000",
     "# scope: AVX2-only per amendment 2026-05-12 (AVX-512 row deferred to f8d230ef)",
-    f"# avx2_throughput_source: re-used from dev/benchmarks/gf2_algebra_permanent/{s1_basename}",
+    f"# avx2_throughput_source: re-used from target/benchmarks/gf2_algebra_permanent/{s1_basename}",
     "#   (rows: permanent_bipedal3_simd at n=24/28/32/36, reformatted to impl=permanent_bipedal3_avx2)",
     "#   s1 seed_base: 0xc98ed60300000000",
     "# scalar_vs_avx2_sanity: measured fresh via experiments/permanent-benchmarks/examples/s3_scalar_vs_avx2_sanity.rs",

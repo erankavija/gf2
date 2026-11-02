@@ -1,6 +1,6 @@
 [campaign]
 name = "test_no_early_term"
-output_dir = "dev/simulation_results/align"
+output_dir = "target/simulation_results/align"
 
 [[curve]]
 name = "bcjr_no_et_40"

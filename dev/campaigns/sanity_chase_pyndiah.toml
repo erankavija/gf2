@@ -3,7 +3,7 @@
 
 [campaign]
 name = "sanity_chase_pyndiah"
-output_dir = "dev/simulation_results/chase_pyndiah"
+output_dir = "target/simulation_results/chase_pyndiah"
 
 [[curve]]
 name = "cp_drm_32_21"

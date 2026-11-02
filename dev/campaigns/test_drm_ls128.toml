@@ -3,7 +3,7 @@
 
 [campaign]
 name = "test_drm_ls128"
-output_dir = "dev/simulation_results/align"
+output_dir = "target/simulation_results/align"
 
 [[curve]]
 name = "fig1_drm_ls128"

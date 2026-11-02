@@ -1,43 +1,5 @@
-/*
- * benchmarks/reference/m4ri_bench.c
- *
- * Reference reproducibility harness for M4RI on GF(2). Emits CSV rows on
- * stdout in the same schema as fflas_bench.cpp:
- *
- *   lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
- *
- * The seed scheme is identical to the C++ harness (SplitMix64 keyed by
- * the master seed) so that gf2's own M4RM benchmarks can fill the same
- * matrices when the master seed is shared.
- *
- * Operations:
- *   * matmul  (mzd_mul / Method-of-the-Four-Russians) at n=64..4096
- *   * echelon (mzd_echelonize_m4ri, full RREF) at n=64..1024
- *   * pluq    (mzd_pluq) at n=64..1024  -- issue 5dea7457
- *   * invert  (mzd_inv_m4ri) at n=64..1024 -- issue 5dea7457
- *   * solve   (mzd_solve_left, single RHS column) at n=64..1024
- *             -- issue 5dea7457
- *
- * charpoly and minpoly are not provided by M4RI and are excluded from
- * this lane (`not-supported-by-library` exclusion class per
- * `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 8).
- *
- * Build:
- *   gcc -O3 -march=native -std=c11 m4ri_bench.c -lm4ri -o m4ri_bench
- *
- * The container Makefile compiles this with the same flags.
- *
- * CLI:
- *   m4ri_bench [--seed N] [--warmup K] [--iters K] [--smoke]
- *
- * `--smoke` runs each new operation at n=16 against a fixed seeded
- * input and asserts the per-operation correctness contract from
- * `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6:
- *   * pluq:   reconstruct P*L*U == A and verify rank.
- *   * invert: A * A^{-1} == I.
- *   * solve:  A * x == b for a square full-rank system.
- * Any failure exits with status 1 so the smoke gate fails fast.
- */
+/* Seeded M4RI reference harness; smoke mode checks PLUQ reconstruction, inversion, and solving. */
+
 
 /* Need _POSIX_C_SOURCE >= 199309L for clock_gettime / CLOCK_MONOTONIC under
  * the strict c11 + glibc combination the container's gcc-12 ships with. */
@@ -310,19 +272,7 @@ static void bench_solve(rci_t n, const char* regime, uint64_t seed,
     mzd_free(B);
 }
 
-/* ----- smoke equality oracles (issue 5dea7457) -----------------------
- *
- * Per `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6, every new
- * (operation, field, n=16) cell must satisfy a specific algebraic
- * equality contract. The smoke functions below enforce those contracts
- * inside the harness and exit non-zero on any violation so that
- * `benchmarks/smoke.sh` fails fast at the canonical n=16 cell.
- *
- * pluq:   reconstruct P*L*U == A_orig over GF(2); reported rank
- *         matches mzd_echelonize_m4ri on the same input.
- * invert: A * A^{-1} == I over GF(2).
- * solve:  A * x == b over GF(2) for a (presumed) full-rank A.
- */
+
 
 static int smoke_pluq(uint64_t seed) {
     const rci_t n = 16;
@@ -544,10 +494,7 @@ int main(int argc, char** argv) {
             "[m4ri_bench] master_seed=0x%llx warmup=%d iters=%d smoke=%d\n",
             (unsigned long long)master_seed, warmup, iters, smoke);
 
-    /* Smoke equality oracle for the new operations (issue 5dea7457).
-     * Per `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6 we run
-     * each new operation at n=16 against fixed-seeded inputs and assert
-     * the operation-specific algebraic invariants. */
+
     if (smoke) {
         int rc = 0;
         rc |= smoke_pluq  (derive_seed(master_seed, "pluq_smoke",   2, 0, 0));

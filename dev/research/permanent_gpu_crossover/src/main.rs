@@ -138,7 +138,7 @@ mod harness {
             format!("{y:04}-{m:02}-{d:02}")
         });
 
-        let csv_dir = "dev/benchmarks/gf2_algebra_permanent";
+        let csv_dir = "target/benchmarks/gf2_algebra_permanent";
         let csv_path = format!("{csv_dir}/s5_gpu_crossover-{date}.csv");
 
         // Run from workspace root so relative paths work.

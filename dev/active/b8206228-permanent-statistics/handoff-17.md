@@ -26,7 +26,7 @@
 
 ## What to do next
 
-- [ ] Revalidate the committed v5 CSV/report byte-for-byte with `python3 dev/benchmarks/permanent_campaign/determinant_cost_v5.py validate --receipt dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.csv --report dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.md`.
+- [ ] Revalidate the committed v5 CSV/report byte-for-byte with `python3 determinant_cost_v5.py validate --receipt determinant-cost-all-cells-v5.csv --report determinant-cost-all-cells-v5.md`.
 - [ ] Run every registered `ec22205e` gate against the clean current tree: `cargo-ci`, then `code-review`, `doc-review`, and `research-review`. Do not trust the prior v4 pass/fail records.
 - [ ] Read the full lead-review protocol and perform the cumulative six-tier review, including every historical code/research finding, stale-narrative sweep, deferred-item audit, and canonical-cutover check.
 - [ ] If all gates and lead review pass, close `ec22205e` and record the closure in `progress.json`. Rework count is at MAX; any new failure requires escalation rather than source repair.
@@ -55,11 +55,11 @@ None.
 - Determinant prerequisite: `jit issue show ec22205e`
 - Progress: `dev/active/b8206228-permanent-statistics/progress.json`
 - Prior handoff: `dev/active/b8206228-permanent-statistics/handoff-16.md`
-- V5 preregistration: `dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v5.md`
-- V5 machine receipt: `dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.csv`
-- V5 rendered report: `dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v5.md`
-- V5 runner and validator: `dev/benchmarks/permanent_campaign/determinant_cost_v5.py`
-- V5 behavioral tests: `dev/benchmarks/permanent_campaign/test_determinant_cost_v5.py`
+- V5 preregistration: `determinant-cost-preregistration-v5.md`
+- V5 machine receipt: `determinant-cost-all-cells-v5.csv`
+- V5 rendered report: `determinant-cost-all-cells-v5.md`
+- V5 runner and validator: `determinant_cost_v5.py`
+- V5 behavioral tests: `test_determinant_cost_v5.py`
 - Producing source revision: `3d1c536a110d05bcba6603f5a72c0ea185dc9bde`
 - Evidence commit: `0273d0e3`
 - Raw diagnostic scratch: `/tmp/gf2-ec22205e-determinant-cost-v5`

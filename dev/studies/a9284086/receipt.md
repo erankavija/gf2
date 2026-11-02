@@ -17,16 +17,16 @@ python3 dev/studies/a9284086/analysis.py
 
 | Artifact | Role |
 | --- | --- |
-| [`profiled-20260816T002340Z/`](profiled-20260816T002340Z/provenance.txt) | This study's paired profiled evidence run: $\mathbb{F}_3$ and $\mathbb{F}_5$ occupancy counters and kernel traces, carrying no timing authority |
+| `profiled-20260816T002340Z/` | This study's paired profiled evidence run: $\mathbb{F}_3$ and $\mathbb{F}_5$ occupancy counters and kernel traces, carrying no timing authority |
 | [`profiled-run.sh`](profiled-run.sh) | The runner that produced it, executed verbatim |
 | [`analysis.py`](analysis.py) | Derivation of every table here from the committed artifacts |
-| [`../047b62ed/…-q3-grid.csv`](../047b62ed/permanent-campaign-20260814T230032Z-2085453-q3-grid.csv) | $\mathbb{F}_3$ timing grid: per-phase device columns and per-launch spans |
-| [`../91605d4d/…-q5-grid.csv`](../91605d4d/permanent-campaign-20260814T230032Z-2085453-q5-grid.csv) | $\mathbb{F}_5$ timing grid, same columns |
-| [`../6c7fcb38/…-q7-grid.csv`](../6c7fcb38/permanent-campaign-20260814T230032Z-2085453-q7-grid.csv) | $\mathbb{F}_7$ timing grid, same columns |
-| [`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt`](../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt) | Compiler kernel-resource receipt for every kernel of every retained path |
-| [`../6c7fcb38/profiled-20260815T181923Z/`](../6c7fcb38/profiled-20260815T181923Z/provenance.txt) | The committed $\mathbb{F}_7$ occupancy counters, cited rather than re-measured |
-| [`../b488f02c/sustained-2026-08-07.csv`](../b488f02c/sustained-2026-08-07.csv) | Prior sustained receipt at the cell where the one recorded device fault occurred |
-| [`../b488f02c/gpu-hang-2026-08-07.log`](../b488f02c/gpu-hang-2026-08-07.log) | That fault's only record, and its explicit retraction of the watchdog attribution |
+| `../047b62ed/…-q3-grid.csv` | $\mathbb{F}_3$ timing grid: per-phase device columns and per-launch spans |
+| `../91605d4d/…-q5-grid.csv` | $\mathbb{F}_5$ timing grid, same columns |
+| `../6c7fcb38/…-q7-grid.csv` | $\mathbb{F}_7$ timing grid, same columns |
+| `../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt` | Compiler kernel-resource receipt for every kernel of every retained path |
+| `../6c7fcb38/profiled-20260815T181923Z/` | The committed $\mathbb{F}_7$ occupancy counters, cited rather than re-measured |
+| `../b488f02c/sustained-2026-08-07.csv` | Prior sustained receipt at the cell where the one recorded device fault occurred |
+| `../b488f02c/gpu-hang-2026-08-07.log` | That fault's only record, and its explicit retraction of the watchdog attribution |
 
 Every figure this document takes from another study is cited to the file it
 comes from rather than restated as an independent claim.
@@ -46,7 +46,7 @@ file, and each campaign's §1 states the benchmark-mutex discipline the run held
 re-measured here.
 
 **This study's own runtime evidence** is the paired profiled run
-[`profiled-20260816T002340Z/`](profiled-20260816T002340Z/provenance.txt),
+`profiled-20260816T002340Z/`,
 produced by [`profiled-run.sh`](profiled-run.sh) executed verbatim. It runs the
 same hash-pinned harness binary as the timing run, SHA-256
 `edb03650bbbfb47064a3a2b5e021ac055394812a4362c577fdad07cdbd997bce`, verified
@@ -59,12 +59,12 @@ with 24 logical CPUs, kernel `7.1.8-arch1-3`; repository revision
 the repository's canonical benchmark mutex.
 
 Thirty-four passes, one `COMMAND`/`EXIT` pair each in
-[`run.log`](profiled-20260816T002340Z/run.log), all exit 0: seventeen cells,
+`run.log`, all exit 0: seventeen cells,
 each with one kernel-trace pass and one early-iteration counter pass. Every pass
 wraps exactly one device-executing workload and every `-o` carries `%pid%`, the
 two conditions the committed $\mathbb{F}_7$ run's provenance records as
 necessary for per-process outputs to survive
-([`../6c7fcb38/profiled-20260815T181923Z/provenance.txt`](../6c7fcb38/profiled-20260815T181923Z/provenance.txt),
+(`../6c7fcb38/profiled-20260815T181923Z/provenance.txt`,
 `supersedes:`). `analysis.py` section 1 asserts that the pass directories and
 the log's pass list agree exactly and that every exit code is zero, so a partial
 run fails the script rather than passing silently under this text.
@@ -78,7 +78,7 @@ and $n = 20$, the two orders the committed $\mathbb{F}_7$ counter evidence uses,
 plus that field's declared operating point** — $n = 28$ for $q = 3$ and
 $n = 24$ for $q = 5$, which the campaign protocol fixes as the
 processor-feasible frontier of each field
-([`dev/simulation_results/permanent-zero-fraction/protocol.md`](../../simulation_results/permanent-zero-fraction/protocol.md):51-54).
+(`protocol.md`:51-54).
 The $q = 5$, $n = 24$ shipped cells are censored before running in the timing
 grid, so that cell dispatches nothing and is not a pass, which is why $q = 5$
 contributes eight cells against $q = 3$'s nine.
@@ -235,7 +235,7 @@ second lane of its wavefront does work.
 Every figure in this section is a committed measurement of a field campaign,
 cited to its file rather than re-measured. The source is the compiler
 kernel-resource receipt
-[`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt`](../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt)
+`../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt`
 at `source_revision f9224650a780ea8ed98bcdff6e662cdb0d7b94f4`, architecture
 `gfx1030`, flag `-Rpass-analysis=kernel-resource-usage`, every entry
 `exit_status: 0` with source, object, and log SHA-256; the three campaigns read
@@ -315,7 +315,7 @@ $\mathbb{F}_7$ run, which read `LDS_Per_Workgroup` 512 for
 `wave_gf7_three_plane_kernel` at $n = 20$ — the design's 480-byte prediction at
 a 128-byte allocation granularity — in the four dispatches it captured before
 aborting
-([`../6c7fcb38/profiled-20260815T181923Z/rocprofv2-n20-threeplane/pmc_1/results_v2-n20-threeplane.csv`](../6c7fcb38/profiled-20260815T181923Z/rocprofv2-n20-threeplane/pmc_1/results_v2-n20-threeplane.csv)).
+(`../6c7fcb38/profiled-20260815T181923Z/rocprofv2-n20-threeplane/pmc_1/results_v2-n20-threeplane.csv`).
 That is the one runtime observation of a dynamic shared table in the study's
 evidence, and it confirms the launch formula for the kernel it covers.
 
@@ -608,7 +608,7 @@ column above is the launch measure comparable across all nine paths.
 Sustained-kernel duration per launch is `kernel_device_s` divided by that cell's
 `reps`, a device-event span that excludes allocation, transfer, host
 serialisation, and submission
-(`dev/research/permanent-sampling-feas/src/usage.txt`, GRID TIMING COLUMNS).
+(`usage.txt`, GRID TIMING COLUMNS).
 Per-launch work is the batch times the Ryser index space, $M \cdot 2^n$, the
 quantity the archived calibration of §9 budgets; the Ryser-weighted form
 $M \cdot n \cdot 2^n$ is carried beside it because Ryser's cost per matrix is
@@ -695,7 +695,7 @@ per-launch device time, and this study reports both axes rather than one.
 ### 9.1 The prior, and the terms it is cited on
 
 The only committed numeric bound before this study is an archived calibration:
-[`dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`](../../archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md)
+`r4_gpu_uniformity_resample.md`
 §2.5 places a hang boundary at "*≈190–200 s*" per launch, reports bounded
 sub-batches holding every launch at "*≈10–117 s*", sets per-field work budgets
 on $\text{sub\_batch} \cdot 2^n$ of $4.0 \times 10^9$ at $q = 3$,
@@ -706,7 +706,7 @@ even on a 2300 s single launch at n=32*".
 That calibration is cited here as a prior and never as an established device
 property, because the mechanism it names was retracted for the one observation
 that motivates it. The single recorded device fault,
-[`../b488f02c/gpu-hang-2026-08-07.log`](../b488f02c/gpu-hang-2026-08-07.log),
+`../b488f02c/gpu-hang-2026-08-07.log`,
 records "*nothing here attributes the hang to a watchdog timeout: that is one
 hypothesis among others (driver defect, memory pressure, a transient), and no
 diagnostic was captured that would separate them*", and states that the file
@@ -770,7 +770,7 @@ faulted:
 
 The one recorded device fault is a $q = 3$, $n = 24$, `gpu_hip` launch at
 $M = 4096$, attempted once while probing the batch ceiling and never retried
-([`../b488f02c/gpu-hang-2026-08-07.log`](../b488f02c/gpu-hang-2026-08-07.log);
+(`../b488f02c/gpu-hang-2026-08-07.log`;
 the harness records the same event and lowers its own sustained probe to
 $M = 2048$ because of it,
 `dev/research/permanent-sampling-feas/src/main.rs:819-826`). What this study
@@ -804,7 +804,7 @@ assumption rather than bounds** (`@/inv/benchmark-backed-performance`):
   by the batch ratio: 3.2806 s at $M = 1024$ estimates 13.1225 s and 9.7637 s at
   $M = 2048$ estimates 19.5274 s, from 55 shards over 180.435 s and 19 over
   185.510 s
-  ([`../b488f02c/sustained-2026-08-07.csv`](../b488f02c/sustained-2026-08-07.csv)).
+  (`../b488f02c/sustained-2026-08-07.csv`).
   Those two points step **super**-linearly, 2.9762× for 2.00× the batch, in the
   opposite direction to the device spans above, so extending either assumes a
   scaling the measurements do not settle. The quantity is composite host and
@@ -891,7 +891,7 @@ Recorded here with the statements they contradict, per
 4. **The archived statement that the $\mathbb{F}_3$ kernel "never tripped it" is
    not the whole record.** The one device fault on record is a $q = 3$ launch on
    that same shipped kernel
-   ([`../b488f02c/gpu-hang-2026-08-07.log`](../b488f02c/gpu-hang-2026-08-07.log)).
+   (`../b488f02c/gpu-hang-2026-08-07.log`).
    The two are not strictly in conflict, because that fault's attribution to a
    watchdog was retracted and the archived sentence is about the watchdog; both
    are recorded here so the reader does not meet either alone.
@@ -918,7 +918,7 @@ table confirms its launch formula at the allocator's granularity.
 | REQ | Where addressed | Status |
 | --- | --- | --- |
 | REQ-01 | §3 | **Satisfied.** Wave utilization is reported for each of the nine retained GPU permanent paths as the share of a 32-lane wavefront its execution mapping makes active: 3.1250 % for the three shipped one-thread-per-matrix paths and 100 % for the six lane-owns-interval paths, each exact by construction and cited to its launch site. The lane-owns-interval partition's tail-interval idleness is zero at every measured order because $2^n \bmod 32 = 0$, which `analysis.py` section 3 asserts, and the source's lanes-per-block is checked against the profiled dispatches' own `Workgroup_Size`. The phases around the Gray walk are decomposed into lane-steps and reported as a bracket under two readings of the reduction; `prepare_three_plane_columns`, whose whole body is a strided column loop, is reported separately at $n/32$. The derivation's basis — launch geometry and source loop bounds, not a per-lane counter — is stated. |
-| REQ-02 | §4 | **Satisfied.** Registers per thread, private scratch memory per thread, shared memory per block, spill counts, and the occupancy-limiting resource are reported for all eleven kernels of the nine retained paths. Every compiler figure is cited to `dev/studies/6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt` and its named per-kernel log, and none is re-measured; the three field campaigns read the same receipt in their own §7. Per-block shared memory is reported from the launch formulas because the compiler's field is static-LDS only, which the campaigns state and this receipt repeats rather than reading a 0 as an absence. The limiter naming is checked by `analysis.py` against all 26 receipt entries. |
+| REQ-02 | §4 | **Satisfied.** Registers per thread, private scratch memory per thread, shared memory per block, spill counts, and the occupancy-limiting resource are reported for all eleven kernels of the nine retained paths. Every compiler figure is cited to `receipt.txt` and its named per-kernel log, and none is re-measured; the three field campaigns read the same receipt in their own §7. Per-block shared memory is reported from the launch formulas because the compiler's field is static-LDS only, which the campaigns state and this receipt repeats rather than reading a 0 as an absence. The limiter naming is checked by `analysis.py` against all 26 receipt entries. |
 | REQ-03 | §5 | **Satisfied.** Achieved occupancy comes from `MeanOccupancyPerCU`, a profiler counter collected per dispatch while the workload executed, for all eleven kernels: six from this study's paired profiled run, five cited to the committed $\mathbb{F}_7$ run. Each figure names its pass, launch width, and dispatch count, and is expressed against the device's own 2 560 wave slots from the profiler's agent report. Admissibility is the stated physical test the $\mathbb{F}_7$ study committed, applied per dispatch by `analysis.py`; all 135 counted dispatches pass it and none is discarded. Compiler resource-usage output never fills the achieved column: §4 shows the compiler's occupancy field is a function of `VGPRs` alone and §5 states that reading. The not-measured escape does not arise, because `rocprofv3` runs this workload on this host and returns counters. |
 | REQ-04 | §6 | **Satisfied.** The verdict is stated across the study's kernels at three levels, each with the measurement behind it. The lane-owns-interval mapping's stated per-lane register budget implies the wave-slot ceiling for all seven kernels that have one, and its per-block shared-memory allocation leaves the device's LDS with headroom above the per-CU wave-slot cap, so neither is the limiter anywhere. Where per-SIMD occupancy falls below the ceiling — four of eleven kernels — the resource that limits it is the compiler's realised per-lane vector-register allocation, from the receipt of §4 and confirmed at runtime by `VGPR_Count` in §5. Where achieved occupancy falls below that ceiling, which is every cell in the study, the limiting quantity is the launch width the batch calibration supplies, measured as launch geometry and residency in §5. §6 states which candidate mechanisms this evidence cannot rule on. |
 | REQ-05 | §7 | **Satisfied.** Host-to-device transfer, device-to-host transfer, and launch overhead are each a separate device-event column of the field campaigns' grids, reported per launch beside kernel time over all 52 device cells that carry spans, and cited to those columns rather than re-measured. `device_submission_to_kernel_s` is the launch measure used, and §7 states why a prototype row's `host_submission_s` is not one, citing bug `79c5ace7`. |

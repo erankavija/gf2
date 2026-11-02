@@ -101,58 +101,6 @@ class InterruptionTest(unittest.TestCase):
         self.assertEqual((scratch.exists(), removed.exists()), (False, True))
 
 
-class CommittedRecordTest(unittest.TestCase):
-    """Each build record's validation record beside it."""
-
-    def records(self):
-        for build_path, build in peak.build_records():
-            # The campaign's own untimed smoke validates an arm recorded alone.
-            if any(peak.catalogue_of(build)[arm].get("own_record") for arm in build["arms"]):
-                continue
-            text = (build_path.parent / recorder.RECORD).read_text(encoding="utf-8")
-            with self.subTest(build=str(build_path)):
-                yield build_path, build, [json.loads(line) for line in text.splitlines()]
-
-    def test_every_arm_runs_every_family_cell_of_each_code(self):
-        declared = Counter()
-        for family in recorder.FAMILIES:
-            addendum = json.loads((smoke.ROOT / smoke.located("file", smoke.FAMILIES[family][0]))
-                                  .read_text(encoding="utf-8"))
-            for cell in addendum["cells"]:
-                key = next(key for key in smoke.CODES if cell["cell_id"].startswith(key + "-"))
-                declared[family, key, cell["workload"]["size"]["workers"]] += 1
-        for _, build, lines in self.records():
-            expected = Counter({(name, *cell): count for name in build["arms"]
-                                for cell, count in declared.items()})
-            found = Counter((line["arm"], line["family"], line["code"], line["workers"])
-                            for line in lines)
-            self.assertEqual(found, expected)
-
-    def test_each_line_names_its_arm_by_the_build_record(self):
-        for build_path, build, lines in self.records():
-            cited = peak.cited(build_path)
-            for line in lines:
-                self.assertEqual(line["build_identity"], cited)
-                self.assertEqual(line["validation"]["executable_sha256"],
-                                 build["arms"][line["arm"]]["executable_sha256"])
-
-    def test_each_worker_is_pinned_and_decodes_every_recorded_frame_untimed(self):
-        for _, build, lines in self.records():
-            files = peak.quality_files(build)
-            for line in lines:
-                self.assertEqual((line["validation"]["role"], line["validation"]["windows"]),
-                                 ("validation", 0))
-                path, digest = files[line["arm"], line["code"]]
-                self.assertEqual((line["quality"]["path"], line["quality"]["sha256"]),
-                                 (str(path), digest))
-                quality = json.loads((smoke.ROOT / path).read_text(encoding="utf-8"))
-                self.assertEqual(line["batch_frames"], len(quality["frame_bit_errors"]))
-                workers = line[smoke.PLACEMENT]["workers"]
-                self.assertEqual(len(workers), line["workers"])
-                for worker in workers:
-                    self.assertEqual(
-                        (worker["affinity"], worker["cpus_seen"], worker["calls"]),
-                        ([worker["cpu"]], [worker["cpu"]], 1))
 
 if __name__ == "__main__":
     unittest.main()

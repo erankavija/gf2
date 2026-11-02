@@ -7,7 +7,7 @@
 //!
 //! # Output
 //!
-//! Writes `dev/benchmarks/gf2_algebra_permanent/s2_parallel_scaling-<DATE>.csv`
+//! Writes `target/benchmarks/gf2_algebra_permanent/s2_parallel_scaling-<DATE>.csv`
 //! (date overridable via `SA_DATE`) with columns `n, threads, mean_us, std_us,
 //! k_matrices, scaling_factor, scaling_ci_lo, scaling_ci_hi, fp3_result_hex`.
 
@@ -80,7 +80,7 @@ fn main() {
     let date = today_yyyy_mm_dd();
     let host = host_fingerprint();
     let topology = observed_topology();
-    let csv_dir = "dev/benchmarks/gf2_algebra_permanent";
+    let csv_dir = "target/benchmarks/gf2_algebra_permanent";
     let csv_path = format!("{csv_dir}/s2_parallel_scaling-{date}.csv");
 
     fs::create_dir_all(csv_dir).expect("create benchmarks dir");

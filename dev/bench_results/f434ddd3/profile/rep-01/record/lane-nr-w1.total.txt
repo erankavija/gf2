@@ -1,1 +1,0 @@
-              SAMPLE events:         42  (70.0%)

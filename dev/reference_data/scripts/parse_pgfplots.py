@@ -394,10 +394,9 @@ FIGURE_MAP = {
 
 
 def main():
-    src_dir = Path(os.environ.get('SRC_DIR',
-                   '/home/vkaskivuo/Projects/so-grand/img_PY'))
+    src_dir = Path(os.environ['SRC_DIR'])
     out_dir = Path(os.environ.get('OUT_DIR',
-                   '/home/vkaskivuo/Projects/gf2/dev/reference_data'))
+                   str(Path(__file__).resolve().parents[1])))
     out_dir.mkdir(parents=True, exist_ok=True)
 
     tex_files = sorted(src_dir.glob('*.tex'))

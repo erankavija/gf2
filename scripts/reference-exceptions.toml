@@ -1,0 +1,26 @@
+# Exceptions for scripts/check-references.py. Each entry needs a reason.
+
+[[exception]]
+path = ".jit/events.jsonl"
+reason = "append-only tracker log records paths as they were"
+
+[[exception]]
+path = ".jit/issues/*"
+planned = ["crates/", "experiments/", "docs/", "scripts/", "benchmarks/", "proofs/"]
+reason = "open issues name files they plan to create"
+
+[[exception]]
+path = "contrib/gates/tests/*"
+reason = "fixtures of the documentation check"
+
+[[exception]]
+path = "scripts/check-references.py"
+reason = "its self-test names unresolvable paths"
+
+[[exception]]
+path = "packages/*"
+reason = "installable rule packs name paths of the projects that adopt them"
+
+[[exception]]
+path = "dev/active/b8206228-permanent-statistics/45ecf975/*"
+reason = "history rewrite runbook names the paths it strips; remove when 45ecf975 closes"

@@ -31,7 +31,7 @@ measurements.
 | `bch_sequential_vs_batch/sequential_loop` | 9.2116 µs / 9.2247 µs / 9.2367 µs |
 | `bch_sequential_vs_batch/batch_operation` | 6.5327 µs / 6.5429 µs / 6.5530 µs |
 
-## ID mapping against the pre-cutover baseline (`dev/bench_results/88ca7d2f/`)
+## ID mapping against the pre-cutover baseline (`88ca7d2f/`)
 
 | Baseline ID | Status | Reason |
 |---|---|---|

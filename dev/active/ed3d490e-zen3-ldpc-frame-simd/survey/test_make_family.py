@@ -61,6 +61,51 @@ def bundle_inputs(test, *loaded):
     return root
 
 
+def build_inputs(test, recorder):
+    """Construct build and quality metadata without measured campaign records."""
+    temporary = tempfile.TemporaryDirectory(dir=smoke.ROOT / "target")
+    test.addCleanup(temporary.cleanup)
+    directory = Path(temporary.name)
+    catalogue_path = SURVEY / "arms.json"
+    catalogue = json.loads(catalogue_path.read_text(encoding="utf-8"))["arms"]
+    records = []
+    groups = {}
+    for name, arm in catalogue.items():
+        key = name if arm.get("own_record") else arm["build"]
+        groups.setdefault(key, {})[name] = arm
+    for index, entries in enumerate(groups.values()):
+        arms, executables, commands = {}, {}, []
+        pinned = directory / f"pinned-{index}.json"
+        pinned.write_text(json.dumps({"rustflags": "-C target-cpu=native"}), encoding="utf-8")
+        for name, entry in entries.items():
+            executable = entry["executable"]
+            arms[name] = {**entry, "path": f"release/{executable}",
+                          "executable_sha256": "a" * 64,
+                          "pinned_by": {"record": str(pinned.relative_to(smoke.ROOT))}}
+            executables[executable] = {"sha256": "a" * 64, "compiler_options": []}
+            if entry["source"] == "workspace":
+                flags = "-C target-cpu=native" if entry["build"] == "native" else None
+                commands.append({"argv": ["cargo", "build", "--release", "--package", entry["package"]],
+                                 "environment": {"RUSTFLAGS": flags}})
+        build = {"catalogue": {"path": str(catalogue_path.relative_to(smoke.ROOT))},
+                 "build_root": str(directory), "arms": arms, "executables": executables,
+                 "build_commands": commands, "rustc": "rustc fixture", "cargo": "cargo fixture",
+                 "release_profile": {}}
+        path = directory / f"build-{index}.json"
+        path.write_text(json.dumps(build), encoding="utf-8")
+        records.append((path, build))
+    def quality(build):
+        return {(name, code): (directory / f"quality-{name}-{code}.json", "a" * 64)
+                for name in build["arms"] for code in smoke.CODES}
+    patch = mock.patch.object(recorder, "build_records", return_value=records)
+    patch.start()
+    test.addCleanup(patch.stop)
+    patch = mock.patch.object(recorder, "quality_files", side_effect=quality)
+    patch.start()
+    test.addCleanup(patch.stop)
+    return records
+
+
 class RecordedInputsTest(unittest.TestCase):
     def test_a_directory_without_bundles_is_refused_with_its_remedy(self):
         with tempfile.TemporaryDirectory() as empty:
@@ -90,6 +135,7 @@ class RecordedInputsTest(unittest.TestCase):
 class GeneratorTest(unittest.TestCase):
     def setUp(self):
         bundle_inputs(self)
+        build_inputs(self, peak)
         self.directory = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.directory)
         self.declaration = json.loads(SAMPLE.read_text(encoding="utf-8"))

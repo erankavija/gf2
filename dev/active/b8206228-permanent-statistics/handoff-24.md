@@ -52,7 +52,7 @@
 - Progress and wave plan: `dev/active/b8206228-permanent-statistics/progress.json`
 - Prior stopping boundary: `dev/active/b8206228-permanent-statistics/handoff-23.md`
 - Acceptance issue: `jit issue show 73317b2e`
-- Canonical coordinator: `crates/gf2-sim/src/permanent_campaign/coordinator.rs`
-- Thin campaign consumer: `crates/gf2-sim/src/bin/permanent_campaign.rs`
-- Frozen campaign: `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/`
+- Canonical coordinator: `coordinator.rs`
+- Thin campaign consumer: `permanent_campaign.rs`
+- Frozen campaign: `permanent-zero-fraction-20260829/`
 - Importance-sampling branch: `.agents/worktrees/agent-6639435f` at `49b4d452`

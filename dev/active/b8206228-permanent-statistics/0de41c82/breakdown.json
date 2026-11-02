@@ -36,10 +36,10 @@
         "footprint": {
           "creates": [
             "dev/research/permanent_wave_gpu/Cargo.toml",
-            "dev/research/permanent_wave_gpu/.gitignore",
+            ".gitignore",
             "dev/research/permanent_wave_gpu/README.md",
             "dev/research/permanent_wave_gpu/build.rs",
-            "dev/research/permanent_wave_gpu/hip/probe.hip",
+            "probe.hip",
             "dev/research/permanent_wave_gpu/src/lib.rs",
             "dev/research/permanent_wave_gpu/src/paths.rs",
             "dev/research/permanent_wave_gpu/src/fixtures.rs",
@@ -97,7 +97,7 @@
         "worker_sized_reason": "One fixture module and one oracle comparator dropped into an existing crate skeleton, all host-side, fits a single focused cycle.",
         "footprint": {
           "creates": [
-            "dev/research/permanent_wave_gpu/tests/fixture_equivalence.rs"
+            "fixture_equivalence.rs"
           ],
           "touches": [
             "dev/research/permanent_wave_gpu/src/fixtures.rs",
@@ -145,7 +145,7 @@
         "footprint": {
           "creates": [
             "crates/gf2-kernels-hip/src/host/events.rs",
-            "crates/gf2-kernels-hip/tests/host_events.rs"
+            "host_events.rs"
           ],
           "touches": [
             "crates/gf2-kernels-hip/src/ffi.rs",
@@ -197,7 +197,7 @@
         "worker_sized_reason": "One bit-field encoding with its bounds assertions, an injectivity test, and a golden-vector table is a small self-contained cycle.",
         "footprint": {
           "creates": [
-            "dev/research/permanent-sampling-feas/src/domains.rs"
+            "domains.rs"
           ],
           "touches": [
             "dev/research/permanent-sampling-feas/src/sampler.rs",
@@ -250,13 +250,13 @@
         "worker_sized_reason": "Per-phase columns threaded from the instrumented boundary through an existing protocol module and CSV schema is a single focused cycle.",
         "footprint": {
           "creates": [
-            "dev/research/permanent-sampling-feas/src/timing.rs"
+            "timing.rs"
           ],
           "touches": [
             "dev/research/permanent-sampling-feas/src/lib.rs",
             "dev/research/permanent-sampling-feas/src/protocol.rs",
             "dev/research/permanent-sampling-feas/src/backend.rs",
-            "dev/research/permanent-sampling-feas/src/usage.txt",
+            "usage.txt",
             "dev/research/permanent-sampling-feas/Cargo.toml"
           ]
         }
@@ -306,7 +306,7 @@
         "worker_sized_reason": "One adapter module deriving the schedule from an existing registry, plus a set-equality test, is a small self-contained cycle.",
         "footprint": {
           "creates": [
-            "dev/research/permanent-sampling-feas/src/adapter.rs"
+            "adapter.rs"
           ],
           "touches": [
             "dev/research/permanent-sampling-feas/src/backend.rs",
@@ -358,11 +358,11 @@
         "worker_sized_reason": "One measurement routine over timing plumbing that already exists is a small self-contained cycle with no receipt to produce.",
         "footprint": {
           "creates": [
-            "dev/research/permanent-sampling-feas/src/micro_gray.rs"
+            "micro_gray.rs"
           ],
           "touches": [
             "dev/research/permanent-sampling-feas/src/main.rs",
-            "dev/research/permanent-sampling-feas/src/usage.txt"
+            "usage.txt"
           ]
         }
       }
@@ -413,11 +413,11 @@
         "worker_sized_reason": "One measurement routine over timing plumbing that already exists is a small self-contained cycle with no receipt to produce.",
         "footprint": {
           "creates": [
-            "dev/research/permanent-sampling-feas/src/micro_product.rs"
+            "micro_product.rs"
           ],
           "touches": [
             "dev/research/permanent-sampling-feas/src/main.rs",
-            "dev/research/permanent-sampling-feas/src/usage.txt"
+            "usage.txt"
           ]
         }
       }
@@ -471,8 +471,8 @@
         "worker_sized_reason": "One kernel over an already-bit-sliced arithmetic, checked against a corpus that already exists, keeps the cycle to the execution mapping alone.",
         "footprint": {
           "creates": [
-            "dev/research/permanent_wave_gpu/hip/permanent_wave_gf3.hip",
-            "dev/research/permanent_wave_gpu/tests/wave_gf3_equivalence.rs"
+            "permanent_wave_gf3.hip",
+            "wave_gf3_equivalence.rs"
           ],
           "touches": [
             "dev/research/permanent_wave_gpu/src/wave.rs"
@@ -525,8 +525,8 @@
         "worker_sized_reason": "One extra fold variant swapped into an existing kernel and checked against an existing corpus is a single focused cycle.",
         "footprint": {
           "creates": [
-            "dev/research/permanent_wave_gpu/hip/fold_gf3_controls.hip",
-            "dev/research/permanent_wave_gpu/tests/fold_gf3_equivalence.rs"
+            "fold_gf3_controls.hip",
+            "fold_gf3_equivalence.rs"
           ],
           "touches": [
             "dev/research/permanent_wave_gpu/src/fold_gf3.rs"
@@ -583,8 +583,8 @@
         "worker_sized_reason": "Two arithmetic paths dropped into an existing execution mapping, checked against an existing corpus, is one focused cycle of work.",
         "footprint": {
           "creates": [
-            "dev/research/permanent_wave_gpu/hip/arith_gf5_candidates.hip",
-            "dev/research/permanent_wave_gpu/tests/f5_candidate_equivalence.rs"
+            "arith_gf5_candidates.hip",
+            "f5_candidate_equivalence.rs"
           ],
           "touches": [
             "dev/research/permanent_wave_gpu/src/f5_candidates.rs"
@@ -642,8 +642,8 @@
         "worker_sized_reason": "One arithmetic circuit transliterated from an existing prototype plus its exhaustive validation is a single focused cycle with no kernel integration.",
         "footprint": {
           "creates": [
-            "dev/research/permanent_wave_gpu/hip/arith_gf7_three_plane.hip",
-            "dev/research/permanent_wave_gpu/tests/f7_three_plane_exactness.rs"
+            "arith_gf7_three_plane.hip",
+            "f7_three_plane_exactness.rs"
           ],
           "touches": [
             "dev/research/permanent_wave_gpu/src/f7_three_plane.rs"
@@ -699,8 +699,8 @@
         "worker_sized_reason": "Two kernels assembled from an existing accumulator and an existing execution mapping, with no campaign to run, fits one focused cycle.",
         "footprint": {
           "creates": [
-            "dev/research/permanent_wave_gpu/hip/permanent_wave_gf7.hip",
-            "dev/research/permanent_wave_gpu/tests/wave_gf7_equivalence.rs"
+            "permanent_wave_gf7.hip",
+            "wave_gf7_equivalence.rs"
           ],
           "touches": [
             "dev/research/permanent_wave_gpu/src/wave_gf7.rs"
@@ -767,12 +767,12 @@
         "worker_sized_reason": "One scheduled campaign run over a single field on a prepared host, with no instrumentation to design, is one focused cycle.",
         "footprint": {
           "creates": [
-            "dev/active/b8206228-permanent-statistics/0de41c82/f3-protocol-note.md",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f3-throughput.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f3-micro-gray-update.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f3-micro-horizontal-product.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f3-zero-fraction.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f3-equivalence.csv"
+            "f3-protocol-note.md",
+            "f3-throughput.csv",
+            "f3-micro-gray-update.csv",
+            "f3-micro-horizontal-product.csv",
+            "f3-zero-fraction.csv",
+            "f3-equivalence.csv"
           ],
           "uncertainty": "Receipt filenames carry the measurement date in the harness's committed convention, so the exact committed names are fixed at measurement time."
         }
@@ -840,12 +840,12 @@
         "worker_sized_reason": "One scheduled campaign run over a single field on a prepared host, with no instrumentation to design, is one focused cycle.",
         "footprint": {
           "creates": [
-            "dev/active/b8206228-permanent-statistics/0de41c82/f5-protocol-note.md",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f5-throughput.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f5-micro-gray-update.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f5-micro-horizontal-product.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f5-zero-fraction.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f5-equivalence.csv"
+            "f5-protocol-note.md",
+            "f5-throughput.csv",
+            "f5-micro-gray-update.csv",
+            "f5-micro-horizontal-product.csv",
+            "f5-zero-fraction.csv",
+            "f5-equivalence.csv"
           ],
           "uncertainty": "Receipt filenames carry the measurement date in the harness's committed convention, so the exact committed names are fixed at measurement time."
         }
@@ -915,13 +915,13 @@
         "worker_sized_reason": "One scheduled campaign run over a single field on a prepared host, with no instrumentation to design, is one focused cycle.",
         "footprint": {
           "creates": [
-            "dev/active/b8206228-permanent-statistics/0de41c82/f7-protocol-note.md",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f7-throughput.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f7-micro-gray-update.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f7-micro-horizontal-product.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f7-zero-fraction.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f7-equivalence.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/f7-bitplane-resources.csv"
+            "f7-protocol-note.md",
+            "f7-throughput.csv",
+            "f7-micro-gray-update.csv",
+            "f7-micro-horizontal-product.csv",
+            "f7-zero-fraction.csv",
+            "f7-equivalence.csv",
+            "f7-bitplane-resources.csv"
           ],
           "uncertainty": "Receipt filenames carry the measurement date in the harness's committed convention, so the exact committed names are fixed at measurement time."
         }
@@ -977,9 +977,9 @@
         "worker_sized_reason": "One qualification pass over kernels that already run on the host, bounded to resource readouts plus a launch-duration envelope, is one focused cycle.",
         "footprint": {
           "creates": [
-            "dev/active/b8206228-permanent-statistics/0de41c82/runtime-qualification.md",
-            "dev/active/b8206228-permanent-statistics/0de41c82/occupancy-resources.csv",
-            "dev/active/b8206228-permanent-statistics/0de41c82/launch-duration-envelope.csv"
+            "runtime-qualification.md",
+            "occupancy-resources.csv",
+            "launch-duration-envelope.csv"
           ],
           "uncertainty": "Whether achieved occupancy can be measured at all depends on profiler availability for the study's HIP toolchain on the target host; where it is unavailable the receipt records it as not measured rather than substituting a computed figure."
         }
@@ -1026,7 +1026,7 @@
         "worker_sized_reason": "One build-script flag surface plus a compile sweep over an already-written kernel set is a small self-contained cycle.",
         "footprint": {
           "creates": [
-            "dev/active/b8206228-permanent-statistics/0de41c82/compile-scope-evidence.txt"
+            "compile-scope-evidence.txt"
           ],
           "touches": [
             "dev/research/permanent_wave_gpu/build.rs",
@@ -1061,7 +1061,7 @@
       "runtime-qualification",
       "arch-scope-compile-evidence"
     ],
-    "description": "The study's findings document: a per-field go or no-go verdict grounded in the committed receipts, a production design behind every go, the validity argument for the $\\mathbb{F}_3$ Boolean representation, and the decision on where a permanent-specialized representation lives.\n\n## Background\n\nThe study concludes per field, and a no-go is a legitimate conclusion where reproducible evidence does not support GPU acceleration. A go decision requires exact equivalence, reproducible receipts, a safe launch duration, and an end-to-end crossover against the best applicable in-tree CPU path; a win on an isolated operator is insufficient.\n\nThree design questions have to be settled in the same document.\n\nThe $\\mathbb{F}_3$ packed representation encodes a lane as a magnitude bit and a sign bit, with the sign a don't-care when the magnitude is zero. $\\mathbb{F}_3$ receives two simultaneous algebraic advantages: $3 = 2^2 - 1$, so Mersenne-style addition is cheap, and $|\\mathbb{F}_3^*| = 2$, so the only nonzero distinction is sign. Neither holds for $\\mathbb{F}_5^*$ of order four nor for $\\mathbb{F}_7^*$ of order six. The document must explain why this is a Boolean encoding of $\\mathbb{F}_3$ arithmetic rather than the permanent of a matrix over $\\mathbb{F}_2$.\n\nA production design converges on the repository's existing device infrastructure rather than growing a parallel one. Persistent device buffers, pinned host buffers, streams, a stream pool, and launch-dimension types already exist and are public in `crates/gf2-kernels-hip/src/host/`; the permanent dispatcher bypasses them today, allocating and freeing per call. The dispatcher also asserts on every device return code and panics, where the repository's accelerator contract requires unsupported capabilities and recoverable resource failures to select a tested fallback while fatal device failures stay explicit.\n\nThe representation boundary has exactly two compliant resolutions: change the canonical public packed $\\mathbb{F}_7$ representation at its source once broader evidence supports it, or keep the public representation as it is and define the three-plane state as an internal permanent-kernel representation with explicit scope, shared behavioral tests, and a tracked convergence condition. A public packed representation also attracts a proof obligation by repository convention, which an internal permanent-kernel state does not obviously attract.\n\nAn archived encoding decision rejected a three-plane $\\mathbb{F}_7$ candidate under a workload model weighting each Gray transition as one packed add or subtract plus roughly $n-1$ packed multiplications, and states that a re-benchmark is not a re-decision authority for it. Where this study's receipts support the candidate under the permanent workload, that document is amended at its source with the new evidence rather than silently contradicted.\n\n## Success Criteria\n\n- [hard] REQ-01: A findings document states a go or no-go verdict for each of $\\mathbb{F}_3$, $\\mathbb{F}_5$, and $\\mathbb{F}_7$, each supported by a citation to a committed receipt.\n- [hard] REQ-02: Each verdict states the measured crossover condition against the best applicable in-tree CPU path, or states explicitly that no crossover was observed within the measured range.\n- [hard] REQ-03: The document specifies the intra-matrix parallel Ryser decomposition the study exercised — the per-lane Gray interval, the per-lane accumulator initialization, the lane-local row-product reduction, and the cross-lane partial-sum reduction — and links the executable prototype implementing it.\n- [hard] REQ-04: The document explains why the $\\mathbb{F}_3$ Boolean representation is valid for a permanent over $\\mathbb{F}_3$ without treating an odd-characteristic permanent as a permanent over $\\mathbb{F}_2$.\n- [hard] REQ-05: For each of $\\mathbb{F}_5$ and $\\mathbb{F}_7$, the document reports at least two measured arithmetic representations before selecting or rejecting a design, citing the receipt for each.\n- [hard] REQ-06: Every go verdict carries a production design covering input layout; persistent device buffers and streams named as the existing `DeviceBuffer`, `HipStreamPool`, and `LaunchDims` types in `crates/gf2-kernels-hip/src/host/`; bounded-duration launches; per-device initialization; error propagation that selects a tested CPU fallback for unsupported capabilities and recoverable resource failures while leaving fatal device failures explicit; and behavioral-equivalence coverage.\n- [hard] REQ-07: The document names the public packed-field representation and the permanent-specialized internal state as distinct surfaces, chooses one of the two compliant resolutions described in the background, and, where the internal state is chosen, records the named exception together with its tracked convergence condition.\n- [hard] REQ-08: Where the study's receipts support the three-plane $\\mathbb{F}_7$ candidate, the archived $\\mathbb{F}_7$ encoding decision document is amended at its source with the permanent-workload evidence and the changed verdict; otherwise the findings document states that the archived decision stands and cites the measurement leaving it standing.\n- [hard] REQ-09: Falsified hypotheses, rejected candidates, and censored measurements are recorded together with the evidence contradicting them rather than removed.\n- [hard] REQ-10: Every quantitative claim in the document resolves to a committed receipt file or to an in-tree source location.\n- [hard] REQ-11: For each of $\\mathbb{F}_5$ and $\\mathbb{F}_7$, the document states whether the declared scientifically relevant operating point reached at least $1.5\\times$ the best applicable in-tree CPU throughput inside the documented safe launch-duration bound, cites the receipt, and records the measured factor and the shortfall where it did not.\n\n## Notes\n\nThe document consumes committed evidence and introduces no new measurement.\n\nThe archived encoding decision lives under `dev/archive/`, which is permanent repository content; amending it is a deliberate act that needs owner approval before it lands.\n\nDevice facts stated in the findings are the receipted ones. Where an in-tree comment disagrees with a receipt — for example a compute-unit count recorded in a test file — the receipt governs and the stale comment is corrected in the same change.\n\nThe $\\mathbb{F}_3$ arithmetic background is [Scheinerman2024].\n",
+    "description": "The study's findings document: a per-field go or no-go verdict grounded in the committed receipts, a production design behind every go, the validity argument for the $\\mathbb{F}_3$ Boolean representation, and the decision on where a permanent-specialized representation lives.\n\n## Background\n\nThe study concludes per field, and a no-go is a legitimate conclusion where reproducible evidence does not support GPU acceleration. A go decision requires exact equivalence, reproducible receipts, a safe launch duration, and an end-to-end crossover against the best applicable in-tree CPU path; a win on an isolated operator is insufficient.\n\nThree design questions have to be settled in the same document.\n\nThe $\\mathbb{F}_3$ packed representation encodes a lane as a magnitude bit and a sign bit, with the sign a don't-care when the magnitude is zero. $\\mathbb{F}_3$ receives two simultaneous algebraic advantages: $3 = 2^2 - 1$, so Mersenne-style addition is cheap, and $|\\mathbb{F}_3^*| = 2$, so the only nonzero distinction is sign. Neither holds for $\\mathbb{F}_5^*$ of order four nor for $\\mathbb{F}_7^*$ of order six. The document must explain why this is a Boolean encoding of $\\mathbb{F}_3$ arithmetic rather than the permanent of a matrix over $\\mathbb{F}_2$.\n\nA production design converges on the repository's existing device infrastructure rather than growing a parallel one. Persistent device buffers, pinned host buffers, streams, a stream pool, and launch-dimension types already exist and are public in `crates/gf2-kernels-hip/src/host/`; the permanent dispatcher bypasses them today, allocating and freeing per call. The dispatcher also asserts on every device return code and panics, where the repository's accelerator contract requires unsupported capabilities and recoverable resource failures to select a tested fallback while fatal device failures stay explicit.\n\nThe representation boundary has exactly two compliant resolutions: change the canonical public packed $\\mathbb{F}_7$ representation at its source once broader evidence supports it, or keep the public representation as it is and define the three-plane state as an internal permanent-kernel representation with explicit scope, shared behavioral tests, and a tracked convergence condition. A public packed representation also attracts a proof obligation by repository convention, which an internal permanent-kernel state does not obviously attract.\n\nAn archived encoding decision rejected a three-plane $\\mathbb{F}_7$ candidate under a workload model weighting each Gray transition as one packed add or subtract plus roughly $n-1$ packed multiplications, and states that a re-benchmark is not a re-decision authority for it. Where this study's receipts support the candidate under the permanent workload, that document is amended at its source with the new evidence rather than silently contradicted.\n\n## Success Criteria\n\n- [hard] REQ-01: A findings document states a go or no-go verdict for each of $\\mathbb{F}_3$, $\\mathbb{F}_5$, and $\\mathbb{F}_7$, each supported by a citation to a committed receipt.\n- [hard] REQ-02: Each verdict states the measured crossover condition against the best applicable in-tree CPU path, or states explicitly that no crossover was observed within the measured range.\n- [hard] REQ-03: The document specifies the intra-matrix parallel Ryser decomposition the study exercised — the per-lane Gray interval, the per-lane accumulator initialization, the lane-local row-product reduction, and the cross-lane partial-sum reduction — and links the executable prototype implementing it.\n- [hard] REQ-04: The document explains why the $\\mathbb{F}_3$ Boolean representation is valid for a permanent over $\\mathbb{F}_3$ without treating an odd-characteristic permanent as a permanent over $\\mathbb{F}_2$.\n- [hard] REQ-05: For each of $\\mathbb{F}_5$ and $\\mathbb{F}_7$, the document reports at least two measured arithmetic representations before selecting or rejecting a design, citing the receipt for each.\n- [hard] REQ-06: Every go verdict carries a production design covering input layout; persistent device buffers and streams named as the existing `DeviceBuffer`, `HipStreamPool`, and `LaunchDims` types in `crates/gf2-kernels-hip/src/host/`; bounded-duration launches; per-device initialization; error propagation that selects a tested CPU fallback for unsupported capabilities and recoverable resource failures while leaving fatal device failures explicit; and behavioral-equivalence coverage.\n- [hard] REQ-07: The document names the public packed-field representation and the permanent-specialized internal state as distinct surfaces, chooses one of the two compliant resolutions described in the background, and, where the internal state is chosen, records the named exception together with its tracked convergence condition.\n- [hard] REQ-08: Where the study's receipts support the three-plane $\\mathbb{F}_7$ candidate, the archived $\\mathbb{F}_7$ encoding decision document is amended at its source with the permanent-workload evidence and the changed verdict; otherwise the findings document states that the archived decision stands and cites the measurement leaving it standing.\n- [hard] REQ-09: Falsified hypotheses, rejected candidates, and censored measurements are recorded together with the evidence contradicting them rather than removed.\n- [hard] REQ-10: Every quantitative claim in the document resolves to a committed receipt file or to an in-tree source location.\n- [hard] REQ-11: For each of $\\mathbb{F}_5$ and $\\mathbb{F}_7$, the document states whether the declared scientifically relevant operating point reached at least $1.5\\times$ the best applicable in-tree CPU throughput inside the documented safe launch-duration bound, cites the receipt, and records the measured factor and the shortfall where it did not.\n\n## Notes\n\nThe document consumes committed evidence and introduces no new measurement.\n\nThe archived encoding decision lives under `archive/`, which is permanent repository content; amending it is a deliberate act that needs owner approval before it lands.\n\nDevice facts stated in the findings are the receipted ones. Where an in-tree comment disagrees with a receipt — for example a compute-unit count recorded in a test file — the receipt governs and the stale comment is corrected in the same change.\n\nThe $\\mathbb{F}_3$ arithmetic background is [Scheinerman2024].\n",
     "planning": {
       "outcome": "A findings document records the per-field go/no-go verdict, the production design, and the representation-boundary decision.",
       "contract_refs": [
@@ -1095,10 +1095,10 @@
         "worker_sized_reason": "One synthesis over evidence that is already committed, with no measurement to run, is a single focused writing cycle.",
         "footprint": {
           "creates": [
-            "dev/active/b8206228-permanent-statistics/0de41c82/wave-gpu-findings.md"
+            "wave-gpu-findings.md"
           ],
           "touches": [
-            "dev/archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md"
+            "r2_f7_encoding_decision.md"
           ],
           "uncertainty": "The archived decision document is amended only where the receipts reopen it, and only with owner approval, so that file may end the work untouched."
         }

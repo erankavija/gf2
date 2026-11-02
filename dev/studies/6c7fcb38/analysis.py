@@ -136,10 +136,7 @@ BIT_SLICED = ("f7-three-plane-permanent",)
 # the orders this campaign measures: active_lanes_for_order(n) = 32 for n >= 5
 # (dev/research/permanent_wave_gpu/hip/wave_ryser_mapping.h:29-31, :16).
 WAVE_LANES = 32
-# Archived per-launch q=7 work budget and span boundary, both carried as priors
-# rather than as established device properties. The q=7 budget is committed at
-# 3.5e8 in dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/
-# r4_gpu_uniformity_resample.md:225-227.
+# Configured prior calibration bounds.
 ARCHIVED_HANG_BOUNDARY_S = 190.0
 ARCHIVED_Q7_WORK_BUDGET = 3.5e8
 # The grid writer emits `phase_timing_note` and `note` unquoted, and both carry
@@ -350,7 +347,7 @@ def prototype_shared_bytes(backend: str, n: int) -> int:
 
     `3 * n * 8` for the three-plane Gray-walk kernel's staged column planes and
     `8 * n * ceil(n / 16)` for the lookup control's staged nibble words
-    (dev/research/permanent_wave_gpu/hip/wave_gf7_equivalence.hip:683, :718,
+    (crates/gf2-kernels-hip/kernels/wave_gf7_equivalence.hip:683, :718,
     :723). The preparation kernel that stages the planes is launched with none
     (`:677`).
     """

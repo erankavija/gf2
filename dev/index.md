@@ -1,17 +1,15 @@
 # gf2 development directory
 
 `dev/` is gf2's developer documentation, with the working documents,
-measurement evidence and tooling of its development. An experiment's code,
-protocol, configuration, results and small receipts live at
+tooling of its development. An experiment's code,
+protocol and configuration live at
 [`experiments/<name>/`](../experiments/). Permanent documentation is indexed at
 [`docs/index.md`](../docs/index.md), and [`AGENTS.md`](../AGENTS.md) is the
 engineering contract for all of them.
 
 The [eBCH OSD](../experiments/osd-ebch/README.md) and
 [DVB-T2 AWGN](../experiments/dvb-t2-awgn/README.md) campaign crates live under
-`experiments/`. Their published records remain under
-[`simulation_results/osd-ebch-128-64/`](simulation_results/osd-ebch-128-64/) and
-[`benchmarks/dvb_t2_awgn/`](benchmarks/dvb_t2_awgn/), respectively.
+`experiments/`.
 
 The `[documentation]` table of [`.jit/config.toml`](../.jit/config.toml)
 declares the development root, the archive root, the paths archival relocates
@@ -60,12 +58,11 @@ writes the directory.
 
 | Material | Directory | Readers and writers |
 |---|---|---|
-| Benchmark results, configuration and input digests | `bench_results/` | `experiments/permanent-statistics/tests/rank_event_rates.rs` |
-| Benchmark output tables, campaign measurement plans, tuning-profile receipts | `benchmarks/` | Read by `dev/scripts/permanent-campaign-runner.sh`; written by `scripts/perm-uniformity-repro.sh` and `dev/tools/tuning-campaign-support` |
 | `sim_runner` campaign definitions | `campaigns/` | `crates/gf2-coding/src/bin/sim_runner.rs`, `crates/gf2-coding/tests/grand_phase1_smoke.rs` |
 | Reference curves, their comparison scripts, complete tuning profiles | `reference_data/` | `crates/gf2-coding/tests/ebch_128_64_reference.rs`, `crates/gf2-algebra/tests/tuning_repository_envelopes.rs`, `dev/tools/tuning-profile-compose/src/main.rs`, `dev/scripts/gen_fig7_report.sh` |
 | Standalone prototype crates | `research/` | `crates/gf2-kernels-simd/Cargo.toml` (dev-dependency), `.jit/gates.toml`, `experiments/permanent-benchmarks/scripts/permanent-repro.sh`, `dev/scripts/permanent-campaign-runner.sh` |
 | CI checks, the benchmark lock wrapper, campaign runners | `scripts/` | `scripts/cargo-ci.sh`, [`AGENTS.md`](../AGENTS.md) |
-| Campaign output and the permanent zero-fraction datasets | `simulation_results/` | `output_dir` of the `campaigns/` definitions, historical permanent receipts, `crates/gf2-coding/tests/grand_phase1_smoke.rs` |
-| Study inputs and measurement logs, one directory per issue | `studies/` | Written by `dev/scripts/permanent-campaign-runner.sh` |
+| Study analysis tools, one directory per issue | `studies/` | `dev/scripts/permanent-campaign-runner.sh` |
 | Tuning-campaign crates | `tools/` | Root `Cargo.toml` (workspace member), dev-dependency of `crates/gf2-core` and `crates/gf2-algebra`, `scripts/cargo-ci.sh` step `tuning-composer` |
+
+Harness output is written below the gitignored `target/` directory.

@@ -26,7 +26,7 @@
 - Reviewer models changed (invoker-approved): `code-review`, `doc-review`, `plan-review`, `breakdown-review` on `gpt-6.1-sol`; `research-review`, `holistic-review` on `gpt-6-astra`. `codex-cli` upgraded 0.157.0 → 0.162.0 (0.157.0 refuses `gpt-6.1-sol`).
 - Closed, all gates passed: `6bb13c31`, `6b5f4f3c`, `df144ecf` (no-claim branch), `79a62102`, `9600eb56` (rework 1), `33057520` (lead fixed two doc findings), `0657c9fa` (rework 1), `8342487d`, `2a9cc72c` (lead fixed three rustdoc findings), `f556d663`, `c7c11e7e` and `f0228940` (shared rework 1), `b2520e0f` (lead-requested touch-up keeping an unrolled fold for N in 22..=31), `9d474049`, `5c62bb1c`, `1fe6e218`, `d1bfe986`.
 - Rejected `45a962da` (invoker decision): the five tests run in about 6 ms; ignore tags reverted.
-- `dfb8820b`: worker deleted two schema-v2/v3 profiles; both reviews failed because `dev/benchmarks/tuning_profiles/*.sha256` and zen3 producing-input records pin them by path and digest. Merge reverted in `fix(jit:dfb8820b): restore the receipt-pinned core tuning profiles`.
+- `dfb8820b`: worker deleted two schema-v2/v3 profiles; both reviews failed because `tuning_profiles/*.sha256` and zen3 producing-input records pin them by path and digest. Merge reverted in `fix(jit:dfb8820b): restore the receipt-pinned core tuning profiles`.
 - `dd493649`: merged with `5c62bb1c` (one worker, two commits). Review F1 (high): a multi-frame seeded call still crosses its reserved stride. F2: the regression runs with debug assertions in CI.
 - `fbcadf17`: two reviews failed on REQ-01. The substituting arm is unreachable; the reviewer reads the criterion's other branch (reject with evidence) as the applicable one and notes `DvbT2Concat::new` never returns `Unsupported`.
 - `3464c241`: REQ-02 delivered; REQ-01 unmet literally. No 5G NR code probed (BG1 and BG2, 42 lifting sizes up to 176) has non-identity `systematic_cols`; sizes 192..=384 unprobed.
@@ -80,7 +80,7 @@
   - Context: REQ-01 asks for a base graph and lifting size whose `systematic_cols` differ from the identity prefix; none found up to Z = 176.
   - Options: (A) amend REQ-01 to accept the in-module (6, 3) code and merge; (B) probe Z = 192..=384 under the slow tier first; (C) reject the bug as not reachable and keep REQ-02 as a refactor.
   - Recommendation: B then A; the probe is one ignored test.
-- Question: Do the `dev/bench_results/3be770d5` receipts need revalidation after `33057520`?
+- Question: Do the `3be770d5` receipts need revalidation after `33057520`?
   - Context: `snr_checkpoint.rs` and `executor/drain.rs` are listed as producing inputs by source digest and both changed; snapshot checks pass and the worker reports timing behavior unchanged.
   - Options: (A) no revalidation; (B) queue a re-run in the bench window.
   - Recommendation: No strong preference.

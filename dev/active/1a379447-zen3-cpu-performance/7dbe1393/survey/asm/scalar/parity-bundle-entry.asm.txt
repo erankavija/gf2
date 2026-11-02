@@ -1,6 +1,0 @@
-# parity-bundle-entry: gf2_kernels_simd::x86::avx2::fns::and_parity_fn
-# binary sha256: 1cfb254df63744dc43e0130bec0fa2eb54e3994874ef21de8694a08722601509
-
-## gf2_kernels_simd::x86::avx2::fns::and_parity_fn at 000000000005d0a0, 0x0000000000000005 bytes
-000000000005d0a0 <gf2_kernels_simd::x86::avx2::fns::and_parity_fn>:
-   5d0a0:	jmp    5bf30 <gf2_kernels_simd::x86::avx2::avx2_and_parity>

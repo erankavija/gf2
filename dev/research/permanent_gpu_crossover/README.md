@@ -10,10 +10,10 @@ CPU SIMD (`permanent_bipedal3`) against GPU batch
 at `M = 256` is outside the per-cell wall-clock budget: CPU SIMD at `n = 32` would
 take ~3.7 h per repetition (256 × 53 s ≈ 13,500 s), i.e. ~11 h for the full
 3-repetition cell. The M-dependence of the crossover and extrapolations to larger
-`n` are discussed in `dev/archive/ae82bd73-gf2-algebra-permanent/plans/a9e461de/s5_gpu_crossover.md` §3.
+`n` are discussed in `s5_gpu_crossover.md` §3.
 
-The substantive writeup and results table live at `dev/archive/ae82bd73-gf2-algebra-permanent/plans/a9e461de/s5_gpu_crossover.md`.
-The CSV output lands at `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-YYYY-MM-DD.csv`.
+The substantive writeup and results table live at `s5_gpu_crossover.md`.
+The CSV output lands at `s5_gpu_crossover-YYYY-MM-DD.csv`.
 
 ## Build and run
 

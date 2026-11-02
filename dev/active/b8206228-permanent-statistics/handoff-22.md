@@ -77,7 +77,7 @@ Options:
 - Open implementation issues: `jit issue show 73317b2e`, `jit issue show 6639435f`
 - Progress and escalations: `dev/active/b8206228-permanent-statistics/progress.json`
 - Rare-event design: `dev/active/b8206228-permanent-statistics/3f664839/design.md`
-- Frozen campaign: `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/`
-- Accelerator costs: `dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv`
+- Frozen campaign: `permanent-zero-fraction-20260829/`
+- Accelerator costs: `accelerator-launch-costs-v1.csv`
 - Importance worktree: `.agents/worktrees/agent-6639435f` at `49b4d452`
 - Main escalation commit: `d014e120`

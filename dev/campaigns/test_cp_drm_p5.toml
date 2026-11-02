@@ -3,7 +3,7 @@
 
 [campaign]
 name = "test_cp_drm_p5"
-output_dir = "dev/simulation_results/chase_pyndiah"
+output_dir = "target/simulation_results/chase_pyndiah"
 
 [[curve]]
 name = "cp_drm_p5"

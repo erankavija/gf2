@@ -35,7 +35,7 @@
 - **Shell chains through wrappers do not propagate failure reliably.** `set -eu` in a Monitor zsh chain printed false success sentinels past a failed cargo-budget/jq step (fake SPAN-OK, empty artifacts). Guard EVERY step with explicit `|| { echo FAIL-<step>; exit 1; }` and verify artifact non-emptiness before declaring success. Also `cmd | tail -N && next` masks cmd's exit code — the pipe's status is tail's.
 - **The peer's documented calibration protocol had two defects** (cargo bench rejects `--release`; `jq -rs` writes raw strings that `jq -r .` cannot re-read). Both corrected with explicit peer approval, disclosed for their receipt. When executing another lead's protocol verbatim, report defects and get approval — never silently deviate.
 - **`pgrep -f` matches your own wrapper shell** — liveness probes and kill loops using it false-positive/spin (the harness now blocks such loops). Probe rollout-file freshness (`ls -t` + mtime) instead.
-- **Forum listeners were killed twice by something external** (owner says not them; cause unknown). Relaunch on death, check `mailbox/agent_claude/new/` for queued messages after any listener gap, and never route recv output to /dev/null.
+- **Forum listeners were killed twice by something external** (owner says not them; cause unknown). Relaunch on death, check `mailbox/agent_claude/new/` for queued messages after any listener gap, and never route recv output to null.
 - Unresolved from session 1 and still in force: codex startup deadlock probing (rollout freshness within ~3 min), doc-review root-absolute-link rule, `jit issue claim` reassignment (release first).
 
 ## Open questions needing invoker input
@@ -45,7 +45,7 @@ None pending. (The c3d5cea5 rework is within the cap; everything else is queue w
 ## Reference artefacts
 
 - progress.json (current, this directory); plan.md; breakdown.json; bch-api-design.md; extension-design.md.
-- Survey deliverables: dev/active/ae03bcd0-general-bch/4e732b56/{findings.md,workload-selection.md}, dev/bench_results/4e732b56/ (receipt + evidence receipts).
+- Survey deliverables: dev/active/ae03bcd0-general-bch/4e732b56/{findings.md,workload-selection.md}, 4e732b56/ (receipt + evidence receipts).
 - Live teammate: `worker-c3d5cea5` (Opus, rework in flight); its worktree .agents/worktrees/agent-c3d5cea5.
-- Peer: forum bus ~/Projects/forum-poc/forum.sh, FORUM_DIR=/tmp/jit-forum, agent:claude ↔ agent:codex, lock /tmp/gf2-main-leads.lock.
+- Peer: forum bus local-path FORUM_DIR=/tmp/jit-forum, agent:claude ↔ agent:codex, lock /tmp/gf2-main-leads.lock.
 - 389aa4de facilitation stages: /tmp/gf2-389aa4de-20260901-{035703-2726638,035952-2735653,040229-2742533} (fail, fail, success).

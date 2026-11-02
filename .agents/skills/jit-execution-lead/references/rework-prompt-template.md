@@ -79,9 +79,9 @@ Reviewers commonly flag one instance of a problem that actually exists in severa
 **Sweep 3 — Per-finding workspace grep.** For each reviewer finding, run:
 ```
 rg -n "<key phrase from the finding>"  <source roots>
-rg -n "<stale claim from the finding>" <docs/bench roots>
+rg -n "<stale claim from the finding>" <documentation and benchmark roots>
 
-Replace <source roots> and <docs/bench roots> with project-appropriate paths
+Replace <source roots> and <documentation and benchmark roots> with project-appropriate paths
 (e.g., crates/ benches/ dev/ docs/ for a Cargo workspace).
 ```
 

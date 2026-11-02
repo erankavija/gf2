@@ -615,8 +615,7 @@ impl CalibratedField {
     ///
     /// Ordinary grids straddle `conservative_default`. The M4RM tiled grid is
     /// domain-clipped to begin at its boundary default of four words, where
-    /// both arms remain forceable. The complete grids and fixtures are
-    /// preregistered in `dev/active/eaae1b56/premeasurement-protocol.md` §3.
+    /// both arms remain forceable.
     ///
     /// `karatsuba_max_out_len` counts product lengths, and a product of two
     /// equal-length operands has odd length `2n - 1`; its grid therefore uses
@@ -627,8 +626,7 @@ impl CalibratedField {
     /// default than the small-operand ones, because their conservative arms are
     /// quadratic.
     ///
-    /// The three seam grids are preregistered in
-    /// `dev/active/dbd8787d/premeasurement-protocol.md` §2. Their `_max_`
+    /// The three seam grids' `_max_`
     /// grids begin at two, so the asymptotic arm's `t = s - 1` stays inside
     /// the codec's floor of one; the scalar-base default of one is the value
     /// that floor selects.
@@ -5667,7 +5665,7 @@ mod tests {
             cpu_features: vec!["avx2".to_owned()],
             os_kernel: "Linux".to_owned(),
             governor: "performance".to_owned(),
-            receipt: RepoRelPath::parse("dev/benchmarks/tuning_profiles/receipt.md").unwrap(),
+            receipt: RepoRelPath::parse("target/benchmarks/tuning_profiles/receipt.md").unwrap(),
         }
     }
 
@@ -5941,9 +5939,10 @@ mod tests {
         // the wrong bytes.
         let mut provenance = calibrated_provenance();
         if let MeasurementProvenance::Calibrated { receipt, .. } = &mut provenance {
-            *receipt =
-                RepoRelPath::parse("dev/benchmarks/tuning_profiles/karatsuba_min_degree-notes.md")
-                    .unwrap();
+            *receipt = RepoRelPath::parse(
+                "target/benchmarks/tuning_profiles/karatsuba_min_degree-notes.md",
+            )
+            .unwrap();
         }
         let profile = build_profile(
             ProfileId::parse("test-profile").unwrap(),
@@ -5964,7 +5963,7 @@ mod tests {
         };
         assert_eq!(
             receipt.as_str(),
-            "dev/benchmarks/tuning_profiles/karatsuba_min_degree-notes.md"
+            "target/benchmarks/tuning_profiles/karatsuba_min_degree-notes.md"
         );
         assert_eq!(
             loaded.polynomial().karatsuba_min_degree(),
@@ -8121,11 +8120,11 @@ mod tests {
     #[test]
     fn a_parent_segment_is_collapsed_out_of_the_harness_path() {
         assert_eq!(
-            normalize_relative(Path::new("crates/gf2-core/tests/../benches/x.rs")),
-            "crates/gf2-core/benches/x.rs"
+            normalize_relative(Path::new("target/normalize/../benches/x.rs")),
+            "target/benches/x.rs"
         );
         assert!(RepoRelPath::parse(&normalize_relative(Path::new(
-            "crates/gf2-core/tests/../benches/x.rs"
+            "target/normalize/../benches/x.rs"
         )))
         .is_ok());
     }
@@ -11488,7 +11487,7 @@ mod campaign_owner {
                         os_kernel: "test-kernel".to_owned(),
                         governor: "performance".to_owned(),
                         receipt: format!(
-                            "dev/benchmarks/tuning_profiles/{LAUNCHER_CAMPAIGN_ID}.md"
+                            "target/benchmarks/tuning_profiles/{LAUNCHER_CAMPAIGN_ID}.md"
                         ),
                     })
                     .unwrap(),

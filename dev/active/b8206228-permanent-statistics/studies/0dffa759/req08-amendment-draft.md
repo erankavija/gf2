@@ -9,7 +9,7 @@ REQ-08 of JIT issue `0dffa759` requires that, where the study's receipts support
 the three-plane $\mathbb{F}_7$ candidate, the archived $\mathbb{F}_7$ encoding
 decision be amended at its source with the permanent-workload evidence and the
 changed verdict. [`findings.md`](../../../../studies/0dffa759/findings.md) §8 determines that the receipts do
-support it. `dev/archive/` is permanent repository content and amending it is a
+support it. `archive/` is permanent repository content and amending it is a
 deliberate act that needs the owner's approval
 ([`dev/active/b8206228-permanent-statistics/0de41c82/plan.md`](../../0de41c82/plan.md):174). The
 owner gave that approval on 2026-08-17 and this document records the approved
@@ -18,13 +18,13 @@ text and its insertion points.
 ## 1. Target file and insertion points
 
 Target:
-`dev/archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md`.
+`r2_f7_encoding_decision.md`.
 
 Three edits, all additive. No existing sentence is reworded, deleted, or
 renumbered; the original text is preserved unchanged beneath the note
 (`@/inv/falsification-preserved`). This is the same shape the sibling archived
 document already carries — the 2026-08-16 supersession note above
-`dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`
+`r4_gpu_uniformity_resample.md`
 §2.5 — and it is deliberately modelled on it.
 
 | # | Where | What |
@@ -63,7 +63,7 @@ document already carries — the 2026-08-16 supersession note above
 >    execution mapping: `f7-lookup-table-control` is Candidate A — it retains
 >    the canonical two-nibble table layout and uploads the public Rust
 >    `Packed7` table byte arrays themselves
->    (`dev/research/permanent_wave_gpu/hip/wave_gf7_equivalence.hip:25-29`) —
+>    (`wave_gf7_equivalence.hip:25-29`) —
 >    and `f7-three-plane-permanent` is Candidate D. Composite throughput of D
 >    over A is 0.4524, 2.0661, 20.5474, 168.1439, and 66.1022 at
 >    $n = 12, 16, 20, 24, 28$ (`dev/studies/6c7fcb38/receipts.md` §4.2). Both
@@ -129,7 +129,7 @@ document already carries — the 2026-08-16 supersession note above
 ## 4. What the owner approved
 
 Adding the note of §2 and the two pointer stubs of §3 to a file under
-`dev/archive/`. Nothing existing is edited. The amendment records a falsified
+`archive/`. Nothing existing is edited. The amendment records a falsified
 premise and a scoped changed verdict; it does not re-decide the public packed
 $\mathbb{F}_7$ encoding, and no code, proof, or public type changes as a
 consequence of it. The archived verdict's ratification of `Packed7` as

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Post-processing fixups for the gf2-algebra Aeneas extraction.
 
-The bipedal3 V1 proofs (see `dev/archive/ae82bd73-gf2-algebra-permanent/plans/a0c0a45f/d2_lean_bipedal3_sketch.md` and
-JIT issue f05ffbe1) target the inherent `Bipedal3::{add,sub,mul,neg}_inherent`
+The bipedal3 V1 proofs (@/issue/f05ffbe1) target the inherent `Bipedal3::{add,sub,mul,neg}_inherent`
 methods. These are pure bitwise on `Std.U64` and do not reach into the
 `gf2_core::gfp::Fp` or `FiniteField` machinery at runtime — but Charon still
 extracts those trait impls transitively because they appear as type-level
@@ -162,8 +161,7 @@ def fixup_funs(path: str) -> None:
     #    step_by, take`), and its `…Pair.{next,zip,map,collect,all}`
     #    helper bodies are never even defined (undefined references).
     #
-    #    `Packed5Vec` is explicitly out of D5 scope
-    #    (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d5_lean_packed5_sketch.md` §7); the proofs target
+    #    The proofs target
     #    only the `Packed5::{add,sub,mul,neg}_inherent` element ops and
     #    never project this `Zip` instance (it is referenced nowhere
     #    outside its own malformed body). Replacing the whole `def …
@@ -220,9 +218,7 @@ def fixup_funs(path: str) -> None:
     #     `…IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.{zip,map,
     #     collect,all}` helper bodies are never even defined.
     #
-    #     `Packed7Vec` (like `Packed5Vec`) is explicitly out of D5/D6
-    #     scope (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d6_lean_packed7_sketch.md` §7); the proofs
-    #     target only the `Packed7::{add,sub,mul,neg}_inherent` element
+    #     The proofs target only the `Packed7::{add,sub,mul,neg}_inherent` element
     #     ops and never project this `IterMut` instance (it is referenced
     #     nowhere outside its own malformed body / the out-of-scope
     #     `Packed{5,7}Vec` ops). Replacing the whole `def … := { … }`

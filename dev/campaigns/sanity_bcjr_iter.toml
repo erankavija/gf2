@@ -3,7 +3,7 @@
 
 [campaign]
 name = "sanity_bcjr_iter"
-output_dir = "dev/simulation_results/align"
+output_dir = "target/simulation_results/align"
 
 # 40 iterations, alpha=0.7
 [[curve]]

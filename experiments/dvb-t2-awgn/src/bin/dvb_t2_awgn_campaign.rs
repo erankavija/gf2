@@ -517,7 +517,7 @@ fn write_readme(path: &Path, args: &Args, snr_points: &[f64], total_wall_seconds
          ## Plotting\n\
          \n\
          ```bash\n\
-         python3 dev/benchmarks/dvb_t2_awgn/plot.py \\\n\
+         python3 experiments/dvb-t2-awgn/plot.py \\\n\
              --curve-csv curve_{}_{}.csv \\\n\
              --reference-toml crates/gf2-coding/data/dvb_t2_tr102831_reference.toml \\\n\
              --output curve_{}_{}.png\n\

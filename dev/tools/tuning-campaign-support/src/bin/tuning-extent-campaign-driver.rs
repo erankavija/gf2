@@ -1223,7 +1223,10 @@ fn bootstrap_inputs(
     validate_build_source_observations(&channels.stage, &staging)?;
     let producing = ProducingInputs::read_at(Path::new("."), &declaration.producing_manifest)?;
     let behavior = ProducingInputs::hashes_at(Path::new("."), &producing.behavior_sources)?;
-    let receipt = format!("dev/benchmarks/tuning_profiles/{}.md", campaign_id.as_str());
+    let receipt = format!(
+        "target/benchmarks/tuning_profiles/{}.md",
+        campaign_id.as_str()
+    );
     let runtime = CanonicalJson::from_serializable(&host_runtime(&receipt, source_dirty)?)?;
     let affinity = CpuAffinity::observe()?;
     let repository = fs::canonicalize(".")?;
@@ -3018,7 +3021,7 @@ fn discover_preparation(stage: &Path) -> io::Result<()> {
     writeln!(output)?;
     output.flush()
 }
-const TUNING_EVIDENCE: &str = "dev/benchmarks/tuning_profiles";
+const TUNING_EVIDENCE: &str = "target/benchmarks/tuning_profiles";
 /// Stage records small enough to commit in the session record. Every other
 /// published stage file, bulk evidence and the execution log included, goes
 /// to the git-ignored evidence archive.
@@ -5284,7 +5287,7 @@ mod tests {
         let text = fs::read_to_string(&receipt).unwrap();
         assert!(!text.contains(stage.to_str().unwrap()) && !text.contains("/repository/"));
         assert!(text.contains(".agents/campaign-evidence/gf2-dbd8787d-19700101t000000z-1/candidates/core-producer-s-9/output.json"));
-        assert!(text.contains("`dev/benchmarks/tuning_profiles/gf2-dbd8787d-19700101t000000z-1-session/composition.json`"));
+        assert!(text.contains("`target/benchmarks/tuning_profiles/gf2-dbd8787d-19700101t000000z-1-session/composition.json`"));
         assert!(text.contains(&format!(
             "`{}`",
             declaration.imported_owners[0].envelope.path

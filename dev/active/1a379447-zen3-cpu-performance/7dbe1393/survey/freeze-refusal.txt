@@ -1,9 +1,0 @@
-# Canonical freezer on the pilot of 7dbe1393-matvec-ragged-tail (jit:7dbe1393)
-# freezer sha256: 422d860cc0cd81062b58d3c4fe4c2a3dc4889f6b4154c989abda4bc2b86a072a
-# pilot receipt sha256: e89ca2bcac24f0cdbcc87e28fcee81b49646f5758e46bbbb0cae02cadbce5754
-# derivation sha256: babcf1cc5234072f6c23ad86c87ad0a26e7ab089977bc1f332ef41f06c4a2850
-# frozen rule: resolution=0.168 outcome=resolution-insufficient
-# command: python3 -B dev/active/1a379447-zen3-cpu-performance/c7113c5a/survey/freeze-confirmation.py --pilot-addendum dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json --pilot dev/bench_results/7dbe1393/7dbe1393-matvec-ragged-tail/v4-r1-pilot --frozen-utc 2026-10-10T22:10:00Z --output dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail-confirmation.json --record dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail-confirmation-derivation.txt --resolution 0.168 --resolution-derivation dev/active/1a379447-zen3-cpu-performance/7dbe1393/pilot-resolution.md --resolution-decimals 3 --family-description Allocated\ BitMatrix::matvec_parity_kernel\,\ which\ reduces\ each\ row\ through\ the\ bundle\'s\ fused\ AND-parity\ kernel\,\ as\ candidate\ against\ the\ public\ BitMatrix::matvec\ on\ its\ selected\ SIMD\ lane\ in\ the\ same\ build\,\ with\ the\ output\ allocation\ and\ appends\ inside\ both\ calls\,\ at\ the\ frozen\ ragged\ strides\ and\ the\ aligned\ control\ in\ the\ warm\ cache\ state.\ This\ addendum\ is\ the\ confirmation:\ every\ cell\ is\ confirmatory\ and\ is\ measured\ on\ fresh\ pairs.
-worthwhile_speedup 1.08 does not exceed 1 + 0.168
-# exit status: 1
-# confirmation addendum: none written

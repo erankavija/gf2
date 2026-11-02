@@ -128,8 +128,7 @@ monomorphization wrapper.
 
 The `Gf2Algebra/` Lean library is a second Aeneas extraction covering only the
 bipedal F_3 packed arithmetic at `gf2_algebra::packed::bipedal3::Bipedal3`,
-needed for the D2 V1 correctness proof
-(`dev/archive/ae82bd73-gf2-algebra-permanent/plans/a0c0a45f/d2_lean_bipedal3_sketch.md`). It is verified in lock-step with the
+needed for the D2 V1 correctness proof. It is verified in lock-step with the
 existing `Gf2Core/` extraction via the same `scripts/verify-lean.sh`. The
 Bipedal3 V1 proofs (`proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean`)
 target the four inherent wrappers
@@ -178,7 +177,7 @@ the same four ops as the production trait surface.
 
 | Tool | Version | Pin |
 |------|---------|-----|
-| Charon | v0.1.217 | local patched build, base `487f0320` + 1 implied-clause fix (`dev/archive/legacy/dev/active/charon-patch-backup-2026-05-15/implied-clause-rebased-487f0320.patch`) |
+| Charon | v0.1.217 | local patched build, base `487f0320` + 1 implied-clause fix |
 | Aeneas | 5220259c | git rev `5220259c`; declares Charon `487f0320` via `charon-pin`; needs OCaml dep `ppx_deriving_yojson` |
 | Lean4 | v4.30.0-rc2 | via `proofs/lean-toolchain` |
 | Rust nightly | nightly-2026-06-01 | required by Charon for rustc internals (components incl. `miri`) |

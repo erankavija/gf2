@@ -1,63 +1,4 @@
-// benchmarks/reference/sparse_smoke.cpp
-//
-// Cross-equality oracle for the sparse cells promoted by
-// `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md` § 4. Implements protocol § 6
-// *Comparable semantics* at `n = 16` for every claimed cross-library
-// or internal-consistency cell. Coverage matrix (post jit:96fde7c7
-// R1 expansion):
-//
-//   - `spmv × {GF(2), GF(p)}` — 5 cells. fflas-ffpack `fspmv`
-//     candidate vs gf2-core `SparseFieldMatrix::<Fp<P>>::matvec` /
-//     `SpBitMatrix::matvec` ground-truth. The `linbox_spmv` oracle
-//     (added by jit:0f708b36) provides a second independent
-//     candidate-side witness for the same 5 cells via LinBox
-//     `SparseMatrix::apply`.
-//   - `sparse_matmul × {GF(2), GF(p), GF(2^m)}` — 7 cells. Sparse·sparse
-//     has `no-independent-oracle` per protocol § 9, so the candidate
-//     is the **dense round-trip**: `A.to_dense() · B.to_dense()` via
-//     fflas `fgemm` (GF(p) + GF(2)) or a self-contained scalar
-//     GF(2^m) matmul against the same primitive polynomial gf2-core
-//     uses (`scalar gf2m_mul`, see `Gf2mField` constants below). The
-//     gf2-core `SpBitMatrix::matmul` / `SparseFieldMatrix::matmul`
-//     output is the ground-truth.
-//   - `sparse×dense × {GF(2), GF(p)}` — 5 cells. fflas-ffpack `fspmm`
-//     candidate vs gf2-core `SpBitMatrix::matmat` /
-//     `SparseFieldMatrix::<Fp<P>>::matmat` ground-truth (GF(2)
-//     candidate added by jit:521390db).
-//   - `sparse×dense × GF(2^m)` — 2 cells. fflas / LinBox have no
-//     GF(2^m)-with-our-modulus matrix path (`semantics-mismatch` per
-//     protocol § 9), so the candidate is a scalar
-//     `A.to_dense() · B` over the same field. The gf2-core sparse
-//     `matmat` ground-truth must equal byte-for-byte.
-//   - `sparse_elim × {GF(2), GF(p)}` — 5 cells. LinBox
-//     `GaussDomain::NoReordering` rank against the gf2-core
-//     `SpBitMatrix::rref` / `SparseFieldMatrix::<Fp<P>>::rref` rank;
-//     in-harness `scalar_rref` RREF-content vs gf2-core RREF dense
-//     bytes (full byte equality between two independent RREF
-//     implementations).
-//
-// Total: 24 cells emitted by the gf2-core ground-truth, 29 oracle
-// invocations counting the 5 `linbox_spmv` redundant-witness passes
-// against the same 5 spmv ground-truth cells.
-//
-// The harness exits non-zero on any mismatch with a stderr trace
-// identifying the (op, field, cell) pair.
-//
-// Determinism / ground-truth integrity:
-//   * Every cell uses the same `gf2_bench_splitmix64` /
-//     `gf2_bench_derive_seed` from `seed_helpers.h`, byte-equivalent
-//     with the gf2-core Rust harness's seed walk.
-//   * Per cell, before the candidate runs, we assert byte-equality
-//     between (a) the input we just built and (b) the input bytes the
-//     gf2-core emitter recorded for the same cell tag. A drift here
-//     fails the smoke immediately with `seed-walk drift` and
-//     identifies the cell.
-//   * After the candidate runs, we assert byte-equality between the
-//     candidate output and the gf2-core ground-truth output.
-//   * Self-test mode (`--self-test`) loads the ground-truth file,
-//     verifies the structure parses, and prints the cell list without
-//     running candidates. Useful for debugging file-format drift in
-//     isolation from the candidate libraries.
+// Checks sparse reference libraries against canonical seeded inputs at n=16.
 
 #include <cstdint>
 #include <cstdio>
@@ -649,16 +590,6 @@ static int oracle_spmv(const Field& F, const char* field_label, uint64_t seed,
     return rc;
 }
 
-// LinBox-side spmv oracle (jit:0f708b36) — independent witness alongside
-// `oracle_spmv`. Builds a `LinBox::SparseMatrix<Field>` (default storage,
-// `SparseSeq` of (col, val) pairs) from the same byte-equivalent CSR
-// triples the fflas oracle uses, runs `apply(y, x)`, and bitwise-compares
-// the output against the same gf2-core ground-truth (jit:96fde7c7).
-//
-// Together with `oracle_spmv` this gives the smoke chain two independent
-// library-side witnesses (fflas + LinBox) for every GF(*) `spmv` cell —
-// closing the gap recorded in `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md:162`
-// for GF(2) and providing redundant coverage for the GF(p) cells.
 template <typename Field>
 static int linbox_oracle_spmv(const Field& F,
                               const char* field_label,
@@ -821,17 +752,6 @@ static int oracle_sparse_dense(const Field& F, const char* field_label, uint64_t
     return rc;
 }
 
-// LinBox-side sparse×dense oracle (jit:47698404 R9). Mirrors
-// `linbox_oracle_spmv` but for the `sparse_dense` cell: builds a
-// `LinBox::SparseMatrix<Field, SparseMatrixFormat::TPL>` from the same
-// triples the fflas oracle uses, calls `applyLeft(C, B)` (the canonical
-// sparse×dense kernel per `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md:168-169`
-// — `applyLeft × Modular<int8_t>` for GF(2), `applyLeft × Modular<int64_t>`
-// for GF(p), both routing through the same TPL saxpyin engine), and
-// asserts byte-equality between the LinBox output and the gf2-core
-// ground-truth recorded in `benchmarks/expected/sparse_smoke_n16.bin`.
-// Closes the protocol § criterion-3 candidate-specific smoke contract
-// for the LinBox-canonical `sparse×dense × GF(2)` cell.
 template <typename Field>
 static int linbox_oracle_sparse_dense(const Field& F,
                                       const char* field_label,
@@ -1459,12 +1379,6 @@ int main(int argc, char** argv) {
                           gf2_bench_derive_seed(master_seed ^ 0x55ULL, "smoke-spmv", 0, 0, 0), et);
     }
 
-    // LinBox-side spmv oracle (jit:0f708b36). Independent witness alongside
-    // the fflas oracles above. GF(2) is the explicit gap-closing target
-    // from `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md:162`; the GF(p) cells get
-    // redundant coverage for free since LinBox's `SparseMatrix::apply` is
-    // a separate code path from fflas-ffpack's `fspmv`. Seeds match the
-    // fflas oracle calls so both witnesses see the same triples + RHS.
     {
         using Field = Givaro::Modular<int64_t>;
         Field F((1LL << 31) - 1);

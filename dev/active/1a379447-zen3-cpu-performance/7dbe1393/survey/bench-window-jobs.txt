@@ -1,6 +1,0 @@
-# Benchmark-window log lines of the ragged-tail jobs (jit:7dbe1393)
-# start line fields: load=<1 min> <5 min> <15 min>
-2026-10-08T23:07:09Z job start issue=7dbe1393 key=2601442e4ee47327 est_min=40 worktree=.agents/worktrees/agent-7dbe1393 load=13.91 33.37 31.02 command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-profile.sh window --cases dev/active/1a379447-zen3-cpu-performance/7dbe1393/survey/profile-cases.txt
-2026-10-08T23:12:10Z job exit issue=7dbe1393 key=2601442e4ee47327 rc=0
-2026-10-08T23:12:10Z job start issue=7dbe1393 key=d421869749e0576f est_min=10 worktree=.agents/worktrees/agent-7dbe1393 load=33.35 22.89 26.35 command=dev/active/1a379447-zen3-cpu-performance/2037941f-profile-and-optimize-mid-range-buffer-operations/survey/run-dense-harness.sh window --family 7dbe1393-matvec-ragged-tail --addendum dev/active/1a379447-zen3-cpu-performance/7dbe1393/campaigns/matvec-ragged-tail.json --run-id v4-r1
-2026-10-08T23:15:20Z job exit issue=7dbe1393 key=d421869749e0576f rc=0

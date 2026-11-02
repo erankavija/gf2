@@ -1,9 +1,0 @@
-AGENTS.md:65: @/issue/ec530af9: source of truth is linked through JIT item `@/issue/ec530af9`.
-AGENTS.md:120: @/issue/<short-id>: `@/issue/<short-id>`, the form the mechanical documentation check resolves.
-AGENTS.md:140: jit:<short-id>: serves an issue carries `jit:<short-id>` as its scope.
-AGENTS.md:142: jit:<id>: (`chore(jit:<id>): merge ...`), tracker state commits and salvage commits
-AGENTS.md:149: jit:profile-sim-research-guidance:begin: <!-- jit:profile-sim-research-guidance:begin -->
-AGENTS.md:152: jit:invariants:begin: <!-- jit:invariants:begin -->
-AGENTS.md:190: jit:invariants:end: <!-- jit:invariants:end -->
-AGENTS.md:200: jit:profile-sim-research-guidance:end: <!-- jit:profile-sim-research-guidance:end -->
-hits: 8

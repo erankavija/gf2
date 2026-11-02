@@ -2,7 +2,7 @@
 //! against `permanent_mod3_reference` on identical seeded inputs. Criterion
 //! cells cover `n ∈ {24, 28}`. With `S1_OFFLINE=1` the binary instead takes one
 //! wall-clock sample per cell at `n ∈ {32, 36}` and appends rows to
-//! `dev/benchmarks/gf2_algebra_permanent/s1_speedup-<DATE>.csv` (date
+//! `target/benchmarks/gf2_algebra_permanent/s1_speedup-<DATE>.csv` (date
 //! overridable via `SA_DATE`) with columns
 //! `n,impl,mean_us,std_us,samples,ratio_vs_reference,hardware_fingerprint`.
 
@@ -165,7 +165,7 @@ fn main() {
                 .unwrap_or(std::path::Path::new("."))
                 .to_path_buf()
         };
-        let csv_dir = workspace_root.join("dev/benchmarks/gf2_algebra_permanent");
+        let csv_dir = workspace_root.join("target/benchmarks/gf2_algebra_permanent");
         let csv_path = csv_dir.join(format!("s1_speedup-{date}.csv"));
         fs::create_dir_all(&csv_dir).expect("create CSV directory");
 

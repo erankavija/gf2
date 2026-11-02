@@ -1,6 +1,6 @@
 # Task: jit issue a39bb161 — Accelerator execution for campaign cells
 
-Repository: /home/vkaskivuo/Projects/gf2 (Rust workspace, MSRV 1.95).
+Repository: gf2 (Rust workspace, MSRV 1.95).
 You are a worker dispatched by the epic-b8206228 execution lead. Read `AGENTS.md`
 first; it is the binding engineering contract. Read the issue with
 `jit issue show a39bb161` (read-only) for its full Background and Notes.
@@ -50,7 +50,7 @@ first; it is the binding engineering contract. Read the issue with
 
 **D1 — the measured per-matrix cost is an input, not a manifest field.** Do
 **not** add a cost field to `CellSpec` or any other type in
-`crates/gf2-sim/src/permanent_campaign/schema.rs`. The frozen root manifest is
+`schema.rs`. The frozen root manifest is
 owned by a separate in-flight issue (`7a816262`) and is under a standing decision
 that it is never edited or resynchronised. The launch-sizing rule therefore takes
 the measured per-matrix cost as an explicit parameter, supplied by configuration.
@@ -63,7 +63,7 @@ to `crates/gf2-algebra/src/gpu.rs` behind its `hip` feature and call it from
 `gf2-sim`. This is `@/inv/library-first-generality` applied literally.
 
 **D3 — `Backend::Accelerator` resolves through the existing resolver.**
-`resolve_processor_path` in `crates/gf2-sim/src/permanent_campaign/schedule.rs`
+`resolve_processor_path` in `schedule.rs`
 currently returns `BackendUnavailable` for `Backend::Accelerator`. Give it a new
 `ProcessorPath::Accelerator` arm compiled in under `#[cfg(feature = "hip")]`, and
 keep the `BackendUnavailable` refusal when the feature is off — that is REQ-05.
@@ -73,7 +73,7 @@ Do not restructure `resolve_processor_path`, `ProcessorPath`, or
 **D4 — REQ-03 is satisfied by invoking the campaign through the wrapper.**
 `dev/scripts/permanent-campaign-runner.sh` currently drives the feasibility
 harness and the wave-evidence binaries, **not** the `gf2-sim` campaign binary
-(`crates/gf2-sim/src/bin/permanent_campaign.rs`), so the campaign binary has no
+(`permanent_campaign.rs`), so the campaign binary has no
 lock integration today. Add one, invoking the binary through
 `"$FLOCK_WRAPPER" --full-host` exactly as `run_campaign` (line ~627) and
 `run_premeasure` (line ~991) already do. Do not invent a second lock domain and

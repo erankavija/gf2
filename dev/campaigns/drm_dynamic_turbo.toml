@@ -2,7 +2,7 @@
 # Compare with old dRM (d_min=4) and paper's SOGRAND results
 [campaign]
 name = "drm_dynamic_turbo"
-output_dir = "dev/simulation_results/drm_waterfall"
+output_dir = "target/simulation_results/drm_waterfall"
 
 [[curve]]
 name = "dynamic_drm_bcjr"

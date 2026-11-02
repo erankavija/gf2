@@ -48,8 +48,8 @@ This handoff is intentional. The current implementation and evidence work is com
 
 - Closed acceptance issue: `jit issue status 73317b2e`
 - Epic progress: `jit issue progress b8206228`
-- Canonical coordinator: `crates/gf2-sim/src/permanent_campaign/coordinator.rs`
-- Thin campaign consumer: `crates/gf2-sim/src/bin/permanent_campaign.rs`
-- Frozen campaign: `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/`
-- Exact refreeze record: `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md`
+- Canonical coordinator: `coordinator.rs`
+- Thin campaign consumer: `permanent_campaign.rs`
+- Frozen campaign: `permanent-zero-fraction-20260829/`
+- Exact refreeze record: `freeze.md`
 - Execution-lead state: `dev/active/b8206228-permanent-statistics/progress.json`

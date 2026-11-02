@@ -1,8 +1,0 @@
-{
-  "receipt": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/receipt.json",
-  "receipt_sha256": "37fda99e6f956ec92bf3a4525577ef825258308dfc2fac7e4ca558cf8a8683b9",
-  "evaluator_executable_sha256": "9444e08585fdbd27341a6c7e9b76bb09a794e6d6a200b5c682dc3b3ada9e1196",
-  "evaluator_source_snapshot": "dev/bench_results/c077a88b/v3-r1-c077a88b-ldpc-matched-algorithm-confirmation/inputs/producing/dev/tools/tuning-campaign-support/src/receipt.rs",
-  "status": "preserved-initial-independent-rejection",
-  "cause": "P-03 incorrectly requires an optional pilot decision claim; the unchanged raw pairs, canonical seed inputs and ledger support independent resolution recomputation."
-}

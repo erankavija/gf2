@@ -1,36 +1,4 @@
-/-
-  Gf2Algebra.Proofs.Bipedal3Correctness — V1 bipedal F_3 correctness
-
-  Implements the 20 lemmas of the D2 proof sketch
-  (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/a0c0a45f/d2_lean_bipedal3_sketch.md`) for JIT issue f05ffbe1.
-
-  Proof target (Option A in the dispatch prompt; sketch §5): the four
-  inherent wrappers `Bipedal3.{add,sub,mul,neg}_inherent` defined in
-  `crates/gf2-algebra/src/packed/bipedal3.rs`. Each wrapper delegates a
-  single tail-call to the corresponding `PackedField<Fp<3>>` trait method
-  on `Bipedal3`; the bipedal formula lives in the trait impl. Targeting
-  the inherent wrappers gives us a stable, non-dispatch-indirected name
-  that survives any future PackedField refactor.
-
-  Divergence from the sketch §1: the sketch's V1 statement names the
-  four operations as `{add, sub, mul, div}` (because in the abstract F_3,
-  div by a nonzero element coincides with mul by the same — F_3* is
-  self-inverse). The production code at `bipedal3.rs` exposes
-  `{add, sub, mul, neg}` — `neg` instead of `div`, matching the
-  PackedField trait surface (`packed/mod.rs:185–224`). Per the
-  verification-work convention, the sketch's intent (one easy operation
-  alongside the three main ones) is preserved by proving `neg`. The
-  same per-lane truth-table tactic discharges the new lemma; no
-  structural change to the sketch is needed.
-
-  All 20 lemmas correspond to sketch §10 with the `div` ↦ `neg`
-  substitution. The four `*_word` lemmas (mul / add / sub / neg) are
-  stated against the *exact composed bitwise expressions* used in the
-  production formulas in `crates/gf2-algebra/src/packed/bipedal3.rs`,
-  and the four `*_correct` theorems discharge their `getLsbD`-lift step
-  by `obtain ⟨hmag, hsgn⟩ := bipedal3_*_word ...; rw [hmag, hsgn]` so
-  the word lemmas are load-bearing — not generic `getLsbD` distributors.
--/
+/- Correctness of the extracted Bipedal3 element arithmetic (@/issue/f05ffbe1). -/
 import Aeneas
 import Mathlib.Data.ZMod.Basic
 import Gf2Algebra.Funs

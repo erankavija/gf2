@@ -302,13 +302,7 @@ echo "lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops" \
 # produced after a forced rebuild (issue 5dea7457).
 COMPILE_CMD='set -e; cd /work/reference && make -B 1>&2'
 
-# Smoke-equality oracle pass (issue 5dea7457). When enabled, each
-# harness runs its `--smoke` mode first and exits non-zero on any
-# operation-specific algebraic-equality failure (per
-# `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6). The smoke
-# pass writes only to stderr; the CSV file is unaffected. This is what
-# `benchmarks/smoke.sh` engages so the gate can certify the n=16
-# correctness contracts before measurement.
+# Smoke mode checks seeded algebraic equality before measurements.
 if [[ "${RUN_SMOKE_EQUALITY}" -eq 1 ]]; then
     if [[ "${RUN_FFLAS}" -eq 1 ]]; then
         echo "[run.sh] running fflas_bench --smoke inside ${IMAGE_TAG}" >&2

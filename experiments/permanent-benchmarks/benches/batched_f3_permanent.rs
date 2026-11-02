@@ -412,10 +412,10 @@ fn self_check() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(cell_seed(8, 0, 0), SEED_ROOT ^ (8_u64 << 32));
     assert_ne!(cell_seed(8, 0, 0), cell_seed(8, 0, 1));
     assert_eq!(
-        resolve_output_path(Path::new("dev/receipt.csv")),
+        resolve_output_path(Path::new("target/receipt.csv")),
         Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
-            .join("dev/receipt.csv")
+            .join("target/receipt.csv")
     );
     let absolute = Path::new("/tmp/batched-f3-avx2-self-check.csv");
     assert_eq!(resolve_output_path(absolute), absolute);
@@ -452,7 +452,7 @@ mod tests {
                 "--target-ms",
                 "250",
                 "--output",
-                "dev/benchmarks/permanent_campaign/batched-f3-avx2.csv",
+                "target/benchmarks/permanent_campaign/batched-f3-avx2.csv",
                 "--append",
                 "--bench",
             ]

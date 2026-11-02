@@ -43,7 +43,7 @@
 ## Traps
 
 - Do not trust `handoff-10.md` or `progress.json` at commit `2adc8bcd` as current state. Both predate the owner graph amendment, `1947125e` implementation, durable receipts, and timer installation; follow this handoff and the live JIT store.
-- Do not conclude that no timers exist when sandboxed `systemctl --user` cannot connect. This host needs `XDG_RUNTIME_DIR=/run/user/1000` and `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus` in that context; the explicit bus revealed two waiting timers.
+- Do not conclude that no timers exist when sandboxed `systemctl --user` cannot connect. This host needs `XDG_RUNTIME_DIR=/run/user/<uid>` and `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/<uid>/bus` in that context; the explicit bus revealed two waiting timers.
 - Do not remove or modify either timer worktree. The frozen runner worktree is deliberately pinned at `1350d5b4`; the collector worktree is pinned at `3014ad87`, whose collector change is tree-equivalent to main `1cb1bc47`.
 - Do not run the collector from the frozen runner worktree. Only the collector worktree and main carry the signal-preserving hardening.
 - Do not repair, delete, supersede, or rerun schedule position 539. It is valid terminal censored evidence with exit status 130, and the hardened collector is designed to preserve it.
@@ -64,7 +64,7 @@
 - New exact path: `jit issue show 8ec10dde`
 - Reconciled progress: `dev/active/b8206228-permanent-statistics/progress.json`
 - Prior handoff: `dev/active/b8206228-permanent-statistics/handoff-10.md`
-- Frozen-manifest plan: `dev/active/b8206228-permanent-statistics/premeasure-plan-v1.md`
+- Frozen-manifest plan: `premeasure-plan-v1.md`
 - Durable campaign root: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824`
 - Resume log: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-resume-20260825.log`
 - Collector log and status: `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-collect-20260825.log`, `/data/gf2-campaigns/b8206228/premeasure-recovery-20260824/premeasure-collect-20260825.exit.status`

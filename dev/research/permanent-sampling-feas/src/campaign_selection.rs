@@ -16,7 +16,7 @@ use crate::equivalence::reference_backend;
 
 /// Repository path of the authoritative backend-selection receipt.
 pub const SELECTION_AUTHORITY_PATH: &str =
-    "dev/benchmarks/permanent_campaign/backend-selection-v1.md";
+    "target/benchmarks/permanent_campaign/backend-selection-v1.md";
 
 /// SHA-256 of [`SELECTION_AUTHORITY_PATH`] at the harness revision that embeds
 /// it. The executable SHA-256 in each receipt pins these embedded bytes.
@@ -27,7 +27,7 @@ const SELECTION_AUTHORITY: &str =
     include_str!("../../../benchmarks/permanent_campaign/backend-selection-v1.md");
 
 /// Repository path of the committed probe-cost derivation record.
-pub const PROBE_COSTS_PATH: &str = "dev/benchmarks/permanent_campaign/probe-costs-de5f7414.csv";
+pub const PROBE_COSTS_PATH: &str = "target/benchmarks/permanent_campaign/probe-costs-de5f7414.csv";
 
 /// SHA-256 of [`PROBE_COSTS_PATH`] at the harness revision that embeds it. The
 /// executable SHA-256 in each receipt pins these embedded bytes.

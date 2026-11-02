@@ -2,8 +2,7 @@
 """Refuses copied inputs, raw single-host output and oversized files in git.
 
 Enforces `@/inv/committed-evidence-budget`. Limits and exceptions live in
-`tracked-budget.toml`; `tracked-budget-baseline.tsv` lists files that broke a
-rule at adoption, and each may shrink but not grow.
+`tracked-budget.toml`; limits may only fall.
 
   check-tracked-budget.py                 check the tree at HEAD
   check-tracked-budget.py --staged        check the index and staged additions
@@ -22,7 +21,6 @@ import tomllib
 from pathlib import Path
 
 CONFIG = "scripts/tracked-budget.toml"
-BASELINE = "scripts/tracked-budget-baseline.tsv"
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
@@ -36,11 +34,7 @@ def read_config(ref, cwd):
     """Reads the budget files from `ref`, or from the index when `ref` is empty."""
     prefix = f"{ref}:" if ref else ":"
     config = tomllib.loads(git("show", f"{prefix}{CONFIG}", cwd=cwd))
-    baseline = {}
-    for line in git("show", f"{prefix}{BASELINE}", cwd=cwd).splitlines():
-        size, path = line.split("\t", 1)
-        baseline[path] = int(size)
-    return config, baseline
+    return config
 
 
 def tree_sizes(treeish, cwd):
@@ -59,31 +53,28 @@ def excepted(path, config):
     return any(fnmatch.fnmatch(path, e["path"]) for e in config.get("exception", []))
 
 
-def path_faults(paths, config, baseline):
+def path_faults(paths, config):
     forbidden = [re.compile(p) for p in config["forbidden_paths"]]
-    allowed = [re.compile(p) for p in config["allowed_paths"]]
     return [
         f"forbidden path: {path}"
         for path in paths
         if any(p.search(path) for p in forbidden)
-        and not any(p.search(path) for p in allowed)
-        and path not in baseline
         and not excepted(path, config)
     ]
 
 
-def size_faults(sizes, config, baseline):
+def size_faults(sizes, config):
     limit = config["max_file_bytes"]
     faults = []
     for path, size in sizes.items():
-        if size > max(limit, baseline.get(path, 0)) and not excepted(path, config):
+        if size > limit and not excepted(path, config):
             faults.append(f"{path}: {size} bytes exceeds {limit}")
     return faults
 
 
-def tree_faults(sizes, config, baseline):
+def tree_faults(sizes, config):
     total = sum(sizes.values())
-    faults = path_faults(sizes, config, baseline) + size_faults(sizes, config, baseline)
+    faults = path_faults(sizes, config) + size_faults(sizes, config)
     if total > config["max_tree_bytes"]:
         faults.append(f"tree: {total} bytes exceeds {config['max_tree_bytes']}")
     return faults
@@ -126,30 +117,27 @@ def change_faults(old, new, config, label, cwd):
     return [f"{label}: adds {total} bytes, limit {limit}"] if total > limit else []
 
 
-def ratchet_faults(config, baseline, cwd):
-    """The tree limit and the baseline may only fall against HEAD."""
+def ratchet_faults(config, cwd):
+    """Limits may only fall against HEAD."""
     try:
-        old_config, old_baseline = read_config("HEAD", cwd)
+        old_config = read_config("HEAD", cwd)
     except subprocess.CalledProcessError:
         return []
     faults = []
     for key in ("max_tree_bytes", "max_file_bytes", "max_commit_added_bytes"):
         if config[key] > old_config[key]:
             faults.append(f"{CONFIG}: {key} rises above HEAD's {old_config[key]}")
-    for path, size in baseline.items():
-        if size > old_baseline.get(path, 0):
-            faults.append(f"{BASELINE}: {path} grows above HEAD's entry")
     return faults
 
 
 def check_staged(cwd):
-    config, baseline = read_config("", cwd)
+    config = read_config("", cwd)
     sizes = tree_sizes(git("write-tree", cwd=cwd).strip(), cwd)
     head = "HEAD" if has_head(cwd) else EMPTY_TREE
     return (
-        tree_faults(sizes, config, baseline)
+        tree_faults(sizes, config)
         + change_faults(head, "", config, "staged change", cwd)
-        + ratchet_faults(config, baseline, cwd)
+        + ratchet_faults(config, cwd)
     )
 
 
@@ -175,7 +163,7 @@ def check_range(revisions, cwd):
     if not commits:
         return faults
     try:
-        config, baseline = read_config(commits[-1], cwd)
+        config = read_config(commits[-1], cwd)
     except subprocess.CalledProcessError:
         return faults
     for commit in commits:
@@ -183,8 +171,8 @@ def check_range(revisions, cwd):
         parent = parents[0] if parents else EMPTY_TREE
         _, touched = added_bytes(parent, commit, cwd)
         label = commit[:9]
-        faults += [f"{label}: {f}" for f in path_faults(touched, config, baseline)]
-        faults += [f"{label}: {f}" for f in size_faults(touched, config, baseline)]
+        faults += [f"{label}: {f}" for f in path_faults(touched, config)]
+        faults += [f"{label}: {f}" for f in size_faults(touched, config)]
         faults += change_faults(parent, commit, config, label, cwd)
     return faults
 
@@ -194,8 +182,10 @@ def self_test():
 max_file_bytes = 1000
 max_commit_added_bytes = 2500
 max_tree_bytes = 10000
-forbidden_paths = ['(^|/)inputs/', '\\.log$']
-allowed_paths = ['execution\\.log$']
+forbidden_paths = ['(^|/)inputs/', '\\.log$', '(^|/)receipt\\.json$', '(^|/)(execution|journal)[^/]*\\.jsonl$', '^dev/(bench_results|benchmarks|simulation_results|archive)/']
+[[exception]]
+path = "experiments/*/tests/fixtures/*"
+reason = "test fixture"
 [[exception]]
 path = "big.lock"
 reason = "fixture"
@@ -214,17 +204,21 @@ reason = "fixture"
             run("add", path)
 
         write(CONFIG, 0, config)
-        write(BASELINE, 0, "1500\told.bin\n")
-        write("old.bin", 1500)
+        write("old.bin", 900)
         write("big.lock", 4000)
         run("commit", "-qm", "base", "--no-verify")
-        assert_faults(tree_faults(tree_sizes("HEAD", repo), *read_config("HEAD", repo)), [], "tree")
+        assert_faults(tree_faults(tree_sizes("HEAD", repo), read_config("HEAD", repo)), [], "tree")
 
         cases = [
             ("large new file", lambda: write("new.bin", 1001), "new.bin"),
-            ("baselined growth", lambda: write("old.bin", 1501), "old.bin"),
+            ("file growth", lambda: write("old.bin", 1001), "old.bin"),
             ("copied input", lambda: write("a/inputs/b.rs", 1), "forbidden path"),
             ("raw log", lambda: write("a/run.log", 1), "forbidden path"),
+            ("receipt", lambda: write("a/receipt.json", 1), "forbidden path"),
+            ("execution log", lambda: write("a/execution.log", 1), "forbidden path"),
+            ("execution stream", lambda: write("a/execution.jsonl", 1), "forbidden path"),
+            ("journal", lambda: write("a/journal.jsonl", 1), "forbidden path"),
+            ("measurement directory", lambda: write("/".join(["dev", "benchmarks", "a.csv"]), 1), "forbidden path"),
             ("commit size", lambda: [write(f"f{i}", 900) for i in range(3)], "adds"),
             ("tree size", lambda: write("big.lock", 9000), "tree:"),
             ("raised limit", lambda: write(CONFIG, 0, config.replace("10000", "20000")), "rises"),
@@ -237,9 +231,10 @@ reason = "fixture"
         write("big.lock", 4100)
         assert_faults(check_staged(repo), [], "small append to an excepted large file")
         run("reset", "-q", "--hard", "HEAD")
-        write("a/execution.log", 1)
-        write("old.bin", 1499)
-        assert_faults(check_staged(repo), [], "allowed log and shrink")
+        write("/".join(["experiments", "demo", "tests", "fixtures", "execution.jsonl"]), 1)
+        write("/".join(["experiments", "demo", "tests", "fixtures", "receipt.json"]), 1)
+        write("old.bin", 899)
+        assert_faults(check_staged(repo), [], "test fixtures and shrink")
         run("commit", "-qm", "ok", "--no-verify")
         write("a/inputs/c.rs", 1)
         run("commit", "-qm", "bad", "--no-verify")
@@ -272,7 +267,7 @@ def main():
     elif args.revisions:
         faults = check_range(args.revisions, cwd)
     else:
-        faults = tree_faults(tree_sizes("HEAD", cwd), *read_config("HEAD", cwd))
+        faults = tree_faults(tree_sizes("HEAD", cwd), read_config("HEAD", cwd))
     for fault in faults:
         print(f"check-tracked-budget: {fault}", file=sys.stderr)
     if faults:

@@ -33,12 +33,12 @@
      "touches": [
       "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms.json",
       "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/src/lib.rs",
-      "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/driver.rs",
-      "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/aff3ct.rs",
-      "dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/bin/aff3ct-throughput-arm.rs",
-      "dev/active/1a379447-zen3-cpu-performance/f63a2464/survey/arms/src/bin/qc-decoder-arm.rs",
-      "dev/active/1a379447-zen3-cpu-performance/f63a2464/survey/prototypes/src/qc.rs",
-      "dev/active/1a379447-zen3-cpu-performance/f63a2464/survey/prototypes/tests/contracts.rs"
+      "driver.rs",
+      "aff3ct.rs",
+      "aff3ct-throughput-arm.rs",
+      "qc-decoder-arm.rs",
+      "qc.rs",
+      "contracts.rs"
      ]
     }
    }
@@ -86,8 +86,8 @@
     "worker_sized_reason": "One family declaration on prepared arms; both decisions read its single receipt",
     "footprint": {
      "creates": [
-      "dev/active/55c3e433-aff3ct-ldpc-gaps/pilot/",
-      "dev/bench_results/55c3e433/pilot/"
+      "pilot/",
+      "pilot/"
      ]
     }
    }
@@ -131,8 +131,8 @@
     "worker_sized_reason": "Both variants are bounded patches of one scalar function measured by existing family tools",
     "footprint": {
      "creates": [
-      "dev/active/55c3e433-aff3ct-ldpc-gaps/check-variants/",
-      "dev/bench_results/55c3e433/check-variants/"
+      "check-variants/",
+      "check-variants/"
      ],
      "touches": [
       "crates/gf2-coding/tests/ldpc_check_update_contract.rs"
@@ -144,7 +144,7 @@
  {
   "key": "qc-decoder-core",
   "title": "Deliver the QC decoder core with its kernel and scalar fallback",
-  "description": "Implement QC-aware intra-frame decoding as a reusable library capability in `gf2-coding` over a safe kernel in `gf2-kernels-simd`, promoting the prototype. This work proceeds only on a recorded go decision for QC-aware intra-frame decoding, and a no-go closes it as obsolete without implementation.\n\n## Background\n\n`LdpcCode::from_quasi_cyclic` discards the QC description, so a library API must retain it. The prototype is `dev/active/1a379447-zen3-cpu-performance/f63a2464/survey/prototypes/src/qc.rs`. The obligations are fixed by the contract `qc-go-rule` in `dev/active/55c3e433-aff3ct-ldpc-gaps/plan.md`; go-path findings are in `dev/active/55c3e433-aff3ct-ldpc-gaps/investigation.md`, section Go path.\n\n## Success Criteria\n\n- [hard] REQ-01: A library API retains applicable QC structure for a code and reports its absence for a code that has none.\n- [hard] REQ-02: Unsafe code lives only in `gf2-kernels-simd` with explicit safety contracts, a tested scalar fallback exists, and Rust 1.95 feasibility evidence covers any new intrinsic.\n- [hard] REQ-03: Posterior bits equal the canonical decoder's for scalar and SIMD paths, including cap zero, decoder reuse, special values and both stopping modes.\n- [hard] REQ-04: Decoder behavior stays within `docs/reference/ldpc-decoder-numerical-contract.md`.\n",
+  "description": "Implement QC-aware intra-frame decoding as a reusable library capability in `gf2-coding` over a safe kernel in `gf2-kernels-simd`, promoting the prototype. This work proceeds only on a recorded go decision for QC-aware intra-frame decoding, and a no-go closes it as obsolete without implementation.\n\n## Background\n\n`LdpcCode::from_quasi_cyclic` discards the QC description, so a library API must retain it. The prototype is `qc.rs`. The obligations are fixed by the contract `qc-go-rule` in `dev/active/55c3e433-aff3ct-ldpc-gaps/plan.md`; go-path findings are in `dev/active/55c3e433-aff3ct-ldpc-gaps/investigation.md`, section Go path.\n\n## Success Criteria\n\n- [hard] REQ-01: A library API retains applicable QC structure for a code and reports its absence for a code that has none.\n- [hard] REQ-02: Unsafe code lives only in `gf2-kernels-simd` with explicit safety contracts, a tested scalar fallback exists, and Rust 1.95 feasibility evidence covers any new intrinsic.\n- [hard] REQ-03: Posterior bits equal the canonical decoder's for scalar and SIMD paths, including cap zero, decoder reuse, special values and both stopping modes.\n- [hard] REQ-04: Decoder behavior stays within `docs/reference/ldpc-decoder-numerical-contract.md`.\n",
   "type": "task",
   "priority": "normal",
   "labels": [
@@ -178,8 +178,8 @@
     "worker_sized_reason": "One decoder and one kernel family moved from an existing prototype",
     "footprint": {
      "creates": [
-      "crates/gf2-coding/src/ldpc/qc_decoder.rs",
-      "crates/gf2-kernels-simd/src/ldpc_qc.rs"
+      "qc_decoder.rs",
+      "ldpc_qc.rs"
      ],
      "touches": [
       "crates/gf2-coding/src/ldpc/core.rs",
@@ -226,14 +226,14 @@
     "worker_sized_reason": "One route variant added to the existing selector and route types",
     "footprint": {
      "creates": [
-      "crates/gf2-coding/data/tuning-profiles/gf2-qc-candidate.json"
+      "gf2-qc-candidate.json"
      ],
      "touches": [
       "crates/gf2-coding/src/tuning.rs",
       "crates/gf2-coding/src/ldpc/route.rs",
       "crates/gf2-coding/src/ldpc/batch.rs",
       "crates/gf2-coding/tests/ldpc_batch_contract.rs",
-      "crates/gf2-coding/benches/tuning_calibration.rs",
+      "tuning_calibration.rs",
       "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/src/lib.rs",
       "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/tuned-profile/src/lib.rs"
      ]
@@ -282,13 +282,13 @@
     "worker_sized_reason": "One existing family flow on six cells, with at most a one-function landing and an envelope change",
     "footprint": {
      "creates": [
-      "dev/active/55c3e433-aff3ct-ldpc-gaps/adoption/",
-      "dev/bench_results/55c3e433/adoption/"
+      "adoption/",
+      "adoption/"
      ],
      "touches": [
       "crates/gf2-coding/src/ldpc/min_sum.rs",
       "crates/gf2-coding/src/tuning.rs",
-      "crates/gf2-coding/data/tuning-profiles/gf2-qc-candidate.json",
+      "gf2-qc-candidate.json",
       "dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/tuned-profile/src/lib.rs"
      ]
     }
@@ -336,8 +336,8 @@
     "worker_sized_reason": "At most one existing family flow, projected through the shared campaign tables",
     "footprint": {
      "creates": [
-      "dev/active/55c3e433-aff3ct-ldpc-gaps/closeout/",
-      "dev/bench_results/55c3e433/closeout/"
+      "closeout/",
+      "closeout/"
      ],
      "touches": [
       "dev/scripts/campaign_tables.py"

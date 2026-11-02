@@ -57,11 +57,11 @@
 - Validation issue: `jit issue show 02b8137c`
 - Progress: `dev/active/b8206228-permanent-statistics/progress.json`
 - Prior state: `dev/active/b8206228-permanent-statistics/handoff-28.md`
-- Preserved journal: `dev/active/02b8137c/validation-journal/`
-- Original run-state: `dev/active/02b8137c/validation-journal/run-state.json`
-- Q=5 terminal that exposed the defect: `dev/active/02b8137c/validation-journal/q5-n01-s0.terminal.json`
-- Preregistration: `dev/active/02b8137c/pre-draw-validation-v1-preregistration.json` and `.md`
+- Preserved journal: `validation-journal/`
+- Original run-state: `run-state.json`
+- Q=5 terminal that exposed the defect: `q5-n01-s0.terminal.json`
+- Preregistration: `pre-draw-validation-v1-preregistration.json` and `.md`
 - Journal preservation commit: `3fd2893b`
 - Repair implementation: `1acd2a3b`
 - Integrated repair merge: `2e760af7`
-- Runbook and log: `/home/vkaskivuo/.local/state/gf2-validation/run-validation-0200.sh` and `validation-run.log`
+- Runbook and log: `run-validation-0200.sh` and `validation-run.log`

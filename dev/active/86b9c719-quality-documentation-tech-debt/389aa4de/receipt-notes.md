@@ -15,13 +15,13 @@ larger than the records above.
 
 ## Rule the blocks follow
 
-Append-only. Committed records under `dev/active/` and `dev/benchmarks/` carry
+Append-only. Committed records under `dev/active/` and `benchmarks/` carry
 citations anchored to the tree they were written against, so an amendment is
 appended and changes no pre-existing line
-([`handoff.md:57`](../../../archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff.md)). The section
+(`handoff.md:57`). The section
 shape follows the precedents at
-`dev/benchmarks/tuning_profiles/across-build-control-arm-v1.md:179` and
-`dev/benchmarks/tuning_profiles/selector-non-regression-plan-v1.md:314`.
+`across-build-control-arm-v1.md:179` and
+`selector-non-regression-plan-v1.md:314`.
 
 Nothing in `2026-08-20-host-calibration.md` is rewritten, and in particular the
 emitted document quoted byte-for-byte at `:293` and every measured figure stay
@@ -35,12 +35,12 @@ of what was swept.
 
 | Record | Anchor | Statement |
 |---|---|---|
-| [`2026-08-20-host-calibration.md`](../../../archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-host-calibration.md) | `:338`–`:367` (F2) | "no grid point offers both arms and §2.7 rule 1 cannot be executed for this field" |
-| [`handoff.md`](../../../archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff.md) | `:26` (DEC-B6) | "`karatsuba_min_degree` is not sweepable (both arms private …)" |
-| `dev/active/7d824b2f/design.md` | `:427`–`:431`, `:455`–`:461` | names the steering technique as one `389aa4de` builds, and cites the field's omission as the precedent for seventeen non-sweepable fields |
-| `crates/gf2-core/benches/tuning_calibration.rs` | module docs, `# Arm reachability` | **already rewritten** by this issue's own commits; listed so the inventory is complete |
+| `2026-08-20-host-calibration.md` | `:338`–`:367` (F2) | "no grid point offers both arms and §2.7 rule 1 cannot be executed for this field" |
+| `handoff.md` | `:26` (DEC-B6) | "`karatsuba_min_degree` is not sweepable (both arms private …)" |
+| `design.md` | `:427`–`:431`, `:455`–`:461` | names the steering technique as one `389aa4de` builds, and cites the field's omission as the precedent for seventeen non-sweepable fields |
+| `tuning_calibration.rs` | module docs, `# Arm reachability` | **already rewritten** by this issue's own commits; listed so the inventory is complete |
 
-## Block A — append at the end of [`2026-08-20-host-calibration.md`](../../../archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-host-calibration.md)
+## Block A — append at the end of `2026-08-20-host-calibration.md`
 
 ```markdown
 ## Amendment — issue `389aa4de` (<date>)
@@ -67,7 +67,7 @@ Every figure above, the emitted document quoted under §Emitted profile, and
 F2's account of what this run measured stand as taken.
 ```
 
-## Block B — append as a bullet to the current session section of [`handoff.md`](../../../archive/6dc81018-field-capability-dispatch/active/6dc81018-field-capability-dispatch/handoff.md)
+## Block B — append as a bullet to the current session section of `handoff.md`
 
 ```markdown
 - **DEC-B6 discharged by `389aa4de`**: `karatsuba_min_degree` is sweepable
@@ -78,7 +78,7 @@ F2's account of what this run measured stand as taken.
   sweep.
 ```
 
-## Block C — append at the end of `dev/active/7d824b2f/design.md`
+## Block C — append at the end of `design.md`
 
 Recommended rather than required by REQ-03's wording: §5.1 condition 2 states
 the mechanism in the future tense and §5.2 cites the field's omission as a
@@ -92,7 +92,7 @@ This section is appended at the end of the document and changes no line above
 it.
 
 §5.1 condition 2 names the profile-steered technique as one issue `389aa4de`
-builds. It is built: `crates/gf2-core/benches/tuning_calibration.rs` reaches
+builds. It is built: `tuning_calibration.rs` reaches
 both arms of a runtime threshold field by spawning one child process per arm,
 each installing a profile that forces its arm before any selection boundary
 runs, and each reporting the arm back through the family's production route
@@ -144,9 +144,9 @@ recursion-shape caveat.
 ## Block D — DEC-B16, the mechanism the earlier records describe
 
 Three records describe the forcing as minimal-against-maximal: the issue's own
-Background, [`2026-08-20-host-calibration.md`](../../../archive/6dc81018-field-capability-dispatch/benchmarks/tuning_profiles/2026-08-20-host-calibration.md)
+Background, `2026-08-20-host-calibration.md`
 F2's tracked-owner paragraph at `:361`–`:367`, and
-`dev/active/7d824b2f/design.md` §5.1 condition 2 at `:427`–`:431`. DEC-B16
+`design.md` §5.1 condition 2 at `:427`–`:431`. DEC-B16
 supersedes that detail. The paragraph below carries the correction; append it
 to Block A and to Block C, and apply it to the issue Background.
 
@@ -204,9 +204,9 @@ the two.
 
 The bump was applied as a probe on this branch, verified, and reverted. What it
 breaks is wider than the loader, because
-`crates/gf2-core/data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json`
+`gf2-5ecc9bf8-calibration-e202c080.json`
 is not only a committed record: it is the **drift anchor of the whole baked
-follow-on mechanism** of `dev/active/7d824b2f/design.md`, and four test binaries
+follow-on mechanism** of `design.md`, and four test binaries
 plus the library's own unit tests read it. Its `harness_schema` is
 `tuning-calibration-v1`, so a loader that rejects that token rejects the file.
 
@@ -274,7 +274,7 @@ Two shapes are available, and the choice belongs to the owner:
       type's rustdoc at `:202` names the new token.
 - [ ] `crates/gf2-core/src/tuning/mod.rs:2426` and `:2528`: update the v1 token
       in both f35daec0 fixture documents.
-- [ ] `crates/gf2-core/data/tuning-profiles/gf2-5ecc9bf8-calibration-e202c080.json`:
+- [ ] `gf2-5ecc9bf8-calibration-e202c080.json`:
       replaced by, or joined by, the measured v2 profile per the shape chosen
       above.
 - [ ] `crates/gf2-core/tests/tuning_profile_committed.rs`: both tests point at
@@ -289,7 +289,7 @@ Two shapes are available, and the choice belongs to the owner:
 - [ ] If `simd_min_words` moves: a DEC-G re-pin record, since the baked
       bit-backend boundary is a performance claim under
       `@/inv/benchmark-backed-performance`.
-- [ ] `dev/active/7d824b2f/design.md:372` states that
+- [ ] `design.md:372` states that
       `gf2-5ecc9bf8-calibration-e202c080.json` "keeps loading unchanged". The
       bump falsifies that sentence; it needs an appended amendment under the
       same append-only rule as Blocks A to C.
@@ -317,7 +317,7 @@ under `crates/gf2-core/data/tuning-profiles/`. That was the state at this
 receipt's revision. Commit `7163e2a9` (issue `676f55a2`, DEC-G) later committed
 this run's emitted document there as
 `gf2-5ecc9bf8-calibration-e202c080.json`, where it became the drift anchor for
-the baked selector constants of `dev/active/7d824b2f/design.md`.
+the baked selector constants of `design.md`.
 
 Under owner decision DEC-B17 the calibration harness's schema token moves to
 `tuning-calibration-v2`, because the harness's timing path and emitted field
@@ -401,7 +401,7 @@ artifact.
 ## Executed state and publication corrections (2026-09-01)
 
 The measured run exists at
-`dev/benchmarks/tuning_profiles/2026-09-01-389aa4de.md`. Blocks A through D are
+`2026-09-01-389aa4de.md`. Blocks A through D are
 applied as append-only, format-2-aware amendments: F2 and DEC-B6 are discharged
 at `karatsuba_min_degree = 31`; DEC-B16's grid-point forcing is explicit; the
 current omission count is 32 rather than the pre-pilot count 33; and DEC-G

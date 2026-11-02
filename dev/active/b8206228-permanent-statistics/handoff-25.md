@@ -19,7 +19,7 @@
 - Reconciled `ed494117` and its hard criteria against the frozen protocol, manifest, coordinator, exact-cell binary, and prior handoffs.
 - Found that a later shared-target Cargo build had overwritten `target/release/permanent_campaign`; its digest was `0b345f0c…`, not the frozen `c9b2307a…`, so it could not receive emission approval.
 - Recreated the exact source checkout at detached revision `785e3146` in `.agents/worktrees/agent-73317b2e` and repeated the recorded Rust 1.95 HIP build command. The resulting emitter reproduced the frozen digest exactly: `c9b2307a9f1d3ae4fedd5c442bf1ba79786b27727f8b0d99eb96fea23e3c501d`.
-- Preserved those exact bytes at `/home/vkaskivuo/.local/state/gf2-frozen/permanent_campaign-c9b2307a` and copied them to `target/release/permanent_campaign` for the canonical relative invocation.
+- Preserved those exact bytes at `permanent_campaign-c9b2307a` and copied them to `target/release/permanent_campaign` for the canonical relative invocation.
 - Ran only read-only/no-draw admission checks: supplied-emitter inspection passed, and the exact dry schedule returned `schedule q=7 n=20 shards=3` with the committed accelerator-cost table. It did not open the campaign output, coordinator receipt, execution lock, or sampler.
 
 ## What to do next
@@ -52,10 +52,10 @@
 - Epic: `jit issue show b8206228`
 - Wave state: `dev/active/b8206228-permanent-statistics/progress.json`
 - q=7 issue: `jit issue show ed494117`
-- Frozen protocol: `dev/simulation_results/permanent-zero-fraction/protocol.md`
-- Frozen campaign: `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/`
-- Exact refreeze record: `dev/simulation_results/permanent-zero-fraction/permanent-zero-fraction-20260829/freeze.md`
-- Preserved emitter: `/home/vkaskivuo/.local/state/gf2-frozen/permanent_campaign-c9b2307a`
+- Frozen protocol: `protocol.md`
+- Frozen campaign: `permanent-zero-fraction-20260829/`
+- Exact refreeze record: `freeze.md`
+- Preserved emitter: `permanent_campaign-c9b2307a`
 - Exact-source reconstruction: `.agents/worktrees/agent-73317b2e` at `785e3146`
-- Canonical coordinator: `crates/gf2-sim/src/permanent_campaign/coordinator.rs`
+- Canonical coordinator: `coordinator.rs`
 - Importance-sampling branch: `.agents/worktrees/agent-6639435f` at `49b4d452`

@@ -50,7 +50,7 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
    (`matrix.rs:1394-1554`), `MatrixLike` implementations (`matrix.rs:1557-1593`),
    and generic `gemm` (`matrix.rs:2774-2815`). It is not merely a design issue
    left by `ab791e27`, `bb85c68a`, or `cdcebf6a`; the completion report records
-   the dense/sparse delivery (`dev/archive/bb85c68a-field-linear-algebra/active/bb85c68a-completion-report.md:1-32`).
+   the dense/sparse delivery (`bb85c68a-completion-report.md:1-32`).
 
 5. **`valid-and-open`.** The current concrete extension configuration is
    `ExtConfig` with an associated base field and non-residue, not a relative
@@ -123,11 +123,11 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
    simulation tests cover 200-frame Short/Normal CPU-vs-GPU syndrome identity
    and decode equivalence (`crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs:1-18,99-164`).
    The throughput executable measures syndrome evaluation, not a new GPU encoder
-   (`crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs:1-25,148-180`).
+   (`gpu_bch_syndrome_throughput.rs:1-25,148-180`).
 
 12. **`already-done` for the existing pipeline, qualified for GF(2^m).** The
    documented pipeline verifies `gfp/` and `gfpn/` arithmetic and extracts
-   field-trait declarations with opaque bodies (`dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md:18-25`).
+   field-trait declarations with opaque bodies (`lean4-verification-pipeline.md:18-25`).
    The current extraction surface makes `gfp/` and `gfpn/` transparent, starts
    from raw GF(2^m) multiplication, and marks runtime `gf2m::field`,
    `gf2m::generation`, `field`, `matrix`, `primitive_polys`, and related
@@ -137,7 +137,7 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
    inverse progress obligations (`proofs/Gf2Core/Proofs/Gf2mDefs.lean:1-27`;
    `Gf2mProgress.lean:1-15,69-114`). `scripts/verify-lean.sh` feeds the Charon /
    Aeneas extraction and then the Lean build; the committed build gate is
-   `cd proofs && lake build` (`dev/archive/e095a100-gfpm-arithmetic/docs/lean4-verification-pipeline.md:73-85,180-191`).
+   `cd proofs && lake build` (`lean4-verification-pipeline.md:73-85,180-191`).
    Therefore “binary-extension arithmetic is proven/extracted” is true for the
    raw bounded path, not for the runtime field-carrying implementation or
    `FieldPoly`; the latter remains behind the opaque `field` surface.
@@ -157,7 +157,7 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
    sequential map and carries a `ComputeBackend` TODO (`crates/gf2-coding/src/bch/core.rs:357-400`).
 
 14. **`already-done`, with coexistence/cutover still open.** `ExtendedBchCode`
-   exists and is a wrapper around a `LinearBlockCode` (`crates/gf2-coding/src/bch/extended.rs:55-80`).
+   exists and is a wrapper around a `LinearBlockCode` (`extended.rs:55-80`).
    `from_bch(&BchCode)` materializes an extended generator and parity-check
    matrix, appends the overall parity bit, and retains `base_t`
    (`extended.rs:82-175`). It has fixed convenience constructors for the
@@ -184,36 +184,36 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
   `BchCode::construct` path, generic derived wrappers, a diagnostic decoder,
   and separate algorithm-family versus AVX2 dispatch. It also explicitly keeps
   stronger Hartmann–Tzeng/Roos bounds out of scope (`brief.md:10-18`).
-- `dev/archive/legacy/dev/plans/field_poly_module_overview.md:14-26,37-59` is the current reader
+- `field_poly_module_overview.md:14-26,37-59` is the current reader
   map for `FieldPoly`, `FieldVec`, batch polynomial operations, and the shared
   axiom-test harness. It identifies `FieldPoly` as the single source of truth
   and records the existing generic division/GCD/evaluation/product surface.
 - The FieldMatrix design records the delivered abstraction, `MatrixLike`
   ownership choices, views, sparse conversion, and the decision to preserve
-  `BitMatrix` specialization (`dev/archive/bb85c68a-field-linear-algebra/active/ab791e27-design-fieldmatrix-f-finitefield-dense-matrix-ty/ab791e27-design.md:1-73,129-153`).
+  `BitMatrix` specialization (`ab791e27-design.md:1-73,129-153`).
   The expression-template document is design-only and describes a possible
   fused algebra rather than a missing base matrix type
-  (`dev/archive/bb85c68a-field-linear-algebra/plans/cdcebf6a-design-fieldmatrix-expression-template-algebra-p/expression_templates_design.md:1-39`).
+  (`expression_templates_design.md:1-39`).
   The completion report states that dense/sparse FieldMatrix, decomposition,
   polynomial, and Criterion benchmark work was delivered
   (`.../bb85c68a-completion-report.md:1-32,42-78`).
-- `dev/archive/806eb14e-hip-gpu-prototype/active/9012f8a0/gpu-batch-bch-syndrome-plan.md:14-30,242-320`
+- `gpu-batch-bch-syndrome-plan.md:14-30,242-320`
   already specifies the implemented HIP split: device syndrome evaluation,
   CPU BM/Chien, exact small fixtures, simulation identity tests, and a manual
   throughput executable. It should be treated as prior implementation evidence,
   not as a plan to rediscover.
-- `dev/archive/97bf0879-gf2-core-sota-performance/plans/sota_target_matrix.md:9-24,126-145,170-182` establishes the
+- `sota_target_matrix.md:9-24,126-145,170-182` establishes the
   benchmark-receipt convention and the pinned external-library landscape. It
   also records that GF(2^m) external reference coverage is incomplete for many
   matrix operations (`sota_target_matrix.md:226-244`). The FLINT and NTL
   promotion material is therefore useful for evidence conventions and selected
   GF(2^m)/GF(p) baselines, but it does not supply a BCH encoder oracle.
-- `dev/archive/e095a100-gfpm-arithmetic/plans/gfpn_planning_session.md:1-8`
+- `gfpn_planning_session.md:1-8`
   records the earlier motivation for general finite-field arithmetic while
   retaining binary-specific performance paths. The implemented `gfpn` result is
   the narrower quadratic/cubic tower seen in `gfpn/mod.rs`, not arbitrary
   polynomial quotients.
-- `dev/archive/e095a100-gfpm-arithmetic/plans/70972f06_audit.md:1-35` records that BCH’s
+- `70972f06_audit.md:1-35` records that BCH’s
   `alpha_power.minimal_polynomial()` call remains a Gf2mElement operation. It
   is useful cutover evidence: moving this operation to a reusable relative-field
   API must preserve the current call’s semantics while removing the BCH-private
@@ -244,12 +244,12 @@ Direct code/tests/benches/examples and simulation consumers:
 `examples/dvb_t2_bch_demo.rs`, `tests/bch_tests.rs`,
 `tests/dvb_t2_bch_verification.rs`, `tests/ebch_128_64_reference.rs`,
 `tests/data/ebch_128_64_reference.json`, `tests/backend_integration.rs`,
-`tests/grand_phase1_smoke.rs`, `crates/gf2-sim/src/bin/ebch_osd_awgn_campaign.rs`,
-`crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs`,
-`crates/gf2-sim/tests/ebch_osd_campaign_cli.rs`,
+`tests/grand_phase1_smoke.rs`, `ebch_osd_awgn_campaign.rs`,
+`gpu_bch_syndrome_throughput.rs`,
+`ebch_osd_campaign_cli.rs`,
 `crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs`,
 `crates/gf2-sim/tests/gpu_byte_identity.rs`,
-`crates/gf2-sim/tests/osd_campaign_protocol.rs`, and
+`osd_campaign_protocol.rs`, and
 `crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs`.
 
 The coupling points are visible in `dvb_t2/mod.rs:59-105` (inherent
@@ -258,10 +258,10 @@ simulation test’s construction/decode path (`gpu_bch_syndrome_byte_identity.rs
 
 Documentation, campaign, data, presentation, and development references:
 
-`crates/gf2-coding/README.md`, `ROADMAP.md`, `dev/archive/legacy/crates/gf2-coding/docs/PARALLELIZATION.md`,
-`dev/archive/legacy/crates/gf2-coding/docs/SYSTEMATIC_ENCODING_CONVENTION.md`,
-`dev/archive/legacy/crates/gf2-coding/docs/archive/QUALITY_AUDIT_REPORT.md`,
-`dev/archive/legacy/crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md`,
+`crates/gf2-coding/README.md`, `ROADMAP.md`, `PARALLELIZATION.md`,
+`SYSTEMATIC_ENCODING_CONVENTION.md`,
+`QUALITY_AUDIT_REPORT.md`,
+`PRIMITIVE_POLYNOMIALS.md`,
 `dev/campaigns/cp_ebch_sanity.toml`, `dev/campaigns/ebch32_vs_drm32.toml`,
 `dev/campaigns/ebch_bcjr_compare.toml`, all `dev/campaigns/phase*.toml`,
 `dev/campaigns/test_cp_ebch.toml`, `dev/reference_data/fig_*ebch*.csv`,
@@ -269,25 +269,25 @@ Documentation, campaign, data, presentation, and development references:
 `dev/reference_data/osd_ebch_128_64_fossorier1994.md`,
 `dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/README.md`,
 `extract.py`, and `yue2022_fig1_receipt.json` in that directory,
-`dev/simulation_results/fig7_comparison_report.txt`,
-`dev/simulation_results/phase1_comparison_report.md`,
-`dev/archive/6efb756b-grand/simulation_results/phase4_comparison_report.md`, every file under
-`dev/simulation_results/osd-ebch-128-64/`,
-`dev/archive/b7157be6-osd/bench_results/2026-08-27-258be082-osd-campaign-worker-scaling.md`,
-`dev/archive/6efb756b-grand/docs/presentations/6efb756b-grand-sogrand/talk.html`,
-`dev/archive/6efb756b-grand/docs/presentations/figures/fig5_ebch_64_57_comparison.svg`,
+`fig7_comparison_report.txt`,
+`phase1_comparison_report.md`,
+`phase4_comparison_report.md`, every file under
+`osd-ebch-128-64/`,
+`2026-08-27-258be082-osd-campaign-worker-scaling.md`,
+`talk.html`,
+`fig5_ebch_64_57_comparison.svg`,
 `fig6_ebch_16_7_comparison.svg`, and
 `generate_grand_comparison_plots.py`.
 
 Historical JIT/development references are also present in
 `.jit/events.jsonl`, the BCH-related `.jit/issues/*.json` records, and these
-tracked development documents: `dev/archive/legacy/dev/active/DOCUMENTATION_AUDIT.md`,
+tracked development documents: `DOCUMENTATION_AUDIT.md`,
 `dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md`,
-`dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-verdicts.tsv`,
-the `dev/archive/6efb756b-grand/active/` handoffs/completions, the
-`dev/archive/806eb14e-hip-gpu-prototype/active/9012f8a0/` plan and related
-handoff, the `dev/archive/b7157be6-osd/active/` investigation/plan/handoffs,
-and the `dev/archive/f9717e7e-gf2-sim/active/ec530af9/` pipeline design.
+`fa787f85-rustdoc-example-verdicts.tsv`,
+the `active/` handoffs/completions, the
+`9012f8a0/` plan and related
+handoff, the `active/` investigation/plan/handoffs,
+and the `ec530af9/` pipeline design.
 
 ### `BlockEncoder`, `GeneratorMatrixAccess`, and parity-check surfaces
 
@@ -331,7 +331,7 @@ HIP/SIMD direct trait references are limited to
 `crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs` and
 `crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs`; the SIMD kernel
 crate itself does not implement these coding traits. Simulation-facing matches
-are in `crates/gf2-sim/benches/nr_5g_realtime.rs`,
+are in `nr_5g_realtime.rs`,
 `src/stages/nr_5g.rs`, `src/gpu/ldpc_bp.rs`, and the GPU byte-identity tests.
 
 ### BitMatrix save/load and `.gf2` files
@@ -343,13 +343,13 @@ Runtime/read-write consumers are:
 `crates/gf2-coding/src/ldpc/encoding/cache.rs:317-429` (writes parity
 matrices and reloads them), `crates/gf2-coding/tests/ldpc_cache_io.rs:38-79`,
 `crates/gf2-coding/tests/common/mod.rs:84-93` (cache location/gating),
-`dev/archive/legacy/crates/gf2-coding/docs/SDR_INTEGRATION.md`, and `benchmarks/analyze.py`.
+`SDR_INTEGRATION.md`, and `benchmarks/analyze.py`.
 The only exact production `.gf2` round trip is the LDPC encoding cache;
 `BitMatrix`’s own tests live in `crates/gf2-core/src/io/matrix.rs`.
 
 The remaining exact matches are proof/generated or documentation references:
-`dev/archive/6dc81018-field-capability-dispatch/active/7d7c647c/probes/AS1_lean/Funs.lean` and
-`dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-verdicts.tsv`.
+`Funs.lean` and
+`fa787f85-rustdoc-example-verdicts.tsv`.
 No HIP/SIMD crate, BCH matrix path, or simulation checkpoint uses the `.gf2`
 BitMatrix format.
 
@@ -366,10 +366,10 @@ or `.verify_primitive()` are:
 `crates/gf2-core/benches/polynomial.rs:245`,
 `crates/gf2-core/benches/primitive_poly.rs:98-253`,
 `crates/gf2-core/examples/primitive_polynomial_verification.rs:1-32`,
-`dev/archive/legacy/crates/gf2-core/docs/PRIMITIVE_POLYNOMIALS.md:70-80,270-360`,
-`dev/archive/legacy/crates/gf2-core/docs/archive/GF2M_POLY_UTILITIES_REQUIREMENTS.md:171`,
-`dev/archive/e095a100-gfpm-arithmetic/plans/70972f06_audit.md:28-29`, and
-`dev/archive/806eb14e-hip-gpu-prototype/active/9012f8a0/gpu-batch-bch-syndrome-plan.md:73`.
+`PRIMITIVE_POLYNOMIALS.md:70-80,270-360`,
+`GF2M_POLY_UTILITIES_REQUIREMENTS.md:171`,
+`70972f06_audit.md:28-29`, and
+`gpu-batch-bch-syndrome-plan.md:73`.
 The HIP field test additionally consumes `primitive_element` to form evaluation
 points (`crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs:39-48`). No
 consumer exists in `gf2-kernels-simd` or `gf2-sim` for these exact APIs; their
@@ -415,7 +415,7 @@ matches are through BCH/eBCH consumers listed above.
   five-second per-test kill and 60-second suite budget; longer tests need
   descriptive `slow:`/`sim:` ignores, and the nightly ignored tier is capped at
   600 seconds with host-data/benchmark self-gating where needed
-  (`AGENTS.md:83-90,143`). No `dev/TESTING.md` exists in this checkout; the
+  (`AGENTS.md:83-90,143`). No `TESTING.md` exists in this checkout; the
   repository-wide test contract is the cited `AGENTS.md`.
 
 ## Architecture fit
@@ -460,11 +460,11 @@ matches are through BCH/eBCH consumers listed above.
   `None`, with safe scalar selection above it (`gf2-kernels-simd/src/x86/mod.rs:37-43`;
   `src/lib.rs:80-108`).
 - **Research evidence.** Use the SOTA target matrix’s pinned reference and
-  receipt convention (`dev/archive/97bf0879-gf2-core-sota-performance/plans/sota_target_matrix.md:9-24,155-170`) and the
+  receipt convention (`sota_target_matrix.md:9-24,155-170`) and the
   existing Criterion/CSV benchmark harnesses rather than embedding hand-written
   performance claims. Existing BCH benches are a baseline, while the current
   HIP benchmark is a manually invoked simulation executable
-  (`crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs:21-34`).
+  (`gpu_bch_syndrome_throughput.rs:21-34`).
 
 ## Open unknowns
 
@@ -482,7 +482,7 @@ matches are through BCH/eBCH consumers listed above.
 - It is not yet verified which external libraries can serve as independent
   *BCH encoder* and *generator-materialization* oracles; the SOTA matrix mostly
   covers linear algebra and explicitly records GF(2^m) oracle gaps
-  (`dev/archive/97bf0879-gf2-core-sota-performance/plans/sota_target_matrix.md:226-244`).
+  (`sota_target_matrix.md:226-244`).
 - The current HIP path is binary GF(2^m), table-backed, and CPU-completes the
   decoder. Equivalence after a future typed decoder result and canonical
   construction cutover is not yet demonstrated; current tests establish only

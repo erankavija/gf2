@@ -22,7 +22,7 @@
 - `d7749931`: lake-build + code-review passed; doc-review failed twice on the stale O-3 proof sketch — fixed lead-direct (7a380646, 3c744093; R-43 standing rule for lean workers); passed R3; done.
 - `444c06bc`/`bd0edfa2`: rework 1 merged 8754afc8; 444c06bc code-review R1 F1 (private `MatrixFill` bound, REQ-06) → R-45 → rework 2 (public trait with provided bodies, opting-in test representation, design amended) merged 0cb1025a; doc-review R3 asked for panic/shape docs → lead-direct 3b839a80; bd0edfa2 code-review R3 failed only on the unlinked receipt → linked; all gates passed; both done.
 - `3f7edef1`: B4 GAP retry at -o 50g / 52G scope FAILED (9m17s, 54.4 GB peak RSS, 15.6 GB swap); part-2 rework merged 93f08af2; cargo-ci passed on rerun (first run: transient GPU smoke SIGABRT under load 14); code-review R2 + research-review R2 F1 = B4 root cause ×3 → escalated; doc-review R2 F1 (bare `cargo run` in the example) closed lead-direct e899f8c8; research R2 F2–F5 → rework 2 complete on the branch at 115ce492 (attempt artifacts committed under `oracle/attempts/2026-09-02-b4-heap-50g/`, run.sh stage 4 runs the stream test and the receipt records 808/808, "predeclared" wording fixed, two peak-RSS members) — **not yet lead-reviewed or merged**.
-- `b1bd75ca` (Lean O-4): 84 declarations, 0 sorry, four recorded Mathlib-route deviations, load-bearing anchor test, O-4 sketch section remapped; lead review PASS; merged 531a2039 + lead-direct O-3 citation fix 6f94277e; lake-build passed in 33 s after hardlinking the worker's `proofs/.lake` into main's.
+- `b1bd75ca` (Lean O-4): 84 declarations, 0 sorry, four recorded Mathlib-route deviations, load-bearing anchor test, O-4 sketch section remapped; lead review PASS; merged 531a2039 + lead-direct O-3 citation fix 6f94277e; lake-build passed in 33 s after hardlinking the worker's `.lake` into main's.
 - Host: tmpfs /tmp held ~17 GB of stale Luna cargo target dirs (deleted); an sccache daemon spawned under the CCX1 flock inherited the lock (killed); 99 stale gf2-kernels-simd artifacts purged from the cache pool.
 - Codex weekly quota 94% → 96% over ~20 review runs (≈0.13%/run); resets Mon 2026-09-07 17:56 EEST.
 
@@ -61,6 +61,6 @@
 
 - Epic: `jit issue show ae03bcd0`; progress.json, plan.md (Amendments 1–2), bch-api-design.md (MatrixFill contract), extension-design.md, oracle-provenance.md, oracle-receipt.md (this directory).
 - Session-9 prompts (committed): `session-9-prompts/` in this directory — rework and dispatch briefs, including the three wave-11 dispatch prompts.
-- Session-9 scratchpad (may not survive): `/tmp/claude-1000/-home-vkaskivuo-Projects-gf2/b6ff6d78-3691-40ce-9546-069e618e637c/scratchpad/` — gate logs (`gates-wave10-{a,b,c,d}.log`, `gates-3f7edef1-r2.log`), `b4-attempt-50g/`, `88ca7d2f-run1/` (the discarded contended measurement).
+- Session-9 scratchpad (may not survive): `temporary-file` — gate logs (`gates-wave10-{a,b,c,d}.log`, `gates-3f7edef1-r2.log`), `b4-attempt-50g/`, `88ca7d2f-run1/` (the discarded contended measurement).
 - Proof sketch: dev/active/ae03bcd0-general-bch/64fd3afd/proof-sketch.md (O-5 for 94597a51 is the remaining obligation).
-- ETSI DVB-T2 streams: ~/dvb_test_vectors → ~/Projects/dvb_test_vectors/VV001-CR35_CSP (host symlink).
+- ETSI DVB-T2 streams: ~/dvb_test_vectors → local-path (host symlink).

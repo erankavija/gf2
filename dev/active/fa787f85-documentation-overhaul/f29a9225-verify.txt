@@ -1,5 +1,0 @@
-archive directories whose marker names 026fc832-a480-4d07-8d25-47b8bfcb69a3: 1
-planned destinations 109: sha256 or size mismatches 0
-sources removed by jit:f29a9225 commits 15: mirror differing from the last source blob 0, mirror without a tracker reference 0, tracker references naming the source 0
-link scan, archive directory: files 82, local links 55, unresolved 0
-link scan, Markdown files edited by jit:f29a9225 commits: files 3, local links 8, unresolved 0

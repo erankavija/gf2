@@ -2,7 +2,7 @@
   "schema_version": 3,
   "campaign_id": "permanent-zero-fraction-20261102",
   "root_seed": 1600116544598179841,
-  "configuration_sha256": "707e95b7a263d481ccf6309143d7c97c6c8442b1540f35653600893012c317e1",
+  "configuration_sha256": "7d46c0dec55f8c0868785804bf2a8a06f0d90be8563336cbe521d3fa0e02ddce",
   "purpose_tag": 3,
   "acceptance": {
     "permanent_family_error": 0.025,
@@ -20,7 +20,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "generic_ryser",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -29,7 +29,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "generic_ryser",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -38,7 +38,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "generic_ryser",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -47,7 +47,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -56,7 +56,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -65,7 +65,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -74,7 +74,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -83,7 +83,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -92,7 +92,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -101,7 +101,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -110,7 +110,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -119,7 +119,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -128,7 +128,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -137,7 +137,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -146,7 +146,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -155,7 +155,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -164,7 +164,7 @@
       "matrix_count": 20000000,
       "shard_size": 200000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -173,7 +173,7 @@
       "matrix_count": 222223,
       "shard_size": 50000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -182,7 +182,7 @@
       "matrix_count": 222223,
       "shard_size": 50000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -191,7 +191,7 @@
       "matrix_count": 222223,
       "shard_size": 50000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -200,7 +200,7 @@
       "matrix_count": 222223,
       "shard_size": 50000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -209,7 +209,7 @@
       "matrix_count": 222223,
       "shard_size": 50000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -218,7 +218,7 @@
       "matrix_count": 222223,
       "shard_size": 50000,
       "backend": "intra_matrix_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -227,7 +227,7 @@
       "matrix_count": 222223,
       "shard_size": 50000,
       "backend": "intra_matrix_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -236,7 +236,7 @@
       "matrix_count": 222223,
       "shard_size": 50000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -245,7 +245,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -254,7 +254,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -263,7 +263,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -272,7 +272,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -281,7 +281,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -290,7 +290,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -299,7 +299,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -308,7 +308,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -317,7 +317,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -326,7 +326,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -335,7 +335,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -344,7 +344,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -353,7 +353,7 @@
       "matrix_count": 16000000,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -362,7 +362,7 @@
       "matrix_count": 160000,
       "shard_size": 50000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -371,7 +371,7 @@
       "matrix_count": 160000,
       "shard_size": 50000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -380,7 +380,7 @@
       "matrix_count": 160000,
       "shard_size": 50000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -389,7 +389,7 @@
       "matrix_count": 160000,
       "shard_size": 50000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -398,7 +398,7 @@
       "matrix_count": 160000,
       "shard_size": 50000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -407,7 +407,7 @@
       "matrix_count": 160000,
       "shard_size": 50000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -416,7 +416,7 @@
       "matrix_count": 160000,
       "shard_size": 50000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -425,7 +425,7 @@
       "matrix_count": 160000,
       "shard_size": 50000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -434,7 +434,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -443,7 +443,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -452,7 +452,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -461,7 +461,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -470,7 +470,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -479,7 +479,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -488,7 +488,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -497,7 +497,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -506,7 +506,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -515,7 +515,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -524,7 +524,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -533,7 +533,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -542,7 +542,7 @@
       "matrix_count": 12244898,
       "shard_size": 200000,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -551,7 +551,7 @@
       "matrix_count": 122449,
       "shard_size": 50000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -560,7 +560,7 @@
       "matrix_count": 122449,
       "shard_size": 50000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -569,7 +569,7 @@
       "matrix_count": 122449,
       "shard_size": 50000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -578,7 +578,7 @@
       "matrix_count": 122449,
       "shard_size": 50000,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/backend-selection-v1.md",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     }
   ]

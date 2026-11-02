@@ -2,7 +2,7 @@
 
 ## Context
 
-`@/inv/experiment-library-separation` makes about 17,600 lines of permanent campaign code in `gf2-sim` a defect, along with other campaign code. Measuring where experiment data should live also showed 3.9 GB in the tree against 13.6 MB of `crates/`. Of that, 2.9 GB is copied `inputs/` and 411 MB is `source-inputs/`. Actual results (`dev/simulation_results`) are 2.4 MB.
+`@/inv/experiment-library-separation` makes about 17,600 lines of permanent campaign code in `gf2-sim` a defect, along with other campaign code. Measuring where experiment data should live also showed 3.9 GB in the tree against 13.6 MB of `crates/`. Of that, 2.9 GB is copied `inputs/` and 411 MB is `source-inputs/`. Actual results (`simulation_results`) are 2.4 MB.
 
 Owner decisions from the interview:
 
@@ -23,17 +23,17 @@ Default is delete. Code moves only if an epic criterion or a live consumer needs
 
 ## Phase A: stop the bloat (first)
 
-**A1. Tree purge, one commit on main.** Remove under `dev/bench_results` and `dev/active`:
+**A1. Tree purge, one commit on main.** Remove under `bench_results` and `dev/active`:
 - `inputs/`, `source-inputs/`
 - `*.log`, `*.err`, perf `*.data`, `*.zst`, raw `test-logs/`
 
 Keep receipts, summaries, CSV, TSV, and every `execution.log` and execution journal (`@/inv/campaign-resumability` makes these authoritative).
 
-Exempt until landed or closed: `dev/active/55c3e433-aff3ct-ldpc-gaps`, `dev/active/02b8137c`, `.agents/`, and `bench-window/` (the armed timer runs `run-window.sh`).
+Exempt until landed or closed: `dev/active/55c3e433-aff3ct-ldpc-gaps`, `02b8137c`, `.agents/`, and `bench-window/` (the armed timer runs `run-window.sh`).
 
 **A2. Remove the rule and its tooling.**
 - Replace the "receipt carries every input" paragraph in `AGENTS.md`: receipts hold results, configuration and digests, and the source revision is the rebuild pointer.
-- Delete `dev/scripts/check-receipt-input-snapshots.py`, `receipt-input-omissions.json` and their `scripts/cargo-ci.sh` steps.
+- Delete `check-receipt-input-snapshots.py`, `receipt-input-omissions.json` and their `scripts/cargo-ci.sh` steps.
 - Stop snapshot writing in `dev/tools/tuning-campaign-support/src/receipt.rs`, `src/bin/benchmark-ab-runner.rs`, `src/bin/tuning-extent-campaign-driver.rs`. Update `dev/scripts/validate-tuning-extent-campaign.py`.
 - Remove `inputs/` entries from `contrib/gates/docs-mechanical-baseline.md`. This resolves the open docs-mechanical question.
 - Fix or delete every CI step and test that read purged files. A check that only re-verifies purged bytes is deleted.

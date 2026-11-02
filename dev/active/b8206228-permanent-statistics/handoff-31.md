@@ -18,7 +18,7 @@
 - Prevention: `@/inv/committed-evidence-budget`, `scripts/check-tracked-budget.py`, versioned hooks in `.githooks`, `cargo-ci` and GitHub CI steps.
 - Separation: library production code fell from 106,454 to 84,451 code lines by the same count as the session's first measurement; `gf2-sim` from 29,013 to 7,997. Experiments live in `experiments/`.
 - `permanent-statistics` is 6,177 Rust code lines including tests and the moved sampler, 177 over the aspirational 6,000 in `fd1ef344`.
-- Rewrite rehearsal: pack 221 MiB to 63 MiB, 334 pinned commits mapped, `jit validate` and full `cargo-ci` pass on the rewritten checkout. See [45ecf975/history-rewrite-runbook.md](45ecf975/history-rewrite-runbook.md). The rehearsal mirror is at `~/.local/share/gf2/rewrite-rehearsal`.
+- Rewrite rehearsal: pack 221 MiB to 63 MiB, 334 pinned commits mapped, `jit validate` and full `cargo-ci` pass on the rewritten checkout. See [45ecf975/history-rewrite-runbook.md](45ecf975/history-rewrite-runbook.md). The rehearsal mirror is at `local-path
 
 ## What to do next
 
@@ -46,13 +46,13 @@
 1. **Force-push confirmation.** Rewrites all history, changes every commit ID, breaks old clones and needs the `Main protected` bypass. Recorded IDs resolve through a committed map, and the bytes stay in an off-repo backup. Recommendation: confirm once `55c3e433`'s pilots land.
 2. **Validation window and campaign go.** Arm a window for `67194d70`; the first campaign draw needs a separate go.
 3. **Protocol differences made on defaults in `1634c185`, all stated in `experiments/permanent-statistics/protocol.md`:** Wilson intervals only with one z constant; shard size 200,000 in precision tiers; a killed process no longer uses a retry; the 12-hour ceiling; `--on-unavailable` modes. Recommendation: accept.
-4. **Remaining 485 MB.** `dev/bench_results` still holds about 340 MB of JSON, TSV and summaries, and 227 older files sit in the budget baseline, including `dev/archive`, `dev/studies` and `dev/research` logs. Recommendation: move to a summary-only layout in a separate issue.
+4. **Remaining 485 MB.** `bench_results` still holds about 340 MB of JSON, TSV and summaries, and 227 older files sit in the budget baseline, including `archive`, `dev/studies` and `dev/research` logs. Recommendation: move to a summary-only layout in a separate issue.
 5. **Server-side enforcement is unavailable.** GitHub refuses push rulesets on a public, user-owned repository, so `--no-verify` can bypass the hooks and CI reports only afterwards. Recommendation: accept, or move the repository to an organization.
-6. **`experiments/common/build_profile.rs` is more machinery than I'd like.** Code review drove it through five rounds, past the two-retry policy, and the flags rest on a documented caller precondition. Recommendation: revisit it when `74f8cf16` converges the shared code.
+6. **`build_profile.rs` is more machinery than I'd like.** Code review drove it through five rounds, past the two-retry policy, and the flags rest on a documented caller precondition. Recommendation: revisit it when `74f8cf16` converges the shared code.
 
 ## Limits
 
-- Old receipts: 192 protocol receipts can no longer be re-evaluated; `benchmark-acceptance` reports `ConfigurationUnavailable`. Old input bytes come from git history until the rewrite and from the backup after it. External archives are in `~/.local/share/gf2/external-inputs/`.
+- Old receipts: 192 protocol receipts can no longer be re-evaluated; `benchmark-acceptance` reports `ConfigurationUnavailable`. Old input bytes come from git history until the rewrite and from the backup after it. External archives are in `local-path
 - The September validation's independent verifier never ran, and that receipt is now history only.
 - GPU runtime paths in `permanent-statistics` are unverified: no usable device was exposed, though the `hip` feature builds. The `crates/gf2-kernels-hip` standalone build was blocked offline.
 - `rank_event_rates` was moved without rerunning its ignored receipt test; stream equality rests on code reading.

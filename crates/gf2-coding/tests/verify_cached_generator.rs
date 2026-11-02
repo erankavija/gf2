@@ -33,11 +33,11 @@ fn load_normal_r35() -> Option<(LdpcCode, Arc<RuEncodingMatrices>)> {
 }
 
 const NO_CACHE: &str = "precomputed DVB-T2 generator cache absent \
-    (crates/gf2-coding/data/ldpc/dvb_t2); generate it with \
+    (DVB-T2 generator cache); generate it with \
     EncodingCache::precompute_and_save_dvb_t2";
 
 #[test]
-#[ignore = "external: requires precomputed LDPC DVB-T2 cache at crates/gf2-coding/data/ldpc/dvb_t2"]
+#[ignore = "external: requires precomputed LDPC DVB-T2 cache at DVB-T2 generator cache"]
 fn test_cached_parity_matrix_property() {
     let Some((code, encoder)) = load_normal_r35() else {
         common::skip("test_cached_parity_matrix_property", NO_CACHE);
@@ -111,7 +111,7 @@ fn test_cached_parity_matrix_property() {
 }
 
 #[test]
-#[ignore = "external: requires precomputed LDPC DVB-T2 cache at crates/gf2-coding/data/ldpc/dvb_t2"]
+#[ignore = "external: requires precomputed LDPC DVB-T2 cache at DVB-T2 generator cache"]
 fn test_problematic_parity_bits_property() {
     let Some((code, encoder)) = load_normal_r35() else {
         common::skip("test_problematic_parity_bits_property", NO_CACHE);
@@ -166,7 +166,7 @@ fn test_problematic_parity_bits_property() {
 }
 
 #[test]
-#[ignore = "external: requires precomputed LDPC DVB-T2 cache at crates/gf2-coding/data/ldpc/dvb_t2"]
+#[ignore = "external: requires precomputed LDPC DVB-T2 cache at DVB-T2 generator cache"]
 fn test_full_generator_orthogonality() {
     let Some((code, encoder)) = load_normal_r35() else {
         common::skip("test_full_generator_orthogonality", NO_CACHE);

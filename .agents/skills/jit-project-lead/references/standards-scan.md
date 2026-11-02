@@ -48,7 +48,7 @@ Only `.jit/config.toml` is read as a file, for the `[documentation]` scope,
 because no CLI surface exposes it; it is configuration, not issue persistence.
 
 Out of scope (historical record): `archive_root`, the other `managed_paths`
-(e.g. `dev/studies`, `dev/sessions`), and `dev/active` documents whose owning
+(e.g. `dev/studies`), and `dev/active` documents whose owning
 issue is Done.
 
 ### dev/active exemption rule

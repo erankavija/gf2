@@ -31,7 +31,7 @@ simulation pipelines and campaigns.
 ./scripts/cargo-budget.sh cargo doc -p gf2-coding --no-deps
 ```
 
-Rendered output: [Rustdoc](../../target/doc/gf2_coding/index.html).
+Rendered output: Rustdoc.
 
 ## License
 

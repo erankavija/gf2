@@ -1,47 +1,4 @@
-// benchmarks/reference/fflas_bench.cpp
-//
-// Reference reproducibility harness for fflas-ffpack. Emits a single CSV
-// stream on stdout with the schema documented in benchmarks/README.md:
-//
-//   lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
-//
-// The harness is intentionally narrow:
-//   * Modular<int64_t> for GF(p) where p fits the int64 fast path.
-//   * Modular<float>   for the 8-bit prime to exercise the BLAS-accelerated
-//     dispatch on tiny moduli (8-bit + small accumulator) — fflas-ffpack
-//     does not provide a "Modular<int8_t>" by default, but Modular<float>
-//     with cardinality <=251 is the canonical small-prime path used in
-//     the linbox test corpus.
-//   * Operations: fgemm, PLUQ (PLE), RowEchelonForm, Invert, Solve,
-//     CharPoly, MinPoly. PLUQ / RowEchelonForm / Invert / Solve run in
-//     both `uniform` (i.i.d.) and `deficient` (rank exactly n/2) regimes;
-//     fgemm, CharPoly, and MinPoly run uniform only.
-//   * Sizes 64, 256, 1024 for the full dense sweep on every GF(p)
-//     field. fgemm additionally runs at n=4096 on each field; the
-//     remaining ops at 4096 are deferred to T2 (per R1 amendment of
-//     `a03b2556`). A per-cell wall-clock cap (kCellBudgetNs) is
-//     enforced so a slow host degrades gracefully rather than stalling.
-//   * CharPoly runs at n in {64, 256} across all four GF(p) fields.
-//   * MinPoly (issue 5dea7457) runs at n in {64, 256, 1024} across
-//     all four GF(p) fields; n=4096 is deferred per protocol § 10.
-//
-// CLI:
-//   fflas_bench [--seed N] [--warmup K] [--iters K] [--smoke]
-//
-// `--smoke` runs every operation at n=16 with single warmup/iter and
-// performs an internal correctness oracle for each new operation
-// row (per `dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md` § 6):
-// minpoly is verified monic and divides charpoly. Smoke output is
-// still emitted as CSV; the protocol's gf2-core cross-check runs in
-// the parent process (`benchmarks/smoke.sh`).
-//
-// Determinism: every (field, op, size, regime) entry is seeded with a
-// 64-bit splittable seed derived from a fixed master seed (see
-// benchmarks/seeds/seed.txt). Re-running with the same master produces
-// the same matrices byte-for-byte.
-//
-// All output goes to stdout; status messages go to stderr so the caller
-// can redirect cleanly into a CSV file.
+// Seeded FFLAS reference harness; smoke mode checks polynomial identities.
 
 #include <chrono>
 #include <cstdint>

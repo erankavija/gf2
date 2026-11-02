@@ -68,7 +68,7 @@ each P done, commit.
   carries in-manifest REQ-01 contribution.
 - Sampler + statistics in a new narrow crate `gf2-stats`; campaign driver a
   binary in `gf2-sim` with the checkpoint writer generalised at source.
-- Published dataset under `dev/simulation_results/permanent-zero-fraction/`
+- Published dataset under `permanent-zero-fraction/`
   (documented divergence from study §7.4).
 - G6: build the four-matrix batched AVX2 path (now split across
   `avx2-batched-impl` / `avx2-dispatch-migration` / `avx2-narrative-sweep` /
@@ -78,7 +78,7 @@ each P done, commit.
 ## Second-opinion protocol (Codex advisor)
 
 `agent:scientific-hpc-advisor` reviews via the forum:
-`FORUM_DIR=/tmp/jit-forum`, script `~/Projects/forum-poc/forum.sh`
+`FORUM_DIR=/tmp/jit-forum`, script `local-path
 (`send`/`recv --as agent:claude`). It issued PASS verdicts on both manifests
 under the owner's major-issues-only bar. Its binding statistical corrections
 (alpha split across permanent+determinant families, exact binomial tests with

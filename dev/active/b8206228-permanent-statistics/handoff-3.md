@@ -15,7 +15,7 @@
 
 ## What just happened
 
-- Morning checklist on the 2026-08-14 02:00 overnight run: exit 0, all steps completed for q=3,5,7. Raw evidence committed per issue (`e0954ea6`, `533b2532`, `5e46f4d1`), including the final kernel resource receipt + logs preserved from transient `target/` into `dev/studies/6c7fcb38/hip-resource-usage-20260813T193800Z-793245/`.
+- Morning checklist on the 2026-08-14 02:00 overnight run: exit 0, all steps completed for q=3,5,7. Raw evidence committed per issue (`e0954ea6`, `533b2532`, `5e46f4d1`), including the final kernel resource receipt + logs preserved from transient `target/` into `hip-resource-usage-20260813T193800Z-793245/`.
 - Dispatched `047b62ed` receipts worker (opus): receipts v1 + `analysis.py` committed (`6eb364e9`). Its conformance table exposed REQ-01/04/14 as structurally unsatisfiable (prototype registry batch `dispatch()` still the skeleton stub; no issue owned the wiring), REQ-03/10 single-order isolates, REQ-11 equivalence stopping at n=20, and REQ-01's identical-corpus clause contradicting the harness's deliberate disjoint per-cell streams.
 - Escalated; owner chose **wire-and-rerun**, approved the REQ-01 corpus-clause rewording on all three campaigns, and the 047b62ed Background zero-fast-path ordering correction. Amendments applied (`66f56d93`); `047b62ed` claim released; campaigns re-blocked.
 - Created `e31b1918` "Prototype batch evaluators and full-order isolates in the campaign harness" (gates `code-review`, `permanent-sampling-feas-ci`, `permanent-wave-gpu-ci`; deps wired from all three campaigns; `025a1a17`).

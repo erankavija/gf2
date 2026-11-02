@@ -62,9 +62,9 @@
 - Determinant prerequisite: `jit issue show ec22205e`
 - Progress: `dev/active/b8206228-permanent-statistics/progress.json`
 - Prior handoff: `dev/active/b8206228-permanent-statistics/handoff-13.md`
-- V5 preregistration: `dev/benchmarks/permanent_campaign/determinant-cost-preregistration-v5.md`
-- V5 runner: `dev/benchmarks/permanent_campaign/determinant_cost_v5.py`
-- V5 tests: `dev/benchmarks/permanent_campaign/test_determinant_cost_v5.py`
-- Historical v4 research evidence: `dev/benchmarks/permanent_campaign/determinant-cost-all-cells-v4.csv`, `determinant-cost-all-cells-v4.md`
-- Protocol baseline: `dev/simulation_results/permanent-zero-fraction/protocol.md` at `7901430a324616b00b92c9fc23e3b3dbee66c291`
+- V5 preregistration: `determinant-cost-preregistration-v5.md`
+- V5 runner: `determinant_cost_v5.py`
+- V5 tests: `test_determinant_cost_v5.py`
+- Historical v4 research evidence: `determinant-cost-all-cells-v4.csv`, `determinant-cost-all-cells-v4.md`
+- Protocol baseline: `protocol.md` at `7901430a324616b00b92c9fc23e3b3dbee66c291`
 - Readiness commits: `ac550959` (preregistration), `6348b0c9` (canonical source cutover), `1ddcc266` (valid-address truncation repair)

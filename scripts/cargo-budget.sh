@@ -37,8 +37,7 @@ set -euo pipefail
 # while this one holds it only across test execution; the pairing stays correct
 # because exclusion is what matters, not symmetry of the hold. Changing this
 # path silently un-serializes the two repositories — jit's benchmark baselines
-# pin `/tmp/cargo-ci.lock` and `dev/TESTING.md` documents
-# CARGO_CI_BUILD_LOCK — so change both sides together or not at all.
+# pin `/tmp/cargo-ci.lock`, so change both sides together.
 #
 # CARGO_CI_NO_LOCK=1 disables both domains (an isolated container that already
 # owns the machine).

@@ -12,12 +12,10 @@ const COMPLETE: &str =
     include_str!("../../../dev/reference_data/tuning-profiles/conservative.json");
 const MEASURED_CORE_OWNER: &str =
     include_str!("../../gf2-core/data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json");
-const MEASURED_CORE_RECEIPT: &str =
-    "dev/benchmarks/tuning_profiles/gf2-63bad95d-20261006t230547z-2073085.md";
+const MEASURED_CORE_RECEIPT: &str = "experiments/tuning-calibration/benches/core.rs";
 const MEASURED_ALGEBRA_OWNER: &str =
     include_str!("../data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json");
-const MEASURED_ALGEBRA_RECEIPT: &str =
-    "dev/benchmarks/tuning_profiles/gf2-a83583e0-20260930t230000z-2728298.md";
+const MEASURED_ALGEBRA_RECEIPT: &str = "experiments/tuning-calibration/benches/algebra.rs";
 const MEASURED_COMPLETE: &str = include_str!(
     "../../../dev/reference_data/tuning-profiles/gf2-63bad95d-20261006t230547z-2073085.json"
 );
@@ -185,8 +183,6 @@ fn committed_measured_algebra_owner_is_canonical_and_cites_the_campaign() {
 /// The complete envelope composes the measured core owner with the algebra
 /// owner its campaign imports unchanged, so its profile ID is the core owner's
 /// and each section keeps its own receipt.
-/// Protocol: `dev/active/dbd8787d/premeasurement-protocol.md` §6, which the
-/// core campaign's own protocol amends by reference.
 #[test]
 fn measured_complete_envelope_preserves_both_owner_wrappers_exactly() {
     let core = core_registry().from_json(MEASURED_CORE_OWNER).unwrap();

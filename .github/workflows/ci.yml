@@ -20,6 +20,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Self-test reference check
+      run: python3 -B scripts/check-references.py --self-test
+
+    - name: Check references
+      run: python3 -B scripts/check-references.py
+
     - name: Check tracked budget
       run: python3 -B scripts/check-tracked-budget.py
 

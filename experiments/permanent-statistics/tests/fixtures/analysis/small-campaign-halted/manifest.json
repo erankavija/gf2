@@ -2,7 +2,7 @@
   "schema_version": 3,
   "campaign_id": "small-campaign-halted",
   "root_seed": 1,
-  "configuration_sha256": "a6d8c933d2882e2f1226793312711ebde76123d291e5cb715cbf7fff233ca6eb",
+  "configuration_sha256": "eca5c3abfc68a28eac359cb8bed18b7f961b4c600597f82e50e1710076a0567a",
   "purpose_tag": 3,
   "acceptance": {
     "permanent_family_error": 0.025,
@@ -20,7 +20,7 @@
       "matrix_count": 120,
       "shard_size": 40,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -29,7 +29,7 @@
       "matrix_count": 120,
       "shard_size": 40,
       "backend": "accelerator",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     },
     {
@@ -38,7 +38,7 @@
       "matrix_count": 120,
       "shard_size": 40,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
       "determinant_companion": true
     }
   ]

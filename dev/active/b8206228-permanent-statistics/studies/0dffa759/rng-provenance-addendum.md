@@ -77,8 +77,8 @@ measurement revisions, and at any date up to the observation date, resolves
 derived from the committed sources and the cited registry state rather than
 from a lockfile:
 
-- `dev/research/permanent-sampling-feas/Cargo.lock` is untracked by design —
-  `dev/research/permanent-sampling-feas/.gitignore:2` ignores it — and
+- `Cargo.lock` is untracked by design —
+  `.gitignore:2` ignores it — and
   `git ls-tree` at `f9224650` and at `292320d5` carries only `.gitignore`,
   `Cargo.toml`, and `src/` under that directory. No lockfile exists in the tree
   at either pinned revision.

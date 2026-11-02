@@ -22,7 +22,7 @@
     "maintenance_rationale": "Zero added source lines and zero unsafe kernels: the family measures committed arms under the committed envelope, and its outcome retains or withdraws that envelope's decode selectors."
   },
   "family_wise": {
-    "ledger_path": "dev/active/1a379447-zen3-cpu-performance/31727c57/decoder/ledger.jsonl",
+    "ledger_path": "ledger.jsonl",
     "prior_trials": []
   },
   "max_pilot_trials_per_cell": 2,
@@ -207,7 +207,7 @@
     }
   ],
   "holdout_declaration": {
-    "inventory": "dev/active/ed3d490e-zen3-ldpc-frame-simd/calibration/producer/coding-list-grid.json",
+    "inventory": "coding-list-grid.json",
     "rationale": "NR code, recorded-input seed and per-worker batch sizes are absent from the pinned calibration inventory. Neither cell appears in this family pilot. Both compare the integrated tuned envelope against conservative selectors on partial waves.",
     "cells": [
       {

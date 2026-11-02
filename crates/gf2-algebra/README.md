@@ -30,7 +30,7 @@ permanent-zero-fraction campaigns over its permanents.
 ./scripts/cargo-budget.sh cargo doc -p gf2-algebra --no-deps
 ```
 
-Rendered output: [Rustdoc](../../target/doc/gf2_algebra/index.html).
+Rendered output: Rustdoc.
 
 ## License
 

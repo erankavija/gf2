@@ -40,4 +40,4 @@ and [installation](../../docs/reference/supported-configurations.md#installation
 ./scripts/cargo-budget.sh cargo doc -p gf2-kernels-simd --no-deps
 ```
 
-Rendered output: [Rustdoc](../../target/doc/gf2_kernels_simd/index.html).
+Rendered output: Rustdoc.

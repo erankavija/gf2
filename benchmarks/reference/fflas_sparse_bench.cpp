@@ -1,22 +1,4 @@
-// benchmarks/reference/fflas_sparse_bench.cpp
-//
-// Sparse `spmv` and `sparse×dense` reference harness for fflas-ffpack 2.5.0
-// over GF(p), companion to the dense `fflas_bench.cpp`. Targets the cells
-// promoted in `dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md` § 4 — the canonical
-// sparse-matrix-vector and sparse-matrix-block-vector products under
-// `Givaro::Modular<int64_t>` / `Modular<float>`.
-//
-// Schema (matches benchmarks/README.md § CSV schema):
-//
-//   lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
-//
-// CLI: --seed N --warmup K --iters K --smoke
-//
-// Determinism: every (op, n, density, field) cell uses the shared
-// `gf2_bench_splitmix64` / `gf2_bench_derive_seed` from `seed_helpers.h`.
-// The Bernoulli support sample walks SplitMix64 row-major, included if
-// `draw < density · 2^64`. This is byte-equivalent with the
-// `gf2_core::bench_seed::fp_sparse_from_seed` helper.
+// Seeded FFLAS sparse matrix-vector and matrix-block reference harness.
 
 #include <chrono>
 #include <cstdint>

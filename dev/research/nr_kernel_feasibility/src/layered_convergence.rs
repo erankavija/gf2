@@ -4,7 +4,7 @@
 //! (serial-C) normalized-min-sum schedule vs the PRODUCTION flooding decoder
 //! (`Nr5gRateMatchedDecoder`, NMS(0.75)) on the SAME canonical 5G NR mother
 //! graph (BG1, i_LS=1, Z=384, r1/2) at the SAME operating point
-//! (Es/N0 = -1.4 dB AWGN, per dev/benchmarks/gf2-sim/5g-nr-realtime.md).
+//! (Es/N0 = -1.4 dB AWGN, per target/benchmarks/gf2-sim/5g-nr-realtime.md).
 //!
 //! The layered decoder here is a faithful row-layered NMS implemented on the
 //! production mother-code H (`mother_code().parity_check_matrix()`): it reuses

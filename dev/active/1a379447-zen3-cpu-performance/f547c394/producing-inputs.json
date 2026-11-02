@@ -1,7 +1,6 @@
 {
   "schema": "tuning-campaign-producing-inputs-v1",
   "behavior_sources": [
-    "dev/bench_results/f547c394/run-smoke-v3.sh",
     "dev/scripts/ccx1-bench-flock.sh",
     "dev/tools/tuning-campaign-support/src/abtest.rs",
     "dev/tools/tuning-campaign-support/src/arm.rs",
@@ -25,7 +24,6 @@
     "dev/tools/tuning-campaign-support/src/trial_ledger.rs"
   ],
   "lifecycle_sources": [
-    "dev/bench_results/f547c394/run-smoke-v3.sh",
     "dev/scripts/ccx1-bench-flock.sh",
     "dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs",
     "dev/tools/tuning-campaign-support/src/journal.rs",
@@ -40,7 +38,6 @@
     ".cargo/config.toml",
     "Cargo.lock",
     "Cargo.toml",
-    "dev/bench_results/f547c394/run-smoke-v3.sh",
     "dev/scripts/ccx1-bench-flock.sh",
     "dev/tools/tuning-campaign-support/Cargo.toml",
     "dev/tools/tuning-campaign-support/src/abtest.rs",

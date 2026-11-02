@@ -9,7 +9,7 @@
 - Epic `b8206228`: backlog; 12 of 15 direct dependencies done after this session.
 - `6639435f` is DONE at merge `660b742b` / closure `3d2ed9fd`: owner authorized the bounded high-tier rework; all four audit boundary findings plus four lead review findings (F-R1..F-R4) closed; cargo-ci clean-tree pass, code-review pass with zero findings, doc-review pass (one pre-existing advisory tracked by `049a89af`).
 - `02b8137c` implementation is complete and merged at `d06d6fe3`; cargo-ci gate passed; the three AI review gates fail only on the not-yet-existing receipt.
-- Evidence run ARMED: systemd user timer `gf2-predraw-validation2` fires 2026-08-31 02:00:30 running `/home/vkaskivuo/.local/state/gf2-validation/run-validation-0200.sh` (pristine-tree check, binary hash, rocm snapshot, then the exact preregistered invocation under `dev/scripts/ccx1-bench-flock.sh --full-host`, `--workers 24`). Runner binary `target/release/permanent_validation` sha256 `76c778f1e3e90530c3db39b26d8954642b601a17d1050144929270e48c59297e`, built `cargo +1.95.0 --release --features hip` at `660b742b`; `ldd` resolves with an empty environment (no profile-env dependence). A persistent log monitor watches the run.
+- Evidence run ARMED: systemd user timer `gf2-predraw-validation2` fires 2026-08-31 02:00:30 running `run-validation-0200.sh` (pristine-tree check, binary hash, rocm snapshot, then the exact preregistered invocation under `dev/scripts/ccx1-bench-flock.sh --full-host`, `--workers 24`). Runner binary `target/release/permanent_validation` sha256 `76c778f1e3e90530c3db39b26d8954642b601a17d1050144929270e48c59297e`, built `cargo +1.95.0 --release --features hip` at `660b742b`; `ldd` resolves with an empty environment (no profile-env dependence). A persistent log monitor watches the run.
 - Campaign arms `ed494117`, `1d0b3ec4`, `90a61cd4` remain blocked on `02b8137c`. The owner requires a separate explicit go before any campaign-purpose draw (decision 2026-08-30: "arm tonight, ask before campaign").
 - Peer session gf2-dc holds `perf/cargo-cpu-budget` at `28fbee35` (cargo-ci lock redesign: budgeted builds, exclusive test lock, enforced shared-mode CCX1 acquisition, AGENTS.md +18/-3). Owner ruled it lands; agreed sequencing: merge right after the validation receipt commits, or unconditionally if the run has not started by 02:45.
 
@@ -23,7 +23,7 @@
 
 ## Resume order
 
-1. If the timer fired: read `/home/vkaskivuo/.local/state/gf2-validation/validation-run.log` and the receipt at `dev/active/02b8137c/pre-draw-validation-v1-receipt.json`. Exit 0 = passed. Run `target/release/permanent_validation --verify-receipt <path>` as the launch check.
+1. If the timer fired: read `validation-run.log` and the receipt at `pre-draw-validation-v1-receipt.json`. Exit 0 = passed. Run `target/release/permanent_validation --verify-receipt <path>` as the launch check.
 2. Commit the receipt + journal evidence, `jit doc add` the receipt to `02b8137c`, re-evaluate code-review, doc-review, research-review, run the lead six-tier review, close `02b8137c`.
 3. Signal gf2-dc to merge `perf/cargo-cpu-budget`; review its AGENTS.md hunk against the terseness directive (baseline sha256 16c1d917…, 165 lines).
 4. ASK THE OWNER before claiming `ed494117` or drawing any campaign-purpose cell. First campaign action is exact (7,20) through the canonical coordinator after restoring the preserved `c9b2307a…` emitter (handoff-25 procedure).
@@ -31,7 +31,7 @@
 
 ## Traps — do not repeat these
 
-- **Do not run `jit` or diagnose gate state from a worktree cwd.** Re-confirmed live this session: a shell parked in `agent-6639435f` made `jit gate status` report a recorded doc-review run as "never run" and hid `.jit/gate-runs`. `cd /home/vkaskivuo/Projects/gf2` first, every time. (Extends handoff-12.)
+- **Do not run `jit` or diagnose gate state from a worktree cwd.** Re-confirmed live this session: a shell parked in `agent-6639435f` made `jit gate status` report a recorded doc-review run as "never run" and hid `.jit/gate-runs`. `cd gf2` first, every time. (Extends handoff-12.)
 - **Do not read a leak-check hit as a worker leak before checking for peer sessions.** The 22:20 `scripts/cargo-ci.sh`/`.config/nextest.toml` modifications were gf2-dc's uncommitted host-throughput work on main; I ran `git restore` over them (patch was preserved first — always preserve before restoring). `ListAgents` shows peer sessions; ask before reverting.
 - **A worker issued host-wide process kills by full-command-line pattern** (matching cargo-nextest and the crate name, ~22:05, cleaning its own aborted CI run). No observed casualties, but such patterns are not worktree-scoped and can kill peer builds. Brief workers: terminate only PIDs from their own process tree.
 - **Do not expect the three AI review gates to pass before run evidence exists.** All three failed `02b8137c` solely on the absent receipt (REQ-05/09). Sequencing, not defect: evaluate cargo-ci pre-run; evaluate the reviews after the receipt is committed and linked.
@@ -47,9 +47,9 @@
 
 ## Reference artefacts
 
-- Runbook + log: `/home/vkaskivuo/.local/state/gf2-validation/run-validation-0200.sh`, log beside it
+- Runbook + log: `run-validation-0200.sh`, log beside it
 - Timer: `systemctl --user list-timers "gf2-predraw*"`
-- Preregistration: `dev/active/02b8137c/pre-draw-validation-v1-preregistration.json` (+ prose `.md`)
-- Receipt destination: `dev/active/02b8137c/pre-draw-validation-v1-receipt.json`
+- Preregistration: `pre-draw-validation-v1-preregistration.json` (+ prose `.md`)
+- Receipt destination: `pre-draw-validation-v1-receipt.json`
 - Progress: `dev/active/b8206228-permanent-statistics/progress.json`
 - Peer branch: `perf/cargo-cpu-budget` at `28fbee35` (gf2-dc)

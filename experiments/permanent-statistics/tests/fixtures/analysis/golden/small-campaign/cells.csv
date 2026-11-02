@@ -1,4 +1,4 @@
 campaign_id,manifest_sha256,q,n,terminal_state,pooled_sample_count,pooled_permanent_zero_count,halt_reason,dataset_permanent_verdict,estimate,wilson_95_lower,wilson_95_upper,prior_source_table,prior_source_evidence,prior_sample_count,prior_zero_count,prior_point_estimate,prior_interval_kind,prior_interval_level,prior_interval_lower,prior_interval_upper,precision_classification,prior_interval_relation,interval_excludes_published
-small-campaign,8cdd68f582a831e8b694dabe15853d2e47f4e16db9888d14761b3f09f17b29b7,3,2,completed,120,53,,accepted,0.441666666667,0.355997466995,0.530954769087,,,,,,,,,,,,
-small-campaign,8cdd68f582a831e8b694dabe15853d2e47f4e16db9888d14761b3f09f17b29b7,5,2,completed,120,31,,accepted,0.258333333333,0.188373963187,0.343285300582,,,,,,,,,,,,
-small-campaign,8cdd68f582a831e8b694dabe15853d2e47f4e16db9888d14761b3f09f17b29b7,7,2,completed,120,22,,accepted,0.183333333333,0.124303003560,0.262009135172,,,,,,,,,,,,
+small-campaign,b335bedb2bf597fcaa84453258c27662de552a0ebcc6002e409d7f8bd89cdf14,3,2,completed,120,53,,accepted,0.441666666667,0.355997466995,0.530954769087,,,,,,,,,,,,
+small-campaign,b335bedb2bf597fcaa84453258c27662de552a0ebcc6002e409d7f8bd89cdf14,5,2,completed,120,31,,accepted,0.258333333333,0.188373963187,0.343285300582,,,,,,,,,,,,
+small-campaign,b335bedb2bf597fcaa84453258c27662de552a0ebcc6002e409d7f8bd89cdf14,7,2,completed,120,22,,accepted,0.183333333333,0.124303003560,0.262009135172,,,,,,,,,,,,

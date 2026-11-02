@@ -1,45 +1,45 @@
 {
-  "schema_version": 3,
-  "campaign_id": "small-campaign",
-  "root_seed": 1,
-  "configuration_sha256": "c7b55fc0eae72ae6fa1d6efd58987a0559307cab0810d44d21008cf584386fcb",
-  "purpose_tag": 3,
   "acceptance": {
-    "permanent_family_error": 0.025,
     "determinant_family_error": 0.025,
+    "permanent_family_error": 0.025,
     "wilson_z": 1.959963984540054
   },
-  "reference_data": {
-    "reproduction_targets": "experiments/permanent-statistics/data/scheinerman2024-q3-targets-v1.csv",
-    "literature_claim": "experiments/permanent-statistics/data/literature-claim.json"
-  },
+  "campaign_id": "small-campaign",
   "cells": [
     {
+      "backend": "batch_parallel",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
+      "determinant_companion": true,
+      "matrix_count": 120,
+      "n": 2,
       "q": 9,
-      "n": 2,
-      "matrix_count": 120,
-      "shard_size": 40,
-      "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
-      "determinant_companion": true
+      "shard_size": 40
     },
     {
+      "backend": "batch_parallel",
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
+      "determinant_companion": true,
+      "matrix_count": 120,
+      "n": 2,
       "q": 5,
-      "n": 2,
-      "matrix_count": 120,
-      "shard_size": 40,
-      "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
-      "determinant_companion": true
+      "shard_size": 40
     },
     {
-      "q": 7,
-      "n": 2,
-      "matrix_count": 120,
-      "shard_size": 40,
       "backend": "batch_parallel",
-      "backend_evidence": "dev/benchmarks/permanent_campaign/accelerator-launch-costs-v1.csv",
-      "determinant_companion": true
+      "backend_evidence": "experiments/permanent-statistics/src/campaign/evaluate.rs",
+      "determinant_companion": true,
+      "matrix_count": 120,
+      "n": 2,
+      "q": 7,
+      "shard_size": 40
     }
-  ]
+  ],
+  "configuration_sha256": "98c89d80ff74aacda689447792bd801bf010e618ada69f8367750c982148c1a6",
+  "purpose_tag": 3,
+  "reference_data": {
+    "literature_claim": "experiments/permanent-statistics/data/literature-claim.json",
+    "reproduction_targets": "experiments/permanent-statistics/data/scheinerman2024-q3-targets-v1.csv"
+  },
+  "root_seed": 1,
+  "schema_version": 3
 }
