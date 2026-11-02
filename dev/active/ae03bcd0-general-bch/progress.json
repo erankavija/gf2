@@ -848,7 +848,7 @@
     "R-56 (session 11): invoker DEC-01 on f759d724 \u2014 archived documents (paths with an archive segment) are immutable and outside REQ-01/doc-review scope.",
     "R-57 (session 11): fd9d5416 comparison basis \u2014 Tier A (88ca7d2f, 591a1c5e mapping, 7 cells) plus Tier B (4e732b56 survey pre-cutover gf2 W1 cells, option A); fallback option B (re-measure legacy encoder at 74871c6b) only if research-review rejects cross-harness comparison.",
     "R-58 (session 11): fd9d5416 \u2014 W2 cells reported, excluded from the non-regression verdict (legacy harness timed construction+materialization); W6 cells reported as reference-family throughput (no calibrated coding profile; calibration is follow-up work).",
-    "R-59 (session 11): invoker \u2014 all ROADMAP files, .github/copilot-instructions.md and the Copilot agent config are obsolete and deleted; JIT is the progress tracker."
+    "R-59 (session 11): invoker \u2014 all ROADMAP files, copilot-instructions.md and the Copilot agent config are obsolete and deleted; JIT is the progress tracker."
   ],
   "traps": [
     "codex-exec workers cannot commit in linked worktrees: .git/worktrees/<name>/ metadata is outside their sandbox. Lead commits on the branch for them, or pass -c sandbox_workspace_write.writable_roots including that path on dispatch.",

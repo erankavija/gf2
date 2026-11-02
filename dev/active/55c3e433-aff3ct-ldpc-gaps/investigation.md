@@ -2,7 +2,7 @@
 
 > **Diátaxis Type:** Reference
 
-Read-only planning investigation for `55c3e433`, by Codex `gpt-6-astra` at high effort, 2026-11-01. It extends `dev/active/1a379447-zen3-cpu-performance/1362381c/aff3ct-gap-investigation.md`. Prospective effects and durations are estimates.
+Read-only planning investigation for `55c3e433`, by Codex `gpt-6-astra` at high effort, 2026-11-01. It extends `aff3ct-gap-investigation.md`. Prospective effects and durations are estimates.
 
 The planning lead checked these claims against source: the numerical contract's operation order, `min_sum_check_row`, the QC prototype's cap-zero path, `LdpcCode::from_quasi_cyclic`, the ledger's one-confirmation-per-candidate rule, the tail-support limit and the FI-3 ledger. The compile status of the QC prototype and the adopted graph are recorded in [plan.md](plan.md).
 
@@ -13,6 +13,7 @@ Citation prefixes used below:
 - `P/` = `dev/active/1a379447-zen3-cpu-performance/`
 - `S/` = `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/`
 - `A/` = `.agents/ext/c077a88b/aff3ct/include/`
+> The harness these citations name left the tree: `S/` at revision `ca8980547`, `P/` at its parent revisions before `ec069295c`.
 
 These are source findings. Prospective performance effects remain estimates.
 

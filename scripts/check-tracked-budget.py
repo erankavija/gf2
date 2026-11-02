@@ -177,6 +177,22 @@ def check_range(revisions, cwd):
     return faults
 
 
+def policy_faults(config):
+    """The repository's own rules refuse each artifact kind and admit source."""
+    refused = (
+        "dev/active/x/oracle/gap.out", "experiments/a/run.stdout", "dev/x/receipt.yaml",
+        "dev/active/x/receipt.toml", "dev/active/x/outcome.txt", "dev/active/x/config.json",
+        "dev/active/x/execution.log", "experiments/a/results/table.md", "dev/research/x/table.csv",
+        "dev/studies/x/findings.md", "dev/archive/x/plan.md", "dev/bench_results/x.md",
+    )
+    admitted = (
+        "crates/a/src/lib.rs", "dev/active/x/handoff.md", "dev/active/x/progress.json",
+        "dev/active/x/tool/Cargo.toml", "crates/a/tests/compile_fail/b.stderr",
+    )
+    faults = [f"admits {path}" for path in refused if not path_faults([path], config)]
+    return faults + [f"refuses {path}" for path in admitted if path_faults([path], config)]
+
+
 def self_test():
     config = """
 max_file_bytes = 1000
@@ -267,7 +283,8 @@ def main():
     elif args.revisions:
         faults = check_range(args.revisions, cwd)
     else:
-        faults = tree_faults(tree_sizes("HEAD", cwd), read_config("HEAD", cwd))
+        config = read_config("HEAD", cwd)
+        faults = tree_faults(tree_sizes("HEAD", cwd), config) + policy_faults(config)
     for fault in faults:
         print(f"check-tracked-budget: {fault}", file=sys.stderr)
     if faults:

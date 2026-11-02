@@ -2,7 +2,7 @@
 
 A generator enumerates a family's sources into a closure document. `emit`
 writes it, or with `check` compares it with the committed document and writes
-nothing, so `check-family-producing-closures.py` can run every generator.
+nothing.
 """
 
 from __future__ import annotations

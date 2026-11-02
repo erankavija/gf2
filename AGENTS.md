@@ -24,7 +24,7 @@ execution with `./scripts/cargo-budget.sh --test`.
 - For focused work, keep the `ci-test` profile and select a package or test
   expression, for example
   `cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci`.
-- Build benchmarks and receipts under `--release`; `ci-test` drops LTO.
+- Build benchmarks under `--release`; `ci-test` drops LTO.
 - Check formatting with `cargo fmt --all -- --check` and lint with
   `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
 - Build API documentation with `cargo doc --workspace --all-features --no-deps`.

@@ -20,7 +20,7 @@
 #   with "package ID specification did not match any packages".
 #   The correct invocation is `--manifest-path`, as used by this script and by
 #   the permanent_gpu_crossover and gf2-kernels-hip precedents.
-#   See .jit/issues/5c0505b2 Amendment 2026-05-15 (build-invocation).
+#   See @/issue/5c0505b2 Amendment 2026-05-15 (build-invocation).
 #
 # Determinism:
 #   The harness uses a pinned seed (0x00c0ffee00000001) embedded in the binary.

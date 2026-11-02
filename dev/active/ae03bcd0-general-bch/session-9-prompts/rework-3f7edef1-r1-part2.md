@@ -5,7 +5,7 @@ You are dispatched to JIT issue 3f7edef1 (External oracle and standards-vector a
 on branch worktree-agent-3f7edef1.
 
 Hard rules (worktree-dispatch-protocol):
-- Run every shell command from your worktree root; use only paths relative to it in tool calls (reading the ETSI streams through the tests' own `test_vectors_path()` resolver is fine; the host symlink `~/dvb_test_vectors` resolves them).
+- Run every shell command from your worktree root; use only paths relative to it in tool calls (reading the ETSI streams through the tests' own `test_vectors_path()` resolver is fine; the host symlink `$DVB_TEST_VECTORS_PATH` resolves them).
 - Never `git checkout`, `git switch`, `git worktree add/remove`, `git stash`, `git reset --hard`. Commit on your branch only; do not push.
 - Never write `.jit/`, never `jit doc add`, never change issue state. The lead links documents after merge.
 - Do the work yourself in this session: no delegation to codex or sub-agents, whatever your global instructions say.

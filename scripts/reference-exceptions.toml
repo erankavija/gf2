@@ -18,6 +18,10 @@ path = "scripts/check-references.py"
 reason = "its self-test names unresolvable paths"
 
 [[exception]]
+path = "scripts/check-tracked-budget.py"
+reason = "its self-test names the paths it must refuse"
+
+[[exception]]
 path = "packages/*"
 reason = "installable rule packs name paths of the projects that adopt them"
 
@@ -31,16 +35,16 @@ reason = "cites files of the upstream Sionna repository"
 
 [[exception]]
 path = "dev/active/55c3e433-aff3ct-ldpc-gaps/*"
-reason = "names pilot files in the worktrees awaiting collection; remove when 55c3e433 lands them"
+reason = "cites the harness at the revision its documents state; remove when 55c3e433 restores or replaces it"
 
 [[exception]]
 path = ".agents/skills/*"
 reason = "skill text gives illustrative paths of the projects that use it"
 
 [[exception]]
-path = "dev/authoring-conventions.md"
-reason = "its link examples name illustrative paths"
-
-[[exception]]
 path = "scripts/tracked-budget.toml"
 reason = "names the locations it forbids"
+
+[[exception]]
+path = "dev/tools/tuning-campaign-support/tests/protocol_contracts.rs"
+reason = "creates the named path in a temporary repository"

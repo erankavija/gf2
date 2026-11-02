@@ -21,8 +21,8 @@
 1. `gap.out` under the `ae03bcd0` oracle attempt remains, and the eight survey family JSON files hold frozen campaign configuration under `dev/active`.
 2. The budget accepts `gap.out`, `run.stdout` and `receipt.yaml`.
 3. The tree limit is 12.93% above the tree; the criterion allows 10%, so it falls to at most 35,700,727 bytes.
-4. The reference check misses `~/dvb_test_vectors`, unresolved `.jit` paths, and relative Markdown references inside issue JSON.
-5. `dev/scripts/resume_identity_test.py` cannot initialize, because the profile launchers it locates are gone. CI does not run it.
+4. The reference check misses a home-relative stream path, unresolved `.jit` paths, and relative Markdown references inside issue JSON.
+5. `resume_identity_test.py` cannot initialize, because the profile launchers it locates are gone. CI does not run it.
 6. `dev/index.md` still describes the archive and studies directories.
 
 ## Traps — do not repeat these

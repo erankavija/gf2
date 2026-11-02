@@ -22,13 +22,15 @@ MAX_TEXT_BYTES = 4 * 1024 * 1024
 HOST_LOCAL = re.compile(
     r"(?<![\w.-])/home/(?!example\b)[a-z_][\w-]*/|/Users/[A-Za-z]\w*/|/run/user/\d|/tmp/claude-"
     r"|(?<![\w.-])/(?:mnt|root|data|scratch)/\w"
-    r"|(?:~|\$HOME|\$\{HOME\})/(?:\.local|\.cache|\.claude|\.codex|\.gap|Projects)\b"
+    # The toolchain's own directories exist wherever the toolchain does.
+    r"|(?<![\w.])(?:~|\$HOME|\$\{HOME\})/(?!\.cargo\b|\.rustup\b|\.elan\b)[\w.]"
 )
-ROOTS = r"(?:benchmarks|contrib|crates|dev|docs|experiments|packages|proofs|scripts)"
-REPOSITORY_PATH = re.compile(rf"(?<![\w./+-])/?({ROOTS}/[\w.+=-]+(?:/[\w.+=-]+)*)")
+ROOTS = r"(?:\.agents|\.cargo|\.config|\.github|\.jit|benchmarks|contrib|crates|dev|docs|experiments|packages|proofs|scripts)"
+REPOSITORY_PATH = re.compile(rf"(?<![\w./+~}}-])/?({ROOTS}/[\w.+=-]+(?:/[\w.+=-]+)*)")
 RELATIVE_PATH = re.compile(r"(?<![\w./+-])((?:\.\./)+[\w.+=-]+(?:/[\w.+=-]+)*)")
 INLINE_PATH = re.compile(r"`((?!10\.\d)[\w.+=-]+(?:/[\w.+=-]+)*/[\w+=-]+\.\w+)`")
 MARKDOWN_LINK = re.compile(r"\]\((?!https?:|mailto:|#)([^)#\s]+)")
+CARGO_PATH = re.compile(r"""\bpath\s*=\s*"([^"]+)\"""")
 RUST_INCLUDE = re.compile(r"""include(?:_str|_bytes)?!\(\s*"([^"]+)"\s*\)""")
 DOT_PATH = re.compile(r"(?<![\w./+-])\./([\w.+=-]+(?:/[\w.+=-]+)+)")
 TEMPLATE = re.compile(r"[<>{}*$]")
@@ -54,8 +56,15 @@ def resolvable_set(tracked: list[str]) -> set[str]:
     return known
 
 
-def faults_in(path: str, text: str, known: set[str]) -> list[str]:
+def faults_in(path: str, text: str, known: set[str], base: str | None = None) -> list[str]:
+    """`base` is the directory relative references resolve against.
+
+    Passing it marks `text` as Markdown prose whatever the file's suffix.
+    """
     faults = []
+    markdown = base is not None or path.endswith(".md")
+    prose = markdown or not path.endswith(CODE_SUFFIXES)
+    base = str(Path(path).parent) if base is None else base
     for number, line in enumerate(text.splitlines(), 1):
         if HOST_LOCAL.search(line):
             faults.append(f"{path}:{number}: host-local path")
@@ -68,27 +77,45 @@ def faults_in(path: str, text: str, known: set[str]) -> list[str]:
                 continue
             if not TEMPLATE.search(target) and target not in known:
                 faults.append(f"{path}:{number}: {target}")
+        if path.endswith("Cargo.toml"):
+            for dependency in CARGO_PATH.findall(line):
+                target = str(Path(*_normal(f"{base}/{dependency}")))
+                if target not in known:
+                    faults.append(f"{path}:{number}: {target}")
         if path.endswith(".rs"):
             for included in RUST_INCLUDE.findall(line):
-                target = str(Path(*_normal(f"{Path(path).parent}/{included}")))
+                target = str(Path(*_normal(f"{base}/{included}")))
                 if target not in known:
                     faults.append(f"{path}:{number}: {target}")
         for dotted in DOT_PATH.findall(line):
-            if dotted not in known and not path.endswith(CODE_SUFFIXES):
+            if dotted not in known and prose:
                 faults.append(f"{path}:{number}: {dotted}")
         for relative in RELATIVE_PATH.findall(line):
-            target = str(Path(*_normal(f"{Path(path).parent}/{relative}")))
-            if not path.endswith(CODE_SUFFIXES) and target not in known:
+            target = str(Path(*_normal(f"{base}/{relative}")))
+            if prose and target not in known:
                 faults.append(f"{path}:{number}: {target}")
-        if path.endswith(".md"):
+        if markdown:
             for inline in INLINE_PATH.findall(line):
                 if ".." not in inline and not _suffix_known(inline.removeprefix("./"), known):
                     faults.append(f"{path}:{number}: {inline}")
             for link in MARKDOWN_LINK.findall(line):
-                target = link[1:] if link.startswith("/") else f"{Path(path).parent}/{link}"
+                target = link[1:] if link.startswith("/") else f"{base}/{link}"
                 normal = str(Path(*_normal(target)))
                 if not TEMPLATE.search(link) and normal not in known:
                     faults.append(f"{path}:{number}: {link}")
+    return faults
+
+
+def issue_faults(path: str, text: str, known: set[str]) -> list[str]:
+    """An issue's references resolve from the repository root; its links must exist."""
+    issue = json.loads(text)
+    prose = "\n".join(filter(None, [issue.get("description"), issue.get("context") if isinstance(issue.get("context"), str) else None]))
+    faults = faults_in(path, prose, known, base="")
+    faults += [
+        f"{path}:0: {document['path']}"
+        for document in issue.get("documents", [])
+        if document["path"] not in known
+    ]
     return faults
 
 
@@ -134,6 +161,12 @@ def ignored(root: Path, target: str) -> bool:
     )
 
 
+def scan(path: str, text: str, known: set[str]) -> list[str]:
+    if fnmatch.fnmatch(path, ".jit/issues/*.json"):
+        return issue_faults(path, text, known)
+    return faults_in(path, text, known)
+
+
 def check(root: Path) -> list[str]:
     tracked = git(root, "ls-files", "-z").split("\0")[:-1]
     known = resolvable_set(tracked)
@@ -153,7 +186,7 @@ def check(root: Path) -> list[str]:
         except UnicodeDecodeError:
             continue
         faults += [
-            fault for fault in faults_in(path, text, known)
+            fault for fault in scan(path, text, known)
             if not excepted(root, fault, exceptions)
             and not ignored(root, fault.rsplit(": ", 1)[1])
         ]
@@ -171,6 +204,16 @@ def self_test() -> None:
         (root / "docs/relative.md").write_text("see ../missing/file.txt and ../docs/good.md\n")
         (root / "docs/inline.md").write_text("see `gone/file.json` and `docs/good.md`\n")
         (root / "docs/home.md").write_text("see $HOME/.local/share/x and crates/a/data/b and ../data/c\n")
+        (root / "docs/tilde.md").write_text("see ~/vectors/x; ~/.cargo/bin is fine\n")
+        (root / "docs/dot-root.md").write_text("see .jit/absent.toml\n")
+        (root / "pkg").mkdir()
+        (root / "pkg/Cargo.toml").write_text('a = { path = "../absent-crate" }\nb = { path = "../docs" }\n')
+        (root / ".jit/issues").mkdir(parents=True)
+        (root / ".jit/issues/a.json").write_text(json.dumps({
+            "state": "done",
+            "description": "first\ndev/gone/after-newline.md and [x](../issue-link.md) and `gone/issue.md`",
+            "documents": [{"path": "dev/gone-document.md"}],
+        }))
         (root / "docs/dot.md").write_text("run ./scripts/absent.sh\n")
         (root / "docs/rooted.md").write_text("[a](/docs/absent.md) [b](/docs/good.md)\n")
         (root / "src").mkdir()
@@ -180,7 +223,13 @@ def self_test() -> None:
         git(root, "add", ".")
         faults = check(root)
     assert any("bad-link.md" in f for f in faults), faults
-    assert sum("host-local" in f for f in faults) == 2, faults
+    assert sum("host-local" in f for f in faults) == 3, faults
+    assert sum("tilde.md" in f for f in faults) == 1, faults
+    assert any("dot-root.md" in f and ".jit/absent.toml" in f for f in faults), faults
+    assert any("pkg/Cargo.toml" in f and "absent-crate" in f for f in faults), faults
+    assert not any("pkg/Cargo.toml" in f and "docs" in f for f in faults), faults
+    for target in ("dev/gone/after-newline.md", "issue-link.md", "gone/issue.md", "dev/gone-document.md"):
+        assert any(f.startswith(".jit/issues/a.json") and target in f for f in faults), (target, faults)
     assert any("missing/file.txt" in f for f in faults), faults
     assert any("scripts/absent.sh" in f for f in faults), faults
     assert any("rooted.md" in f and "absent.md" in f for f in faults), faults

@@ -18,7 +18,7 @@ description = "Empirical perm-vs-det uniformity comparison over F_3/F_5/F_7 (JIT
 # this crate is not in the root workspace, that invocation fails with
 # "package ID specification did not match any packages".  The correct form is
 # the --manifest-path invocation above, matching the permanent_gpu_crossover
-# and gf2-kernels-hip precedents (see .jit/issues/5c0505b2 Amendment 2026-05-15).
+# and gf2-kernels-hip precedents (see @/issue/5c0505b2 Amendment 2026-05-15).
 
 [lib]
 name = "perm_uniformity"

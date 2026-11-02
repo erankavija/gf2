@@ -1,24 +1,22 @@
 # Limits for scripts/check-tracked-budget.py. The numbers may only fall.
 max_file_bytes = 1048576
 max_commit_added_bytes = 5242880
-max_tree_bytes = 36653288
+max_tree_bytes = 34040000
 
 forbidden_paths = [
   '(^|/)(inputs|source-inputs|test-logs)/',
   '\.(log|err|zst|data|tar\.gz|tgz|tar\.xz)$',
   '(^|/)perf\.data',
-  '(^|/)[^/]*receipts?[^/]*\.(json|md|txt|csv|tsv)$',
-  '(^|/)outcomes?[^/]*\.(json|md|csv|tsv)$',
-  '^dev/(active|research)/.*\.(csv|tsv|jsonl|txt)$',
+  '(^|/)[^/]*receipts?[^/]*\.(json|md|txt|csv|tsv|yaml|yml|toml)$',
+  '(^|/)outcomes?[^/]*\.(json|md|txt|csv|tsv|yaml|yml|toml)$',
+  '\.(out|stdout|stderr)(\.[^/]*)?$',
+  '(^|/)(stdout|stderr|output|timeline|scope)[^/]*\.txt$',
+  '^dev/(active|research)/(?!.*(\.(md|py|rs|sh|h|g|toml|lock)|/progress\.json|/[^/]*breakdown\.json)$)',
   '^dev/studies/',
   '^experiments/[^/]+/results/',
-  '(^|/)(execution|journal)[^/]*\.(log|jsonl)$',
+  '(^|/)(execution|journal)[^/]*\.(log|jsonl|txt|csv|tsv)$',
   '^dev/(bench_results|benchmarks|simulation_results|archive)/',
 ]
-[[exception]]
-path = "dev/active/1a379447-zen3-cpu-performance/bench-window/queue.tsv"
-reason = "the overnight window's job list"
-
 [[exception]]
 path = "dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/*"
 reason = "digitization of published figures, not a measurement of this code"
@@ -30,3 +28,7 @@ reason = "behavioral test fixtures"
 [[exception]]
 path = ".jit/events.jsonl"
 reason = "append-only tracker log; grows with the tracker"
+
+[[exception]]
+path = "crates/*/tests/compile_fail/*.stderr"
+reason = "expected compiler diagnostics of the trybuild tests"

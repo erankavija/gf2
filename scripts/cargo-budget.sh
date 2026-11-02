@@ -102,7 +102,7 @@ fi
 # Invoker policy (2026-09-13): the host is never locked during a working
 # session. The lock discipline below exists for the overnight benchmark window,
 # which exports GF2_BENCH_WINDOW=1 (see
-# dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh); outside
+# dev/scripts/bench-window/run-window.sh); outside
 # it every invocation runs unlocked and unbudgeted, exactly as under
 # CARGO_CI_NO_LOCK=1.
 if [ -z "${GF2_BENCH_WINDOW:-}" ]; then

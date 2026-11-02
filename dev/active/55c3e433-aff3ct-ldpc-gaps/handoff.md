@@ -13,7 +13,7 @@
 - Open escalations: None. The owner approved the window below.
 - Progress file: `progress.json` in this directory.
 
-**Timer armed:** `gf2-bench-window-20261102`, 2026-11-02 04:00 Helsinki, runs `dev/active/1a379447-zen3-cpu-performance/bench-window/run-window.sh`. At 21:15 the queue would run only two jobs, in order: `1d787ed3` (estimate 40 min), then `a72f2b3f` (estimate 25 min). State and logs are in `.agents/bench-window/`.
+**Timer armed:** `gf2-bench-window-20261102`, 2026-11-02 04:00 Helsinki, runs `dev/scripts/bench-window/run-window.sh`. At 21:15 the queue would run only two jobs, in order: `1d787ed3` (estimate 40 min), then `a72f2b3f` (estimate 25 min). State and logs are in `.agents/bench-window/`.
 
 **This session's watcher ends with the session.** Nothing reports the window's end, and the next lead must check it.
 
@@ -72,3 +72,7 @@ None blocking. The owner may still overrule the plan's comparator-family boundar
 - NR pilot, on `worktree-agent-1d787ed3`: `pilot/window.sh`, `pilot/nr-route-pilot.json`, `pilot/qc-bits/result.txt`
 - Variants, on `worktree-agent-a72f2b3f`: `check-variants/README.md`, `check-variants/assembly.md`, `check-variants/posterior-comparison.txt`
 - Expected receipts: `pilot/` and `check-variants/`
+
+## Harness removal
+
+Main no longer carries the batch-decoder survey harness or its `c077a88b` and `3be770d5` dependencies, under `@/issue/daef2dc3`. They remain in the two pilot worktrees and in history: the survey at revision `ca8980547`. Restoring any of it for this epic places code and configuration under `experiments/`; its pilot results stay uncommitted.

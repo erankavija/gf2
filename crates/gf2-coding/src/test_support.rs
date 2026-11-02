@@ -293,16 +293,12 @@ impl<C: ParityCheckMatrixAccess> ParityCheckMatrixAccess for RankDerivedMother<C
 }
 
 /// Root of the DVB-T2 reference-stream tree
-/// (`@/citation/DvbVerification2010`): `$DVB_TEST_VECTORS_PATH`, or
-/// `$HOME/dvb_test_vectors` when the variable is unset.
+/// (`@/citation/DvbVerification2010`): `$DVB_TEST_VECTORS_PATH`, empty when
+/// the variable is unset, which availability checks report as absent streams.
 pub fn dvb_vectors_path() -> PathBuf {
     std::env::var_os("DVB_TEST_VECTORS_PATH")
         .map(PathBuf::from)
-        .unwrap_or_else(|| {
-            std::env::home_dir()
-                .unwrap_or_default()
-                .join("dvb_test_vectors")
-        })
+        .unwrap_or_default()
 }
 
 /// Streams the first `max_blocks` non-empty blocks of a CSP test-point file

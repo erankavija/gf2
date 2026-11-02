@@ -27,11 +27,10 @@ required-features = ["hip", "fixture-oracle"]
 
 [features]
 default = ["fixture-oracle"]
-# The deterministic fixture corpus deliberately reuses the feasibility
-# harness's sampler. Keep that higher-level dependency off when this crate is
-# consumed only for its candidate registry, so the harness can derive its
-# schedule from the registry without a Cargo dependency cycle.
-fixture-oracle = ["dep:permanent-sampling-feas"]
+# The deterministic fixture corpus reuses the campaign's sampler. Keep that
+# higher-level dependency off when this crate is consumed only for its
+# candidate registry.
+fixture-oracle = ["dep:permanent-statistics"]
 # Enables HIP source compilation. This is deliberately opt-in so registry tests
 # remain runnable on hosts without a ROCm toolchain or device.
 hip = []
@@ -39,10 +38,9 @@ hip = []
 [dependencies]
 gf2-algebra = { path = "../../../crates/gf2-algebra", features = ["f5", "f7"] }
 gf2-core = { path = "../../../crates/gf2-core" }
-# The feasibility harness owns the campaign's canonical domain-separated
-# sampler and MeasurementPurpose vocabulary.  Fixtures use its Equivalence
-# domain rather than assigning another random stream tag in this prototype.
-permanent-sampling-feas = { path = "../permanent-sampling-feas", optional = true, default-features = false }
+# The campaign crate owns the canonical domain-separated sampler. Fixtures use
+# its Validation stream rather than assigning another tag in this prototype.
+permanent-statistics = { path = "../../../experiments/permanent-statistics", optional = true }
 
 [profile.release]
 opt-level = 3

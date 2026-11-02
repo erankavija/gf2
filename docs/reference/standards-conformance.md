@@ -36,7 +36,7 @@ The external vectors are the DVB-T2 Verification and Validation reference
 streams (`@/citation/DvbVerification2010`), distributed by the DVB Project at
 <https://dvb.org/specifications/verification-validation/dvb-t2-reference-streams/>.
 They are not redistributed in the repository. The tests read them from
-`$DVB_TEST_VECTORS_PATH`, defaulting to `~/dvb_test_vectors`, which holds
+`$DVB_TEST_VECTORS_PATH`, which holds
 one unpacked `<stream>_CSP` archive per stream. The consumed test points are
 TP04 (BBFRAME), TP05 (BCH codeword), TP06 (FECFRAME) and TP07a (bit-interleaved
 FECFRAME).

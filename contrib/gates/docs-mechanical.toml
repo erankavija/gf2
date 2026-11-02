@@ -1,4 +1,4 @@
-markdown = ["README.md", "crates/*/README.md", "docs/**/*.md", "AGENTS.md", "CLAUDE.md", "dev/active/**/*.md", "experiments/**/*.md", "dev/index.md", "dev/authoring-conventions.md"]
+markdown = ["README.md", "crates/*/README.md", "docs/**/*.md", "AGENTS.md", "CLAUDE.md", "dev/active/**/*.md", "experiments/**/*.md", "dev/index.md"]
 citations = ["README.md", "crates/*/README.md", "docs/**/*.md", "AGENTS.md", "CLAUDE.md"]
 rustdoc = ["crates/**/*.rs", "dev/tools/tuning-campaign-support/**/*.rs", "experiments/**/*.rs"]
 exclude = []

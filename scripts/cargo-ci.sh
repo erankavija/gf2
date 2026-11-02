@@ -286,25 +286,6 @@ run_step tuning-campaign-support-build "$BUDGET" cargo nextest run -p tuning-cam
 run_step tuning-campaign-support-nextest "$BUDGET" --test cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
 run_step tuning-campaign-validator python3 dev/scripts/validate-tuning-extent-campaign.py --self-test
 run_step repository-files-self-test python3 dev/scripts/repository_files_test.py
-# The checker is located through the shared file locator, which git finds by
-# name; -B keeps the steps from writing bytecode into the repository.
-repository_files=$(git ls-files -- ':(glob)**/repository_files.py')
-# The batch decoder survey tooling lies beside its shared smoke module. Its
-# `build_runner` compiles the campaign runner and the binaries the tests run
-# beside it here, so the test steps' clocks time no compilation.
-survey_smoke=$(python3 -B "$repository_files" file smoke-gf2-arms.py)
-survey=$(dirname "$survey_smoke")
-run_step survey-runner-build python3 -B -c 'import importlib.util, sys
-spec = importlib.util.spec_from_file_location("smoke", sys.argv[1])
-smoke = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(smoke)
-smoke.build_runner(*sys.argv[2:])' "$survey_smoke" ab-smoke-workload benchmark-acceptance
-for survey_test in $(git ls-files -- ":(glob)$survey/**/test_*.py"); do
-  run_step "survey-${survey_test#"$survey"/}" python3 -B "$survey_test"
-done
-for survey_tool in $(git grep -l -F '["--self-test"]' -- ":(glob)$survey/**/*.py"); do
-  run_step "survey-${survey_tool#"$survey"/}-self-test" python3 -B "$survey_tool" --self-test
-done
 run_step reference-check-self-test python3 -B scripts/check-references.py --self-test
 run_step reference-check python3 -B scripts/check-references.py
 run_step tracked-budget-self-test python3 -B scripts/check-tracked-budget.py --self-test

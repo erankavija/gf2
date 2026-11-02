@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Benchmark window for epic 1a379447 (jit:1a379447).
+# Benchmark window.
 #
 # Invoker policy (2026-09-13): the host is never locked during a working
 # session; every measurement runs in a benchmark window outside the session.

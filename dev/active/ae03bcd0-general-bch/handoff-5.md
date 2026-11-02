@@ -17,7 +17,7 @@
 
 - Reconstructed session 7's end from git log, gate records, and the eight still-listed idle teammates; committed its orphaned gate records (28fbb090). Three idle session-7 workers never answered status requests and were stopped; fresh Opus workers resumed from their worktrees.
 - `444c06bc`/`bd0edfa2`: cargo-ci failure root-caused to `t2s_mother_row_matches_the_oracle_generator` at 7.85 s isolated vs the 8 s kill (R-38); code-review R1 (F1 contract cells, F2 field-generic coverage, F3 receipt) and doc-review R1 (bench rustdoc narration) → rework 1 to the live `worker-bd0edfa2-2` with ruling R-37 (dated bd0edfa2 amendment of the survey contract § 9: DVB-T2 W2 rows at mother length for this consumer only). Its draft receipt (window 11:27–11:33Z) shows the canonical path 10×–3000× over the reference.
-- `3f7edef1`: merged fd8bc3d9 (lead resolved a `test_support.rs` import conflict, widened the module summary); code-review R1 FAIL (3), doc-review R1 FAIL (docs unlinked — lead's job post-rework), research-review R1 FAIL (5). Citekeys `SageMath2026`/`GapGroup2026`/`Joyner2026` registered lead-direct (aa56c3cb). Rework 1 → `worker-3f7edef1-2` (prompt files in the session scratchpad; contents summarized in progress.json). ETSI DVB-T2 streams exist on this host at `~/dvb_test_vectors/VV001-CR35_CSP` (TP04/TP05).
+- `3f7edef1`: merged fd8bc3d9 (lead resolved a `test_support.rs` import conflict, widened the module summary); code-review R1 FAIL (3), doc-review R1 FAIL (docs unlinked — lead's job post-rework), research-review R1 FAIL (5). Citekeys `SageMath2026`/`GapGroup2026`/`Joyner2026` registered lead-direct (aa56c3cb). Rework 1 → `worker-3f7edef1-2` (prompt files in the session scratchpad; contents summarized in progress.json). ETSI DVB-T2 streams exist on this host at `$DVB_TEST_VECTORS_PATH` (TP04/TP05).
 - `2b6968d3`: rework 1 (R-36 `clmul-fold` family) resumed by `worker-2b6968d3-3` from the session-7 draft (commit 7d545c26 + uncommitted gf2-coding edits).
 - `d7749931`: fresh Opus `worker-d7749931-2` with the O-3 spec and the R-27 anchor test.
 - `88ca7d2f`: Sonnet `worker-88ca7d2f` (runner committed de2202d0; measurement pending; told to take the CCX1 lock instead of waiting for load < 1).
@@ -54,4 +54,4 @@ None.
 - Rework/dispatch prompt files (session scratchpad, may not survive): `rework-bd0edfa2-444c06bc-r1.md`, `rework-2b6968d3-r1.md`, `dispatch-d7749931.md`, `rework-3f7edef1-r1.md`, `rework-3f7edef1-r1-research.md`, `dispatch-203ee826.md`, `dispatch-e1e0e7ff.md`, `dispatch-5ee83cd3.md`.
 - Survey contract and findings: 4e732b56/{workload-selection.md,findings.md}; baselines in KEPT worktree agent-4e732b56.
 - Proof sketch: proof-sketch.md (O-3 for d7749931).
-- ETSI DVB-T2 streams: ~/dvb_test_vectors/VV001-CR35_CSP (host-only, not committed).
+- ETSI DVB-T2 streams: $DVB_TEST_VECTORS_PATH (host-only, not committed).

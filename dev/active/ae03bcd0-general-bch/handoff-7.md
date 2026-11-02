@@ -72,4 +72,4 @@ None.
 - Session-10 prompts (committed): `session-10-prompts/` — 97410c80 brief, the four wave-12 briefs plus `wave12-common.md`, the b1bd75ca rework brief, the 3f7edef1 description as applied.
 - Session-10 scratchpad (may not survive): `temporary-file` — gate logs `gate-*.log`, `gates-chain-{a..e}.log`.
 - Proof sketch: proof-sketch.md (O-5 for 94597a51 is the remaining obligation).
-- ETSI DVB-T2 streams: ~/dvb_test_vectors → local-path (host symlink).
+- ETSI DVB-T2 streams: $DVB_TEST_VECTORS_PATH → local-path (host symlink).

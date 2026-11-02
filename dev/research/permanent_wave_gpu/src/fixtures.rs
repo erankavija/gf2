@@ -1,12 +1,13 @@
 //! Deterministic structural fixtures for the permanent wave study.
 //!
-//! The random fixtures deliberately reuse the feasibility harness's
-//! [`MeasurementPurpose::Equivalence`][permanent_sampling_feas::sampler::MeasurementPurpose::Equivalence]
-//! domain.  That vocabulary and its seed-address encoding are canonical for
-//! this study family: this crate must not mint another purpose tag merely
-//! because it consumes a more structured corpus.
+//! The random fixtures draw from the campaign sampler's
+//! [`StreamPurpose::Validation`] stream. That vocabulary and its seed-address
+//! encoding are canonical for this study family.
 
-use permanent_sampling_feas::sampler::{MatrixSampler, MeasurementPurpose};
+use gf2_core::gfp::Fp;
+use permanent_statistics::sampler::{
+    FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose,
+};
 
 /// Root seed used by the committed fixture-reproduction command.
 pub const DEFAULT_FIXTURE_SEED: u64 = 0x6D0F_F83C_CAFE_2026;
@@ -261,23 +262,30 @@ fn patterned_matrix(q: u64, n: usize) -> Vec<u8> {
         .collect()
 }
 
+fn uniform_matrix<const Q: u64>(address: MatrixAddress, n: usize) -> Vec<u8> {
+    let mut sampler = MatrixSampler::<Q>::new(address).expect("the field orders match");
+    let mut entries = vec![Fp::<Q>::new(0); n * n];
+    sampler.fill_next_matrix(&mut entries);
+    entries
+        .into_iter()
+        .map(|value| value.value() as u8)
+        .collect()
+}
+
 fn uniform_fixture(seed: u64, q: u64, n: usize, stream_index: u64) -> Fixture {
+    let address = |field| {
+        MatrixAddress::new(
+            seed,
+            field,
+            n,
+            StreamPurpose::Validation,
+            StreamIndex::new(stream_index).expect("corpus stream indices fit in 56 bits"),
+        )
+    };
     let matrix = match q {
-        3 => MatrixSampler::new(seed, q, n, MeasurementPurpose::Equivalence, stream_index)
-            .next_matrix::<3>(n)
-            .into_iter()
-            .map(|value| value.value() as u8)
-            .collect(),
-        5 => MatrixSampler::new(seed, q, n, MeasurementPurpose::Equivalence, stream_index)
-            .next_matrix::<5>(n)
-            .into_iter()
-            .map(|value| value.value() as u8)
-            .collect(),
-        7 => MatrixSampler::new(seed, q, n, MeasurementPurpose::Equivalence, stream_index)
-            .next_matrix::<7>(n)
-            .into_iter()
-            .map(|value| value.value() as u8)
-            .collect(),
+        3 => uniform_matrix::<3>(address(FieldOrder::F3), n),
+        5 => uniform_matrix::<5>(address(FieldOrder::F5), n),
+        7 => uniform_matrix::<7>(address(FieldOrder::F7), n),
         _ => unreachable!("FixtureCorpus validates the field set"),
     };
     Fixture::new(

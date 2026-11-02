@@ -63,4 +63,4 @@
 - Session-9 prompts (committed): `session-9-prompts/` in this directory — rework and dispatch briefs, including the three wave-11 dispatch prompts.
 - Session-9 scratchpad (may not survive): `temporary-file` — gate logs (`gates-wave10-{a,b,c,d}.log`, `gates-3f7edef1-r2.log`), `b4-attempt-50g/`, `88ca7d2f-run1/` (the discarded contended measurement).
 - Proof sketch: proof-sketch.md (O-5 for 94597a51 is the remaining obligation).
-- ETSI DVB-T2 streams: ~/dvb_test_vectors → local-path (host symlink).
+- ETSI DVB-T2 streams: $DVB_TEST_VECTORS_PATH → local-path (host symlink).
