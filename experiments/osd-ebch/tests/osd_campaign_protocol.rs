@@ -845,6 +845,87 @@ fn schema_1_committed_receipt_remains_readable_with_historical_semantics() {
 }
 
 #[test]
+fn resume_ignores_source_metadata_but_keeps_campaign_identity_checks() {
+    let dir = temp_dir("resume-source-metadata");
+    let checkpoint_path = dir.path().join("checkpoint.json");
+    let cell = cell("source-metadata", 2.0, 2);
+    let original = OsdCampaign::new(17, vec![cell.clone()], interval_spec(), 2, provenance())
+        .expect("valid original campaign");
+    let evaluate = || {
+        |_: OsdBlockContext<'_>| OsdBlockOutcome {
+            information_bits: 64,
+            information_bit_errors: 0,
+            work: work(1, 1, 1),
+        }
+    };
+
+    let interrupted = run_osd_campaign(&checkpoint_path, &original, 2, serial(), evaluate)
+        .expect("initial invocation checkpoints interrupted progress");
+    assert!(matches!(
+        interrupted.termination,
+        OsdCampaignTermination::Interrupted { .. }
+    ));
+
+    let mut updated_provenance = provenance();
+    updated_provenance.runtime.git_revision = "1111111111111111111111111111111111111111"
+        .parse::<GitRevision>()
+        .expect("valid later source revision");
+    updated_provenance.runtime.deps_source_revision = Some(
+        "2222222222222222222222222222222222222222"
+            .parse::<GitRevision>()
+            .expect("valid later dependency source revision"),
+    );
+    updated_provenance.runtime.deps_source_dirty = Some(true);
+    let updated = OsdCampaign::new(
+        17,
+        vec![cell.clone()],
+        interval_spec(),
+        2,
+        updated_provenance.clone(),
+    )
+    .expect("valid campaign with later source metadata");
+    let resumed = run_osd_campaign(&checkpoint_path, &updated, 2, serial(), evaluate)
+        .expect("source revision and dirty-state changes preserve resume");
+    assert_eq!(resumed.cell_results[1].samples, 4);
+    assert_eq!(resumed.invocation_history.len(), 2);
+
+    let mut changed_configuration_provenance = updated_provenance.clone();
+    changed_configuration_provenance.configuration =
+        artifact("dev/campaigns/osd-reference.json", 'd');
+    let changed_configuration = OsdCampaign::new(
+        17,
+        vec![cell.clone()],
+        interval_spec(),
+        2,
+        changed_configuration_provenance,
+    )
+    .expect("valid campaign with changed configuration identity");
+    assert!(run_osd_campaign(
+        &checkpoint_path,
+        &changed_configuration,
+        2,
+        serial(),
+        evaluate
+    )
+    .is_err());
+
+    let mut changed_executable_provenance = updated_provenance;
+    changed_executable_provenance.runtime.binary_sha256 =
+        Some(artifact("dev/executables/osd-campaign", 'd').sha256);
+    let changed_executable = OsdCampaign::new(
+        17,
+        vec![cell],
+        interval_spec(),
+        2,
+        changed_executable_provenance,
+    )
+    .expect("valid campaign with changed executable identity");
+    assert!(
+        run_osd_campaign(&checkpoint_path, &changed_executable, 2, serial(), evaluate).is_err()
+    );
+}
+
+#[test]
 fn resume_skips_completed_cells_and_continues_an_interrupted_cell() {
     let dir = temp_dir("resume");
     let checkpoint_path = dir.path().join("checkpoint.json");

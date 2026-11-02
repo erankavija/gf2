@@ -39,7 +39,8 @@ use rand_chacha08::ChaCha20Rng;
 use serde::{Deserialize, Deserializer, Serialize};
 
 pub use crate::provenance::ArtifactIdentity;
-use crate::provenance::Provenance;
+use crate::provenance::{Availability, Provenance};
+use experiments_common::{RngAlgorithm, Sha256Digest};
 use gf2_sim::checkpoint::{
     CheckpointLoadError, CheckpointPayload, CheckpointReader, CheckpointWriter,
 };
@@ -419,6 +420,62 @@ pub struct OsdCampaignProvenance {
     pub configuration: ArtifactIdentity,
     /// Committed identity of the producer's measurement behavior.
     pub measurement_behavior: ArtifactIdentity,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ResumeRuntimeIdentity {
+    binary_sha256: Option<Sha256Digest>,
+    compiler_version: String,
+    rng_algorithm: RngAlgorithm,
+    rng_version: String,
+    accelerator_runtime: Availability<String>,
+    cpu_model: String,
+    cpu_physical_cores: Option<u32>,
+    cpu_logical_threads: Option<u32>,
+    gpu_model: Availability<String>,
+}
+
+impl From<&Provenance> for ResumeRuntimeIdentity {
+    fn from(runtime: &Provenance) -> Self {
+        Self {
+            binary_sha256: runtime.binary_sha256.clone(),
+            compiler_version: runtime.compiler_version.clone(),
+            rng_algorithm: runtime.rng_algorithm,
+            rng_version: runtime.rng_version.clone(),
+            accelerator_runtime: runtime.accelerator_runtime.clone(),
+            cpu_model: runtime.cpu_model.clone(),
+            cpu_physical_cores: runtime.cpu_physical_cores,
+            cpu_logical_threads: runtime.cpu_logical_threads,
+            gpu_model: runtime.gpu_model.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ResumeProvenanceIdentity {
+    runtime: ResumeRuntimeIdentity,
+    configuration: ArtifactIdentity,
+    measurement_behavior: ArtifactIdentity,
+}
+
+impl OsdCampaignProvenance {
+    fn resume_identity(&self) -> ResumeProvenanceIdentity {
+        ResumeProvenanceIdentity {
+            runtime: ResumeRuntimeIdentity::from(&self.runtime),
+            configuration: self.configuration.clone(),
+            measurement_behavior: self.measurement_behavior.clone(),
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct CampaignCheckpointIdentity<'a> {
+    schema_version: u32,
+    campaign_seed: u64,
+    cells: &'a [OsdCell],
+    interval: &'a BinomialIntervalSpec,
+    target_block_errors: u64,
+    provenance: ResumeProvenanceIdentity,
 }
 
 /// Runtime provenance for one invocation that contributed cell attempts.
@@ -887,21 +944,26 @@ impl OsdCampaign {
 
     /// Computes the checkpoint configuration identity.
     ///
-    /// The hash covers the complete validated campaign, including the stopping
-    /// rule, interval, explicit cell grid, source/toolchain/hardware
-    /// observations, committed configuration, and measurement behavioral
-    /// identity. The invocation argument vector is excluded because
-    /// `--max-samples` is deliberately an invocation-local bound and may differ
-    /// across resumptions; every full vector is retained in invocation history.
+    /// The hash covers the campaign seed, stopping rule, interval, explicit
+    /// cell grid, executable digest, toolchain/RNG/hardware observations,
+    /// committed configuration, and measurement behavior. Source revisions,
+    /// source dirty state, and invocation arguments remain recorded as
+    /// provenance but do not determine whether a checkpoint can resume.
     ///
     /// # Errors
     ///
     /// Returns a serialization error if the in-memory campaign cannot be
     /// represented by the canonical JSON serializer.
     pub fn config_hash(&self) -> Result<String, serde_json::Error> {
-        let mut configuration = self.clone();
-        configuration.provenance.runtime.invocation.clear();
-        serde_json::to_vec(&configuration)
+        let identity = CampaignCheckpointIdentity {
+            schema_version: self.schema_version,
+            campaign_seed: self.campaign_seed,
+            cells: &self.cells,
+            interval: &self.interval,
+            target_block_errors: self.target_block_errors,
+            provenance: self.provenance.resume_identity(),
+        };
+        serde_json::to_vec(&identity)
             .map(|bytes| format!("blake3:{}", blake3::hash(&bytes).to_hex()))
     }
 }
@@ -1601,13 +1663,7 @@ fn same_resume_provenance(
     checkpoint: &OsdCampaignProvenance,
     live: &OsdCampaignProvenance,
 ) -> bool {
-    let mut checkpoint_runtime = checkpoint.runtime.clone();
-    let mut live_runtime = live.runtime.clone();
-    checkpoint_runtime.invocation.clear();
-    live_runtime.invocation.clear();
-    checkpoint_runtime == live_runtime
-        && checkpoint.configuration == live.configuration
-        && checkpoint.measurement_behavior == live.measurement_behavior
+    checkpoint.resume_identity() == live.resume_identity()
 }
 
 fn validate_invocation_history(checkpoint: &OsdCampaignCheckpoint) -> Result<(), OsdCampaignError> {
