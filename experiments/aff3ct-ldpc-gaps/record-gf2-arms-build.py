@@ -30,7 +30,9 @@ def record(name, out=None):
     subprocess.run(command, cwd=ROOT, env=environment, check=True)
     executable = target / "release" / arm["executable"]
     version = lambda tool: subprocess.check_output([tool, "+1.95", "--version"], text=True).strip()
-    record = {"build_root": str(ROOT), "rustc": version("rustc"), "cargo": version("cargo"),
+    revision = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
+    # A pointer for rebuilding; nothing compares it.
+    record = {"build_root": str(ROOT), "source_revision": revision, "rustc": version("rustc"), "cargo": version("cargo"),
               "rustflags": environment["RUSTFLAGS"],
               "release_profile": tomllib.loads(manifest.read_text())["profile"]["release"],
               "build_commands": [{"argv": command, "environment": {

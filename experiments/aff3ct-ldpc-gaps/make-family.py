@@ -13,9 +13,10 @@ from pathlib import Path
 import re
 import sys
 
-from campaign import HERE, ROOT, OUTPUT, INPUT_VAR, digest, input_root, output_path, read, write
+from campaign import (HERE, ROOT, OUTPUT, INPUT_VAR, SUPPORT, digest, input_root, output_path, read,
+                      repository_relative, tracked, write)
 
-spec = importlib.util.spec_from_file_location("campaign_plan", ROOT / "dev/scripts/campaign_plan.py")
+spec = importlib.util.spec_from_file_location("campaign_plan", tracked("campaign_plan.py"))
 projection = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(projection)
 
@@ -28,7 +29,7 @@ def merged(base, overlay):
 
 
 def shared():
-    directory = ROOT / "dev/tools/tuning-campaign-support/config"
+    directory = SUPPORT / "config"
     schema = read(directory / "addendum.schema.json")
     protocol = schema["properties"]["protocol"]["properties"]
     identity = {key: protocol[key]["const"] for key in ("id", "version")}
@@ -150,8 +151,7 @@ def generate(declaration, out=None, *, configuration=False, confirmation=False, 
     plan = {"schema": "zen3-benchmark-plan-v1", "campaign_id": campaign["id"],
             "issue": declaration["family"]["issue"], "label": label, "campaign_seed": campaign["seed"],
             "addendum": str(relative / "addendum.json") if configuration else str((out / "addendum.json").relative_to(ROOT)),
-            "producing_manifest": "dev/tools/tuning-campaign-support/config/producing-inputs.json",
-            "lock_path": "/tmp/gf2-ccx1.lock", "wrapper": projection.lock_wrapper() + " --full-host",
+            "lock_path": "/tmp/gf2-ccx1.lock", "wrapper": repository_relative(tracked("ccx1-bench-flock.sh")) + " --full-host",
             "timing_override": None, "arms": dict(sorted(arms.items())), "cells": planned,
             "max_cells_per_session": campaign["max_cells_per_session"]}
     if not confirmation:
