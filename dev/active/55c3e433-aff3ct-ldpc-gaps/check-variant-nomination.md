@@ -18,7 +18,7 @@ The patches are `experiments/aff3ct-ldpc-gaps/patches/cached-signed.patch` and `
 
 ## Pilot (REQ-03)
 
-Campaign `55c3e433-check-variants-pilot`, family `55c3e433-check-variants`, receipt SHA-256 `64dc191d5d728b430a9c624ee2afcf5139f81175b1232d543f0efc73c79366aa`, Rust 1.95, 8 sessions, verdict Accepted, no flagged window in any cell (0/120 each). Speedup is unchanged-production time divided by variant time; the bound is the lower end of the 0.975 interval. Cells `w1-b1` and `p12-b8` on both codes.
+Campaign `55c3e433-check-variants-pilot`, family `55c3e433-check-variants`, receipt SHA-256 `64dc191d5d728b430a9c624ee2afcf5139f81175b1232d543f0efc73c79366aa`, Rust 1.95, verdict Accepted, no flagged window in any cell. Speedup is unchanged-production time divided by variant time; the bound is the lower end of the 0.975 interval. Cells `w1-b1` and `p12-b8` on both codes.
 
 On the 5900X host, `cached-signed` is slower than unchanged production on every cell and `select-reduced` is faster on every cell. The receipt holds each cell's speedup and interval.
 

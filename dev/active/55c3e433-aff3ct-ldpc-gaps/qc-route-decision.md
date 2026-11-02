@@ -4,8 +4,8 @@ Decision record for @/issue/1d787ed3. The decision is exploratory: it starts del
 
 ## Evidence
 
-- Campaign `55c3e433-nr-route-pilot-pilot`, family `55c3e433-nr-route-pilot`, receipt SHA-256 `0a98003957cce247411aa123685f5b8385bf0d2604716f490d324563d9a0891e`, Rust 1.95, 10 sessions, verdict Accepted, no flagged window in any cell (0/120 each).
-- Iteration record SHA-256 `67a04756385312a8264f0eadb70769252cc102920f5be863f37d7deb1decd02d`: 176 rows, 132 direct (gf2 single-frame and QC) and 44 replay-derived (AFF3CT).
+- Campaign `55c3e433-nr-route-pilot-pilot`, family `55c3e433-nr-route-pilot`, receipt SHA-256 `0a98003957cce247411aa123685f5b8385bf0d2604716f490d324563d9a0891e`, Rust 1.95, verdict Accepted, no flagged window in any cell.
+- Iteration record SHA-256 `67a04756385312a8264f0eadb70769252cc102920f5be863f37d7deb1decd02d`: direct for gf2 single-frame and QC, replay-derived for AFF3CT.
 - The receipt, iteration record and check output are preserved outside the tracked tree.
 - Speedup is single-frame time divided by candidate time, from the receipt's paired cells. Intervals are 0.975 bootstrap intervals.
 
@@ -21,7 +21,7 @@ The indirect clause holds: AFF3CT time over QC time is 5.23 at `w1-b1` and 5.53 
 
 ## Iteration counts per frame
 
-The timed prefix is eight frames, identical on every worker, and the iteration record lists each arm's count per frame. gf2 and QC agree on every frame. AFF3CT's counts are replay-derived and differ by one iteration on three of the eight frames, with totals of 284 against 283, so the iteration difference does not account for the time ratio.
+The timed prefix is eight frames, identical on every worker, and the iteration record lists each arm's count per frame. gf2 and QC agree on every frame. AFF3CT's counts are replay-derived and differ by at most one iteration per frame, so the iteration difference does not account for the time ratio.
 
 ## Result that would have reversed the decision
 
