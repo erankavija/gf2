@@ -23,7 +23,7 @@
           "short_id": "2088e0ec",
           "title": "Land the comparison harness under experiments",
           "classification": "implementation",
-          "status": "in_progress"
+          "status": "blocked-awaiting-owner"
         }
       ]
     },
@@ -181,6 +181,17 @@
     {
       "topic": "rule values in records",
       "resolution": "owner: invariant amended"
+    },
+    {
+      "topic": "2088e0ec rework limit",
+      "status": "open",
+      "issue": "2088e0ec",
+      "finding": "code-review F1: experiments/aff3ct-ldpc-gaps/src/arm.rs keeps a parallel arm wire contract instead of tuning-campaign-support's types",
+      "need": "owner: authorize one more rework round, recommended",
+      "blocks": [
+        "3ee00fcf",
+        "5f401907"
+      ]
     }
   ],
   "surfaced_pitfalls": [],
