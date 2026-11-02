@@ -1,13 +1,14 @@
 //! Behavioral contracts of the experiment mechanics.
 
 use std::fs;
+use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process::Command;
 use std::thread;
 
 use experiments_common::{
-    publish_atomic, ArtifactPath, GitRevision, RepositoryRoot, RngAlgorithm, RngIdentity,
-    RunRecord, Sha256Digest,
+    create_durable, publish_atomic, ArtifactPath, DurabilityUnconfirmed, GitRevision,
+    RepositoryRoot, RngAlgorithm, RngIdentity, RunRecord, Sha256Digest,
 };
 
 fn git(directory: &Path, arguments: &[&str]) {
@@ -249,4 +250,77 @@ fn a_failed_publish_keeps_the_target_and_removes_its_temporary() {
             .kind(),
         std::io::ErrorKind::InvalidInput
     );
+}
+
+#[test]
+fn a_directory_sync_failure_after_the_rename_is_distinguished() {
+    let directory = tempfile::tempdir().unwrap();
+    let parent = directory.path().join("parent");
+    let target = parent.join("state");
+    publish_atomic(&target, b"first").unwrap();
+
+    // Searchable and writable but unreadable: the rename succeeds and opening
+    // the directory for its sync fails. Root ignores the mode.
+    fs::set_permissions(&parent, fs::Permissions::from_mode(0o300)).unwrap();
+    let readable_anyway = fs::read_dir(&parent).is_ok();
+    let error = publish_atomic(&target, b"second");
+    fs::set_permissions(&parent, fs::Permissions::from_mode(0o700)).unwrap();
+    if readable_anyway {
+        return;
+    }
+
+    let error = error.unwrap_err();
+    assert!(error
+        .get_ref()
+        .is_some_and(|source| source.is::<DurabilityUnconfirmed>()));
+    assert_eq!(fs::read(&target).unwrap(), b"second");
+    assert_eq!(entries(&parent), ["state"]);
+}
+
+#[test]
+fn a_failure_before_the_rename_is_not_a_durability_failure() {
+    let directory = tempfile::tempdir().unwrap();
+    let occupied = directory.path().join("occupied");
+    fs::create_dir(&occupied).unwrap();
+    let error = publish_atomic(&occupied, b"bytes").unwrap_err();
+    assert!(!error
+        .get_ref()
+        .is_some_and(|source| source.is::<DurabilityUnconfirmed>()));
+}
+
+#[test]
+fn durable_creation_tolerates_racing_creators_and_existing_chains() {
+    let directory = tempfile::tempdir().unwrap();
+    let nested = directory.path().join("a/b/c");
+    thread::scope(|scope| {
+        for _ in 0..8 {
+            scope.spawn(|| create_durable(&nested).unwrap());
+        }
+    });
+    assert!(nested.is_dir());
+    create_durable(&nested).unwrap();
+}
+
+#[test]
+fn durable_creation_refuses_a_file_in_the_chain() {
+    let directory = tempfile::tempdir().unwrap();
+    let file = directory.path().join("file");
+    fs::write(&file, b"bytes").unwrap();
+    assert!(create_durable(&file).is_err());
+    assert!(create_durable(&file.join("below")).is_err());
+}
+
+#[test]
+fn concurrent_publishes_create_a_shared_new_chain() {
+    let directory = tempfile::tempdir().unwrap();
+    let parent = directory.path().join("a/b");
+    thread::scope(|scope| {
+        for writer in 0..8 {
+            let parent = &parent;
+            scope.spawn(move || {
+                publish_atomic(&parent.join(format!("state{writer}")), b"bytes").unwrap();
+            });
+        }
+    });
+    assert_eq!(entries(&parent).len(), 8);
 }
