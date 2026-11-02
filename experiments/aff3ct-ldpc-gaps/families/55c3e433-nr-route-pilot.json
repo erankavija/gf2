@@ -1,0 +1,217 @@
+{
+  "family": {
+    "id": "55c3e433-nr-route-pilot",
+    "issue": "1d787ed3",
+    "purpose": "decoder-family",
+    "description": "Exploratory pilot of the NR BG1 Z=384 routes at the current tree. The baseline arm is gf2-coding's LdpcBatchDecoder forced onto the single-frame route (gf2-batch-single-frame-iterations). Each configuration pairs it with the QC-aware intra-frame prototype (qc-decoder, eight sequential single-frame decodes per worker at batch eight) and with AFF3CT's flooding f32 normalized min-sum decoder [Cassagne2019] (aff3ct-flooding-nms-f32-iterations, one clone per pinned worker, at the pin of c077a88b). The matched-algorithm settings all arms share are the recorded AList parity-check matrix, the recorded LLRs, f32 precision, the flooding schedule, normalized min-sum at factor 0.75, the iteration cap of 50 and syndrome stopping, with AFF3CT's syndrome check at depth one. The measured operation is the steady-state decode of 3be770d5: every worker is a thread pinned to one resolved CPU and owns one decoder built before timing, and a timed call makes every worker decode the cell's per-worker batch of the first recorded frames, including LLR conversion, dispatch and extraction of the information-window decisions. Cells are w1-b1, w1-b8, p6-b8, p12-b8 and l24-b8, resolved at run time from the single-core, physical-cores-6, physical-cores-12 and logical-cpus-24 sets. Each arm reports its per-frame iteration counts after timing, direct for gf2 and QC and replay-derived for AFF3CT. History: the FI-3 comparison of 1362381c-ldpc-aff3ct-integration (@/issue/1358d6ab) and the QC-aware study of f63a2464 (@/issue/f63a2464) ran on other ledgers and other trees; this family's ledger starts empty, so prior_trials is empty, and those results are descriptive history that no estimate here reuses. QC against AFF3CT is the ratio of the two pairings of a configuration and is indirect. The family decides nothing by itself; the decision record applies the QC go rule of the plan to its receipt."
+  },
+  "frozen_utc": "2026-11-01T15:20:26Z",
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "The family publishes the NR route pilot and adopts nothing, so it declares no worthwhile speedup.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "Within ten percent at matched settings, a receiver choosing between gf2's production route and AFF3CT [Cassagne2019] gains too little throughput to repay integrating and maintaining a second decoder dependency, so the family reads the arms as equivalent. Fixed before this pilot; the canonical freezer stops when pilot resolution reaches it and never widens it from results.",
+    "material_gap_threshold": 1.25,
+    "material_gap_rationale": "A steady-state gap of a quarter of a receiver's decode throughput at matched settings outweighs the integration and maintenance cost of a second decoder dependency, so it changes which decoder a receiver deploys and needs attribution; it lies outside the equivalence margin. Fixed before this pilot; the canonical freezer stops when pilot resolution reaches it and never widens it from results."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": null,
+    "maintenance_rationale": "The family selects nothing and adds no production code."
+  },
+  "family_wise": {
+    "ledger_path": "target/aff3ct-ldpc-gaps/55c3e433-nr-route-pilot/ledger.jsonl",
+    "prior_trials": []
+  },
+  "max_pilot_trials_per_cell": 1,
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "campaign": {
+    "id": "55c3e433-nr-route-pilot-pilot",
+    "seed": 3807008720,
+    "pilot_pairs": 12,
+    "max_cells_per_session": 1
+  },
+  "codes": {
+    "nr-bg1-z384": {
+      "code_identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+      "workload_identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+      "bundle_contract": {
+        "n": 26112,
+        "k": 8448,
+        "frames": 128,
+        "seed": 42
+      },
+      "decoder_code": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+        "n": 26112,
+        "k": 8448,
+        "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+      },
+      "decoder_input": {
+        "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle nr-bg1-z384-mother",
+        "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+        "frames": 128,
+        "seed": 42,
+        "codeword_source": "both",
+        "snr_db": -4.3
+      }
+    }
+  },
+  "cell": {
+    "objective": "comparator-gap",
+    "metric_kind": "whole-consumer",
+    "scaling": "sustained-throughput",
+    "core_arm": "single-core",
+    "workers": {
+      "declared": 1,
+      "nested_pools_allowed": false
+    },
+    "cache_state": "warm",
+    "conversion_costs_included": true,
+    "baseline": "gf2-batch-single-frame-iterations",
+    "candidate": "aff3ct-flooding-nms-f32",
+    "timed_batch": 8,
+    "size": {
+      "timed_fixture_banks": 1
+    },
+    "decoder": {
+      "arm_kind": "matched-algorithm",
+      "precision": "f32",
+      "schedule": "flooding",
+      "normalization": {
+        "kind": "normalized-min-sum",
+        "factor": 0.75
+      },
+      "iteration_cap": 50,
+      "stopping": {
+        "kind": "syndrome",
+        "crc": null
+      },
+      "batching": {
+        "batch_size": 1,
+        "batch_fill_included": true
+      },
+      "quality_tolerance": {
+        "fer_ratio_max": 1.0
+      },
+      "rate_matching": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "nr-bg1-z384-pilot-w1-b1-qc",
+      "code": "nr-bg1-z384",
+      "candidate": "qc-decoder",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1
+      },
+      "timed_batch": 1
+    },
+    {
+      "cell_id": "nr-bg1-z384-pilot-w1-b1-aff3ct",
+      "code": "nr-bg1-z384",
+      "candidate": "aff3ct-flooding-nms-f32-iterations",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1
+      },
+      "timed_batch": 1
+    },
+    {
+      "cell_id": "nr-bg1-z384-pilot-w1-b8-qc",
+      "code": "nr-bg1-z384",
+      "candidate": "qc-decoder",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1
+      },
+      "timed_batch": 8
+    },
+    {
+      "cell_id": "nr-bg1-z384-pilot-w1-b8-aff3ct",
+      "code": "nr-bg1-z384",
+      "candidate": "aff3ct-flooding-nms-f32-iterations",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1
+      },
+      "timed_batch": 8
+    },
+    {
+      "cell_id": "nr-bg1-z384-pilot-p6-b8-qc",
+      "code": "nr-bg1-z384",
+      "candidate": "qc-decoder",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 6
+      },
+      "timed_batch": 8
+    },
+    {
+      "cell_id": "nr-bg1-z384-pilot-p6-b8-aff3ct",
+      "code": "nr-bg1-z384",
+      "candidate": "aff3ct-flooding-nms-f32-iterations",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-6",
+      "workers": {
+        "declared": 6
+      },
+      "timed_batch": 8
+    },
+    {
+      "cell_id": "nr-bg1-z384-pilot-p12-b8-qc",
+      "code": "nr-bg1-z384",
+      "candidate": "qc-decoder",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12
+      },
+      "timed_batch": 8
+    },
+    {
+      "cell_id": "nr-bg1-z384-pilot-p12-b8-aff3ct",
+      "code": "nr-bg1-z384",
+      "candidate": "aff3ct-flooding-nms-f32-iterations",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12
+      },
+      "timed_batch": 8
+    },
+    {
+      "cell_id": "nr-bg1-z384-pilot-l24-b8-qc",
+      "code": "nr-bg1-z384",
+      "candidate": "qc-decoder",
+      "scaling": "multicore-throughput",
+      "core_arm": "logical-cpus-24",
+      "workers": {
+        "declared": 24
+      },
+      "timed_batch": 8
+    },
+    {
+      "cell_id": "nr-bg1-z384-pilot-l24-b8-aff3ct",
+      "code": "nr-bg1-z384",
+      "candidate": "aff3ct-flooding-nms-f32-iterations",
+      "scaling": "multicore-throughput",
+      "core_arm": "logical-cpus-24",
+      "workers": {
+        "declared": 24
+      },
+      "timed_batch": 8
+    }
+  ]
+}

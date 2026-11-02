@@ -54,7 +54,7 @@ The selection predicate is fixed now, before any measurement. It takes the QC ro
 
 ### `adoption-family` [plan-fixed] — confirmation against pre-change production
 
-The family is `55c3e433-integrated-adoption`, purpose `decoder-family`, on its own ledger. It asks whether the named change improves production, a question no earlier family asks. The stages are one twelve-pair pilot, a freeze by `c7113c5a/survey/freeze-confirmation.py` with resolution from that pilot, and one 24-pair confirmation of six cells, the most a first attempt's tail support admits.
+The family is `55c3e433-integrated-adoption`, purpose `decoder-family`, on its own ledger. It asks whether the named change improves production, a question no earlier family asks. The stages are one twelve-pair pilot, a freeze by `experiments/aff3ct-ldpc-gaps/freeze-confirmation.py` with resolution from that pilot, and one 24-pair confirmation of six cells, the most a first attempt's tail support admits.
 
 The baseline is a pinned pre-change arm, and the candidate carries the nominated variant, the delivered route, or both. Cells are both codes at `w1-b1`, `w1-b8` and `p12-b8`, with the tuned envelope on both sides.
 
@@ -66,7 +66,7 @@ Project-level final integration stays with the `1362381c` scorecard, so this fam
 
 With an adopted change, `55c3e433-adopted-vs-aff3ct` measures the gap of that named route against AFF3CT, using FI-3's six cells, tuned arm, ratio direction and margins, through a same-family pilot, freeze and one confirmation. With none, FI-3 and the preserved experiments are the results, and no campaign runs.
 
-The boundary is the named adopted route, which FI-3 could not measure. Earlier comparator questions on changed production have each held their own family, as `ldpc-matched-algorithm-alist-v1`, `ldpc-steady-matched-single-worker-v1`, `ldpc-batch-aff3ct-matched-v1` and FI-3 show. FI-3's ledger cannot serve it: its AFF3CT candidate holds that ledger's reservation, and a second attempt there has too little alpha to pass tail support on six cells. The declaration cites FI-3 as history. Tables reuse `dev/scripts/campaign_tables.py`.
+The boundary is the named adopted route, which FI-3 could not measure. Earlier comparator questions on changed production have each held their own family, as `ldpc-matched-algorithm-alist-v1`, `ldpc-steady-matched-single-worker-v1`, `ldpc-batch-aff3ct-matched-v1` and FI-3 show. FI-3's ledger cannot serve it: its AFF3CT candidate holds that ledger's reservation, and a second attempt there has too little alpha to pass tail support on six cells. The declaration cites FI-3 as history. Tables reuse `dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs`.
 
 ## Generated decomposition overview
 

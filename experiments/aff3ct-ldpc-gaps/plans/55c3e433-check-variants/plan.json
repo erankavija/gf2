@@ -1,0 +1,203 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "55c3e433-check-variants-pilot",
+  "issue": "a72f2b3f",
+  "label": "pilot",
+  "campaign_seed": 3674285378,
+  "addendum": "target/aff3ct-ldpc-gaps/55c3e433-check-variants/pilot/addendum.json",
+  "producing_manifest": "dev/tools/tuning-campaign-support/config/producing-inputs.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-batch-single-frame-unchanged-dvb-t2-r12": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder on the single-frame route, built from its own pinned tree",
+      "executable": "@build/gf2-batch-single-frame-unchanged/gf2-batch-single-frame-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-batch-single-frame-unchanged-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder on the single-frame route, built from its own pinned tree",
+      "executable": "@build/gf2-batch-single-frame-unchanged/gf2-batch-single-frame-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-check-cached-signed-dvb-t2-r12": {
+      "build": "native",
+      "description": "gf2-check-cached-signed built in its own pinned tree",
+      "executable": "@build/gf2-check-cached-signed/gf2-batch-single-frame-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-check-cached-signed-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-check-cached-signed built in its own pinned tree",
+      "executable": "@build/gf2-check-cached-signed/gf2-batch-single-frame-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-check-select-reduced-dvb-t2-r12": {
+      "build": "native",
+      "description": "gf2-check-select-reduced built in its own pinned tree",
+      "executable": "@build/gf2-check-select-reduced/gf2-batch-single-frame-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-check-select-reduced-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-check-select-reduced built in its own pinned tree",
+      "executable": "@build/gf2-check-select-reduced/gf2-batch-single-frame-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-cached-signed-w1-b1",
+      "baseline_arm": "gf2-batch-single-frame-unchanged-dvb-t2-r12",
+      "candidate_arm": "gf2-check-cached-signed-dvb-t2-r12",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "dvb-t2-r12-cached-signed-p12-b8",
+      "baseline_arm": "gf2-batch-single-frame-unchanged-dvb-t2-r12",
+      "candidate_arm": "gf2-check-cached-signed-dvb-t2-r12",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-cached-signed-w1-b1",
+      "baseline_arm": "gf2-batch-single-frame-unchanged-nr-bg1-z384",
+      "candidate_arm": "gf2-check-cached-signed-nr-bg1-z384",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-cached-signed-p12-b8",
+      "baseline_arm": "gf2-batch-single-frame-unchanged-nr-bg1-z384",
+      "candidate_arm": "gf2-check-cached-signed-nr-bg1-z384",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "dvb-t2-r12-select-reduced-w1-b1",
+      "baseline_arm": "gf2-batch-single-frame-unchanged-dvb-t2-r12",
+      "candidate_arm": "gf2-check-select-reduced-dvb-t2-r12",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "dvb-t2-r12-select-reduced-p12-b8",
+      "baseline_arm": "gf2-batch-single-frame-unchanged-dvb-t2-r12",
+      "candidate_arm": "gf2-check-select-reduced-dvb-t2-r12",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-select-reduced-w1-b1",
+      "baseline_arm": "gf2-batch-single-frame-unchanged-nr-bg1-z384",
+      "candidate_arm": "gf2-check-select-reduced-nr-bg1-z384",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-select-reduced-p12-b8",
+      "baseline_arm": "gf2-batch-single-frame-unchanged-nr-bg1-z384",
+      "candidate_arm": "gf2-check-select-reduced-nr-bg1-z384",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    }
+  ],
+  "max_cells_per_session": 1
+}

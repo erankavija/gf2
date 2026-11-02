@@ -1,0 +1,108 @@
+{
+  "codes": {
+    "dvb-t2-r12": {
+      "bundle": "dvb-t2-r12-waterfall",
+      "code": "dvb-t2-r12"
+    },
+    "nr-bg1-z384": {
+      "bundle": "nr-bg1-z384-mother",
+      "code": "nr-bg1-r12"
+    }
+  },
+  "arms": {
+    "gf2-batch-single-frame": {
+      "executable": "gf2-batch-single-frame-arm",
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder on the single-frame route",
+      "environment": {},
+      "package": "aff3ct-ldpc-gaps",
+      "quality": "gf2-nms-f32"
+    },
+    "gf2-batch-single-frame-iterations": {
+      "executable": "gf2-batch-single-frame-arm",
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder on the single-frame route, reporting per-frame iterations after timing",
+      "environment": {},
+      "package": "aff3ct-ldpc-gaps",
+      "quality": "gf2-nms-f32"
+    },
+    "gf2-batch-single-frame-unchanged": {
+      "executable": "gf2-batch-single-frame-arm",
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder on the single-frame route, built from its own pinned tree",
+      "environment": {},
+      "package": "aff3ct-ldpc-gaps",
+      "quality": "gf2-nms-f32"
+    },
+    "gf2-batch-tuned": {
+      "executable": "gf2-batch-tuned-arm",
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope",
+      "environment": {},
+      "package": "aff3ct-ldpc-gaps",
+      "quality": "gf2-nms-f32",
+      "tuning_profile": "crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json"
+    },
+    "aff3ct-flooding-nms-f32-iterations": {
+      "executable": "aff3ct-throughput-arm",
+      "build": "external",
+      "description": "AFF3CT [Cassagne2019] flooding normalized min-sum, one clone per pinned worker, reporting replay-derived per-frame iterations after timing",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      },
+      "package": "aff3ct-ldpc-arm",
+      "quality": "aff3ct-flooding-nms-f32"
+    },
+    "gf2-check-cached-signed": {
+      "executable": "gf2-batch-single-frame-arm",
+      "build": "native",
+      "description": "gf2-check-cached-signed built in its own pinned tree",
+      "environment": {},
+      "package": "aff3ct-ldpc-gaps",
+      "quality": "gf2-nms-f32"
+    },
+    "gf2-check-select-reduced": {
+      "executable": "gf2-batch-single-frame-arm",
+      "build": "native",
+      "description": "gf2-check-select-reduced built in its own pinned tree",
+      "environment": {},
+      "package": "aff3ct-ldpc-gaps",
+      "quality": "gf2-nms-f32"
+    },
+    "gf2-batch-pre-change": {
+      "executable": "gf2-batch-tuned-arm",
+      "build": "native",
+      "description": "gf2-batch-pre-change built in its own pinned tree",
+      "environment": {},
+      "package": "aff3ct-ldpc-gaps",
+      "quality": "gf2-nms-f32",
+      "tuning_profile": "crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json"
+    },
+    "aff3ct-flooding-nms-f32": {
+      "executable": "aff3ct-throughput-arm",
+      "build": "external",
+      "description": "AFF3CT [Cassagne2019] flooding normalized min-sum, one clone per pinned worker, reporting replay-derived per-frame iterations after timing",
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1"
+      },
+      "package": "aff3ct-ldpc-arm",
+      "quality": "aff3ct-flooding-nms-f32"
+    },
+    "qc-decoder": {
+      "executable": "qc-decoder-arm",
+      "build": "native",
+      "description": "QC prototype pilot configuration; execution is unsupported",
+      "environment": {},
+      "quality": "gf2-nms-f32",
+      "configuration_only": true
+    }
+  }
+}

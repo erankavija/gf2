@@ -1,0 +1,77 @@
+# AFF3CT LDPC comparisons
+
+The harness for @/issue/55c3e433 compares forced single-frame gf2, independently
+pinned pre-change gf2, tuned gf2 and AFF3CT 4.7.0 flooding f32 NMS. Workers
+reuse decoders and repeat the declared input prefix. gf2 reports direct
+per-frame iteration counts after timing. AFF3CT replays that prefix on its
+counting prototype, checks equality with the timed clone's decisions and
+reports replay-derived counts.
+
+Set `GF2_LDPC_INPUT_ROOT` to an absolute artifact directory containing `bundles/`
+and `quality/`. Bundles use the names in [arms.json](arms.json); each contains
+a manifest, an AList, codewords and little-endian f32 LLRs. Quality filenames
+combine the catalogue's quality name and code key. The harness verifies bundle
+digests and compares decoded frame errors with prepared quality. The frozen
+input identities are configuration in [families/](families/); input bytes and
+prepared quality stay outside the tracked tree.
+
+Build records, materialized plans, campaign stages, ledgers, summaries and
+freeze derivations live under the repository's `target/` directory. Python
+tools resolve the repository with Git from their installed location; the
+working directory does not affect the default output. Each build record names
+its own source worktree and executable digest. Build an unchanged arm in its
+unchanged worktree, each patched arm in its separately patched worktree, and
+the candidate in its candidate worktree. The two scalar patches are in
+[patches/](patches/). A build record never substitutes another executable when
+its pinned bytes are absent.
+
+From a worktree root, build and record an arm without measuring:
+
+```sh
+export CARGO_NET_OFFLINE=true
+python3 experiments/aff3ct-ldpc-gaps/record-gf2-arms-build.py --arm gf2-batch-tuned
+```
+
+The AFF3CT adapter is an independent nested workspace. Set `GF2_AFF3CT_ROOT`
+to the AFF3CT source/build directory containing its 4.7.0 static library, then
+use the same recorder with `--arm aff3ct-flooding-nms-f32-iterations`. Ordinary
+workspace builds and tests need no AFF3CT installation.
+
+Generate portable configuration from a declaration:
+
+```sh
+python3 experiments/aff3ct-ldpc-gaps/make-family.py \
+  experiments/aff3ct-ldpc-gaps/families/55c3e433-check-variants.json \
+  target/aff3ct-ldpc-gaps/configuration --configuration
+```
+
+[plans/](plans/) contains the generated pilot configurations. Their symbolic
+input-root and build references require materialization before dispatch. The NR
+pilot retains its QC-prototype comparisons as configuration; this harness
+refuses to dispatch that prototype. A scoped confirmation declaration names the
+tuned arm for a delivered QC route.
+
+For a runnable plan, omit `--configuration` and supply one `--build` argument
+per build record, including records in other worktrees. Generation checks the
+input manifest identities, prepared-quality files and executable pins. A
+confirmation declaration uses the same family format, adds a `confirmation`
+campaign, and retains the pilot's input contract and independently scoped
+ledger. The adoption and comparator contracts are in the epic's
+[plan](../../dev/active/55c3e433-aff3ct-ldpc-gaps/plan.md).
+
+`smoke-family.py PLAN BUILD_RECORD...` runs the materialized plan through the
+canonical staged untimed lifecycle. `run-family-campaign.py` uses the same
+arguments for bounded timed sessions and refuses them outside the benchmark
+window. Both resume interrupted work. The shared Rust runner owns checkpoint,
+execution-log and finalization validation; its acceptance command writes the
+summary tables.
+
+`freeze-confirmation.py --help` lists the freeze arguments. Supply the pilot
+addendum, accepted pilot directory, fixed freeze timestamp, output addendum and
+derivation path under `target/`. It derives resolution from every pilot cell,
+including cells omitted from confirmation, and refuses invalid margins.
+Generate the confirmation plan in that output directory with `--confirmation`;
+the generator preserves the frozen addendum.
+
+The CI wrapper includes the gf2 package through the experiments workspace glob
+and runs the Python suite through its `aff3ct-ldpc-gaps-python` step.
