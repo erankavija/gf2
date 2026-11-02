@@ -15,9 +15,8 @@
 // Determinism: every (op, n, density, field) cell uses the shared
 // `gf2_bench_splitmix64` / `gf2_bench_derive_seed` from `seed_helpers.h`.
 // The Bernoulli support sample walks SplitMix64 row-major, included if
-// `draw < density · 2^64`. This is byte-equivalent with the gf2-core
-// emitter at `crates/gf2-coding/examples/bench_sparse_csv_emitter.rs` and
-// the `gf2_core::bench_seed::fp_sparse_from_seed` helper.
+// `draw < density · 2^64`. This is byte-equivalent with the
+// `gf2_core::bench_seed::fp_sparse_from_seed` helper.
 
 #include <chrono>
 #include <cstdint>

@@ -917,6 +917,7 @@ dependencies = [
  "gf2-algebra",
  "gf2-core",
  "gf2-kernels-simd",
+ "permanent-benchmarks",
  "rayon",
  "tuning-campaign-support",
 ]
