@@ -177,7 +177,8 @@
       "issue": "3ee00fcf",
       "vendor": "claude",
       "model": "opus",
-      "reason": "contract-setting family declaration, pinned pre-change build, smoke and window job"
+      "reason": "contract-setting family declaration, pinned pre-change build, smoke and window job",
+      "outcome": "prepared: declaration ad4344d57, untimed smoke passed on six cells, window job ready"
     }
   ],
   "created_during_execution": [],
@@ -216,11 +217,15 @@
   "surfaced_pitfalls": [
     {
       "subject": "qc-route-candidate.json assembly.tool names tuned.rs though a one-off script assembled it",
-      "status": "passed code-review; correct if the confirmation's build record reads it"
+      "status": "not read by the build record or confirmation; left unchanged"
     },
     {
-      "subject": "gf2-batch-qc-candidate arm has unit tests only, no end-to-end smoke",
-      "status": "required before arming the window"
+      "subject": "prepared quality files come from tracked history 545a3c814, byte-identical to the pilots' inputs",
+      "status": "state in the closing record"
+    },
+    {
+      "subject": "max_added_source_lines: 898 production lines vs 1882 including tests",
+      "status": "state which count binds in the adoption record"
     }
   ],
   "rework_counts": {
@@ -232,6 +237,7 @@
   "started_at": "2026-11-01T15:20:00+02:00",
   "window": {
     "approved_by": "owner",
-    "scope": "one window for 55c3e433-integrated-adoption pilot and confirmation, first night after wave 4 passes review, only this epic's job queued"
+    "scope": "one window for 55c3e433-integrated-adoption pilot and confirmation, first night after wave 4 passes review, only this epic's job queued",
+    "armed": "timer gf2-bench-window-20261104, 2026-11-04 04:00 Europe/Helsinki; queue job 3ee00fcf only (67194d70 line has no worktree and is skipped)"
   }
 }
