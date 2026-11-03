@@ -1,0 +1,455 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "55c3e433-integrated-adoption",
+    "issue": "3ee00fcf",
+    "purpose": "decoder-family",
+    "description": "Confirmation of the delivered QC route against pinned pre-change production, under the adoption-family contract of dev/active/55c3e433-aff3ct-ldpc-gaps/plan.md. The baseline arm gf2-batch-pre-change is the tuned production arm built from the tree immediately before the QC decoder core merged, under the committed coding envelope. The candidate arm gf2-batch-qc-candidate is the tuned production arm built from the tree carrying the QC decoder and its route, under the candidate envelope experiments/aff3ct-ldpc-gaps/tuning-profiles/qc-route-candidate.json, with NR BG1 Z=384 structure attached after an exact parity-check comparison outside timing. The candidate carries no check variant. Both arms decode by default construction under their installed envelope. The QC route's selection predicate of qc-go-rule takes NR BG1 Z=384 at one worker with one frame and at twelve workers with eight frames per worker, the cells with objective improvement; every other cell keeps its existing route and has objective non-regression. The AList graphs, recorded LLRs, f32 flooding NMS factor 0.75, cap 50, syndrome stopping, timed prefix and steady-state decode boundary are those of 55c3e433-nr-route-pilot and 55c3e433-check-variants. Each worker owns its decoder before timing; conversion, dispatch and information-window extraction are included. Stages are one twelve-pair pilot, a freeze by experiments/aff3ct-ldpc-gaps/freeze-confirmation.py with resolution from that pilot, and one 24-pair confirmation of the six cells. This family's ledger starts empty; the earlier families of @/issue/55c3e433 asked other questions on their own ledgers, and no estimate here reuses them. Project-level final integration stays with the 1362381c scorecard, so the family declares no holdout."
+  },
+  "frozen": {
+    "frozen_utc": "2026-11-03T20:49:03Z"
+  },
+  "effect": {
+    "worthwhile_speedup": 1.25,
+    "rationale": "FI-3's material-gap threshold, which reflects the QC delivery's size of an estimated 600 to 1,200 lines; a smaller repeatable gain on the targeted cells does not repay that maintenance (qc-go-rule).",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "A cell the selection predicate keeps on its existing route may lose at most ten percent before the route counts as a regression there; the margin is the epic's equivalence margin, fixed before this pilot, and the canonical freezer stops when pilot resolution reaches it and never widens it from results.",
+    "material_gap_threshold": null,
+    "material_gap_rationale": "The adoption family pairs two gf2 builds; it has no comparator-gap cells."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 1,
+    "max_added_source_lines": 1500,
+    "maintenance_rationale": "The QC route adds one unsafe SIMD kernel and at most the investigation's upper estimate of 1,200 source lines plus a quarter; it carries no check variant."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "ledger_path": "target/aff3ct-ldpc-gaps/55c3e433-integrated-adoption/ledger.jsonl",
+    "prior_trials": []
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-w1-b1",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 1,
+          "workers": 1,
+          "timed_frames": 1,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle dvb-t2-r12-waterfall",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        }
+      }
+    },
+    {
+      "cell_id": "dvb-t2-r12-w1-b8",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 1,
+          "timed_frames": 8,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle dvb-t2-r12-waterfall",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        }
+      }
+    },
+    {
+      "cell_id": "dvb-t2-r12-p12-b8",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 12,
+          "timed_frames": 96,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle dvb-t2-r12-waterfall",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        }
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-w1-b1",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 1,
+          "workers": 1,
+          "timed_frames": 1,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "improvement",
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle nr-bg1-z384-mother",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        }
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-w1-b8",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 1,
+          "timed_frames": 8,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "non-regression",
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle nr-bg1-z384-mother",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        }
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-p12-b8",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 12,
+          "timed_frames": 96,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "improvement",
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "native"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle nr-bg1-z384-mother",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        }
+      }
+    }
+  ]
+}
