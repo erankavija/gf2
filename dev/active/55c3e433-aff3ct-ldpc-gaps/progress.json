@@ -1,7 +1,7 @@
 {
   "epic_id": "55c3e433-843f-4079-adc5-4530ff3e8946",
   "epic_short_id": "55c3e433",
-  "current_wave": 3,
+  "current_wave": 4,
   "waves": [
     {
       "wave_number": 1,
@@ -54,7 +54,7 @@
           "short_id": "4555dfb3",
           "title": "Deliver the QC decoder core with its kernel and scalar fallback",
           "classification": "implementation",
-          "status": "in_progress"
+          "status": "done"
         }
       ]
     },
@@ -66,7 +66,7 @@
           "short_id": "0cc6c195",
           "title": "Route the QC decoder through canonical tuning and dispatch",
           "classification": "implementation",
-          "status": "pending"
+          "status": "in_progress"
         }
       ]
     },
@@ -158,6 +158,12 @@
       "vendor": "claude",
       "model": "sonnet",
       "reason": "one remaining path-resolution finding"
+    },
+    {
+      "issue": "0cc6c195",
+      "vendor": "claude",
+      "model": "opus",
+      "reason": "contract-setting route predicate across exhaustive consumers"
     }
   ],
   "created_during_execution": [],
