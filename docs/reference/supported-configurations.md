@@ -77,11 +77,14 @@ of the coding tuning section
 - The min-sum family (`MinSum`, `NormalizedMinSum`, `OffsetMinSum`) takes the
   lane route when the wave, code and configured decode concurrency satisfy
   `lane_min_frames`, `lane_max_edges` and `lane_max_workers`.
+- `NormalizedMinSum` takes the QC route instead when a `qc_route_cases` entry
+  names the 5G NR structure the code retains, the configured concurrency and
+  the frames of a call of at most one wave.
 - `SumProduct` takes the single-frame route.
 - The lane route runs AVX2 kernels when `gf2-coding` is built with `simd` and
   the host reports AVX2. On a host without AVX2, or in a build without `simd`,
   it runs the portable kernels, which write the same bits; the selectors
-  decide the route on every host.
+  decide the route on every host. The QC route selects its backend the same way.
 
 Each frame's word and outcome equal the single-frame decoder's under the
 [numerical contract](ldpc-decoder-numerical-contract.md).

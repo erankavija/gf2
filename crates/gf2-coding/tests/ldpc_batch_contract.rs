@@ -9,7 +9,7 @@
 
 use gf2_coding::bch::CodeRate;
 use gf2_coding::channel::AwgnChannel;
-use gf2_coding::ldpc::nr_5g::FILLER_LLR;
+use gf2_coding::ldpc::nr_5g::{all_lifting_sizes, FILLER_LLR};
 use gf2_coding::ldpc::{
     BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, EdgeLayout, LaneBackend,
     LdpcBatchDecoder, LdpcCode, LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc,
@@ -18,8 +18,9 @@ use gf2_coding::llr::Llr;
 use gf2_coding::test_support::ldpc_lane_backends;
 use gf2_coding::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
 use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome};
-use gf2_coding::tuning::DecodeSelectors;
+use gf2_coding::tuning::{DecodeSelectors, QcRouteCase};
 use gf2_core::BitVec;
+use gf2_kernels_simd::ldpc_lanes::LANES;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use rand::{Rng, SeedableRng};
@@ -54,6 +55,9 @@ enum Route {
     LaneFromFourFrames(LaneBackend),
     /// Every wave decodes on the single-frame decoder.
     SingleFrame,
+    /// Under normalized min-sum at one worker, a batch of at most one wave of
+    /// a 5G NR code decodes on the QC decoder of the backend.
+    Qc(LaneBackend),
 }
 
 impl Route {
@@ -61,14 +65,32 @@ impl Route {
         let lane_min_frames = match self {
             Route::Lane(_) => 1,
             Route::LaneFromFourFrames(_) => 4,
-            Route::SingleFrame => usize::MAX,
+            Route::SingleFrame | Route::Qc(_) => usize::MAX,
         };
-        DecodeSelectors::try_new(lane_min_frames, usize::MAX, 1, 1).unwrap()
+        let selectors = DecodeSelectors::try_new(lane_min_frames, usize::MAX, 1, 1).unwrap();
+        if !matches!(self, Route::Qc(_)) {
+            return selectors;
+        }
+        let mut cases = Vec::new();
+        for base_graph in [1, 2] {
+            for lifting_size in all_lifting_sizes() {
+                for frames in 1..=LANES {
+                    cases.push(
+                        QcRouteCase::try_new(base_graph, lifting_size.into(), 1, frames).unwrap(),
+                    );
+                }
+            }
+        }
+        selectors.with_qc_route_cases(cases)
     }
 
-    /// The route of a wave of `frames` frames under a min-sum rule.
-    fn of_wave(self, frames: usize) -> BatchRoute {
+    /// The route of a wave of `frames` frames under the min-sum rule `algorithm`.
+    fn of_wave(self, frames: usize, algorithm: DecoderAlgorithm) -> BatchRoute {
         match self {
+            Route::Qc(backend) if matches!(algorithm, DecoderAlgorithm::NormalizedMinSum(_)) => {
+                BatchRoute::Qc(backend)
+            }
+            Route::Qc(_) => BatchRoute::SingleFrame,
             Route::Lane(backend) => BatchRoute::Lane(backend),
             Route::LaneFromFourFrames(backend) if frames >= 4 => BatchRoute::Lane(backend),
             Route::LaneFromFourFrames(_) | Route::SingleFrame => BatchRoute::SingleFrame,
@@ -89,7 +111,7 @@ impl Route {
             self.selectors(),
         );
         match self {
-            Route::Lane(backend) | Route::LaneFromFourFrames(backend) => {
+            Route::Lane(backend) | Route::LaneFromFourFrames(backend) | Route::Qc(backend) => {
                 assert!(ldpc_lane_backends().contains(&backend));
                 match backend {
                     LaneBackend::Portable => decoder.with_portable_lanes(),
@@ -215,7 +237,11 @@ fn assert_route_equals_single_frame(route: Route, case: &Case) {
             let mut decoder = route.decoder(code, config, *cap);
             let lanes = decoder.batch_granularity();
             for size in 1..=lanes {
-                assert_eq!(decoder.batch_route(size), route.of_wave(size), "{label}");
+                assert_eq!(
+                    decoder.batch_route(size),
+                    route.of_wave(size, algorithm),
+                    "{label}"
+                );
             }
 
             if set.wave_mix && early_termination {
@@ -231,6 +257,13 @@ fn assert_route_equals_single_frame(route: Route, case: &Case) {
             for size in BATCH_SIZES {
                 let got = batch_results(&mut decoder, &views[..size]);
                 assert_eq!(got.len(), size);
+                if (1..=lanes).contains(&size) {
+                    assert_eq!(
+                        decoder.last_wave_route(),
+                        Some(route.of_wave(size, algorithm)),
+                        "{size} frames, {label}"
+                    );
+                }
                 for (f, (got, expected)) in got.iter().zip(&expected).enumerate() {
                     assert_frame_eq(got, expected, format_args!("frame {f} of {size}, {label}"));
                 }
@@ -614,6 +647,45 @@ route_suite!(
     Route::LaneFromFourFrames(LaneBackend::Portable)
 );
 route_suite!(single_frame_route, Route::SingleFrame);
+
+/// The QC route over 5G NR codes, the only codes its selectors can name.
+macro_rules! qc_route_suite {
+    ($route:ident, $value:expr) => {
+        mod $route {
+            use super::*;
+
+            #[test]
+            fn nr_base_graph_1_lifting_size_4() {
+                assert_route_equals_single_frame($value, &nr_mother(1, 4, 1.0, true));
+            }
+
+            #[test]
+            fn nr_base_graph_1_lifting_size_24() {
+                assert_route_equals_single_frame($value, &nr_mother(1, 24, 1.0, false));
+            }
+
+            #[test]
+            fn nr_base_graph_2_lifting_size_6() {
+                assert_route_equals_single_frame($value, &nr_mother(2, 6, 1.2, true));
+            }
+
+            #[test]
+            fn nr_base_graph_1_rate_matched_punctured_and_filler() {
+                assert_route_equals_single_frame($value, &nr_rate_matched(1, 600, 200, 0.9));
+            }
+
+            #[test]
+            fn shared_batch_contract_on_nr_base_graph_2() {
+                assert_route_satisfies_the_batch_contract($value, &nr_mother(2, 6, 1.2, false));
+            }
+        }
+    };
+}
+
+#[cfg(feature = "simd")]
+qc_route_suite!(avx2_qc_route, Route::Qc(LaneBackend::Avx2));
+// The forced fallback of a host without the kernel.
+qc_route_suite!(portable_qc_route, Route::Qc(LaneBackend::Portable));
 
 /// A decoder of the (96, 48) code of [`regular_edges`] under selectors that
 /// open the lane route for every wave, on the backend of the build and host.

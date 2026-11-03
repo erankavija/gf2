@@ -49,7 +49,12 @@ python3 experiments/aff3ct-ldpc-gaps/make-family.py \
 input-root and build references require materialization before dispatch. The NR
 pilot retains its QC-prototype comparisons as configuration; this harness
 refuses to dispatch that prototype. A scoped confirmation declaration names the
-tuned arm for a delivered QC route.
+tuned arm for a delivered QC route. The candidate arm, `gf2-batch-qc-candidate`,
+embeds [tuning-profiles/qc-route-candidate.json](tuning-profiles/qc-route-candidate.json),
+which holds the committed lane selectors and the selection of `qc-go-rule`. It
+attaches NR BG1 Z=384 structure after an exact parity-check comparison outside
+timing, refuses a cell where a worker decodes off the selected route, and states
+each worker's executed route in `selected_path` and its diagnostics.
 
 For a runnable plan, omit `--configuration` and supply one `--build` argument
 per build record, including records in other worktrees. Generation checks the

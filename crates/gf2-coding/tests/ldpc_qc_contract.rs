@@ -43,6 +43,42 @@ fn retains_the_qc_relation_across_clones_and_reports_absence() {
     .is_none());
 }
 
+#[test]
+fn attaching_structure_requires_the_exact_parity_check_matrix() {
+    let qc = small_qc(9);
+    let mut edges = qc.to_edges();
+    edges.reverse();
+
+    let mut matching = LdpcCode::from_edges(qc.expanded_rows(), qc.expanded_cols(), &edges);
+    assert!(matching.quasi_cyclic().is_none());
+    assert!(matching.attach_quasi_cyclic(&qc));
+    assert_eq!(matching.clone().quasi_cyclic(), Some(&qc));
+
+    let mut moved = LdpcCode::from_edges(
+        qc.expanded_rows(),
+        qc.expanded_cols(),
+        &small_qc_with_shift(9, 2).to_edges(),
+    );
+    assert!(!moved.attach_quasi_cyclic(&qc));
+    assert!(moved.quasi_cyclic().is_none());
+
+    let mut other_size = LdpcCode::from_edges(qc.expanded_rows(), qc.expanded_cols() + 1, &edges);
+    assert!(!other_size.attach_quasi_cyclic(&qc));
+    assert!(other_size.quasi_cyclic().is_none());
+}
+
+fn small_qc_with_shift(z: usize, shift: i32) -> QuasiCyclicLdpc {
+    QuasiCyclicLdpc::new(
+        vec![
+            vec![0, shift, 0, -1],
+            vec![1, 0, -1, 0],
+            vec![-1, -1, -1, -1],
+            vec![-1, -1, 0, -1],
+        ],
+        z,
+    )
+}
+
 fn assert_contract(code: &LdpcCode) {
     let mut rng = StdRng::seed_from_u64(91);
     let special = [

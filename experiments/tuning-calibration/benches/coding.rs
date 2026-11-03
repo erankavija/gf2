@@ -15,7 +15,7 @@ use std::sync::{Mutex, OnceLock};
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::ldpc::{
     decide_batch_route, BatchRoute, DecodedWord, DecoderConfig, LaneBackend, LaneCapability,
-    LdpcBatchDecoder, LdpcCode, LdpcDecoder, QuasiCyclicLdpc,
+    LdpcBatchDecoder, LdpcCode, LdpcDecoder, QcCapability, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
 use gf2_coding::pooled::PooledBatchDecoder;
@@ -284,6 +284,7 @@ impl Field {
             &selectors,
             decoder_config().algorithm(),
             LaneCapability::Present(LaneBackend::detected()),
+            QcCapability::Absent,
             stratum.frames.min(LANES),
             codes()?[stratum.code].edges,
             self.workers(),
@@ -346,6 +347,8 @@ const fn route_name(route: BatchRoute) -> &'static str {
         BatchRoute::SingleFrame => "single-frame",
         BatchRoute::Lane(LaneBackend::Portable) => "lane-portable",
         BatchRoute::Lane(LaneBackend::Avx2) => "lane-avx2",
+        BatchRoute::Qc(LaneBackend::Portable) => "qc-portable",
+        BatchRoute::Qc(LaneBackend::Avx2) => "qc-avx2",
     }
 }
 

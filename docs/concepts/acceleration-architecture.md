@@ -65,7 +65,8 @@ The `CodingTuning` section carries an `encode` family for BCH batch encoding
 and a `decode` family for LDPC batch decoding, whose canonical selectors
 are defined by [`DecodeSelectors`](../../crates/gf2-coding/src/tuning.rs). `LdpcBatchDecoder` gives each wave of a batch a route through
 `gf2_coding::ldpc::decide_batch_route`: the lane kernels of
-`gf2_kernels_simd::ldpc_lanes`, or frame by frame on `LdpcDecoder`. The
+`gf2_kernels_simd::ldpc_lanes`, frame by frame on `QcDecoder` over the kernels
+of `gf2_kernels_simd::ldpc_qc`, or frame by frame on `LdpcDecoder`. The
 conditions are in
 [Route LDPC batch decoding](../how-to/select-acceleration.md#route-ldpc-batch-decoding).
 `granules_per_task` sizes the tasks of `PooledBatchDecoder`

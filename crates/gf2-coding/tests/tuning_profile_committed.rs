@@ -268,6 +268,12 @@ fn committed_lane_domain_rejects_multicore_loss_configurations() {
 }
 
 #[test]
+fn the_committed_envelope_leaves_the_qc_route_unselected() {
+    let (selectors, _) = measured_decode();
+    assert!(selectors.qc_route_cases().is_empty());
+}
+
+#[test]
 fn committed_worker_default_preserves_the_envelope_bytes() {
     let prepared = fresh::measured_owner();
     let assembly = prepared.verified_assembly().unwrap().provenance.clone();

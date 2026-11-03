@@ -1,12 +1,12 @@
 //! LDPC implementer of [`BatchSoftDecoder`]: a batch decodes in waves of
 //! [`LANES`] frames, each wave in the lanes of the
 //! [`gf2_kernels_simd::ldpc_lanes`] kernels or frame by frame on
-//! [`LdpcDecoder`], as [`decide_batch_route`] decides.
+//! [`LdpcDecoder`] or [`QcDecoder`], as [`decide_batch_route`] decides.
 
 use super::route::detected_lanes;
 use super::{
-    decide_batch_route, BatchRoute, DecoderConfig, EdgeLayout, LaneBackend, LaneCapability,
-    LdpcCode, LdpcDecoder,
+    decide_batch_route, BatchRoute, DecoderAlgorithm, DecoderConfig, EdgeLayout, LaneBackend,
+    LaneCapability, LdpcCode, LdpcDecoder, QcCapability, QcDecoder, QuasiCyclicLdpc,
 };
 use crate::llr::Llr;
 use crate::traits::{BatchSoftDecoder, DecodeOutcome};
@@ -38,6 +38,10 @@ pub enum DecodedWord {
 ///   min-sum lane kernels. A frame stops as the single-frame decoder stops
 ///   it, and the wave runs until each of its frames has stopped or the cap is
 ///   reached. The route names the [`LaneBackend`] whose kernels run.
+/// - [`BatchRoute::Qc`]: each frame decodes on an owned [`QcDecoder`]. Only a
+///   batch of at most [`LANES`] frames takes this route, under a
+///   [`QcRouteCase`](crate::tuning::QcRouteCase) naming the structure the code
+///   retains ([`LdpcCode::quasi_cyclic`]).
 /// - [`BatchRoute::SingleFrame`]: each frame decodes on an owned
 ///   [`LdpcDecoder`]. [`DecoderAlgorithm::SumProduct`](super::DecoderAlgorithm::SumProduct)
 ///   takes this route for every wave.
@@ -45,10 +49,11 @@ pub enum DecodedWord {
 /// The lane backend is [`LaneBackend::detected`], decided at construction:
 /// the AVX2 kernels when `gf2-coding` is built with its `simd` cargo feature
 /// and AVX2 is detected at run time, and the portable kernels otherwise.
-/// [`with_portable_lanes`](Self::with_portable_lanes) holds a decoder on the
-/// portable kernels.
+/// The QC backend is detected the same way, with the scalar QC kernel as its
+/// fallback. [`with_portable_lanes`](Self::with_portable_lanes) holds a decoder
+/// on the portable kernels of both routes.
 ///
-/// On either route and backend a frame's decoded word, outcome and posterior
+/// On every route and backend a frame's decoded word, outcome and posterior
 /// equal those of [`LdpcDecoder`] on the same LLRs, configuration and cap,
 /// bit for bit, under the batch clauses of
 /// `docs/reference/ldpc-decoder-numerical-contract.md`.
@@ -121,6 +126,10 @@ pub struct LdpcBatchDecoder {
     selectors: DecodeSelectors,
     lane_backend: LaneBackend,
     lane_fns: LdpcLaneFns,
+    /// Present when the selectors name the structure the code retains and the
+    /// algorithm is normalized min-sum.
+    qc: Option<QcRoute>,
+    last_wave_route: Option<BatchRoute>,
     /// Codeword position of each message bit; `None` when the decoded words
     /// are codewords.
     message_cols: Option<Vec<usize>>,
@@ -134,6 +143,31 @@ pub struct LdpcBatchDecoder {
     check_to_var: Vec<F32x8>,
     /// Hard decisions by variable; bit `l` is the decision of lane `l`.
     hard: Vec<u8>,
+}
+
+/// The decoder of the QC route and the selected structure it decodes.
+struct QcRoute {
+    decoder: QcDecoder,
+    base_graph: u8,
+    lifting_size: usize,
+}
+
+impl QcRoute {
+    fn select(code: &LdpcCode, config: DecoderConfig, selectors: &DecodeSelectors) -> Option<Self> {
+        if !matches!(config.algorithm(), DecoderAlgorithm::NormalizedMinSum(_)) {
+            return None;
+        }
+        let retained = code.quasi_cyclic()?;
+        let case = selectors.qc_route_cases().iter().find(|case| {
+            case.lifting_size() == retained.expansion_factor()
+                && *retained == QuasiCyclicLdpc::nr_5g(case.base_graph(), case.lifting_size())
+        })?;
+        Some(Self {
+            decoder: QcDecoder::new(code, config)?,
+            base_graph: case.base_graph(),
+            lifting_size: case.lifting_size(),
+        })
+    }
 }
 
 impl LdpcBatchDecoder {
@@ -163,8 +197,10 @@ impl LdpcBatchDecoder {
     /// Every frame decodes under `config` with the iteration cap
     /// `max_iterations`; a cap of zero behaves as in
     /// [`LdpcDecoder::decode_codeword_into`]. Construction allocates the
-    /// single-frame decoder and the lane workspace and, for
-    /// [`DecodedWord::Message`], resolves the code's systematic columns.
+    /// single-frame decoder and the lane workspace, compares the structure the
+    /// code retains with each selected QC structure of its lifting size and on
+    /// a match allocates a [`QcDecoder`], and, for [`DecodedWord::Message`],
+    /// resolves the code's systematic columns.
     ///
     /// # Panics
     ///
@@ -182,6 +218,7 @@ impl LdpcBatchDecoder {
             DecodedWord::Codeword => None,
             DecodedWord::Message => Some(code.systematic_cols()),
         };
+        let qc = QcRoute::select(&code, config, &selectors);
         let single = LdpcDecoder::with_config(code, config);
         let layout = single.edge_layout();
         let (n, edges) = (layout.n(), layout.edges());
@@ -192,6 +229,8 @@ impl LdpcBatchDecoder {
             selectors,
             lane_backend,
             lane_fns,
+            qc,
+            last_wave_route: None,
             message_cols,
             codeword: BitVec::with_capacity(n),
             channel: vec![F32x8::ZERO; n],
@@ -203,8 +242,8 @@ impl LdpcBatchDecoder {
         }
     }
 
-    /// Holds the lane route on [`LaneBackend::Portable`], whatever the build
-    /// and the host provide.
+    /// Holds the lane and QC routes on [`LaneBackend::Portable`], whatever the
+    /// build and the host provide.
     ///
     /// The builder selects a route for equivalence tests and benchmarks; decoded
     /// results and per-frame outcomes are identical on every route
@@ -213,6 +252,12 @@ impl LdpcBatchDecoder {
     pub fn with_portable_lanes(mut self) -> Self {
         self.lane_backend = LaneBackend::Portable;
         self.lane_fns = LdpcLaneFns::portable();
+        if let Some(qc) = self.qc.take() {
+            self.qc = Some(QcRoute {
+                decoder: qc.decoder.with_portable_kernel(),
+                ..qc
+            });
+        }
         self
     }
 
@@ -231,8 +276,9 @@ impl LdpcBatchDecoder {
     /// The route of a wave of `frames` frames at one configured worker, without decoding.
     ///
     /// A batch of at most [`LANES`] frames is one wave and takes this route.
-    /// A longer batch takes `batch_route(LANES)`, the value returned for it,
-    /// in each full wave, and `batch_route(r)` in a final wave of `r` frames.
+    /// A longer batch stays off [`BatchRoute::Qc`]: it takes the value returned
+    /// for it in each full wave, and in a final wave of `r` frames the lane or
+    /// single-frame route of `r` frames.
     #[must_use]
     pub fn batch_route(&self, frames: usize) -> BatchRoute {
         self.batch_route_with_workers(frames, NonZeroUsize::MIN)
@@ -241,20 +287,45 @@ impl LdpcBatchDecoder {
     /// The wave route under configured concurrent decode `workers`.
     #[must_use]
     pub fn batch_route_with_workers(&self, frames: usize, workers: NonZeroUsize) -> BatchRoute {
+        self.wave_route(frames.min(LANES), frames, workers)
+    }
+
+    /// The route of a wave of `wave_frames` frames in a batch of `batch_frames`.
+    fn wave_route(
+        &self,
+        wave_frames: usize,
+        batch_frames: usize,
+        workers: NonZeroUsize,
+    ) -> BatchRoute {
+        let qc = match &self.qc {
+            Some(qc) if batch_frames <= LANES => QcCapability::Present {
+                base_graph: qc.base_graph,
+                lifting_size: qc.lifting_size,
+                backend: qc.decoder.backend(),
+            },
+            _ => QcCapability::Absent,
+        };
         decide_batch_route(
             &self.selectors,
             self.config.algorithm(),
             LaneCapability::Present(self.lane_backend),
-            frames.min(LANES),
+            qc,
+            wave_frames,
             self.single.edge_layout().edges(),
             workers,
         )
     }
 
+    /// The route the last wave decoded on, `None` before the first wave.
+    #[must_use]
+    pub fn last_wave_route(&self) -> Option<BatchRoute> {
+        self.last_wave_route
+    }
+
     /// Bytes of the lane workspace: both message directions per edge, channel
     /// LLRs and beliefs per variable, each of [`LANES`] `f32`, and one
     /// hard-decision byte per variable. The storage of the owned single-frame
-    /// decoder is not counted.
+    /// and QC decoders is not counted.
     #[must_use]
     pub fn workspace_bytes(&self) -> usize {
         std::mem::size_of_val(self.channel.as_slice())
@@ -350,44 +421,55 @@ impl LdpcBatchDecoder {
             let posteriors = posteriors
                 .as_deref_mut()
                 .map(|all| &mut all[slots.start * n..slots.end * n]);
-            match (self.batch_route_with_workers(wave.len(), workers), rule) {
+            let route = self.wave_route(wave.len(), frames.len(), workers);
+            self.last_wave_route = Some(route);
+            match (route, rule) {
                 (BatchRoute::Lane(_), Some(rule)) => {
                     self.decode_wave_in_lanes(rule.into(), wave, decoded, outcomes, posteriors);
                 }
-                _ => self.decode_wave_per_frame(wave, decoded, outcomes, posteriors),
+                (BatchRoute::Qc(_), _) => {
+                    self.decode_wave_per_frame(true, wave, decoded, outcomes, posteriors);
+                }
+                (BatchRoute::SingleFrame | BatchRoute::Lane(_), _) => {
+                    self.decode_wave_per_frame(false, wave, decoded, outcomes, posteriors);
+                }
             }
         }
     }
 
     fn decode_wave_per_frame(
         &mut self,
+        on_qc: bool,
         wave: &[&[Llr]],
         decoded: &mut [BitVec],
         outcomes: &mut [DecodeOutcome],
         mut posteriors: Option<&mut [Llr]>,
     ) {
         let n = self.frame_len();
+        let cap = self.max_iterations;
+        let mut qc = self.qc.as_mut().filter(|_| on_qc).map(|qc| &mut qc.decoder);
         for (slot, &llrs) in wave.iter().enumerate() {
             let word = &mut decoded[slot];
-            outcomes[slot] = match &self.message_cols {
-                None => self
-                    .single
-                    .decode_codeword_into(llrs, self.max_iterations, word),
-                Some(cols) => {
-                    let outcome = self.single.decode_codeword_into(
-                        llrs,
-                        self.max_iterations,
-                        &mut self.codeword,
-                    );
-                    word.clear();
-                    for &col in cols {
-                        word.push_bit(self.codeword.get(col));
-                    }
-                    outcome
-                }
+            let target = match self.message_cols {
+                None => &mut *word,
+                Some(_) => &mut self.codeword,
             };
+            outcomes[slot] = match qc.as_deref_mut() {
+                Some(qc) => qc.decode_codeword_into(llrs, cap, target),
+                None => self.single.decode_codeword_into(llrs, cap, target),
+            };
+            if let Some(cols) = &self.message_cols {
+                word.clear();
+                for &col in cols {
+                    word.push_bit(self.codeword.get(col));
+                }
+            }
             if let Some(posteriors) = posteriors.as_deref_mut() {
-                posteriors[slot * n..(slot + 1) * n].copy_from_slice(self.single.posterior_llrs());
+                let posterior = match qc.as_deref() {
+                    Some(qc) => qc.posterior_llrs(),
+                    None => self.single.posterior_llrs(),
+                };
+                posteriors[slot * n..(slot + 1) * n].copy_from_slice(posterior);
             }
         }
     }

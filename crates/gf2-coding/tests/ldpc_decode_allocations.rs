@@ -3,7 +3,7 @@
 //! later decodes through the same decoder and prepared buffer allocate nothing.
 //! The rate-matched 5G NR batch decoder (`@/citation/ThreeGpp2017`) is counted
 //! over preparation and decoding together. The batch decoders are counted on
-//! each lane backend of the build and on the single-frame route.
+//! each lane backend of the build, on the single-frame route and on the QC route.
 
 use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedBatchDecoder;
 use gf2_coding::ldpc::{
@@ -13,6 +13,7 @@ use gf2_coding::ldpc::{
 use gf2_coding::llr::Llr;
 use gf2_coding::test_support::ldpc_batch_routes;
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome, IterativeSoftDecoder};
+use gf2_coding::tuning::{DecodeSelectors, QcRouteCase};
 use gf2_core::BitVec;
 use thread_allocations::{count, CountingAllocator, Counts};
 
@@ -328,4 +329,39 @@ fn owning_entry_points_allocate_what_they_return() {
         counts.allocations > 0,
         "decode_iterative returns an owned message"
     );
+}
+
+#[test]
+fn the_qc_route_allocates_nothing_after_a_first_decode() {
+    let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(2, 6));
+    let frames: Vec<Vec<Llr>> = (0..4u64).map(|f| channel_llrs(code.n(), 41 + f)).collect();
+    let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
+    let selectors = DecodeSelectors::CONSERVATIVE.with_qc_route_cases(vec![QcRouteCase::try_new(
+        2,
+        6,
+        1,
+        views.len(),
+    )
+    .unwrap()]);
+    let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+    let mut outcomes = vec![DecodeOutcome::default(); views.len()];
+    let mut posteriors = vec![Llr::zero(); views.len() * code.n()];
+    for word in [DecodedWord::Codeword, DecodedWord::Message] {
+        let mut decoder =
+            LdpcBatchDecoder::with_selectors(code.clone(), config, 2, word, selectors.clone());
+        let mut decoded = vec![BitVec::new(); views.len()];
+        decoder.decode_batch(&views, &mut decoded, &mut outcomes);
+        assert!(matches!(decoder.last_wave_route(), Some(BatchRoute::Qc(_))));
+        let (_, counts) = count(|| {
+            decoder.decode_batch(&views, &mut decoded, &mut outcomes);
+            decoder.decode_batch_with_posteriors(
+                &views,
+                &mut decoded,
+                &mut outcomes,
+                &mut posteriors,
+            );
+        });
+        report("qc-batch-steady-state", &format!("{word:?}"), counts);
+        assert!(counts.is_zero(), "{word:?} requested {counts:?}");
+    }
 }
