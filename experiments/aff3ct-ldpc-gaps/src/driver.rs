@@ -1,6 +1,6 @@
 //! Shared pinned-worker cell lifecycle and post-timing observations.
 
-use crate::arm::{self, ConversionCosts, Quality, Request, Window};
+use crate::arm::{self, ArmRequest, ConversionCosts, PairPosition, Quality, WindowRecord};
 use crate::pool::{self, process_threads};
 use crate::workload::{median_u64, verify_workers, Threads, Workload};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -9,12 +9,9 @@ use std::time::Instant;
 /// Empty dispatches the untimed probe times after the last window.
 pub const DISPATCH_PROBES: usize = 101;
 
-/// The request role that runs one untimed dispatch instead of timing windows.
-pub const VALIDATION_ROLE: &str = "validation";
-
 /// What a steady-state cell measured.
 pub struct CellRun {
-    pub windows: Vec<Window>,
+    pub windows: Vec<WindowRecord>,
     pub conversion: ConversionCosts,
     pub workers_observed: u32,
     pub threads: Threads,
@@ -29,7 +26,7 @@ pub struct CellRun {
 /// as the dispatch cost. `pack_ns` is the arm's untimed per-batch conversion
 /// probe, or zero when the conversion happens inside the decoder call.
 ///
-/// A request with role [`VALIDATION_ROLE`] runs one untimed dispatch and no
+/// A request with role [`PairPosition::Validation`] runs one untimed dispatch and no
 /// probe, returns no windows, and applies every placement and decision check,
 /// so an arm can be exercised end to end without a timing run. `observe` runs
 /// once per verified worker after the pool has stopped, in both roles.
@@ -41,7 +38,7 @@ pub struct CellRun {
 #[allow(clippy::too_many_arguments)]
 pub fn run_cell<S, I, B, D, O>(
     arm_name: &str,
-    request: &Request,
+    request: &ArmRequest,
     workload: &Workload,
     quality: &Quality,
     setup_start: Instant,
@@ -59,7 +56,7 @@ where
     O: FnMut(usize, &S) -> Result<(), String>,
 {
     let empty = AtomicBool::new(false);
-    let validation = request.role == VALIDATION_ROLE;
+    let validation = request.role == PairPosition::Validation;
     let (measured, finished) = pool::run(
         &request.cpus,
         init,

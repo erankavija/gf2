@@ -1,44 +1,22 @@
 //! Child framing, prepared quality and timing windows.
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::io;
 use std::time::Duration;
+pub use tuning_campaign_support::arm::{
+    ArmRequest, ArmResult, PairPosition, ARM_REQUEST_SCHEMA, ARM_RESULT_SCHEMA,
+};
 pub use tuning_campaign_support::protocol::{
-    Normalization, NormalizationKind, Precision, Schedule, Stopping, StoppingKind,
+    CacheState, Normalization, NormalizationKind, Precision, Schedule, Stopping, StoppingKind,
 };
 pub use tuning_campaign_support::receipt::{
     ArmQuality as Quality, ConversionCosts, DecoderArmSettings as ArmSettings,
-    IterationDistribution,
+    IterationDistribution, WindowRecord,
 };
 pub use tuning_campaign_support::transport::{
     FRESH_CASE_VALUE, FRESH_CASE_VAR, FRESH_RESULT_PREFIX,
 };
 use tuning_campaign_support::{timing, transport};
-
-/// Schema of the one result line an arm writes.
-pub const ARM_RESULT_SCHEMA: &str = "zen3-benchmark-arm-result-v1";
-
-/// The request the runner forwards to an arm child.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct Request {
-    pub schema: String,
-    pub cell_id: String,
-    pub arm: String,
-    pub role: String,
-    pub pair: u32,
-    pub case: Value,
-    pub cache_state: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cold_calls: Option<u64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub decoder: Option<tuning_campaign_support::protocol::DecoderCell>,
-    pub windows: u32,
-    pub window_target_ms: u32,
-    pub cpus: Vec<u32>,
-    pub workers_declared: u32,
-}
 
 /// The decoder case every arm of a cell receives.
 ///
@@ -70,34 +48,13 @@ pub struct DecoderCase {
     pub decisions_out: Option<String>,
 }
 
-/// One raw timing window.
-#[derive(Clone, Copy, Debug, Serialize)]
-pub struct Window {
-    pub calls: u64,
-    pub elapsed_ns: u64,
-}
-
-/// The one result line an arm writes.
-#[derive(Clone, Debug, Serialize)]
-pub struct ArmResult {
-    pub schema: String,
-    pub windows: Vec<Window>,
-    pub cache_state_applied: String,
-    pub workers_observed: u32,
-    pub cpus_observed: Vec<u32>,
-    pub selected_path: Option<String>,
-    pub conversion: Option<ConversionCosts>,
-    pub quality: Option<Quality>,
-    pub calibrated: bool,
-}
-
 /// Reads the guarded child-v2 request from standard input.
 ///
 /// # Errors
 ///
 /// Returns an error when the sentinel is absent or wrong, when standard input
 /// cannot be read, or when it does not decode as exactly one request.
-pub fn read_request() -> Result<Request, String> {
+pub fn read_request() -> Result<ArmRequest, String> {
     let sentinel = std::env::var(FRESH_CASE_VAR).ok();
     transport::read_guarded_case(sentinel.as_deref(), io::stdin().lock())
 }
@@ -157,8 +114,12 @@ pub fn quantile(sorted: &[u32], fraction: f64) -> u32 {
 
 /// Runs the canonical protocol timing mechanism. Each call processes the
 /// same declared batch in either arm, including representation conversions.
-pub fn timing_windows(request: &Request, body: &mut impl FnMut(usize)) -> Vec<Window> {
-    if request.role == "validation" {
+///
+/// # Panics
+///
+/// Panics for a timed request with `cold_calls` present or an invalid window budget.
+pub fn timing_windows(request: &ArmRequest, body: &mut impl FnMut(usize)) -> Vec<WindowRecord> {
+    if request.role == PairPosition::Validation {
         return Vec::new();
     }
     assert!(
@@ -167,12 +128,11 @@ pub fn timing_windows(request: &Request, body: &mut impl FnMut(usize)) -> Vec<Wi
     );
     // Warm and cold cells use one fixed fixture bank. Only streaming cells
     // rotate through the canonical bank set, as in ab-smoke-workload.
-    let banks = if request.cache_state == "streaming" {
-        timing::FIXTURE_BANKS
-    } else {
-        1
+    let banks = match request.cache_state {
+        CacheState::Streaming => timing::FIXTURE_BANKS,
+        CacheState::Warm | CacheState::Cold => 1,
     };
-    if request.cache_state == "warm" {
+    if request.cache_state == CacheState::Warm {
         body(0);
     }
     let mut selected = |bank: usize| body(bank % banks);
@@ -185,7 +145,7 @@ pub fn timing_windows(request: &Request, body: &mut impl FnMut(usize)) -> Vec<Wi
     )
     .expect("validated timing request")
     .into_iter()
-    .map(|w| Window {
+    .map(|w| WindowRecord {
         calls: w.calls,
         elapsed_ns: w.elapsed_ns,
     })
@@ -323,15 +283,15 @@ mod tests {
 
     #[test]
     fn timing_uses_the_declared_cache_working_set() {
-        for cache in ["warm", "streaming"] {
-            let request = super::Request {
-                schema: "zen3-benchmark-arm-request-v1".into(),
+        for cache in [super::CacheState::Warm, super::CacheState::Streaming] {
+            let request = super::ArmRequest {
+                schema: super::ARM_REQUEST_SCHEMA.into(),
                 cell_id: "cache-fixture".into(),
                 arm: "fixture".into(),
-                role: "exploratory".into(),
+                role: super::PairPosition::Baseline,
                 pair: 0,
                 case: serde_json::json!({}),
-                cache_state: cache.into(),
+                cache_state: cache,
                 cold_calls: None,
                 decoder: None,
                 windows: 1,
@@ -345,7 +305,7 @@ mod tests {
             });
             assert!(!windows.is_empty());
             assert!(visited[0]);
-            if cache == "warm" {
+            if cache == super::CacheState::Warm {
                 assert!(visited[1..].iter().all(|seen| !seen));
             } else {
                 assert!(visited.iter().all(|seen| *seen));

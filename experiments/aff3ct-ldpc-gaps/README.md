@@ -7,6 +7,10 @@ per-frame iteration counts after timing. AFF3CT replays that prefix on its
 counting prototype, checks equality with the timed clone's decisions and
 reports replay-derived counts.
 
+The arms use the canonical request, result, window and schema definitions from
+`tuning-campaign-support`. Steady-state cells require warm cache state. Requests
+in the validation position run one untimed dispatch and return no timing windows.
+
 Set `GF2_LDPC_INPUT_ROOT` to an absolute artifact directory containing `bundles/`
 and `quality/`. Bundles use the names in [arms.json](arms.json); each contains
 a manifest, an AList, codewords and little-endian f32 LLRs. Quality filenames
