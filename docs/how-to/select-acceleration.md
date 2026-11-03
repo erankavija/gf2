@@ -128,13 +128,16 @@ caller-provided `BitVec` words and `DecodeOutcome`s in input order. Its scope
 is soft-decision whole-frame block decoding. `LdpcBatchDecoder` implements it
 for `gf2-coding`'s LDPC codes in waves of eight frames (`LANES`), each frame
 stopping as the single-frame decoder `LdpcDecoder` stops it. Each wave takes
-one of two routes, which
+one of the routes
 [`BatchRoute`](../../crates/gf2-coding/src/ldpc/route.rs) names:
 
 - `Lane` runs the wave in the lane kernels, one frame per lane. The kernels are
   the AVX2 ones when `gf2-coding` is built with the `simd` feature and the host
   reports AVX2, and the portable ones otherwise; the two backends write the
   same bits.
+- `Qc` decodes each frame on `QcDecoder`, in its AVX2 kernel when `gf2-coding`
+  is built with the `simd` feature and the host reports AVX2, and in its
+  portable kernel otherwise; the two write the same bits.
 - `SingleFrame` decodes each frame on `LdpcDecoder`.
 
 The route follows from the algorithm and the decode family of the coding
@@ -147,7 +150,17 @@ Tanner-graph edges, and configured decode concurrency is at most
 `decode_batch_with_workers` accepts the caller's configured concurrency.
 `PooledBatchDecoder` supplies the execution pool's width, preserving a larger
 explicit caller width; simulation stages pass their executing pool's width.
-`SumProduct` takes `SingleFrame`. `granules_per_task` is
+`SumProduct` takes `SingleFrame`.
+
+A decode call of at most eight frames takes `Qc` instead when the algorithm is
+`NormalizedMinSum`, the code retains the 5G NR structure a `qc_route_cases`
+entry names, and that entry's `workers` and `frames` equal the configured
+concurrency and the call's frames. `LdpcCode::from_quasi_cyclic` retains the
+structure; `LdpcCode::attach_quasi_cyclic` retains it on a code read from
+elsewhere when the lifted parity-check matrix equals the code's exactly. An
+absent list selects no case.
+
+`granules_per_task` is
 the number of `batch_granularity` frame groups in a task of
 `PooledBatchDecoder` ([Decode LDPC frames in parallel](#decode-ldpc-frames-in-parallel)).
 The conservative family closes the lane route, so a process that installs no
@@ -161,8 +174,10 @@ profile registry above installs one.
 `with_selectors` takes one explicitly.
 
 `batch_route(frames)` reports the route of a wave of `frames` frames without
-decoding: a batch longer than eight frames takes `batch_route(8)` in each full
-wave and `batch_route(r)` in a final wave of `r` frames. The frames of a wave
+decoding: a batch longer than eight frames stays off `Qc` and takes the lane or
+single-frame route of eight frames in each full wave and of `r` frames in a
+final wave of `r` frames. `last_wave_route` reports the route the last wave
+decoded on. The frames of a wave
 decode as in the single-frame decoder
 ([numerical contract](../reference/ldpc-decoder-numerical-contract.md)), so the
 selectors move time only. The sample opens the lane route for every wave,
@@ -188,7 +203,7 @@ let mut outcomes = vec![DecodeOutcome::default(); views.len()];
 decoder.decode_batch(&views, &mut decoded, &mut outcomes);
 ```
 
-`with_portable_lanes()` holds the portable kernels on an AVX2 host.
+`with_portable_lanes()` holds the portable lane and QC kernels on an AVX2 host.
 
 ## Thread parallelism
 

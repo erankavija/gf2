@@ -1,7 +1,7 @@
 //! Intra-frame flooding over QC blocks. Check lanes are lifted positions;
 //! column-block check order and row-block variable order preserve canonical sums.
 
-use super::{DecodeOutcome, DecoderConfig, LdpcCode, MinSumRule, QuasiCyclicLdpc};
+use super::{DecodeOutcome, DecoderConfig, LaneBackend, LdpcCode, MinSumRule, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use gf2_core::BitVec;
 use gf2_kernels_simd::ldpc_qc::QcCheckFn;
@@ -98,6 +98,7 @@ pub struct QcDecoder {
     posterior: Vec<Llr>,
     hard_bits: Vec<bool>,
     kernel: QcCheckFn,
+    backend: LaneBackend,
     last_iterations: usize,
 }
 
@@ -113,9 +114,10 @@ impl QcDecoder {
         let rule = config.algorithm().min_sum_rule()?;
         let layout = QcLayout::new(code.quasi_cyclic()?);
         let messages = layout.base_edges() * layout.z();
-        let kernel = QcCheckFn::portable();
+        let (kernel, backend) = (QcCheckFn::portable(), LaneBackend::Portable);
         #[cfg(feature = "simd")]
-        let kernel = gf2_kernels_simd::ldpc_qc::detect().unwrap_or(kernel);
+        let (kernel, backend) = gf2_kernels_simd::ldpc_qc::detect()
+            .map_or((kernel, backend), |fns| (fns, LaneBackend::Avx2));
         Some(Self {
             channel: vec![0.0; layout.n()],
             check_to_var: vec![0.0; messages],
@@ -123,6 +125,7 @@ impl QcDecoder {
             posterior: vec![Llr::zero(); layout.n()],
             hard_bits: vec![false; layout.n()],
             kernel,
+            backend,
             layout,
             rule,
             config,
@@ -134,7 +137,14 @@ impl QcDecoder {
     #[must_use]
     pub fn with_portable_kernel(mut self) -> Self {
         self.kernel = QcCheckFn::portable();
+        self.backend = LaneBackend::Portable;
         self
+    }
+
+    /// The backend of the selected kernel.
+    #[must_use]
+    pub fn backend(&self) -> LaneBackend {
+        self.backend
     }
 
     /// Iterations the last decode performed.

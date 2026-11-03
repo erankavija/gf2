@@ -98,13 +98,85 @@ impl EncodeSelectors {
     }
 }
 
+/// One case the QC route is selected for: a code carrying the 5G NR
+/// quasi-cyclic structure of `base_graph` and `lifting_size`, decoded by
+/// exactly `workers` configured workers in calls of exactly `frames` frames.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct QcRouteCase {
+    base_graph: u8,
+    lifting_size: usize,
+    workers: NonZeroUsize,
+    frames: NonZeroUsize,
+}
+
+impl QcRouteCase {
+    /// Builds a case.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SectionError::SelectorOutOfRange`] when `base_graph` is not
+    /// 1 or 2, `lifting_size` is not a 5G NR lifting size, or `workers` or
+    /// `frames` is zero.
+    pub fn try_new(
+        base_graph: usize,
+        lifting_size: usize,
+        workers: usize,
+        frames: usize,
+    ) -> Result<Self, SectionError> {
+        let out_of_range = |field, value: usize| SectionError::SelectorOutOfRange {
+            family: "decode",
+            field,
+            value: value as u64,
+        };
+        let graph = match base_graph {
+            1 => 1,
+            2 => 2,
+            _ => return Err(out_of_range("qc_route_cases.base_graph", base_graph)),
+        };
+        if !u16::try_from(lifting_size).is_ok_and(crate::ldpc::nr_5g::is_valid_lifting_size) {
+            return Err(out_of_range("qc_route_cases.lifting_size", lifting_size));
+        }
+        Ok(Self {
+            base_graph: graph,
+            lifting_size,
+            workers: NonZeroUsize::new(workers).ok_or(out_of_range("qc_route_cases.workers", 0))?,
+            frames: NonZeroUsize::new(frames).ok_or(out_of_range("qc_route_cases.frames", 0))?,
+        })
+    }
+
+    /// Returns the 5G NR base graph, 1 or 2.
+    #[must_use]
+    pub const fn base_graph(&self) -> u8 {
+        self.base_graph
+    }
+
+    /// Returns the 5G NR lifting size.
+    #[must_use]
+    pub const fn lifting_size(&self) -> usize {
+        self.lifting_size
+    }
+
+    /// Returns the configured decode workers of the case.
+    #[must_use]
+    pub const fn workers(&self) -> NonZeroUsize {
+        self.workers
+    }
+
+    /// Returns the frames of a decode call of the case.
+    #[must_use]
+    pub const fn frames(&self) -> NonZeroUsize {
+        self.frames
+    }
+}
+
 /// Validated decode selector family of the coding section.
 ///
 /// `lane_min_frames` is a lower bound on a count of occupied lanes and
 /// `lane_max_edges` an upper bound on a Tanner-graph edge count, each over
 /// all of `usize`; `lane_max_workers` bounds configured decode concurrency;
 /// `granules_per_task` is a positive count of
-/// preferred-granularity frame groups. The section stores, validates and
+/// preferred-granularity frame groups; `qc_route_cases` lists the cases of the
+/// QC route, and the empty list closes it. The section stores, validates and
 /// serializes the family, and
 /// [`decide_batch_route`](crate::ldpc::decide_batch_route) reads it to decide
 /// the LDPC batch route.
@@ -114,20 +186,23 @@ pub struct DecodeSelectors {
     lane_max_edges: usize,
     lane_max_workers: NonZeroUsize,
     granules_per_task: NonZeroUsize,
+    qc_route_cases: Vec<QcRouteCase>,
 }
 
 impl DecodeSelectors {
     /// The conservative decode family: [`LANE_MIN_FRAMES`],
-    /// [`LANE_MAX_EDGES`], [`LANE_MAX_WORKERS`] and [`GRANULES_PER_TASK`].
+    /// [`LANE_MAX_EDGES`], [`LANE_MAX_WORKERS`] and [`GRANULES_PER_TASK`], with
+    /// no QC route case.
     pub const CONSERVATIVE: Self = Self {
         lane_min_frames: LANE_MIN_FRAMES,
         lane_max_edges: LANE_MAX_EDGES,
         lane_max_workers: LANE_MAX_WORKERS,
         granules_per_task: GRANULES_PER_TASK,
+        qc_route_cases: Vec::new(),
     };
 
-    /// Builds the decode selector family. Every `lane_min_frames` and
-    /// `lane_max_edges` is admissible.
+    /// Builds the decode selector family with no QC route case. Every
+    /// `lane_min_frames` and `lane_max_edges` is admissible.
     ///
     /// # Errors
     ///
@@ -156,7 +231,15 @@ impl DecodeSelectors {
             lane_max_edges,
             lane_max_workers,
             granules_per_task,
+            qc_route_cases: Vec::new(),
         })
+    }
+
+    /// Replaces the cases of the QC route.
+    #[must_use]
+    pub fn with_qc_route_cases(mut self, cases: Vec<QcRouteCase>) -> Self {
+        self.qc_route_cases = cases;
+        self
     }
 
     /// Returns the lower bound on a count of occupied lanes.
@@ -181,6 +264,12 @@ impl DecodeSelectors {
     #[must_use]
     pub const fn granules_per_task(&self) -> NonZeroUsize {
         self.granules_per_task
+    }
+
+    /// Returns the cases of the QC route.
+    #[must_use]
+    pub fn qc_route_cases(&self) -> &[QcRouteCase] {
+        &self.qc_route_cases
     }
 }
 
@@ -222,6 +311,7 @@ struct CodingPresence {
     lane_max_edges: bool,
     lane_max_workers: bool,
     granules_per_task: bool,
+    qc_route_cases: bool,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -237,6 +327,7 @@ impl CodingPresence {
         lane_max_edges: true,
         lane_max_workers: true,
         granules_per_task: true,
+        qc_route_cases: true,
     };
 }
 
@@ -302,7 +393,8 @@ impl fmt::Debug for CodingTuning {
                 + usize::from(self.presence.lane_min_frames)
                 + usize::from(self.presence.lane_max_edges)
                 + usize::from(self.presence.lane_max_workers)
-                + usize::from(self.presence.granules_per_task);
+                + usize::from(self.presence.granules_per_task)
+                + usize::from(self.presence.qc_route_cases);
             debug
                 .field("declared_families", &declared_families)
                 .field("declared_fields", &declared_fields);
@@ -316,7 +408,8 @@ impl TuningSection for CodingTuning {
     type Selectors = CodingSelectors;
 
     fn conservative() -> &'static Self {
-        &Self::CONSERVATIVE
+        static CONSERVATIVE: CodingTuning = CodingTuning::CONSERVATIVE;
+        &CONSERVATIVE
     }
 
     fn selectors(&self) -> &Self::Selectors {
@@ -415,6 +508,19 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
             GRANULES_PER_TASK.get(),
             "granules_per_task",
         )?;
+        let (qc_cases_present, qc_route_cases) =
+            selector_or(decode.qc_route_cases, Vec::new(), "qc_route_cases")?;
+        let qc_route_cases = qc_route_cases
+            .into_iter()
+            .map(|case: JsonQcRouteCase| {
+                QcRouteCase::try_new(
+                    case.base_graph,
+                    case.lifting_size,
+                    case.workers,
+                    case.frames,
+                )
+            })
+            .collect::<Result<_, _>>()?;
         Ok(CodingTuning {
             selectors: CodingSelectors {
                 encode: EncodeSelectors::try_new(
@@ -428,7 +534,8 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
                     lane_max_edges,
                     lane_max_workers,
                     granules_per_task,
-                )?,
+                )?
+                .with_qc_route_cases(qc_route_cases),
             },
             presence: CodingPresence {
                 encode: encode_present,
@@ -441,6 +548,7 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
                 lane_max_edges: lane_edges_present,
                 lane_max_workers: workers_present,
                 granules_per_task: granules_present,
+                qc_route_cases: qc_cases_present,
             },
         })
     }
@@ -450,7 +558,7 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
     ) -> Result<gf2_core::tuning::CanonicalValue, SectionError> {
         use std::collections::BTreeMap;
 
-        let mut selectors = BTreeMap::<&str, BTreeMap<&str, usize>>::new();
+        let mut selectors = BTreeMap::<&str, gf2_core::tuning::CanonicalValue>::new();
         if section.presence.encode {
             let family = section.encode();
             let mut encode = BTreeMap::new();
@@ -475,24 +583,55 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
             if section.presence.clmul_fold_min_batch {
                 encode.insert("clmul_fold_min_batch", family.clmul_fold_min_batch());
             }
-            selectors.insert("encode", encode);
+            selectors.insert(
+                "encode",
+                gf2_core::tuning::CanonicalValue::serialize(&encode)?,
+            );
         }
         if section.presence.decode {
             let family = section.decode();
             let mut decode = BTreeMap::new();
             if section.presence.lane_min_frames {
-                decode.insert("lane_min_frames", family.lane_min_frames());
+                decode.insert(
+                    "lane_min_frames",
+                    JsonDecodeField::Bound(family.lane_min_frames()),
+                );
             }
             if section.presence.lane_max_edges {
-                decode.insert("lane_max_edges", family.lane_max_edges());
+                decode.insert(
+                    "lane_max_edges",
+                    JsonDecodeField::Bound(family.lane_max_edges()),
+                );
             }
             if section.presence.lane_max_workers {
-                decode.insert("lane_max_workers", family.lane_max_workers().get());
+                decode.insert(
+                    "lane_max_workers",
+                    JsonDecodeField::Bound(family.lane_max_workers().get()),
+                );
             }
             if section.presence.granules_per_task {
-                decode.insert("granules_per_task", family.granules_per_task().get());
+                decode.insert(
+                    "granules_per_task",
+                    JsonDecodeField::Bound(family.granules_per_task().get()),
+                );
             }
-            selectors.insert("decode", decode);
+            if section.presence.qc_route_cases {
+                let cases = family
+                    .qc_route_cases()
+                    .iter()
+                    .map(|case| JsonQcRouteCase {
+                        base_graph: usize::from(case.base_graph()),
+                        lifting_size: case.lifting_size(),
+                        workers: case.workers().get(),
+                        frames: case.frames().get(),
+                    })
+                    .collect();
+                decode.insert("qc_route_cases", JsonDecodeField::Cases(cases));
+            }
+            selectors.insert(
+                "decode",
+                gf2_core::tuning::CanonicalValue::serialize(&decode)?,
+            );
         }
         gf2_core::tuning::CanonicalValue::serialize(&selectors)
     }
@@ -534,6 +673,26 @@ struct JsonDecode {
     lane_max_workers: Present<usize>,
     #[serde(default)]
     granules_per_task: Present<usize>,
+    #[serde(default)]
+    qc_route_cases: Present<Vec<JsonQcRouteCase>>,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+struct JsonQcRouteCase {
+    base_graph: usize,
+    lifting_size: usize,
+    workers: usize,
+    frames: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+#[derive(serde::Serialize)]
+#[serde(untagged)]
+enum JsonDecodeField {
+    Bound(usize),
+    Cases(Vec<JsonQcRouteCase>),
 }
 
 /// Returns whether `family` is present and its fields, all missing for an
@@ -553,11 +712,11 @@ fn family_or_default<T: Default>(
 /// Returns whether `selector` is present and its value, `conservative` for an
 /// absent selector.
 #[cfg(feature = "tuning-profile")]
-fn selector_or(
-    selector: Present<usize>,
-    conservative: usize,
+fn selector_or<T>(
+    selector: Present<T>,
+    conservative: T,
     name: &str,
-) -> Result<(bool, usize), SectionError> {
+) -> Result<(bool, T), SectionError> {
     match selector {
         Present::Missing => Ok((false, conservative)),
         Present::Value(Some(value)) => Ok((true, value)),

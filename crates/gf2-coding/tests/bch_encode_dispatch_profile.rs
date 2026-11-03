@@ -9,7 +9,7 @@ mod fresh;
 
 use gf2_coding::bch::encode::EncodeFamily;
 use gf2_coding::tuning::{
-    CodingSelectors, CodingTuning, CodingTuningCodec, DecodeSelectors, EncodeSelectors,
+    CodingSelectors, CodingTuning, CodingTuningCodec, DecodeSelectors, EncodeSelectors, QcRouteCase,
 };
 use gf2_core::tuning::{
     CanonicalValue, ProfileRegistryBuilder, SectionCodec, SectionError, TuningSection,
@@ -62,7 +62,11 @@ fn the_owner_codec_round_trips_its_selectors() {
     let section = CodingTuning::from_selectors(CodingSelectors {
         encode: EncodeSelectors::try_new(32, 16, 64, 8)
             .expect("every selector bound is admissible"),
-        decode: DecodeSelectors::try_new(4, 4096, 2, 3).expect("a positive group count"),
+        decode: DecodeSelectors::try_new(4, 4096, 2, 3)
+            .expect("a positive group count")
+            .with_qc_route_cases(vec![
+                QcRouteCase::try_new(1, 384, 12, 8).expect("a case of its domain")
+            ]),
     });
     let body = CodingTuningCodec::encode_body(&section).expect("a complete section encodes");
     let decoded = CodingTuningCodec::decode_body(body).expect("the canonical body decodes");
@@ -75,6 +79,16 @@ fn the_owner_codec_round_trips_its_selectors() {
     assert_eq!(decoded.decode().lane_max_edges(), 4096);
     assert_eq!(decoded.decode().lane_max_workers().get(), 2);
     assert_eq!(decoded.decode().granules_per_task().get(), 3);
+    let case = decoded.decode().qc_route_cases()[0];
+    assert_eq!(
+        (
+            case.base_graph(),
+            case.lifting_size(),
+            case.workers().get(),
+            case.frames().get()
+        ),
+        (1, 384, 12, 8)
+    );
 }
 
 #[test]
@@ -128,6 +142,8 @@ fn the_codec_encodes_the_fields_a_body_states_and_no_others() {
         r#"{"decode": {"lane_max_edges": 4096}}"#,
         r#"{"decode": {"granules_per_task": 5}}"#,
         r#"{"decode": {"lane_max_workers": 6}}"#,
+        r#"{"decode": {"qc_route_cases": []}}"#,
+        r#"{"decode": {"qc_route_cases": [{"base_graph": 1, "frames": 8, "lifting_size": 384, "workers": 12}]}}"#,
         r#"{"decode": {"granules_per_task": 5, "lane_min_frames": 2}, "encode": {}}"#,
         r#"{"encode": {"clmul_fold_min_batch": 8}}"#,
     ] {
@@ -176,8 +192,52 @@ fn a_null_family_or_selector_is_rejected() {
         r#"{"decode": {"lane_max_edges": null}}"#,
         r#"{"decode": {"lane_max_workers": null}}"#,
         r#"{"decode": {"granules_per_task": null}}"#,
+        r#"{"decode": {"qc_route_cases": null}}"#,
         r#"{"encode": null}"#,
         r#"{"encode": {"clmul_fold_min_batch": null}}"#,
+    ] {
+        assert!(
+            matches!(
+                CodingTuningCodec::decode_body(body(text)),
+                Err(SectionError::InvalidBody(_))
+            ),
+            "{text}"
+        );
+    }
+}
+
+#[test]
+fn a_qc_route_case_outside_its_domain_is_rejected() {
+    for (case, field, value) in [
+        ((0, 384, 1, 1), "qc_route_cases.base_graph", 0),
+        ((3, 384, 1, 1), "qc_route_cases.base_graph", 3),
+        ((1, 383, 1, 1), "qc_route_cases.lifting_size", 383),
+        ((1, 70_000, 1, 1), "qc_route_cases.lifting_size", 70_000),
+        ((1, 384, 0, 1), "qc_route_cases.workers", 0),
+        ((1, 384, 1, 0), "qc_route_cases.frames", 0),
+    ] {
+        let (base_graph, lifting_size, workers, frames) = case;
+        let rejected = SectionError::SelectorOutOfRange {
+            family: "decode",
+            field,
+            value,
+        };
+        assert_eq!(
+            QcRouteCase::try_new(base_graph, lifting_size, workers, frames),
+            Err(rejected.clone())
+        );
+        let text = format!(
+            r#"{{"decode": {{"qc_route_cases": [{{"base_graph": {base_graph}, "frames": {frames}, "lifting_size": {lifting_size}, "workers": {workers}}}]}}}}"#
+        );
+        assert_eq!(
+            CodingTuningCodec::decode_body(body(&text)),
+            Err(rejected),
+            "{text}"
+        );
+    }
+    for text in [
+        r#"{"decode": {"qc_route_cases": [{"base_graph": 1, "lifting_size": 384, "workers": 1}]}}"#,
+        r#"{"decode": {"qc_route_cases": [{"base_graph": 1, "frames": 1, "lifting_size": 384, "workers": 1, "edges": 1}]}}"#,
     ] {
         assert!(
             matches!(

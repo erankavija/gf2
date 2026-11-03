@@ -91,11 +91,36 @@ impl LdpcCode {
         code
     }
 
-    /// The QC description retained by [`Self::from_quasi_cyclic`].
+    /// The QC description retained by [`Self::from_quasi_cyclic`] or
+    /// [`Self::attach_quasi_cyclic`].
     ///
-    /// Returns `None` for other constructors; structure is not inferred from edges.
+    /// Returns `None` for other codes; structure is not inferred from edges.
     pub fn quasi_cyclic(&self) -> Option<&QuasiCyclicLdpc> {
         self.qc.as_deref()
+    }
+
+    /// Retains `qc` when its expansion is exactly this code's parity-check
+    /// matrix, row order included, and returns whether it does; a mismatch
+    /// leaves the code unchanged. Takes O(B + E log E) time for B base-matrix
+    /// entries and E edges.
+    #[must_use]
+    pub fn attach_quasi_cyclic(&mut self, qc: &QuasiCyclicLdpc) -> bool {
+        if qc.expanded_rows() != self.m || qc.expanded_cols() != self.n {
+            return false;
+        }
+        let lifted = SpBitMatrixDual::from_coo(self.m, self.n, &qc.to_edges());
+        let equal = (0..self.m).all(|row| {
+            let sorted = |matrix: &SpBitMatrixDual| {
+                let mut columns: Vec<_> = matrix.row_iter(row).collect();
+                columns.sort_unstable();
+                columns
+            };
+            sorted(&lifted) == sorted(&self.h)
+        });
+        if equal {
+            self.qc = Some(std::sync::Arc::new(qc.clone()));
+        }
+        equal
     }
 
     /// Creates a DVB-T2 short frame LDPC code (n=16200) from the
@@ -290,7 +315,7 @@ impl CirculantMatrix {
 /// Each entry in the base matrix:
 /// - **-1**: Zero block (all zeros)
 /// - **0 to Z-1**: Circulant block with corresponding shift
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QuasiCyclicLdpc {
     /// Base matrix with shift values (-1 = zero block, 0..Z-1 = circulant shift)
     base_matrix: Vec<Vec<i32>>,

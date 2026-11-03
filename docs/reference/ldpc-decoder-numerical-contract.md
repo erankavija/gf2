@@ -215,6 +215,9 @@ batch assigns it no frame.
   `gf2-coding` is built with its `simd` cargo feature and AVX2 is detected at
   run time, and the portable backend otherwise; `batch_route` names the
   backend of a lane-route wave.
+- **QC backends.** The QC kernels of `gf2-kernels-simd` have the same two
+  backends under the same detection, each clause holds on either, and
+  `batch_route` names the backend of a QC-route wave.
 
 ## Evidence
 
@@ -250,7 +253,9 @@ sizes around the wave boundaries, under a permutation of its frames, and with
 the other lanes of a wave holding non-converging frames. A build with `simd`
 runs the AVX2 backend, requires AVX2 of the host and asserts that the lane
 route reports that backend; a build without `simd` asserts that it reports the
-portable backend.
+portable backend. The same assertions run on the QC route of each backend over
+5G NR mother and rate-matched codes, where the portable backend is the forced
+fallback of a host without the kernel.
 
 [`dvb_t2_concat_batch_decoder`](../../crates/gf2-coding/tests/dvb_t2_concat_batch_decoder.rs)
 runs the shared batch contract on `DvbT2ConcatBatchDecoder`, whose LDPC inner

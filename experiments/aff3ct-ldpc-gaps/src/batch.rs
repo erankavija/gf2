@@ -10,7 +10,7 @@ pub use gf2_coding::ldpc::{BatchRoute, LaneBackend};
 use gf2_coding::ldpc::{DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode};
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
-use gf2_coding::tuning::DecodeSelectors;
+use gf2_coding::tuning::{DecodeSelectors, QcRouteCase};
 use gf2_core::BitVec;
 use gf2_kernels_simd::ldpc_lanes::LANES;
 
@@ -28,14 +28,24 @@ use std::time::Instant;
 pub const STAGE_PROBES: usize = 9;
 
 /// The selectors an arm on `route` decodes under: the conservative family,
-/// which closes the lane route, or a family that opens it to every wave size
-/// and edge count, through the benchmark grid's maximum of 24 workers.
+/// which closes the lane route; a family that opens it to every wave size and
+/// edge count, through the benchmark grid's maximum of 24 workers; or a family
+/// that selects the QC route for NR BG1 Z=384 at every wave size on that grid.
 #[must_use]
 pub fn route_selectors(route: BatchRoute) -> DecodeSelectors {
     match route {
         BatchRoute::SingleFrame => DecodeSelectors::CONSERVATIVE,
         BatchRoute::Lane(_) => {
             DecodeSelectors::try_new(1, usize::MAX, 24, 1).expect("a positive group count")
+        }
+        BatchRoute::Qc(_) => {
+            let mut cases = Vec::new();
+            for workers in [1, 6, 12, 24] {
+                for frames in 1..=LANES {
+                    cases.push(QcRouteCase::try_new(1, 384, workers, frames).expect("in domain"));
+                }
+            }
+            DecodeSelectors::CONSERVATIVE.with_qc_route_cases(cases)
         }
     }
 }
@@ -216,7 +226,7 @@ impl BatchWorker {
 /// At that cap the decoder call runs no kernel iteration: on a lane route it
 /// is the transposition into the lanes, the message initialisation, the
 /// terminal syndrome test and the transposition out into the decoded words,
-/// and on the single-frame route the single-frame decoder's pass at the same
+/// and on the single-frame and QC routes that frame decoder's pass at the same
 /// cap.
 ///
 /// # Errors
@@ -271,6 +281,15 @@ pub trait ArmPolicy: Sync {
     /// Per-worker route observations, collected before dispatch.
     type Observation: Send;
 
+    /// Prepares the corpus code named `corpus` once, outside timing.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the arm cannot run on the code.
+    fn prepare_code(&self, code: LdpcCode, _corpus: &str) -> Result<LdpcCode, String> {
+        Ok(code)
+    }
+
     /// Builds a codeword decoder, rejecting routes the arm does not declare.
     ///
     /// # Errors
@@ -313,6 +332,8 @@ pub struct CellContext<'a> {
     pub decoder_config: DecoderConfig,
     pub batch: usize,
     pub llrs: &'a [f32],
+    /// The route of each worker's last decoded wave, in worker order.
+    pub executed_routes: &'a [Option<BatchRoute>],
 }
 
 impl ArmPolicy for BatchRoute {
@@ -334,7 +355,9 @@ impl ArmPolicy for BatchRoute {
             route_selectors(route),
         );
         let decoder = match route {
-            BatchRoute::Lane(LaneBackend::Portable) => decoder.with_portable_lanes(),
+            BatchRoute::Lane(LaneBackend::Portable) | BatchRoute::Qc(LaneBackend::Portable) => {
+                decoder.with_portable_lanes()
+            }
             _ => decoder,
         };
         for frames in [batch.min(LANES), batch % LANES] {
@@ -364,6 +387,7 @@ impl ArmPolicy for BatchRoute {
             decoder_config,
             batch,
             llrs,
+            ..
         } = context;
         let stages = probe_stages(code, decoder_config, batch, route, llrs)?;
         cell.conversion.pack_ns = stages.pack_ns;
@@ -464,6 +488,7 @@ pub fn run_with_policy(arm_name: &str, policy: impl ArmPolicy) -> Result<(), Str
     {
         return Err("the bundle dimensions differ from the built code".to_owned());
     }
+    let code = policy.prepare_code(code, &case.code)?;
     let decoder_config = config(case.normalization_factor, case.syndrome_stopping);
     let cap = case.iteration_cap as usize;
     let concurrency = NonZeroUsize::new(request.cpus.len());
@@ -472,6 +497,7 @@ pub fn run_with_policy(arm_name: &str, policy: impl ArmPolicy) -> Result<(), Str
             .take(request.cpus.len())
             .collect::<Vec<_>>(),
     );
+    let mut executed_routes = vec![None; request.cpus.len()];
     let mut cell = run_cell(
         arm_name,
         &request,
@@ -499,6 +525,7 @@ pub fn run_with_policy(arm_name: &str, policy: impl ArmPolicy) -> Result<(), Str
                 .map(|outcome| outcome.iterations as u32)
                 .collect();
             report_iterations(arm_name, index, IterationSource::Direct, &iterations);
+            executed_routes[index] = worker.decoder().last_wave_route();
             Ok(())
         },
     )?;
@@ -511,6 +538,7 @@ pub fn run_with_policy(arm_name: &str, policy: impl ArmPolicy) -> Result<(), Str
             decoder_config,
             batch,
             llrs,
+            executed_routes: &executed_routes,
         },
         routes,
         workspace_bytes,
