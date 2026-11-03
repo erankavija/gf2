@@ -1,0 +1,162 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "55c3e433-integrated-adoption-pilot",
+  "issue": "3ee00fcf",
+  "label": "pilot",
+  "campaign_seed": 2992665123,
+  "addendum": "target/aff3ct-ldpc-gaps/55c3e433-integrated-adoption/pilot/addendum.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "gf2-batch-pre-change-dvb-t2-r12": {
+      "build": "native",
+      "description": "gf2-batch-pre-change built in its own pinned tree",
+      "executable": "@build/gf2-batch-pre-change/gf2-batch-tuned-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": {
+        "id": "gf2-0a77ecfc-20261013t011147z-815998",
+        "sha256": "bcb0ac3a6013290366d3d1cd7331644b6cec06be19c156c3401aa13ca3f00b95"
+      }
+    },
+    "gf2-batch-pre-change-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-batch-pre-change built in its own pinned tree",
+      "executable": "@build/gf2-batch-pre-change/gf2-batch-tuned-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": {
+        "id": "gf2-0a77ecfc-20261013t011147z-815998",
+        "sha256": "bcb0ac3a6013290366d3d1cd7331644b6cec06be19c156c3401aa13ca3f00b95"
+      }
+    },
+    "gf2-batch-qc-candidate-dvb-t2-r12": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the QC route candidate envelope, with NR BG1 Z=384 structure attached after an exact parity-check comparison",
+      "executable": "@build/gf2-batch-qc-candidate/gf2-batch-qc-candidate-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": {
+        "id": "gf2-qc-route-candidate",
+        "sha256": "b0bcab5b879005446edcaf5aae23ab3119eb51f7e97ef1701cd7ca3a93797897"
+      }
+    },
+    "gf2-batch-qc-candidate-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the QC route candidate envelope, with NR BG1 Z=384 structure attached after an exact parity-check comparison",
+      "executable": "@build/gf2-batch-qc-candidate/gf2-batch-qc-candidate-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": {
+        "id": "gf2-qc-route-candidate",
+        "sha256": "b0bcab5b879005446edcaf5aae23ab3119eb51f7e97ef1701cd7ca3a93797897"
+      }
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-w1-b1",
+      "baseline_arm": "gf2-batch-pre-change-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-qc-candidate-dvb-t2-r12",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "dvb-t2-r12-w1-b8",
+      "baseline_arm": "gf2-batch-pre-change-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-qc-candidate-dvb-t2-r12",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "dvb-t2-r12-p12-b8",
+      "baseline_arm": "gf2-batch-pre-change-dvb-t2-r12",
+      "candidate_arm": "gf2-batch-qc-candidate-dvb-t2-r12",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-w1-b1",
+      "baseline_arm": "gf2-batch-pre-change-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-qc-candidate-nr-bg1-z384",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-w1-b8",
+      "baseline_arm": "gf2-batch-pre-change-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-qc-candidate-nr-bg1-z384",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-p12-b8",
+      "baseline_arm": "gf2-batch-pre-change-nr-bg1-z384",
+      "candidate_arm": "gf2-batch-qc-candidate-nr-bg1-z384",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    }
+  ],
+  "max_cells_per_session": 1
+}
