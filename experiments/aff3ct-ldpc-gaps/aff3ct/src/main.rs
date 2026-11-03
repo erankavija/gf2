@@ -63,8 +63,8 @@ fn run() -> Result<(), String> {
     let result = ArmResult {
         schema: ARM_RESULT_SCHEMA.to_owned(),
         windows: cell.windows,
-        calibrated: true,
-        cache_state_applied: request.cache_state.clone(),
+        calibrated: Some(true),
+        cache_state_applied: request.cache_state,
         workers_observed: cell.workers_observed,
         cpus_observed: arm::observed_cpus(),
         selected_path: Some(format!(

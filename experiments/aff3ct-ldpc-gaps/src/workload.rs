@@ -1,6 +1,6 @@
 //! Recorded workload and post-timing placement and decision checks.
 
-use crate::arm::{DecoderCase, Quality, Request};
+use crate::arm::{ArmRequest, CacheState, DecoderCase, Quality};
 use crate::bundle::BundleManifest;
 use crate::pool::{Finished, WorkerObservation};
 use serde::Serialize;
@@ -108,10 +108,14 @@ pub fn check_prepared(errors: &[u64], quality: &Quality, first: usize) -> Result
 ///
 /// Returns an error when the cell is not warm, when the worker count differs
 /// from the resolved CPU count, or when the batch leaves the bundle.
-pub fn check_request(request: &Request, case: &DecoderCase, frames: usize) -> Result<(), String> {
-    if request.cache_state != "warm" {
+pub fn check_request(
+    request: &ArmRequest,
+    case: &DecoderCase,
+    frames: usize,
+) -> Result<(), String> {
+    if request.cache_state != CacheState::Warm {
         return Err(format!(
-            "steady-state cells declare warm cache state, not {}",
+            "steady-state cells declare warm cache state, not {:?}",
             request.cache_state
         ));
     }
