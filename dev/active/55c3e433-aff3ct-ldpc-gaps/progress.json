@@ -1,7 +1,7 @@
 {
   "epic_id": "55c3e433-843f-4079-adc5-4530ff3e8946",
   "epic_short_id": "55c3e433",
-  "current_wave": 4,
+  "current_wave": 5,
   "waves": [
     {
       "wave_number": 1,
@@ -66,7 +66,7 @@
           "short_id": "0cc6c195",
           "title": "Route the QC decoder through canonical tuning and dispatch",
           "classification": "implementation",
-          "status": "in_progress"
+          "status": "done"
         }
       ]
     },
@@ -200,7 +200,16 @@
       ]
     }
   ],
-  "surfaced_pitfalls": [],
+  "surfaced_pitfalls": [
+    {
+      "subject": "qc-route-candidate.json assembly.tool names tuned.rs though a one-off script assembled it",
+      "status": "passed code-review; correct if the confirmation's build record reads it"
+    },
+    {
+      "subject": "gf2-batch-qc-candidate arm has unit tests only, no end-to-end smoke",
+      "status": "required before arming the window"
+    }
+  ],
   "rework_counts": {
     "10590c11": 1,
     "1d787ed3": 3,
