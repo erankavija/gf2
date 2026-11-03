@@ -23,7 +23,7 @@
           "short_id": "2088e0ec",
           "title": "Land the comparison harness under experiments",
           "classification": "implementation",
-          "status": "blocked-awaiting-owner"
+          "status": "rework"
         }
       ]
     },
@@ -164,6 +164,13 @@
       "vendor": "claude",
       "model": "opus",
       "reason": "contract-setting route predicate across exhaustive consumers"
+    },
+    {
+      "issue": "2088e0ec",
+      "vendor": "codex",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "reason": "owner-authorized rework: adopt canonical arm wire types across the experiment's arms"
     }
   ],
   "created_during_execution": [],
@@ -190,14 +197,13 @@
     },
     {
       "topic": "2088e0ec rework limit",
-      "status": "open",
       "issue": "2088e0ec",
       "finding": "code-review F1: experiments/aff3ct-ldpc-gaps/src/arm.rs keeps a parallel arm wire contract instead of tuning-campaign-support's types",
-      "need": "owner: authorize one more rework round, recommended",
       "blocks": [
         "3ee00fcf",
         "5f401907"
-      ]
+      ],
+      "resolution": "owner: one more rework round authorized (2026-11-03)"
     }
   ],
   "surfaced_pitfalls": [
@@ -214,7 +220,7 @@
     "10590c11": 1,
     "1d787ed3": 3,
     "a72f2b3f": 2,
-    "2088e0ec": 2
+    "2088e0ec": 3
   },
   "started_at": "2026-11-01T15:20:00+02:00",
   "window": {
