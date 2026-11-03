@@ -78,7 +78,7 @@
           "short_id": "3ee00fcf",
           "title": "Confirm the integrated candidate and adopt it only if it qualifies",
           "classification": "research",
-          "status": "pending"
+          "status": "in_progress"
         }
       ]
     },
@@ -172,6 +172,12 @@
       "effort": "high",
       "reason": "owner-authorized rework: adopt canonical arm wire types across the experiment's arms",
       "outcome": "code-review pass; lead removed one redundant library-duplicating test"
+    },
+    {
+      "issue": "3ee00fcf",
+      "vendor": "claude",
+      "model": "opus",
+      "reason": "contract-setting family declaration, pinned pre-change build, smoke and window job"
     }
   ],
   "created_during_execution": [],
