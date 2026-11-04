@@ -53,9 +53,9 @@ pub fn route_selectors(route: BatchRoute) -> DecodeSelectors {
 /// A stage of one worker batch, in execution order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Stage {
-    /// Conversion of a wave's recorded f32 values into [`Llr`].
+    /// Conversion of the batch's recorded f32 values into [`Llr`].
     Pack,
-    /// The batch decoder call on a wave.
+    /// The batch decoder call on the batch.
     Decode,
     /// Extraction of the batch's information-window decisions.
     Extract,
@@ -72,7 +72,7 @@ pub struct StageCosts {
 /// One worker's reused batch decoder and buffers.
 pub struct BatchWorker {
     decoder: LdpcBatchDecoder,
-    /// Converted LLRs of one wave.
+    /// Converted LLRs of the batch.
     packed: Vec<Llr>,
     decoded: Vec<BitVec>,
     outcomes: Vec<DecodeOutcome>,
@@ -116,7 +116,7 @@ impl BatchWorker {
         }
         Ok(Self {
             decoder,
-            packed: vec![Llr::zero(); LANES * n],
+            packed: vec![Llr::zero(); batch * n],
             decoded: vec![BitVec::new(); batch],
             outcomes: vec![DecodeOutcome::default(); batch],
             n,
@@ -140,9 +140,10 @@ impl BatchWorker {
     /// Decodes every frame of `llrs`, `n` values per frame, and extracts the
     /// information-window hard decisions.
     ///
-    /// The frames go to the decoder in waves of [`LANES`], the grouping it
-    /// applies to a longer batch itself, so the frame views live on the stack
-    /// and a call allocates nothing after the first.
+    /// The decoder receives the whole batch in one call, so it selects the
+    /// route of the batch as a direct production call does. The frame views
+    /// of a batch of at most [`LANES`] frames live on the stack, and a call
+    /// on such a batch allocates nothing after the first.
     ///
     /// # Panics
     ///
@@ -184,28 +185,30 @@ impl BatchWorker {
     /// Runs the batch and calls `lap` at the end of each stage.
     fn run_stages(&mut self, llrs: &[f32], workers: NonZeroUsize, mut lap: impl FnMut(Stage)) {
         let n = self.n;
-        assert_eq!(llrs.len(), self.decoded.len() * n, "batch size");
-        for (wave, recorded) in llrs.chunks(LANES * n).enumerate() {
-            let packed = &mut self.packed[..recorded.len()];
-            for (slot, value) in packed.iter_mut().zip(recorded) {
-                *slot = Llr::new(*value);
-            }
-            lap(Stage::Pack);
-            let mut views: [&[Llr]; LANES] = [&[]; LANES];
-            let mut frames = 0;
-            for (view, frame) in views.iter_mut().zip(packed.chunks_exact(n)) {
-                *view = frame;
-                frames += 1;
-            }
-            let slots = wave * LANES..wave * LANES + frames;
-            self.decoder.decode_batch_with_workers(
-                black_box(&views[..frames]),
-                &mut self.decoded[slots.clone()],
-                &mut self.outcomes[slots],
-                workers,
-            );
-            lap(Stage::Decode);
+        let batch = self.decoded.len();
+        assert_eq!(llrs.len(), batch * n, "batch size");
+        for (slot, value) in self.packed.iter_mut().zip(llrs) {
+            *slot = Llr::new(*value);
         }
+        lap(Stage::Pack);
+        let mut stack: [&[Llr]; LANES] = [&[]; LANES];
+        let heap: Vec<&[Llr]>;
+        let views: &[&[Llr]] = if batch <= LANES {
+            for (view, frame) in stack.iter_mut().zip(self.packed.chunks_exact(n)) {
+                *view = frame;
+            }
+            &stack[..batch]
+        } else {
+            heap = self.packed.chunks_exact(n).collect();
+            &heap
+        };
+        self.decoder.decode_batch_with_workers(
+            black_box(views),
+            &mut self.decoded,
+            &mut self.outcomes,
+            workers,
+        );
+        lap(Stage::Decode);
         for (word, decided) in self
             .decoded
             .iter()
