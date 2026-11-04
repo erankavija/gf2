@@ -78,7 +78,7 @@
           "short_id": "3ee00fcf",
           "title": "Confirm the integrated candidate and adopt it only if it qualifies",
           "classification": "research",
-          "status": "blocked-awaiting-owner"
+          "status": "in_progress"
         }
       ]
     },
@@ -187,6 +187,12 @@
       "effort": "high",
       "reason": "adopt the qualified QC route in the committed production envelope through canonical composition",
       "outcome": "blocked: composer cannot add a fixed selector; no change made"
+    },
+    {
+      "issue": "3ee00fcf",
+      "vendor": "claude",
+      "model": "opus",
+      "reason": "owner-approved composer fixed-selector input plus production envelope cutover, contract-setting"
     }
   ],
   "created_during_execution": [],
@@ -223,19 +229,17 @@
     },
     {
       "topic": "composer fixed-selector input for qc_route_cases",
-      "status": "open",
       "issue": "3ee00fcf",
-      "need": "owner: approve shared-tool change to dev/tools/tuning-profile-compose (recommended A)",
       "blocks": [
         "3ee00fcf",
         "5f401907"
-      ]
+      ],
+      "resolution": "owner: option A approved (2026-11-04)"
     },
     {
       "topic": "second window for comparator-family",
-      "status": "open",
       "issue": "5f401907",
-      "need": "owner: approve one window after adoption lands"
+      "resolution": "owner: one window approved for comparator-family after adoption lands (2026-11-04)"
     }
   ],
   "surfaced_pitfalls": [
@@ -265,5 +269,9 @@
     "armed": "timer gf2-bench-window-20261104, 2026-11-04 04:00 Europe/Helsinki; queue job 3ee00fcf only (67194d70 line has no worktree and is skipped)",
     "result": "ran 2026-11-04 04:00-04:09 Helsinki rc=0; confirmation qualifies=true, receipt 87cfeaa2d11de5b8f03d5f5f6a8f83c0975b3dd2e256d25c692854c21c06a18a; pilot receipt ea8df84f85ca82f2563bf68733634c41aad3a33812ef881ac161ea76eee3f447; evidence in campaign-evidence/55c3e433/integrated-adoption/run",
     "status": "spent"
+  },
+  "window2": {
+    "approved_by": "owner",
+    "scope": "one window for 55c3e433-adopted-vs-aff3ct pilot and confirmation, after 3ee00fcf adoption lands"
   }
 }
