@@ -1,4 +1,3 @@
 # issue	worktree	est_minutes	command
 # 67194d70 new pre-draw validation; est_minutes is an estimate from the September run over the same anchors
 67194d70	.agents/worktrees/agent-67194d70	20	bash experiments/permanent-statistics/validation-window.sh
-3ee00fcf	.agents/worktrees/agent-3ee00fcf	15	bash ../../campaign-evidence/55c3e433/integrated-adoption/prepared/window.sh
