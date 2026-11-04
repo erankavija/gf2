@@ -194,6 +194,20 @@
       "model": "opus",
       "reason": "owner-approved composer fixed-selector input plus production envelope cutover, contract-setting",
       "outcome": "partial: composer input 6946a4057, adoption 235238c95; lead moved the superseded profile b71907313 on branch; cutover blocked on d06a99ed description"
+    },
+    {
+      "issue": "3ee00fcf",
+      "vendor": "codex",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "reason": "adoption decision record from preserved evidence",
+      "outcome": "record written; reviews raised F1 routing and F2 budget"
+    },
+    {
+      "issue": "3ee00fcf",
+      "vendor": "claude",
+      "model": "sonnet",
+      "reason": "rework 1: code-review F1, tuned arm long-batch routing"
     }
   ],
   "created_during_execution": [],
@@ -244,9 +258,18 @@
     },
     {
       "topic": "d06a99ed description names the superseded production profile path",
+      "issue": "3ee00fcf",
+      "blocks": [
+        "3ee00fcf",
+        "5f401907"
+      ],
+      "resolution": "owner: option A approved; applied 890c3e8be"
+    },
+    {
+      "topic": "complexity budget scope: 907 production vs 1984 including tests against frozen 1500",
       "status": "open",
       "issue": "3ee00fcf",
-      "need": "owner: approve replacing the path in done issue d06a99ed's description with experiments/aff3ct-ldpc-gaps/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json (recommended)",
+      "need": "owner: rule whether max_added_source_lines binds production source only",
       "blocks": [
         "3ee00fcf",
         "5f401907"
@@ -271,7 +294,8 @@
     "10590c11": 1,
     "1d787ed3": 3,
     "a72f2b3f": 2,
-    "2088e0ec": 3
+    "2088e0ec": 3,
+    "3ee00fcf": 1
   },
   "started_at": "2026-11-01T15:20:00+02:00",
   "window": {
