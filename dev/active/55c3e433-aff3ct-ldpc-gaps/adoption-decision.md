@@ -47,8 +47,13 @@ The delivery adds one unsafe kernel,
 `crates/gf2-kernels-simd/src/x86/ldpc_qc.rs`.
 
 The measured addition is **907 production Rust source lines**, or **1,984 including
-tests**. The budget binds the production count, which is below 1,500.
-The measurement sums the added column of `git diff --numstat 87ec416d3 HEAD`
+tests**. Neither `adoption-family` nor the frozen declaration states whether the
+allowance counts test source. The total including tests exceeds 1,500. After the
+confirmation, the owner ruled on 2026-11-04 that `max_added_source_lines` binds
+production source, because the allowance derives from the delivery's estimated size
+as a maintenance cost. Under that ruling the delivery is within budget, at 907 of
+1,500 lines. Under a count that includes tests, it would exceed the budget by 484
+lines. The measurement sums the added column of `git diff --numstat 87ec416d3 HEAD`
 for Rust source files under `crates/`. Production excludes `tests/` directories
 and additions inside `#[cfg(test)]` modules. Zero-context diff hunk positions
 identify 137 added lines inside the test module of
@@ -98,4 +103,6 @@ On the 5900X host, an improvement-cell lower bound below 1.25 reverses adoption
 lower bound below $1/1.1$ reverses adoption (observed: 0.9973, 0.9937 and 0.9957
 at DVB-T2 `w1-b1`, `w1-b8` and `p12-b8`; 0.9652 at NR `w1-b8`).
 Any evaluator finding (observed: none) or conformance failure also reverses
-adoption (observed: the `cargo-ci` gate passes).
+adoption (observed: the `cargo-ci` gate passes). So does exceeding the complexity
+budget: more than one new unsafe kernel (observed: one), or more than 1,500 added
+production source lines under the owner's ruling (observed: 907).
