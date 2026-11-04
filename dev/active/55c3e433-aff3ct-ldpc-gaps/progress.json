@@ -222,7 +222,8 @@
       "issue": "5f401907",
       "vendor": "claude",
       "model": "opus",
-      "reason": "comparator-family declaration from FI-3 history, builds, smoke and window job"
+      "reason": "comparator-family declaration from FI-3 history, builds, smoke and window job",
+      "outcome": "prepared: declaration 3a775c2a7, smoke passed on six cells, window job ready"
     }
   ],
   "created_during_execution": [
@@ -336,6 +337,7 @@
   },
   "window2": {
     "approved_by": "owner",
-    "scope": "one window for 55c3e433-adopted-vs-aff3ct pilot and confirmation, after 3ee00fcf adoption lands"
+    "scope": "one window for 55c3e433-adopted-vs-aff3ct pilot and confirmation, after 3ee00fcf adoption lands",
+    "armed": "timer gf2-bench-window-20261105, 2026-11-05 04:00 Europe/Helsinki; queue job 5f401907 only"
   }
 }
