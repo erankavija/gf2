@@ -1,7 +1,7 @@
 {
   "epic_id": "55c3e433-843f-4079-adc5-4530ff3e8946",
   "epic_short_id": "55c3e433",
-  "current_wave": 5,
+  "current_wave": 6,
   "waves": [
     {
       "wave_number": 1,
@@ -78,7 +78,7 @@
           "short_id": "3ee00fcf",
           "title": "Confirm the integrated candidate and adopt it only if it qualifies",
           "classification": "research",
-          "status": "blocked-awaiting-owner"
+          "status": "done"
         }
       ]
     },
@@ -90,7 +90,7 @@
           "short_id": "5f401907",
           "title": "Close the integrated LDPC cells against AFF3CT",
           "classification": "research",
-          "status": "pending"
+          "status": "in_progress"
         }
       ]
     }
@@ -215,7 +215,14 @@
       "vendor": "codex",
       "model": "gpt-6-luna",
       "effort": "xhigh",
-      "reason": "rework 2: code-review F3, forced-route validation against whole-batch execution"
+      "reason": "rework 2: code-review F3, forced-route validation against whole-batch execution",
+      "outcome": "code-review pass (fe9ae761a)"
+    },
+    {
+      "issue": "5f401907",
+      "vendor": "claude",
+      "model": "opus",
+      "reason": "comparator-family declaration from FI-3 history, builds, smoke and window job"
     }
   ],
   "created_during_execution": [
