@@ -1,0 +1,455 @@
+{
+  "schema": "zen3-benchmark-addendum-v4",
+  "protocol": {
+    "id": "zen3-benchmark-protocol",
+    "version": 4
+  },
+  "family": {
+    "id": "55c3e433-adopted-vs-aff3ct",
+    "issue": "5f401907",
+    "purpose": "decoder-family",
+    "description": "Matched-algorithm gap of gf2's adopted production LDPC route against AFF3CT [Cassagne2019], under the comparator-family contract of dev/active/55c3e433-aff3ct-ldpc-gaps/plan.md. The baseline arm gf2-batch-tuned is the gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope gf2-3ee00fcf-20261104t064432z-4012544, whose selectors include the QC route cases of qc-go-rule, with NR BG1 Z=384 structure attached after an exact parity-check comparison outside timing; the QC route therefore runs at NR w1-b1 and p12-b8, and every other cell keeps its existing route. The candidate arm aff3ct-flooding-nms-f32 is AFF3CT's flooding f32 normalized min-sum decoder at the pin of c077a88b, one clone per pinned worker, with its syndrome check at depth one. The cells, arms, comparator-gap objective, ratio direction and margins are those of FI-3's family 1362381c-ldpc-aff3ct-integration (@/issue/1358d6ab): the speedup is gf2 time divided by AFF3CT time, so an evaluator pass means AFF3CT holds a material advantage and a value below one means gf2 is faster. The AList graphs, recorded LLRs, f32 flooding NMS factor 0.75, cap 50, syndrome stopping, timed prefix and steady-state decode boundary are those of 55c3e433-integrated-adoption. Each worker owns its decoder before timing; conversion, dispatch and information-window extraction are included. Each arm reports its per-frame iteration counts after timing, direct for gf2 and replay-derived for AFF3CT. Stages are one twelve-pair pilot, a freeze by experiments/aff3ct-ldpc-gaps/freeze-confirmation.py with resolution from that pilot, and one 24-pair confirmation of the six cells. History: FI-3 measured the pre-adoption route on its own ledger, whose confirmation reservation its AFF3CT candidate holds; this family's ledger starts empty, so prior_trials is empty, and FI-3's results are descriptive history that no estimate here reuses. The family publishes the gap and selects nothing, so it declares no holdout."
+  },
+  "frozen": {
+    "frozen_utc": "2026-11-04T13:23:57Z"
+  },
+  "effect": {
+    "worthwhile_speedup": null,
+    "rationale": "The family publishes the matched comparator gap with AFF3CT [Cassagne2019] and adopts nothing, so it declares no worthwhile speedup.",
+    "measurement_resolution": null,
+    "resolution_evidence": null,
+    "equivalence_margin": 1.1,
+    "equivalence_rationale": "Within ten percent at matched settings, a receiver choosing between gf2's production route and AFF3CT [Cassagne2019] gains too little throughput to repay integrating and maintaining a second decoder dependency, so the family reads the arms as equivalent. Fixed before this pilot; the canonical freezer stops when pilot resolution reaches it and never widens it from results.",
+    "material_gap_threshold": 1.25,
+    "material_gap_rationale": "A steady-state gap of a quarter of a receiver's decode throughput at matched settings outweighs the integration and maintenance cost of a second decoder dependency, so it changes which decoder a receiver deploys and needs attribution; it lies outside the equivalence margin. Fixed before this pilot; the canonical freezer stops when pilot resolution reaches it and never widens it from results."
+  },
+  "complexity_budget": {
+    "max_new_unsafe_kernels": 0,
+    "max_added_source_lines": null,
+    "maintenance_rationale": "The family selects nothing and adds no production code."
+  },
+  "family_wise": {
+    "alpha": 0.05,
+    "prior_confirmatory_trials": 0,
+    "ledger_path": "target/aff3ct-ldpc-gaps/55c3e433-adopted-vs-aff3ct/ledger.jsonl",
+    "prior_trials": []
+  },
+  "search_budget": {
+    "max_pilot_trials_per_cell": 1,
+    "max_confirmatory_attempts_per_candidate": 1
+  },
+  "holdout": {
+    "required": false,
+    "cells": []
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-w1-b1",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 1,
+          "workers": 1,
+          "timed_frames": 1,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "comparator-gap",
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle dvb-t2-r12-waterfall",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        }
+      }
+    },
+    {
+      "cell_id": "dvb-t2-r12-w1-b8",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 1,
+          "timed_frames": 8,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "comparator-gap",
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle dvb-t2-r12-waterfall",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        }
+      }
+    },
+    {
+      "cell_id": "dvb-t2-r12-p12-b8",
+      "role": "exploratory",
+      "workload": {
+        "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 64800,
+          "k": 32400,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 12,
+          "timed_frames": 96,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "comparator-gap",
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "dvb-t2-normal-rate-1-2-etsi-en-302-755",
+          "n": 64800,
+          "k": 32400,
+          "h_sha256": "a419661049980d70925d5ea225118196e00142c9f1c80ab7bcb1fad3c39e2f5b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle dvb-t2-r12-waterfall",
+          "llr_sha256": "9d38372777f38d9abcd755df19774aeee66418b75468926c408b766ee1070892",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -1.2
+        }
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-w1-b1",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 1,
+          "workers": 1,
+          "timed_frames": 1,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "comparator-gap",
+      "metric_kind": "whole-consumer",
+      "scaling": "single-core-latency",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle nr-bg1-z384-mother",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        }
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-w1-b8",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 1,
+          "timed_frames": 8,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "comparator-gap",
+      "metric_kind": "whole-consumer",
+      "scaling": "sustained-throughput",
+      "core_arm": "single-core",
+      "workers": {
+        "declared": 1,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle nr-bg1-z384-mother",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        }
+      }
+    },
+    {
+      "cell_id": "nr-bg1-z384-p12-b8",
+      "role": "exploratory",
+      "workload": {
+        "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212 awgn-bpsk recorded llrs",
+        "size": {
+          "n": 26112,
+          "k": 8448,
+          "frames": 128,
+          "timed_batch": 8,
+          "workers": 12,
+          "timed_frames": 96,
+          "timed_fixture_banks": 1
+        },
+        "seed": 42
+      },
+      "objective": "comparator-gap",
+      "metric_kind": "whole-consumer",
+      "scaling": "multicore-throughput",
+      "core_arm": "physical-cores-12",
+      "workers": {
+        "declared": 12,
+        "nested_pools_allowed": false
+      },
+      "cache_state": "warm",
+      "builds": {
+        "baseline": "native",
+        "candidate": "external"
+      },
+      "conversion_costs_included": true,
+      "decoder": {
+        "arm_kind": "matched-algorithm",
+        "precision": "f32",
+        "schedule": "flooding",
+        "normalization": {
+          "kind": "normalized-min-sum",
+          "factor": 0.75
+        },
+        "iteration_cap": 50,
+        "stopping": {
+          "kind": "syndrome",
+          "crc": null
+        },
+        "batching": {
+          "batch_size": 1,
+          "batch_fill_included": true
+        },
+        "quality_tolerance": {
+          "fer_ratio_max": 1.0,
+          "confidence": 0.95
+        },
+        "rate_matching": null,
+        "code": {
+          "identity": "nr-5g-bg1-lifting-384-mother-code-3gpp-ts-38-212",
+          "n": 26112,
+          "k": 8448,
+          "h_sha256": "3fdf21d7ee9c1fb472765b3ea2e82ce6ae2240860a290defead8a2932762266b"
+        },
+        "input": {
+          "llr_source": "SHA-256 a7c47dfb9d345b0ab01ad2feca82c512963f963776036c8d9bd761f3640cdfba bundle nr-bg1-z384-mother",
+          "llr_sha256": "c1963f8c7b54022074c1c482dce8cfed56a77591ccfddee3b315dd1f270d1c7a",
+          "frames": 128,
+          "seed": 42,
+          "codeword_source": "both",
+          "snr_db": -4.3
+        }
+      }
+    }
+  ]
+}
