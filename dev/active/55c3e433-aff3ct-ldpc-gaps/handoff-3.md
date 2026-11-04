@@ -52,6 +52,7 @@ The traps in [handoff-2.md](handoff-2.md) and [handoff.md](handoff.md) stay in f
 - **Do NOT install jit from just-in-time's main.** After `2117739f` it refuses format-3 trackers, including gf2's, until the owner runs the five-repository cutover. Keep `~/.cargo/bin/jit` (built Nov 1).
 - **`jit gate check` does not exist.** Use `jit gate evaluate <id> <gate>`. `jit gate status` only reports the last run.
 - **Do NOT rebuild in `agent-3ee00fcf` or the pre-change tree before reclaiming.** The build records pin those executables, and the input root lives in the worktree's `target/`.
+- **A tracked queue line whose command names an ignored path fails `check-references`.** The `3ee00fcf` line did so from `773ff282e` until `c5b146b96` removed it. Remove a spent line as soon as its window ends, and expect the fault while one is queued.
 - **`systemctl --user` needs `XDG_RUNTIME_DIR=/run/user/$(id -u)`** in this harness's shell.
 - **The prepared quality files are not in the preserved evidence.** They came from `545a3c814:dev/bench_results/c077a88b/v3-preparation/quality/` and are byte-identical to the files both pilots used. The closing record must say so.
 
