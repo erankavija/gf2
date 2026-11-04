@@ -78,7 +78,7 @@
           "short_id": "3ee00fcf",
           "title": "Confirm the integrated candidate and adopt it only if it qualifies",
           "classification": "research",
-          "status": "in_progress"
+          "status": "blocked-awaiting-owner"
         }
       ]
     },
@@ -192,7 +192,8 @@
       "issue": "3ee00fcf",
       "vendor": "claude",
       "model": "opus",
-      "reason": "owner-approved composer fixed-selector input plus production envelope cutover, contract-setting"
+      "reason": "owner-approved composer fixed-selector input plus production envelope cutover, contract-setting",
+      "outcome": "partial: composer input 6946a4057, adoption 235238c95; lead moved the superseded profile b71907313 on branch; cutover blocked on d06a99ed description"
     }
   ],
   "created_during_execution": [],
@@ -240,6 +241,16 @@
       "topic": "second window for comparator-family",
       "issue": "5f401907",
       "resolution": "owner: one window approved for comparator-family after adoption lands (2026-11-04)"
+    },
+    {
+      "topic": "d06a99ed description names the superseded production profile path",
+      "status": "open",
+      "issue": "3ee00fcf",
+      "need": "owner: approve replacing the path in done issue d06a99ed's description with experiments/aff3ct-ldpc-gaps/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json (recommended)",
+      "blocks": [
+        "3ee00fcf",
+        "5f401907"
+      ]
     }
   ],
   "surfaced_pitfalls": [
