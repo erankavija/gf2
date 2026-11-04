@@ -167,7 +167,11 @@ The conservative family closes the lane route, so a process that installs no
 section decodes every wave frame by frame. Take the bounds from a measurement
 on the target host; the committed coding envelope under
 `crates/gf2-coding/data/tuning-profiles/` records the calibration campaign's
-selectors with their provenance. With `gf2-coding`'s `tuning-profile`
+lane selectors with their provenance, and the `qc_route_cases` that the
+confirmation family `55c3e433-integrated-adoption` qualified. The cases have
+no measured threshold, so `tuning-profile-compose coding-owner` adds them to a
+calibrated owner through `--fixed-selector decode.qc_route_cases`. With
+`gf2-coding`'s `tuning-profile`
 feature enabled, registering `CodingTuning` with `CodingTuningCodec` in the
 profile registry above installs one.
 `LdpcBatchDecoder::new` reads the family once at construction;

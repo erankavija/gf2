@@ -9,11 +9,11 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use gf2_algebra::tuning::{AlgebraTuning, AlgebraTuningCodec};
-use gf2_coding::tuning::{CodingTuning, CodingTuningCodec};
+use gf2_coding::tuning::{CodingTuning, CodingTuningCodec, QcRouteCase};
 use gf2_core::tuning::{
-    AssemblyProvenance, CompiledProfileProvenance, CoreTuning, CoreTuningCodec, GitRevision,
-    MeasurementProvenance, PreparedEnvelope, ProfileId, ProfileRegistry, ProfileRegistryBuilder,
-    RepoRelPath, Rfc3339Utc, Sha256, TuningSection,
+    AssemblyProvenance, CanonicalValue, CompiledProfileProvenance, CoreTuning, CoreTuningCodec,
+    GitRevision, MeasurementProvenance, PreparedEnvelope, ProfileId, ProfileRegistry,
+    ProfileRegistryBuilder, RepoRelPath, Rfc3339Utc, SectionCodec, Sha256, TuningSection,
 };
 use serde::Deserialize;
 use serde_json::value::RawValue;
@@ -23,8 +23,37 @@ const TOOL_PATH: &str = "dev/tools/tuning-profile-compose";
 const USAGE: &str = "usage: tuning-profile-compose \
     (core-owner OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
      algebra-owner OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
-     coding-owner CALIBRATED_OWNER OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
+     coding-owner CALIBRATED_OWNER [--fixed-selector decode.qc_route_cases CASES_JSON] OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
      complete CORE_OWNER ALGEBRA_OWNER [CODING_OWNER] OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256)";
+
+/// The one selector path a coding owner accepts as a fixed input.
+const QC_ROUTE_CASES: &str = "decode.qc_route_cases";
+
+/// A selector value the caller fixes in a coding owner beside the calibrated
+/// selectors. Only the QC route cases qualify: `qc-go-rule` fixes their
+/// predicate with no measured threshold, so they carry no calibration.
+#[derive(Debug, PartialEq, Eq)]
+struct FixedSelector(Vec<QcRouteCase>);
+
+impl FixedSelector {
+    /// Reads `value`, the JSON of the selector at `path`, through the coding
+    /// owner codec.
+    fn parse(path: &str, value: &str) -> Result<Self, Box<dyn Error>> {
+        if path != QC_ROUTE_CASES {
+            return Err(format!("{path} is no fixed selector; only {QC_ROUTE_CASES} is").into());
+        }
+        let value: serde_json::Value = serde_json::from_str(value)?;
+        let body = CanonicalValue::serialize(
+            &serde_json::json!({ "decode": { "qc_route_cases": value } }),
+        )?;
+        let section = CodingTuningCodec::decode_body(body)?;
+        Ok(Self(section.decode().qc_route_cases().to_vec()))
+    }
+
+    fn apply(&self, section: CodingTuning) -> CodingTuning {
+        section.with_qc_route_cases(self.0.clone())
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 enum Command {
@@ -40,6 +69,7 @@ enum Command {
     },
     CodingOwner {
         calibrated_path: PathBuf,
+        fixed: Option<FixedSelector>,
         output_path: PathBuf,
         profile_id: ProfileId,
         assembly: AssemblyProvenance,
@@ -92,9 +122,16 @@ fn parse_command(arguments: &[String]) -> Result<Command, Box<dyn Error>> {
                 })
             }
         }
-        [mode, calibrated_path, output_path, profile_id, assembled_at, source_revision, source_dirty, tool_sha256]
+        [mode, calibrated_path, rest @ .., profile_id, assembled_at, source_revision, source_dirty, tool_sha256]
             if mode == "coding-owner" =>
         {
+            let (fixed, output_path) = match rest {
+                [output_path] => (None, output_path),
+                [flag, path, value, output_path] if flag == "--fixed-selector" => {
+                    (Some(FixedSelector::parse(path, value)?), output_path)
+                }
+                _ => return Err(USAGE.into()),
+            };
             let (profile_id, assembly) = parse_identity_and_assembly(
                 profile_id,
                 assembled_at,
@@ -104,6 +141,7 @@ fn parse_command(arguments: &[String]) -> Result<Command, Box<dyn Error>> {
             )?;
             Ok(Command::CodingOwner {
                 calibrated_path: PathBuf::from(calibrated_path),
+                fixed,
                 output_path: PathBuf::from(output_path),
                 profile_id,
                 assembly,
@@ -173,10 +211,17 @@ fn execute(command: Command) -> Result<(), Box<dyn Error>> {
         } => emit_algebra_owner(&output_path, profile_id, &assembly),
         Command::CodingOwner {
             calibrated_path,
+            fixed,
             output_path,
             profile_id,
             assembly,
-        } => emit_coding_owner(&calibrated_path, &output_path, profile_id, &assembly),
+        } => emit_coding_owner(
+            &calibrated_path,
+            fixed.as_ref(),
+            &output_path,
+            profile_id,
+            &assembly,
+        ),
         Command::Complete {
             core_path,
             algebra_path,
@@ -221,15 +266,22 @@ fn emit_algebra_owner(
 
 fn emit_coding_owner(
     calibrated_path: &Path,
+    fixed: Option<&FixedSelector>,
     output_path: &Path,
     profile_id: ProfileId,
     assembly: &AssemblyProvenance,
 ) -> Result<(), Box<dyn Error>> {
     let calibrated_text = fs::read_to_string(calibrated_path)?;
-    let text = coding_owner_text(&calibrated_text, profile_id.clone(), assembly)?;
+    let text = coding_owner_text(&calibrated_text, fixed, profile_id.clone(), assembly)?;
     write_validated_atomic(output_path, text.as_bytes(), |written_path| {
         let written_text = fs::read_to_string(written_path)?;
-        verify_coding_owner(&calibrated_text, &written_text, &profile_id, assembly)
+        verify_coding_owner(
+            &calibrated_text,
+            fixed,
+            &written_text,
+            &profile_id,
+            assembly,
+        )
     })
 }
 
@@ -264,9 +316,11 @@ fn algebra_owner_text(
 }
 
 /// Reassembles the calibrated section of a coding owner envelope, with its
-/// measurement provenance, under the caller's profile ID and assembly.
+/// measurement provenance and the `fixed` selector when given, under the
+/// caller's profile ID and assembly.
 fn coding_owner_text(
     calibrated_text: &str,
+    fixed: Option<&FixedSelector>,
     profile_id: ProfileId,
     assembly: &AssemblyProvenance,
 ) -> Result<String, Box<dyn Error>> {
@@ -276,17 +330,22 @@ fn coding_owner_text(
     let projection = calibrated
         .section::<CodingTuning>()?
         .ok_or("calibrated coding envelope is missing its typed section")?;
+    let section = projection.section.clone();
+    let section = match fixed {
+        Some(fixed) => fixed.apply(section),
+        None => section,
+    };
     let provenance = CompiledProfileProvenance {
         artifact_id: profile_id.clone(),
     };
     let prepared = PreparedEnvelope::compiled(profile_id.clone(), provenance)
         .insert_measured::<CodingTuning, CodingTuningCodec>(
-            projection.section.clone(),
+            section,
             projection.measurement.clone(),
         )?
         .build()?;
     let text = registry.to_json(&prepared, assembly)?;
-    verify_coding_owner(calibrated_text, &text, &profile_id, assembly)?;
+    verify_coding_owner(calibrated_text, fixed, &text, &profile_id, assembly)?;
     Ok(text)
 }
 
@@ -344,6 +403,7 @@ fn verify_algebra_owner(
 
 fn verify_coding_owner(
     calibrated_text: &str,
+    fixed: Option<&FixedSelector>,
     text: &str,
     expected_profile_id: &ProfileId,
     expected_assembly: &AssemblyProvenance,
@@ -373,7 +433,48 @@ fn verify_coding_owner(
             .ok_or("calibrated coding envelope lacks verified assembly")?
             .provenance,
     )?;
-    verify_wrapper_identity(&canonical_calibrated, text, CodingTuning::ID.as_str())
+    let Some(fixed) = fixed else {
+        return verify_wrapper_identity(&canonical_calibrated, text, CodingTuning::ID.as_str());
+    };
+    let reopened_section = reopened
+        .section::<CodingTuning>()?
+        .ok_or("coding owner envelope is missing its typed section")?;
+    if reopened_section.section != &fixed.apply(source.section.clone())
+        || reopened_section.measurement != source.measurement
+    {
+        return Err(
+            "coding owner does not hold the calibrated section with the fixed selector".into(),
+        );
+    }
+    let without_fixed = |envelope: &str| -> Result<serde_json::Value, Box<dyn Error>> {
+        let mut document: serde_json::Value = serde_json::from_str(envelope)?;
+        let wrapper = document
+            .get_mut("sections")
+            .and_then(|sections| sections.get_mut(CodingTuning::ID.as_str()))
+            .ok_or("canonical output lacks the coding section")?;
+        let selectors = wrapper
+            .get_mut("selectors")
+            .and_then(serde_json::Value::as_object_mut)
+            .ok_or("coding section lacks its selectors")?;
+        if let Some(decode) = selectors
+            .get_mut("decode")
+            .and_then(serde_json::Value::as_object_mut)
+        {
+            decode.remove("qc_route_cases");
+            if decode.is_empty() {
+                selectors.remove("decode");
+            }
+        }
+        Ok(wrapper.take())
+    };
+    if without_fixed(&canonical_calibrated)? != without_fixed(text)? {
+        return Err(format!(
+            "canonical wrapper of {} changed beyond {QC_ROUTE_CASES}",
+            CodingTuning::ID.as_str()
+        )
+        .into());
+    }
+    Ok(())
 }
 
 fn verify_owner_identity(
@@ -844,6 +945,47 @@ mod tests {
                 && output_path == Path::new("coding.json")
                 && profile_id.as_str() == "campaign"
         ));
+
+        let fixed = parse_command(&command_arguments(
+            "coding-owner",
+            &[
+                "calibrated.json",
+                "--fixed-selector",
+                QC_ROUTE_CASES,
+                r#"[{"base_graph":1,"frames":8,"lifting_size":384,"workers":12}]"#,
+                "coding.json",
+            ],
+        ))
+        .unwrap();
+        assert!(matches!(
+            fixed,
+            Command::CodingOwner {
+                fixed: Some(FixedSelector(cases)),
+                output_path,
+                ..
+            } if cases == [QcRouteCase::try_new(1, 384, 12, 8).unwrap()]
+                && output_path == Path::new("coding.json")
+        ));
+        for paths in [
+            &[
+                "calibrated.json",
+                "--fixed-selector",
+                QC_ROUTE_CASES,
+                "coding.json",
+            ][..],
+            &[
+                "calibrated.json",
+                "--fixed",
+                QC_ROUTE_CASES,
+                "[]",
+                "coding.json",
+            ],
+        ] {
+            assert!(parse_command(&command_arguments("coding-owner", paths))
+                .unwrap_err()
+                .to_string()
+                .contains(USAGE));
+        }
 
         let three_owner = parse_command(&command_arguments(
             "complete",

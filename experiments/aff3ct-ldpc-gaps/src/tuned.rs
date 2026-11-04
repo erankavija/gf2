@@ -5,7 +5,8 @@ use crate::arm;
 use crate::batch::{probe_stages, run_with_policy, ArmPolicy, CellContext, STAGE_PROBES};
 use crate::driver::CellRun;
 use gf2_coding::ldpc::{
-    BatchRoute, DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode, QuasiCyclicLdpc,
+    BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LdpcBatchDecoder, LdpcCode,
+    QuasiCyclicLdpc,
 };
 use gf2_coding::tuning::{self, CodingTuning, CodingTuningCodec};
 use gf2_core::tuning::{ProfileRegistryBuilder, SectionResolution};
@@ -21,14 +22,14 @@ const CANDIDATE_ARM: &str = "gf2-batch-qc-candidate";
 const QC_CORPUS: &str = "nr-bg1-r12";
 
 /// The committed coding owner envelope, embedded so the executable digest
-/// pins it.
+/// pins it. It selects the QC route of `qc-go-rule`.
 pub const ENVELOPE: &str = include_str!(
-    "../../../crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json"
+    "../../../crates/gf2-coding/data/tuning-profiles/gf2-3ee00fcf-20261104t064432z-4012544.json"
 );
 
-/// The committed envelope's lane selectors with the QC route of `qc-go-rule`
-/// selected, embedded so the executable digest pins it. Its section is
-/// inherited because the predicate has no measured threshold.
+/// The candidate envelope `55c3e433-integrated-adoption` confirmed: the
+/// selectors of [`ENVELOPE`] under an inherited measurement, embedded so the
+/// executable digest pins it.
 pub const CANDIDATE_ENVELOPE: &str = include_str!("../tuning-profiles/qc-route-candidate.json");
 
 /// The installed envelope as a plan's `tuning_profile` names it.
@@ -116,22 +117,28 @@ struct Diagnostics<'a> {
 struct TunedProfile {
     arm: &'static str,
     envelope: EnvelopeIdentity,
-    attach_qc: bool,
 }
 
 /// Checks that every worker decoded the route its decoder reported before
-/// timing, and that the QC route ran on exactly the installed cases, so that
-/// another route cannot stand in for it. Returns the executed routes.
+/// timing, and that the QC route ran on exactly the cases `qc-go-rule`
+/// selects from the installed cases, so that another route cannot stand in
+/// for it. Returns the executed routes.
 fn verify_executed_routes(
     context: &CellContext<'_>,
     observations: &[Vec<WaveRoute>],
     cases: &[gf2_coding::tuning::QcRouteCase],
 ) -> Result<Vec<BatchRoute>, String> {
     let workers = context.executed_routes.len();
-    let selected = context.code.quasi_cyclic().is_some()
-        && cases
-            .iter()
-            .any(|case| case.workers().get() == workers && case.frames().get() == context.batch);
+    let structure = context.code.quasi_cyclic();
+    let selected = matches!(
+        context.decoder_config.algorithm(),
+        DecoderAlgorithm::NormalizedMinSum(_)
+    ) && cases.iter().any(|case| {
+        let named = QuasiCyclicLdpc::nr_5g(case.base_graph(), case.lifting_size());
+        case.workers().get() == workers
+            && case.frames().get() == context.batch
+            && structure == Some(&named)
+    });
     let mut executed = Vec::with_capacity(workers);
     for (worker, (route, reported)) in context.executed_routes.iter().zip(observations).enumerate()
     {
@@ -154,13 +161,10 @@ fn verify_executed_routes(
 impl ArmPolicy for TunedProfile {
     type Observation = Vec<WaveRoute>;
 
-    /// A candidate arm retains the NR BG1 Z=384 structure on the code it
-    /// decodes only when the lifted matrix equals the corpus matrix exactly.
+    /// The arm retains the NR BG1 Z=384 structure on the code it decodes
+    /// only when the lifted matrix equals the corpus matrix exactly.
     fn prepare_code(&self, mut code: LdpcCode, corpus: &str) -> Result<LdpcCode, String> {
-        if self.attach_qc
-            && !code.attach_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(1, 384))
-            && corpus == QC_CORPUS
-        {
+        if !code.attach_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(1, 384)) && corpus == QC_CORPUS {
             return Err(format!(
                 "the parity-check matrix of {corpus} differs from NR BG1 Z=384"
             ));
@@ -269,29 +273,24 @@ impl ArmPolicy for TunedProfile {
     }
 }
 
-/// Runs the production decoder arm.
+/// Runs the production decoder arm under [`ENVELOPE`], with QC structure
+/// attached outside timing.
 ///
 /// # Errors
-/// Returns envelope installation or shared arm errors, and an error when the
-/// waves of a batch decode on several routes, which the stage probe refuses.
+/// Returns envelope installation or shared arm errors, an error when the
+/// waves of a batch decode on several routes, which the stage probe refuses,
+/// and an error when the NR corpus matrix differs from NR BG1 Z=384 or a
+/// worker decodes other than the route the envelope selects.
 pub fn run() -> Result<(), String> {
     let envelope = install_envelope(ENVELOPE)?;
-    run_with_policy(
-        ARM,
-        TunedProfile {
-            arm: ARM,
-            envelope,
-            attach_qc: false,
-        },
-    )
+    run_with_policy(ARM, TunedProfile { arm: ARM, envelope })
 }
 
 /// Runs the candidate arm: the production decoder under
 /// [`CANDIDATE_ENVELOPE`], with QC structure attached outside timing.
 ///
 /// # Errors
-/// As [`run`], and an error when the NR corpus matrix differs from NR BG1
-/// Z=384 or a worker decodes other than the route the envelope selects.
+/// As [`run`].
 pub fn run_candidate() -> Result<(), String> {
     let envelope = install_envelope(CANDIDATE_ENVELOPE)?;
     run_with_policy(
@@ -299,7 +298,6 @@ pub fn run_candidate() -> Result<(), String> {
         TunedProfile {
             arm: CANDIDATE_ARM,
             envelope,
-            attach_qc: true,
         },
     )
 }
@@ -307,7 +305,7 @@ pub fn run_candidate() -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::{install_envelope, wave_routes, ArmPolicy, NonZeroUsize, TunedProfile, LANES};
-    use super::{CANDIDATE_ARM, CANDIDATE_ENVELOPE, ENVELOPE, QC_CORPUS};
+    use super::{ARM, CANDIDATE_ENVELOPE, ENVELOPE, QC_CORPUS};
     use crate::arm::ConversionCosts;
     use crate::batch::CellContext;
     use crate::driver::CellRun;
@@ -315,22 +313,26 @@ mod tests {
     use crate::workload::Threads;
     use gf2_coding::ldpc::{
         BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LaneBackend, LdpcBatchDecoder,
-        LdpcCode, QuasiCyclicLdpc,
+        LdpcCode, LdpcDecoder, QuasiCyclicLdpc,
     };
     use gf2_coding::llr::Llr;
     use gf2_coding::test_support::{ldpc_batch_code, ldpc_batch_frames, LDPC_BATCH_CAP};
     use gf2_coding::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
-    use gf2_coding::traits::BatchSoftDecoder;
+    use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
     use gf2_coding::tuning::{self, DecodeSelectors, QcRouteCase};
     use gf2_coding::tuning::{CodingTuning, CodingTuningCodec};
     use gf2_core::tuning::ProfileRegistryBuilder;
+    use gf2_core::BitVec;
 
-    fn committed_policy(envelope: super::EnvelopeIdentity) -> TunedProfile {
-        TunedProfile {
-            arm: "probe",
-            envelope,
-            attach_qc: false,
-        }
+    fn policy(envelope: super::EnvelopeIdentity) -> TunedProfile {
+        TunedProfile { arm: ARM, envelope }
+    }
+
+    fn unnamed_policy() -> TunedProfile {
+        policy(super::EnvelopeIdentity {
+            id: "probe".to_owned(),
+            sha256: String::new(),
+        })
     }
 
     fn decode_section(envelope: &str) -> DecodeSelectors {
@@ -349,47 +351,34 @@ mod tests {
         LdpcCode::from_edges(qc.expanded_rows(), qc.expanded_cols(), &qc.to_edges())
     }
 
-    fn candidate_decoder(code: LdpcCode, config: DecoderConfig, cap: usize) -> LdpcBatchDecoder {
+    fn committed_decoder(code: LdpcCode, config: DecoderConfig, cap: usize) -> LdpcBatchDecoder {
         LdpcBatchDecoder::with_selectors(
             code,
             config,
             cap,
             DecodedWord::Codeword,
-            decode_section(CANDIDATE_ENVELOPE),
+            decode_section(ENVELOPE),
         )
     }
 
-    fn candidate_policy(envelope: super::EnvelopeIdentity) -> TunedProfile {
-        TunedProfile {
-            arm: CANDIDATE_ARM,
-            envelope,
-            attach_qc: true,
-        }
-    }
-
     #[test]
-    fn the_candidate_envelope_adds_the_frozen_cases_to_the_committed_selectors() {
-        let committed = decode_section(ENVELOPE);
-        assert!(committed.qc_route_cases().is_empty());
+    fn the_committed_envelope_selects_the_confirmed_candidates_decode_family() {
         let case = |workers, frames| QcRouteCase::try_new(1, 384, workers, frames).unwrap();
-        assert_eq!(
-            decode_section(CANDIDATE_ENVELOPE),
-            committed.with_qc_route_cases(vec![case(1, 1), case(12, 8)])
-        );
+        let committed = decode_section(ENVELOPE);
+        assert_eq!(committed.qc_route_cases(), [case(1, 1), case(12, 8)]);
+        assert_eq!(committed, decode_section(CANDIDATE_ENVELOPE));
     }
 
     #[test]
-    fn the_candidate_envelope_routes_each_cell_of_the_nr_code_and_keeps_the_others() {
-        let policy = candidate_policy(super::EnvelopeIdentity {
-            id: "candidate".to_owned(),
-            sha256: String::new(),
-        });
-        let attached = policy.prepare_code(nr_corpus_code(), QC_CORPUS).unwrap();
+    fn the_committed_envelope_routes_each_cell_of_the_nr_code_and_keeps_the_others() {
+        let attached = unnamed_policy()
+            .prepare_code(nr_corpus_code(), QC_CORPUS)
+            .unwrap();
         let nms = config(0.75, true);
         let workers = |count| NonZeroUsize::new(count).unwrap();
         let qc = BatchRoute::Qc(LaneBackend::detected());
         let lane = BatchRoute::Lane(LaneBackend::detected());
-        let decoder = candidate_decoder(attached.clone(), nms, 1);
+        let decoder = committed_decoder(attached.clone(), nms, 1);
         for (frames, count, expected) in [
             (1, 1, qc),
             (LANES, 12, qc),
@@ -408,23 +397,20 @@ mod tests {
             DecoderAlgorithm::OffsetMinSum(0.5),
             DecoderAlgorithm::SumProduct,
         ] {
-            let other = candidate_decoder(attached.clone(), DecoderConfig::new(algorithm, true), 1);
+            let other = committed_decoder(attached.clone(), DecoderConfig::new(algorithm, true), 1);
             assert_eq!(other.batch_route(1), BatchRoute::SingleFrame);
             assert_eq!(
                 other.batch_route_with_workers(LANES, workers(12)),
                 BatchRoute::SingleFrame
             );
         }
-        let unattached = candidate_decoder(nr_corpus_code(), nms, 1);
+        let unattached = committed_decoder(nr_corpus_code(), nms, 1);
         assert_eq!(unattached.batch_route(1), BatchRoute::SingleFrame);
     }
 
     #[test]
     fn structure_attaches_only_after_an_exact_comparison() {
-        let policy = candidate_policy(super::EnvelopeIdentity {
-            id: "candidate".to_owned(),
-            sha256: String::new(),
-        });
+        let policy = unnamed_policy();
         let prepared = policy.prepare_code(nr_corpus_code(), QC_CORPUS).unwrap();
         assert_eq!(
             prepared.quasi_cyclic(),
@@ -447,18 +433,11 @@ mod tests {
             )
             .unwrap();
         assert!(other.quasi_cyclic().is_none());
-
-        let committed = committed_policy(super::EnvelopeIdentity {
-            id: "committed".to_owned(),
-            sha256: String::new(),
-        });
-        let untouched = committed.prepare_code(nr_corpus_code(), QC_CORPUS).unwrap();
-        assert!(untouched.quasi_cyclic().is_none());
     }
 
-    /// A report on one cell of the NR code under the installed candidate
-    /// envelope, with `executed` as each worker's last route.
-    fn candidate_report(
+    /// A report on one cell of `code` under the installed envelope, with
+    /// `executed` as each worker's last route.
+    fn cell_report(
         policy: &TunedProfile,
         code: &LdpcCode,
         batch: usize,
@@ -485,7 +464,7 @@ mod tests {
         };
         policy.report(
             CellContext {
-                arm_name: CANDIDATE_ARM,
+                arm_name: ARM,
                 code,
                 decoder_config,
                 batch,
@@ -499,31 +478,31 @@ mod tests {
     }
 
     #[test]
-    fn the_candidate_report_names_every_worker_route_and_refuses_another_route() {
-        let envelope = install_envelope(CANDIDATE_ENVELOPE).expect("install");
-        let policy = candidate_policy(envelope);
+    fn the_report_names_every_worker_route_and_refuses_another_route() {
+        let envelope = install_envelope(ENVELOPE).expect("install");
+        let policy = policy(envelope);
         let attached = policy.prepare_code(nr_corpus_code(), QC_CORPUS).unwrap();
         let qc = BatchRoute::Qc(LaneBackend::detected());
         let lane = BatchRoute::Lane(LaneBackend::detected());
 
-        let path = candidate_report(&policy, &attached, LANES, 12, vec![Some(qc); 12]).unwrap();
+        let path = cell_report(&policy, &attached, LANES, 12, vec![Some(qc); 12]).unwrap();
         assert_eq!(path.matches(&format!("{qc:?}")).count(), 13, "{path}");
         assert!(path.contains("QC structure attached true"), "{path}");
-        let path = candidate_report(&policy, &attached, 1, 1, vec![Some(qc)]).unwrap();
+        let path = cell_report(&policy, &attached, 1, 1, vec![Some(qc)]).unwrap();
         assert!(path.contains(&format!("{qc:?}")), "{path}");
-        let path = candidate_report(&policy, &attached, LANES, 1, vec![Some(lane)]).unwrap();
+        let path = cell_report(&policy, &attached, LANES, 1, vec![Some(lane)]).unwrap();
         assert!(!path.contains("Qc("), "{path}");
 
         // A single worker off the QC route refuses the cell.
         let mut one_off = vec![Some(qc); 12];
         one_off[7] = Some(BatchRoute::SingleFrame);
-        let refused = candidate_report(&policy, &attached, LANES, 12, one_off).unwrap_err();
+        let refused = cell_report(&policy, &attached, LANES, 12, one_off).unwrap_err();
         assert!(refused.contains("worker 7"), "{refused}");
 
         // Structure that never attached leaves the cell off the QC route, and
         // such a run reports it.
         let unattached = nr_corpus_code();
-        let path = candidate_report(
+        let path = cell_report(
             &policy,
             &unattached,
             1,
@@ -535,45 +514,41 @@ mod tests {
         assert!(!path.contains("Qc("), "{path}");
     }
 
-    #[test]
-    fn the_candidate_route_satisfies_the_batch_contract_under_the_installed_envelope() {
-        install_envelope(CANDIDATE_ENVELOPE).expect("install");
-        let qc = QuasiCyclicLdpc::nr_5g(1, 384);
-        let code = LdpcCode::from_quasi_cyclic(&qc);
-        let nms = config(0.75, true);
-        let mut single = gf2_coding::ldpc::LdpcDecoder::with_config(code.clone(), nms);
-        // One frame per call: each call is the selected one-worker case.
-        struct OneFrameCalls(LdpcBatchDecoder);
-        impl BatchSoftDecoder for OneFrameCalls {
-            fn frame_len(&self) -> usize {
-                self.0.frame_len()
-            }
-            fn decoded_len(&self) -> usize {
-                self.0.decoded_len()
-            }
-            fn batch_granularity(&self) -> usize {
-                1
-            }
-            fn decode_batch(
-                &mut self,
-                frames: &[&[Llr]],
-                decoded: &mut [gf2_core::BitVec],
-                outcomes: &mut [gf2_coding::traits::DecodeOutcome],
-            ) {
-                assert_eq!(frames.len(), decoded.len());
-                assert_eq!(frames.len(), outcomes.len());
-                for (index, frame) in frames.iter().enumerate() {
-                    self.0.decode_batch(
-                        std::slice::from_ref(frame),
-                        &mut decoded[index..=index],
-                        &mut outcomes[index..=index],
-                    );
-                    assert!(matches!(self.0.last_wave_route(), Some(BatchRoute::Qc(_))));
-                }
+    /// One frame per call: each call is the selected one-worker case.
+    struct OneFrameCalls(LdpcBatchDecoder);
+
+    impl BatchSoftDecoder for OneFrameCalls {
+        fn frame_len(&self) -> usize {
+            self.0.frame_len()
+        }
+        fn decoded_len(&self) -> usize {
+            self.0.decoded_len()
+        }
+        fn batch_granularity(&self) -> usize {
+            1
+        }
+        fn decode_batch(
+            &mut self,
+            frames: &[&[Llr]],
+            decoded: &mut [BitVec],
+            outcomes: &mut [DecodeOutcome],
+        ) {
+            assert_eq!(frames.len(), decoded.len());
+            assert_eq!(frames.len(), outcomes.len());
+            for (index, frame) in frames.iter().enumerate() {
+                self.0.decode_batch(
+                    std::slice::from_ref(frame),
+                    &mut decoded[index..=index],
+                    &mut outcomes[index..=index],
+                );
+                assert!(matches!(self.0.last_wave_route(), Some(BatchRoute::Qc(_))));
             }
         }
-        let frames: Vec<Vec<Llr>> = (0..4)
-            .map(|frame: usize| {
+    }
+
+    fn nr_frames(code: &LdpcCode, count: usize) -> Vec<Vec<Llr>> {
+        (0..count)
+            .map(|frame| {
                 (0..code.n())
                     .map(|i| {
                         Llr::new(if (i + frame).is_multiple_of(31) {
@@ -584,14 +559,58 @@ mod tests {
                     })
                     .collect()
             })
-            .collect();
-        let mut decoder = OneFrameCalls(LdpcBatchDecoder::new(code, nms, 2, DecodedWord::Codeword));
-        batch_soft_decoder_contract(
-            &mut decoder,
-            |llrs| single.decode_to_codeword(llrs, 2),
-            &frames,
-            ConvergenceMix::Any,
-        );
+            .collect()
+    }
+
+    /// Under the installed committed envelope, default construction decodes
+    /// the selected cases on the QC route of the detected backend and of the
+    /// portable fallback, with the single-frame decoder's results.
+    #[test]
+    fn the_qc_route_satisfies_the_batch_contract_under_the_installed_envelope() {
+        install_envelope(ENVELOPE).expect("install");
+        let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(1, 384));
+        let nms = config(0.75, true);
+        let mut single = LdpcDecoder::with_config(code.clone(), nms);
+        let frames = nr_frames(&code, LANES);
+        for portable in [false, true] {
+            let decoder = |cap| {
+                let decoder = LdpcBatchDecoder::new(code.clone(), nms, cap, DecodedWord::Codeword);
+                if portable {
+                    decoder.with_portable_lanes()
+                } else {
+                    decoder
+                }
+            };
+            let backend = if portable {
+                LaneBackend::Portable
+            } else {
+                LaneBackend::detected()
+            };
+
+            batch_soft_decoder_contract(
+                &mut OneFrameCalls(decoder(2)),
+                |llrs| single.decode_to_codeword(llrs, 2),
+                &frames[..4],
+                ConvergenceMix::Any,
+            );
+
+            let mut decoder = decoder(2);
+            let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
+            let mut decoded = vec![BitVec::new(); LANES];
+            let mut outcomes = vec![DecodeOutcome::default(); LANES];
+            decoder.decode_batch_with_workers(
+                &views,
+                &mut decoded,
+                &mut outcomes,
+                NonZeroUsize::new(12).unwrap(),
+            );
+            assert_eq!(decoder.last_wave_route(), Some(BatchRoute::Qc(backend)));
+            for (frame, view) in views.iter().enumerate() {
+                let expected = single.decode_to_codeword(view, 2);
+                assert_eq!(decoded[frame], expected.decoded_bits, "frame {frame}");
+                assert_eq!(outcomes[frame], expected.outcome(), "frame {frame}");
+            }
+        }
     }
 
     #[test]
@@ -628,7 +647,7 @@ mod tests {
             install_envelope(ENVELOPE).is_err(),
             "the tuning installs once"
         );
-        let policy = committed_policy(envelope);
+        let policy = policy(envelope);
 
         let code = ldpc_batch_code();
         let frames = ldpc_batch_frames();
@@ -663,7 +682,7 @@ mod tests {
     #[test]
     fn the_report_probes_the_stages_of_the_observed_route() {
         let envelope = install_envelope(ENVELOPE).expect("install");
-        let policy = committed_policy(envelope);
+        let policy = policy(envelope);
         let code = ldpc_batch_code();
         let frames = ldpc_batch_frames();
         let llrs: Vec<f32> = frames.iter().flatten().map(|llr| llr.value()).collect();

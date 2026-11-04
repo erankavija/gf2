@@ -104,7 +104,8 @@ workload, baseline and date.
   $0.75$, at most $50$ iterations, syndrome stopping. Whole consumer, warm.
 - **Baseline:** AFF3CT v4.7.0 (`@/citation/Cassagne2019`)
   `Decoder_LDPC_BP_flooding<NMS>`, scalar f32, one clone per worker. gf2 runs the
-  production route of `LdpcBatchDecoder` under the committed coding envelope.
+  production route of `LdpcBatchDecoder` under the coding envelope
+  `gf2-0a77ecfc-20261013t011147z-815998`.
 - **Hardware:** AMD Ryzen 9 5900X, SMT on, Linux 7.2.11.
 - **Build:** rustc 1.95.0; RUSTFLAGS `-C target-cpu=native` on both arms.
 - **Date:** 2026-10-28.

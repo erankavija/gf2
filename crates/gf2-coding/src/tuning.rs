@@ -358,6 +358,20 @@ impl CodingTuning {
         }
     }
 
+    /// Replaces the cases of the QC route and declares them, with their
+    /// decode family, in the section's serialized body. Every other selector
+    /// keeps its value and its declaration or omission.
+    #[must_use]
+    pub fn with_qc_route_cases(mut self, cases: Vec<QcRouteCase>) -> Self {
+        self.selectors.decode.qc_route_cases = cases;
+        #[cfg(feature = "tuning-profile")]
+        {
+            self.presence.decode = true;
+            self.presence.qc_route_cases = true;
+        }
+        self
+    }
+
     /// Returns the complete coding selector view.
     #[must_use]
     pub const fn selectors(&self) -> &CodingSelectors {
