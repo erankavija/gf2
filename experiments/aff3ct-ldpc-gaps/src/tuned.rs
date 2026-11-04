@@ -64,17 +64,14 @@ pub fn install_envelope(envelope: &str) -> Result<EnvelopeIdentity, String> {
     }
 }
 
-/// The route of each wave size of a batch of `batch` frames: the first wave,
-/// and a shorter final wave when the batch has one.
+/// The route production selects for the first wave of a batch of `batch`
+/// frames, from the whole batch's context. A shorter final wave takes a route
+/// of its own, which the decoder reports only as it decodes.
 fn wave_routes(decoder: &LdpcBatchDecoder, batch: usize, workers: NonZeroUsize) -> Vec<WaveRoute> {
-    let last = batch % LANES;
-    std::iter::once(batch.min(LANES))
-        .chain((batch > LANES && last > 0).then_some(last))
-        .map(|frames| WaveRoute {
-            frames,
-            route: decoder.batch_route_with_workers(frames, workers),
-        })
-        .collect()
+    vec![WaveRoute {
+        frames: batch.min(LANES),
+        route: decoder.batch_route_with_workers(batch, workers),
+    }]
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
@@ -143,6 +140,8 @@ fn verify_executed_routes(
     for (worker, (route, reported)) in context.executed_routes.iter().zip(observations).enumerate()
     {
         let route = route.ok_or_else(|| format!("worker {worker} decoded no wave"))?;
+        // A final wave that takes another route than the first leaves the
+        // stage probe without one route to measure.
         if reported.last().map(|wave| wave.route) != Some(route) {
             return Err(format!(
                 "worker {worker} decoded on {route:?} after reporting {reported:?}"
@@ -215,14 +214,7 @@ impl ArmPolicy for TunedProfile {
         let routes = observations.into_iter().next().expect("first worker");
         // The probe decodes on one worker, so it takes the route the cell's
         // worker count selects rather than the envelope's one-worker route.
-        let route = match routes.as_slice() {
-            [first, rest @ ..] if rest.iter().all(|wave| wave.route == first.route) => first.route,
-            _ => {
-                return Err(format!(
-                    "the waves decode on several routes {routes:?}; the stage probe takes one"
-                ))
-            }
-        };
+        let route = routes.first().expect("a first wave").route;
         let stages = probe_stages(code, decoder_config, batch, route, llrs)?;
         cell.conversion.pack_ns = stages.pack_ns;
         cell.conversion.batch_fill_ns = stages.decode_ns;
@@ -230,7 +222,7 @@ impl ArmPolicy for TunedProfile {
         let selected_path = format!(
             "gf2-coding LdpcBatchDecoder f32 flooding normalized min-sum, default construction \
          under tuning profile {} (lane_min_frames {} lane_max_edges {}), QC structure attached \
-         {}, wave routes {}, executed routes by worker {:?}, batches of {batch} frames in waves of {LANES}, lane workspace {} bytes per worker, \
+         {}, first-wave route {}, executed routes by worker {:?}, batches of {batch} frames in waves of {LANES}, lane workspace {} bytes per worker, \
          reused decoder per worker; {} pinned workers, {} process threads",
             self.envelope.id,
             selectors.lane_min_frames(),
@@ -726,12 +718,19 @@ mod tests {
                 "batch {batch} workers {workers}"
             );
         }
-        let mixed = report(LANES + 1, 1).expect_err("a lane wave and a single-frame wave");
-        assert!(mixed.contains("routes"), "{mixed}");
+        let mixed = cell_report(
+            &policy,
+            &code,
+            LANES + 1,
+            1,
+            vec![Some(BatchRoute::SingleFrame)],
+        )
+        .expect_err("a lane wave and a single-frame wave");
+        assert!(mixed.contains("decoded on"), "{mixed}");
     }
 
     #[test]
-    fn the_route_report_names_each_wave_size_once() {
+    fn the_route_report_names_the_first_wave_of_the_batch() {
         let decoder = LdpcBatchDecoder::with_selectors(
             ldpc_batch_code(),
             config(0.75, true),
@@ -747,10 +746,62 @@ mod tests {
         };
         assert_eq!(sizes(3), [3]);
         assert_eq!(sizes(LANES), [LANES]);
-        assert_eq!(sizes(2 * LANES), [LANES]);
-        assert_eq!(sizes(2 * LANES + 3), [LANES, 3]);
+        assert_eq!(sizes(2 * LANES + 3), [LANES]);
         assert!(wave_routes(&decoder, LANES + 1, NonZeroUsize::MIN)
             .iter()
             .all(|wave| wave.route == BatchRoute::SingleFrame));
+    }
+
+    /// An attached NR BG1 Z=384 batch longer than one wave takes the route one
+    /// direct production call of that batch takes, which excludes QC, at
+    /// every worker count; the arm decodes it and the report accepts it.
+    #[test]
+    fn a_batch_beyond_one_wave_takes_the_production_route() {
+        let envelope = install_envelope(ENVELOPE).expect("install");
+        let policy = policy(envelope);
+        let attached = policy.prepare_code(nr_corpus_code(), QC_CORPUS).unwrap();
+        let nms = config(0.75, true);
+        let frames = nr_frames(&attached, 2 * LANES);
+        let llrs: Vec<f32> = frames.iter().flatten().map(|llr| llr.value()).collect();
+        let mut single = LdpcDecoder::with_config(attached.clone(), nms);
+        for workers in [1, 12] {
+            let count = NonZeroUsize::new(workers).unwrap();
+            let mut direct = LdpcBatchDecoder::new(attached.clone(), nms, 2, DecodedWord::Codeword);
+            let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
+            let mut decoded = vec![BitVec::new(); views.len()];
+            let mut outcomes = vec![DecodeOutcome::default(); views.len()];
+            direct.decode_batch_with_workers(&views, &mut decoded, &mut outcomes, count);
+            let production = direct.last_wave_route().expect("decoded");
+            assert!(!matches!(production, BatchRoute::Qc(_)));
+
+            let mut worker = crate::batch::BatchWorker::from_decoder(
+                &attached,
+                views.len(),
+                policy
+                    .build_decoder(&attached, nms, 2, views.len())
+                    .unwrap(),
+            )
+            .expect("worker");
+            worker.decode_batch_with_workers(&llrs, count);
+            assert_eq!(worker.decoder().last_wave_route(), Some(production));
+            for (index, view) in views.iter().enumerate() {
+                let expected = single.decode_to_codeword(view, 2);
+                let decisions = &worker.decisions[index * attached.k()..][..attached.k()];
+                let bits: Vec<u8> = (0..attached.k())
+                    .map(|bit| u8::from(expected.decoded_bits.get(bit)))
+                    .collect();
+                assert_eq!(decisions, bits, "frame {index} workers {workers}");
+            }
+
+            let path = cell_report(
+                &policy,
+                &attached,
+                views.len(),
+                workers,
+                vec![Some(production); workers],
+            )
+            .unwrap();
+            assert!(!path.contains("Qc("), "{path}");
+        }
     }
 }
