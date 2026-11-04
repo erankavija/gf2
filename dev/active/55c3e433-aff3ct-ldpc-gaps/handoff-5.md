@@ -45,8 +45,9 @@ The traps in [handoff-4.md](handoff-4.md) and earlier stay in force.
   - Options: A, production source only, so the adoption stands; B, tests count, so the adoption fails the contract and is reverted, with the result kept as negative.
   - Recommendation: A. The budget derives from the delivery's estimated size as a maintenance cost.
 - Question: The format 4 rewrite breaks `check-references` repository-wide. Who fixes it?
-  - Context: `just-in-time-6a` has been told.
-  - Recommendation: the cutover owner, by exempting `.jit/archive-evidence/` in the checker or by not writing unresolvable paths.
+  - Context: `just-in-time-6a` reports that the records are correct by design: they record the source and destination of archived documents. It proposes a gf2 fix in `scripts/check-references.py` that treats `.jit/archive-evidence/` as historical tracker data, as the checker already treats `.jit/issues/*.json`, with a self-test case. The checker is shared CI infrastructure outside this epic (escalation policy entry 8).
+  - Options: A, file one small gf2 task for that checker change and land it first; B, the owner fixes it directly.
+  - Recommendation: A. It is small, and it unblocks every gf2 `cargo-ci`.
 
 ## Reference artefacts
 
