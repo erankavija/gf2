@@ -153,6 +153,44 @@ fn the_codec_encodes_the_fields_a_body_states_and_no_others() {
 }
 
 #[test]
+fn added_qc_route_cases_are_stated_beside_the_selectors_a_body_states() {
+    let case = QcRouteCase::try_new(1, 384, 12, 8).expect("a case of its domain");
+    for text in [
+        r#"{}"#,
+        r#"{"decode": {"lane_min_frames": 2}}"#,
+        r#"{"decode": {"qc_route_cases": []}, "encode": {"clmul_fold_min_batch": 8}}"#,
+    ] {
+        let decoded = CodingTuningCodec::decode_body(body(text)).expect("the body decodes");
+        let added = decoded.clone().with_qc_route_cases(vec![case]);
+        assert_eq!(
+            added.decode(),
+            &decoded.decode().clone().with_qc_route_cases(vec![case]),
+            "{text}"
+        );
+        assert_eq!(added.encode(), decoded.encode(), "{text}");
+
+        let mut stated: serde_json::Value = serde_json::from_str(text).unwrap();
+        stated
+            .as_object_mut()
+            .unwrap()
+            .entry("decode")
+            .or_insert_with(|| serde_json::json!({}))
+            .as_object_mut()
+            .unwrap()
+            .insert(
+                "qc_route_cases".to_owned(),
+                serde_json::json!([{"base_graph": 1, "frames": 8, "lifting_size": 384, "workers": 12}]),
+            );
+        let encoded = CodingTuningCodec::encode_body(&added).expect("the section encodes");
+        assert_eq!(
+            serde_json::to_value(encoded).expect("a canonical value is JSON"),
+            stated,
+            "{text}"
+        );
+    }
+}
+
+#[test]
 fn a_body_without_the_decode_family_reads_as_the_conservative_family() {
     for text in [r#"{}"#, r#"{"encode": {"table_remainder_min_batch": 4}}"#] {
         let decoded = CodingTuningCodec::decode_body(body(text)).expect("the body decodes");
