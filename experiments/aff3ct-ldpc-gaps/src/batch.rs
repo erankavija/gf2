@@ -27,10 +27,14 @@ use std::time::Instant;
 /// Untimed repetitions of the conversion-stage probe.
 pub const STAGE_PROBES: usize = 9;
 
+/// Worker counts in the batch arm's benchmark grid.
+const ROUTE_WORKERS: [usize; 4] = [1, 6, 12, 24];
+
 /// The selectors an arm on `route` decodes under: the conservative family,
 /// which closes the lane route; a family that opens it to every wave size and
 /// edge count, through the benchmark grid's maximum of 24 workers; or a family
-/// that selects the QC route for NR BG1 Z=384 at every wave size on that grid.
+/// that selects the QC route for NR BG1 Z=384 at every batch size up to
+/// [`LANES`] on that grid.
 #[must_use]
 pub fn route_selectors(route: BatchRoute) -> DecodeSelectors {
     match route {
@@ -40,7 +44,7 @@ pub fn route_selectors(route: BatchRoute) -> DecodeSelectors {
         }
         BatchRoute::Qc(_) => {
             let mut cases = Vec::new();
-            for workers in [1, 6, 12, 24] {
+            for workers in ROUTE_WORKERS {
                 for frames in 1..=LANES {
                     cases.push(QcRouteCase::try_new(1, 384, workers, frames).expect("in domain"));
                 }
@@ -88,8 +92,9 @@ impl BatchWorker {
     ///
     /// # Errors
     ///
-    /// Returns an error when a wave of the batch takes another route than
-    /// `route`, which includes a lane backend this build or host lacks.
+    /// Returns an error when production selects another route for a wave,
+    /// cannot confirm the route of a final partial wave, or the requested lane
+    /// backend is unavailable.
     pub fn new(
         code: &LdpcCode,
         config: DecoderConfig,
@@ -234,7 +239,8 @@ impl BatchWorker {
 ///
 /// # Errors
 ///
-/// As [`BatchWorker::new`].
+/// Returns the construction or route-confirmation errors of
+/// [`BatchWorker::new`].
 pub fn probe_stages(
     code: &LdpcCode,
     config: DecoderConfig,
@@ -293,11 +299,13 @@ pub trait ArmPolicy: Sync {
         Ok(code)
     }
 
-    /// Builds a codeword decoder, rejecting routes the arm does not declare.
+    /// Builds this arm's codeword decoder.
     ///
     /// # Errors
     ///
-    /// Returns an error when the requested route is unavailable.
+    /// Returns an error when this arm cannot build its decoder for the code or
+    /// request. A policy with a pinned route also errors when production
+    /// selects another route or cannot confirm the pinned route for every wave.
     fn build_decoder(
         &self,
         code: &LdpcCode,
@@ -363,12 +371,28 @@ impl ArmPolicy for BatchRoute {
             }
             _ => decoder,
         };
-        for frames in [batch.min(LANES), batch % LANES] {
-            let observed = decoder.batch_route(frames);
-            if frames > 0 && observed != route {
+        let final_wave_frames = if batch > LANES { batch % LANES } else { 0 };
+        for worker_count in ROUTE_WORKERS {
+            let workers = NonZeroUsize::new(worker_count).expect("positive benchmark worker count");
+            // Passing the total batch preserves production's route context for
+            // every full wave, including QC suppression on batches over LANES.
+            let observed = decoder.batch_route_with_workers(batch, workers);
+            if batch > 0 && observed != route {
                 return Err(format!(
-                    "a wave of {frames} frames decodes on {observed:?}; the arm declares {route:?}"
+                    "a whole-batch wave of {} frames in a {batch}-frame batch takes {observed:?} with {worker_count} workers; the arm declares {route:?}",
+                    batch.min(LANES),
                 ));
+            }
+            if final_wave_frames > 0 {
+                // The public query cannot pair a partial wave size with its
+                // original batch context. Accept only when its production
+                // route query independently confirms the declared route.
+                let partial = decoder.batch_route_with_workers(final_wave_frames, workers);
+                if partial != route {
+                    return Err(format!(
+                        "cannot confirm {route:?} for the final partial wave of {final_wave_frames} frames in a {batch}-frame batch with {worker_count} workers: the production route query returns {partial:?} without whole-batch context"
+                    ));
+                }
             }
         }
         Ok(decoder)
@@ -564,7 +588,7 @@ pub fn run_with_policy(arm_name: &str, policy: impl ArmPolicy) -> Result<(), Str
 
 #[cfg(test)]
 mod tests {
-    use super::{probe_stages, BatchWorker, NonZeroUsize, LANES};
+    use super::{probe_stages, BatchWorker, NonZeroUsize, LANES, ROUTE_WORKERS};
     use crate::reference::{config, Gf2Worker};
     use gf2_coding::ldpc::{BatchRoute, LaneBackend, LdpcCode, LdpcEncoder, QuasiCyclicLdpc};
     use gf2_coding::traits::BlockEncoder;
@@ -579,6 +603,13 @@ mod tests {
             vec![9, 13, 0, 6, -1, 4],
         ];
         LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::new(base, 16))
+    }
+
+    fn attached_nr_bg1_z384() -> LdpcCode {
+        let qc = QuasiCyclicLdpc::nr_5g(1, 384);
+        let mut code = LdpcCode::from_edges(qc.expanded_rows(), qc.expanded_cols(), &qc.to_edges());
+        assert!(code.attach_quasi_cyclic(&qc));
+        code
     }
 
     /// Recorded-style f32 LLRs of `frames` noisy codewords; the noise grows
@@ -621,7 +652,7 @@ mod tests {
             for route in routes() {
                 let mut worker =
                     BatchWorker::new(&code, decoder_config, CAP, batch, route).expect("route");
-                for workers in [1, 6, 12, 24] {
+                for workers in ROUTE_WORKERS {
                     worker.decode_batch_with_workers(&llrs, NonZeroUsize::new(workers).unwrap());
                     assert_eq!(
                         worker.decisions, reference.decisions,
@@ -659,6 +690,31 @@ mod tests {
     }
 
     #[test]
+    fn forced_qc_uses_whole_batch_context_for_attached_nr_bg1_z384() {
+        let code = attached_nr_bg1_z384();
+        let route = BatchRoute::Qc(LaneBackend::Portable);
+        for batch in [1, LANES] {
+            let worker = BatchWorker::new(&code, config(0.75, true), CAP, batch, route)
+                .expect("frozen QC route");
+            for worker_count in ROUTE_WORKERS {
+                assert_eq!(
+                    worker
+                        .decoder()
+                        .batch_route_with_workers(batch, NonZeroUsize::new(worker_count).unwrap()),
+                    route,
+                    "{batch} frames, {worker_count} workers"
+                );
+            }
+        }
+
+        let refused = BatchWorker::new(&code, config(0.75, true), CAP, 16, route)
+            .err()
+            .expect("the whole batch disables QC");
+        assert!(refused.contains("whole-batch"), "{refused}");
+        assert!(refused.contains("SingleFrame"), "{refused}");
+    }
+
+    #[test]
     fn the_stage_probe_decodes_the_channel_hard_decisions() {
         let code = code();
         let batch = LANES + 3;
@@ -683,7 +739,7 @@ mod tests {
             let worker =
                 BatchWorker::new(&code, config(0.75, true), CAP, LANES, route).expect("route");
             for frames in 1..=LANES {
-                for workers in [1, 6, 12, 24] {
+                for workers in ROUTE_WORKERS {
                     assert_eq!(
                         worker
                             .decoder
