@@ -209,6 +209,13 @@
       "model": "sonnet",
       "reason": "rework 1: code-review F1, tuned arm long-batch routing",
       "outcome": "F1 closed by code-review (0ef28ee1a)"
+    },
+    {
+      "issue": "3ee00fcf",
+      "vendor": "codex",
+      "model": "gpt-6-luna",
+      "effort": "xhigh",
+      "reason": "rework 2: code-review F3, forced-route validation against whole-batch execution"
     }
   ],
   "created_during_execution": [
@@ -310,7 +317,7 @@
     "1d787ed3": 3,
     "a72f2b3f": 2,
     "2088e0ec": 3,
-    "3ee00fcf": 1
+    "3ee00fcf": 2
   },
   "started_at": "2026-11-01T15:20:00+02:00",
   "window": {
