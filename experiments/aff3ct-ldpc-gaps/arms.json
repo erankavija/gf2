@@ -89,7 +89,7 @@
       "environment": {},
       "package": "aff3ct-ldpc-gaps",
       "quality": "gf2-nms-f32",
-      "tuning_profile": "crates/gf2-coding/data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json"
+      "tuning_profile": "experiments/aff3ct-ldpc-gaps/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json"
     },
     "aff3ct-flooding-nms-f32": {
       "executable": "aff3ct-throughput-arm",
