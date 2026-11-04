@@ -162,6 +162,10 @@ def ignored(root: Path, target: str) -> bool:
 
 
 def scan(path: str, text: str, known: set[str]) -> list[str]:
+    # Archive evidence records where archived documents moved from, so its
+    # source paths are history and need not resolve.
+    if path.startswith(".jit/archive-evidence/"):
+        return []
     if fnmatch.fnmatch(path, ".jit/issues/*.json"):
         return issue_faults(path, text, known)
     return faults_in(path, text, known)
@@ -214,6 +218,10 @@ def self_test() -> None:
             "description": "first\ndev/gone/after-newline.md and [x](../issue-link.md) and `gone/issue.md`",
             "documents": [{"path": "dev/gone-document.md"}],
         }))
+        (root / ".jit/archive-evidence/container").mkdir(parents=True)
+        (root / ".jit/archive-evidence/container/c.json").write_text(json.dumps({
+            "source": "dev/active/archived-away/plan.md",
+        }))
         (root / "docs/dot.md").write_text("run ./scripts/absent.sh\n")
         (root / "docs/rooted.md").write_text("[a](/docs/absent.md) [b](/docs/good.md)\n")
         (root / "src").mkdir()
@@ -240,6 +248,7 @@ def self_test() -> None:
     assert not any("docs/good.md" in f and "inline" in f for f in faults), faults
     assert any("dev/gone/file.json" in f for f in faults), faults
     assert not any("ignored.md" in f for f in faults), faults
+    assert not any(f.startswith(".jit/archive-evidence/") for f in faults), faults
 
 
 def main() -> int:
