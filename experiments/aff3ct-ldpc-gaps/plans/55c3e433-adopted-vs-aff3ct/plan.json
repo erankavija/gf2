@@ -1,0 +1,166 @@
+{
+  "schema": "zen3-benchmark-plan-v1",
+  "campaign_id": "55c3e433-adopted-vs-aff3ct-pilot",
+  "issue": "5f401907",
+  "label": "pilot",
+  "campaign_seed": 2293276784,
+  "addendum": "target/aff3ct-ldpc-gaps/55c3e433-adopted-vs-aff3ct/pilot/addendum.json",
+  "lock_path": "/tmp/gf2-ccx1.lock",
+  "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
+  "timing_override": null,
+  "arms": {
+    "aff3ct-flooding-nms-f32-dvb-t2-r12": {
+      "build": "external",
+      "description": "AFF3CT [Cassagne2019] flooding normalized min-sum, one clone per pinned worker, reporting replay-derived per-frame iterations after timing",
+      "executable": "@build/aff3ct-flooding-nms-f32/aff3ct-throughput-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1",
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/aff3ct-flooding-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "aff3ct-flooding-nms-f32-nr-bg1-z384": {
+      "build": "external",
+      "description": "AFF3CT [Cassagne2019] flooding normalized min-sum, one clone per pinned worker, reporting replay-derived per-frame iterations after timing",
+      "executable": "@build/aff3ct-flooding-nms-f32/aff3ct-throughput-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_AFF3CT_TYPE": "flooding",
+        "GF2_AFF3CT_IMPLEM": "NMS",
+        "GF2_AFF3CT_SIMD": "",
+        "GF2_AFF3CT_PRECISION": "f32",
+        "GF2_AFF3CT_SYNDROME_DEPTH": "1",
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/aff3ct-flooding-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": null
+    },
+    "gf2-batch-tuned-dvb-t2-r12": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope, with NR BG1 Z=384 structure attached after an exact parity-check comparison",
+      "executable": "@build/gf2-batch-tuned/gf2-batch-tuned-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-dvb-t2-r12.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": {
+        "id": "gf2-3ee00fcf-20261104t064432z-4012544",
+        "sha256": "a049644567a2a4d872d0a62ec3035b5748907be250e49032f2cea1da2febfa12"
+      }
+    },
+    "gf2-batch-tuned-nr-bg1-z384": {
+      "build": "native",
+      "description": "gf2-coding LdpcBatchDecoder of default construction under the committed coding envelope, with NR BG1 Z=384 structure attached after an exact parity-check comparison",
+      "executable": "@build/gf2-batch-tuned/gf2-batch-tuned-arm",
+      "arguments": [],
+      "environment": {
+        "GF2_LDPC_QUALITY": "${GF2_LDPC_INPUT_ROOT}/quality/gf2-nms-f32-nr-bg1-z384.json"
+      },
+      "rustflags": "-C target-cpu=native",
+      "tuning_profile": {
+        "id": "gf2-3ee00fcf-20261104t064432z-4012544",
+        "sha256": "a049644567a2a4d872d0a62ec3035b5748907be250e49032f2cea1da2febfa12"
+      }
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "dvb-t2-r12-w1-b1",
+      "baseline_arm": "gf2-batch-tuned-dvb-t2-r12",
+      "candidate_arm": "aff3ct-flooding-nms-f32-dvb-t2-r12",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "dvb-t2-r12-w1-b8",
+      "baseline_arm": "gf2-batch-tuned-dvb-t2-r12",
+      "candidate_arm": "aff3ct-flooding-nms-f32-dvb-t2-r12",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "dvb-t2-r12-p12-b8",
+      "baseline_arm": "gf2-batch-tuned-dvb-t2-r12",
+      "candidate_arm": "aff3ct-flooding-nms-f32-dvb-t2-r12",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/dvb-t2-r12-waterfall",
+        "code": "dvb-t2-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-w1-b1",
+      "baseline_arm": "gf2-batch-tuned-nr-bg1-z384",
+      "candidate_arm": "aff3ct-flooding-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 1,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-w1-b8",
+      "baseline_arm": "gf2-batch-tuned-nr-bg1-z384",
+      "candidate_arm": "aff3ct-flooding-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    },
+    {
+      "cell_id": "nr-bg1-z384-p12-b8",
+      "baseline_arm": "gf2-batch-tuned-nr-bg1-z384",
+      "candidate_arm": "aff3ct-flooding-nms-f32-nr-bg1-z384",
+      "case": {
+        "bundle": "${GF2_LDPC_INPUT_ROOT}/bundles/nr-bg1-z384-mother",
+        "code": "nr-bg1-r12",
+        "iteration_cap": 50,
+        "normalization_factor": 0.75,
+        "syndrome_stopping": true,
+        "batch_size": 8,
+        "quality_frames": 128
+      },
+      "pilot_pairs": 12
+    }
+  ],
+  "max_cells_per_session": 1
+}
