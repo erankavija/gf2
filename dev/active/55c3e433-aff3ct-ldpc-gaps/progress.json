@@ -207,7 +207,8 @@
       "issue": "3ee00fcf",
       "vendor": "claude",
       "model": "sonnet",
-      "reason": "rework 1: code-review F1, tuned arm long-batch routing"
+      "reason": "rework 1: code-review F1, tuned arm long-batch routing",
+      "outcome": "F1 closed by code-review (0ef28ee1a)"
     }
   ],
   "created_during_execution": [],
@@ -270,6 +271,15 @@
       "status": "open",
       "issue": "3ee00fcf",
       "need": "owner: rule whether max_added_source_lines binds production source only",
+      "blocks": [
+        "3ee00fcf",
+        "5f401907"
+      ]
+    },
+    {
+      "topic": "format 4 rewrite 321f632ac adds .jit/archive-evidence paths; check-references 5051 faults; cargo-ci blocked repo-wide",
+      "status": "open",
+      "owner": "just-in-time-6a / owner",
       "blocks": [
         "3ee00fcf",
         "5f401907"
