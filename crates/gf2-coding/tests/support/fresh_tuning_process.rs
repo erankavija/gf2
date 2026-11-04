@@ -98,6 +98,11 @@ pub enum FreshProcessCase {
     /// shared batch contract on the LDPC batch suite's frames.
     #[cfg(feature = "tuning-profile")]
     MeasuredOwnerDecode,
+    /// [`MEASURED_OWNER`] installed, with the batch decoder's routes and
+    /// results reported on NR BG1 Z=384 at the QC route's cases and beside
+    /// them, on the detected lane backend and held on the portable one.
+    #[cfg(feature = "tuning-profile")]
+    MeasuredOwnerQc,
 }
 
 impl FreshProcessCase {
@@ -121,6 +126,8 @@ impl FreshProcessCase {
             Self::MeasuredOwnerRoutes => "measured-owner-routes",
             #[cfg(feature = "tuning-profile")]
             Self::MeasuredOwnerDecode => "measured-owner-decode",
+            #[cfg(feature = "tuning-profile")]
+            Self::MeasuredOwnerQc => "measured-owner-qc",
         }
     }
 
@@ -154,6 +161,8 @@ impl FreshProcessCase {
             Some("measured-owner-routes") => Ok(Self::MeasuredOwnerRoutes),
             #[cfg(feature = "tuning-profile")]
             Some("measured-owner-decode") => Ok(Self::MeasuredOwnerDecode),
+            #[cfg(feature = "tuning-profile")]
+            Some("measured-owner-qc") => Ok(Self::MeasuredOwnerQc),
             _ => Err("fresh-process case has an unknown case name".to_owned()),
         }
     }
@@ -332,11 +341,12 @@ pub fn coding_registry() -> ProfileRegistry {
         .unwrap()
 }
 
-/// The committed coding owner envelope of the decoder calibration campaign
-/// `@/issue/20af7e6e`.
+/// The committed production coding owner envelope: the calibrated selectors
+/// of the decoder calibration campaign `@/issue/20af7e6e` with the QC route
+/// cases of `@/issue/3ee00fcf`.
 #[cfg(feature = "tuning-profile")]
 pub const MEASURED_OWNER: &str =
-    include_str!("../../data/tuning-profiles/gf2-0a77ecfc-20261013t011147z-815998.json");
+    include_str!("../../data/tuning-profiles/gf2-3ee00fcf-20261104t064432z-4012544.json");
 
 /// [`MEASURED_OWNER`] read through the owner codec.
 #[cfg(feature = "tuning-profile")]
@@ -409,6 +419,8 @@ pub fn execute_child(case: FreshProcessCase) -> serde_json::Value {
         FreshProcessCase::MeasuredOwnerRoutes => execute_measured_routes_child(),
         #[cfg(feature = "tuning-profile")]
         FreshProcessCase::MeasuredOwnerDecode => execute_measured_decode_child(),
+        #[cfg(feature = "tuning-profile")]
+        FreshProcessCase::MeasuredOwnerQc => execute_measured_qc_child(),
     }
 }
 
@@ -653,6 +665,90 @@ fn execute_measured_decode_child() -> serde_json::Value {
     serde_json::json!({
         "decode": decode_report(decode),
         "wave_routes": wave_routes,
+        "resolution": "installed",
+    })
+}
+
+/// The `(workers, frames)` calls [`FreshProcessCase::MeasuredOwnerQc`]
+/// reports: the QC route's cases and the calls beside them.
+#[cfg(feature = "tuning-profile")]
+pub const QC_CALLS: &[(usize, usize)] = &[(1, 1), (12, 8), (1, 8), (6, 8), (12, 1), (1, 2)];
+
+/// Reports the route of each of [`QC_CALLS`] on NR BG1 Z=384 with its
+/// structure attached and without it, and decodes the attached code's calls
+/// against the single-frame decoder on both lane backends.
+#[cfg(feature = "tuning-profile")]
+fn execute_measured_qc_child() -> serde_json::Value {
+    use gf2_coding::ldpc::QuasiCyclicLdpc;
+    use gf2_coding::llr::Llr;
+    use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
+
+    let decode = install_measured_owner();
+    let structure = QuasiCyclicLdpc::nr_5g(1, 384);
+    let attached = LdpcCode::from_quasi_cyclic(&structure);
+    let unattached = LdpcCode::from_edges(
+        structure.expanded_rows(),
+        structure.expanded_cols(),
+        &structure.to_edges(),
+    );
+    let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+    let cap = 2;
+    let mut single = LdpcDecoder::with_config(attached.clone(), config);
+    let mut reports = Vec::new();
+    for (structured, code) in [(true, &attached), (false, &unattached)] {
+        for portable in [false, true] {
+            let mut decoder =
+                LdpcBatchDecoder::new(code.clone(), config, cap, DecodedWord::Codeword);
+            if portable {
+                decoder = decoder.with_portable_lanes();
+            }
+            for &(workers, frames) in QC_CALLS {
+                let workers = NonZeroUsize::new(workers).unwrap();
+                let route = decoder.batch_route_with_workers(frames, workers);
+                let mut executed = serde_json::Value::Null;
+                if structured {
+                    let llrs: Vec<Vec<Llr>> = (0..frames)
+                        .map(|frame| {
+                            (0..code.n())
+                                .map(|i| {
+                                    Llr::new(if (i + frame).is_multiple_of(31) {
+                                        -1.0
+                                    } else {
+                                        2.0
+                                    })
+                                })
+                                .collect()
+                        })
+                        .collect();
+                    let views: Vec<&[Llr]> = llrs.iter().map(Vec::as_slice).collect();
+                    let mut decoded = vec![BitVec::new(); frames];
+                    let mut outcomes = vec![DecodeOutcome::default(); frames];
+                    decoder.decode_batch_with_workers(&views, &mut decoded, &mut outcomes, workers);
+                    for (frame, view) in views.iter().enumerate() {
+                        let expected = single.decode_to_codeword(view, cap);
+                        assert_eq!(decoded[frame], expected.decoded_bits, "frame {frame}");
+                        assert_eq!(outcomes[frame], expected.outcome(), "frame {frame}");
+                    }
+                    executed = route_report(
+                        decoder
+                            .last_wave_route()
+                            .expect("a decoded call has a last wave"),
+                    );
+                }
+                reports.push(serde_json::json!({
+                    "structured": structured,
+                    "portable": portable,
+                    "workers": workers.get(),
+                    "frames": frames,
+                    "route": route_report(route),
+                    "executed": executed,
+                }));
+            }
+        }
+    }
+    serde_json::json!({
+        "decode": decode_report(decode),
+        "routes": reports,
         "resolution": "installed",
     })
 }

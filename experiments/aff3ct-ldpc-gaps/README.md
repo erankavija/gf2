@@ -52,13 +52,15 @@ python3 experiments/aff3ct-ldpc-gaps/make-family.py \
 [plans/](plans/) contains the generated pilot configurations. Their symbolic
 input-root and build references require materialization before dispatch. The NR
 pilot retains its QC-prototype comparisons as configuration; this harness
-refuses to dispatch that prototype. A scoped confirmation declaration names the
-tuned arm for a delivered QC route. The candidate arm, `gf2-batch-qc-candidate`,
-embeds [tuning-profiles/qc-route-candidate.json](tuning-profiles/qc-route-candidate.json),
-which holds the committed lane selectors and the selection of `qc-go-rule`. It
-attaches NR BG1 Z=384 structure after an exact parity-check comparison outside
-timing, refuses a cell where a worker decodes off the selected route, and states
-each worker's executed route in `selected_path` and its diagnostics.
+refuses to dispatch that prototype. The tuned arm, `gf2-batch-tuned`, embeds
+the committed coding envelope, whose selectors include the QC route cases of
+`qc-go-rule`. The candidate arm, `gf2-batch-qc-candidate`, which the
+`55c3e433-integrated-adoption` family confirmed, embeds
+[tuning-profiles/qc-route-candidate.json](tuning-profiles/qc-route-candidate.json),
+the same selectors under an inherited measurement. Both arms attach NR BG1
+Z=384 structure after an exact parity-check comparison outside timing, refuse
+a cell where a worker decodes off the route `qc-go-rule` selects, and state
+each worker's executed route in `selected_path` and their diagnostics.
 
 For a runnable plan, omit `--configuration` and supply one `--build` argument
 per build record, including records in other worktrees. Generation checks the

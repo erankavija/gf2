@@ -89,7 +89,8 @@ of the coding tuning section
 Each frame's word and outcome equal the single-frame decoder's under the
 [numerical contract](ldpc-decoder-numerical-contract.md).
 The committed coding envelope under `crates/gf2-coding/data/tuning-profiles/`
-records the decode selectors of the calibration campaign.
+records the lane selectors of the calibration campaign and the QC route cases
+that the confirmation family `55c3e433-integrated-adoption` qualified.
 
 ## Cargo features
 

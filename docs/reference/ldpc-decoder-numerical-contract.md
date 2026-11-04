@@ -256,6 +256,10 @@ route reports that backend; a build without `simd` asserts that it reports the
 portable backend. The same assertions run on the QC route of each backend over
 5G NR mother and rate-matched codes, where the portable backend is the forced
 fallback of a host without the kernel.
+[`tuning_profile_committed`](../../crates/gf2-coding/tests/tuning_profile_committed.rs)
+installs the committed coding envelope in a fresh process and asserts that NR
+BG1 Z=384 decodes on the QC route of each backend exactly at the envelope's
+`qc_route_cases`, with each frame's word and outcome equal to `LdpcDecoder`'s.
 
 [`dvb_t2_concat_batch_decoder`](../../crates/gf2-coding/tests/dvb_t2_concat_batch_decoder.rs)
 runs the shared batch contract on `DvbT2ConcatBatchDecoder`, whose LDPC inner
