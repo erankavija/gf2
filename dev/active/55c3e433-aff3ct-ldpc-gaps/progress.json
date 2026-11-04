@@ -179,6 +179,13 @@
       "model": "opus",
       "reason": "contract-setting family declaration, pinned pre-change build, smoke and window job",
       "outcome": "prepared: declaration ad4344d57, untimed smoke passed on six cells, window job ready"
+    },
+    {
+      "issue": "3ee00fcf",
+      "vendor": "codex",
+      "model": "gpt-6-astra",
+      "effort": "high",
+      "reason": "adopt the qualified QC route in the committed production envelope through canonical composition"
     }
   ],
   "created_during_execution": [],
@@ -238,6 +245,7 @@
   "window": {
     "approved_by": "owner",
     "scope": "one window for 55c3e433-integrated-adoption pilot and confirmation, first night after wave 4 passes review, only this epic's job queued",
-    "armed": "timer gf2-bench-window-20261104, 2026-11-04 04:00 Europe/Helsinki; queue job 3ee00fcf only (67194d70 line has no worktree and is skipped)"
+    "armed": "timer gf2-bench-window-20261104, 2026-11-04 04:00 Europe/Helsinki; queue job 3ee00fcf only (67194d70 line has no worktree and is skipped)",
+    "result": "ran 2026-11-04 04:00-04:09 Helsinki rc=0; confirmation qualifies=true, receipt 87cfeaa2d11de5b8f03d5f5f6a8f83c0975b3dd2e256d25c692854c21c06a18a; pilot receipt ea8df84f85ca82f2563bf68733634c41aad3a33812ef881ac161ea76eee3f447; evidence in campaign-evidence/55c3e433/integrated-adoption/run"
   }
 }
