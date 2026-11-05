@@ -1,9 +1,9 @@
 {
   "schema": "zen3-benchmark-plan-v1",
-  "campaign_id": "55c3e433-adopted-vs-aff3ct-pilot",
+  "campaign_id": "55c3e433-adopted-vs-aff3ct-pilot-2",
   "issue": "5f401907",
   "label": "pilot",
-  "campaign_seed": 2293276784,
+  "campaign_seed": 3264351777,
   "addendum": "target/aff3ct-ldpc-gaps/55c3e433-adopted-vs-aff3ct/pilot/addendum.json",
   "lock_path": "/tmp/gf2-ccx1.lock",
   "wrapper": "dev/scripts/ccx1-bench-flock.sh --full-host",
