@@ -224,6 +224,13 @@
       "model": "opus",
       "reason": "comparator-family declaration from FI-3 history, builds, smoke and window job",
       "outcome": "prepared: declaration 3a775c2a7, smoke passed on six cells, window job ready"
+    },
+    {
+      "issue": "5f401907",
+      "vendor": "codex",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "reason": "declaration amendment for pilot 2, regenerated projections and load-guarded window job"
     }
   ],
   "created_during_execution": [
@@ -304,6 +311,14 @@
         "5f401907"
       ],
       "resolution": "owner: A, task 096f2ba3 exempts .jit/archive-evidence/ (412f717d6)"
+    },
+    {
+      "topic": "comparator pilot freeze refused at resolution 0.48 under host load",
+      "issue": "5f401907",
+      "blocks": [
+        "5f401907"
+      ],
+      "resolution": "owner: re-pilot (2026-11-06): declaration max_pilot_trials_per_cell 2 with pilot-2 id, pilot 1 and refusal preserved, job-local load check above 1.0, one more window approved"
     }
   ],
   "surfaced_pitfalls": [
@@ -338,6 +353,12 @@
   "window2": {
     "approved_by": "owner",
     "scope": "one window for 55c3e433-adopted-vs-aff3ct pilot and confirmation, after 3ee00fcf adoption lands",
-    "armed": "timer gf2-bench-window-20261105, 2026-11-05 04:00 Europe/Helsinki; queue job 5f401907 only"
+    "armed": "timer gf2-bench-window-20261105, 2026-11-05 04:00 Europe/Helsinki; queue job 5f401907 only",
+    "result": "ran 2026-11-05 04:00-04:04 Helsinki rc=1; pilot accepted qualifies=false, receipt 1065c2cc8c486b90a0957f242d51ccfaa407f9b389a925e14419629430f6ccdb; freeze refused: equivalence 1.1 does not exceed 1 + 0.48 (nr-bg1-z384-p12-b8, start load 4.15 7.06 7.37); no confirmation; evidence in campaign-evidence/55c3e433/adopted-vs-aff3ct/run-1",
+    "status": "spent"
+  },
+  "window3": {
+    "approved_by": "owner",
+    "scope": "one window for 55c3e433-adopted-vs-aff3ct pilot-2, freeze and confirmation, host idle at start"
   }
 }
