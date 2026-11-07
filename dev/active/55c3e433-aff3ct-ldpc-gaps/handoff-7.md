@@ -10,7 +10,7 @@
 - Wave in progress: wave 6 (`5f401907`, `in_progress`, assignee `agent:worker`). No worker is running.
 - Children summary: 7 done, 1 in_progress, 0 rejected.
 - Open escalations: none.
-- Timer armed: `gf2-bench-window-20261109`, 2026-11-09 04:00 Helsinki. The queue runs only `5f401907` from `prepared-3/window.sh`. The owner keeps the host idle from about 03:30.
+- Timer armed: `gf2-bench-window-20261108`, 2026-11-08 04:00 Helsinki. The queue runs only `5f401907` from `prepared-3/window.sh`. The owner keeps the host idle from about 03:30.
 
 ## What just happened
 

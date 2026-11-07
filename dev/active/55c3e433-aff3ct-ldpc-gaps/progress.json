@@ -383,6 +383,6 @@
   "window4": {
     "approved_by": "owner",
     "scope": "one window for 55c3e433-adopted-vs-aff3ct pilot-3, freeze and confirmation; host idle from about 03:30 Helsinki",
-    "armed": "timer gf2-bench-window-20261109, 2026-11-09 04:00 Europe/Helsinki; queue job 5f401907 prepared-3 only (67194d70 line has no worktree and is skipped)"
+    "armed": "timer gf2-bench-window-20261108, 2026-11-08 04:00 Europe/Helsinki; queue job 5f401907 prepared-3 only (67194d70 line has no worktree and is skipped)"
   }
 }
