@@ -232,6 +232,13 @@
       "effort": "high",
       "reason": "declaration amendment for pilot 2, regenerated projections and load-guarded window job",
       "outcome": "prepared: declaration b586b34eb (merged a7f51916f), prepared-2 job with load guard (exit 4 above 1.0), untimed smoke on six cells, executables unchanged"
+    },
+    {
+      "issue": "5f401907",
+      "vendor": "claude",
+      "model": "sonnet",
+      "reason": "declaration amendment for pilot 3, regenerated projections, 1- and 5-minute load guard",
+      "outcome": "prepared: declaration 3bd70555f (merged 0c3f43b45), prepared-3 job, untimed smoke on six cells, executables unchanged"
     }
   ],
   "created_during_execution": [
@@ -375,6 +382,7 @@
   },
   "window4": {
     "approved_by": "owner",
-    "scope": "one window for 55c3e433-adopted-vs-aff3ct pilot-3, freeze and confirmation; host idle from about 03:30 Helsinki"
+    "scope": "one window for 55c3e433-adopted-vs-aff3ct pilot-3, freeze and confirmation; host idle from about 03:30 Helsinki",
+    "armed": "timer gf2-bench-window-20261109, 2026-11-09 04:00 Europe/Helsinki; queue job 5f401907 prepared-3 only (67194d70 line has no worktree and is skipped)"
   }
 }
