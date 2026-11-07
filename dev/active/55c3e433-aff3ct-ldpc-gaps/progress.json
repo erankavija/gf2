@@ -320,6 +320,14 @@
         "5f401907"
       ],
       "resolution": "owner: re-pilot (2026-11-06): declaration max_pilot_trials_per_cell 2 with pilot-2 id, pilot 1 and refusal preserved, job-local load check above 1.0, one more window approved"
+    },
+    {
+      "topic": "comparator pilot-2 freeze refused at resolution 0.75; pilot budget 2 spent",
+      "issue": "5f401907",
+      "blocks": [
+        "5f401907"
+      ],
+      "resolution": "owner: third pilot (2026-11-08): max_pilot_trials_per_cell 3, pilot-3 campaign with new seed, pilots 1-2 and refusals recorded, job refuses when 1- or 5-minute load exceeds 1.0, one more window approved, host idle from about 03:30"
     }
   ],
   "surfaced_pitfalls": [
@@ -364,5 +372,9 @@
     "armed": "timer gf2-bench-window-20261106, 2026-11-06 04:00 Europe/Helsinki; queue job 5f401907 prepared-2 only (67194d70 line has no worktree and is skipped)",
     "result": "ran 2026-11-06 04:00-04:06 Helsinki rc=1; load guard passed at 1-minute 0.75 (5- and 15-minute 2.80 4.99); pilot-2 accepted qualifies=false findings=0, receipt f47929f8491af5a63c629b4080c40656134a47da8fe0ba93200d9cfe6fdc71da; freeze refused: equivalence 1.1 does not exceed 1 + 0.75 (widest interval dvb-t2-r12-p12-b8 [1.33, 2.26]); no confirmation; evidence in campaign-evidence/55c3e433/adopted-vs-aff3ct/run-2",
     "status": "spent"
+  },
+  "window4": {
+    "approved_by": "owner",
+    "scope": "one window for 55c3e433-adopted-vs-aff3ct pilot-3, freeze and confirmation; host idle from about 03:30 Helsinki"
   }
 }
