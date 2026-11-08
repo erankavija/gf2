@@ -239,6 +239,13 @@
       "model": "sonnet",
       "reason": "declaration amendment for pilot 3, regenerated projections, 1- and 5-minute load guard",
       "outcome": "prepared: declaration 3bd70555f (merged 0c3f43b45), prepared-3 job, untimed smoke on six cells, executables unchanged"
+    },
+    {
+      "issue": "5f401907",
+      "vendor": "codex",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "reason": "table generator and closing record from preserved pilot evidence"
     }
   ],
   "created_during_execution": [
@@ -342,7 +349,7 @@
       "blocks": [
         "5f401907"
       ],
-      "resolution": null
+      "resolution": "owner: stop and record (2026-11-08); 5f401907 REQ-01 amended to allow no confirmation, record states why (ef1d54ec0)"
     }
   ],
   "surfaced_pitfalls": [
