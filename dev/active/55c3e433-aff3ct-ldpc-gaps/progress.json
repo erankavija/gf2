@@ -335,6 +335,14 @@
         "5f401907"
       ],
       "resolution": "owner: third pilot (2026-11-08): max_pilot_trials_per_cell 3, pilot-3 campaign with new seed, pilots 1-2 and refusals recorded, job refuses when 1- or 5-minute load exceeds 1.0, one more window approved, host idle from about 03:30"
+    },
+    {
+      "topic": "pilot-3 confirmation refused by the job's own load guard after the pilot loaded the host",
+      "issue": "5f401907",
+      "blocks": [
+        "5f401907"
+      ],
+      "resolution": null
     }
   ],
   "surfaced_pitfalls": [
@@ -383,6 +391,8 @@
   "window4": {
     "approved_by": "owner",
     "scope": "one window for 55c3e433-adopted-vs-aff3ct pilot-3, freeze and confirmation; host idle from about 03:30 Helsinki",
-    "armed": "timer gf2-bench-window-20261108, 2026-11-08 04:00 Europe/Helsinki; queue job 5f401907 prepared-3 only (67194d70 line has no worktree and is skipped)"
+    "armed": "timer gf2-bench-window-20261108, 2026-11-08 04:00 Europe/Helsinki; queue job 5f401907 prepared-3 only (67194d70 line has no worktree and is skipped)",
+    "result": "ran 2026-11-08 04:00-04:05 Helsinki rc=4; start load 0.19 0.28 0.26; pilot-3 accepted qualifies=false findings=0, receipt 1deea3f0a2845709d764c37c8c6cd11d3d4aff9d5b87f18091d970bdd692f03b; freeze passed (widest rel_half 0.0436, frozen resolution 0.05, confirmation addendum and plan written); confirmation refused by the job load guard at 1-minute 4.87, 5-minute 2.83, raised by the pilot's own timed stage; no confirmation; evidence in campaign-evidence/55c3e433/adopted-vs-aff3ct/run-3; the job resumes at the confirmation stage",
+    "status": "spent"
   }
 }
