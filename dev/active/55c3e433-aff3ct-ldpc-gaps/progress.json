@@ -247,6 +247,12 @@
       "effort": "high",
       "reason": "table generator and closing record from preserved pilot evidence",
       "outcome": "closing table and record (8b65fef2a); cargo-ci, code-review, research-review passed; lead closed advisory F1 (3533fad65)"
+    },
+    {
+      "issue": "55c3e433",
+      "vendor": "claude",
+      "model": "sonnet",
+      "reason": "epic doc-review rework: F1-F4 citations, manifest authority, pinned diff endpoint"
     }
   ],
   "created_during_execution": [
@@ -372,7 +378,8 @@
     "1d787ed3": 3,
     "a72f2b3f": 2,
     "2088e0ec": 3,
-    "3ee00fcf": 2
+    "3ee00fcf": 2,
+    "55c3e433": 1
   },
   "started_at": "2026-11-01T15:20:00+02:00",
   "window": {
