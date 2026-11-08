@@ -84,5 +84,12 @@ including cells omitted from confirmation, and refuses invalid margins.
 Generate the confirmation plan in that output directory with `--confirmation`;
 the generator preserves the frozen addendum.
 
+`closing-table.py` projects preserved comparator receipts, their acceptance
+summaries and prepared quality records into a Markdown table under `target/`.
+It keeps historical pilots separate, preserves candidate-oriented evaluator
+labels and reports losing-cell closures without claiming confirmation. The
+closing record for @/issue/5f401907 gives the reproduction command and
+interprets the gf2-time/AFF3CT-time ratios.
+
 The CI wrapper includes the gf2 package through the experiments workspace glob
 and runs the Python suite through its `aff3ct-ldpc-gaps-python` step.
