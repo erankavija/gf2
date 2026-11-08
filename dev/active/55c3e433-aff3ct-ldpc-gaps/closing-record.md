@@ -47,6 +47,9 @@ therefore applies; its no-production-change branch does not.
 
 The generated table below is reproduced from pilot 3, the freeze's resolution
 evidence, and retains pilots 1 and 2 as separate historical timing rows.
+Pilot 3 exists because the pilot budget grew after two refused freezes, so its
+selection depends on observed precision; its 97.5% intervals carry no
+adjustment for that adaptive stopping.
 Every timing ratio is **gf2 time divided by AFF3CT time**, using the ratio of
 medians and the canonical evaluator's paired-bootstrap interval. Every timing
 estimate in the following cell results has twelve pairs and confidence 0.975
