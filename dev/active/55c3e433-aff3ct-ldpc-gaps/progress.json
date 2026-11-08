@@ -252,7 +252,8 @@
       "issue": "55c3e433",
       "vendor": "claude",
       "model": "sonnet",
-      "reason": "epic doc-review rework: F1-F4 citations, manifest authority, pinned diff endpoint"
+      "reason": "epic doc-review rework: F1-F4 citations, manifest authority, pinned diff endpoint",
+      "outcome": "F1-F4 fixed (08432fb6c, merged 85b46a21a); epic gates research-review, repo-validate, doc-review, holistic-review passed"
     }
   ],
   "created_during_execution": [
@@ -409,5 +410,7 @@
     "armed": "timer gf2-bench-window-20261108, 2026-11-08 04:00 Europe/Helsinki; queue job 5f401907 prepared-3 only (67194d70 line has no worktree and is skipped)",
     "result": "ran 2026-11-08 04:00-04:05 Helsinki rc=4; start load 0.19 0.28 0.26; pilot-3 accepted qualifies=false findings=0, receipt 1deea3f0a2845709d764c37c8c6cd11d3d4aff9d5b87f18091d970bdd692f03b; freeze passed (widest rel_half 0.0436, frozen resolution 0.05, confirmation addendum and plan written); confirmation refused by the job load guard at 1-minute 4.87, 5-minute 2.83, raised by the pilot's own timed stage; no confirmation; evidence in campaign-evidence/55c3e433/adopted-vs-aff3ct/run-3; the job resumes at the confirmation stage",
     "status": "spent"
-  }
+  },
+  "completed_at": "2026-11-08",
+  "status": "complete"
 }
