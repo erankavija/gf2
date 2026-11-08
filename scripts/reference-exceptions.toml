@@ -35,7 +35,7 @@ reason = "cites files of the upstream Sionna repository"
 
 [[exception]]
 path = "dev/active/55c3e433-aff3ct-ldpc-gaps/*"
-reason = "cites the harness at the revision its documents state; remove when 55c3e433 restores or replaces it"
+reason = "cites paths removed from the tree at the revisions its documents state; remove when those documents leave the tree"
 
 [[exception]]
 path = ".agents/skills/*"

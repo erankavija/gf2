@@ -1,7 +1,10 @@
 # Plan: Close the integrated LDPC gaps against AFF3CT (55c3e433)
 
-> Planning node: c39b9e1b. Authoritative graph:
-> [breakdown.json](breakdown.json).
+> Planning node: c39b9e1b. [breakdown.json](breakdown.json) is the
+> creation-time manifest and preregistration, kept as written. The current
+> criteria are the issue descriptions, cited as `@/issue/<short-id>`; they
+> include amendments after creation, and a conflict between a manifest copy and
+> an issue description resolves to the issue.
 
 ## Outcome and criterion approach
 
@@ -12,7 +15,7 @@
 | REQ-03 | A rule fixed before the run decides. Two planned delivery items run on go and close as obsolete on no-go. | `qc-go-rule`, `adoption-family` |
 | REQ-04 | The pilot's decision record decides it, with no implementation unless it starts the candidates. | `nr-route-pilot` |
 | REQ-05 | Each gf2 terminal states the contract; variants compare bits against an unchanged build. | `docs/reference/ldpc-decoder-numerical-contract.md` |
-| REQ-06, REQ-07 | A six-row generated outcome. Confirmation runs only for a candidate or adopted change. | `adoption-family`, `comparator-family` |
+| REQ-06, REQ-07 | A six-row generated outcome. A pilot and freeze run for an adopted change, and a confirmation only in an owner-armed window, as `@/issue/5f401907` states. | `adoption-family`, `comparator-family` |
 
 ## Shared architectural contracts
 
@@ -64,7 +67,7 @@ Project-level final integration stays with the `1362381c` scorecard, so this fam
 
 ### `comparator-family` [plan-fixed] — confirmed gap of the adopted route
 
-With an adopted change, `55c3e433-adopted-vs-aff3ct` measures the gap of that named route against AFF3CT, using FI-3's six cells, tuned arm, ratio direction and margins, through a same-family pilot, freeze and one confirmation. With none, FI-3 and the preserved experiments are the results, and no campaign runs.
+With an adopted change, `55c3e433-adopted-vs-aff3ct` measures the gap of that named route against AFF3CT, using FI-3's six cells, tuned arm, ratio direction and margins, through a same-family pilot and freeze, and one confirmation only in an owner-armed window; without one, no losing cell reports a confirmed result (`@/issue/5f401907`, REQ-01). With none, FI-3 and the preserved experiments are the results, and no campaign runs.
 
 The boundary is the named adopted route, which FI-3 could not measure. Earlier comparator questions on changed production have each held their own family, as `ldpc-matched-algorithm-alist-v1`, `ldpc-steady-matched-single-worker-v1`, `ldpc-batch-aff3ct-matched-v1` and FI-3 show. FI-3's ledger cannot serve it: its AFF3CT candidate holds that ledger's reservation, and a second attempt there has too little alpha to pass tail support on six cells. The declaration cites FI-3 as history. Tables reuse `dev/tools/tuning-campaign-support/src/bin/benchmark-acceptance.rs`.
 
@@ -117,5 +120,5 @@ flowchart LR
 ## Investigation sources
 
 - [Investigation](investigation.md) holds the claim classification, reuse paths and go-path findings. Manifest source aliases map to its sections: `INV-harness` to Harness reuse, `INV-check-path` to Check-update path, `INV-go-path` to Go path, and `INV-closeout` to Closeout.
-- `dev/active/1a379447-zen3-cpu-performance/1362381c/aff3ct-gap-investigation.md` holds the candidate ranking.
-- `dev/active/1a379447-zen3-cpu-performance/1358d6ab/outcome.md` holds FI-3's values.
+- [aff3ct-gap-investigation.md](aff3ct-gap-investigation.md) holds the candidate ranking.
+- FI-3's values are in `dev/active/1a379447-zen3-cpu-performance/1358d6ab/outcome.md` at revision `46bdf2114`, the last revision that tracks it (`git show 46bdf2114:<path>`).

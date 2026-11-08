@@ -39,8 +39,8 @@ A held candidate restarts from a measured lane arm at an NR cell where QC loses 
 
 ## Production behavior and the numerical contract (REQ-05)
 
-- `git diff 3ea453e42 HEAD -- crates/gf2-coding/src/ldpc` is empty: no production decoder source changed.
-- `crates/gf2-coding/src/tuning.rs` differs by one doc-comment line, which names the coding producer's new location. No code changed.
+- Pilot-snapshot evidence, true at the decision-time revision `09069897e` and not at later revisions, which carry the delivered QC decoder, dispatch and selector changes: `git diff 3ea453e42 09069897e -- crates/gf2-coding/src/ldpc` is empty, so no production decoder source changed.
+- At the same snapshot, `crates/gf2-coding/src/tuning.rs` differs from `3ea453e42` by one doc-comment line, which names the coding producer's new location. No code changed.
 - The gf2 single-frame arm runs the production decoder. The QC arm matches the canonical decoder's posterior bits, iteration counts and syndrome flags on the eight timed frames. Both stay within `docs/reference/ldpc-decoder-numerical-contract.md`; the QC decoder's conformance suites belong to its delivery.
 - AFF3CT is outside the contract: it adds the channel LLR after summing check messages, where the contract sums from the channel LLR in edge order; it takes sign bits, where the contract takes the comparison $\mu \ge 0$ and reads signed zero as positive and NaN as negative; and it skips the terminal syndrome check at the iteration cap. These differences can change iteration counts and decisions; the pilot's record shows differing iteration counts only.
 
