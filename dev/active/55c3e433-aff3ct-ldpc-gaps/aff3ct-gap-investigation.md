@@ -58,3 +58,33 @@ No evidence establishes an AVX2 ceiling. Hardware bounds are unmeasured (account
 **Open unknowns:** timed-subset iteration equality, current executable versus FI-3 performance, actual memory bandwidth, and workspace causality.
 
 **Records needing careful correction:** `07ca8585`’s disappearing-reduction/dominant-loop claims are contradicted by recategorization; blanket “multicore lanes lose” contradicts NR results; fixed-wave sweeps do not isolate policy cost; QC’s comparator `fail` means AFF3CT was slower, not QC. (recategorization:50 (line 50), R-04:341 (line 341), decision direction:231 (line 231))
+
+## 7. Evidence key
+
+A label such as `DVB:206 (line 206)` names a file and a line in it. Each label below resolves to the file at revision `6e9fbaff6790d744464be8f39d900b880d1ac3ea`, the parent of the commit that removed measurement artifacts from the tree; retrieve it with `git show 6e9fbaff6:<path>`. Line numbers are those of the file when the label was written; the profile, timing and findings labels match at that revision. Paths under `dev/bench_results/` are measurement artifacts whose preserved copies live outside the tracked tree; the revision above is the retrievable tracked copy.
+
+| Label | Path |
+|---|---|
+| `DVB`, `NR` | `dev/active/1a379447-zen3-cpu-performance/78f0aafd/decoder-profile/profile.md` |
+| `scope` | `dev/active/1a379447-zen3-cpu-performance/78f0aafd/report.md` |
+| `timings`, `multicore`, `comparator` | `dev/bench_results/f63a2464/timing-tables.md` |
+| `C-09`, `findings:54,133` | `dev/active/1a379447-zen3-cpu-performance/f63a2464/corrections.md`, `dev/active/1a379447-zen3-cpu-performance/f63a2464/findings.md` |
+| `decision direction` | `dev/active/1a379447-zen3-cpu-performance/f63a2464/decision-record.md` |
+| `findings:58` | `dev/active/1a379447-zen3-cpu-performance/07ca8585/findings.md` |
+| `outcomes`, `R-04` | `dev/active/1a379447-zen3-cpu-performance/6230e0b6/findings.md` |
+| `recategorization` | `dev/active/1a379447-zen3-cpu-performance/92c53589/record.md` |
+| `counters` | `dev/bench_results/f434ddd3/profile/profile.md` |
+| `profile` | `dev/bench_results/3be770d5/v4-r1-steady-profile/profile.md` |
+| `AFF3CT build` | `dev/bench_results/3be770d5/preparation/build-identity.json` |
+| `library flags` | `dev/bench_results/c077a88b/v3-preparation/build-identity.json` |
+| `gf2 build` | `dev/bench_results/ed3d490e/preparation/build-identity.json` |
+| `driver` | `dev/active/1a379447-zen3-cpu-performance/3be770d5/survey/harness/src/driver.rs` |
+| `shim` | `dev/active/1a379447-zen3-cpu-performance/c077a88b/survey/harness/cpp/aff3ct_shim.cpp` |
+| `gf2`, `gf2 selection` | `dev/active/ed3d490e-zen3-ldpc-frame-simd/survey/arms/src/lib.rs` |
+| `batch` | `crates/gf2-coding/src/ldpc/batch.rs` |
+| `single`, `variable update` | `crates/gf2-coding/src/ldpc/core.rs` |
+| `gf2 reduction` | `crates/gf2-coding/src/ldpc/min_sum.rs` |
+| `assembly` | `crates/gf2-kernels-simd/src/x86/asm/ldpc_lanes.asm.txt` |
+| `contract` | `docs/reference/ldpc-decoder-numerical-contract.md` |
+
+Labels naming tracked source files, the assembly listing and the contract carry line numbers from the time of writing; the current files may have moved on. Spot checks matched the profile, timing, findings and record labels. The three build-identity labels do not match exactly: the compiler line is 5 in `AFF3CT build` where the label says 4, and the labels `gf2 build:73` and `library flags:20` stay unverified, so those three name a file and an approximate line.
