@@ -1,7 +1,7 @@
 {
   "epic_id": "55c3e433-843f-4079-adc5-4530ff3e8946",
   "epic_short_id": "55c3e433",
-  "current_wave": 6,
+  "current_wave": 7,
   "waves": [
     {
       "wave_number": 1,
@@ -90,7 +90,7 @@
           "short_id": "5f401907",
           "title": "Close the integrated LDPC cells against AFF3CT",
           "classification": "research",
-          "status": "in_progress"
+          "status": "done"
         }
       ]
     }
@@ -245,7 +245,8 @@
       "vendor": "codex",
       "model": "gpt-6.1-sol",
       "effort": "high",
-      "reason": "table generator and closing record from preserved pilot evidence"
+      "reason": "table generator and closing record from preserved pilot evidence",
+      "outcome": "closing table and record (8b65fef2a); cargo-ci, code-review, research-review passed; lead closed advisory F1 (3533fad65)"
     }
   ],
   "created_during_execution": [
@@ -359,11 +360,11 @@
     },
     {
       "subject": "prepared quality files come from tracked history 545a3c814, byte-identical to the pilots' inputs",
-      "status": "state in the closing record"
+      "status": "stated in closing-record.md"
     },
     {
       "subject": "max_added_source_lines: 898 production lines vs 1882 including tests",
-      "status": "state which count binds in the adoption record"
+      "status": "stated in adoption-decision.md (owner ruling 2026-11-04)"
     }
   ],
   "rework_counts": {
