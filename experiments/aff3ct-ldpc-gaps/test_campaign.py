@@ -70,7 +70,7 @@ def test_input_root_is_explicit_and_independent_of_cwd(tmp_path, monkeypatch):
     assert input_root() == tmp_path
     assert output_path(ROOT / "target/test") == ROOT / "target/test"
     with pytest.raises(ValueError, match="under.*target"):
-        output_path(tmp_path)
+        output_path(ROOT)
 
 
 def materialized(tmp_path, monkeypatch):
@@ -255,3 +255,69 @@ def test_frozen_addendum_names_an_absolute_pilot_by_repository_relative_path():
         assert literal_relative(evidence["receipt"]), evidence["receipt"]
         assert (ROOT / evidence["receipt"]).read_bytes() == (pilot / "receipt.json").read_bytes()
         assert len(evidence["sha256"]) == 64
+
+
+def closing_pilot(tmp_path, name, ratio):
+    declaration = read(HERE / "families/55c3e433-adopted-vs-aff3ct.json")
+    quality_dir = tmp_path / "quality"
+    quality = {"frames": 128, "frame_errors": 2,
+               "fer_interval": [0.004295449710144082, 0.055180976679817195],
+               "interval_method": "frame-hoeffding-95+fer-wilson-95"}
+    receipt_cells, summary_cells = [], []
+    for cell in declaration["cells"]:
+        for prefix in ("gf2-nms-f32", "aff3ct-flooding-nms-f32"):
+            write(quality_dir / f"{prefix}-{cell['code']}.json", quality)
+        receipt_cells.append({"cell_id": cell["cell_id"],
+                              "baseline_arm": f"gf2-batch-tuned-{cell['code']}",
+                              "candidate_arm": f"aff3ct-flooding-nms-f32-{cell['code']}",
+                              "pairs": [{side: {"quality": quality} for side in ("baseline", "candidate")}
+                                        for _ in range(12)]})
+        summary_cells.append({"cell_id": cell["cell_id"], "pairs": 12,
+                              "interval": {"estimate": ratio, "lower": ratio * 0.99,
+                                           "upper": ratio * 1.01, "confidence": 0.975},
+                              "decision": "regressed" if ratio < 1 else "improved",
+                              "outcome": "pilot"})
+    pilot = tmp_path / name
+    write(pilot / "receipt.json", {"family_id": declaration["family"]["id"],
+                                   "campaign_id": name, "label": "pilot",
+                                   "host": {"hostname": "fixture", "cpu_model": "fixture CPU"},
+                                   "cells": receipt_cells})
+    write(pilot / "acceptance-summary.json", {
+        "receipt_sha256": digest(pilot / "receipt.json"), "campaign_id": name,
+        "family": {"family_id": declaration["family"]["id"]},
+        "label": "pilot", "verdict": "accepted", "qualifies": False,
+        "findings": [], "cells": summary_cells})
+    return pilot, quality_dir
+
+
+def test_closing_table_keeps_pilots_separate_and_never_confirms_a_pilot(tmp_path):
+    primary, quality = closing_pilot(tmp_path, "primary", 0.5)
+    history, _ = closing_pilot(tmp_path, "history", 2.0)
+    table = load("closing-table").render(primary, [history], quality)
+    current, historical = table.split("## Historical pilots")
+    assert current.count("preserved negative or inconclusive experiment") == 4
+    assert "confirmed result" not in table
+    assert current.count("gf2 exceeds AFF3CT") == 6
+    assert current.count("lead preserved in pilot") == 2
+    assert "gf2 does not meet AFF3CT" in historical
+    assert "regressed / pilot" in current and "improved / pilot" in historical
+    assert "gf2 time / AFF3CT time" in table
+    assert digest(primary / "receipt.json") in current
+    assert digest(history / "receipt.json") in historical
+    # Replayed timing pairs and worker cells do not increase the quality sample.
+    assert table.count("2/128") == 4
+    assert "[0.00429545, 0.05518098]" in table
+
+
+def test_closing_table_checks_receipt_binding_and_quality_inputs(tmp_path):
+    pilot, quality = closing_pilot(tmp_path, "primary", 0.5)
+    closing = load("closing-table")
+    summary = read(pilot / "acceptance-summary.json")
+    write(pilot / "acceptance-summary.json", {**summary, "receipt_sha256": "0" * 64})
+    with pytest.raises(ValueError, match="different receipt"):
+        closing.render(pilot, [], quality)
+    write(pilot / "acceptance-summary.json", summary)
+    path = quality / "gf2-nms-f32-dvb-t2-r12.json"
+    write(path, {**read(path), "frame_errors": 3})
+    with pytest.raises(ValueError, match="quality.*differs"):
+        closing.render(pilot, [], quality)
