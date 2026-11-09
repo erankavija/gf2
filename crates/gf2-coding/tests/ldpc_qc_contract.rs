@@ -1,8 +1,9 @@
 //! The same posterior, word and outcome contract runs on each QC backend.
 use gf2_coding::ldpc::{
-    DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QcDecoder, QuasiCyclicLdpc,
+    DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QcCirculant, QcDecoder, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
+use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 
@@ -121,6 +122,12 @@ fn assert_contract(code: &LdpcCode) {
             .collect(),
     );
     frames.push(vec![Llr::new(2.0); code.n()]);
+    // The zero word under noise converges after a few iterations.
+    frames.push(
+        (0..code.n())
+            .map(|_| Llr::new(rng.gen_range(-1.5..4.0)))
+            .collect(),
+    );
     frames.push(
         (0..code.n())
             .map(|i| Llr::new(if i == 0 { -3.0 } else { 2.0 }))
@@ -297,4 +304,137 @@ fn zero_cap_copies_the_current_frame_after_a_nonzero_decode() {
             }
         }
     }
+}
+
+const DVB_RATES: [CodeRate; 6] = [
+    CodeRate::Rate1_2,
+    CodeRate::Rate3_5,
+    CodeRate::Rate2_3,
+    CodeRate::Rate3_4,
+    CodeRate::Rate4_5,
+    CodeRate::Rate5_6,
+];
+
+fn dvb_t2_codes() -> impl Iterator<Item = (&'static str, CodeRate, LdpcCode)> {
+    DVB_RATES
+        .into_iter()
+        .map(|rate| ("short", rate, LdpcCode::dvb_t2_short(rate)))
+        .chain(
+            DVB_RATES
+                .into_iter()
+                .map(|rate| ("normal", rate, LdpcCode::dvb_t2_normal(rate))),
+        )
+}
+
+#[test]
+fn dvb_t2_block_descriptions_lift_to_the_parity_check_matrix() {
+    let mut weight_above_one = false;
+    for (frame, rate, code) in dvb_t2_codes() {
+        let qc = code.quasi_cyclic().expect("DVB-T2 codes retain structure");
+        assert_eq!(qc.expansion_factor(), 360, "{frame} {rate:?}");
+        assert!(qc.row_order().is_some() && qc.col_order().is_some());
+        let h = code.parity_check_matrix();
+        let edges: Vec<_> = (0..code.m())
+            .flat_map(|row| h.row_iter(row).map(move |col| (row, col)))
+            .collect();
+        let mut plain = LdpcCode::from_edges(code.m(), code.n(), &edges);
+        assert!(plain.attach_quasi_cyclic(qc), "{frame} {rate:?}");
+        assert_eq!(
+            qc.circulants()
+                .iter()
+                .filter(|c| !c.masked_rows().is_empty())
+                .count(),
+            1,
+            "{frame} {rate:?}: the staircase wrap is the one masked circulant"
+        );
+        weight_above_one |= qc.circulants().windows(2).any(|pair| {
+            (pair[0].row_block(), pair[0].col_block()) == (pair[1].row_block(), pair[1].col_block())
+        });
+        assert!(qc.base_matrix().is_none());
+    }
+    assert!(
+        weight_above_one,
+        "the tables hold blocks of weight above one"
+    );
+}
+
+/// Masked rows, a block of weight two and non-identity orders at word-boundary
+/// lifting sizes.
+fn general_qc(z: usize) -> QuasiCyclicLdpc {
+    let circulants = vec![
+        QcCirculant::new(0, 0, 0),
+        QcCirculant::new(0, 0, 1 % z),
+        QcCirculant::new(0, 1, 2 % z),
+        QcCirculant::new(0, 2, 0).with_masked_rows(vec![0, z - 1]),
+        QcCirculant::new(1, 1, 0),
+        QcCirculant::new(1, 2, (z - 1) % z),
+        QcCirculant::new(1, 0, 3 % z),
+    ];
+    let rows = 2 * z;
+    let cols = 3 * z;
+    let row_order = (0..rows).map(|r| 2 * (r % z) + r / z).collect();
+    let col_order = (0..cols).rev().collect();
+    QuasiCyclicLdpc::from_circulants(2, 3, z, circulants).with_orders(row_order, col_order)
+}
+
+#[test]
+fn masked_weighted_and_permuted_blocks_follow_canonical() {
+    for z in [2, 3, 63, 64, 65] {
+        let qc = general_qc(z);
+        let code = LdpcCode::from_quasi_cyclic(&qc);
+        assert!(code.clone().attach_quasi_cyclic(&qc));
+        assert_contract(&code);
+    }
+}
+
+#[test]
+fn a_masked_check_left_with_one_edge_has_no_qc_decoder() {
+    let qc = QuasiCyclicLdpc::from_circulants(
+        1,
+        2,
+        4,
+        vec![
+            QcCirculant::new(0, 0, 0),
+            QcCirculant::new(0, 1, 1).with_masked_rows(vec![2]),
+        ],
+    );
+    let code = LdpcCode::from_quasi_cyclic(&qc);
+    assert!(QcDecoder::new(&code, DecoderConfig::default()).is_none());
+}
+
+#[test]
+fn dvb_t2_short_codes_follow_canonical() {
+    for rate in DVB_RATES {
+        assert_contract(&LdpcCode::dvb_t2_short(rate));
+    }
+}
+
+#[test]
+fn dvb_t2_normal_1_2_follows_canonical() {
+    assert_contract(&LdpcCode::dvb_t2_normal(CodeRate::Rate1_2));
+}
+
+#[test]
+fn dvb_t2_normal_3_5_follows_canonical() {
+    assert_contract(&LdpcCode::dvb_t2_normal(CodeRate::Rate3_5));
+}
+
+#[test]
+fn dvb_t2_normal_2_3_follows_canonical() {
+    assert_contract(&LdpcCode::dvb_t2_normal(CodeRate::Rate2_3));
+}
+
+#[test]
+fn dvb_t2_normal_3_4_follows_canonical() {
+    assert_contract(&LdpcCode::dvb_t2_normal(CodeRate::Rate3_4));
+}
+
+#[test]
+fn dvb_t2_normal_4_5_follows_canonical() {
+    assert_contract(&LdpcCode::dvb_t2_normal(CodeRate::Rate4_5));
+}
+
+#[test]
+fn dvb_t2_normal_5_6_follows_canonical() {
+    assert_contract(&LdpcCode::dvb_t2_normal(CodeRate::Rate5_6));
 }

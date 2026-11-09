@@ -93,7 +93,7 @@ fn check_bg_ils_against_reference(bg: u8, i_ls: usize) {
         let expected = reduce_mod_z(&reference[i_ls], z);
         assert_eq!(
             qc.base_matrix(),
-            &expected[..],
+            Some(expected.to_vec()),
             "BG{bg} Z={z} (i_LS={i_ls}): constructor base matrix differs from \
              the Sionna reference reduced mod Z"
         );
@@ -190,7 +190,7 @@ fn check_wrong_ils_guard_z208(bg: u8) {
     let qc = QuasiCyclicLdpc::nr_5g(bg, z);
     assert_eq!(
         qc.base_matrix(),
-        &correct[..],
+        Some(correct.to_vec()),
         "BG{bg} Z=208: correct i_LS=6 table must match the external reference"
     );
 
@@ -446,7 +446,7 @@ fn check_rate_tuple(bg: u8, target_n: usize, target_k: usize, expect_z: usize, e
     let qc = QuasiCyclicLdpc::nr_5g(bg, expect_z);
     assert_eq!(
         qc.base_matrix(),
-        &expected[..],
+        Some(expected.to_vec()),
         "BG{bg} Z={expect_z} (i_LS={expect_ils}): mother base matrix differs \
          from the Sionna reference reduced mod Z"
     );

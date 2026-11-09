@@ -91,18 +91,18 @@ impl LdpcCode {
         code
     }
 
-    /// The QC description retained by [`Self::from_quasi_cyclic`] or
-    /// [`Self::attach_quasi_cyclic`].
+    /// The QC description retained by [`Self::from_quasi_cyclic`],
+    /// [`Self::attach_quasi_cyclic`] or the DVB-T2 constructors.
     ///
     /// Returns `None` for other codes; structure is not inferred from edges.
     pub fn quasi_cyclic(&self) -> Option<&QuasiCyclicLdpc> {
         self.qc.as_deref()
     }
 
-    /// Retains `qc` when its expansion is exactly this code's parity-check
-    /// matrix, row order included, and returns whether it does; a mismatch
-    /// leaves the code unchanged. Takes O(B + E log E) time for B base-matrix
-    /// entries and E edges.
+    /// Retains `qc` when its expansion under its row and column orders is
+    /// exactly this code's parity-check matrix, and returns whether it does;
+    /// a mismatch leaves the code unchanged. Takes O(B + E log E) time for B
+    /// circulants and E edges.
     #[must_use]
     pub fn attach_quasi_cyclic(&mut self, qc: &QuasiCyclicLdpc) -> bool {
         if qc.expanded_rows() != self.m || qc.expanded_cols() != self.n {
@@ -124,7 +124,8 @@ impl LdpcCode {
     }
 
     /// Creates a DVB-T2 short frame LDPC code (n=16200) from the
-    /// `@/citation/Etsi2015` tables.
+    /// `@/citation/Etsi2015` tables, retaining the block description of
+    /// [`Self::quasi_cyclic`] with Z = 360.
     pub fn dvb_t2_short(rate: crate::bch::CodeRate) -> Self {
         use crate::ldpc::dvb_t2::{builder, dvb_t2_matrices, params};
 
@@ -139,11 +140,16 @@ impl LdpcCode {
         };
 
         let edges = builder::build_dvb_edges(table, &params);
-        Self::from_edges(params.m, params.n, &edges)
+        let mut code = Self::from_edges(params.m, params.n, &edges);
+        code.qc = Some(std::sync::Arc::new(builder::build_dvb_quasi_cyclic(
+            table, &params,
+        )));
+        code
     }
 
     /// Creates a DVB-T2 normal frame LDPC code (n=64800) from the
-    /// `@/citation/Etsi2015` tables.
+    /// `@/citation/Etsi2015` tables, retaining the block description of
+    /// [`Self::quasi_cyclic`] with Z = 360.
     pub fn dvb_t2_normal(rate: crate::bch::CodeRate) -> Self {
         use crate::ldpc::dvb_t2::{builder, dvb_t2_matrices, params};
 
@@ -158,7 +164,11 @@ impl LdpcCode {
         };
 
         let edges = builder::build_dvb_edges(table, &params);
-        Self::from_edges(params.m, params.n, &edges)
+        let mut code = Self::from_edges(params.m, params.n, &edges);
+        code.qc = Some(std::sync::Arc::new(builder::build_dvb_quasi_cyclic(
+            table, &params,
+        )));
+        code
     }
 
     /// Computes the k × n generator matrix whose row `i` is the codeword
@@ -304,27 +314,88 @@ impl CirculantMatrix {
     }
 }
 
+/// One circulant of a [`QuasiCyclicLdpc`] block description.
+///
+/// Lifted row `i` of block (`row_block`, `col_block`) joins lifted column
+/// `(i + shift) mod Z` of that block, except at the masked rows, which have no
+/// entry in this circulant.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct QcCirculant {
+    row_block: usize,
+    col_block: usize,
+    shift: usize,
+    masked_rows: Vec<usize>,
+}
+
+impl QcCirculant {
+    /// A full circulant permutation block.
+    #[must_use]
+    pub fn new(row_block: usize, col_block: usize, shift: usize) -> Self {
+        Self {
+            row_block,
+            col_block,
+            shift,
+            masked_rows: Vec::new(),
+        }
+    }
+
+    /// Removes the entries of the given lifted rows of the block; the rows are
+    /// kept sorted and unique.
+    #[must_use]
+    pub fn with_masked_rows(mut self, mut rows: Vec<usize>) -> Self {
+        rows.sort_unstable();
+        rows.dedup();
+        self.masked_rows = rows;
+        self
+    }
+
+    /// The base row of the block.
+    #[must_use]
+    pub fn row_block(&self) -> usize {
+        self.row_block
+    }
+
+    /// The base column of the block.
+    #[must_use]
+    pub fn col_block(&self) -> usize {
+        self.col_block
+    }
+
+    /// The right shift of the circulant.
+    #[must_use]
+    pub fn shift(&self) -> usize {
+        self.shift
+    }
+
+    /// The lifted rows without an entry, ascending.
+    #[must_use]
+    pub fn masked_rows(&self) -> &[usize] {
+        &self.masked_rows
+    }
+}
+
 /// Quasi-cyclic LDPC code structure.
 ///
-/// # Structure
-///
-/// - **Base matrix**: mb × nb matrix of shift values
-/// - **Expansion factor** Z: Size of each circulant block
-/// - **Expanded matrix**: (mb·Z) × (nb·Z) parity-check matrix H
-///
-/// Each entry in the base matrix:
-/// - **-1**: Zero block (all zeros)
-/// - **0 to Z-1**: Circulant block with corresponding shift
+/// The lifted matrix has `base_rows · Z` rows and `base_cols · Z` columns and
+/// is the GF(2) sum of its [`QcCirculant`]s, which are distinct and
+/// non-overlapping. Lifted row `r` is parity check [`Self::row_order`]`[r]` and
+/// lifted column `c` is variable [`Self::col_order`]`[c]` of the code; both
+/// orders are the identity unless set by [`Self::with_orders`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QuasiCyclicLdpc {
-    /// Base matrix with shift values (-1 = zero block, 0..Z-1 = circulant shift)
-    base_matrix: Vec<Vec<i32>>,
-    /// Expansion factor (circulant size)
+    base_rows: usize,
+    base_cols: usize,
     expansion_factor: usize,
+    /// Sorted by row block, column block and shift.
+    circulants: Vec<QcCirculant>,
+    /// `None` is the identity.
+    row_order: Option<Vec<usize>>,
+    col_order: Option<Vec<usize>>,
 }
 
 impl QuasiCyclicLdpc {
-    /// Creates a new quasi-cyclic LDPC structure.
+    /// Creates the structure of a base matrix whose entries are `-1` for a zero
+    /// block or a circulant shift in `0..expansion_factor`.
     ///
     /// # Panics
     ///
@@ -332,6 +403,7 @@ impl QuasiCyclicLdpc {
     /// - Base matrix is empty
     /// - Rows have inconsistent lengths
     /// - Expansion factor is zero
+    /// - A shift value is neither -1 nor in range
     pub fn new(base_matrix: Vec<Vec<i32>>, expansion_factor: usize) -> Self {
         assert!(
             !base_matrix.is_empty(),
@@ -345,20 +417,116 @@ impl QuasiCyclicLdpc {
             "All rows in base matrix must have the same length"
         );
 
-        Self {
-            base_matrix,
-            expansion_factor,
+        let mut circulants = Vec::new();
+        for (base_row, row) in base_matrix.iter().enumerate() {
+            for (base_col, &shift) in row.iter().enumerate() {
+                if shift == -1 {
+                    continue;
+                }
+                assert!(
+                    shift >= 0 && (shift as usize) < expansion_factor,
+                    "Shift value {} at position ({},{}) must be -1 or in range [0,{})",
+                    shift,
+                    base_row,
+                    base_col,
+                    expansion_factor
+                );
+                circulants.push(QcCirculant::new(base_row, base_col, shift as usize));
+            }
         }
+        Self::from_circulants(base_matrix.len(), cols, expansion_factor, circulants)
+    }
+
+    /// Creates the structure of a list of circulants, in any order; a block may
+    /// hold several circulants of distinct shifts.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `base_rows` or `expansion_factor` is zero, a circulant lies
+    /// outside the base matrix, a shift or masked row is at least the
+    /// expansion factor, or two circulants share a block and shift.
+    #[must_use]
+    pub fn from_circulants(
+        base_rows: usize,
+        base_cols: usize,
+        expansion_factor: usize,
+        mut circulants: Vec<QcCirculant>,
+    ) -> Self {
+        assert!(base_rows > 0, "Base matrix must have at least one row");
+        assert!(expansion_factor > 0, "Expansion factor must be positive");
+        for circulant in &circulants {
+            assert!(
+                circulant.row_block < base_rows && circulant.col_block < base_cols,
+                "Circulant block ({},{}) outside the {base_rows}x{base_cols} base matrix",
+                circulant.row_block,
+                circulant.col_block
+            );
+            assert!(
+                circulant.shift < expansion_factor,
+                "Shift value {} at position ({},{}) must be in range [0,{})",
+                circulant.shift,
+                circulant.row_block,
+                circulant.col_block,
+                expansion_factor
+            );
+            assert!(
+                circulant
+                    .masked_rows
+                    .last()
+                    .is_none_or(|&row| row < expansion_factor),
+                "Masked row out of range [0,{expansion_factor})"
+            );
+        }
+        circulants.sort_unstable();
+        assert!(
+            circulants.windows(2).all(|pair| {
+                (pair[0].row_block, pair[0].col_block, pair[0].shift)
+                    != (pair[1].row_block, pair[1].col_block, pair[1].shift)
+            }),
+            "Two circulants share a block and shift"
+        );
+        Self {
+            base_rows,
+            base_cols,
+            expansion_factor,
+            circulants,
+            row_order: None,
+            col_order: None,
+        }
+    }
+
+    /// Maps lifted row `r` to parity check `row_order[r]` and lifted column
+    /// `c` to variable `col_order[c]`.
+    ///
+    /// # Panics
+    ///
+    /// Panics unless the orders are permutations of the lifted rows and columns.
+    #[must_use]
+    pub fn with_orders(mut self, row_order: Vec<usize>, col_order: Vec<usize>) -> Self {
+        fn normalized(order: Vec<usize>, len: usize, what: &str) -> Option<Vec<usize>> {
+            assert_eq!(order.len(), len, "{what} order length");
+            let mut seen = vec![false; len];
+            for &index in &order {
+                assert!(
+                    index < len && !std::mem::replace(&mut seen[index], true),
+                    "{what} order is not a permutation"
+                );
+            }
+            (!order.iter().enumerate().all(|(i, &index)| i == index)).then_some(order)
+        }
+        self.row_order = normalized(row_order, self.expanded_rows(), "Row");
+        self.col_order = normalized(col_order, self.expanded_cols(), "Column");
+        self
     }
 
     /// Returns the number of rows in the base matrix.
     pub fn base_rows(&self) -> usize {
-        self.base_matrix.len()
+        self.base_rows
     }
 
     /// Returns the number of columns in the base matrix.
     pub fn base_cols(&self) -> usize {
-        self.base_matrix[0].len()
+        self.base_cols
     }
 
     /// Returns the expansion factor.
@@ -366,55 +534,73 @@ impl QuasiCyclicLdpc {
         self.expansion_factor
     }
 
-    /// Returns the base matrix of shift values.
-    ///
-    /// Each entry is either `-1` (zero block) or a circulant shift in
-    /// `0..expansion_factor()`. One inner `Vec` per base row.
-    pub fn base_matrix(&self) -> &[Vec<i32>] {
-        &self.base_matrix
+    /// The circulants, sorted by row block, column block and shift.
+    #[must_use]
+    pub fn circulants(&self) -> &[QcCirculant] {
+        &self.circulants
+    }
+
+    /// The parity check of each lifted row, or `None` for the identity.
+    #[must_use]
+    pub fn row_order(&self) -> Option<&[usize]> {
+        self.row_order.as_deref()
+    }
+
+    /// The variable of each lifted column, or `None` for the identity.
+    #[must_use]
+    pub fn col_order(&self) -> Option<&[usize]> {
+        self.col_order.as_deref()
+    }
+
+    /// The base matrix of shift values, `-1` for a zero block, when the
+    /// structure is one; `None` when a block holds several circulants, a
+    /// circulant is masked or an order is not the identity. Takes O(B) time
+    /// for B base-matrix entries.
+    #[must_use]
+    pub fn base_matrix(&self) -> Option<Vec<Vec<i32>>> {
+        if self.row_order.is_some() || self.col_order.is_some() {
+            return None;
+        }
+        let mut matrix = vec![vec![-1i32; self.base_cols]; self.base_rows];
+        for circulant in &self.circulants {
+            let entry = &mut matrix[circulant.row_block][circulant.col_block];
+            if *entry != -1 || !circulant.masked_rows.is_empty() {
+                return None;
+            }
+            *entry = circulant.shift as i32;
+        }
+        Some(matrix)
     }
 
     /// Returns the number of rows in the expanded matrix.
     pub fn expanded_rows(&self) -> usize {
-        self.base_rows() * self.expansion_factor
+        self.base_rows * self.expansion_factor
     }
 
     /// Returns the number of columns in the expanded matrix.
     pub fn expanded_cols(&self) -> usize {
-        self.base_cols() * self.expansion_factor
+        self.base_cols * self.expansion_factor
     }
 
-    /// Expands the quasi-cyclic structure to the (row, col) edge list of the
-    /// expanded matrix.
-    ///
-    /// # Panics
-    ///
-    /// Panics if any shift value is invalid (not -1 and not in range 0..Z)
+    /// The (check, variable) edges of the lifted matrix under the row and
+    /// column orders.
     pub fn to_edges(&self) -> Vec<(usize, usize)> {
         let z = self.expansion_factor;
+        let row = |r: usize| self.row_order.as_ref().map_or(r, |order| order[r]);
+        let col = |c: usize| self.col_order.as_ref().map_or(c, |order| order[c]);
         let mut edges = Vec::new();
-
-        for (base_row, row) in self.base_matrix.iter().enumerate() {
-            for (base_col, &shift) in row.iter().enumerate() {
-                if shift == -1 {
+        for circulant in &self.circulants {
+            let mut masked = circulant.masked_rows.iter().peekable();
+            for i in 0..z {
+                if masked.next_if_eq(&&i).is_some() {
                     continue;
                 }
-
-                assert!(
-                    shift >= 0 && (shift as usize) < z,
-                    "Shift value {} at position ({},{}) must be -1 or in range [0,{})",
-                    shift,
-                    base_row,
-                    base_col,
-                    z
-                );
-
-                let circ = CirculantMatrix::new(shift as usize, z);
-                let block_edges = circ.to_edges(base_row, base_col);
-                edges.extend(block_edges);
+                edges.push((
+                    row(circulant.row_block * z + i),
+                    col(circulant.col_block * z + (i + circulant.shift) % z),
+                ));
             }
         }
-
         edges
     }
 }

@@ -96,10 +96,15 @@ of `min_sum_check_row` states the divergence.
 
 The explicitly constructed `QcDecoder`
 ([`qc.rs`](../../crates/gf2-coding/src/ldpc/qc.rs)) applies these same rules
-with lanes representing lifted checks within one frame. Its portable and AVX2
-kernels preserve each check's edge order and each variable's accumulation order.
-[`ldpc_qc_contract`](../../crates/gf2-coding/tests/ldpc_qc_contract.rs) compares
-posterior bits, words and outcomes with the canonical decoder on both paths,
+with lanes representing lifted checks within one frame. The outputs of the
+check rule do not depend on the order of a check's edges, since tied magnitudes
+are equal values; a masked circulant entry carries a $+\infty$ input, which the
+sign and magnitude rules skip. Each variable accumulates in its canonical
+order: a column block's lanes split into segments that share one order of
+parity checks. [`ldpc_qc_contract`](../../crates/gf2-coding/tests/ldpc_qc_contract.rs)
+compares posterior bits, words and outcomes with the canonical decoder on both
+paths over 5G NR base graphs, every DVB-T2 code (`@/citation/Etsi2015`) and
+hand-built codes with masked entries, blocks of weight two and permuted orders,
 including zero caps, reuse, special values and both stopping modes.
 
 ## Channel scaling and saturation
