@@ -152,25 +152,28 @@ Tanner-graph edges, and configured decode concurrency is at most
 explicit caller width; simulation stages pass their executing pool's width.
 `SumProduct` takes `SingleFrame`.
 
-A decode call of at most eight frames takes `Qc` instead when the algorithm is
-`NormalizedMinSum`, the code retains the 5G NR structure a `qc_route_cases`
-entry names, and that entry's `workers` and `frames` equal the configured
-concurrency and the call's frames. `LdpcCode::from_quasi_cyclic` retains the
-structure; `LdpcCode::attach_quasi_cyclic` retains it on a code read from
-elsewhere when the lifted parity-check matrix equals the code's exactly. An
-absent list selects no case.
+A wave of a code that retains quasi-cyclic structure takes `Qc` instead under
+a min-sum rule, within the bounds of the `qc_route` selector: the lifting size
+is at least `min_lifting_size`, configured decode concurrency is at most
+`max_workers`, and the lane route is ineligible or the wave holds fewer than
+`lane_claim_min_frames` frames. Every bound is on lifting size, worker count
+or occupied lanes. An omitted `qc_route` resolves to open bounds
+(`QcRouteBounds::OPEN`), which give every such wave `Qc`.
+`LdpcCode::from_quasi_cyclic` retains the structure;
+`LdpcCode::attach_quasi_cyclic` retains it on a code read from elsewhere when
+the lifted parity-check matrix equals the code's exactly.
 
 `granules_per_task` is
 the number of `batch_granularity` frame groups in a task of
 `PooledBatchDecoder` ([Decode LDPC frames in parallel](#decode-ldpc-frames-in-parallel)).
-The conservative family closes the lane route, so a process that installs no
-section decodes every wave frame by frame. Take the bounds from a measurement
-on the target host; the committed coding envelope under
+The conservative family closes the lane route and opens the QC route, so a
+process that installs no section decodes a code with QC structure on `Qc` and
+every other code frame by frame. Take the bounds from a measurement on the
+target host; the committed coding envelope under
 `crates/gf2-coding/data/tuning-profiles/` records the calibration campaign's
-lane selectors with their provenance, and the `qc_route_cases` that the
-confirmation family `55c3e433-integrated-adoption` qualified. The cases have
-no measured threshold, so `tuning-profile-compose coding-owner` adds them to a
-calibrated owner through `--fixed-selector decode.qc_route_cases`. With
+lane selectors with their provenance and states no `qc_route`. The calibration
+harness measures no QC bound, so `tuning-profile-compose coding-owner` adds one
+to a calibrated owner through `--fixed-selector decode.qc_route BOUNDS_JSON`. With
 `gf2-coding`'s `tuning-profile`
 feature enabled, registering `CodingTuning` with `CodingTuningCodec` in the
 profile registry above installs one.
@@ -178,19 +181,20 @@ profile registry above installs one.
 `with_selectors` takes one explicitly.
 
 `batch_route(frames)` reports the route of a wave of `frames` frames without
-decoding: a batch longer than eight frames stays off `Qc` and takes the lane or
-single-frame route of eight frames in each full wave and of `r` frames in a
-final wave of `r` frames. `last_wave_route` reports the route the last wave
+decoding: a batch longer than eight frames takes the route of eight frames in
+each full wave and of `r` frames in a final wave of `r` frames. `last_wave_route` reports the route the last wave
 decoded on. The frames of a wave
 decode as in the single-frame decoder
 ([numerical contract](../reference/ldpc-decoder-numerical-contract.md)), so the
-selectors move time only. The sample opens the lane route for every wave,
-checks the route and decodes through the trait
+selectors move time only. The sample lets the lane route claim a wave of at
+least four frames from the QC route, checks the routes and decodes through the
+trait
 ([rustdoc example](../../crates/gf2-coding/src/ldpc/batch.rs) with the code and
 `frames` built):
 
 ```rust
-let selectors = DecodeSelectors::try_new(1, usize::MAX, 1, 1)?;
+let selectors = DecodeSelectors::try_new(1, usize::MAX, 1, 1)?
+    .with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4)?);
 let decoder = LdpcBatchDecoder::with_selectors(
     code,
     DecoderConfig::default(),
@@ -199,6 +203,7 @@ let decoder = LdpcBatchDecoder::with_selectors(
     selectors,
 );
 assert!(matches!(decoder.batch_route(frames.len()), BatchRoute::Lane(_)));
+assert!(matches!(decoder.batch_route(3), BatchRoute::Qc(_)));
 
 let mut decoder: Box<dyn BatchSoftDecoder> = Box::new(decoder);
 let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();

@@ -16,7 +16,7 @@ use gf2_coding::traits::conformance::{batch_soft_decoder_contract, ConvergenceMi
 use gf2_coding::traits::{
     BatchSoftDecoder, BlockEncoder, DecodeOutcome, IterativeBatchDecoder, IterativeSoftDecoder,
 };
-use gf2_coding::tuning::DecodeSelectors;
+use gf2_coding::tuning::{DecodeSelectors, QcRouteBounds};
 use gf2_core::BitVec;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
@@ -215,7 +215,9 @@ fn lane_decoder() -> LdpcBatchDecoder {
         DecoderConfig::default(),
         CAP,
         DecodedWord::Codeword,
-        DecodeSelectors::try_new(1, usize::MAX, 24, 1).unwrap(),
+        DecodeSelectors::try_new(1, usize::MAX, 24, 1)
+            .unwrap()
+            .with_qc_route(QcRouteBounds::CLOSED),
     )
 }
 

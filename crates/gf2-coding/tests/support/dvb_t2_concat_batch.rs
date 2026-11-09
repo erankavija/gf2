@@ -7,6 +7,7 @@
 use gf2_coding::ldpc::dvb_t2::concat::{ConcatError, DvbT2Concat, DvbT2ConcatBatchDecoder};
 use gf2_coding::ldpc::LaneBackend;
 use gf2_coding::llr::Llr;
+use gf2_coding::test_support::ldpc_batch_route_of;
 pub use gf2_coding::test_support::ldpc_batch_routes as routes;
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome, DecoderResult};
 use gf2_coding::tuning::DecodeSelectors;
@@ -85,6 +86,7 @@ pub fn assert_batch_decodes_as_single_frame(
     for (selectors, backend, full_wave) in routes() {
         let mut decoder = decoder_on(backend, codec, selectors);
         let lanes = decoder.batch_granularity();
+        let full_wave = ldpc_batch_route_of(&codec.ldpc_code(), full_wave);
         assert_eq!(decoder.ldpc().batch_route(lanes), full_wave);
         let got = batch_results(&mut decoder, frames);
         for (f, (got, expected)) in got.iter().zip(&expected).enumerate() {

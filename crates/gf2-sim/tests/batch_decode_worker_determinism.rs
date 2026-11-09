@@ -19,7 +19,7 @@ use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, DecoderConfig, LaneBackend,
 #[cfg(feature = "hip")]
 use gf2_coding::ldpc::{DecodedWord, LdpcBatchDecoder};
 use gf2_coding::modem::DemapMethod;
-use gf2_coding::test_support::ldpc_batch_routes;
+use gf2_coding::test_support::{ldpc_batch_route_of, ldpc_batch_routes};
 use gf2_coding::traits::BlockEncoder;
 use gf2_coding::tuning::DecodeSelectors;
 use gf2_coding::{CodeRate, Llr};
@@ -60,7 +60,8 @@ fn routes() -> Vec<Route> {
                 worker_counts().into_iter().max().unwrap(),
                 selectors.granules_per_task().get(),
             )
-            .unwrap(),
+            .unwrap()
+            .with_qc_route(selectors.qc_route()),
             backend,
             route,
         })
@@ -143,6 +144,7 @@ fn conservative(routes: &[Route]) -> &Route {
 /// mix successes and failures, or every route would agree trivially.
 fn assert_invariant(
     name: &str,
+    code: &gf2_coding::ldpc::LdpcCode,
     build: impl Fn(&Route) -> Box<dyn AnyStage>,
     full_wave: impl Fn(&Route, NonZeroUsize) -> BatchRoute,
     llrs: &[Vec<Llr>],
@@ -161,7 +163,7 @@ fn assert_invariant(
         for count in worker_counts() {
             assert_eq!(
                 full_wave(route, workers(count)),
-                route.route,
+                ldpc_batch_route_of(code, route.route),
                 "{name}: {} takes another route at {count} workers",
                 route.label
             );
@@ -200,6 +202,7 @@ fn dvb_t2_decode_is_worker_and_route_invariant() {
 
     assert_invariant(
         "DVB-T2 decode",
+        &codec.ldpc_code(),
         |route| {
             let stage = DvbT2Decode::with_selectors(codec.clone(), route.selectors.clone());
             erase(on_backend(stage, route, DvbT2Decode::with_portable_lanes))
@@ -234,6 +237,7 @@ fn nr_decode_is_worker_and_route_invariant() {
 
     assert_invariant(
         "NR decode",
+        code.mother_code(),
         |route| {
             let stage = Nr5gDecode::with_selectors(
                 code.clone(),
@@ -290,6 +294,7 @@ fn cpu_ldpc_decode_is_worker_and_route_invariant() {
 
     assert_invariant(
         "CPU LDPC decode",
+        &code,
         |route| {
             let stage =
                 CpuLdpcBp::with_selectors(code.clone(), config, 20, route.selectors.clone());

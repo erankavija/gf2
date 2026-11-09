@@ -95,12 +95,13 @@ pub enum FreshProcessCase {
     #[cfg(feature = "tuning-profile")]
     MeasuredOwnerRoutes,
     /// [`MEASURED_OWNER`] installed, with the batch decoder held to the
-    /// shared batch contract on the LDPC batch suite's frames.
+    /// shared batch contract on the LDPC batch suite's frames, with the
+    /// suite code's QC structure retained and without it.
     #[cfg(feature = "tuning-profile")]
     MeasuredOwnerDecode,
     /// [`MEASURED_OWNER`] installed, with the batch decoder's routes and
-    /// results reported on NR BG1 Z=384 at the QC route's cases and beside
-    /// them, on the detected lane backend and held on the portable one.
+    /// results reported on NR BG1 Z=384 at each of [`QC_CALLS`], on the
+    /// detected lane backend and held on the portable one.
     #[cfg(feature = "tuning-profile")]
     MeasuredOwnerQc,
 }
@@ -342,11 +343,10 @@ pub fn coding_registry() -> ProfileRegistry {
 }
 
 /// The committed production coding owner envelope: the calibrated selectors
-/// of the decoder calibration campaign `@/issue/20af7e6e` with the QC route
-/// cases of `@/issue/3ee00fcf`.
+/// of the decoder calibration campaign `@/issue/20af7e6e`.
 #[cfg(feature = "tuning-profile")]
 pub const MEASURED_OWNER: &str =
-    include_str!("../../data/tuning-profiles/gf2-3ee00fcf-20261104t064432z-4012544.json");
+    include_str!("../../data/tuning-profiles/gf2-c62356d2-20261109t233411z-3067230.json");
 
 /// [`MEASURED_OWNER`] read through the owner codec.
 #[cfg(feature = "tuning-profile")]
@@ -634,34 +634,49 @@ fn execute_measured_routes_child() -> serde_json::Value {
     })
 }
 
+/// The LDPC batch suite's code without its retained QC structure.
+#[cfg(feature = "tuning-profile")]
+pub fn unstructured_batch_code() -> LdpcCode {
+    test_support::ldpc_batch_code().without_quasi_cyclic()
+}
+
 /// Holds the installed decoder of every min-sum rule to the shared batch
-/// contract against the single-frame decoder, and reports the route of each
-/// wave size of the suite's code.
+/// contract against the single-frame decoder, on the suite's code with its
+/// QC structure and without it, and reports the route of each wave size of
+/// both.
 #[cfg(feature = "tuning-profile")]
 fn execute_measured_decode_child() -> serde_json::Value {
     let decode = install_measured_owner();
-    let code = test_support::ldpc_batch_code();
     let frames = test_support::ldpc_batch_frames();
     let cap = test_support::LDPC_BATCH_CAP;
-    for algorithm in [
-        DecoderAlgorithm::MinSum,
-        DecoderAlgorithm::NormalizedMinSum(0.75),
-        DecoderAlgorithm::OffsetMinSum(0.5),
+    let mut wave_routes = serde_json::Map::new();
+    for (name, code) in [
+        ("structured", test_support::ldpc_batch_code()),
+        ("unstructured", unstructured_batch_code()),
     ] {
-        let config = DecoderConfig::new(algorithm, true);
-        let mut decoder = LdpcBatchDecoder::new(code.clone(), config, cap, DecodedWord::Codeword);
-        let mut single = LdpcDecoder::with_config(code.clone(), config);
-        batch_soft_decoder_contract(
-            &mut decoder,
-            |llrs| single.decode_to_codeword(llrs, cap),
-            &frames,
-            ConvergenceMix::EarlyLateAndNonConverging,
-        );
+        for algorithm in [
+            DecoderAlgorithm::MinSum,
+            DecoderAlgorithm::NormalizedMinSum(0.75),
+            DecoderAlgorithm::OffsetMinSum(0.5),
+        ] {
+            let config = DecoderConfig::new(algorithm, true);
+            let mut decoder =
+                LdpcBatchDecoder::new(code.clone(), config, cap, DecodedWord::Codeword);
+            let mut single = LdpcDecoder::with_config(code.clone(), config);
+            batch_soft_decoder_contract(
+                &mut decoder,
+                |llrs| single.decode_to_codeword(llrs, cap),
+                &frames,
+                ConvergenceMix::EarlyLateAndNonConverging,
+            );
+        }
+        let decoder =
+            LdpcBatchDecoder::new(code, DecoderConfig::default(), cap, DecodedWord::Codeword);
+        let routes: Vec<serde_json::Value> = (0..=LANES)
+            .map(|frames| route_report(decoder.batch_route(frames)))
+            .collect();
+        wave_routes.insert(name.to_owned(), routes.into());
     }
-    let decoder = LdpcBatchDecoder::new(code, DecoderConfig::default(), cap, DecodedWord::Codeword);
-    let wave_routes: Vec<serde_json::Value> = (0..=LANES)
-        .map(|frames| route_report(decoder.batch_route(frames)))
-        .collect();
     serde_json::json!({
         "decode": decode_report(decode),
         "wave_routes": wave_routes,
@@ -670,9 +685,19 @@ fn execute_measured_decode_child() -> serde_json::Value {
 }
 
 /// The `(workers, frames)` calls [`FreshProcessCase::MeasuredOwnerQc`]
-/// reports: the QC route's cases and the calls beside them.
+/// reports: a wave of one, two and eight frames, a longer batch, and worker
+/// counts on either side of the lane route's worker bound.
 #[cfg(feature = "tuning-profile")]
-pub const QC_CALLS: &[(usize, usize)] = &[(1, 1), (12, 8), (1, 8), (6, 8), (12, 1), (1, 2)];
+pub const QC_CALLS: &[(usize, usize)] = &[
+    (1, 1),
+    (1, 2),
+    (1, 8),
+    (1, 9),
+    (6, 8),
+    (12, 1),
+    (12, 8),
+    (24, 8),
+];
 
 /// Reports the route of each of [`QC_CALLS`] on NR BG1 Z=384 with its
 /// structure attached and without it, and decodes the attached code's calls

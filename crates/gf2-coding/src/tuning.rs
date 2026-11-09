@@ -98,74 +98,76 @@ impl EncodeSelectors {
     }
 }
 
-/// One case the QC route is selected for: a code carrying the 5G NR
-/// quasi-cyclic structure of `base_graph` and `lifting_size`, decoded by
-/// exactly `workers` configured workers in calls of exactly `frames` frames.
+/// Bounds of the QC route ([`decide_batch_route`](crate::ldpc::decide_batch_route)).
+///
+/// A wave of a code with retained QC structure takes the QC route when its
+/// lifting size is at least `min_lifting_size`, the configured decode workers
+/// are at most `max_workers`, and no eligible lane route claims it: the lane
+/// route claims a wave from `lane_claim_min_frames` occupied lanes. Each bound
+/// spans its whole domain; [`Self::OPEN`] places every QC wave on the QC route.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct QcRouteCase {
-    base_graph: u8,
-    lifting_size: usize,
-    workers: NonZeroUsize,
-    frames: NonZeroUsize,
+pub struct QcRouteBounds {
+    min_lifting_size: usize,
+    max_workers: NonZeroUsize,
+    lane_claim_min_frames: usize,
 }
 
-impl QcRouteCase {
-    /// Builds a case.
+impl QcRouteBounds {
+    /// The bounds that take the QC route for every wave of a code with
+    /// retained QC structure under a min-sum rule.
+    pub const OPEN: Self = Self {
+        min_lifting_size: 0,
+        max_workers: NonZeroUsize::MAX,
+        lane_claim_min_frames: usize::MAX,
+    };
+
+    /// The bounds that close the QC route.
+    pub const CLOSED: Self = Self {
+        min_lifting_size: usize::MAX,
+        max_workers: NonZeroUsize::MIN,
+        lane_claim_min_frames: 0,
+    };
+
+    /// Builds the bounds.
     ///
     /// # Errors
     ///
-    /// Returns [`SectionError::SelectorOutOfRange`] when `base_graph` is not
-    /// 1 or 2, `lifting_size` is not a 5G NR lifting size, or `workers` or
-    /// `frames` is zero.
+    /// Returns [`SectionError::SelectorOutOfRange`] when `max_workers` is zero.
     pub fn try_new(
-        base_graph: usize,
-        lifting_size: usize,
-        workers: usize,
-        frames: usize,
+        min_lifting_size: usize,
+        max_workers: usize,
+        lane_claim_min_frames: usize,
     ) -> Result<Self, SectionError> {
-        let out_of_range = |field, value: usize| SectionError::SelectorOutOfRange {
-            family: "decode",
-            field,
-            value: value as u64,
-        };
-        let graph = match base_graph {
-            1 => 1,
-            2 => 2,
-            _ => return Err(out_of_range("qc_route_cases.base_graph", base_graph)),
-        };
-        if !u16::try_from(lifting_size).is_ok_and(crate::ldpc::nr_5g::is_valid_lifting_size) {
-            return Err(out_of_range("qc_route_cases.lifting_size", lifting_size));
-        }
+        let max_workers =
+            NonZeroUsize::new(max_workers).ok_or(SectionError::SelectorOutOfRange {
+                family: "decode",
+                field: "qc_route.max_workers",
+                value: 0,
+            })?;
         Ok(Self {
-            base_graph: graph,
-            lifting_size,
-            workers: NonZeroUsize::new(workers).ok_or(out_of_range("qc_route_cases.workers", 0))?,
-            frames: NonZeroUsize::new(frames).ok_or(out_of_range("qc_route_cases.frames", 0))?,
+            min_lifting_size,
+            max_workers,
+            lane_claim_min_frames,
         })
     }
 
-    /// Returns the 5G NR base graph, 1 or 2.
+    /// Returns the lower bound on the lifting size.
     #[must_use]
-    pub const fn base_graph(&self) -> u8 {
-        self.base_graph
+    pub const fn min_lifting_size(&self) -> usize {
+        self.min_lifting_size
     }
 
-    /// Returns the 5G NR lifting size.
+    /// Returns the upper bound on configured decode workers.
     #[must_use]
-    pub const fn lifting_size(&self) -> usize {
-        self.lifting_size
+    pub const fn max_workers(&self) -> NonZeroUsize {
+        self.max_workers
     }
 
-    /// Returns the configured decode workers of the case.
+    /// Returns the occupied lanes from which an eligible lane route takes a
+    /// wave instead of the QC route.
     #[must_use]
-    pub const fn workers(&self) -> NonZeroUsize {
-        self.workers
-    }
-
-    /// Returns the frames of a decode call of the case.
-    #[must_use]
-    pub const fn frames(&self) -> NonZeroUsize {
-        self.frames
+    pub const fn lane_claim_min_frames(&self) -> usize {
+        self.lane_claim_min_frames
     }
 }
 
@@ -175,9 +177,8 @@ impl QcRouteCase {
 /// `lane_max_edges` an upper bound on a Tanner-graph edge count, each over
 /// all of `usize`; `lane_max_workers` bounds configured decode concurrency;
 /// `granules_per_task` is a positive count of
-/// preferred-granularity frame groups; `qc_route_cases` lists the cases of the
-/// QC route, and the empty list closes it. The section stores, validates and
-/// serializes the family, and
+/// preferred-granularity frame groups; `qc_route` bounds the QC route. The
+/// section stores, validates and serializes the family, and
 /// [`decide_batch_route`](crate::ldpc::decide_batch_route) reads it to decide
 /// the LDPC batch route.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -186,22 +187,24 @@ pub struct DecodeSelectors {
     lane_max_edges: usize,
     lane_max_workers: NonZeroUsize,
     granules_per_task: NonZeroUsize,
-    qc_route_cases: Vec<QcRouteCase>,
+    qc_route: QcRouteBounds,
 }
 
 impl DecodeSelectors {
     /// The conservative decode family: [`LANE_MIN_FRAMES`],
     /// [`LANE_MAX_EDGES`], [`LANE_MAX_WORKERS`] and [`GRANULES_PER_TASK`], with
-    /// no QC route case.
+    /// [`QcRouteBounds::OPEN`]: the QC kernels have a portable fallback on
+    /// every host, so the QC route is the default wherever a code retains QC
+    /// structure.
     pub const CONSERVATIVE: Self = Self {
         lane_min_frames: LANE_MIN_FRAMES,
         lane_max_edges: LANE_MAX_EDGES,
         lane_max_workers: LANE_MAX_WORKERS,
         granules_per_task: GRANULES_PER_TASK,
-        qc_route_cases: Vec::new(),
+        qc_route: QcRouteBounds::OPEN,
     };
 
-    /// Builds the decode selector family with no QC route case. Every
+    /// Builds the decode selector family with [`QcRouteBounds::OPEN`]. Every
     /// `lane_min_frames` and `lane_max_edges` is admissible.
     ///
     /// # Errors
@@ -231,14 +234,14 @@ impl DecodeSelectors {
             lane_max_edges,
             lane_max_workers,
             granules_per_task,
-            qc_route_cases: Vec::new(),
+            qc_route: QcRouteBounds::OPEN,
         })
     }
 
-    /// Replaces the cases of the QC route.
+    /// Replaces the bounds of the QC route.
     #[must_use]
-    pub fn with_qc_route_cases(mut self, cases: Vec<QcRouteCase>) -> Self {
-        self.qc_route_cases = cases;
+    pub const fn with_qc_route(mut self, bounds: QcRouteBounds) -> Self {
+        self.qc_route = bounds;
         self
     }
 
@@ -266,10 +269,10 @@ impl DecodeSelectors {
         self.granules_per_task
     }
 
-    /// Returns the cases of the QC route.
+    /// Returns the bounds of the QC route.
     #[must_use]
-    pub fn qc_route_cases(&self) -> &[QcRouteCase] {
-        &self.qc_route_cases
+    pub const fn qc_route(&self) -> QcRouteBounds {
+        self.qc_route
     }
 }
 
@@ -311,7 +314,7 @@ struct CodingPresence {
     lane_max_edges: bool,
     lane_max_workers: bool,
     granules_per_task: bool,
-    qc_route_cases: bool,
+    qc_route: bool,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -327,7 +330,7 @@ impl CodingPresence {
         lane_max_edges: true,
         lane_max_workers: true,
         granules_per_task: true,
-        qc_route_cases: true,
+        qc_route: true,
     };
 }
 
@@ -358,16 +361,16 @@ impl CodingTuning {
         }
     }
 
-    /// Replaces the cases of the QC route and declares them, with their
+    /// Replaces the bounds of the QC route and declares them, with their
     /// decode family, in the section's serialized body. Every other selector
     /// keeps its value and its declaration or omission.
     #[must_use]
-    pub fn with_qc_route_cases(mut self, cases: Vec<QcRouteCase>) -> Self {
-        self.selectors.decode.qc_route_cases = cases;
+    pub fn with_qc_route(mut self, bounds: QcRouteBounds) -> Self {
+        self.selectors.decode.qc_route = bounds;
         #[cfg(feature = "tuning-profile")]
         {
             self.presence.decode = true;
-            self.presence.qc_route_cases = true;
+            self.presence.qc_route = true;
         }
         self
     }
@@ -408,7 +411,7 @@ impl fmt::Debug for CodingTuning {
                 + usize::from(self.presence.lane_max_edges)
                 + usize::from(self.presence.lane_max_workers)
                 + usize::from(self.presence.granules_per_task)
-                + usize::from(self.presence.qc_route_cases);
+                + usize::from(self.presence.qc_route);
             debug
                 .field("declared_families", &declared_families)
                 .field("declared_fields", &declared_fields);
@@ -522,19 +525,16 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
             GRANULES_PER_TASK.get(),
             "granules_per_task",
         )?;
-        let (qc_cases_present, qc_route_cases) =
-            selector_or(decode.qc_route_cases, Vec::new(), "qc_route_cases")?;
-        let qc_route_cases = qc_route_cases
-            .into_iter()
-            .map(|case: JsonQcRouteCase| {
-                QcRouteCase::try_new(
-                    case.base_graph,
-                    case.lifting_size,
-                    case.workers,
-                    case.frames,
-                )
-            })
-            .collect::<Result<_, _>>()?;
+        let (qc_route_present, qc_route) = selector_or(
+            decode.qc_route,
+            JsonQcRoute::from(QcRouteBounds::OPEN),
+            "qc_route",
+        )?;
+        let qc_route = QcRouteBounds::try_new(
+            qc_route.min_lifting_size,
+            qc_route.max_workers,
+            qc_route.lane_claim_min_frames,
+        )?;
         Ok(CodingTuning {
             selectors: CodingSelectors {
                 encode: EncodeSelectors::try_new(
@@ -549,7 +549,7 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
                     lane_max_workers,
                     granules_per_task,
                 )?
-                .with_qc_route_cases(qc_route_cases),
+                .with_qc_route(qc_route),
             },
             presence: CodingPresence {
                 encode: encode_present,
@@ -562,7 +562,7 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
                 lane_max_edges: lane_edges_present,
                 lane_max_workers: workers_present,
                 granules_per_task: granules_present,
-                qc_route_cases: qc_cases_present,
+                qc_route: qc_route_present,
             },
         })
     }
@@ -629,18 +629,8 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
                     JsonDecodeField::Bound(family.granules_per_task().get()),
                 );
             }
-            if section.presence.qc_route_cases {
-                let cases = family
-                    .qc_route_cases()
-                    .iter()
-                    .map(|case| JsonQcRouteCase {
-                        base_graph: usize::from(case.base_graph()),
-                        lifting_size: case.lifting_size(),
-                        workers: case.workers().get(),
-                        frames: case.frames().get(),
-                    })
-                    .collect();
-                decode.insert("qc_route_cases", JsonDecodeField::Cases(cases));
+            if section.presence.qc_route {
+                decode.insert("qc_route", JsonDecodeField::Qc(family.qc_route().into()));
             }
             selectors.insert(
                 "decode",
@@ -688,17 +678,27 @@ struct JsonDecode {
     #[serde(default)]
     granules_per_task: Present<usize>,
     #[serde(default)]
-    qc_route_cases: Present<Vec<JsonQcRouteCase>>,
+    qc_route: Present<JsonQcRoute>,
 }
 
 #[cfg(feature = "tuning-profile")]
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(deny_unknown_fields)]
-struct JsonQcRouteCase {
-    base_graph: usize,
-    lifting_size: usize,
-    workers: usize,
-    frames: usize,
+struct JsonQcRoute {
+    min_lifting_size: usize,
+    max_workers: usize,
+    lane_claim_min_frames: usize,
+}
+
+#[cfg(feature = "tuning-profile")]
+impl From<QcRouteBounds> for JsonQcRoute {
+    fn from(bounds: QcRouteBounds) -> Self {
+        Self {
+            min_lifting_size: bounds.min_lifting_size(),
+            max_workers: bounds.max_workers().get(),
+            lane_claim_min_frames: bounds.lane_claim_min_frames(),
+        }
+    }
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -706,7 +706,7 @@ struct JsonQcRouteCase {
 #[serde(untagged)]
 enum JsonDecodeField {
     Bound(usize),
-    Cases(Vec<JsonQcRouteCase>),
+    Qc(JsonQcRoute),
 }
 
 /// Returns whether `family` is present and its fields, all missing for an

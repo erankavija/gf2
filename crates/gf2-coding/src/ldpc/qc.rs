@@ -247,6 +247,12 @@ impl QcDecoder {
         self
     }
 
+    /// The lifting size $Z$ of the decoded structure.
+    #[must_use]
+    pub fn lifting_size(&self) -> usize {
+        self.layout.z
+    }
+
     /// The backend of the selected kernel.
     #[must_use]
     pub fn backend(&self) -> LaneBackend {

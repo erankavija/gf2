@@ -51,12 +51,10 @@ pub enum LaneCapability {
 /// The QC structure and kernel backend of a decoder, for the QC route.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum QcCapability {
-    /// The code carries the 5G NR structure of `base_graph` and
-    /// `lifting_size`, and the kernels of `backend` decode it.
+    /// The code retains quasi-cyclic structure of lifting size
+    /// `lifting_size`, and the QC kernels of `backend` decode it.
     Present {
-        /// The 5G NR base graph.
-        base_graph: u8,
-        /// The 5G NR lifting size.
+        /// The lifting size $Z$ of the retained structure.
         lifting_size: usize,
         /// The backend of the QC kernels.
         backend: LaneBackend,
@@ -80,13 +78,8 @@ pub enum BatchRoute {
 
 /// Decides the route of one wave of frames.
 ///
-/// The QC route on the backend of `qc` is taken when `algorithm` is
-/// [`DecoderAlgorithm::NormalizedMinSum`], `qc` is [`QcCapability::Present`]
-/// and a [`QcRouteCase`](crate::tuning::QcRouteCase) of `selectors` names its
-/// structure, `workers` and `occupied_lanes` exactly.
-///
-/// Otherwise the lane route on the backend of `capability` is taken when all of
-/// the following hold, and the single-frame route otherwise:
+/// The lane route on the backend of `capability` is eligible when all of the
+/// following hold:
 ///
 /// - `algorithm` is of the min-sum family: [`DecoderAlgorithm::MinSum`],
 ///   [`DecoderAlgorithm::NormalizedMinSum`] or
@@ -96,11 +89,19 @@ pub enum BatchRoute {
 /// - `edges <= selectors.lane_max_edges()`;
 /// - `workers <= selectors.lane_max_workers()`.
 ///
+/// With `bounds = selectors.qc_route()`, the QC route on the backend of `qc`
+/// is taken when `algorithm` is of the min-sum family, `qc` is
+/// [`QcCapability::Present`], its lifting size is at least
+/// `bounds.min_lifting_size()`, `workers <= bounds.max_workers()`, and the
+/// lane route is ineligible or `occupied_lanes <
+/// bounds.lane_claim_min_frames()`. Otherwise an eligible lane route is
+/// taken, and the single-frame route otherwise.
+///
 /// `occupied_lanes` counts the frames of the wave and `edges` the
 /// Tanner-graph edges of the code. `workers` is the configured concurrent
-/// decode worker count, independent of how many are presently scheduled. The decision reads the decode selector
-/// family only; the caller resolves the family from the coding tuning
-/// section.
+/// decode worker count, independent of how many are presently scheduled. The
+/// decision reads the decode selector family only; the caller resolves the
+/// family from the coding tuning section.
 #[must_use]
 pub fn decide_batch_route(
     selectors: &DecodeSelectors,
@@ -111,41 +112,40 @@ pub fn decide_batch_route(
     edges: usize,
     workers: NonZeroUsize,
 ) -> BatchRoute {
-    if let QcCapability::Present {
-        base_graph,
-        lifting_size,
-        backend,
-    } = qc
-    {
-        let selected = matches!(algorithm, DecoderAlgorithm::NormalizedMinSum(_))
-            && selectors.qc_route_cases().iter().any(|case| {
-                case.base_graph() == base_graph
-                    && case.lifting_size() == lifting_size
-                    && case.workers() == workers
-                    && case.frames().get() == occupied_lanes
-            });
-        if selected {
-            return BatchRoute::Qc(backend);
-        }
-    }
     let min_sum_family = !matches!(algorithm, DecoderAlgorithm::SumProduct);
-    match capability {
+    let lane = match capability {
         LaneCapability::Present(backend)
             if min_sum_family
                 && occupied_lanes >= selectors.lane_min_frames()
                 && edges <= selectors.lane_max_edges()
                 && workers <= selectors.lane_max_workers() =>
         {
-            BatchRoute::Lane(backend)
+            Some(backend)
         }
-        _ => BatchRoute::SingleFrame,
+        _ => None,
+    };
+    if let QcCapability::Present {
+        lifting_size,
+        backend,
+    } = qc
+    {
+        let bounds = selectors.qc_route();
+        let lane_claims = lane.is_some() && occupied_lanes >= bounds.lane_claim_min_frames();
+        if min_sum_family
+            && lifting_size >= bounds.min_lifting_size()
+            && workers <= bounds.max_workers()
+            && !lane_claims
+        {
+            return BatchRoute::Qc(backend);
+        }
     }
+    lane.map_or(BatchRoute::SingleFrame, BatchRoute::Lane)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tuning::QcRouteCase;
+    use crate::tuning::QcRouteBounds;
 
     const MIN_SUM_FAMILY: [DecoderAlgorithm; 3] = [
         DecoderAlgorithm::MinSum,
@@ -300,125 +300,191 @@ mod tests {
         }
     }
 
-    /// The selection predicate of `qc-go-rule` in
-    /// `dev/active/55c3e433-aff3ct-ldpc-gaps/plan.md`, with lanes open from
-    /// two frames for one worker.
-    fn qc_selectors() -> DecodeSelectors {
-        let case = |workers, frames| QcRouteCase::try_new(1, 384, workers, frames).unwrap();
-        DecodeSelectors::try_new(2, usize::MAX, 1, 1)
-            .unwrap()
-            .with_qc_route_cases(vec![case(1, 1), case(12, 8)])
-    }
-
-    fn structure(base_graph: u8, lifting_size: usize) -> QcCapability {
+    fn structure(lifting_size: usize) -> QcCapability {
         QcCapability::Present {
-            base_graph,
             lifting_size,
             backend: LaneBackend::Avx2,
         }
     }
 
-    /// The route without QC capability, the existing route of a case.
-    fn existing(algorithm: DecoderAlgorithm, frames: usize, workers: NonZeroUsize) -> BatchRoute {
+    const QC: BatchRoute = BatchRoute::Qc(LaneBackend::Avx2);
+    const WORKERS: [usize; 6] = [1, 2, 6, 12, 13, 24];
+
+    fn decide_qc(
+        s: &DecodeSelectors,
+        algorithm: DecoderAlgorithm,
+        qc: QcCapability,
+        frames: usize,
+        workers: usize,
+    ) -> BatchRoute {
         decide_batch_route(
-            &qc_selectors(),
+            s,
             algorithm,
             PORTABLE,
-            QcCapability::Absent,
+            qc,
             frames,
             100,
-            workers,
+            NonZeroUsize::new(workers).unwrap(),
         )
     }
 
+    /// The route of the same wave without QC capability.
+    fn without_qc(
+        s: &DecodeSelectors,
+        algorithm: DecoderAlgorithm,
+        frames: usize,
+        workers: usize,
+    ) -> BatchRoute {
+        decide_qc(s, algorithm, QcCapability::Absent, frames, workers)
+    }
+
     #[test]
-    fn the_qc_route_takes_exactly_the_selected_cases_and_others_keep_their_route() {
-        let algorithm = DecoderAlgorithm::NormalizedMinSum(0.75);
-        for workers in [1, 2, 6, 11, 12, 13, 24] {
-            let workers = NonZeroUsize::new(workers).unwrap();
+    fn open_bounds_take_the_qc_route_for_every_min_sum_wave_of_a_qc_code() {
+        let lanes_open = DecodeSelectors::try_new(1, usize::MAX, usize::MAX, 1).unwrap();
+        for s in [DecodeSelectors::CONSERVATIVE, lanes_open] {
+            assert_eq!(s.qc_route(), QcRouteBounds::OPEN);
+            for algorithm in MIN_SUM_FAMILY {
+                for lifting_size in [1, 2, 7, 8, 9, 360, 384] {
+                    for workers in WORKERS {
+                        for frames in 0..=8 {
+                            let got =
+                                decide_qc(&s, algorithm, structure(lifting_size), frames, workers);
+                            assert_eq!(
+                                got, QC,
+                                "{algorithm:?} Z={lifting_size} {workers}w {frames}f"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn sum_product_and_absent_structure_keep_the_route_without_qc() {
+        let s = DecodeSelectors::try_new(2, usize::MAX, 1, 1).unwrap();
+        for workers in WORKERS {
             for frames in 0..=8 {
-                let got = decide_batch_route(
-                    &qc_selectors(),
-                    algorithm,
-                    PORTABLE,
-                    structure(1, 384),
+                let got = decide_qc(
+                    &s,
+                    DecoderAlgorithm::SumProduct,
+                    structure(384),
                     frames,
-                    100,
                     workers,
                 );
-                let selected = matches!((workers.get(), frames), (1, 1) | (12, 8));
-                let expected = if selected {
-                    BatchRoute::Qc(LaneBackend::Avx2)
-                } else {
-                    existing(algorithm, frames, workers)
-                };
-                assert_eq!(got, expected, "{workers} workers, {frames} frames");
-            }
-        }
-        assert_eq!(existing(algorithm, 8, NonZeroUsize::MIN), LANE);
-    }
-
-    #[test]
-    fn every_other_algorithm_keeps_its_route_on_the_selected_cases() {
-        let twelve = NonZeroUsize::new(12).unwrap();
-        for algorithm in [
-            DecoderAlgorithm::MinSum,
-            DecoderAlgorithm::OffsetMinSum(0.5),
-            DecoderAlgorithm::SumProduct,
-        ] {
-            for (workers, frames) in [(NonZeroUsize::MIN, 1), (twelve, 8)] {
-                let got = decide_batch_route(
-                    &qc_selectors(),
-                    algorithm,
-                    PORTABLE,
-                    structure(1, 384),
-                    frames,
-                    100,
-                    workers,
-                );
-                assert_eq!(got, existing(algorithm, frames, workers), "{algorithm:?}");
+                assert_eq!(got, BatchRoute::SingleFrame);
+                for algorithm in MIN_SUM_FAMILY {
+                    assert_eq!(
+                        decide_qc(&s, algorithm, QcCapability::Absent, frames, workers),
+                        without_qc(&s, algorithm, frames, workers)
+                    );
+                }
             }
         }
     }
 
     #[test]
-    fn another_structure_or_no_case_keeps_the_existing_route() {
-        let algorithm = DecoderAlgorithm::NormalizedMinSum(0.75);
-        let decide = |selectors: &DecodeSelectors, qc| {
-            decide_batch_route(
-                selectors,
-                algorithm,
-                PORTABLE,
-                qc,
-                1,
-                100,
-                NonZeroUsize::MIN,
-            )
-        };
-        for qc in [structure(2, 384), structure(1, 352), QcCapability::Absent] {
-            assert_eq!(decide(&qc_selectors(), qc), BatchRoute::SingleFrame);
+    fn min_lifting_size_bounds_the_qc_route_from_below() {
+        let bounds = QcRouteBounds::try_new(8, usize::MAX, usize::MAX).unwrap();
+        let s = DecodeSelectors::try_new(2, usize::MAX, 1, 1)
+            .unwrap()
+            .with_qc_route(bounds);
+        for algorithm in MIN_SUM_FAMILY {
+            for workers in WORKERS {
+                for frames in 0..=8 {
+                    for lifting_size in [1, 7, 8, 9, 384] {
+                        let got =
+                            decide_qc(&s, algorithm, structure(lifting_size), frames, workers);
+                        let expected = if lifting_size >= 8 {
+                            QC
+                        } else {
+                            without_qc(&s, algorithm, frames, workers)
+                        };
+                        assert_eq!(got, expected, "Z={lifting_size} {workers}w {frames}f");
+                    }
+                }
+            }
         }
-        assert_eq!(
-            decide(&DecodeSelectors::CONSERVATIVE, structure(1, 384)),
-            BatchRoute::SingleFrame
-        );
+    }
+
+    #[test]
+    fn max_workers_bounds_the_qc_route_from_above() {
+        let bounds = QcRouteBounds::try_new(0, 12, usize::MAX).unwrap();
+        let s = DecodeSelectors::try_new(2, usize::MAX, 1, 1)
+            .unwrap()
+            .with_qc_route(bounds);
+        for algorithm in MIN_SUM_FAMILY {
+            for workers in WORKERS {
+                for frames in 0..=8 {
+                    let got = decide_qc(&s, algorithm, structure(384), frames, workers);
+                    let expected = if workers <= 12 {
+                        QC
+                    } else {
+                        without_qc(&s, algorithm, frames, workers)
+                    };
+                    assert_eq!(got, expected, "{workers}w {frames}f");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn an_eligible_lane_route_claims_waves_from_its_bound() {
+        let bounds = QcRouteBounds::try_new(0, usize::MAX, 4).unwrap();
+        // Lanes are eligible from two frames at up to six workers.
+        let s = DecodeSelectors::try_new(2, usize::MAX, 6, 1)
+            .unwrap()
+            .with_qc_route(bounds);
+        for algorithm in MIN_SUM_FAMILY {
+            for workers in WORKERS {
+                for frames in 0..=8 {
+                    let got = decide_qc(&s, algorithm, structure(384), frames, workers);
+                    let expected = if workers <= 6 && frames >= 4 {
+                        LANE
+                    } else {
+                        QC
+                    };
+                    assert_eq!(got, expected, "{workers}w {frames}f");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn closed_bounds_keep_the_route_without_qc() {
+        let s = DecodeSelectors::try_new(2, usize::MAX, 1, 1)
+            .unwrap()
+            .with_qc_route(QcRouteBounds::CLOSED);
+        for algorithm in MIN_SUM_FAMILY {
+            for workers in WORKERS {
+                for frames in 0..=8 {
+                    for lifting_size in [1, 384, usize::MAX - 1] {
+                        assert_eq!(
+                            decide_qc(&s, algorithm, structure(lifting_size), frames, workers),
+                            without_qc(&s, algorithm, frames, workers)
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[test]
     fn the_qc_route_names_the_backend_of_the_capability() {
-        let got = decide_batch_route(
-            &qc_selectors(),
-            DecoderAlgorithm::NormalizedMinSum(0.75),
-            LaneCapability::Absent,
-            QcCapability::Present {
-                base_graph: 1,
-                lifting_size: 384,
-                backend: LaneBackend::Portable,
-            },
-            1,
-            100,
-            NonZeroUsize::MIN,
-        );
-        assert_eq!(got, BatchRoute::Qc(LaneBackend::Portable));
+        for backend in [LaneBackend::Portable, LaneBackend::Avx2] {
+            let got = decide_batch_route(
+                &DecodeSelectors::CONSERVATIVE,
+                DecoderAlgorithm::NormalizedMinSum(0.75),
+                LaneCapability::Absent,
+                QcCapability::Present {
+                    lifting_size: 384,
+                    backend,
+                },
+                1,
+                100,
+                NonZeroUsize::MIN,
+            );
+            assert_eq!(got, BatchRoute::Qc(backend));
+        }
     }
 }

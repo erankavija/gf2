@@ -77,9 +77,9 @@ of the coding tuning section
 - The min-sum family (`MinSum`, `NormalizedMinSum`, `OffsetMinSum`) takes the
   lane route when the wave, code and configured decode concurrency satisfy
   `lane_min_frames`, `lane_max_edges` and `lane_max_workers`.
-- `NormalizedMinSum` takes the QC route instead when a `qc_route_cases` entry
-  names the 5G NR structure the code retains, the configured concurrency and
-  the frames of a call of at most one wave.
+- The min-sum family takes the QC route instead on a code that retains
+  quasi-cyclic structure, unless a `qc_route` bound on lifting size, configured
+  concurrency or occupied lanes moves the wave to the route without it.
 - `SumProduct` takes the single-frame route.
 - The lane route runs AVX2 kernels when `gf2-coding` is built with `simd` and
   the host reports AVX2. On a host without AVX2, or in a build without `simd`,
@@ -89,8 +89,8 @@ of the coding tuning section
 Each frame's word and outcome equal the single-frame decoder's under the
 [numerical contract](ldpc-decoder-numerical-contract.md).
 The committed coding envelope under `crates/gf2-coding/data/tuning-profiles/`
-records the lane selectors of the calibration campaign and the QC route cases
-that the confirmation family `55c3e433-integrated-adoption` qualified.
+records the lane selectors of the calibration campaign and states no QC route
+bound.
 
 ## Cargo features
 

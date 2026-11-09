@@ -11,9 +11,9 @@ use gf2_coding::ldpc::{
     LdpcCode, LdpcDecoder, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
-use gf2_coding::test_support::ldpc_batch_routes;
+use gf2_coding::test_support::{ldpc_batch_route_of, ldpc_batch_routes};
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome, IterativeSoftDecoder};
-use gf2_coding::tuning::{DecodeSelectors, QcRouteCase};
+use gf2_coding::tuning::DecodeSelectors;
 use gf2_core::BitVec;
 use thread_allocations::{count, CountingAllocator, Counts};
 
@@ -193,7 +193,7 @@ fn steady_state_batch_decoding_allocates_nothing() {
                     if algorithm == DecoderAlgorithm::SumProduct {
                         assert_eq!(route, BatchRoute::SingleFrame);
                     } else {
-                        assert_eq!(route, *full_wave);
+                        assert_eq!(route, ldpc_batch_route_of(&code, *full_wave));
                     }
                     let mut decoded = vec![BitVec::new(); FRAMES];
 
@@ -265,7 +265,7 @@ fn steady_state_rate_matched_batch_decoding_allocates_nothing() {
                 if algorithm == DecoderAlgorithm::SumProduct {
                     assert_eq!(route, BatchRoute::SingleFrame);
                 } else {
-                    assert_eq!(route, *full_wave);
+                    assert_eq!(route, ldpc_batch_route_of(code.mother_code(), *full_wave));
                 }
                 let mut decoded = vec![BitVec::new(); FRAMES];
 
@@ -336,13 +336,7 @@ fn the_qc_route_allocates_nothing_after_a_first_decode() {
     let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(2, 6));
     let frames: Vec<Vec<Llr>> = (0..4u64).map(|f| channel_llrs(code.n(), 41 + f)).collect();
     let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
-    let selectors = DecodeSelectors::CONSERVATIVE.with_qc_route_cases(vec![QcRouteCase::try_new(
-        2,
-        6,
-        1,
-        views.len(),
-    )
-    .unwrap()]);
+    let selectors = DecodeSelectors::CONSERVATIVE;
     let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
     let mut outcomes = vec![DecodeOutcome::default(); views.len()];
     let mut posteriors = vec![Llr::zero(); views.len() * code.n()];

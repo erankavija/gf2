@@ -9,7 +9,7 @@
 
 use gf2_coding::bch::CodeRate;
 use gf2_coding::channel::AwgnChannel;
-use gf2_coding::ldpc::nr_5g::{all_lifting_sizes, FILLER_LLR};
+use gf2_coding::ldpc::nr_5g::FILLER_LLR;
 use gf2_coding::ldpc::{
     BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, EdgeLayout, LaneBackend,
     LdpcBatchDecoder, LdpcCode, LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc,
@@ -18,9 +18,8 @@ use gf2_coding::llr::Llr;
 use gf2_coding::test_support::ldpc_lane_backends;
 use gf2_coding::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
 use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome};
-use gf2_coding::tuning::{DecodeSelectors, QcRouteCase};
+use gf2_coding::tuning::{DecodeSelectors, QcRouteBounds};
 use gf2_core::BitVec;
-use gf2_kernels_simd::ldpc_lanes::LANES;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use rand::{Rng, SeedableRng};
@@ -55,8 +54,8 @@ enum Route {
     LaneFromFourFrames(LaneBackend),
     /// Every wave decodes on the single-frame decoder.
     SingleFrame,
-    /// Under normalized min-sum at one worker, a batch of at most one wave of
-    /// a 5G NR code decodes on the QC decoder of the backend.
+    /// Every wave of a code with retained QC structure decodes on the QC
+    /// decoder of the backend, under the open QC bounds.
     Qc(LaneBackend),
 }
 
@@ -68,26 +67,16 @@ impl Route {
             Route::SingleFrame | Route::Qc(_) => usize::MAX,
         };
         let selectors = DecodeSelectors::try_new(lane_min_frames, usize::MAX, 1, 1).unwrap();
-        if !matches!(self, Route::Qc(_)) {
-            return selectors;
+        match self {
+            Route::Qc(_) => selectors.with_qc_route(QcRouteBounds::OPEN),
+            _ => selectors.with_qc_route(QcRouteBounds::CLOSED),
         }
-        let mut cases = Vec::new();
-        for base_graph in [1, 2] {
-            for lifting_size in all_lifting_sizes() {
-                for frames in 1..=LANES {
-                    cases.push(
-                        QcRouteCase::try_new(base_graph, lifting_size.into(), 1, frames).unwrap(),
-                    );
-                }
-            }
-        }
-        selectors.with_qc_route_cases(cases)
     }
 
     /// The route of a wave of `frames` frames under the min-sum rule `algorithm`.
     fn of_wave(self, frames: usize, algorithm: DecoderAlgorithm) -> BatchRoute {
         match self {
-            Route::Qc(backend) if matches!(algorithm, DecoderAlgorithm::NormalizedMinSum(_)) => {
+            Route::Qc(backend) if !matches!(algorithm, DecoderAlgorithm::SumProduct) => {
                 BatchRoute::Qc(backend)
             }
             Route::Qc(_) => BatchRoute::SingleFrame,
@@ -648,7 +637,7 @@ route_suite!(
 );
 route_suite!(single_frame_route, Route::SingleFrame);
 
-/// The QC route over 5G NR codes, the only codes its selectors can name.
+/// The QC route over codes that retain QC structure.
 macro_rules! qc_route_suite {
     ($route:ident, $value:expr) => {
         mod $route {
