@@ -44,7 +44,7 @@ fn build_aff3ct() {
     build
         .cpp(true)
         .file("cpp/throughput_shim.cpp")
-        .flag("-std=gnu++11")
+        .flag("-std=gnu++17")
         .flag("-O3")
         .flag("-march=native")
         .flag("-g1")
