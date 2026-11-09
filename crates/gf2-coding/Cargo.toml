@@ -158,6 +158,10 @@ name = "ldpc_decode"
 harness = false
 
 [[bench]]
+name = "ldpc_dvb_t2_qc"
+harness = false
+
+[[bench]]
 name = "llr_simd"
 harness = false
 
