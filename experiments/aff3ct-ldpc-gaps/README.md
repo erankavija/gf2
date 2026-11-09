@@ -41,6 +41,14 @@ to the AFF3CT source/build directory containing its 4.7.0 static library, then
 use the same recorder with `--arm aff3ct-flooding-nms-f32-iterations`. Ordinary
 workspace builds and tests need no AFF3CT installation.
 
+The adapter's second executable, `aff3ct-fast-bench`, times one AFF3CT NMS
+decoder outside the campaign lifecycle: scalar or inter-frame SIMD, flooding,
+horizontal-layered or the layered ONMS decoder, in f32 or i16. It takes a
+bundle directory, the code name, the decoder type, `none` or `INTER`, the
+precision, and the worker, batch and call counts, decodes the whole bundle
+untimed for frame errors, and prints one JSON line with the median call time.
+The shim compiles as C++17, which AFF3CT's SIMD update rules require.
+
 Generate portable configuration from a declaration:
 
 ```sh

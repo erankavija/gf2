@@ -18,6 +18,10 @@ cc = "1"
 name = "aff3ct-throughput-arm"
 path = "src/main.rs"
 
+[[bin]]
+name = "aff3ct-fast-bench"
+path = "src/fast_bench.rs"
+
 [profile.release]
 lto = "thin"
 codegen-units = 1

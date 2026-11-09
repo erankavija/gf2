@@ -1,4 +1,4 @@
-//! AFF3CT flooding NMS handles and post-timing replay.
+//! AFF3CT NMS decoder handles and post-timing replay.
 
 use aff3ct_ldpc_gaps::arm::{
     ArmSettings, Normalization, NormalizationKind, Precision, Schedule, Stopping, StoppingKind,
@@ -24,6 +24,7 @@ extern "C" {
         enable_syndrome: c_int,
         syndrome_depth: c_int,
         quant_scale: c_float,
+        quant_limit: c_float,
         err: *mut c_char,
         errlen: c_int,
     ) -> *mut c_void;
@@ -94,7 +95,10 @@ pub struct Selection {
     pub simd: String,
     pub precision: String,
     pub offset: f32,
+    /// Fixed-point LLRs are `round(llr * quant_scale)` saturated at
+    /// `quant_limit`; f32 decoders ignore both.
     pub quant_scale: f32,
+    pub quant_limit: f32,
     pub syndrome_depth: i32,
 }
 
@@ -115,6 +119,7 @@ impl Selection {
             precision: environment("GF2_AFF3CT_PRECISION", "f32"),
             offset: 0.0,
             quant_scale: 1.0,
+            quant_limit: 0.0,
             syndrome_depth: 1,
         };
         if selection.kind != "flooding"
@@ -128,6 +133,38 @@ impl Selection {
             );
         }
         Ok(selection)
+    }
+
+    /// An NMS decoder of `kind` (`flooding`, `layered` or `layered-onms`),
+    /// `simd` (empty or `INTER`) and `precision` (`f32`, `i16` or `i8`).
+    ///
+    /// `i8` LLRs take six bits with two fractional, `i16` fourteen with six.
+    /// AFF3CT 4.7.0 refuses its NMS decoders in `i8`.
+    #[must_use]
+    pub fn fast(kind: &str, simd: &str, precision: &str) -> Self {
+        let (quant_scale, quant_limit) = match precision {
+            "i8" => (4.0, 31.0),
+            "i16" => (64.0, 8191.0),
+            _ => (1.0, 0.0),
+        };
+        let overridden = |name: &str, default: f32| {
+            std::env::var(name)
+                .ok()
+                .and_then(|text| text.parse().ok())
+                .unwrap_or(default)
+        };
+        let quant_scale = overridden("GF2_AFF3CT_QUANT_SCALE", quant_scale);
+        let quant_limit = overridden("GF2_AFF3CT_QUANT_LIMIT", quant_limit);
+        Self {
+            kind: kind.to_owned(),
+            implem: "NMS".to_owned(),
+            simd: simd.to_owned(),
+            precision: precision.to_owned(),
+            offset: 0.0,
+            quant_scale,
+            quant_limit,
+            syndrome_depth: 1,
+        }
     }
 
     /// Settings of the matched comparator.
@@ -248,6 +285,7 @@ impl Handle {
                 c_int::from(syndrome_stopping),
                 selection.syndrome_depth,
                 selection.quant_scale,
+                selection.quant_limit,
                 error.as_mut_ptr(),
                 ERROR_BYTES as c_int,
             )
@@ -491,6 +529,7 @@ mod tests {
             precision: "f32".to_owned(),
             offset: 0.0,
             quant_scale: 8.0,
+            quant_limit: 31.0,
             syndrome_depth: SYNDROME_DEPTH,
         }
     }
@@ -502,6 +541,31 @@ mod tests {
             Handle::build(&path, K, N, CAP, 0.75, true, &selection("flooding", ""))
         }
         .expect("decoder")
+    }
+
+    #[test]
+    fn every_fast_decoder_corrects_a_wave_and_so_does_its_clone() {
+        let (_directory, path) = alist();
+        for (kind, simd, precision) in [
+            ("flooding", "INTER", "f32"),
+            ("flooding", "INTER", "i16"),
+            ("layered", "", "f32"),
+            ("layered", "INTER", "f32"),
+            ("layered", "INTER", "i16"),
+            ("layered-onms", "INTER", "f32"),
+            ("layered-onms", "INTER", "i16"),
+        ] {
+            let selection = Selection::fast(kind, simd, precision);
+            let prototype = Handle::build(&path, K, N, CAP, 0.75, true, &selection)
+                .unwrap_or_else(|error| panic!("{kind} {simd} {precision}: {error}"));
+            let wave = prototype.wave();
+            let mut worker = Aff3ctWorker::new(&prototype, wave, K).expect("clone");
+            worker.decode_batch(&llrs(wave));
+            assert!(
+                worker.decisions.iter().all(|&bit| bit == 0),
+                "{kind} {simd} {precision}"
+            );
+        }
     }
 
     /// The all-zero codeword with one unreliable wrong position per frame.
