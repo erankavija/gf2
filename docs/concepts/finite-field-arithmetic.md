@@ -84,20 +84,30 @@ Batch and region entry points dispatch separately:
   $m \in \{8, 16, 32\}$ under the `simd` feature on hosts reporting AVX2,
   VPCLMULQDQ, PCLMULQDQ and SSE4.1, and per-element scalar multiplication
   otherwise; both produce identical results.
-- $\mathrm{GF}(2^8)$ AXPY and classical GEMM over a single-word
-  representation (`u64`-backed `Gf2mElement` or `Gf2mWide<1, Cfg>`) read a
-  process-wide $256 \times 256$ byte product table, built once per
-  reduction polynomial. No feature or CPU capability takes part.
+- $\mathrm{GF}(2^8)$ byte regions and byte matrices, through
+  `Gf2mField::gf256_axpy` and `Gf2mField::gf256_gemm`, run the kernels of
+  `gf2_kernels_simd::gf256_region`: multiplication by each constant split
+  into two 16-entry nibble tables, built once per reduction polynomial, and
+  applied through `vpshufb` under the `simd` feature on AVX2 hosts and by
+  table lookup otherwise. Classical GEMM over a single-word representation
+  (`u64`-backed `Gf2mElement` or `Gf2mWide<1, Cfg>`) copies its operands
+  into bytes and runs the same blocked product; AXPY over those
+  representations makes one table-lookup pass over the elements, since
+  copying 8- or 16-byte elements into bytes and back costs more than the
+  kernel saves.
 - `Gf2mWide` products all pass through one carry-less dispatch whose
   predicate is stated in the rustdoc of
   [`gf2m/wide.rs`](../../crates/gf2-core/src/gf2m/wide.rs); widths without
   a kernel use the portable `clmul_wide_slice_portable`.
 
 The suites
-[`gf256_table_conformance.rs`](../../crates/gf2-core/tests/gf256_table_conformance.rs)
+[`gf256_table_conformance.rs`](../../crates/gf2-core/tests/gf256_table_conformance.rs),
+[`gf256_bytes_conformance.rs`](../../crates/gf2-core/tests/gf256_bytes_conformance.rs)
 and
 [`clmul_wide_conformance.rs`](../../crates/gf2-core/tests/clmul_wide_conformance.rs)
-hold each dispatched path to the portable result.
+hold each dispatched path to the portable result, and the unit suite of
+`gf2_kernels_simd::gf256_region` holds every byte-region backend to the
+definition.
 
 ## $\mathrm{GF}(p)$
 

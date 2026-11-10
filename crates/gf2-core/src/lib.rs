@@ -50,6 +50,26 @@ pub use sparse::{
     RowPermutation, SpBitMatrix, SpBitMatrixBlockCsr, SpBitMatrixDual, SparseBitMatrix,
 };
 
+/// The GF(2^8) byte-region kernels: the fastest the host supports with the
+/// `simd` feature, the portable ones otherwise or on hosts without them.
+pub(crate) fn gf256_region() -> &'static gf2_kernels_simd::gf256_region::Gf256RegionFns {
+    #[cfg(feature = "simd")]
+    {
+        static FNS: std::sync::OnceLock<gf2_kernels_simd::gf256_region::Gf256RegionFns> =
+            std::sync::OnceLock::new();
+        FNS.get_or_init(|| {
+            gf2_kernels_simd::gf256_region::detect()
+                .unwrap_or_else(gf2_kernels_simd::gf256_region::portable)
+        })
+    }
+    #[cfg(not(feature = "simd"))]
+    {
+        static FNS: gf2_kernels_simd::gf256_region::Gf256RegionFns =
+            gf2_kernels_simd::gf256_region::portable();
+        &FNS
+    }
+}
+
 #[cfg(feature = "simd")]
 pub(crate) mod simd {
     use gf2_kernels_simd::fp65537::Fp65537Fns;

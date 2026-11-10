@@ -28,6 +28,8 @@ pub(crate) mod fp_small;
 pub(crate) mod fp_small_f32;
 pub(crate) mod fp_small_panel;
 pub(crate) mod fp_small_ple;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub(crate) mod gf256_region;
 pub(crate) mod gf2m_batch;
 pub(crate) mod gf2m_common;
 pub(crate) mod gf2m_gemm;

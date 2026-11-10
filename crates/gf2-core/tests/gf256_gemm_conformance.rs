@@ -1,5 +1,5 @@
-//! Shared conformance suite for the GF(2^8) cached-product-table dense product:
-//! the cached-table lane for `Gf2mElement` and single-word `Gf2mWide<1, Cfg>`
+//! Shared conformance suite for the GF(2^8) split-table dense product: the
+//! split-table lane for `Gf2mElement` and single-word `Gf2mWide<1, Cfg>`
 //! must agree with the route taken when [`force_scalar_gf256_table`] declines
 //! the dispatch, and with a schoolbook product that names no gf2-core
 //! arithmetic, under the 0x11B and 0x11D reduction polynomials.
