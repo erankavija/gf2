@@ -17,6 +17,8 @@ trap cleanup EXIT
 # Both wrappers apply their lock discipline only inside a benchmark window.
 # Every lock below is a file under $TMP, so the host mutex is never touched.
 export GF2_BENCH_WINDOW=1
+# The default-list cases below run without a caller's CPU list.
+unset GF2_CCX1_CPUS
 
 # --- 1. Command composition, against stubbed flock, taskset and nice ---------
 #
