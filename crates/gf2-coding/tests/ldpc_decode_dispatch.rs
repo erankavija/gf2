@@ -7,12 +7,13 @@ use gf2_coding::ldpc::{
     LdpcBatchDecoder, LdpcCode, LdpcDecoder, QcRouteBounds, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
-use gf2_coding::test_support::{ldpc_batch_code, ldpc_lane_backends, LDPC_BATCH_CAP};
+use gf2_coding::test_support::{
+    ldpc_batch_code, ldpc_dvb_t2_codes, ldpc_lane_backends, LDPC_BATCH_CAP,
+};
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
 use gf2_coding::tuning::{
     self, DecodeSelectors, GRANULES_PER_TASK, LANE_MAX_EDGES, LANE_MIN_FRAMES,
 };
-use gf2_coding::CodeRate;
 use gf2_core::tuning::SectionResolution;
 use gf2_core::BitVec;
 use gf2_kernels_simd::ldpc_lanes::LANES;
@@ -31,11 +32,9 @@ fn batch_sizes() -> std::ops::RangeInclusive<usize> {
 }
 
 fn codes() -> Vec<LdpcCode> {
-    vec![
-        ldpc_batch_code(),
-        LdpcCode::dvb_t2_short(CodeRate::Rate1_2),
-        LdpcCode::dvb_t2_normal(CodeRate::Rate1_2),
-    ]
+    std::iter::once(ldpc_batch_code())
+        .chain(ldpc_dvb_t2_codes().map(|(_, _, code)| code))
+        .collect()
 }
 
 fn edges(code: &LdpcCode) -> usize {
@@ -166,7 +165,8 @@ fn every_route_threshold_is_a_decode_selector() {
 
 const MIN_SUM: [DecoderAlgorithm; 3] = [ALGORITHMS[0], ALGORITHMS[1], ALGORITHMS[2]];
 
-const WORKERS: [usize; 4] = [1, 6, 12, 24];
+/// Worker counts on both sides of the lane bound of [`lane_selectors`].
+const WORKERS: [usize; 5] = [1, 2, 6, 12, 24];
 
 /// Lanes open from two frames up to one worker, as in a calibrated profile.
 fn lane_selectors() -> DecodeSelectors {
@@ -175,16 +175,13 @@ fn lane_selectors() -> DecodeSelectors {
 
 /// Codes with retained QC structure: both 5G NR base graphs at lifting sizes
 /// below one AVX2 vector, with a remainder modulo eight, and the largest, and
-/// DVB-T2 short and normal codes.
+/// every DVB-T2 code.
 fn qc_codes() -> Vec<LdpcCode> {
     let codes: Vec<LdpcCode> = [(1, 384), (2, 384), (1, 13), (2, 6)]
         .into_iter()
         .map(|(graph, z)| LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(graph, z)))
-        .chain([
-            ldpc_batch_code(),
-            LdpcCode::dvb_t2_short(CodeRate::Rate1_2),
-            LdpcCode::dvb_t2_normal(CodeRate::Rate1_2),
-        ])
+        .chain(std::iter::once(ldpc_batch_code()))
+        .chain(ldpc_dvb_t2_codes().map(|(_, _, code)| code))
         .collect();
     assert!(codes.iter().all(|code| code.quasi_cyclic().is_some()));
     codes

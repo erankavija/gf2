@@ -216,6 +216,29 @@ pub fn ldpc_batch_code() -> LdpcCode {
     LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::new(base, 16))
 }
 
+/// The DVB-T2 code rates of the library (`@/citation/Etsi2015`).
+pub const DVB_T2_RATES: [CodeRate; 6] = [
+    CodeRate::Rate1_2,
+    CodeRate::Rate3_5,
+    CodeRate::Rate2_3,
+    CodeRate::Rate3_4,
+    CodeRate::Rate4_5,
+    CodeRate::Rate5_6,
+];
+
+/// Every DVB-T2 LDPC code of the library: short frames at each of
+/// [`DVB_T2_RATES`], then normal frames at each.
+pub fn ldpc_dvb_t2_codes() -> impl Iterator<Item = (FrameSize, CodeRate, LdpcCode)> {
+    DVB_T2_RATES
+        .into_iter()
+        .map(|rate| (FrameSize::Short, rate, LdpcCode::dvb_t2_short(rate)))
+        .chain(
+            DVB_T2_RATES
+                .into_iter()
+                .map(|rate| (FrameSize::Normal, rate, LdpcCode::dvb_t2_normal(rate))),
+        )
+}
+
 /// The frame set of the LDPC batch suite: [`LDPC_BATCH_FRAMES`] seeded
 /// random codewords of [`ldpc_batch_code`], each through AWGN of a deviation
 /// cycling from clean to undecodable, so that a wave holds frames of each

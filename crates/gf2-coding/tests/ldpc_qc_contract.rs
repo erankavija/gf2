@@ -4,7 +4,7 @@ use gf2_coding::ldpc::{
     QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
-use gf2_coding::test_support::ldpc_lane_backends;
+use gf2_coding::test_support::{ldpc_dvb_t2_codes, ldpc_lane_backends, DVB_T2_RATES};
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 use rand::{rngs::StdRng, Rng, SeedableRng};
@@ -340,46 +340,26 @@ fn zero_cap_copies_the_current_frame_after_a_nonzero_decode() {
     }
 }
 
-const DVB_RATES: [CodeRate; 6] = [
-    CodeRate::Rate1_2,
-    CodeRate::Rate3_5,
-    CodeRate::Rate2_3,
-    CodeRate::Rate3_4,
-    CodeRate::Rate4_5,
-    CodeRate::Rate5_6,
-];
-
-fn dvb_t2_codes() -> impl Iterator<Item = (&'static str, CodeRate, LdpcCode)> {
-    DVB_RATES
-        .into_iter()
-        .map(|rate| ("short", rate, LdpcCode::dvb_t2_short(rate)))
-        .chain(
-            DVB_RATES
-                .into_iter()
-                .map(|rate| ("normal", rate, LdpcCode::dvb_t2_normal(rate))),
-        )
-}
-
 #[test]
 fn dvb_t2_block_descriptions_lift_to_the_parity_check_matrix() {
     let mut weight_above_one = false;
-    for (frame, rate, code) in dvb_t2_codes() {
+    for (frame, rate, code) in ldpc_dvb_t2_codes() {
         let qc = code.quasi_cyclic().expect("DVB-T2 codes retain structure");
-        assert_eq!(qc.expansion_factor(), 360, "{frame} {rate:?}");
+        assert_eq!(qc.expansion_factor(), 360, "{frame:?} {rate:?}");
         assert!(qc.row_order().is_some() && qc.col_order().is_some());
         let h = code.parity_check_matrix();
         let edges: Vec<_> = (0..code.m())
             .flat_map(|row| h.row_iter(row).map(move |col| (row, col)))
             .collect();
         let mut plain = LdpcCode::from_edges(code.m(), code.n(), &edges);
-        assert!(plain.attach_quasi_cyclic(qc), "{frame} {rate:?}");
+        assert!(plain.attach_quasi_cyclic(qc), "{frame:?} {rate:?}");
         assert_eq!(
             qc.circulants()
                 .iter()
                 .filter(|c| !c.masked_rows().is_empty())
                 .count(),
             1,
-            "{frame} {rate:?}: the staircase wrap is the one masked circulant"
+            "{frame:?} {rate:?}: the staircase wrap is the one masked circulant"
         );
         weight_above_one |= qc.circulants().windows(2).any(|pair| {
             (pair[0].row_block(), pair[0].col_block()) == (pair[1].row_block(), pair[1].col_block())
@@ -438,7 +418,7 @@ fn a_masked_check_left_with_one_edge_has_no_qc_decoder() {
 
 #[test]
 fn dvb_t2_short_codes_follow_canonical() {
-    for rate in DVB_RATES {
+    for rate in DVB_T2_RATES {
         assert_contract(&LdpcCode::dvb_t2_short(rate));
     }
 }

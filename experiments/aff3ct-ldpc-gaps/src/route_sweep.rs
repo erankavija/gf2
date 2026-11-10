@@ -35,7 +35,8 @@ const EXECUTION_LOG: &str = "execution.log";
 /// field enters the configuration digest of the run identity.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SweepConfig {
-    /// `nr-bg<g>-z<Z>` or `dvb-t2-<short|normal>-r1-2`.
+    /// `nr-bg<g>-z<Z>` or `dvb-t2-<short|normal>-r<a>-<b>` for a DVB-T2 code
+    /// rate `a/b`.
     pub codes: Vec<String>,
     pub workers: Vec<usize>,
     pub frames_per_call: Vec<usize>,
@@ -110,10 +111,26 @@ impl SweepConfig {
 ///
 /// Returns an error for a name outside the grammar of [`SweepConfig::codes`].
 pub fn build_code(name: &str) -> Result<LdpcCode, String> {
-    let code = match name {
-        "dvb-t2-short-r1-2" => LdpcCode::dvb_t2_short(CodeRate::Rate1_2),
-        "dvb-t2-normal-r1-2" => LdpcCode::dvb_t2_normal(CodeRate::Rate1_2),
-        _ => {
+    let dvb_t2 = name.strip_prefix("dvb-t2-").and_then(|rest| {
+        let (frame, rate) = rest.split_once("-r")?;
+        let rate = match rate {
+            "1-2" => CodeRate::Rate1_2,
+            "3-5" => CodeRate::Rate3_5,
+            "2-3" => CodeRate::Rate2_3,
+            "3-4" => CodeRate::Rate3_4,
+            "4-5" => CodeRate::Rate4_5,
+            "5-6" => CodeRate::Rate5_6,
+            _ => return None,
+        };
+        match frame {
+            "short" => Some(LdpcCode::dvb_t2_short(rate)),
+            "normal" => Some(LdpcCode::dvb_t2_normal(rate)),
+            _ => None,
+        }
+    });
+    let code = match dvb_t2 {
+        Some(code) => code,
+        None => {
             let parsed = name.strip_prefix("nr-bg").and_then(|rest| {
                 let (graph, z) = rest.split_once("-z")?;
                 let (graph, z) = (graph.parse::<u8>().ok()?, z.parse::<u16>().ok()?);
@@ -479,7 +496,17 @@ mod tests {
         for name in SweepConfig::issue_grid().codes {
             build_code(&name).unwrap();
         }
-        for name in ["nr-bg3-z6", "nr-bg1-z0", "nr-bg1-z17", "hamming"] {
+        for name in ["dvb-t2-short-r5-6", "dvb-t2-normal-r3-5"] {
+            build_code(name).unwrap();
+        }
+        for name in [
+            "nr-bg3-z6",
+            "nr-bg1-z0",
+            "nr-bg1-z17",
+            "hamming",
+            "dvb-t2-short-r1-3",
+            "dvb-t2-long-r1-2",
+        ] {
             assert!(build_code(name).is_err(), "{name}");
         }
     }
