@@ -5,6 +5,7 @@
 mod batch;
 pub(crate) mod bg1;
 pub(crate) mod bg2;
+mod encode;
 pub mod interleaver;
 pub mod lifting;
 
@@ -235,8 +236,7 @@ impl QuasiCyclicLdpc {
     ///
     /// # Complexity
     ///
-    /// O(m * n * min(m, n)) for Gaussian elimination on the m × n mother
-    /// parity-check matrix.
+    /// O(N_b * Z) beyond the mother code's expansion.
     pub fn nr_5g_rate_matched(
         base_graph: u8,
         target_n: usize,
@@ -338,13 +338,13 @@ impl QuasiCyclicLdpc {
         };
 
         let qc = Self::nr_5g(base_graph, z);
+        let base = qc.base_matrix().expect("an NR code keeps its base matrix");
+        let encoder = encode::NrQcEncoder::new(&base, kb, z, target_k, num_punct_sys, parity_kept);
         let mother_code = LdpcCode::from_quasi_cyclic(&qc);
-
-        let encoding = compute_mother_encoding(&mother_code, &params);
 
         Nr5gRateMatchedCode {
             mother_code,
-            encoding,
+            encoder,
             params,
         }
     }
@@ -404,243 +404,30 @@ impl NrRateMatchParams {
 /// filler posteriors stay finite; `tanh` of half of it is below 1 in `f32`.
 pub const FILLER_LLR: f32 = 15.0;
 
-/// Encoding data for the mother code with right-pivot column mapping.
-///
-/// Contains the parity matrix and the systematic/parity column indices
-/// computed via RREF with right-to-left pivoting on the parity-check matrix H.
-#[derive(Clone)]
-struct MotherEncoding {
-    /// Parity matrix P (k × m): for systematic codes, G = [I at sys_cols | P at par_cols]
-    parity_matrix: gf2_core::BitMatrix,
-    /// Sorted systematic (information) column indices in the codeword
-    systematic_cols: Vec<usize>,
-    /// Sorted parity column indices in the codeword
-    parity_cols: Vec<usize>,
-    /// Ordered list of full-codeword column indices that are transmitted after
-    /// rate matching. Length = target_n. Respects the RREF column assignment so
-    /// that punctured, filler, and truncated positions are correctly excluded.
-    transmitted_cols: Vec<usize>,
-    /// Set of filler (shortened) column positions in the full codeword.
-    filler_col_set: std::collections::HashSet<usize>,
-}
-
-/// Computes the encoding data for an LDPC code using RREF from the right.
-///
-/// Performs Gaussian elimination with right-to-left pivoting to identify
-/// m pivot columns (parity positions) and k non-pivot columns (systematic
-/// positions). Then computes the parity matrix P such that for each
-/// systematic basis vector e_i, the codeword places 1 at systematic_cols[i]
-/// and the corresponding parity bits at parity_cols.
-///
-/// Also computes the `transmitted_cols` list — the ordered set of full-codeword
-/// column indices that survive rate matching. This accounts for the fact that
-/// the RREF may assign some columns in the natural systematic range (0..K_b*Z)
-/// as parity pivots and vice-versa, which affects which columns carry filler
-/// zeros and which carry actual information.
-///
-/// # Panics
-///
-/// Panics if H is not full rank.
-///
-/// # Complexity
-///
-/// O(m * n * min(m, n)) for Gaussian elimination.
-fn compute_mother_encoding(code: &LdpcCode, params: &NrRateMatchParams) -> MotherEncoding {
-    use gf2_core::BitMatrix;
-
-    let n = code.n();
-    let m = code.m();
-    let k = n - m;
-    let h = code.parity_check_matrix();
-
-    let mut work = BitMatrix::zeros(m, n);
-    for row in 0..m {
-        for col in h.row_iter(row) {
-            work.set(row, col, true);
-        }
-    }
-
-    // RREF with parity-column preference: find pivots preferring columns >= full_k
-    // (the natural parity region) over columns < full_k (natural systematic region).
-    //
-    // This ensures systematic_cols == [0, 1, ..., full_k-1] whenever the H matrix
-    // structure allows it. For 5G NR BG2, row 41's expanded block only has entries
-    // in systematic columns (base cols 6, 7), forcing Z pivot columns into the
-    // systematic range. The two-pass approach minimizes such "swapped" columns.
-    let full_k = params.full_k;
-    let mut pivot_cols = Vec::with_capacity(m);
-    let mut current_row = 0;
-
-    for col in (full_k..n).rev() {
-        if current_row >= m {
-            break;
-        }
-
-        let mut pivot_row = None;
-        for row in current_row..m {
-            if work.get(row, col) {
-                pivot_row = Some(row);
-                break;
-            }
-        }
-
-        let Some(pr) = pivot_row else {
-            continue;
-        };
-
-        if pr != current_row {
-            work.swap_rows(pr, current_row);
-        }
-
-        for row in 0..m {
-            if row != current_row && work.get(row, col) {
-                work.row_xor(row, current_row);
-            }
-        }
-
-        pivot_cols.push(col);
-        current_row += 1;
-    }
-
-    // Systematic columns, right to left, for the pivots the parity columns
-    // did not supply (e.g., BG2 row 41, which only touches systematic
-    // columns). Right-to-left prefers higher-numbered systematic columns as
-    // parity pivots, which are closer to the filler/shortened region.
-    for col in (0..full_k).rev() {
-        if current_row >= m {
-            break;
-        }
-
-        let mut pivot_row = None;
-        for row in current_row..m {
-            if work.get(row, col) {
-                pivot_row = Some(row);
-                break;
-            }
-        }
-
-        let Some(pr) = pivot_row else {
-            continue;
-        };
-
-        if pr != current_row {
-            work.swap_rows(pr, current_row);
-        }
-
-        for row in 0..m {
-            if row != current_row && work.get(row, col) {
-                work.row_xor(row, current_row);
-            }
-        }
-
-        pivot_cols.push(col);
-        current_row += 1;
-    }
-
-    assert_eq!(
-        pivot_cols.len(),
-        m,
-        "H matrix is rank-deficient: rank {} < m {}",
-        pivot_cols.len(),
-        m
-    );
-
-    pivot_cols.sort_unstable();
-
-    let pivot_set: std::collections::HashSet<usize> = pivot_cols.iter().copied().collect();
-    let systematic_cols: Vec<usize> = (0..n).filter(|c| !pivot_set.contains(c)).collect();
-    assert_eq!(systematic_cols.len(), k);
-
-    // Reorder rows so that row i has its pivot at parity_cols[i]
-    // After RREF, each row has exactly one pivot column with a 1
-    let mut row_for_pivot = vec![0usize; m];
-    for row in 0..m {
-        for (pi, &pcol) in pivot_cols.iter().enumerate() {
-            if work.get(row, pcol) {
-                row_for_pivot[pi] = row;
-                break;
-            }
-        }
-    }
-
-    // P[i, j] = work[row_for_pivot[j], systematic_cols[i]]
-    let mut parity_matrix = BitMatrix::zeros(k, m);
-    for (i, &sys_col) in systematic_cols.iter().enumerate() {
-        for (j, &pivot_row) in row_for_pivot.iter().enumerate() {
-            if work.get(pivot_row, sys_col) {
-                parity_matrix.set(i, j, true);
-            }
-        }
-    }
-
-    // Compute filler column positions: systematic_cols[target_k..full_k] are
-    // known-zero (filler) bits that should not be transmitted.
-    let filler_col_set: std::collections::HashSet<usize> = (params.target_k..params.full_k)
-        .map(|i| systematic_cols[i])
-        .collect();
-
-    // Compute the set of parity columns to keep. We keep the first parity_kept
-    // parity columns (sorted ascending) and exclude the rest.
-    let parity_kept_set: std::collections::HashSet<usize> = pivot_cols
-        .iter()
-        .take(params.parity_kept)
-        .copied()
-        .collect();
-
-    // Build the transmitted column list: walk through all columns 0..full_n
-    // in natural order, keeping those that are:
-    //   (a) NOT in the first 2*Z columns (always punctured)
-    //   (b) NOT a filler position
-    //   (c) NOT a truncated parity column (parity col not in parity_kept_set)
-    let punctured_end = params.num_punctured_systematic; // = 2*Z
-    let mut transmitted_cols = Vec::with_capacity(params.target_n);
-    for col in 0..params.full_n {
-        if col < punctured_end {
-            continue;
-        }
-        if filler_col_set.contains(&col) {
-            continue;
-        }
-        if pivot_set.contains(&col) && !parity_kept_set.contains(&col) {
-            continue;
-        }
-        transmitted_cols.push(col);
-    }
-
-    debug_assert_eq!(
-        transmitted_cols.len(),
-        params.target_n,
-        "transmitted_cols length {} != target_n {}",
-        transmitted_cols.len(),
-        params.target_n
-    );
-
-    MotherEncoding {
-        parity_matrix,
-        systematic_cols,
-        parity_cols: pivot_cols,
-        transmitted_cols,
-        filler_col_set,
-    }
-}
-
 /// A 5G NR LDPC code with `@/citation/ThreeGpp2017` rate matching.
 ///
 /// Wraps the full mother code and handles rate matching through LLR
 /// initialization rather than H column removal. This preserves the full
 /// Tanner graph for proper BP convergence on both BG1 and BG2 codes.
 ///
+/// # Layout
+///
+/// The mother codeword carries the message in columns `0..target_k`, filler
+/// zeros in `target_k..full_k` and parity in `full_k..full_n`. The
+/// transmitted word is columns `2Z..target_k` followed by the first
+/// `parity_kept` parity columns.
+///
 /// # Encoding
 ///
-/// 1. Pad the target_k message with filler zeros to reach full_k = K_b * Z.
-/// 2. Encode with the full mother code to get full_n = N_b * Z coded bits.
-/// 3. Extract target_n transmitted bits using `transmitted_cols` (the
-///    precomputed list of non-punctured, non-filler, non-truncated columns).
+/// Word-wise circulant products of the message blocks give the four core
+/// parity blocks in closed form and then only the extension parity blocks
+/// that are transmitted, $O(E \lceil Z/64 \rceil)$ word operations for the
+/// $E$ base-graph circulants those rows hold.
 ///
 /// # Decoding
 ///
 /// 1. Receive target_n channel LLRs.
-/// 2. Map to full_n LLR vector using `transmitted_cols`:
+/// 2. Map to the full_n LLR vector of the [layout](Self#layout):
 ///    - Transmitted positions: channel LLR
 ///    - Filler positions: [`FILLER_LLR`] (known zero)
 ///    - All other positions: LLR = 0 (no channel info)
@@ -666,8 +453,7 @@ fn compute_mother_encoding(code: &LdpcCode, params: &NrRateMatchParams) -> Mothe
 pub struct Nr5gRateMatchedCode {
     /// Full mother code (N_b * Z columns, M_b * Z rows).
     mother_code: LdpcCode,
-    /// Encoding data: parity matrix + systematic/parity column mapping.
-    encoding: MotherEncoding,
+    encoder: encode::NrQcEncoder,
     /// Rate matching parameters.
     params: NrRateMatchParams,
 }
@@ -696,9 +482,7 @@ impl Nr5gRateMatchedCode {
         &self.mother_code
     }
 
-    /// Encodes a target_k message into a target_n transmitted codeword: pads
-    /// with filler zeros to full_k, encodes with the mother code through the
-    /// RREF-derived column mapping, and extracts the transmitted bits.
+    /// Encodes a target_k message into a target_n transmitted codeword.
     ///
     /// # Panics
     ///
@@ -711,44 +495,14 @@ impl Nr5gRateMatchedCode {
             message.len(),
             self.params.target_k
         );
-
-        let p = &self.params;
-        let enc = &self.encoding;
-
-        let mut padded = BitVec::zeros(p.full_k);
-        for i in 0..p.target_k {
-            padded.set(i, message.get(i));
-        }
-
-        let parity = enc.parity_matrix.matvec_transpose(&padded);
-
-        let mut codeword = BitVec::zeros(p.full_n);
-        for (i, &col) in enc.systematic_cols.iter().enumerate() {
-            codeword.set(col, padded.get(i));
-        }
-        for (j, &col) in enc.parity_cols.iter().enumerate() {
-            codeword.set(col, parity.get(j));
-        }
-
-        // The precomputed column list covers the case where RREF assigns some
-        // natural "systematic" columns as parity pivots (e.g., BG2 row 41).
-        let mut output = BitVec::with_capacity(p.target_n);
-        for &col in &enc.transmitted_cols {
-            output.push_bit(codeword.get(col));
-        }
-
-        debug_assert_eq!(output.len(), p.target_n);
+        let mut output = BitVec::zeros(self.params.target_n);
+        self.encoder.encode_into(message, &mut output);
         output
     }
 
     /// Constructs the full-length LLR vector from target_n channel LLRs.
     ///
-    /// Maps channel LLRs back to the full mother code positions using the
-    /// precomputed `transmitted_cols` list. This ensures consistency with
-    /// the encoder's column assignment, even when the RREF places some
-    /// natural-systematic columns as parity pivots (e.g., BG2 row 41).
-    ///
-    /// - Transmitted positions (from `transmitted_cols`): channel LLRs
+    /// - Transmitted positions (the [layout](Self#layout)): channel LLRs
     /// - Filler positions: [`FILLER_LLR`] (known to be zero)
     /// - Punctured & untransmitted positions: LLR = 0 (no info)
     ///
@@ -791,44 +545,34 @@ impl Nr5gRateMatchedCode {
             self.params.target_n
         );
 
-        let enc = &self.encoding;
-
-        for (ch_idx, &col) in enc.transmitted_cols.iter().enumerate() {
-            full_llrs[col] = channel_llrs[ch_idx];
-        }
-
-        // Filler positions are systematic_cols[target_k..full_k]; none is in
-        // transmitted_cols, so nothing is overwritten.
-        for &col in &enc.filler_col_set {
-            full_llrs[col] = Llr::new(FILLER_LLR);
-        }
+        let p = &self.params;
+        let systematic = p.target_k.saturating_sub(p.num_punctured_systematic);
+        let start = p.num_punctured_systematic.min(p.target_k);
+        let (sys_llrs, parity_llrs) = channel_llrs.split_at(systematic);
+        full_llrs[start..p.target_k].copy_from_slice(sys_llrs);
+        full_llrs[p.full_k..p.full_k + p.parity_kept].copy_from_slice(parity_llrs);
+        full_llrs[p.target_k..p.full_k].fill(Llr::new(FILLER_LLR));
     }
 
     /// Replaces `message` with the target_k bits at positions `0..target_k`
     /// of a decoded mother codeword, the word of
     /// [`Nr5gRateMatchedDecoder`]'s `decode_iterative`.
     fn natural_order_message_into(&self, decoded_codeword: &BitVec, message: &mut BitVec) {
-        message.clear();
-        for i in 0..self.params.target_k {
-            message.push_bit(decoded_codeword.get(i));
-        }
+        message.resize(self.params.target_k, false);
+        message.copy_bits(0, decoded_codeword, 0, self.params.target_k);
     }
 
     /// Extracts target_k message bits from a full decoded codeword.
     ///
-    /// The decoded codeword has full_n bits indexed by H column position.
-    /// Message bit `i` is at position `systematic_cols[i]` in the codeword.
-    /// This method extracts the first target_k message bits, discarding filler.
+    /// The message is the first target_k bits of the [layout](Self#layout).
     ///
     /// # Panics
     ///
     /// Panics if `decoded_codeword.len() < full_n` (the codeword is shorter than
     /// the full mother code length, so systematic column indices may be out of bounds).
     pub fn extract_message(&self, decoded_codeword: &BitVec) -> BitVec {
-        let mut msg = BitVec::with_capacity(self.params.target_k);
-        for i in 0..self.params.target_k {
-            msg.push_bit(decoded_codeword.get(self.encoding.systematic_cols[i]));
-        }
+        let mut msg = BitVec::zeros(self.params.target_k);
+        msg.copy_bits(0, decoded_codeword, 0, self.params.target_k);
         msg
     }
 }
@@ -1336,6 +1080,100 @@ mod tests {
                     kb,
                     "BG{bg} Z={z}: payload {payload} is not self-consistent"
                 );
+            }
+        }
+    }
+
+    /// The parity part of H is $[B, 0; C, I]$, columns split at the end of
+    /// the core, with an invertible $4Z \times
+    /// 4Z$ core $B$ for every lifting size of both base graphs, so
+    /// the parity of a systematic part is unique and the
+    /// [layout](Nr5gRateMatchedCode#layout) is the `@/citation/ThreeGpp2017`
+    /// one, columns `0..full_k` systematic.
+    #[test]
+    fn test_parity_part_is_invertible_lower_block_triangular_for_all_z() {
+        for bg in [1u8, 2] {
+            let kb = if bg == 1 { bg1::BG1_KB } else { bg2::BG2_KB };
+            for z in all_lifting_sizes() {
+                let z = z as usize;
+                let (core_lo, core_hi) = (kb * z, (kb + 4) * z);
+                let mut core = gf2_core::BitMatrix::zeros(4 * z, 4 * z);
+                for (row, col) in QuasiCyclicLdpc::nr_5g(bg, z).to_edges() {
+                    if col < core_lo {
+                        continue;
+                    }
+                    if row < 4 * z {
+                        assert!(
+                            col < core_hi,
+                            "BG{bg} Z={z}: core row {row} reaches column {col}"
+                        );
+                        core.set(row, col - core_lo, true);
+                    } else if col >= core_hi {
+                        assert_eq!(
+                            col - core_hi,
+                            row - 4 * z,
+                            "BG{bg} Z={z}: extension row {row} column {col}"
+                        );
+                    }
+                }
+                assert!(
+                    gf2_core::alg::gauss::invert(&core).is_some(),
+                    "BG{bg} Z={z}: singular core"
+                );
+            }
+        }
+    }
+
+    /// For every lifting size of both base graphs and transmitted parity
+    /// lengths around the word and block boundaries, the rate-matched word
+    /// is the [layout](Nr5gRateMatchedCode#layout) of the one mother
+    /// codeword whose systematic part is the filler-padded message.
+    #[test]
+    fn test_encode_is_the_layout_of_the_unique_mother_codeword_for_all_z() {
+        use crate::traits::BlockEncoder;
+        for bg in [1u8, 2] {
+            let (kb, nb) = if bg == 1 {
+                (bg1::BG1_KB, bg1::BG1_COLS)
+            } else {
+                (bg2::BG2_KB, bg2::BG2_COLS)
+            };
+            for z in all_lifting_sizes() {
+                let z = z as usize;
+                let k = max_payload_for_lifting(bg, z) - (z % 3);
+                let total_parity = (nb - kb) * z;
+                let systematic = k - 2 * z;
+                let widest = QuasiCyclicLdpc::nr_5g_rate_matched(bg, systematic + total_parity, k);
+                assert_eq!(widest.params().lifting_factor, z);
+                let message = BitVec::random_seeded(k, (bg as u64) << 32 | z as u64);
+                let wide = widest.encode(&message);
+
+                let full_k = kb * z;
+                let mut mother = BitVec::zeros(nb * z);
+                mother.copy_bits(0, &message, 0, k);
+                mother.copy_bits(full_k, &wide, systematic, total_parity);
+                assert_eq!(
+                    widest.mother_code().syndrome(&mother).count_ones(),
+                    0,
+                    "BG{bg} Z={z}"
+                );
+
+                for parity_kept in [
+                    2 * z + 1,
+                    2 * z + 63,
+                    2 * z + 64,
+                    2 * z + 65,
+                    4 * z,
+                    4 * z + 1,
+                ] {
+                    let code = QuasiCyclicLdpc::nr_5g_rate_matched(bg, systematic + parity_kept, k);
+                    let mut expected = BitVec::zeros(systematic + parity_kept);
+                    expected.copy_bits(0, &wide, 0, systematic + parity_kept);
+                    assert_eq!(
+                        code.encode(&message),
+                        expected,
+                        "BG{bg} Z={z} parity {parity_kept}"
+                    );
+                }
             }
         }
     }

@@ -44,7 +44,7 @@ pub mod dispatch_contract;
 pub mod test_scratch;
 
 pub use bitslice::{BitSlice, BitSliceMut};
-pub use bitvec::BitVec;
+pub use bitvec::{packed_window, BitVec};
 pub use matrix::BitMatrix;
 pub use sparse::{
     RowPermutation, SpBitMatrix, SpBitMatrixBlockCsr, SpBitMatrixDual, SparseBitMatrix,
