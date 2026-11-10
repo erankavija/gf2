@@ -6,6 +6,7 @@ use crate::arm::{
 };
 use crate::driver::{report_iterations, run_cell, CellRun, IterationSource};
 use gf2_coding::ldpc::DecoderAlgorithm;
+use gf2_coding::ldpc::QcRouteBounds;
 pub use gf2_coding::ldpc::{BatchRoute, LaneBackend};
 use gf2_coding::ldpc::{
     DecodedWord, DecoderConfig, LayeredConfig, LayeredDecoder, LdpcBatchDecoder, LdpcCode,
@@ -13,7 +14,7 @@ use gf2_coding::ldpc::{
 };
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
-use gf2_coding::tuning::{DecodeSelectors, QcRouteBounds};
+use gf2_coding::tuning::DecodeSelectors;
 use gf2_core::BitVec;
 use gf2_kernels_simd::ldpc_lanes::LANES;
 

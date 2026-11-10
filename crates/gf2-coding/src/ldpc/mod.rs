@@ -18,4 +18,7 @@ pub use edge_layout::EdgeLayout;
 pub use layered::{LayerError, LayeredConfig, LayeredDecoder, LayeredRule};
 pub use min_sum::{min_sum_check_row, MinSumRule};
 pub use qc::QcDecoder;
-pub use route::{decide_batch_route, BatchRoute, LaneBackend, LaneCapability, QcCapability};
+pub use route::{
+    decide_batch_route, BatchRoute, LaneBackend, LaneCapability, QcCapability, QcRouteBounds,
+    LANE_CLAIM_QC_VECTORS,
+};

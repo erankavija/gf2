@@ -4,7 +4,7 @@ use std::num::NonZeroUsize;
 
 use super::DecoderAlgorithm;
 use crate::tuning::DecodeSelectors;
-use gf2_kernels_simd::ldpc_lanes::LdpcLaneFns;
+use gf2_kernels_simd::ldpc_lanes::{LdpcLaneFns, LANES};
 
 /// A backend of the lane and QC kernels. Every backend writes the bit patterns
 /// of the portable kernels.
@@ -23,6 +23,17 @@ impl LaneBackend {
     #[must_use]
     pub fn detected() -> Self {
         detected_lanes().0
+    }
+
+    /// `f32` lanes in one vector of the backend's QC kernels: eight for
+    /// AVX2, one for the portable kernels, which step one lifted position at
+    /// a time.
+    #[must_use]
+    pub const fn qc_f32_lanes(self) -> usize {
+        match self {
+            Self::Portable => 1,
+            Self::Avx2 => 8,
+        }
     }
 }
 
@@ -46,6 +57,97 @@ pub enum LaneCapability {
     Present(LaneBackend),
     /// No lane kernel backend is available.
     Absent,
+}
+
+/// Vectors of the QC kernels per lifted block up to which a full lane wave
+/// takes the lane route instead of the QC route
+/// ([`QcRouteBounds::structural`]).
+///
+/// Example, not a claim: `qc-route-sweep` of @/issue/c62356d2 on host
+/// fraktaali (AVX2, eight `f32` lanes) measured the lane route ahead of the
+/// QC route at eight frames and one worker on NR codes up to lifting size 24,
+/// three vectors, and behind it from 40 on, with 32 within 2% either way.
+pub const LANE_CLAIM_QC_VECTORS: usize = 3;
+
+/// Bounds of the QC route in [`decide_batch_route`].
+///
+/// A wave of a code with retained QC structure takes the QC route when its
+/// lifting size is at least `min_lifting_size`, the configured decode workers
+/// are at most `max_workers`, and no eligible lane route claims it: the lane
+/// route claims a wave from `lane_claim_min_frames` occupied lanes at lifting
+/// sizes up to `lane_claim_max_lifting_size`. Each bound spans its whole
+/// domain; [`Self::OPEN`] places every QC wave on the QC route.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct QcRouteBounds {
+    min_lifting_size: usize,
+    max_workers: NonZeroUsize,
+    lane_claim_min_frames: usize,
+    lane_claim_max_lifting_size: usize,
+}
+
+impl QcRouteBounds {
+    /// The bounds that take the QC route for every wave of a code with
+    /// retained QC structure under a min-sum rule.
+    pub const OPEN: Self = Self::new(0, NonZeroUsize::MAX, usize::MAX, usize::MAX);
+
+    /// The bounds that close the QC route.
+    pub const CLOSED: Self = Self::new(usize::MAX, NonZeroUsize::MIN, 0, usize::MAX);
+
+    /// Builds the bounds.
+    #[must_use]
+    pub const fn new(
+        min_lifting_size: usize,
+        max_workers: NonZeroUsize,
+        lane_claim_min_frames: usize,
+        lane_claim_max_lifting_size: usize,
+    ) -> Self {
+        Self {
+            min_lifting_size,
+            max_workers,
+            lane_claim_min_frames,
+            lane_claim_max_lifting_size,
+        }
+    }
+
+    /// The bounds of the QC kernels on `backend` from their structure: every
+    /// lifting size and worker count, and a lane claim on a full wave of
+    /// [`LANES`] frames at lifting sizes up to [`LANE_CLAIM_QC_VECTORS`]
+    /// vectors of [`LaneBackend::qc_f32_lanes`].
+    #[must_use]
+    pub const fn structural(backend: LaneBackend) -> Self {
+        Self::new(
+            0,
+            NonZeroUsize::MAX,
+            LANES,
+            LANE_CLAIM_QC_VECTORS * backend.qc_f32_lanes(),
+        )
+    }
+
+    /// Returns the lower bound on the lifting size.
+    #[must_use]
+    pub const fn min_lifting_size(&self) -> usize {
+        self.min_lifting_size
+    }
+
+    /// Returns the upper bound on configured decode workers.
+    #[must_use]
+    pub const fn max_workers(&self) -> NonZeroUsize {
+        self.max_workers
+    }
+
+    /// Returns the occupied lanes from which an eligible lane route takes a
+    /// wave instead of the QC route.
+    #[must_use]
+    pub const fn lane_claim_min_frames(&self) -> usize {
+        self.lane_claim_min_frames
+    }
+
+    /// Returns the largest lifting size at which an eligible lane route
+    /// claims a wave.
+    #[must_use]
+    pub const fn lane_claim_max_lifting_size(&self) -> usize {
+        self.lane_claim_max_lifting_size
+    }
 }
 
 /// The QC structure and kernel backend of a decoder, for the QC route.
@@ -89,7 +191,9 @@ pub enum BatchRoute {
 /// - `edges <= selectors.lane_max_edges()`;
 /// - `workers <= selectors.lane_max_workers()`.
 ///
-/// With `bounds = selectors.qc_route()`, the QC route on the backend of `qc`
+/// With `bounds` the selectors' [`DecodeSelectors::qc_route`], or
+/// [`QcRouteBounds::structural`] of the QC backend without one, the QC route
+/// on the backend of `qc`
 /// is taken when `algorithm` is of the min-sum family, `qc` is
 /// [`QcCapability::Present`], its lifting size is at least
 /// `bounds.min_lifting_size()`, `workers <= bounds.max_workers()`, and the
@@ -130,7 +234,9 @@ pub fn decide_batch_route(
         backend,
     } = qc
     {
-        let bounds = selectors.qc_route();
+        let bounds = selectors
+            .qc_route()
+            .unwrap_or(QcRouteBounds::structural(backend));
         let lane_claims = lane.is_some()
             && occupied_lanes >= bounds.lane_claim_min_frames()
             && lifting_size <= bounds.lane_claim_max_lifting_size();
@@ -148,7 +254,6 @@ pub fn decide_batch_route(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tuning::QcRouteBounds;
 
     const MIN_SUM_FAMILY: [DecoderAlgorithm; 3] = [
         DecoderAlgorithm::MinSum,
@@ -303,6 +408,20 @@ mod tests {
         }
     }
 
+    fn make_bounds(
+        min_lifting_size: usize,
+        workers: usize,
+        frames: usize,
+        ceiling: usize,
+    ) -> QcRouteBounds {
+        QcRouteBounds::new(
+            min_lifting_size,
+            NonZeroUsize::new(workers).unwrap(),
+            frames,
+            ceiling,
+        )
+    }
+
     fn structure(lifting_size: usize) -> QcCapability {
         QcCapability::Present {
             lifting_size,
@@ -343,9 +462,11 @@ mod tests {
 
     #[test]
     fn open_bounds_take_the_qc_route_for_every_min_sum_wave_of_a_qc_code() {
-        let lanes_open = DecodeSelectors::try_new(1, usize::MAX, usize::MAX, 1).unwrap();
+        let lanes_open = DecodeSelectors::try_new(1, usize::MAX, usize::MAX, 1)
+            .unwrap()
+            .with_qc_route(QcRouteBounds::OPEN);
+        // The conservative family closes the lane route, so no claim applies.
         for s in [DecodeSelectors::CONSERVATIVE, lanes_open] {
-            assert_eq!(s.qc_route(), QcRouteBounds::OPEN);
             for algorithm in MIN_SUM_FAMILY {
                 for lifting_size in [1, 2, 7, 8, 9, 360, 384] {
                     for workers in WORKERS {
@@ -388,7 +509,7 @@ mod tests {
 
     #[test]
     fn min_lifting_size_bounds_the_qc_route_from_below() {
-        let bounds = QcRouteBounds::try_new(8, usize::MAX, usize::MAX, usize::MAX).unwrap();
+        let bounds = make_bounds(8, usize::MAX, usize::MAX, usize::MAX);
         let s = DecodeSelectors::try_new(2, usize::MAX, 1, 1)
             .unwrap()
             .with_qc_route(bounds);
@@ -412,7 +533,7 @@ mod tests {
 
     #[test]
     fn max_workers_bounds_the_qc_route_from_above() {
-        let bounds = QcRouteBounds::try_new(0, 12, usize::MAX, usize::MAX).unwrap();
+        let bounds = make_bounds(0, 12, usize::MAX, usize::MAX);
         let s = DecodeSelectors::try_new(2, usize::MAX, 1, 1)
             .unwrap()
             .with_qc_route(bounds);
@@ -433,7 +554,7 @@ mod tests {
 
     #[test]
     fn an_eligible_lane_route_claims_waves_from_its_bound() {
-        let bounds = QcRouteBounds::try_new(0, usize::MAX, 4, usize::MAX).unwrap();
+        let bounds = make_bounds(0, usize::MAX, 4, usize::MAX);
         // Lanes are eligible from two frames at up to six workers.
         let s = DecodeSelectors::try_new(2, usize::MAX, 6, 1)
             .unwrap()
@@ -455,7 +576,7 @@ mod tests {
 
     #[test]
     fn the_lane_claim_is_bounded_by_lifting_size_from_above() {
-        let bounds = QcRouteBounds::try_new(0, usize::MAX, 4, 24).unwrap();
+        let bounds = make_bounds(0, usize::MAX, 4, 24);
         let s = DecodeSelectors::try_new(2, usize::MAX, 6, 1)
             .unwrap()
             .with_qc_route(bounds);
@@ -512,6 +633,47 @@ mod tests {
                 NonZeroUsize::MIN,
             );
             assert_eq!(got, BatchRoute::Qc(backend));
+        }
+    }
+
+    #[test]
+    fn without_an_override_the_lane_claim_scales_with_the_qc_vector_width() {
+        // Lanes are eligible from two frames at one worker.
+        let s = DecodeSelectors::try_new(2, usize::MAX, 1, 1).unwrap();
+        assert_eq!(s.qc_route(), None);
+        for backend in [LaneBackend::Portable, LaneBackend::Avx2] {
+            let bounds = QcRouteBounds::structural(backend);
+            let ceiling = LANE_CLAIM_QC_VECTORS * backend.qc_f32_lanes();
+            assert_eq!(bounds.lane_claim_max_lifting_size(), ceiling);
+            assert_eq!(bounds.lane_claim_min_frames(), LANES);
+            for lifting_size in [1, ceiling, ceiling + 1, 384] {
+                for frames in [LANES - 1, LANES] {
+                    for workers in [1, 2] {
+                        let got = decide_batch_route(
+                            &s,
+                            DecoderAlgorithm::MinSum,
+                            LaneCapability::Present(backend),
+                            QcCapability::Present {
+                                lifting_size,
+                                backend,
+                            },
+                            frames,
+                            100,
+                            NonZeroUsize::new(workers).unwrap(),
+                        );
+                        let lanes = lifting_size <= ceiling && frames == LANES && workers == 1;
+                        let expected = if lanes {
+                            BatchRoute::Lane(backend)
+                        } else {
+                            BatchRoute::Qc(backend)
+                        };
+                        assert_eq!(
+                            got, expected,
+                            "{backend:?} Z={lifting_size} {frames}f {workers}w"
+                        );
+                    }
+                }
+            }
         }
     }
 }

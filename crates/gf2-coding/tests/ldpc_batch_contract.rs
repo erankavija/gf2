@@ -10,6 +10,7 @@
 use gf2_coding::bch::CodeRate;
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::ldpc::nr_5g::FILLER_LLR;
+use gf2_coding::ldpc::QcRouteBounds;
 use gf2_coding::ldpc::{
     BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, EdgeLayout, LaneBackend,
     LdpcBatchDecoder, LdpcCode, LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc,
@@ -18,7 +19,7 @@ use gf2_coding::llr::Llr;
 use gf2_coding::test_support::ldpc_lane_backends;
 use gf2_coding::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
 use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome};
-use gf2_coding::tuning::{DecodeSelectors, QcRouteBounds};
+use gf2_coding::tuning::DecodeSelectors;
 use gf2_core::BitVec;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;

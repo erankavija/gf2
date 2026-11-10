@@ -346,7 +346,7 @@ pub fn coding_registry() -> ProfileRegistry {
 /// of the decoder calibration campaign `@/issue/20af7e6e`.
 #[cfg(feature = "tuning-profile")]
 pub const MEASURED_OWNER: &str =
-    include_str!("../../data/tuning-profiles/gf2-c62356d2-20261110t053902z-287464.json");
+    include_str!("../../data/tuning-profiles/gf2-c62356d2-20261109t233411z-3067230.json");
 
 /// [`MEASURED_OWNER`] read through the owner codec.
 #[cfg(feature = "tuning-profile")]

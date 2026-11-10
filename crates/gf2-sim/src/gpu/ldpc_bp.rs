@@ -698,7 +698,7 @@ mod imp {
             let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
             let every_wave = DecodeSelectors::try_new(1, usize::MAX, 1, 1)
                 .unwrap()
-                .with_qc_route(gf2_coding::tuning::QcRouteBounds::CLOSED);
+                .with_qc_route(gf2_coding::ldpc::QcRouteBounds::CLOSED);
             for portable in [false, true] {
                 let decoder = LdpcBatchDecoder::with_selectors(
                     code.clone(),

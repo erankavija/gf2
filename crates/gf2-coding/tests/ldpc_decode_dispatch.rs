@@ -4,13 +4,13 @@
 
 use gf2_coding::ldpc::{
     BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, EdgeLayout, LaneBackend,
-    LdpcBatchDecoder, LdpcCode, LdpcDecoder, QuasiCyclicLdpc,
+    LdpcBatchDecoder, LdpcCode, LdpcDecoder, QcRouteBounds, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
 use gf2_coding::test_support::{ldpc_batch_code, ldpc_lane_backends, LDPC_BATCH_CAP};
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
 use gf2_coding::tuning::{
-    self, DecodeSelectors, QcRouteBounds, GRANULES_PER_TASK, LANE_MAX_EDGES, LANE_MIN_FRAMES,
+    self, DecodeSelectors, GRANULES_PER_TASK, LANE_MAX_EDGES, LANE_MIN_FRAMES,
 };
 use gf2_coding::CodeRate;
 use gf2_core::tuning::SectionResolution;
@@ -207,18 +207,29 @@ fn without_qc(
     )
 }
 
+/// Without a QC override, a min-sum wave of a QC code takes the QC route
+/// unless the eligible lane route claims it: a full wave at a lifting size of
+/// at most the structural ceiling of the QC backend.
 #[test]
-fn every_min_sum_wave_of_a_qc_code_takes_the_qc_route_by_default() {
-    let qc = BatchRoute::Qc(LaneBackend::detected());
+fn every_min_sum_wave_of_a_qc_code_takes_the_qc_route_unless_lanes_claim_it() {
+    let backend = LaneBackend::detected();
+    let ceiling = QcRouteBounds::structural(backend).lane_claim_max_lifting_size();
     for code in qc_codes() {
+        let z = code.quasi_cyclic().unwrap().expansion_factor();
         for algorithm in MIN_SUM {
             let decoder = decoder(&code, algorithm, lane_selectors());
             for count in WORKERS {
                 for frames in batch_sizes() {
+                    let claims = z <= ceiling && count == 1 && frames.min(LANES) == LANES;
+                    let expected = if claims {
+                        BatchRoute::Lane(backend)
+                    } else {
+                        BatchRoute::Qc(backend)
+                    };
                     assert_eq!(
                         decoder.batch_route_with_workers(frames, workers(count)),
-                        qc,
-                        "{algorithm:?}, {count} workers, {frames} frames"
+                        expected,
+                        "Z={z}, {algorithm:?}, {count} workers, {frames} frames"
                     );
                 }
             }
@@ -257,19 +268,19 @@ fn each_qc_bound_moves_its_region_to_the_route_without_qc() {
         let z = code.quasi_cyclic().unwrap().expansion_factor();
         let cases = [
             (
-                QcRouteBounds::try_new(z, usize::MAX, usize::MAX, usize::MAX).unwrap(),
+                QcRouteBounds::new(z, NonZeroUsize::MAX, usize::MAX, usize::MAX),
                 "at Z",
             ),
             (
-                QcRouteBounds::try_new(z + 1, usize::MAX, usize::MAX, usize::MAX).unwrap(),
+                QcRouteBounds::new(z + 1, NonZeroUsize::MAX, usize::MAX, usize::MAX),
                 "above Z",
             ),
             (
-                QcRouteBounds::try_new(0, 6, usize::MAX, usize::MAX).unwrap(),
+                QcRouteBounds::new(0, NonZeroUsize::new(6).unwrap(), usize::MAX, usize::MAX),
                 "six workers",
             ),
             (
-                QcRouteBounds::try_new(0, usize::MAX, 4, usize::MAX).unwrap(),
+                QcRouteBounds::new(0, NonZeroUsize::MAX, 4, usize::MAX),
                 "lanes from four",
             ),
         ];
@@ -312,8 +323,7 @@ fn every_wave_of_a_longer_batch_takes_the_qc_route() {
     let mut decoder = decoder(
         &nr_bg1_z384(),
         DecoderAlgorithm::NormalizedMinSum(0.75),
-        lane_selectors()
-            .with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4, usize::MAX).unwrap()),
+        lane_selectors().with_qc_route(QcRouteBounds::new(0, NonZeroUsize::MAX, 4, usize::MAX)),
     );
     let mut decode = |frames: usize| {
         let views = vec![frame.as_slice(); frames];

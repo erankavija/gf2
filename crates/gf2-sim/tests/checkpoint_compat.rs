@@ -388,14 +388,17 @@ fn sorted_frames(batches: &[Vec<usize>]) -> Vec<usize> {
 /// the checkpoint boundary.
 fn assert_batch_decode_resume(batch_size: impl Fn(usize) -> usize) {
     for (selectors, backend, route) in ldpc_batch_routes() {
-        let selectors = DecodeSelectors::try_new(
+        let widened = DecodeSelectors::try_new(
             selectors.lane_min_frames(),
             selectors.lane_max_edges(),
             4,
             selectors.granules_per_task().get(),
         )
-        .unwrap()
-        .with_qc_route(selectors.qc_route());
+        .unwrap();
+        let selectors = match selectors.qc_route() {
+            Some(bounds) => widened.with_qc_route(bounds),
+            None => widened,
+        };
         let case = (selectors.clone(), backend, route);
         let decoder = batch_decoder_factory(batch_code(), &case)();
         let lanes = decoder.batch_granularity();

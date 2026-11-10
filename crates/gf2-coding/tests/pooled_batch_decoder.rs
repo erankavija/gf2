@@ -6,6 +6,7 @@ use std::num::NonZeroUsize;
 use std::sync::{Arc, Mutex};
 
 use gf2_coding::channel::AwgnChannel;
+use gf2_coding::ldpc::QcRouteBounds;
 use gf2_coding::ldpc::{
     BatchRoute, DecodedWord, DecoderConfig, LaneBackend, LdpcBatchDecoder, LdpcCode, LdpcDecoder,
     LdpcEncoder, QuasiCyclicLdpc,
@@ -16,7 +17,7 @@ use gf2_coding::traits::conformance::{batch_soft_decoder_contract, ConvergenceMi
 use gf2_coding::traits::{
     BatchSoftDecoder, BlockEncoder, DecodeOutcome, IterativeBatchDecoder, IterativeSoftDecoder,
 };
-use gf2_coding::tuning::{DecodeSelectors, QcRouteBounds};
+use gf2_coding::tuning::DecodeSelectors;
 use gf2_core::BitVec;
 use rand::rngs::StdRng;
 use rand::SeedableRng;

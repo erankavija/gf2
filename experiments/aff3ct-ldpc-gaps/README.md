@@ -81,8 +81,7 @@ refuses to dispatch that prototype. The tuned arm, `gf2-batch-tuned`, embeds
 the committed coding envelope. The candidate arm, `gf2-batch-qc-candidate`,
 embeds
 [tuning-profiles/qc-route-candidate.json](tuning-profiles/qc-route-candidate.json),
-the same selectors with open QC route bounds under an inherited measurement.
-Both arms attach NR BG1
+the same selectors under an inherited measurement. Both arms attach NR BG1
 Z=384 structure after an exact parity-check comparison outside timing, refuse
 a cell where a worker decodes off the route `decide_batch_route` gives it
 under the installed selectors, and state each worker's executed route in

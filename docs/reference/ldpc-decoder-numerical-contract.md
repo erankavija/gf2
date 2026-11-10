@@ -346,8 +346,9 @@ portable backend. The same assertions run on the QC route of each backend over
 fallback of a host without the kernel.
 [`tuning_profile_committed`](../../crates/gf2-coding/tests/tuning_profile_committed.rs)
 installs the committed coding envelope in a fresh process and asserts that NR
-BG1 Z=384 decodes on the route its `qc_route` bounds give each call, on each
-backend, with each frame's word and outcome equal to `LdpcDecoder`'s.
+BG1 Z=384 decodes on the route its selectors and the structural QC bounds give
+each call, on each backend, with each frame's word and outcome equal to
+`LdpcDecoder`'s.
 
 [`dvb_t2_concat_batch_decoder`](../../crates/gf2-coding/tests/dvb_t2_concat_batch_decoder.rs)
 runs the shared batch contract on `DvbT2ConcatBatchDecoder`, whose LDPC inner

@@ -10,12 +10,13 @@ mod fresh;
 use std::collections::BTreeMap;
 use std::path::Path;
 
+use gf2_coding::ldpc::QcRouteBounds;
 use gf2_coding::ldpc::{
     decide_batch_route, BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, EdgeLayout,
     LaneBackend, LaneCapability, LdpcBatchDecoder, LdpcCode, QcCapability, QuasiCyclicLdpc,
 };
 use gf2_coding::test_support;
-use gf2_coding::tuning::{CodingTuning, CodingTuningCodec, DecodeSelectors, QcRouteBounds};
+use gf2_coding::tuning::{CodingTuning, CodingTuningCodec, DecodeSelectors};
 use gf2_core::tuning::{MeasurementProvenance, SectionCodec, TuningSection};
 use gf2_kernels_simd::ldpc_lanes::LANES;
 use std::num::NonZeroUsize;
@@ -151,7 +152,7 @@ fn the_installed_envelope_routes_each_side_of_each_stated_selector() {
                 route(LANES, max_edges),
             ),
             // The QC route's own test covers its bounds.
-            "granules_per_task" | "qc_route" => continue,
+            "granules_per_task" => continue,
             other => panic!("{other} is no decode selector"),
         };
         assert_eq!(
@@ -288,21 +289,19 @@ fn committed_lane_domain_rejects_multicore_loss_configurations() {
     }
 }
 
-/// The committed bounds hand full lane waves of NR codes up to Z=24 to the
-/// lane route wherever lanes are eligible, at every worker count of the
-/// route sweep, and keep every other wave on the QC route.
+/// The committed envelope states no QC bounds, so its eligible lane route
+/// claims full waves of NR codes up to the structural ceiling of the detected
+/// QC backend, at every worker count of the route sweep, and every other wave
+/// takes the QC route.
 #[test]
-fn the_committed_envelope_lets_lanes_claim_full_waves_of_small_lifting_sizes() {
+fn the_committed_envelope_leaves_the_qc_route_to_its_structural_bounds() {
     let (selectors, stated) = measured_decode();
-    assert!(stated.iter().any(|field| field == "qc_route"));
-    let bounds = selectors.qc_route();
-    assert_eq!(
-        bounds.min_lifting_size(),
-        QcRouteBounds::OPEN.min_lifting_size()
-    );
-    assert_eq!(bounds.max_workers(), QcRouteBounds::OPEN.max_workers());
+    assert!(!stated.iter().any(|field| field == "qc_route"));
+    assert_eq!(selectors.qc_route(), None);
+    let ceiling = QcRouteBounds::structural(LaneBackend::detected()).lane_claim_max_lifting_size();
     for base_graph in [1, 2] {
-        for z in [6, 24, 32, 384] {
+        // NR lifting sizes on both sides of the AVX2 and portable ceilings.
+        for z in [2, 3, 4, 6, 24, 32, 384] {
             let decoder = LdpcBatchDecoder::with_selectors(
                 LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(base_graph, z)),
                 DecoderConfig::default(),
@@ -314,7 +313,7 @@ fn the_committed_envelope_lets_lanes_claim_full_waves_of_small_lifting_sizes() {
                 for workers in [1, 6, 12, 24] {
                     let route = decoder
                         .batch_route_with_workers(frames, NonZeroUsize::new(workers).unwrap());
-                    let lanes_claim = z <= 24 && frames == LANES && workers == 1;
+                    let lanes_claim = z <= ceiling && frames == LANES && workers == 1;
                     assert_eq!(
                         matches!(route, BatchRoute::Lane(_)),
                         lanes_claim,
@@ -382,7 +381,7 @@ fn the_installed_envelope_routes_each_qc_call_as_its_bounds_document() {
             assert_eq!(report["executed"], report["route"], "{report}");
         }
     }
-    // The open bounds put every structured call on the QC route.
+    // The structural bounds put every structured Z=384 call on the QC route.
     assert_eq!(qc_calls, 2 * fresh::QC_CALLS.len());
 }
 

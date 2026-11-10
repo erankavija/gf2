@@ -40,7 +40,9 @@ pub enum DecodedWord {
 ///   reached. The route names the [`LaneBackend`] whose kernels run.
 /// - [`BatchRoute::Qc`]: each frame decodes on an owned [`QcDecoder`] over
 ///   the structure the code retains ([`LdpcCode::quasi_cyclic`]), within the
-///   [`QcRouteBounds`](crate::tuning::QcRouteBounds) of the selectors.
+///   selectors' [`QcRouteBounds`](super::QcRouteBounds) or, without them,
+///   [`QcRouteBounds::structural`](super::QcRouteBounds::structural) of the QC
+///   backend.
 /// - [`BatchRoute::SingleFrame`]: each frame decodes on an owned
 ///   [`LdpcDecoder`]. [`DecoderAlgorithm::SumProduct`](super::DecoderAlgorithm::SumProduct)
 ///   takes this route for every wave.
@@ -71,11 +73,12 @@ pub enum DecodedWord {
 /// ```
 /// use gf2_coding::ldpc::{
 ///     BatchRoute, DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode, LdpcEncoder,
-///     QuasiCyclicLdpc,
+///     QcRouteBounds, QuasiCyclicLdpc,
 /// };
 /// use gf2_coding::llr::Llr;
 /// use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome};
-/// use gf2_coding::tuning::{DecodeSelectors, QcRouteBounds};
+/// use gf2_coding::tuning::DecodeSelectors;
+/// use std::num::NonZeroUsize;
 /// use gf2_core::BitVec;
 ///
 /// let base = vec![
@@ -101,7 +104,7 @@ pub enum DecodedWord {
 ///
 /// let selectors = DecodeSelectors::try_new(1, usize::MAX, 1, 1)
 ///     .unwrap()
-///     .with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4, usize::MAX).unwrap());
+///     .with_qc_route(QcRouteBounds::new(0, NonZeroUsize::MAX, 4, usize::MAX));
 /// let decoder = LdpcBatchDecoder::with_selectors(
 ///     code,
 ///     DecoderConfig::default(),
@@ -154,7 +157,10 @@ fn select_qc(
     selectors: &DecodeSelectors,
 ) -> Option<QcDecoder> {
     let retained = code.quasi_cyclic()?;
-    if retained.expansion_factor() < selectors.qc_route().min_lifting_size() {
+    let min_lifting_size = selectors
+        .qc_route()
+        .map_or(0, |bounds| bounds.min_lifting_size());
+    if retained.expansion_factor() < min_lifting_size {
         return None;
     }
     QcDecoder::new(code, config)
@@ -604,6 +610,7 @@ impl BatchSoftDecoder for LdpcBatchDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ldpc::QcRouteBounds;
     use crate::ldpc::{DecoderAlgorithm, LdpcEncoder};
     use crate::test_support::{
         ldpc_batch_code as code, ldpc_batch_frames as frames, ldpc_batch_routes as routes,
@@ -611,7 +618,6 @@ mod tests {
     };
     use crate::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
     use crate::traits::{BlockEncoder, DecoderResult, IterativeSoftDecoder};
-    use crate::tuning::QcRouteBounds;
     use rand::rngs::StdRng;
     use rand::SeedableRng;
 

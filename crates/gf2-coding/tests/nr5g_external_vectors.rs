@@ -12,10 +12,11 @@ use gf2_coding::ldpc::nr_5g::{
     lifting_set_index, shift_table, Nr5gRateMatchedBatchDecoder, Nr5gRateMatchedCode,
     Nr5gRateMatchedDecoder,
 };
+use gf2_coding::ldpc::QcRouteBounds;
 use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, LaneBackend, QuasiCyclicLdpc};
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome, IterativeSoftDecoder};
-use gf2_coding::tuning::{DecodeSelectors, QcRouteBounds};
+use gf2_coding::tuning::DecodeSelectors;
 use gf2_core::BitVec;
 use std::path::PathBuf;
 

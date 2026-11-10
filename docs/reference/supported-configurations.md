@@ -78,8 +78,10 @@ of the coding tuning section
   lane route when the wave, code and configured decode concurrency satisfy
   `lane_min_frames`, `lane_max_edges` and `lane_max_workers`.
 - The min-sum family takes the QC route instead on a code that retains
-  quasi-cyclic structure, unless a `qc_route` bound on lifting size, configured
-  concurrency or occupied lanes moves the wave to the route without it.
+  quasi-cyclic structure, unless a `QcRouteBounds` bound on lifting size,
+  configured concurrency or occupied lanes moves the wave to the route without
+  it; by default an eligible lane route claims a full wave at lifting sizes up
+  to three vectors of the QC backend's kernels.
 - `SumProduct` takes the single-frame route.
 - The lane route runs AVX2 kernels when `gf2-coding` is built with `simd` and
   the host reports AVX2. On a host without AVX2, or in a build without `simd`,

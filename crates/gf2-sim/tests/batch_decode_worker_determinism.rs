@@ -52,18 +52,23 @@ struct Route {
 fn routes() -> Vec<Route> {
     ldpc_batch_routes()
         .into_iter()
-        .map(|(selectors, backend, route)| Route {
-            label: format!("{route:?} on {backend:?}"),
-            selectors: DecodeSelectors::try_new(
+        .map(|(selectors, backend, route)| {
+            let widened = DecodeSelectors::try_new(
                 selectors.lane_min_frames(),
                 selectors.lane_max_edges(),
                 worker_counts().into_iter().max().unwrap(),
                 selectors.granules_per_task().get(),
             )
-            .unwrap()
-            .with_qc_route(selectors.qc_route()),
-            backend,
-            route,
+            .unwrap();
+            Route {
+                label: format!("{route:?} on {backend:?}"),
+                selectors: match selectors.qc_route() {
+                    Some(bounds) => widened.with_qc_route(bounds),
+                    None => widened,
+                },
+                backend,
+                route,
+            }
         })
         .collect()
 }

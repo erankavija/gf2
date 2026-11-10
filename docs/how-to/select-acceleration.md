@@ -153,13 +153,18 @@ explicit caller width; simulation stages pass their executing pool's width.
 `SumProduct` takes `SingleFrame`.
 
 A wave of a code that retains quasi-cyclic structure takes `Qc` instead under
-a min-sum rule, within the bounds of the `qc_route` selector: the lifting size
-is at least `min_lifting_size`, configured decode concurrency is at most
-`max_workers`, and the lane route is ineligible, the wave holds fewer than
-`lane_claim_min_frames` frames or the lifting size exceeds
-`lane_claim_max_lifting_size`. Every bound is on lifting size, worker count
-or occupied lanes. An omitted `qc_route` resolves to open bounds
-(`QcRouteBounds::OPEN`), which give every such wave `Qc`.
+a min-sum rule, within the bounds of `gf2_coding::ldpc::QcRouteBounds`: the
+lifting size is at least `min_lifting_size`, configured decode concurrency is
+at most `max_workers`, and the lane route is ineligible, the wave holds fewer
+than `lane_claim_min_frames` frames or the lifting size exceeds
+`lane_claim_max_lifting_size`. The bounds are no tuning selector. By default
+they are `QcRouteBounds::structural` of the QC backend: every lifting size and
+worker count, with an eligible lane route claiming a full wave of eight frames
+at lifting sizes up to `LANE_CLAIM_QC_VECTORS` vectors of the backend's QC
+kernels, three vectors of eight `f32` lanes on AVX2 and three positions on the
+portable kernels. `DecodeSelectors::with_qc_route` sets other bounds, such as
+`QcRouteBounds::OPEN`, which gives every such wave `Qc`, or
+`QcRouteBounds::CLOSED`.
 `LdpcCode::from_quasi_cyclic` retains the structure;
 `LdpcCode::attach_quasi_cyclic` retains it on a code read from elsewhere when
 the lifted parity-check matrix equals the code's exactly.
@@ -172,10 +177,7 @@ process that installs no section decodes a code with QC structure on `Qc` and
 every other code frame by frame. Take the bounds from a measurement on the
 target host; the committed coding envelope under
 `crates/gf2-coding/data/tuning-profiles/` records the calibration campaign's
-lane selectors with their provenance and a `qc_route` fixed from the route
-sweep of @/issue/c62356d2. The calibration harness measures no QC bound, so `tuning-profile-compose coding-owner` adds one
-to a calibrated owner through `--fixed-selector decode.qc_route BOUNDS_JSON`. With
-`gf2-coding`'s `tuning-profile`
+lane selectors with their provenance. With `gf2-coding`'s `tuning-profile`
 feature enabled, registering `CodingTuning` with `CodingTuningCodec` in the
 profile registry above installs one.
 `LdpcBatchDecoder::new` reads the family once at construction;
@@ -195,7 +197,7 @@ trait
 
 ```rust
 let selectors = DecodeSelectors::try_new(1, usize::MAX, 1, 1)?
-    .with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4, usize::MAX)?);
+    .with_qc_route(QcRouteBounds::new(0, NonZeroUsize::MAX, 4, usize::MAX));
 let decoder = LdpcBatchDecoder::with_selectors(
     code,
     DecoderConfig::default(),

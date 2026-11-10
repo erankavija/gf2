@@ -18,6 +18,7 @@ use crate::bch::spec::{
 };
 use crate::channel::AwgnChannel;
 use crate::error::CodeError;
+use crate::ldpc::QcRouteBounds;
 use crate::ldpc::{BatchRoute, LaneBackend, LdpcCode, LdpcEncoder, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use crate::product::ExtendedBchComponent;
@@ -26,7 +27,7 @@ use crate::traits::block::{
     SymbolSequence,
 };
 use crate::transform::{CoordinateMap, Extended, Punctured, Shortened, ShortenedDerivation};
-use crate::tuning::{DecodeSelectors, QcRouteBounds};
+use crate::tuning::DecodeSelectors;
 use crate::CodeRate;
 use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension, FieldIdentity, TrivialExt};
 use gf2_core::field::matrix::FieldMatrix;
