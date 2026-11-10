@@ -94,15 +94,16 @@ tuning::install(registry.from_json(&std::fs::read_to_string(profile_path)?)?)?;
 
 The `gf2-coding` section, `CodingTuning`, holds two selector families:
 `encode` for BCH batch encoding and `decode` for LDPC batch decoding
-([Route LDPC batch decoding](#route-ldpc-batch-decoding)). Under the
-conservative section, batch BCH encoding runs the
-scalar reference recurrence for every code. The table, bit-sliced and
-carry-less-multiply fold families, the last two through the
-`gf2_kernels_simd::bch_encode` kernels, run only from the bounds an installed
-`CodingTuning` sets. Every family writes the same codeword bits
-([algorithm families](../../crates/gf2-coding/src/bch/encode.rs)). Take the
-bounds from a measurement on the target host. The sample sets the `encode`
-family and takes the `decode` family from the conservative section:
+([Route LDPC batch decoding](#route-ldpc-batch-decoding)). With no section
+installed, single-message and batch BCH encoding take the cheapest family the
+host's kernel bundle offers: the carry-less-multiply fold where
+`gf2_kernels_simd::bch_encode` detects PCLMULQDQ, the table remainder
+otherwise, each from the bounds where its step shape is whole (one 32-bit
+table block of redundancy, one 64-frame lane group for the bit-sliced family).
+An installed `CodingTuning` moves those bounds. Every family writes the same
+codeword bits ([algorithm families](../../crates/gf2-coding/src/bch/encode.rs)).
+The sample sets the `encode` family and takes the `decode` family from the
+default section:
 
 ```rust
 use gf2_coding::tuning::{CodingSelectors, CodingTuning, EncodeSelectors};

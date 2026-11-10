@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # Encoder throughput against the reference implementations, one table per run:
 #   compare.sh nr    gf2 / srsRAN / AFF3CT NR rate-matched LDPC encoding
+#   compare.sh bch   gf2 / bchlib DVB-T2 BCH encoding at batch 1 and 256
 #
-# Environment: GF2_SRSRAN_ROOT and GF2_AFF3CT_ROOT name the staged source
-# trees (AFF3CT with its built static library). ENCODE_COMPARE_WORKERS lists
-# the worker counts (default 1,12).
+# Environment: GF2_SRSRAN_ROOT, GF2_AFF3CT_ROOT and GF2_BCHLIB_ROOT name the
+# staged source trees (AFF3CT with its built static library); the one binary
+# links all three. ENCODE_COMPARE_WORKERS lists the NR worker counts (default
+# 1,12).
 #
 # The script builds the comparison binary with target-cpu=native, then re-runs
 # itself under `dev/scripts/ccx1-bench-flock.sh --full-host`, which refuses
@@ -12,13 +14,14 @@
 # target/encode-compare/<suite>-<UTC>.md.
 set -euo pipefail
 
-suite="${1:?usage: compare.sh nr}"
+suite="${1:?usage: compare.sh nr|bch}"
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo=$(git -C "$here" rev-parse --show-toplevel)
 cd "$repo"
 : "${GF2_SRSRAN_ROOT:?GF2_SRSRAN_ROOT must name the staged srsRAN tree}"
 : "${GF2_AFF3CT_ROOT:?GF2_AFF3CT_ROOT must name the staged AFF3CT tree}"
-export GF2_SRSRAN_ROOT GF2_AFF3CT_ROOT
+: "${GF2_BCHLIB_ROOT:?GF2_BCHLIB_ROOT must name the staged bchlib tree}"
+export GF2_SRSRAN_ROOT GF2_AFF3CT_ROOT GF2_BCHLIB_ROOT
 
 manifest="$here/external/Cargo.toml"
 bin="$here/external/target/release/encode-compare"

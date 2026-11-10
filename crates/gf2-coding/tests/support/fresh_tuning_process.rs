@@ -8,10 +8,7 @@ use std::io::Write;
 use std::num::NonZeroUsize;
 use std::process::{Command, Stdio};
 
-use gf2_coding::bch::encode::{
-    EncodeFamily, SystematicLayout, BITSLICE_INTERLEAVED_MIN_BATCH, CLMUL_FOLD_MIN_BATCH,
-    TABLE_REMAINDER_BLOCK_BITS, TABLE_REMAINDER_MIN_BATCH, TABLE_REMAINDER_MIN_REDUNDANCY,
-};
+use gf2_coding::bch::encode::{EncodeFamily, SystematicLayout, TABLE_REMAINDER_BLOCK_BITS};
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use gf2_coding::test_support;
 use gf2_coding::tuning::{self, CodingSelectors, CodingTuning, DecodeSelectors, EncodeSelectors};
@@ -255,17 +252,14 @@ fn with_conservative_decode(encode: EncodeSelectors) -> CodingSelectors {
     }
 }
 
-/// Selectors admitting the table family, with the bit-sliced family left on
-/// its conservative exclusion so the table arm is the one the seam reaches.
+/// A selector bound no redundancy or batch length reaches.
+const CLOSED: usize = usize::MAX;
+
+/// Selectors admitting the table family, with the bit-sliced family closed so the table arm is the one the seam reaches.
 fn selectors_admitting_the_table_family() -> CodingSelectors {
     with_conservative_decode(
-        EncodeSelectors::try_new(
-            TABLE_REMAINDER_BLOCK_BITS,
-            BATCH,
-            BITSLICE_INTERLEAVED_MIN_BATCH,
-            CLMUL_FOLD_MIN_BATCH,
-        )
-        .expect("every selector bound is admissible"),
+        EncodeSelectors::try_new(TABLE_REMAINDER_BLOCK_BITS, BATCH, CLOSED, CLOSED)
+            .expect("every selector bound is admissible"),
     )
 }
 
@@ -291,30 +285,20 @@ pub fn decode_report(decode: &DecodeSelectors) -> serde_json::Value {
 }
 
 /// Selectors admitting the bit-sliced interleaved family, with the others
-/// left on their conservative exclusions.
+/// closed.
 fn selectors_admitting_the_bitslice_family() -> CodingSelectors {
     with_conservative_decode(
-        EncodeSelectors::try_new(
-            TABLE_REMAINDER_MIN_REDUNDANCY,
-            TABLE_REMAINDER_MIN_BATCH,
-            BATCH,
-            CLMUL_FOLD_MIN_BATCH,
-        )
-        .expect("every selector bound is admissible"),
+        EncodeSelectors::try_new(CLOSED, CLOSED, BATCH, CLOSED)
+            .expect("every selector bound is admissible"),
     )
 }
 
 /// Selectors admitting the carry-less-multiply fold family, with the others
-/// left on their conservative exclusions.
+/// closed.
 fn selectors_admitting_the_clmul_family() -> CodingSelectors {
     with_conservative_decode(
-        EncodeSelectors::try_new(
-            TABLE_REMAINDER_MIN_REDUNDANCY,
-            TABLE_REMAINDER_MIN_BATCH,
-            BITSLICE_INTERLEAVED_MIN_BATCH,
-            BATCH,
-        )
-        .expect("every selector bound is admissible"),
+        EncodeSelectors::try_new(CLOSED, CLOSED, CLOSED, BATCH)
+            .expect("every selector bound is admissible"),
     )
 }
 

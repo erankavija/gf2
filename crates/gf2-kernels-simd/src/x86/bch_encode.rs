@@ -74,14 +74,15 @@ pub(crate) unsafe fn bitslice_reduce_avx2(register: &mut [u64], masks: &[u64], s
     }
 }
 
-/// PCLMULQDQ lane: folds one 64-degree message block into one frame's packed
-/// remainder.
+/// PCLMULQDQ lane: folds a run of 64-degree message blocks into one frame's
+/// packed remainder.
 ///
-/// The arguments are the `crate::bch_encode::BchFoldBlockFn` contract:
+/// The arguments are the `crate::bch_encode::BchFoldBlocksFn` contract:
 /// `register` holds the running remainder in `redundancy.div_ceil(64)` packed
 /// words, `low` the generator's low coefficients in the same packing,
 /// `barrett` the constant `crate::bch_encode::fold_barrett_constant` derives,
-/// and `block` the 64 message coefficients entering at $x^r$.
+/// and `blocks` the 64-coefficient blocks entering at $x^r$, highest degrees
+/// first.
 ///
 /// # Safety
 ///
@@ -104,17 +105,17 @@ pub(crate) unsafe fn bitslice_reduce_avx2(register: &mut [u64], masks: &[u64], s
 /// # Complexity
 ///
 /// $1 + \lceil r/64 \rceil$ `pclmulqdq` instructions and
-/// $O(\lceil r/64 \rceil)$ word operations, for 64 message coefficients of
-/// one frame, where $r$ is `redundancy`.
+/// $O(\lceil r/64 \rceil)$ word operations per block, where $r$ is
+/// `redundancy`.
 #[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
-pub(crate) unsafe fn fold_block_pclmul(
+pub(crate) unsafe fn fold_blocks_pclmul(
     register: &mut [u64],
     low: &[u64],
     redundancy: usize,
     barrett: u64,
-    block: u64,
+    blocks: &[u64],
 ) {
-    crate::bch_encode::fold_block_over(
+    crate::bch_encode::fold_blocks_over(
         // SAFETY: this closure is reached only from this function's body, and
         // this function's safety condition is exactly what
         // `crate::x86::clmul::clmul_u64` requires.
@@ -123,6 +124,6 @@ pub(crate) unsafe fn fold_block_pclmul(
         low,
         redundancy,
         barrett,
-        block,
+        blocks,
     );
 }
