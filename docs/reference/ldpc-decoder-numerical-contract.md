@@ -263,10 +263,20 @@ the same bit patterns, so every rule below holds on either.
   $A_v = \mu_e + \lambda_e$, exact in `i8` because of the bound on $\mu_e$.
 - **Iteration.** One iteration updates every layer in order; a layer reads
   the beliefs its predecessors wrote.
-- **Hard decision and termination.** Variable $v$ decides 1 when $A_v < 0$.
-  The syndrome, early termination, iteration count, flags and cap-zero rules
-  are those of [per-frame termination](#per-frame-termination), over these
-  decisions; at cap zero the posterior is $q$.
+- **Hard decision.** Variable $v$ decides 1 when $A_v < 0$.
+- **Early termination.** A sweep is *settled* when, at each check's update,
+  the decisions of its variables have even parity and no update changes a
+  decision, and every check of degree one decides 0. A settled sweep leaves
+  the decisions it started from, all of which satisfy every check, so its
+  syndrome passes. With early termination the frame stops after the first
+  settled iteration; this can be one iteration after the first whose
+  decisions pass the syndrome.
+- **Termination fields.** `iterations` counts the iterations performed;
+  `syndrome_check_passed` and `converged` both equal the syndrome test of the
+  terminal decisions, which a settled last iteration establishes without a
+  separate test. Without early termination the frame runs to the cap. At cap
+  zero the posterior is $q$ and the fields are those of
+  [per-frame termination](#per-frame-termination).
 
 [`ldpc_layered_contract`](../../crates/gf2-coding/tests/ldpc_layered_contract.rs)
 holds both backends to identical posteriors, words, iteration counts and
