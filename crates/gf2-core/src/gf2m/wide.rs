@@ -1040,10 +1040,10 @@ pub(crate) enum ProductWrite {
 /// docs of this module and [`crate::gf2m::barrett`]) cites it by name rather
 /// than restate it.
 ///
-/// A kernel runs only for the two widths `gf2-kernels-simd` publishes one for
-/// — 4 words (GF(2^256)) and 9 words (GF(2^571)) — and only when *all* of the
-/// following hold, exactly as `gf2_kernels_simd::gf2m_wide::detect_x86_wide`
-/// evaluates them:
+/// A width runs its own kernel directly only at 4 words (GF(2^256)) and 9 words
+/// (GF(2^571)), and any kernel of `gf2-kernels-simd` (4, 8 and 9 words) runs
+/// only when *all* of the following hold, exactly as
+/// `gf2_kernels_simd::gf2m_wide::detect_x86_wide` evaluates them:
 ///
 /// 1. The crate's `simd` feature is enabled (it is not a default feature).
 /// 2. The target is `x86` or `x86_64`.
@@ -1054,8 +1054,8 @@ pub(crate) enum ProductWrite {
 /// Every other width, every other target, a `simd`-disabled build, and a host
 /// that clears neither flag set all run [`clmul_slice`]'s split at
 /// [`ClmulSplit::structural`]: Karatsuba down to the widest of those kernels
-/// the host has, zero-padded, or down to single-word products on the portable
-/// lane. Width is a compile-time question alone, since `N` is a const
+/// the host has, each basecase zero-padded through the narrowest kernel that
+/// holds it, or down to single-word products on the portable lane. Width is a compile-time question alone, since `N` is a const
 /// parameter; the flag check is the only part decided at runtime.
 ///
 /// # Panics

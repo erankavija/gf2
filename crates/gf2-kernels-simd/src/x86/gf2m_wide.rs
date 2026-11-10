@@ -1,6 +1,7 @@
 //! AVX2 / PCLMULQDQ kernels for fixed-size schoolbook carry-less multiplication
-//! used by `Gf2mWide`. `clmul_wide4_*` (GF(2^256)) and `clmul_wide9_*`
-//! (GF(2^571), 9 limbs) compute the full unreduced carry-less product in the
+//! used by `Gf2mWide` and the long product's basecase. `clmul_wide4_*`
+//! (GF(2^256)), `clmul_wide8_*` and `clmul_wide9_*` (GF(2^571), 9 limbs)
+//! compute the full unreduced carry-less product in the
 //! little-endian limb layout of the scalar `clmul_wide_slice_portable::<N>`
 //! helper: partial product `a[i] · b[j]` contributes its low/high halves to
 //! `out[i + j]` / `out[i + j + 1]`.
@@ -97,6 +98,91 @@ pub unsafe fn clmul_wide4_ymm(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
             out[i + jp + 2] ^= hi1;
         }
     }
+}
+
+/// 8×8 schoolbook carry-less multiply using 64 scalar PCLMULQDQ instructions.
+///
+/// Computes the 16-limb carry-less product of two 8-limb operands. `out` is
+/// overwritten.
+///
+/// # Safety
+///
+/// Requires the `pclmulqdq` and `sse4.1` CPU features.
+///
+/// The array references fix every length and carry pointer validity and
+/// exclusive access to `out`.
+#[target_feature(enable = "pclmulqdq", enable = "sse4.1")]
+pub unsafe fn clmul_wide8_xmm(a: &[u64; 8], b: &[u64; 8], out: &mut [u64; 16]) {
+    let mut diag = [_mm_setzero_si128(); 15];
+    for i in 0..8 {
+        let ai = _mm_set_epi64x(0, a[i] as i64);
+        for j in 0..8 {
+            let bj = _mm_set_epi64x(0, b[j] as i64);
+            diag[i + j] = _mm_xor_si128(diag[i + j], _mm_clmulepi64_si128::<0x00>(ai, bj));
+        }
+    }
+    fold_diagonals_8x8(&diag, out);
+}
+
+/// 8×8 schoolbook carry-less multiply using 32 VPCLMULQDQ-on-YMM instructions.
+///
+/// `a` loads as two YMM vectors of word pairs, `(a0, a1 | a2, a3)` and
+/// `(a4, a5 | a6, a7)`; each `b[j]` is broadcast, and immediates `0x00` and
+/// `0x01` take the low and the high word of every 128-bit lane. One
+/// instruction then yields `a[i] · b[j]` and `a[i + 2] · b[j]`, the
+/// anti-diagonals `i + j` and `i + j + 2`, which accumulate in register `k =
+/// i + j` holding the diagonal pair `(k, k + 2)`. `out` is overwritten.
+///
+/// # Safety
+///
+/// Requires the `avx2` and `vpclmulqdq` CPU features.
+///
+/// The array references fix every length and carry pointer validity and
+/// exclusive access to `out`.
+#[target_feature(enable = "avx2", enable = "vpclmulqdq")]
+pub unsafe fn clmul_wide8_ymm(a: &[u64; 8], b: &[u64; 8], out: &mut [u64; 16]) {
+    // SAFETY: each load reads four of a's eight words.
+    let (low, high) = unsafe {
+        (
+            _mm256_loadu_si256(a.as_ptr().cast()),
+            _mm256_loadu_si256(a.as_ptr().add(4).cast()),
+        )
+    };
+    let mut pairs = [_mm256_setzero_si256(); 13];
+    macro_rules! column {
+        ($($j:literal)*) => {$(
+            let bj = _mm256_set1_epi64x(b[$j] as i64);
+            pairs[$j] = _mm256_xor_si256(pairs[$j], _mm256_clmulepi64_epi128::<0x00>(low, bj));
+            pairs[$j + 1] =
+                _mm256_xor_si256(pairs[$j + 1], _mm256_clmulepi64_epi128::<0x01>(low, bj));
+            pairs[$j + 4] =
+                _mm256_xor_si256(pairs[$j + 4], _mm256_clmulepi64_epi128::<0x00>(high, bj));
+            pairs[$j + 5] =
+                _mm256_xor_si256(pairs[$j + 5], _mm256_clmulepi64_epi128::<0x01>(high, bj));
+        )*};
+    }
+    column!(0 1 2 3 4 5 6 7);
+    let mut diag = [_mm_setzero_si128(); 15];
+    for (k, pair) in pairs.iter().enumerate() {
+        diag[k] = _mm_xor_si128(diag[k], _mm256_castsi256_si128(*pair));
+        diag[k + 2] = _mm_xor_si128(diag[k + 2], _mm256_extracti128_si256::<1>(*pair));
+    }
+    fold_diagonals_8x8(&diag, out);
+}
+
+/// Folds 15 anti-diagonal 128-bit sums into 16 output limbs: limb `t` is
+/// `hi(diag[t - 1]) XOR lo(diag[t])`.
+///
+/// # Safety
+///
+/// The host supports SSE4.1.
+#[target_feature(enable = "sse4.1")]
+unsafe fn fold_diagonals_8x8(diag: &[__m128i; 15], out: &mut [u64; 16]) {
+    out[0] = _mm_extract_epi64::<0>(diag[0]) as u64;
+    for t in 1..15 {
+        out[t] = (_mm_extract_epi64::<1>(diag[t - 1]) ^ _mm_extract_epi64::<0>(diag[t])) as u64;
+    }
+    out[15] = _mm_extract_epi64::<1>(diag[14]) as u64;
 }
 
 /// 9×9 schoolbook carry-less multiply using 81 scalar PCLMULQDQ instructions.
@@ -388,6 +474,62 @@ mod tests {
                 scalar_ref(&a, &b).as_slice(),
                 "YMM wide9 mismatch for {a:?} * {b:?}"
             );
+        }
+    }
+
+    fn sample_vectors8() -> Vec<([u64; 8], [u64; 8])> {
+        let mut state = 0x5eed_u64;
+        let mut next = || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        let mut pairs = vec![
+            ([0; 8], [0; 8]),
+            ([1, 0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0]),
+            (
+                [0, 0, 0, 0, 0, 0, 0, 1 << 63],
+                [0, 0, 0, 0, 0, 0, 0, 1 << 63],
+            ),
+            ([u64::MAX; 8], [u64::MAX; 8]),
+        ];
+        for _ in 0..16 {
+            pairs.push((
+                core::array::from_fn(|_| next()),
+                core::array::from_fn(|_| next()),
+            ));
+        }
+        pairs
+    }
+
+    #[test]
+    fn xmm_wide8_matches_scalar_reference() {
+        use std::arch::is_x86_feature_detected;
+        crate::contract::require(&[(
+            "pclmulqdq+sse4.1",
+            is_x86_feature_detected!("pclmulqdq") && is_x86_feature_detected!("sse4.1"),
+        )]);
+        for (a, b) in sample_vectors8() {
+            let mut got = [u64::MAX; 16];
+            // SAFETY: PCLMULQDQ and SSE4.1 were detected above.
+            unsafe { clmul_wide8_xmm(&a, &b, &mut got) };
+            assert_eq!(&got[..], scalar_ref(&a, &b).as_slice(), "{a:?} * {b:?}");
+        }
+    }
+
+    #[test]
+    fn ymm_wide8_matches_scalar_reference() {
+        use std::arch::is_x86_feature_detected;
+        crate::contract::require(&[(
+            "avx2+vpclmulqdq",
+            is_x86_feature_detected!("avx2") && is_x86_feature_detected!("vpclmulqdq"),
+        )]);
+        for (a, b) in sample_vectors8() {
+            let mut got = [u64::MAX; 16];
+            // SAFETY: AVX2 and VPCLMULQDQ were detected above.
+            unsafe { clmul_wide8_ymm(&a, &b, &mut got) };
+            assert_eq!(&got[..], scalar_ref(&a, &b).as_slice(), "{a:?} * {b:?}");
         }
     }
 }
