@@ -14,6 +14,9 @@ use std::sync::{Mutex, OnceLock};
 use super::barrett::BarrettReducerWide;
 use super::wide_config::Gf2mWideConfig;
 
+mod split;
+pub use split::{clmul_slice, clmul_slice_with, ClmulSplit};
+
 /// A fixed-width element of `GF(2^M)` stored as `N` little-endian `u64` words.
 ///
 /// Bit `i` of the element lives at `words[i >> 6] >> (i & 63) & 1`. `Cfg`
@@ -439,8 +442,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> Gf2mWide<N, Cfg> {
     ///
     /// # Complexity
     ///
-    /// Three `N`-word carry-less products, `O(N²)` word products each on the
-    /// portable path.
+    /// Three `N`-word carry-less products through the canonical dispatch.
     #[inline]
     pub fn mul_ref(&self, rhs: &Self) -> Self {
         // `[u64; 2 * N]` is not expressible on stable Rust, so the product lives
@@ -1050,9 +1052,11 @@ pub(crate) enum ProductWrite {
 ///    and SSE4.1**. No other flag (no BMI, no AVX-512) is checked.
 ///
 /// Every other width, every other target, a `simd`-disabled build, and a host
-/// that clears neither flag set all run [`clmul_wide_slice_portable`]. Width
-/// is a compile-time question alone, since `N` is a const parameter; the flag
-/// check is the only part decided at runtime.
+/// that clears neither flag set all run [`clmul_slice`]'s split at
+/// [`ClmulSplit::structural`]: Karatsuba down to the widest of those kernels
+/// the host has, zero-padded, or down to single-word products on the portable
+/// lane. Width is a compile-time question alone, since `N` is a const
+/// parameter; the flag check is the only part decided at runtime.
 ///
 /// # Panics
 ///
@@ -1060,8 +1064,8 @@ pub(crate) enum ProductWrite {
 ///
 /// # Complexity
 ///
-/// `O(N²)` word products. A dispatched width performs them in the kernel's
-/// vector lanes; every other width performs `N²` bit-by-bit `clmul` calls.
+/// `O(N²)` word products in the kernel's vector lanes at a dispatched width;
+/// `O(N^log2(3))` basecase products through the split otherwise.
 #[inline]
 pub(crate) fn clmul_wide_dispatch<const N: usize>(
     a: &[u64; N],
@@ -1124,10 +1128,7 @@ pub(crate) fn clmul_wide_dispatch<const N: usize>(
         }
     }
 
-    if write == ProductWrite::Overwrite {
-        out.fill(0);
-    }
-    clmul_wide_slice_portable::<N>(a, b, out);
+    split::clmul_into(a, b, out, ClmulSplit::structural(), write);
 }
 
 /// XOR-folds a kernel's scratch product into the caller's destination.
@@ -1151,8 +1152,8 @@ fn xor_into(out: &mut [u64], scratch: &[u64]) {
 ///
 /// The product runs through `clmul_wide_dispatch`, the canonical selection
 /// this crate's wide arithmetic shares; see its rustdoc for the exact
-/// dispatch predicate. Every case the predicate does not satisfy runs
-/// [`clmul_wide_slice_portable`].
+/// dispatch predicate. Every case the predicate does not satisfy runs the
+/// split [`clmul_slice`] describes.
 ///
 /// # Stable-Rust caveat: why two const parameters?
 ///
@@ -1167,8 +1168,7 @@ fn xor_into(out: &mut [u64], scratch: &[u64]) {
 ///
 /// # Complexity
 ///
-/// `O(N²)` word products; the portable schoolbook performs `N²` bit-by-bit
-/// `clmul` calls.
+/// As `clmul_wide_dispatch` states.
 pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) -> [u64; M] {
     const { assert!(M == 2 * N, "clmul_wide: M must equal 2 * N") }
     let mut out = [0u64; M];
@@ -1194,16 +1194,14 @@ pub fn clmul_wide<const N: usize, const M: usize>(a: &[u64; N], b: &[u64; N]) ->
 ///
 /// # Complexity
 ///
-/// `O(N²)` word products, as [`clmul_wide`] describes, plus the `O(N)` XOR
-/// pass on a dispatched width.
+/// As [`clmul_wide`], plus one `O(N)` XOR pass.
 #[inline]
 pub fn clmul_wide_slice<const N: usize>(a: &[u64; N], b: &[u64; N], out: &mut [u64]) {
     clmul_wide_dispatch::<N>(a, b, out, ProductWrite::Accumulate);
 }
 
-/// The portable bit-by-bit schoolbook carry-less product: the fallback
-/// `clmul_wide_dispatch` takes on a host or a width without a kernel, and
-/// the reference every dispatched lane is checked against.
+/// The portable bit-by-bit schoolbook carry-less product: the reference every
+/// dispatched lane and the split are checked against.
 ///
 /// XOR-accumulates `a * b` into `out`, which must have length exactly
 /// `2 * N`. It reaches no capability dispatch, so a caller that wants the

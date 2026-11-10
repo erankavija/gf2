@@ -1,0 +1,19 @@
+[workspace]
+
+[package]
+name = "clmul-compare-external"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[dependencies]
+clmul-compare = { path = ".." }
+
+[[bin]]
+name = "clmul-compare"
+path = "src/main.rs"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

@@ -1,0 +1,10 @@
+[package]
+name = "clmul-compare"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+description = "Long carry-less polynomial product throughput against gf2x"
+
+[dependencies]
+gf2-core = { path = "../../crates/gf2-core", features = ["simd"] }

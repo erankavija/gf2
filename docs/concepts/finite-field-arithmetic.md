@@ -90,14 +90,18 @@ Batch and region entry points dispatch separately:
   reduction polynomial. No feature or CPU capability takes part.
 - `Gf2mWide` products all pass through one carry-less dispatch whose
   predicate is stated in the rustdoc of
-  [`gf2m/wide.rs`](../../crates/gf2-core/src/gf2m/wide.rs); widths without
-  a kernel use the portable `clmul_wide_slice_portable`.
+  [`gf2m/wide.rs`](../../crates/gf2-core/src/gf2m/wide.rs). Widths without
+  their own kernel, and slices of any length through `clmul_slice`, split by
+  Karatsuba down to the widest kernel the host has, or to single-word
+  products on the portable lane; `ClmulSplit` overrides the basecase width.
 
 The suites
 [`gf256_table_conformance.rs`](../../crates/gf2-core/tests/gf256_table_conformance.rs)
 and
 [`clmul_wide_conformance.rs`](../../crates/gf2-core/tests/clmul_wide_conformance.rs)
-hold each dispatched path to the portable result.
+hold each dispatched path to the portable result;
+[`clmul_split_conformance.rs`](../../crates/gf2-core/tests/clmul_split_conformance.rs)
+holds the split to it at every operand length around each split point.
 
 ## $\mathrm{GF}(p)$
 
