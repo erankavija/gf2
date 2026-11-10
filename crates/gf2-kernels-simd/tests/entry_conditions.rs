@@ -156,6 +156,25 @@ fn small_prime_ple_panel_rejects_window_and_table() {
     rejects(kernel, "shorter than p", || {
         run(&mut [1, 0, 0, 1], 2, 2, &inv_table[..6]);
     });
+    // A pivot in column 0 above a second row copies a tail of `win - 1`
+    // columns into the scratch row.
+    let wide = |win: usize| {
+        let mut window = vec![0u8; 2 * win];
+        window[0] = 1;
+        (fns.ple_panel_base_fn)(
+            &mut window,
+            2,
+            win,
+            7,
+            &inv_table,
+            &mut [0, 1],
+            &mut Vec::new(),
+        )
+    };
+    assert_eq!(wide(fp_small_ple::PANEL_SCRATCH_COLS + 1), 1);
+    rejects(kernel, "PANEL_SCRATCH_COLS", || {
+        wide(fp_small_ple::PANEL_SCRATCH_COLS + 2);
+    });
 }
 
 #[test]
@@ -193,6 +212,25 @@ fn medium_prime_ple_panel_rejects_window_and_table() {
     });
     rejects(kernel, "shorter than p", || {
         run(&mut [1, 0, 0, 1], 2, 2, &inv_table[..256]);
+    });
+    // A pivot in column 0 above a second row copies a tail of `win - 1`
+    // columns into the scratch row.
+    let wide = |win: usize| {
+        let mut window = vec![0u16; 2 * win];
+        window[0] = 1;
+        (fns.ple_panel_base_fn)(
+            &mut window,
+            2,
+            win,
+            257,
+            &inv_table,
+            &mut [0, 1],
+            &mut Vec::new(),
+        )
+    };
+    assert_eq!(wide(fp_medium_ple::PANEL_SCRATCH_COLS + 1), 1);
+    rejects(kernel, "PANEL_SCRATCH_COLS", || {
+        wide(fp_medium_ple::PANEL_SCRATCH_COLS + 2);
     });
 }
 

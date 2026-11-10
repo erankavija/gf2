@@ -38,7 +38,7 @@ pub use crate::fp_medium_ple::PANEL_SCRATCH_COLS;
 /// AVX2 must be available at runtime. All lanes in `window` must be
 /// canonical (`< p`). `p` must be an odd prime in `(251, 65536)`.
 /// `row_perm.len() == m`, `inv_table.len() == p as usize`,
-/// `window.len() == m * win`.
+/// `window.len() == m * win`, `win <= PANEL_SCRATCH_COLS + 1`.
 ///
 /// The references carry pointer validity and exclusive access to `window` and
 /// `row_perm`.
@@ -122,7 +122,7 @@ pub unsafe fn ple_panel_base_canonical_u16(
 ///
 /// # Safety
 ///
-/// The host supports AVX2 and `window` holds rows `r1` and `r2` of `win` 457
+/// The host supports AVX2 and `window` holds rows `r1` and `r2` of `win` cells
 /// each. The exclusive reference carries pointer validity, and distinct rows
 /// are disjoint.
 #[inline]
@@ -163,7 +163,7 @@ unsafe fn swap_panel_rows_u16(window: &mut [u16], win: usize, r1: usize, r2: usi
 ///
 /// # Safety
 ///
-/// The host supports AVX2. `window` holds at least `m * win` 457, `col < win`
+/// The host supports AVX2. `window` holds at least `m * win` cells, `col < win`
 /// and `rank < m`. The exclusive reference carries pointer validity; the pivot
 /// row is copied out before any write.
 #[inline]
@@ -188,7 +188,7 @@ unsafe fn fused_scale_and_schur_u16(
     let mut pivot_buf = [0u16; PANEL_SCRATCH_COLS];
     debug_assert!(
         tail_len <= PANEL_SCRATCH_COLS,
-        "fused_scale_and_schur_u16: tail_len exceeds the kernel scratch capacity"
+        "fused_scale_and_schur_u16: tail_len exceeds PANEL_SCRATCH_COLS"
     );
     if tail_len > 0 {
         let pivot_base = rank * win + tail_start;
