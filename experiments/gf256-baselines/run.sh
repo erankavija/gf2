@@ -7,24 +7,33 @@ set -euo pipefail
 # Usage: GF256_BASELINE_PREFIX=<install prefix> experiments/gf256-baselines/run.sh
 #
 # The prefix holds include/ and lib/ of ISA-L (libisal) and M4RIE (libm4rie,
-# libm4ri). GF256_BASELINE_CORE (default 2) is the core both arms run pinned
-# to. A run with GF2_BENCH_WINDOW=1 is labelled a window measurement, any
-# other an indication. The script exits 1 when the arms' outputs differ on a
-# cell.
+# libm4ri). GF256_BASELINE_CORE (default 8) is the core both arms run pinned
+# to. The script builds both arms, then measures: inside a benchmark window
+# (GF2_BENCH_WINDOW=1) it re-runs itself under dev/scripts/ccx1-bench-flock.sh,
+# which pins to cores 6-11, and labels the table a window measurement; outside
+# one it measures unlocked and labels the table an indication. It exits 1 when
+# the arms' outputs differ on a cell.
 
 : "${GF256_BASELINE_PREFIX:?name the ISA-L and M4RIE install prefix}"
-core=${GF256_BASELINE_CORE:-2}
+export GF256_BASELINE_PREFIX
+core=${GF256_BASELINE_CORE:-8}
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/../.." && pwd)
 out="$root/target/gf256-baselines"
-mkdir -p "$out"
-
-(cd "$root" && ./scripts/cargo-budget.sh cargo build --release -p gf256-baselines --quiet)
-cc -O2 -Wall -I"$GF256_BASELINE_PREFIX/include" -o "$out/arm" "$here/ext/arm.c" \
-  -L"$GF256_BASELINE_PREFIX/lib" -lisal -lm4rie -lm4ri -Wl,-rpath,"$GF256_BASELINE_PREFIX/lib"
-
 mode=indication
 [[ "${GF2_BENCH_WINDOW:-}" == 1 ]] && mode=window
+
+if [[ "${1:-}" != --measure ]]; then
+  mkdir -p "$out"
+  (cd "$root" && ./scripts/cargo-budget.sh cargo build --locked --release -p gf256-baselines --quiet)
+  cc -O2 -Wall -I"$GF256_BASELINE_PREFIX/include" -o "$out/arm" "$here/ext/arm.c" \
+    -L"$GF256_BASELINE_PREFIX/lib" -lisal -lm4rie -lm4ri -Wl,-rpath,"$GF256_BASELINE_PREFIX/lib"
+  if [[ $mode == window ]]; then
+    cd "$root"
+    CARGO_CI_NO_LOCK=1 exec ./dev/scripts/ccx1-bench-flock.sh bash "$here/run.sh" --measure
+  fi
+fi
+
 echo "host $(hostname), $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ //'), core $core, $mode"
 
 taskset -c "$core" "$root/target/release/gf256-baselines" >"$out/gf2.tsv"
