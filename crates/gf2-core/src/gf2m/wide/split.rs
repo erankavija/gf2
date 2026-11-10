@@ -8,38 +8,136 @@ use std::num::NonZeroUsize;
 use super::clmul_wide_dispatch_enabled;
 use super::{record_clmul_wide_lane, ProductWrite, PORTABLE_LANE};
 
-/// Bound of the recursive split in [`clmul_slice_with`]: operands of at most
+/// Bounds of the recursive split in [`clmul_slice_with`]: operands of at most
 /// `basecase_words` words multiply as one schoolbook product, through a
-/// kernel when one is that wide.
+/// kernel when one is that wide. A longer operand either halves or splits at
+/// the smallest `leaf_words · 2^j` at least half its length, so the two
+/// full-width subproducts recurse onto whole leaves, whichever needs fewer
+/// basecase word products: a basecase of `m` words costs the square of the
+/// narrowest kernel width that holds it, or `m^2` without one.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ClmulSplit {
     basecase_words: NonZeroUsize,
+    leaf_words: NonZeroUsize,
 }
 
 impl ClmulSplit {
-    /// The split with basecase width `basecase_words`.
+    /// The split with basecase width `basecase_words`, aligned to
+    /// `leaf_words`.
     #[must_use]
-    pub const fn new(basecase_words: NonZeroUsize) -> Self {
-        Self { basecase_words }
+    pub const fn new(basecase_words: NonZeroUsize, leaf_words: NonZeroUsize) -> Self {
+        Self {
+            basecase_words,
+            leaf_words,
+        }
     }
 
     /// The width of the widest kernel the canonical dispatch runs on this
-    /// host: 9 words, else 4, else one word on the portable lane, where the
-    /// split reduces to single-word products.
+    /// host as the basecase (9 words, else 4, else one word on the portable
+    /// lane, where the split reduces to single-word products), aligned to the
+    /// widest power-of-two kernel width (8, else 4, else 1).
+    ///
     #[must_use]
     pub fn structural() -> Self {
-        let words = match Kernels::detect() {
+        let kernels = Kernels::detect();
+        let basecase = match kernels {
             Kernels { k9: Some(_), .. } => 9,
             Kernels { k4: Some(_), .. } => 4,
             _ => 1,
         };
-        Self::new(NonZeroUsize::new(words).expect("a positive width"))
+        let leaf = kernels.leaf_words();
+        Self::new(
+            NonZeroUsize::new(basecase).expect("a positive width"),
+            NonZeroUsize::new(leaf).expect("a positive width"),
+        )
     }
 
     /// Returns the basecase width in words.
     #[must_use]
     pub const fn basecase_words(self) -> usize {
         self.basecase_words.get()
+    }
+
+    /// Returns the width split points align to, in words.
+    #[must_use]
+    pub const fn leaf_words(self) -> usize {
+        self.leaf_words.get()
+    }
+}
+
+/// The basecase, alignment and kernels one product splits by.
+struct Plan {
+    basecase: usize,
+    leaf: usize,
+    kernels: Kernels,
+}
+
+impl Plan {
+    /// The aligned split point of an `n`-word operand, `n > leaf`: the
+    /// smallest `leaf · 2^j` at least half of `n`, which is below `n`.
+    fn aligned_point(&self, n: usize) -> usize {
+        let mut h = self.leaf;
+        while 2 * h < n {
+            h *= 2;
+        }
+        h
+    }
+
+    /// Word products of one basecase product of `m` words.
+    fn basecase_cost(&self, m: usize) -> u64 {
+        let width = self.kernels.width_for(m).unwrap_or(m) as u64;
+        width * width
+    }
+
+    /// Basecase word products of halving `n` words down to the basecase.
+    fn halving_cost(&self, n: usize) -> u64 {
+        let (mut m, mut leaves) = (n, 1u64);
+        while m > self.basecase {
+            m = m.div_ceil(2);
+            leaves *= 3;
+        }
+        leaves * self.basecase_cost(m)
+    }
+
+    /// Basecase word products of the cheaper split of `n` words.
+    fn cost(&self, n: usize) -> u64 {
+        if n <= self.basecase {
+            return self.basecase_cost(n);
+        }
+        let halving = self.halving_cost(n);
+        if n <= self.leaf {
+            return halving;
+        }
+        let h = self.aligned_point(n);
+        halving.min(2 * self.halving_cost(h) + self.cost(n - h))
+    }
+
+    /// The split point of `n > basecase` words, and whether the parts halve
+    /// from there on: halving whenever the parts of an aligned split cost
+    /// more, the aligned point otherwise.
+    fn split(&self, n: usize, halve: bool) -> (usize, bool) {
+        let half = n.div_ceil(2);
+        if halve || n <= self.leaf {
+            return (half, true);
+        }
+        let h = self.aligned_point(n);
+        if h == half || self.halving_cost(n) <= 2 * self.halving_cost(h) + self.cost(n - h) {
+            (half, true)
+        } else {
+            (h, false)
+        }
+    }
+
+    /// An upper bound on the scratch words [`karatsuba`] uses for `n`-word
+    /// operands: a node takes `4h <= 4n` words, a part that halves from
+    /// there takes a geometric `8h`, and an aligned remainder is at most
+    /// `n/2` words, so `12n` covers every node.
+    fn scratch_words(&self, n: usize) -> usize {
+        if n <= self.basecase {
+            0
+        } else {
+            12 * n
+        }
     }
 }
 
@@ -113,23 +211,26 @@ pub(super) fn clmul_into(
     if n == 0 {
         return;
     }
-    let kernels = Kernels::detect();
-    let basecase = split.basecase_words();
+    let plan = Plan {
+        basecase: split.basecase_words(),
+        leaf: split.leaf_words(),
+        kernels: Kernels::detect(),
+    };
     let product_words = if write == ProductWrite::Accumulate {
         2 * n
     } else {
         0
     };
     let mut run = |scratch: &mut Vec<u64>| {
-        let need = product_words + scratch_words(n, basecase);
+        let need = product_words + plan.scratch_words(n);
         if scratch.len() < need {
             scratch.resize(need, 0);
         }
         let (product, rest) = scratch.split_at_mut(product_words);
         match write {
-            ProductWrite::Overwrite => karatsuba(a, b, out, rest, basecase, &kernels),
+            ProductWrite::Overwrite => karatsuba(a, b, out, rest, &plan, false),
             ProductWrite::Accumulate => {
-                karatsuba(a, b, product, rest, basecase, &kernels);
+                karatsuba(a, b, product, rest, &plan, false);
                 xor(out, product);
             }
         }
@@ -145,29 +246,14 @@ std::thread_local! {
     static SCRATCH: RefCell<Vec<u64>> = const { RefCell::new(Vec::new()) };
 }
 
-/// Scratch words [`karatsuba`] uses for `n`-word operands.
-fn scratch_words(n: usize, basecase: usize) -> usize {
-    if n <= basecase {
-        0
-    } else {
-        let h = n.div_ceil(2);
-        4 * h + scratch_words(h, basecase)
-    }
-}
-
 /// Overwrites the `2n` words of `out` with the product of the `n`-word `a`
-/// and `b`: with `h = ceil(n/2)` and `a = a0 + x^(64h) a1`, `b` alike, the
+/// and `b`: with `h` the split point of [`Plan::split`] and
+/// `a = a0 + x^(64h) a1`, `b` alike, the
 /// product is `P0 + x^(64h) (P0 + P1 + P2) + x^(128h) P2` over `P0 = a0 b0`,
 /// `P2 = a1 b1` and `P1 = (a0 + a1)(b0 + b1)`.
-fn karatsuba(
-    a: &[u64],
-    b: &[u64],
-    out: &mut [u64],
-    scratch: &mut [u64],
-    basecase: usize,
-    kernels: &Kernels,
-) {
+fn karatsuba(a: &[u64], b: &[u64], out: &mut [u64], scratch: &mut [u64], plan: &Plan, halve: bool) {
     let n = a.len();
+    let (basecase, kernels) = (plan.basecase, &plan.kernels);
     if n <= basecase {
         kernels.product(a, b, out);
         return;
@@ -179,7 +265,7 @@ fn karatsuba(
         karatsuba_16(fns, a, b, out);
         return;
     }
-    let h = n.div_ceil(2);
+    let (h, halve) = plan.split(n, halve);
     let l = n - h;
     let (a0, a1) = a.split_at(h);
     let (b0, b1) = b.split_at(h);
@@ -188,10 +274,10 @@ fn karatsuba(
     let (middle, rest) = rest.split_at_mut(2 * h);
     {
         let (low, high) = out.split_at_mut(2 * h);
-        karatsuba(a0, b0, low, rest, basecase, kernels);
-        karatsuba(a1, b1, high, rest, basecase, kernels);
+        karatsuba(a0, b0, low, rest, plan, halve);
+        karatsuba(a1, b1, high, rest, plan, halve);
     }
-    // The halves differ by at most one word; the shared run vectorizes.
+    // The shared run of the two parts vectorizes.
     for (((sa, sb), (x0, y0)), (x1, y1)) in sum_a
         .iter_mut()
         .zip(sum_b.iter_mut())
@@ -203,10 +289,18 @@ fn karatsuba(
     }
     sum_a[l..].copy_from_slice(&a0[l..]);
     sum_b[l..].copy_from_slice(&b0[l..]);
-    karatsuba(sum_a, sum_b, middle, rest, basecase, kernels);
-    // With out = [L0 L1 H0 H1] in h-word quarters (H1 holds 2l - h words,
-    // 3h <= 2n for n >= 2) and middle = [M0 M1], adding P1 + P0 + P2 at word h
-    // gives L1 += L0 + H0 + M0 and H0 += L1 + H1 + M1, sharing L1 + H0.
+    karatsuba(sum_a, sum_b, middle, rest, plan, halve);
+    if 2 * l < h {
+        // P0 + P1 + P2 has degree below 64(h + l), so it ends inside out.
+        xor(middle, &out[..2 * h]);
+        xor(&mut middle[..2 * l], &out[2 * h..]);
+        let end = out.len();
+        xor(&mut out[h..end], &middle[..end - h]);
+        return;
+    }
+    // With out = [L0 L1 H0 H1] in h-word quarters (H1 holds 2l - h words)
+    // and middle = [M0 M1], adding P1 + P0 + P2 at word h gives
+    // L1 += L0 + H0 + M0 and H0 += L1 + H1 + M1, sharing L1 + H0.
     let (low, high) = out.split_at_mut(2 * h);
     let (l0, l1) = low.split_at_mut(h);
     let (h0, h1) = high.split_at_mut(h);
@@ -273,6 +367,37 @@ struct Kernels {
 }
 
 impl Kernels {
+    /// The width of the narrowest kernel that holds `m` words, if any.
+    fn width_for(&self, m: usize) -> Option<usize> {
+        #[cfg(feature = "simd")]
+        {
+            if self.k4.is_some() && m <= 4 {
+                return Some(4);
+            }
+            if self.k8.is_some() && m <= 8 {
+                return Some(8);
+            }
+            if self.k9.is_some() && m <= 9 {
+                return Some(9);
+            }
+        }
+        let _ = m;
+        None
+    }
+
+    /// The widest power-of-two kernel width: 8 words, else 4, else 1.
+    fn leaf_words(&self) -> usize {
+        #[cfg(feature = "simd")]
+        if self.k8.is_some() {
+            return 8;
+        }
+        if self.k4.is_some() {
+            4
+        } else {
+            1
+        }
+    }
+
     fn detect() -> Self {
         #[cfg(feature = "simd")]
         if clmul_wide_dispatch_enabled() {

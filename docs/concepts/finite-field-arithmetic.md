@@ -100,7 +100,9 @@ Batch and region entry points dispatch separately:
   [`gf2m/wide.rs`](../../crates/gf2-core/src/gf2m/wide.rs). Widths without
   their own kernel, and slices of any length through `clmul_slice`, split by
   Karatsuba down to the widest kernel the host has, or to single-word
-  products on the portable lane; `ClmulSplit` overrides the basecase width.
+  products on the portable lane. Each split halves the operand or cuts it at
+  a multiple of the widest power-of-two kernel width, whichever needs fewer
+  basecase word products; `ClmulSplit` overrides the basecase and that width.
 
 The suites
 [`gf256_table_conformance.rs`](../../crates/gf2-core/tests/gf256_table_conformance.rs),

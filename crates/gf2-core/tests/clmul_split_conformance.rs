@@ -70,8 +70,18 @@ fn every_split_accumulates_or_writes_the_schoolbook_product_on_both_lanes() {
     let _guard = LANE_MUTEX
         .lock()
         .unwrap_or_else(|poison| poison.into_inner());
-    let overrides =
-        [1, 2, 3, 4, 5, 9, 16].map(|words| ClmulSplit::new(NonZeroUsize::new(words).unwrap()));
+    let split = |base: usize, leaf: usize| {
+        ClmulSplit::new(
+            NonZeroUsize::new(base).unwrap(),
+            NonZeroUsize::new(leaf).unwrap(),
+        )
+    };
+    // Seven basecase widths, each aligned to one-word, four-word and
+    // eight-word leaves.
+    let overrides: Vec<ClmulSplit> = [1, 2, 3, 4, 5, 9, 16]
+        .into_iter()
+        .flat_map(|base| [1, 4, 8].map(|leaf| split(base, leaf)))
+        .collect();
     for forced in [false, true] {
         force_scalar_clmul_wide(forced);
         for n in lengths() {
@@ -85,7 +95,7 @@ fn every_split_accumulates_or_writes_the_schoolbook_product_on_both_lanes() {
                 let mut got = dirty.clone();
                 clmul_slice_overwrite(&a, &b, &mut got);
                 assert_eq!(got, want, "overwrite, n {n}, forced {forced}");
-                for split in overrides {
+                for &split in &overrides {
                     let mut got = dirty.clone();
                     clmul_slice_with(&a, &b, &mut got, split);
                     assert_eq!(got, expected, "{split:?}, n {n}, forced {forced}");
@@ -141,7 +151,10 @@ fn the_structural_basecase_follows_the_dispatched_kernels() {
     force_scalar_clmul_wide(true);
     assert_eq!(ClmulSplit::structural().basecase_words(), 1);
     force_scalar_clmul_wide(false);
-    let basecase = ClmulSplit::structural().basecase_words();
+    let structural = ClmulSplit::structural();
+    let basecase = structural.basecase_words();
+    let leaf = structural.leaf_words();
+    assert_eq!(leaf, if basecase == 9 { 8 } else { basecase });
     if cfg!(feature = "simd") && gf2_kernels_simd::gf2m_wide::detect_571().is_some() {
         assert_eq!(basecase, 9);
     } else if cfg!(feature = "simd") && gf2_kernels_simd::gf2m_wide::detect().is_some() {
@@ -161,4 +174,20 @@ fn unequal_operands_panic() {
 #[should_panic(expected = "product length")]
 fn a_short_destination_panics() {
     clmul_slice(&[1, 2], &[3, 4], &mut [0; 3]);
+}
+
+/// Lengths whose halving does not land on whole leaves take the cheaper of
+/// halving and the aligned split, and still return the schoolbook product.
+#[test]
+fn lengths_off_the_leaf_grid_match_the_schoolbook() {
+    let _guard = LANE_MUTEX
+        .lock()
+        .unwrap_or_else(|poison| poison.into_inner());
+    force_scalar_clmul_wide(false);
+    for n in [1000, 1025, 1152, 1536, 1728] {
+        let (a, b) = (words(n, n as u64), words(n, 3 * n as u64 + 1));
+        let mut got = vec![u64::MAX; 2 * n];
+        clmul_slice_overwrite(&a, &b, &mut got);
+        assert_eq!(got, schoolbook(&a, &b), "n {n}");
+    }
 }
