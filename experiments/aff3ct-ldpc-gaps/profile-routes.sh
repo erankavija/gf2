@@ -34,21 +34,25 @@ calls="${QUICK_COMPARE_CALLS:-30}"
 out="$repo/target/aff3ct-ldpc-gaps/profile-routes/$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$out"
 
-bundle() {
+# One "<bundle directory> <code name>" line per arms.json code entry.
+arm_codes() {
     python3 -c 'import json, sys
-print(json.load(open(sys.argv[1]))["codes"][sys.argv[2]]["bundle"])' "$here/arms.json" "$1"
+for arm in json.load(open(sys.argv[1]))["codes"].values():
+    print(arm["bundle"], arm["code"])' "$here/arms.json"
 }
 
-for code in dvb-t2-r12 nr-bg1-r12; do
-    dir="$GF2_LDPC_BUNDLES/$(bundle "$code")"
+arm_codes | while read -r bundle code; do
+    dir="$GF2_LDPC_BUNDLES/$bundle"
     for cell in "1 1" "1 16" "12 16"; do
         read -r workers batch <<< "$cell"
         for kind in qc layered; do
             name="$code-$kind-w$workers-b$batch"
-            perf record -q --call-graph fp -o "$out/$name.data" -- \
+            # perf_event_paranoid 2 refuses kernel callchains.
+            perf record -q -e cycles:u --call-graph fp --user-callchains \
+                -o "$out/$name.data" -- \
                 "$gf2_bin" "$dir" "$code" "$kind" avx2 f32 "$workers" "$batch" "$calls" \
-                > "$out/$name.json"
-            perf report -q --stdio --no-children --percent-limit 1 \
+                < /dev/null > "$out/$name.json"
+            perf report -q --stdio --no-children -g none --percent-limit 1 \
                 -i "$out/$name.data" --sort symbol > "$out/$name.txt" 2> /dev/null
             printf '%s\n' "$name" "$(head -n 12 "$out/$name.txt")"
         done
