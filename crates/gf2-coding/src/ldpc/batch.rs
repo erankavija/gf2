@@ -101,7 +101,7 @@ pub enum DecodedWord {
 ///
 /// let selectors = DecodeSelectors::try_new(1, usize::MAX, 1, 1)
 ///     .unwrap()
-///     .with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4).unwrap());
+///     .with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4, usize::MAX).unwrap());
 /// let decoder = LdpcBatchDecoder::with_selectors(
 ///     code,
 ///     DecoderConfig::default(),

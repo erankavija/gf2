@@ -33,10 +33,10 @@ const GOLDEN_COMPLETE: &str = include_str!("golden/complete.json");
 const GOLDEN_CODING_OWNER_QC: &str = include_str!("golden/coding-owner-qc-route.json");
 
 /// QC route bounds as the fixed-selector input states them.
-const QC_ROUTE: &str = r#"{"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64}"#;
+const QC_ROUTE: &str = r#"{"lane_claim_max_lifting_size":360,"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64}"#;
 
 fn qc_route() -> QcRouteBounds {
-    QcRouteBounds::try_new(64, 12, 4).unwrap()
+    QcRouteBounds::try_new(64, 12, 4, 360).unwrap()
 }
 
 struct Scratch(PathBuf);
@@ -397,12 +397,13 @@ fn coding_owner_mode_refuses_invalid_qc_route_bounds() {
     let owner = scratch.file("coding-owner.json");
 
     for value in [
-        r#"{"lane_claim_min_frames":4,"max_workers":0,"min_lifting_size":64}"#,
-        r#"{"lane_claim_min_frames":4,"max_workers":12}"#,
-        r#"{"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64,"extra":1}"#,
-        r#"{"lane_claim_min_frames":-1,"max_workers":12,"min_lifting_size":64}"#,
-        r#"[{"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64}]"#,
-        r#"{"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64"#,
+        r#"{"lane_claim_max_lifting_size":360,"lane_claim_min_frames":4,"max_workers":0,"min_lifting_size":64}"#,
+        r#"{"lane_claim_max_lifting_size":360,"lane_claim_min_frames":4,"max_workers":12}"#,
+        r#"{"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64}"#,
+        r#"{"lane_claim_max_lifting_size":360,"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64,"extra":1}"#,
+        r#"{"lane_claim_max_lifting_size":360,"lane_claim_min_frames":-1,"max_workers":12,"min_lifting_size":64}"#,
+        r#"[{"lane_claim_max_lifting_size":360,"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64}]"#,
+        r#"{"lane_claim_max_lifting_size":360,"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64"#,
         "null",
     ] {
         let output = compose_fixed([&calibrated, &owner], "decode.qc_route", value);

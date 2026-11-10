@@ -951,7 +951,7 @@ mod tests {
                 "calibrated.json",
                 "--fixed-selector",
                 QC_ROUTE,
-                r#"{"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64}"#,
+                r#"{"lane_claim_max_lifting_size":360,"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64}"#,
                 "coding.json",
             ],
         ))
@@ -962,7 +962,7 @@ mod tests {
                 fixed: Some(FixedSelector(bounds)),
                 output_path,
                 ..
-            } if bounds == QcRouteBounds::try_new(64, 12, 4).unwrap()
+            } if bounds == QcRouteBounds::try_new(64, 12, 4, 360).unwrap()
                 && output_path == Path::new("coding.json")
         ));
         for paths in [

@@ -103,13 +103,15 @@ impl EncodeSelectors {
 /// A wave of a code with retained QC structure takes the QC route when its
 /// lifting size is at least `min_lifting_size`, the configured decode workers
 /// are at most `max_workers`, and no eligible lane route claims it: the lane
-/// route claims a wave from `lane_claim_min_frames` occupied lanes. Each bound
-/// spans its whole domain; [`Self::OPEN`] places every QC wave on the QC route.
+/// route claims a wave from `lane_claim_min_frames` occupied lanes at lifting
+/// sizes up to `lane_claim_max_lifting_size`. Each bound spans its whole
+/// domain; [`Self::OPEN`] places every QC wave on the QC route.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct QcRouteBounds {
     min_lifting_size: usize,
     max_workers: NonZeroUsize,
     lane_claim_min_frames: usize,
+    lane_claim_max_lifting_size: usize,
 }
 
 impl QcRouteBounds {
@@ -119,6 +121,7 @@ impl QcRouteBounds {
         min_lifting_size: 0,
         max_workers: NonZeroUsize::MAX,
         lane_claim_min_frames: usize::MAX,
+        lane_claim_max_lifting_size: usize::MAX,
     };
 
     /// The bounds that close the QC route.
@@ -126,6 +129,7 @@ impl QcRouteBounds {
         min_lifting_size: usize::MAX,
         max_workers: NonZeroUsize::MIN,
         lane_claim_min_frames: 0,
+        lane_claim_max_lifting_size: usize::MAX,
     };
 
     /// Builds the bounds.
@@ -137,6 +141,7 @@ impl QcRouteBounds {
         min_lifting_size: usize,
         max_workers: usize,
         lane_claim_min_frames: usize,
+        lane_claim_max_lifting_size: usize,
     ) -> Result<Self, SectionError> {
         let max_workers =
             NonZeroUsize::new(max_workers).ok_or(SectionError::SelectorOutOfRange {
@@ -148,6 +153,7 @@ impl QcRouteBounds {
             min_lifting_size,
             max_workers,
             lane_claim_min_frames,
+            lane_claim_max_lifting_size,
         })
     }
 
@@ -168,6 +174,13 @@ impl QcRouteBounds {
     #[must_use]
     pub const fn lane_claim_min_frames(&self) -> usize {
         self.lane_claim_min_frames
+    }
+
+    /// Returns the largest lifting size at which an eligible lane route
+    /// claims a wave.
+    #[must_use]
+    pub const fn lane_claim_max_lifting_size(&self) -> usize {
+        self.lane_claim_max_lifting_size
     }
 }
 
@@ -534,6 +547,7 @@ impl gf2_core::tuning::SectionCodec<CodingTuning> for CodingTuningCodec {
             qc_route.min_lifting_size,
             qc_route.max_workers,
             qc_route.lane_claim_min_frames,
+            qc_route.lane_claim_max_lifting_size,
         )?;
         Ok(CodingTuning {
             selectors: CodingSelectors {
@@ -688,6 +702,7 @@ struct JsonQcRoute {
     min_lifting_size: usize,
     max_workers: usize,
     lane_claim_min_frames: usize,
+    lane_claim_max_lifting_size: usize,
 }
 
 #[cfg(feature = "tuning-profile")]
@@ -697,6 +712,7 @@ impl From<QcRouteBounds> for JsonQcRoute {
             min_lifting_size: bounds.min_lifting_size(),
             max_workers: bounds.max_workers().get(),
             lane_claim_min_frames: bounds.lane_claim_min_frames(),
+            lane_claim_max_lifting_size: bounds.lane_claim_max_lifting_size(),
         }
     }
 }

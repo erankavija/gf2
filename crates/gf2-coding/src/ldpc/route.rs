@@ -93,8 +93,9 @@ pub enum BatchRoute {
 /// is taken when `algorithm` is of the min-sum family, `qc` is
 /// [`QcCapability::Present`], its lifting size is at least
 /// `bounds.min_lifting_size()`, `workers <= bounds.max_workers()`, and the
-/// lane route is ineligible or `occupied_lanes <
-/// bounds.lane_claim_min_frames()`. Otherwise an eligible lane route is
+/// lane route is ineligible, `occupied_lanes <
+/// bounds.lane_claim_min_frames()` or the lifting size exceeds
+/// `bounds.lane_claim_max_lifting_size()`. Otherwise an eligible lane route is
 /// taken, and the single-frame route otherwise.
 ///
 /// `occupied_lanes` counts the frames of the wave and `edges` the
@@ -130,7 +131,9 @@ pub fn decide_batch_route(
     } = qc
     {
         let bounds = selectors.qc_route();
-        let lane_claims = lane.is_some() && occupied_lanes >= bounds.lane_claim_min_frames();
+        let lane_claims = lane.is_some()
+            && occupied_lanes >= bounds.lane_claim_min_frames()
+            && lifting_size <= bounds.lane_claim_max_lifting_size();
         if min_sum_family
             && lifting_size >= bounds.min_lifting_size()
             && workers <= bounds.max_workers()
@@ -385,7 +388,7 @@ mod tests {
 
     #[test]
     fn min_lifting_size_bounds_the_qc_route_from_below() {
-        let bounds = QcRouteBounds::try_new(8, usize::MAX, usize::MAX).unwrap();
+        let bounds = QcRouteBounds::try_new(8, usize::MAX, usize::MAX, usize::MAX).unwrap();
         let s = DecodeSelectors::try_new(2, usize::MAX, 1, 1)
             .unwrap()
             .with_qc_route(bounds);
@@ -409,7 +412,7 @@ mod tests {
 
     #[test]
     fn max_workers_bounds_the_qc_route_from_above() {
-        let bounds = QcRouteBounds::try_new(0, 12, usize::MAX).unwrap();
+        let bounds = QcRouteBounds::try_new(0, 12, usize::MAX, usize::MAX).unwrap();
         let s = DecodeSelectors::try_new(2, usize::MAX, 1, 1)
             .unwrap()
             .with_qc_route(bounds);
@@ -430,7 +433,7 @@ mod tests {
 
     #[test]
     fn an_eligible_lane_route_claims_waves_from_its_bound() {
-        let bounds = QcRouteBounds::try_new(0, usize::MAX, 4).unwrap();
+        let bounds = QcRouteBounds::try_new(0, usize::MAX, 4, usize::MAX).unwrap();
         // Lanes are eligible from two frames at up to six workers.
         let s = DecodeSelectors::try_new(2, usize::MAX, 6, 1)
             .unwrap()
@@ -445,6 +448,30 @@ mod tests {
                         QC
                     };
                     assert_eq!(got, expected, "{workers}w {frames}f");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn the_lane_claim_is_bounded_by_lifting_size_from_above() {
+        let bounds = QcRouteBounds::try_new(0, usize::MAX, 4, 24).unwrap();
+        let s = DecodeSelectors::try_new(2, usize::MAX, 6, 1)
+            .unwrap()
+            .with_qc_route(bounds);
+        for algorithm in MIN_SUM_FAMILY {
+            for workers in WORKERS {
+                for frames in 0..=8 {
+                    for lifting_size in [1, 6, 23, 24, 25, 32, 384] {
+                        let got =
+                            decide_qc(&s, algorithm, structure(lifting_size), frames, workers);
+                        let expected = if workers <= 6 && frames >= 4 && lifting_size <= 24 {
+                            LANE
+                        } else {
+                            QC
+                        };
+                        assert_eq!(got, expected, "Z={lifting_size} {workers}w {frames}f");
+                    }
                 }
             }
         }

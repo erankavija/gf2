@@ -65,7 +65,7 @@ fn the_owner_codec_round_trips_its_selectors() {
             .expect("every selector bound is admissible"),
         decode: DecodeSelectors::try_new(4, 4096, 2, 3)
             .expect("a positive group count")
-            .with_qc_route(QcRouteBounds::try_new(64, 12, 4).expect("positive workers")),
+            .with_qc_route(QcRouteBounds::try_new(64, 12, 4, 360).expect("positive workers")),
     });
     let body = CodingTuningCodec::encode_body(&section).expect("a complete section encodes");
     let decoded = CodingTuningCodec::decode_body(body).expect("the canonical body decodes");
@@ -140,7 +140,7 @@ fn the_codec_encodes_the_fields_a_body_states_and_no_others() {
         r#"{"decode": {"lane_max_edges": 4096}}"#,
         r#"{"decode": {"granules_per_task": 5}}"#,
         r#"{"decode": {"lane_max_workers": 6}}"#,
-        r#"{"decode": {"qc_route": {"lane_claim_min_frames": 4, "max_workers": 12, "min_lifting_size": 64}}}"#,
+        r#"{"decode": {"qc_route": {"lane_claim_max_lifting_size": 360, "lane_claim_min_frames": 4, "max_workers": 12, "min_lifting_size": 64}}}"#,
         r#"{"decode": {"granules_per_task": 5, "lane_min_frames": 2}, "encode": {}}"#,
         r#"{"encode": {"clmul_fold_min_batch": 8}}"#,
     ] {
@@ -151,11 +151,11 @@ fn the_codec_encodes_the_fields_a_body_states_and_no_others() {
 
 #[test]
 fn added_qc_route_bounds_are_stated_beside_the_selectors_a_body_states() {
-    let bounds = QcRouteBounds::try_new(64, 12, 4).expect("positive workers");
+    let bounds = QcRouteBounds::try_new(64, 12, 4, 360).expect("positive workers");
     for text in [
         r#"{}"#,
         r#"{"decode": {"lane_min_frames": 2}}"#,
-        r#"{"decode": {"qc_route": {"lane_claim_min_frames": 0, "max_workers": 1, "min_lifting_size": 0}}, "encode": {"clmul_fold_min_batch": 8}}"#,
+        r#"{"decode": {"qc_route": {"lane_claim_max_lifting_size": 360, "lane_claim_min_frames": 0, "max_workers": 1, "min_lifting_size": 0}}, "encode": {"clmul_fold_min_batch": 8}}"#,
     ] {
         let decoded = CodingTuningCodec::decode_body(body(text)).expect("the body decodes");
         let added = decoded.clone().with_qc_route(bounds);
@@ -176,7 +176,7 @@ fn added_qc_route_bounds_are_stated_beside_the_selectors_a_body_states() {
             .unwrap()
             .insert(
                 "qc_route".to_owned(),
-                serde_json::json!({"lane_claim_min_frames": 4, "max_workers": 12, "min_lifting_size": 64}),
+                serde_json::json!({"lane_claim_max_lifting_size": 360, "lane_claim_min_frames": 4, "max_workers": 12, "min_lifting_size": 64}),
             );
         let encoded = CodingTuningCodec::encode_body(&added).expect("the section encodes");
         assert_eq!(
@@ -250,8 +250,8 @@ fn qc_route_bounds_outside_their_domain_are_rejected() {
         field: "qc_route.max_workers",
         value: 0,
     };
-    assert_eq!(QcRouteBounds::try_new(64, 0, 4), Err(rejected.clone()));
-    let text = r#"{"decode": {"qc_route": {"lane_claim_min_frames": 4, "max_workers": 0, "min_lifting_size": 64}}}"#;
+    assert_eq!(QcRouteBounds::try_new(64, 0, 4, 360), Err(rejected.clone()));
+    let text = r#"{"decode": {"qc_route": {"lane_claim_max_lifting_size": 360, "lane_claim_min_frames": 4, "max_workers": 0, "min_lifting_size": 64}}}"#;
     assert_eq!(
         CodingTuningCodec::decode_body(body(text)),
         Err(rejected),
@@ -259,8 +259,8 @@ fn qc_route_bounds_outside_their_domain_are_rejected() {
     );
     for text in [
         r#"{"decode": {"qc_route": {"max_workers": 12, "min_lifting_size": 64}}}"#,
-        r#"{"decode": {"qc_route": {"lane_claim_min_frames": 4, "max_workers": 12, "min_lifting_size": 64, "base_graph": 1}}}"#,
-        r#"{"decode": {"qc_route": [{"lane_claim_min_frames": 4, "max_workers": 12, "min_lifting_size": 64}]}}"#,
+        r#"{"decode": {"qc_route": {"lane_claim_max_lifting_size": 360, "lane_claim_min_frames": 4, "max_workers": 12, "min_lifting_size": 64, "base_graph": 1}}}"#,
+        r#"{"decode": {"qc_route": [{"lane_claim_max_lifting_size": 360, "lane_claim_min_frames": 4, "max_workers": 12, "min_lifting_size": 64}]}}"#,
         r#"{"decode": {"qc_route_cases": []}}"#,
     ] {
         assert!(
