@@ -67,7 +67,8 @@ unsafe fn update_layer_avx2_unchecked(
         return;
     }
     let zero = _mm256_setzero_si256();
-    let floor = _mm256_set1_epi8(-127);
+    let limit = params.extrinsic_limit() as i8;
+    let (low, high) = (_mm256_set1_epi8(-limit), _mm256_set1_epi8(limit));
     for lane in (0..stride).step_by(LAYER_LANES) {
         let mut min1 = _mm256_set1_epi8(127);
         let mut min2 = _mm256_set1_epi8(127);
@@ -80,7 +81,9 @@ unsafe fn update_layer_avx2_unchecked(
             let value = unsafe {
                 let app = _mm256_loadu_si256(apps.as_ptr().add(at).cast());
                 let message = _mm256_loadu_si256(messages.as_ptr().add(at).cast());
-                let value = _mm256_max_epi8(_mm256_subs_epi8(app, message), floor);
+                // Saturation at ±128 lies outside the extrinsic bound.
+                let value =
+                    _mm256_min_epi8(_mm256_max_epi8(_mm256_subs_epi8(app, message), low), high);
                 _mm256_storeu_si256(apps.as_mut_ptr().add(at).cast(), value);
                 value
             };
@@ -108,7 +111,7 @@ unsafe fn update_layer_avx2_unchecked(
                 let message =
                     _mm256_blendv_epi8(magnitude, _mm256_sub_epi8(zero, magnitude), negative);
                 _mm256_storeu_si256(messages.as_mut_ptr().add(at).cast(), message);
-                let app = _mm256_max_epi8(_mm256_adds_epi8(value, message), floor);
+                let app = _mm256_add_epi8(value, message);
                 _mm256_storeu_si256(apps.as_mut_ptr().add(at).cast(), app);
             }
         }

@@ -24,7 +24,7 @@ impl LayeredConfig {
     /// # Panics
     ///
     /// Panics if `channel_scale` is not finite and positive, `channel_limit`
-    /// or `message_limit` is outside `1..=127`, or the rule's parameter is
+    /// is outside `1..=127`, `message_limit` is outside `1..=126`, or the rule's parameter is
     /// outside the domain stated by [`LayeredRule`].
     #[must_use]
     pub fn new(
@@ -93,14 +93,6 @@ impl LayeredConfig {
     }
 }
 
-impl Default for LayeredConfig {
-    /// Normalized min-sum at 3/4, two fractional bits, 6-bit channel values
-    /// and messages, with early termination.
-    fn default() -> Self {
-        Self::new(LayeredRule::Normalized { eighths: 6 }, 4.0, 31, 31, true)
-    }
-}
-
 /// Why a layer partition is not a schedule of a code.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LayerError {
@@ -143,41 +135,41 @@ impl std::fmt::Display for LayerError {
 
 impl std::error::Error for LayerError {}
 
-/// Layers the checks of `code` by residue class modulo `period`, in ascending
-/// class order, splitting a class whose checks share a variable.
-///
-/// Class `r` holds checks `r, r + period, r + 2 * period, ...`; each check
-/// joins the first of the class's layers it shares no variable with. DVB-T2
-/// codes of `m` checks layer this way with `period = m / 360`
-/// (`@/citation/Etsi2015`). Takes O(m + n + E) space and O(E * s) time for
-/// E edges and at most s layers per class.
-///
-/// # Panics
-///
-/// Panics if `period` is zero.
-#[must_use]
-pub fn residue_layers(code: &LdpcCode, period: usize) -> Vec<Vec<usize>> {
-    assert!(period > 0, "period must be positive");
+/// Each check's variables in ascending order.
+fn code_rows(code: &LdpcCode) -> Vec<Vec<usize>> {
     let h = code.parity_check_matrix();
-    let mut layers = Vec::new();
-    // stamps[s][v] == class + 1 when variable v is in the class's layer s.
+    (0..code.m())
+        .map(|check| {
+            let mut columns: Vec<usize> = h.row_iter(check).collect();
+            columns.sort_unstable();
+            columns
+        })
+        .collect()
+}
+
+/// Splits each group of checks into layers: in group order, each check joins
+/// the first of its group's layers it shares no variable with. Takes O(E * s)
+/// time for E edges and at most s layers per group.
+fn split_conflicts(rows: &[Vec<usize>], n: usize, groups: &[Vec<usize>]) -> Vec<Vec<usize>> {
+    let mut layers: Vec<Vec<usize>> = Vec::new();
+    // stamps[s][v] == group + 1 when variable v is in the group's layer s.
     let mut stamps: Vec<Vec<usize>> = Vec::new();
-    for class in 0..period.min(code.m()) {
+    for (group, checks) in groups.iter().enumerate() {
         let first = layers.len();
-        for check in (class..code.m()).step_by(period) {
-            let fits = |stamp: &Vec<usize>| h.row_iter(check).all(|v| stamp[v] != class + 1);
-            let sub = stamps[..layers.len() - first]
+        for &check in checks {
+            let open = layers.len() - first;
+            let sub = stamps[..open]
                 .iter()
-                .position(fits)
-                .unwrap_or(layers.len() - first);
-            if sub == layers.len() - first {
+                .position(|stamp| rows[check].iter().all(|&v| stamp[v] != group + 1))
+                .unwrap_or(open);
+            if sub == open {
                 layers.push(Vec::new());
-                if stamps.len() <= sub {
-                    stamps.push(vec![0; code.n()]);
+                if stamps.len() == sub {
+                    stamps.push(vec![0; n]);
                 }
             }
-            for v in h.row_iter(check) {
-                stamps[sub][v] = class + 1;
+            for &v in &rows[check] {
+                stamps[sub][v] = group + 1;
             }
             layers[first + sub].push(check);
         }
@@ -223,12 +215,11 @@ struct Schedule {
 }
 
 impl Schedule {
-    fn new(code: &LdpcCode, partition: &[Vec<usize>]) -> Result<Self, LayerError> {
-        let h = code.parity_check_matrix();
-        let mut seen = vec![false; code.m()];
-        let mut owner = vec![usize::MAX; code.n()];
+    fn new(n: usize, rows: &[Vec<usize>], partition: &[Vec<usize>]) -> Result<Self, LayerError> {
+        let mut seen = vec![false; rows.len()];
+        let mut owner = vec![usize::MAX; n];
         let mut schedule = Self {
-            n: code.n(),
+            n,
             layers: Vec::new(),
             runs: Vec::new(),
             absent: Vec::new(),
@@ -240,15 +231,14 @@ impl Schedule {
         for (index, layer) in partition.iter().enumerate() {
             let mut lanes: Vec<Vec<usize>> = Vec::new();
             for &check in layer {
-                if check >= code.m() {
+                if check >= rows.len() {
                     return Err(LayerError::CheckOutOfRange { check });
                 }
                 if std::mem::replace(&mut seen[check], true) {
                     return Err(LayerError::DuplicateCheck { check });
                 }
-                let mut columns: Vec<usize> = h.row_iter(check).collect();
-                columns.sort_unstable();
-                for &variable in &columns {
+                let columns = &rows[check];
+                for &variable in columns {
                     if std::mem::replace(&mut owner[variable], index) == index {
                         return Err(LayerError::SharedVariable {
                             layer: index,
@@ -259,7 +249,7 @@ impl Schedule {
                 match columns.len() {
                     0 => {}
                     1 => schedule.singletons.push(columns[0] as u32),
-                    _ => lanes.push(columns),
+                    _ => lanes.push(columns.clone()),
                 }
             }
             if !lanes.is_empty() {
@@ -324,7 +314,12 @@ pub struct LayeredDecoder {
     config: LayeredConfig,
     kernel: LayerKernel,
     backend: LaneBackend,
+    /// Beliefs in schedule variable order.
     posterior: Vec<i8>,
+    /// The code variable of each schedule variable, when they differ.
+    variables: Option<Vec<u32>>,
+    /// Beliefs in code variable order, when the orders differ.
+    output: Vec<i8>,
     messages: Vec<i8>,
     buffer: Vec<i8>,
     hard: Vec<u8>,
@@ -336,17 +331,39 @@ impl LayeredDecoder {
     /// Layers a code with retained QC structure by base-matrix row block, in
     /// ascending order; returns `None` without that structure.
     ///
-    /// Uses AVX2 when the `simd` feature and host support it, otherwise
-    /// portable code. Construction takes O(E log d) time and O(n + E) space
-    /// for E edges of largest check degree d.
+    /// The schedule runs over the lifted matrix, so the variables of a
+    /// circulant are contiguous whatever the structure's row and column
+    /// orders. A row block holding several circulants of one column block
+    /// is split into layers sharing no variable, each check joining the first
+    /// that admits it in lifted-row order. Uses AVX2 when the `simd` feature
+    /// and host support it, otherwise portable code. Construction takes
+    /// O(E (log d + s)) time and O(n s + E) space for E edges, largest check
+    /// degree d and at most s layers per row block.
     #[must_use]
     pub fn new(code: &LdpcCode, config: LayeredConfig) -> Option<Self> {
         let qc = code.quasi_cyclic()?;
-        let z = qc.expansion_factor();
-        let partition: Vec<Vec<usize>> = (0..qc.base_rows())
+        let (z, m, n) = (
+            qc.expansion_factor(),
+            qc.expanded_rows(),
+            qc.expanded_cols(),
+        );
+        let lifted = qc.clone().with_orders((0..m).collect(), (0..n).collect());
+        let mut rows = vec![Vec::new(); m];
+        for (row, column) in lifted.to_edges() {
+            rows[row].push(column);
+        }
+        for row in &mut rows {
+            row.sort_unstable();
+        }
+        let blocks: Vec<Vec<usize>> = (0..qc.base_rows())
             .map(|block| (block * z..(block + 1) * z).collect())
             .collect();
-        Self::with_layers(code, &partition, config).ok()
+        let partition = split_conflicts(&rows, n, &blocks);
+        let schedule = Schedule::new(n, &rows, &partition).ok()?;
+        let variables = qc
+            .col_order()
+            .map(|order| order.iter().map(|&v| v as u32).collect());
+        Some(Self::from_schedule(schedule, variables, config))
     }
 
     /// Layers a code by an explicit partition of its checks, updated in the
@@ -361,13 +378,27 @@ impl LayeredDecoder {
         partition: &[Vec<usize>],
         config: LayeredConfig,
     ) -> Result<Self, LayerError> {
-        let schedule = Schedule::new(code, partition)?;
+        let schedule = Schedule::new(code.n(), &code_rows(code), partition)?;
+        Ok(Self::from_schedule(schedule, None, config))
+    }
+
+    fn from_schedule(
+        schedule: Schedule,
+        variables: Option<Vec<u32>>,
+        config: LayeredConfig,
+    ) -> Self {
         let (kernel, backend) = (LayerKernel::portable(), LaneBackend::Portable);
         #[cfg(feature = "simd")]
         let (kernel, backend) = gf2_kernels_simd::ldpc_layered::detect()
             .map_or((kernel, backend), |fns| (fns, LaneBackend::Avx2));
-        Ok(Self {
+        Self {
             posterior: vec![0; schedule.n],
+            output: if variables.is_some() {
+                vec![0; schedule.n]
+            } else {
+                Vec::new()
+            },
+            variables,
             messages: vec![0; schedule.message_len],
             buffer: vec![0; schedule.buffer_len],
             hard: vec![0; schedule.n],
@@ -377,7 +408,7 @@ impl LayeredDecoder {
             kernel,
             backend,
             last_iterations: 0,
-        })
+        }
     }
 
     /// Selects the portable kernel on every host.
@@ -410,7 +441,11 @@ impl LayeredDecoder {
     /// cap leaves the quantized channel values. A negative value decides 1.
     #[must_use]
     pub fn posterior(&self) -> &[i8] {
-        &self.posterior
+        if self.variables.is_some() {
+            &self.output
+        } else {
+            &self.posterior
+        }
     }
 
     /// Decodes a mother-code frame, overwriting `codeword` with all n hard bits.
@@ -429,8 +464,17 @@ impl LayeredDecoder {
         codeword: &mut BitVec,
     ) -> DecodeOutcome {
         assert_eq!(llrs.len(), self.schedule.n, "LLR length must equal n");
-        for (slot, &llr) in self.posterior.iter_mut().zip(llrs) {
-            *slot = self.config.quantize(llr);
+        match &self.variables {
+            Some(variables) => {
+                for (slot, &v) in self.posterior.iter_mut().zip(variables) {
+                    *slot = self.config.quantize(llrs[v as usize]);
+                }
+            }
+            None => {
+                for (slot, &llr) in self.posterior.iter_mut().zip(llrs) {
+                    *slot = self.config.quantize(llr);
+                }
+            }
         }
         self.messages.fill(0);
 
@@ -447,8 +491,20 @@ impl LayeredDecoder {
         self.last_iterations = iterations;
         let syndrome_check_passed = self.syndrome_passes();
         codeword.clear();
-        for &bit in &self.hard {
-            codeword.push_bit(bit != 0);
+        match &self.variables {
+            Some(variables) => {
+                for (&v, &value) in variables.iter().zip(&self.posterior) {
+                    self.output[v as usize] = value;
+                }
+                for &value in &self.output {
+                    codeword.push_bit(value < 0);
+                }
+            }
+            None => {
+                for &bit in &self.hard {
+                    codeword.push_bit(bit != 0);
+                }
+            }
         }
         DecodeOutcome {
             iterations,

@@ -2,8 +2,8 @@
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::ldpc::nr_5g::FILLER_LLR;
 use gf2_coding::ldpc::{
-    residue_layers, LaneBackend, LayerError, LayeredConfig, LayeredDecoder, LayeredRule, LdpcCode,
-    LdpcEncoder, QuasiCyclicLdpc,
+    LaneBackend, LayerError, LayeredConfig, LayeredDecoder, LayeredRule, LdpcCode, LdpcEncoder,
+    QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::BlockEncoder;
@@ -11,10 +11,16 @@ use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 
+/// Normalized min-sum at 3/4 with two fractional bits, channel values
+/// within ±31 and messages within ±40.
+fn standard() -> LayeredConfig {
+    LayeredConfig::new(LayeredRule::Normalized { eighths: 6 }, 4.0, 31, 40, true)
+}
+
 fn configs() -> Vec<LayeredConfig> {
     vec![
-        LayeredConfig::default(),
-        LayeredConfig::new(LayeredRule::Normalized { eighths: 8 }, 2.0, 127, 127, false),
+        standard(),
+        LayeredConfig::new(LayeredRule::Normalized { eighths: 8 }, 2.0, 127, 126, false),
         LayeredConfig::new(LayeredRule::Offset { beta: 1 }, 8.0, 63, 15, true),
     ]
 }
@@ -62,15 +68,33 @@ fn small_qc() -> Case {
     }
 }
 
-fn dvb_t2_short() -> Case {
-    let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    let layers = residue_layers(&code, code.m() / 360);
+/// DVB-T2 short codes through their retained QC structure, whose orders
+/// are not the identity and whose row blocks hold several circulants of one
+/// column block.
+fn dvb_t2_short(rate: CodeRate, sigma: f64) -> Case {
+    let code = LdpcCode::dvb_t2_short(rate);
+    let qc = code
+        .quasi_cyclic()
+        .expect("DVB-T2 codes retain QC structure");
+    assert!(qc.col_order().is_some());
+    let stacked = qc.circulants().windows(2).any(|pair| {
+        (pair[0].row_block(), pair[0].col_block()) == (pair[1].row_block(), pair[1].col_block())
+    });
+    assert!(stacked, "{rate:?}");
     Case {
-        name: "dvb-t2 short 1/2".into(),
+        name: format!("dvb-t2 short {rate:?}"),
         code,
-        layers: Some(layers),
-        sigma: 0.85,
+        layers: None,
+        sigma,
     }
+}
+
+/// The row blocks of [`small_qc`] as an explicit partition.
+fn small_qc_explicit() -> Case {
+    let mut case = small_qc();
+    case.name = "small qc, explicit layers".into();
+    case.layers = Some((0..5).map(|b| (b * 16..(b + 1) * 16).collect()).collect());
+    case
 }
 
 fn cases() -> Vec<Case> {
@@ -82,7 +106,9 @@ fn cases() -> Vec<Case> {
         nr(2, 3, 0.6),
         nr(2, 52, 0.75),
         nr(1, 384, 0.8),
-        dvb_t2_short(),
+        dvb_t2_short(CodeRate::Rate1_2, 0.85),
+        dvb_t2_short(CodeRate::Rate5_6, 0.5),
+        small_qc_explicit(),
     ]
 }
 
@@ -184,12 +210,12 @@ fn backends_agree_on_posteriors_words_and_outcomes() {
 
 #[test]
 fn a_reused_decoder_equals_a_fresh_one() {
-    for case in [nr(1, 15, 0.7), dvb_t2_short()] {
+    for case in [nr(1, 15, 0.7), dvb_t2_short(CodeRate::Rate5_6, 0.5)] {
         let frames = frames(case.code.n(), case.sigma, 0xfee1);
-        for mut reused in backends(&case, LayeredConfig::default()) {
+        for mut reused in backends(&case, standard()) {
             for llrs in frames.iter().chain(frames.iter().rev()) {
                 let backend = reused.backend();
-                let mut fresh = case.decoder(LayeredConfig::default());
+                let mut fresh = case.decoder(standard());
                 if backend == LaneBackend::Portable {
                     fresh = fresh.with_portable_kernel();
                 }
@@ -204,11 +230,15 @@ fn a_reused_decoder_equals_a_fresh_one() {
 
 #[test]
 fn cap_zero_reports_the_quantized_channel_and_its_syndrome() {
-    for case in [small_qc(), nr(2, 3, 0.6), dvb_t2_short()] {
+    for case in [
+        small_qc(),
+        nr(2, 3, 0.6),
+        dvb_t2_short(CodeRate::Rate1_2, 0.85),
+    ] {
         let code = &case.code;
         let zero_word = vec![Llr::new(2.0); code.n()];
         for llrs in frames(code.n(), case.sigma, 7).iter().chain([&zero_word]) {
-            for mut decoder in backends(&case, LayeredConfig::default()) {
+            for mut decoder in backends(&case, standard()) {
                 let (posterior, word, iterations, converged, passed, last) =
                     observe(&mut decoder, llrs, 0);
                 let config = decoder.config();
@@ -227,7 +257,7 @@ fn cap_zero_reports_the_quantized_channel_and_its_syndrome() {
 
 #[test]
 fn quantization_rounds_saturates_and_maps_rate_matching_values() {
-    let config = LayeredConfig::default();
+    let config = standard();
     let q = |x: f32| config.quantize(Llr::new(x));
     assert_eq!((q(0.0), q(-0.0), q(f32::NAN)), (0, 0, 0));
     assert_eq!((q(0.125), q(-0.125), q(0.124), q(-0.375)), (1, -1, 0, -2));
@@ -238,7 +268,12 @@ fn quantization_rounds_saturates_and_maps_rate_matching_values() {
 
 #[test]
 fn termination_follows_the_syndrome_and_the_cap() {
-    let case = nr(1, 15, 0.7);
+    for case in [nr(1, 15, 0.7), dvb_t2_short(CodeRate::Rate5_6, 0.5)] {
+        termination_case(&case);
+    }
+}
+
+fn termination_case(case: &Case) {
     let encoder = LdpcEncoder::new(case.code.clone());
     let mut rng = StdRng::seed_from_u64(0xa11);
     let codeword = encoder.encode(&BitVec::random(encoder.k(), &mut rng));
@@ -248,9 +283,9 @@ fn termination_follows_the_syndrome_and_the_cap() {
     let undecodable = &frames(case.code.n(), case.sigma, 3)[3];
     for early in [true, false] {
         let config = LayeredConfig::new(LayeredRule::Normalized { eighths: 6 }, 4.0, 31, 31, early);
-        for mut decoder in backends(&case, config) {
+        for mut decoder in backends(case, config) {
             let (_, word, iterations, converged, passed, _) = observe(&mut decoder, &clean, 10);
-            assert_eq!(word, codeword);
+            assert_eq!(word, codeword, "{}", case.name);
             assert!(converged && passed);
             assert_eq!(iterations, if early { 1 } else { 10 });
 
@@ -290,7 +325,7 @@ fn rate_matched_nr_frames_decode_to_their_messages() {
                 })
                 .collect();
             let prepared = code.prepare_llrs(&received);
-            let observed: Vec<Observation> = backends(&case, LayeredConfig::default())
+            let observed: Vec<Observation> = backends(&case, standard())
                 .iter_mut()
                 .map(|decoder| observe(decoder, &prepared, 25))
                 .collect();
@@ -307,7 +342,7 @@ fn rate_matched_nr_frames_decode_to_their_messages() {
 #[test]
 fn layer_partitions_are_validated() {
     let code = small_qc().code;
-    let config = LayeredConfig::default();
+    let config = standard();
     let err = |layers: Vec<Vec<usize>>| LayeredDecoder::with_layers(&code, &layers, config).err();
     let m = code.m();
     assert!(err(vec![(0..m).collect::<Vec<_>>()])
@@ -339,8 +374,7 @@ fn any_valid_partition_decodes() {
     let case = small_qc();
     let layers: Vec<Vec<usize>> = (0..case.code.m()).rev().map(|c| vec![c]).collect();
     let clean = vec![Llr::new(3.0); case.code.n()];
-    let mut decoder =
-        LayeredDecoder::with_layers(&case.code, &layers, LayeredConfig::default()).unwrap();
+    let mut decoder = LayeredDecoder::with_layers(&case.code, &layers, standard()).unwrap();
     let mut word = BitVec::new();
     let outcome = decoder.decode_codeword_into(&clean, 5, &mut word);
     assert!(outcome.converged && word.count_ones() == 0);

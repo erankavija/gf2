@@ -7,7 +7,7 @@
 /// Lanes of one AVX2 vector of `i8`; a layer's stride is a multiple of it.
 pub const LAYER_LANES: usize = 32;
 
-/// The largest magnitude of an a-posteriori value or message.
+/// The largest magnitude of an a-posteriori value.
 pub const LAYER_SATURATION: i8 = 127;
 
 /// The magnitude scaling of a quantized min-sum check update.
@@ -38,7 +38,7 @@ impl LayerParams {
     /// # Panics
     ///
     /// Panics if `eighths` is outside `1..=8`, `beta` exceeds 127, or
-    /// `message_limit` is outside `1..=127`.
+    /// `message_limit` is outside `1..=126`.
     #[must_use]
     pub fn new(rule: LayeredRule, message_limit: u8) -> Self {
         match rule {
@@ -48,8 +48,8 @@ impl LayerParams {
             LayeredRule::Offset { beta } => assert!(beta <= 127, "beta must be at most 127"),
         }
         assert!(
-            (1..=127).contains(&message_limit),
-            "message limit must be in 1..=127"
+            (1..=126).contains(&message_limit),
+            "message limit must be in 1..=126"
         );
         Self {
             rule,
@@ -67,6 +67,20 @@ impl LayerParams {
     #[must_use]
     pub fn message_limit(&self) -> u8 {
         self.message_limit
+    }
+
+    /// The magnitude bound of variable-to-check values, `127 - message_limit`,
+    /// so that a value plus a message is an exact `i8` a-posteriori value.
+    #[must_use]
+    pub fn extrinsic_limit(&self) -> u8 {
+        127 - self.message_limit
+    }
+
+    /// Bounds `app - message` by the extrinsic limit.
+    #[inline]
+    pub(crate) fn extrinsic(self, app: i8, message: i8) -> i8 {
+        let limit = i16::from(self.extrinsic_limit());
+        (i16::from(app) - i16::from(message)).clamp(-limit, limit) as i8
     }
 
     /// Scales and saturates an excluded minimum magnitude in `0..=127`.
@@ -103,10 +117,12 @@ impl LayerKernel {
     ///
     /// On entry `apps` holds each edge's variable a-posteriori value and
     /// `messages` the check-to-variable message the layer last wrote. Per lane
-    /// and edge the kernel forms `v = clamp(app - message)`, writes the
-    /// min-sum message of the other edges' `v` and replaces `app` with
-    /// `clamp(v + message)`, where clamp bounds to ±[`LAYER_SATURATION`]. The
-    /// sign of `v >= 0` is positive. The excluded minimum starts at 127 and
+    /// and edge the kernel forms `v = app - message` bounded by
+    /// ±[`LayerParams::extrinsic_limit`], writes the min-sum message of the
+    /// other edges' `v` and replaces `app` with the exact `v + message`, at
+    /// most [`LAYER_SATURATION`] in magnitude. Bounding `v` rather than the
+    /// sum keeps `app - message` exact at the next update of the same check.
+    /// The sign of `v >= 0` is positive. The excluded minimum starts at 127 and
     /// is replaced only on a strictly smaller magnitude, then is scaled by the
     /// rule and bounded by the message limit. A degree-one layer writes zero
     /// messages. Takes O(degree * stride) time without allocation; every
@@ -144,11 +160,6 @@ pub fn detect() -> Option<LayerKernel> {
     None
 }
 
-#[inline]
-fn clamp(value: i16) -> i8 {
-    value.clamp(-127, 127) as i8
-}
-
 fn update_layer_scalar(
     params: LayerParams,
     apps: &mut [i8],
@@ -174,7 +185,7 @@ pub(crate) fn update_lanes_scalar(
         let mut negative_parity = false;
         for edge in 0..degree {
             let at = edge * stride + lane;
-            let value = clamp(i16::from(apps[at]) - i16::from(messages[at]));
+            let value = params.extrinsic(apps[at], messages[at]);
             apps[at] = value;
             negative_parity ^= value < 0;
             let magnitude = value.unsigned_abs();
@@ -201,7 +212,7 @@ pub(crate) fn update_lanes_scalar(
                 magnitude
             };
             messages[at] = message;
-            apps[at] = clamp(i16::from(value) + i16::from(message));
+            apps[at] = value + message;
         }
     }
 }
@@ -229,9 +240,10 @@ mod tests {
         for lane in 0..stride {
             let v: Vec<i8> = (0..degree)
                 .map(|e| {
-                    clamp(
-                        i16::from(apps[e * stride + lane]) - i16::from(messages[e * stride + lane]),
-                    )
+                    let limit = 127 - i16::from(params.message_limit());
+                    let v =
+                        i16::from(apps[e * stride + lane]) - i16::from(messages[e * stride + lane]);
+                    v.clamp(-limit, limit) as i8
                 })
                 .collect();
             for e in 0..degree {
@@ -251,19 +263,21 @@ mod tests {
                 let negative = others.filter(|&o| v[o] < 0).count() % 2 == 1;
                 let message = if negative { -magnitude } else { magnitude };
                 messages[e * stride + lane] = message;
-                apps[e * stride + lane] = clamp(i16::from(v[e]) + i16::from(message));
+                let app = i16::from(v[e]) + i16::from(message);
+                assert!(app.abs() <= 127);
+                apps[e * stride + lane] = app as i8;
             }
         }
     }
 
     fn rules() -> Vec<LayerParams> {
         vec![
-            LayerParams::new(LayeredRule::Normalized { eighths: 8 }, 127),
+            LayerParams::new(LayeredRule::Normalized { eighths: 8 }, 126),
             LayerParams::new(LayeredRule::Normalized { eighths: 6 }, 31),
             LayerParams::new(LayeredRule::Normalized { eighths: 1 }, 1),
-            LayerParams::new(LayeredRule::Offset { beta: 0 }, 127),
+            LayerParams::new(LayeredRule::Offset { beta: 0 }, 63),
             LayerParams::new(LayeredRule::Offset { beta: 2 }, 15),
-            LayerParams::new(LayeredRule::Offset { beta: 127 }, 127),
+            LayerParams::new(LayeredRule::Offset { beta: 127 }, 126),
         ]
     }
 
@@ -320,7 +334,7 @@ mod tests {
     #[should_panic(expected = "layer stride must fill vectors")]
     fn a_partial_vector_stride_panics() {
         LayerKernel::portable().update_layer(
-            LayerParams::new(LayeredRule::Offset { beta: 0 }, 127),
+            LayerParams::new(LayeredRule::Offset { beta: 0 }, 63),
             &mut [0; 33],
             &mut [0; 33],
             1,
@@ -332,7 +346,7 @@ mod tests {
     #[should_panic(expected = "layer message length")]
     fn a_length_mismatch_panics() {
         LayerKernel::portable().update_layer(
-            LayerParams::new(LayeredRule::Offset { beta: 0 }, 127),
+            LayerParams::new(LayeredRule::Offset { beta: 0 }, 63),
             &mut [0; 64],
             &mut [0; 32],
             2,
@@ -341,8 +355,14 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "message limit must be in 1..=126")]
+    fn a_message_limit_without_extrinsic_room_panics() {
+        let _ = LayerParams::new(LayeredRule::Offset { beta: 0 }, 127);
+    }
+
+    #[test]
     #[should_panic(expected = "eighths must be in 1..=8")]
     fn a_zero_normalization_panics() {
-        let _ = LayerParams::new(LayeredRule::Normalized { eighths: 0 }, 127);
+        let _ = LayerParams::new(LayeredRule::Normalized { eighths: 0 }, 63);
     }
 }
