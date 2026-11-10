@@ -184,11 +184,18 @@ fn karatsuba(
         karatsuba(a0, b0, low, rest, basecase, kernels);
         karatsuba(a1, b1, high, rest, basecase, kernels);
     }
-    for i in 0..h {
-        let (x, y) = if i < l { (a1[i], b1[i]) } else { (0, 0) };
-        sum_a[i] = a0[i] ^ x;
-        sum_b[i] = b0[i] ^ y;
+    // The halves differ by at most one word; the shared run vectorizes.
+    for (((sa, sb), (x0, y0)), (x1, y1)) in sum_a
+        .iter_mut()
+        .zip(sum_b.iter_mut())
+        .zip(a0.iter().zip(b0))
+        .zip(a1.iter().zip(b1))
+    {
+        *sa = x0 ^ x1;
+        *sb = y0 ^ y1;
     }
+    sum_a[l..].copy_from_slice(&a0[l..]);
+    sum_b[l..].copy_from_slice(&b0[l..]);
     karatsuba(sum_a, sum_b, middle, rest, basecase, kernels);
     // With out = [L0 L1 H0 H1] in h-word quarters (H1 holds 2l - h words,
     // 3h <= 2n for n >= 2) and middle = [M0 M1], adding P1 + P0 + P2 at word h
@@ -197,11 +204,14 @@ fn karatsuba(
     let (l0, l1) = low.split_at_mut(h);
     let (h0, h1) = high.split_at_mut(h);
     let (m0, m1) = middle.split_at(h);
+    let top = h1.len();
     for i in 0..h {
         let shared = l1[i] ^ h0[i];
-        let top = h1.get(i).copied().unwrap_or(0);
         l1[i] = shared ^ l0[i] ^ m0[i];
-        h0[i] = shared ^ top ^ m1[i];
+        h0[i] = shared ^ m1[i];
+    }
+    for (word, value) in h0[..top].iter_mut().zip(h1.iter()) {
+        *word ^= value;
     }
 }
 
