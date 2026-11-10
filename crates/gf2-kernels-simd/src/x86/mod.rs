@@ -37,6 +37,8 @@ pub(crate) mod ldpc_lanes;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub(crate) mod ldpc_layered;
 pub(crate) mod ldpc_qc;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub(crate) mod ldpc_signs;
 pub(crate) mod mersenne;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub(crate) mod popcount;

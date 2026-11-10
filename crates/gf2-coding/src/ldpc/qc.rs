@@ -2,11 +2,11 @@
 //! each column block splits into lane segments that share one canonical
 //! accumulation order, so variable sums equal the canonical decoder's.
 
-use super::decisions::{pack_bits, pack_eight};
 use super::{DecodeOutcome, DecoderConfig, LaneBackend, LdpcCode, MinSumRule, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use gf2_core::BitVec;
 use gf2_kernels_simd::ldpc_qc::{QcAccumulation, QcBlock, QcKernels, QcSegment, QcTerm};
+use gf2_kernels_simd::ldpc_signs::{pack_signs_portable, PackSignsFn};
 use std::ops::Range;
 
 /// One circulant of the block description.
@@ -234,12 +234,16 @@ pub struct QcDecoder {
     row_scratch: Vec<f32>,
     /// Terminal beliefs by variable.
     posterior: Vec<Llr>,
-    /// Hard decisions by lifted column and the parities of one row block.
-    hard_bits: Vec<u8>,
-    parity: Vec<u8>,
-    /// Hard decisions by variable, 64 per word.
+    /// Hard decisions by lifted column, -1 for a one and 0 for a zero, and
+    /// the parities of one row block.
+    hard_bits: Vec<i8>,
+    parity: Vec<i8>,
+    /// Hard decisions by variable when the column order differs, and packed
+    /// 64 per word.
+    ordered: Vec<i8>,
     words: Vec<u64>,
     kernel: QcKernels,
+    pack_signs: PackSignsFn,
     backend: LaneBackend,
     last_iterations: usize,
 }
@@ -258,10 +262,17 @@ impl QcDecoder {
         let rule = config.algorithm().min_sum_rule()?;
         let layout = QcLayout::new(code.quasi_cyclic()?)?;
         let messages = layout.base_edges() * layout.z();
-        let (kernel, backend) = (QcKernels::portable(), LaneBackend::Portable);
+        let (kernel, pack_signs, backend) = (
+            QcKernels::portable(),
+            pack_signs_portable as PackSignsFn,
+            LaneBackend::Portable,
+        );
         #[cfg(feature = "simd")]
-        let (kernel, backend) = gf2_kernels_simd::ldpc_qc::detect()
-            .map_or((kernel, backend), |fns| (fns, LaneBackend::Avx2));
+        let (kernel, pack_signs, backend) = gf2_kernels_simd::ldpc_qc::detect()
+            .zip(gf2_kernels_simd::ldpc_signs::detect())
+            .map_or((kernel, pack_signs, backend), |(fns, pack)| {
+                (fns, pack, LaneBackend::Avx2)
+            });
         Some(Self {
             channel: vec![0.0; layout.n()],
             belief: vec![0.0; layout.n()],
@@ -270,8 +281,14 @@ impl QcDecoder {
             posterior: vec![Llr::zero(); layout.n()],
             hard_bits: vec![0; layout.n()],
             parity: vec![0; layout.z()],
-            words: Vec::with_capacity(layout.n().div_ceil(64)),
+            ordered: if layout.col_order.is_some() {
+                vec![0; layout.n()]
+            } else {
+                Vec::new()
+            },
+            words: vec![0; layout.n().div_ceil(64)],
             kernel,
+            pack_signs,
             backend,
             layout,
             rule,
@@ -284,6 +301,7 @@ impl QcDecoder {
     #[must_use]
     pub fn with_portable_kernel(mut self) -> Self {
         self.kernel = QcKernels::portable();
+        self.pack_signs = pack_signs_portable;
         self.backend = LaneBackend::Portable;
         self
     }
@@ -325,7 +343,8 @@ impl QcDecoder {
             + std::mem::size_of_val(self.posterior.as_slice())
             + std::mem::size_of_val(self.hard_bits.as_slice())
             + std::mem::size_of_val(self.parity.as_slice())
-            + std::mem::size_of::<u64>() * self.layout.n().div_ceil(64)
+            + std::mem::size_of_val(self.ordered.as_slice())
+            + std::mem::size_of_val(self.words.as_slice())
     }
 
     /// Decodes a mother-code frame, overwriting `codeword` with all n hard bits.
@@ -380,25 +399,19 @@ impl QcDecoder {
                 for (slot, &belief) in self.posterior.iter_mut().zip(&self.belief) {
                     *slot = Llr::new(belief);
                 }
-                pack_bits(&self.hard_bits, &mut self.words);
+                (self.pack_signs)(&self.hard_bits, &mut self.words);
             }
             Some((_, inverse)) => {
-                self.words.clear();
-                for (columns, posterior) in inverse.chunks(64).zip(self.posterior.chunks_mut(64)) {
-                    let mut word = 0;
-                    for (byte, (columns, posterior)) in
-                        columns.chunks(8).zip(posterior.chunks_mut(8)).enumerate()
-                    {
-                        let mut lanes = [0u8; 8];
-                        for ((lane, slot), &column) in lanes.iter_mut().zip(posterior).zip(columns)
-                        {
-                            *slot = Llr::new(self.belief[column]);
-                            *lane = self.hard_bits[column];
-                        }
-                        word |= pack_eight(u64::from_le_bytes(lanes)) << (8 * byte);
-                    }
-                    self.words.push(word);
+                for ((slot, decision), &column) in self
+                    .posterior
+                    .iter_mut()
+                    .zip(&mut self.ordered)
+                    .zip(inverse)
+                {
+                    *slot = Llr::new(self.belief[column]);
+                    *decision = self.hard_bits[column];
                 }
+                (self.pack_signs)(&self.ordered, &mut self.words);
             }
         }
         codeword.resize(self.layout.n(), false);
@@ -467,7 +480,7 @@ impl QcDecoder {
     /// parity, testing one row block at a time.
     fn syndrome_passes(&mut self) -> bool {
         for (bit, &belief) in self.hard_bits.iter_mut().zip(&self.belief) {
-            *bit = u8::from(Llr::new(belief).hard_decision());
+            *bit = -i8::from(Llr::new(belief).hard_decision());
         }
         let z = self.layout.z;
         for row_block in 0..self.layout.row_blocks {
@@ -494,7 +507,7 @@ impl QcDecoder {
 /// line so that its slices stay distinct arguments, which lets the loops
 /// vectorize; inlined, both buffers are reached through the decoder.
 #[inline(never)]
-fn xor_rotated(parity: &mut [u8], block: &[u8], shift: usize) {
+fn xor_rotated(parity: &mut [i8], block: &[i8], shift: usize) {
     let (head, tail) = parity.split_at_mut(block.len() - shift);
     for (parity, &bit) in head.iter_mut().zip(&block[shift..]) {
         *parity ^= bit;
