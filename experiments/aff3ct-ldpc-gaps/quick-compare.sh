@@ -14,7 +14,9 @@
 # whose batch is not whole native waves of its decoder is skipped. Each code's
 # table goes to stdout and target/aff3ct-ldpc-gaps/quick-compare/<UTC>.txt as
 # soon as that code's runs finish, beside the raw lines. The ratio is best gf2
-# frames/s over best AFF3CT frames/s, so a value above 1 means gf2 is faster.
+# frames/s over best AFF3CT frames/s, so a value above 1 means gf2 is faster;
+# the flooding ratio restricts both sides to flooding decoders (every gf2 route
+# but layered, AFF3CT's flooding configurations at either precision).
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -95,15 +97,19 @@ for row in rows:
         cells.setdefault((run["workers"], run["batch"]), []).append((row["side"], run))
 for (workers, batch), runs in cells.items():
     print(f"\n{code}  workers {workers}  batch {batch}")
-    print(f"  {'side':7} {'decoder':44} {'cap':>4} {'FER':>9} {'frames/s':>10} {'info Mb/s':>10}")
-    best = {}
+    print(f"  {'side':7} {'decoder':44} {'prec':4} {'cap':>4} {'FER':>9} {'frames/s':>10} {'info Mb/s':>10}")
+    best, flooding = {}, {}
     for side, run in runs:
         fps = run["frames_per_second"]
         best[side] = max(best.get(side, 0.0), fps)
+        if run["kind"] not in ("layered", "layered-onms"):
+            flooding[side] = max(flooding.get(side, 0.0), fps)
         errors = f"{run['frame_errors']}/{run['quality_frames']}"
-        print(f"  {side:7} {run['decoder'][:44]:44} {run['iteration_cap']:>4} {errors:>9} {fps:10.1f} {run['info_mbps']:10.2f}")
+        print(f"  {side:7} {run['decoder'][:44]:44} {run['precision']:4} {run['iteration_cap']:>4} {errors:>9} {fps:10.1f} {run['info_mbps']:10.2f}")
     if "gf2" in best and "aff3ct" in best:
         print(f"  ratio {best['gf2'] / best['aff3ct']:.3f}")
+    if "gf2" in flooding and "aff3ct" in flooding:
+        print(f"  flooding ratio {flooding['gf2'] / flooding['aff3ct']:.3f}")
 for row in rows:
     if "failed" in row and row["code"] == code:
         print(f"\nfailed: {row['side']} {row['failed']}")
@@ -112,7 +118,8 @@ EOF
 
 {
     echo "host $(hostname); FER = frames with an information-bit error over the decoded frames;"
-    echo "ratio = best gf2 frames/s / best AFF3CT frames/s"
+    echo "ratio = best gf2 frames/s / best AFF3CT frames/s;"
+    echo "flooding ratio = the same over flooding decoders only"
     arm_codes | while read -r bundle code; do
         dir="$GF2_LDPC_BUNDLES/$bundle"
         for cell in "${cells[@]}"; do
