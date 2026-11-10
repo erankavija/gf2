@@ -1,5 +1,5 @@
-//! Shared conformance suite for the GF(2^8) cached-product-table axpy lane:
-//! through the public [`FieldVec::axpy`], the cached-table lane for
+//! Shared conformance suite for the GF(2^8) split-table axpy lane: through
+//! the public [`FieldVec::axpy`], the split-table lane for
 //! `Gf2mElement` and single-word `Gf2mWide<1, Cfg>` must agree with the scalar
 //! element loop reached through [`force_scalar_gf256_table`].
 

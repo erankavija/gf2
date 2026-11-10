@@ -32,6 +32,7 @@ pub mod fp_small;
 pub mod fp_small_f32;
 pub mod fp_small_panel;
 pub mod fp_small_ple;
+pub mod gf256_region;
 pub mod gf2m;
 pub mod gf2m_batch;
 pub mod gf2m_gemm;

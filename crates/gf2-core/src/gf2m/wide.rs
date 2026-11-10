@@ -688,8 +688,9 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
         usize::MAX
     }
 
-    /// Routes a GF(2^8) fused multiply-add through the cached byte product
-    /// table, in place and without allocation.
+    /// Routes a GF(2^8) fused multiply-add through the dispatched byte-region
+    /// kernel and the cached split tables, through reused thread-local byte
+    /// buffers.
     ///
     /// `crate::gf2m::byte_table::gf256_table_dispatch` states the predicate
     /// that selects this lane; every other degree and every multi-word
@@ -705,11 +706,10 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
         };
         debug_assert_eq!(N, 1, "the dispatch accepts only the single-word width");
 
-        let row = table.row(a.words[0] as u8);
-        crate::gf2m::byte_table::axpy_region(
+        crate::gf2m::byte_table::axpy_elements(
             y,
             x,
-            row,
+            &table[usize::from(a.words[0] as u8)],
             |source| source.words[0] as u8,
             |destination, product| destination.words[0] ^= u64::from(product),
         );
@@ -747,7 +747,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
         Some(Self::from_u64(value))
     }
 
-    /// Computes the dense product over the cached GF(2^8) byte product table
+    /// Computes the dense product through the blocked GF(2^8) byte product
     /// when `crate::gf2m::byte_table::gf256_table_dispatch` accepts.
     ///
     /// Otherwise single-word GF(2^m) for `m` in {8, 16, 32} takes the

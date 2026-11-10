@@ -13,7 +13,7 @@ rust-version = "1.95"
 # Always linked: provides the FiniteField / Fp<P> / BitVec primitives the
 # packed types and permanent algorithms operate over. See D1a §3 for the
 # dependency-edge graph.
-gf2-core = { path = "../gf2-core" }
+gf2-core = { path = "../gf2-core", default-features = false, features = ["rand", "io"] }
 num-bigint = { workspace = true }
 # Rayon dispatch is gated behind the `parallel` feature; the rayon crate
 # itself is therefore an optional dep. See D1c §2 row `parallel`.
@@ -34,7 +34,7 @@ serde = { version = "1", features = ["derive"], optional = true }
 proptest = { workspace = true }
 criterion = { workspace = true }
 # Integration tests use the shared fresh-process tuning support.
-gf2-core = { path = "../gf2-core", features = ["test-support"] }
+gf2-core = { path = "../gf2-core", default-features = false, features = ["rand", "io", "test-support"] }
 # Production-only validation boundary: exact algebra anchors exercise the
 # interval estimator without adding a production dependency on statistics.
 gf2-stats = { path = "../gf2-stats" }

@@ -1,62 +1,54 @@
-//! Cached GF(2^8) byte product tables and the region kernel that reads them.
-//! One table holds the product of every byte pair under one degree-8
-//! reduction polynomial, keyed by that polynomial's low eight bits. A table
-//! occupies 65536 bytes; the registry holds one per key used, at most 16 MiB,
-//! and never evicts.
+//! Cached GF(2^8) split product tables and the byte-region routes that read
+//! them. One table set holds, for every constant `c`, the products of `c` with
+//! the sixteen low and the sixteen high nibbles under one degree-8 reduction
+//! polynomial, keyed by that polynomial's low eight bits: 8192 bytes per key,
+//! at most 2 MiB over all keys, never evicted. The kernels of
+//! `gf2_kernels_simd::gf256_region`, selected by [`crate::gf256_region`],
+//! multiply through them.
 
+use gf2_kernels_simd::gf256_region::{GemmBlock, SplitTable};
 use std::sync::OnceLock;
 
-/// Products of one fixed coefficient with every byte, indexed by that byte.
-pub(crate) type ProductRow = [u8; 256];
+/// The split table of every constant under one reduction polynomial.
+pub(crate) type Gf256SplitTables = [SplitTable; 256];
 
 /// Registry slots: one per degree-8 reduction polynomial.
 const REGISTRY_SLOTS: usize = 256;
 
-/// Entries in one product table: every ordered byte pair.
-const TABLE_ENTRIES: usize = 256 * 256;
+/// Depth of one matrix-product block: the right operand's rows a block reads.
+const GEMM_DEPTH_BLOCK: usize = 256;
 
-/// Elements [`axpy_region`] handles per unrolled step.
-pub(crate) const AXPY_UNROLL: usize = 8;
+/// Width of one matrix-product block: with [`GEMM_DEPTH_BLOCK`] rows the
+/// block's right operand stays within a 512 KiB second-level cache.
+const GEMM_WIDTH_BLOCK: usize = 1024;
 
-/// The products of every ordered byte pair under one degree-8 reduction
-/// polynomial.
+/// Builds the split tables for the reduction polynomial whose low eight bits
+/// are `reduction_low`.
 ///
-/// `entries[256 * c + v]` is `c * v` reduced by the polynomial the table was
-/// built for. Immutable after construction and shareable across every worker.
-pub(crate) struct Gf256ProductTable {
-    entries: [u8; TABLE_ENTRIES],
-}
-
-impl Gf256ProductTable {
-    /// Builds the whole table for the reduction polynomial whose low eight
-    /// bits are `reduction_low`.
-    ///
-    /// Each row is the doubling recurrence over that polynomial: `c * 0` is
-    /// zero, `c * 1` is `c`, an even multiple is [`xtime`] of half of it, and
-    /// an odd multiple is the even one below it XOR `c`.
-    fn build(reduction_low: u8) -> Self {
-        let mut entries = [0u8; TABLE_ENTRIES];
-        for coefficient in 0..256usize {
-            let base = coefficient << 8;
-            entries[base + 1] = coefficient as u8;
-            for value in 2..256usize {
-                entries[base + value] = if value % 2 == 0 {
-                    xtime(entries[base + value / 2], reduction_low)
-                } else {
-                    entries[base + value - 1] ^ entries[base + 1]
-                };
-            }
+/// Each constant's 256 products follow the doubling recurrence over that
+/// polynomial: `c * 0` is zero, `c * 1` is `c`, an even multiple is [`xtime`]
+/// of half of it, and an odd multiple is the even one below it XOR `c`.
+fn build(reduction_low: u8) -> Gf256SplitTables {
+    let mut tables = [SplitTable {
+        low: [0; 16],
+        high: [0; 16],
+    }; 256];
+    for (coefficient, table) in tables.iter_mut().enumerate() {
+        let mut row = [0u8; 256];
+        row[1] = coefficient as u8;
+        for value in 2..256usize {
+            row[value] = if value % 2 == 0 {
+                xtime(row[value / 2], reduction_low)
+            } else {
+                row[value - 1] ^ row[1]
+            };
         }
-        Self { entries }
+        for nibble in 0..16 {
+            table.low[nibble] = row[nibble];
+            table.high[nibble] = row[nibble << 4];
+        }
     }
-
-    /// Returns the 256 products of `coefficient` with every byte.
-    pub(crate) fn row(&self, coefficient: u8) -> &ProductRow {
-        let start = usize::from(coefficient) << 8;
-        self.entries[start..start + 256]
-            .try_into()
-            .expect("a 256-byte window of a 65536-byte table")
-    }
+    tables
 }
 
 /// Multiplies by `x` in GF(2^8) under the modulus whose low eight bits are
@@ -71,53 +63,43 @@ fn xtime(value: u8, reduction_low: u8) -> u8 {
     }
 }
 
-/// One lazily initialised table per degree-8 reduction polynomial.
-static TABLES: [OnceLock<Gf256ProductTable>; REGISTRY_SLOTS] =
+/// One lazily initialised table set per degree-8 reduction polynomial.
+static TABLES: [OnceLock<Gf256SplitTables>; REGISTRY_SLOTS] =
     [const { OnceLock::new() }; REGISTRY_SLOTS];
 
-/// Returns the process-wide table for the reduction polynomial whose low eight
-/// bits are `reduction_low`, building it on the first touch of that key.
+/// Returns the process-wide table set for the reduction polynomial whose low
+/// eight bits are `reduction_low`, building it on the first touch of that key.
 ///
-/// The first caller for a key builds the table, concurrent callers for the
-/// same key block until it is published, and every later caller takes the
+/// The first caller for a key builds the tables, concurrent callers for the
+/// same key block until they are published, and every later caller takes the
 /// published reference with no lock.
-pub(crate) fn product_table(reduction_low: u8) -> &'static Gf256ProductTable {
+pub(crate) fn split_tables(reduction_low: u8) -> &'static Gf256SplitTables {
     TABLES[usize::from(reduction_low)].get_or_init(|| {
         record_table_build();
-        Gf256ProductTable::build(reduction_low)
+        build(reduction_low)
     })
 }
 
-/// XORs the products of one coefficient row into `y`, reading `x` of the same length.
+/// XORs `table`'s products of the sources of `x` into the destinations of
+/// `y`, of the same length, in one pass.
 ///
 /// `source_byte` reads the GF(2^8) value out of a source element and
 /// `accumulate` XORs one product into a destination element, so the same
-/// kernel serves the runtime-context element and the compile-time-configured
-/// wide value without either representation packing its operands into bytes.
-/// The kernel allocates nothing and reads `x` while writing `y`, which the
-/// caller's borrows keep disjoint.
-pub(crate) fn axpy_region<Y, X>(
+/// route serves the runtime-context element and the compile-time-configured
+/// wide value. Elements of 8 or 16 bytes leave nothing for the byte kernel to
+/// gain over one pass: copying the values into bytes and back costs more than
+/// the products, so the route expands the constant's split table into its 256
+/// products once and looks each one up. Allocates nothing.
+pub(crate) fn axpy_elements<Y, X>(
     y: &mut [Y],
     x: &[X],
-    row: &ProductRow,
+    table: &SplitTable,
     source_byte: impl Fn(&X) -> u8,
     accumulate: impl Fn(&mut Y, u8),
 ) {
-    let mut destinations = y.chunks_exact_mut(AXPY_UNROLL);
-    let mut sources = x.chunks_exact(AXPY_UNROLL);
-    for (destination, source) in destinations.by_ref().zip(sources.by_ref()) {
-        for lane in 0..AXPY_UNROLL {
-            accumulate(
-                &mut destination[lane],
-                row[usize::from(source_byte(&source[lane]))],
-            );
-        }
-    }
-    for (destination, source) in destinations
-        .into_remainder()
-        .iter_mut()
-        .zip(sources.remainder())
-    {
+    debug_assert_eq!(y.len(), x.len());
+    let row: [u8; 256] = core::array::from_fn(|value| table.apply(value as u8));
+    for (destination, source) in y.iter_mut().zip(x) {
         accumulate(destination, row[usize::from(source_byte(source))]);
     }
 }
@@ -133,16 +115,53 @@ pub(crate) struct GemmShape {
     pub(crate) n: usize,
 }
 
+/// `c = a · b` over bytes, `a` `m × k`, `b` `k × n` and `c` `m × n`, all
+/// row-major, overwriting `c`.
+///
+/// The product runs in blocks of [`GEMM_DEPTH_BLOCK`] inner indices by
+/// [`GEMM_WIDTH_BLOCK`] columns, each through the dispatched block kernel,
+/// so a block of the right operand is read from cache by every row of the
+/// left one.
+pub(crate) fn gemm_bytes(
+    tables: &Gf256SplitTables,
+    shape: &GemmShape,
+    a: &[u8],
+    b: &[u8],
+    c: &mut [u8],
+) {
+    let GemmShape { m, k, n } = *shape;
+    debug_assert_eq!((a.len(), b.len(), c.len()), (m * k, k * n, m * n));
+    c.fill(0);
+    let kernel = crate::gf256_region().gemm_block;
+    for depth_start in (0..k).step_by(GEMM_DEPTH_BLOCK) {
+        let depth = GEMM_DEPTH_BLOCK.min(k - depth_start);
+        for column in (0..n).step_by(GEMM_WIDTH_BLOCK) {
+            let width = GEMM_WIDTH_BLOCK.min(n - column);
+            let block = GemmBlock {
+                tables,
+                a: &a[depth_start..],
+                a_stride: k,
+                b: &b[depth_start * n + column..],
+                b_stride: n,
+                rows: m,
+                depth,
+                width,
+            };
+            kernel(&block, &mut c[column..], n);
+        }
+    }
+}
+
 /// Writes the product of `a` and the operand `b_t` holds transposed into
-/// `out`.
+/// `out`, through [`gemm_bytes`].
 ///
 /// `b_t` is the right operand in `n × k` row-major order, the form the
-/// whole-product hook receives; restoring it to `k × n` is what lets one
-/// left-hand coefficient drive a whole output row through [`axpy_region`], and
-/// costs `O(kn)` byte moves inside an `O(mkn)` kernel. `byte_of` reads the
-/// GF(2^8) value out of an operand element and `store` writes one result byte
-/// into a destination element, so the same traversal serves the
-/// runtime-context element and the compile-time-configured wide value.
+/// whole-product hook receives; restoring it to `k × n` lets the block kernel
+/// read rows of the right operand, and costs `O(kn)` byte moves inside an
+/// `O(mkn)` product. `byte_of` reads the GF(2^8) value out of an operand
+/// element and `store` writes one result byte into a destination element, so
+/// the same traversal serves the runtime-context element and the
+/// compile-time-configured wide value.
 ///
 /// # Arguments
 ///
@@ -153,14 +172,14 @@ pub(crate) struct GemmShape {
 ///
 /// # Complexity
 ///
-/// `O(mkn)` indexed loads and XORs over three byte buffers totalling
-/// `mk + kn + mn` bytes.
+/// `O(mkn)` table lookups over three byte buffers totalling `mk + kn + mn`
+/// bytes.
 pub(crate) fn gemm_region<T>(
     a: &[T],
     b_t: &[T],
     shape: &GemmShape,
     out: &mut [T],
-    table: &Gf256ProductTable,
+    tables: &Gf256SplitTables,
     byte_of: impl Fn(&T) -> u8,
     store: impl Fn(&mut T, u8),
 ) {
@@ -173,34 +192,30 @@ pub(crate) fn gemm_region<T>(
     }
 
     let left: Vec<u8> = a.iter().map(&byte_of).collect();
+    // A transpose in square tiles keeps both sides of each tile in cache.
+    const TILE: usize = 64;
     let mut right = vec![0u8; k * n];
-    for (p, right_row) in right.chunks_exact_mut(n).enumerate() {
-        for (j, slot) in right_row.iter_mut().enumerate() {
-            *slot = byte_of(&b_t[j * k + p]);
+    for j0 in (0..n).step_by(TILE) {
+        for p0 in (0..k).step_by(TILE) {
+            for j in j0..(j0 + TILE).min(n) {
+                for p in p0..(p0 + TILE).min(k) {
+                    right[p * n + j] = byte_of(&b_t[j * k + p]);
+                }
+            }
         }
     }
 
     let mut products = vec![0u8; m * n];
-    for (i, product_row) in products.chunks_exact_mut(n).enumerate() {
-        for (p, right_row) in right.chunks_exact(n).enumerate() {
-            axpy_region(
-                product_row,
-                right_row,
-                table.row(left[i * k + p]),
-                |byte| *byte,
-                |slot, product| *slot ^= product,
-            );
-        }
-    }
+    gemm_bytes(tables, shape, &left, &right, &mut products);
 
     for (slot, &product) in out.iter_mut().zip(products.iter()) {
         store(slot, product);
     }
 }
 
-/// Name the GF(2^8) table dispatch reports when it runs the cached product
-/// table.
-pub const GF256_TABLE_LANE: &str = "gf256-product-table";
+/// Name the GF(2^8) table dispatch reports when it runs the byte-region
+/// kernels over the cached split tables.
+pub const GF256_TABLE_LANE: &str = "gf256-split-table";
 
 /// Name the GF(2^8) table dispatch reports when it declines, leaving the
 /// caller on the route it takes without the table.
@@ -243,10 +258,10 @@ pub(crate) fn gf256_table_dispatch(
     single_u64_word: bool,
     reduction_low: u8,
     shared_field_context: impl FnOnce() -> bool,
-) -> Option<&'static Gf256ProductTable> {
+) -> Option<&'static Gf256SplitTables> {
     if degree == 8 && single_u64_word && gf256_table_lane_enabled() && shared_field_context() {
         record_gf256_table_lane(GF256_TABLE_LANE);
-        Some(product_table(reduction_low))
+        Some(split_tables(reduction_low))
     } else {
         record_gf256_table_lane(GF256_SCALAR_LANE);
         None
@@ -298,7 +313,7 @@ fn record_table_build() {
 #[inline(always)]
 fn record_table_build() {}
 
-/// How many product tables this process has built.
+/// How many split table sets this process has built.
 ///
 /// The witness that a key is built at most once: the counter rises by one the
 /// first time a key is touched and stands still on every later lookup of it.
@@ -344,7 +359,7 @@ mod tests {
     /// Independent schoolbook oracle: the carry-less product of two bytes,
     /// reduced by the degree-8 modulus bit by bit.
     ///
-    /// Shares no code with [`Gf256ProductTable::build`]'s doubling recurrence
+    /// Shares no code with [`build`]'s doubling recurrence
     /// and names no arithmetic from this crate.
     fn schoolbook_product(c: u8, v: u8, reduction_low: u8) -> u8 {
         let mut product: u16 = 0;
@@ -382,12 +397,11 @@ mod tests {
     #[test]
     fn every_entry_of_every_irreducible_modulus_matches_the_schoolbook_oracle() {
         for key in irreducible_keys() {
-            let table = product_table(key);
+            let tables = split_tables(key);
             for c in 0..=255u8 {
-                let row = table.row(c);
                 for v in 0..=255u8 {
                     assert_eq!(
-                        row[usize::from(v)],
+                        tables[usize::from(c)].apply(v),
                         schoolbook_product(c, v, key),
                         "product {c} * {v} under the modulus with low bits {key:#04x}"
                     );
@@ -399,10 +413,10 @@ mod tests {
     #[test]
     fn the_zero_coefficient_gives_an_all_zero_row_and_one_gives_the_identity() {
         for key in irreducible_keys() {
-            let table = product_table(key);
-            assert!(table.row(0).iter().all(|&product| product == 0));
+            let tables = split_tables(key);
             for v in 0..=255u8 {
-                assert_eq!(table.row(1)[usize::from(v)], v);
+                assert_eq!(tables[0].apply(v), 0);
+                assert_eq!(tables[1].apply(v), v);
             }
         }
     }
@@ -410,13 +424,13 @@ mod tests {
     #[test]
     fn a_second_lookup_of_a_key_returns_the_same_table_and_builds_nothing() {
         let key = 0x1d;
-        let first = product_table(key);
+        let first = split_tables(key);
         let builds_after_first = gf256_table_builds();
-        let second = product_table(key);
+        let second = split_tables(key);
         assert!(std::ptr::eq(first, second));
         assert_eq!(gf256_table_builds(), builds_after_first);
 
-        let other = product_table(0x1b);
+        let other = split_tables(0x1b);
         assert!(!std::ptr::eq(first, other));
     }
 
@@ -425,9 +439,9 @@ mod tests {
         // A key no other test in this module touches, so the threads below
         // race on its construction.
         let key = 0x2b;
-        let observed: Vec<&'static Gf256ProductTable> = std::thread::scope(|scope| {
+        let observed: Vec<&'static Gf256SplitTables> = std::thread::scope(|scope| {
             let handles: Vec<_> = (0..16)
-                .map(|_| scope.spawn(move || product_table(key)))
+                .map(|_| scope.spawn(move || split_tables(key)))
                 .collect();
             handles
                 .into_iter()
@@ -439,15 +453,49 @@ mod tests {
         assert!(observed.iter().all(|table| std::ptr::eq(*table, first)));
         for c in 0..=255u8 {
             for v in 0..=255u8 {
-                assert_eq!(first.row(c)[usize::from(v)], schoolbook_product(c, v, key));
+                assert_eq!(
+                    first[usize::from(c)].apply(v),
+                    schoolbook_product(c, v, key)
+                );
             }
         }
     }
 
     #[test]
-    fn the_region_kernel_accumulates_products_at_every_byte_offset() {
+    fn the_blocked_product_matches_the_schoolbook_sum_across_block_edges() {
         let key = 0x1d;
-        let row = product_table(key).row(0x57);
+        let mut state = 0x9e37_79b9u32;
+        let mut next = || {
+            state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+            (state >> 24) as u8
+        };
+        for (m, k, n) in [
+            (0, 3, 4),
+            (3, 0, 4),
+            (1, 1, 1),
+            (5, GEMM_DEPTH_BLOCK + 3, 7),
+            (6, 9, GEMM_WIDTH_BLOCK + 33),
+            (9, GEMM_DEPTH_BLOCK + 1, GEMM_WIDTH_BLOCK + 1),
+        ] {
+            let a: Vec<u8> = (0..m * k).map(|_| next()).collect();
+            let b: Vec<u8> = (0..k * n).map(|_| next()).collect();
+            let mut c = vec![0xa5u8; m * n];
+            gemm_bytes(split_tables(key), &GemmShape { m, k, n }, &a, &b, &mut c);
+            for i in 0..m {
+                for j in 0..n {
+                    let expected = (0..k).fold(0, |sum, p| {
+                        sum ^ schoolbook_product(a[i * k + p], b[p * n + j], key)
+                    });
+                    assert_eq!(c[i * n + j], expected, "{m}x{k}x{n} at {i},{j}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn the_element_route_accumulates_products_at_every_byte_offset() {
+        let key = 0x1d;
+        let table = &split_tables(key)[0x57];
         for length in [0usize, 1, 63, 64, 65, 137] {
             for destination_offset in 0..=7usize {
                 for source_offset in 0..=7usize {
@@ -459,10 +507,10 @@ mod tests {
                         .collect();
                     let mut destination = initial.clone();
 
-                    axpy_region(
+                    axpy_elements(
                         &mut destination[destination_offset..],
                         &source[source_offset..],
-                        row,
+                        table,
                         |byte| *byte,
                         |slot, product| *slot ^= product,
                     );

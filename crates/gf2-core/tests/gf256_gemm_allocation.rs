@@ -1,4 +1,4 @@
-//! Allocation witness for the GF(2^8) cached-product-table dense product: pins
+//! Allocation witness for the GF(2^8) split-table dense product: pins
 //! the allocation count and total bytes at one shape for both single-word
 //! representations.
 

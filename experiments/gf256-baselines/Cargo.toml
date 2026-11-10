@@ -1,0 +1,10 @@
+[package]
+name = "gf256-baselines"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+description = "gf2's GF(2^8) region and matrix products against ISA-L and M4RIE"
+
+[dependencies]
+gf2-core = { path = "../../crates/gf2-core" }

@@ -570,6 +570,60 @@ impl Gf2mField_ {
     pub fn gf65536() -> Self {
         Gf2mField::new(16, 0b10001000000001011)
     }
+
+    /// `y[i] += c · x[i]` over byte-coded elements of this GF(2^8) field, as
+    /// erasure codes multiply a region by a constant.
+    ///
+    /// The bytes are the field's elements in its polynomial basis. The call
+    /// runs the dispatched byte-region kernel over the field's cached split
+    /// tables: two `vpshufb` nibble lookups per 32 bytes with the `simd`
+    /// feature on AVX2 hosts, table lookups otherwise; both write the same
+    /// bytes. Takes O(`x.len()`) time and allocates nothing after the field's
+    /// first byte-region call builds its 8 KiB of tables.
+    ///
+    /// # Panics
+    ///
+    /// Panics unless the field has degree 8 and `x.len() == y.len()`.
+    pub fn gf256_axpy(&self, c: u8, x: &[u8], y: &mut [u8]) {
+        let tables = self.gf256_split_tables();
+        assert_eq!(x.len(), y.len(), "gf256_axpy: region lengths differ");
+        (crate::gf256_region().mul_add)(&tables[usize::from(c)], x, y);
+    }
+
+    /// `c = a · b` over byte-coded elements of this GF(2^8) field: `a` is
+    /// `m × k`, `b` `k × n` and `c` `m × n`, all row-major, and `c` is
+    /// overwritten.
+    ///
+    /// The product runs in cache blocks through the dispatched byte kernel,
+    /// which holds four rows of `c` in registers across each block's inner
+    /// dimension. Takes O(`m · k · n`) time and allocates nothing after the
+    /// field's first byte-region call.
+    ///
+    /// # Panics
+    ///
+    /// Panics unless the field has degree 8 and the slices hold `m · k`,
+    /// `k · n` and `m · n` bytes.
+    pub fn gf256_gemm(&self, m: usize, k: usize, n: usize, a: &[u8], b: &[u8], c: &mut [u8]) {
+        let tables = self.gf256_split_tables();
+        assert_eq!(a.len(), m * k, "gf256_gemm: a holds m * k bytes");
+        assert_eq!(b.len(), k * n, "gf256_gemm: b holds k * n bytes");
+        assert_eq!(c.len(), m * n, "gf256_gemm: c holds m * n bytes");
+        crate::gf2m::byte_table::gemm_bytes(
+            tables,
+            &crate::gf2m::byte_table::GemmShape { m, k, n },
+            a,
+            b,
+            c,
+        );
+    }
+
+    fn gf256_split_tables(&self) -> &'static crate::gf2m::byte_table::Gf256SplitTables {
+        assert_eq!(
+            self.params.m, 8,
+            "byte-region operations need a GF(2^8) field"
+        );
+        crate::gf2m::byte_table::split_tables((self.params.primitive_poly & 0xff) as u8)
+    }
 }
 
 impl<V: UintExt> Gf2mElement_<V> {
@@ -1040,8 +1094,9 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
         usize::MAX
     }
 
-    /// Routes a GF(2^8) fused multiply-add through the cached byte product
-    /// table, in place and without allocation.
+    /// Routes a GF(2^8) fused multiply-add through the dispatched byte-region
+    /// kernel and the cached split tables, through reused thread-local byte
+    /// buffers.
     ///
     /// `crate::gf2m::byte_table::gf256_table_dispatch` states the predicate
     /// that selects this lane; it declines when the operands do not all share
@@ -1060,11 +1115,10 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
             return false;
         };
 
-        let row = table.row(a.value.as_u64_truncated() as u8);
-        crate::gf2m::byte_table::axpy_region(
+        crate::gf2m::byte_table::axpy_elements(
             y,
             x,
-            row,
+            &table[usize::from(a.value.as_u64_truncated() as u8)],
             |source| source.value.as_u64_truncated() as u8,
             |destination, product| {
                 destination.value =
@@ -1074,7 +1128,7 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
         true
     }
 
-    /// Routes a dense GF(2^8) product through the cached byte product table;
+    /// Routes a dense GF(2^8) product through the blocked byte product;
     /// `crate::gf2m::byte_table::gf256_table_dispatch` states the predicate
     /// that selects this lane.
     ///

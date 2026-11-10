@@ -1,4 +1,4 @@
-//! Allocation witness for the GF(2^8) cached-table axpy lane: a call allocates
+//! Allocation witness for the GF(2^8) split-table axpy lane: a call allocates
 //! nothing.
 
 #![cfg(feature = "test-support")]
