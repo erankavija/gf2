@@ -1,7 +1,7 @@
 # issue	worktree	est_minutes	command
 # 67194d70 new pre-draw validation; est_minutes is an estimate from the September run over the same anchors
 67194d70	.agents/worktrees/agent-67194d70	20	bash experiments/permanent-statistics/validation-window.sh
-# de311215 DVB-T2 R1/2 normal QcDecoder against the current route at w1-b1 and w12-b8; est_minutes is an estimate
-de311215	.agents/worktrees/agent-de311215	15	./scripts/cargo-budget.sh cargo bench -p gf2-coding --bench ldpc_dvb_t2_qc --no-run && CARGO_CI_NO_LOCK=1 GF2_BENCH=1 ./dev/scripts/ccx1-bench-flock.sh --full-host cargo bench -p gf2-coding --bench ldpc_dvb_t2_qc
 # c62356d2 QC route sweep; est_minutes is an estimate, not a measurement
 c62356d2	.agents/worktrees/jit-c62356d2	45	bash experiments/aff3ct-ldpc-gaps/qc-route-sweep.sh
+# de311215 gf2 routes against AFF3CT NMS configurations on the recorded DVB-T2 and NR bundles; inputs and the AFF3CT tree are host-local under .agents/ext; est_minutes is an estimate
+de311215	.agents/worktrees/agent-de311215	60	GF2_AFF3CT_ROOT="$PWD/../../ext/c077a88b/aff3ct" GF2_LDPC_BUNDLES="$PWD/../../ext/c077a88b/inputs" bash experiments/aff3ct-ldpc-gaps/quick-compare.sh

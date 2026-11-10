@@ -48,6 +48,17 @@ bundle directory, the code name, the decoder type, `none` or `INTER`, the
 precision, and the worker, batch and call counts, decodes the whole bundle
 untimed for frame errors, and prints one JSON line with the median call time.
 The shim compiles as C++17, which AFF3CT's SIMD update rules require.
+`gf2-fast-bench` takes the same arguments for a gf2 route: `single`, `lanes`,
+`qc` (`QcDecoder` one frame at a time) or `default` (`LdpcBatchDecoder` as
+shipped), with SIMD `none` or `avx2` (`none` for `single`, `auto` for
+`default`) and precision `f32`. It attaches the corpus block description after
+an exact parity-check comparison. Both executables share the argument parsing,
+pinned call loop and JSON line of `src/fast.rs`.
+[quick-compare.sh](quick-compare.sh) builds both, runs every gf2 route and
+AFF3CT configuration whose wave divides the batch over both bundles and a fixed
+worker and batch grid inside a benchmark window, and writes one table of frames
+per second, information throughput, frame errors and the best-gf2 to
+best-AFF3CT ratio under `target/`; its header names the environment it reads.
 
 Generate portable configuration from a declaration:
 
