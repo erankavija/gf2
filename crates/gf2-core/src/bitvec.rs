@@ -1118,18 +1118,12 @@ fn polar_transform_words(words: &mut [u64]) {
             *word ^= (*word & low) << shift;
         }
     }
-    // Below this many words a plain loop beats the dispatched XOR kernel.
-    const KERNEL_WORDS: usize = 8;
     let mut stride = 1;
     while stride < words.len() {
         for pair in words.chunks_exact_mut(2 * stride) {
             let (low, high) = pair.split_at_mut(stride);
-            if stride >= KERNEL_WORDS {
-                crate::kernels::ops::xor_inplace(high, low);
-            } else {
-                for (high, low) in high.iter_mut().zip(low.iter()) {
-                    *high ^= *low;
-                }
+            for (high, low) in high.iter_mut().zip(low.iter()) {
+                *high ^= *low;
             }
         }
         stride *= 2;
