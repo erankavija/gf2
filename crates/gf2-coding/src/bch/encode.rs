@@ -322,20 +322,24 @@ pub enum EncodeFamily {
     /// otherwise. Both write the same bits.
     BitsliceInterleaved,
 
-    /// Carry-less-multiply fold, consuming 64 message coefficients per step
-    /// through one Barrett reduction.
+    /// Carry-less-multiply fold, consuming 64 message coefficients per
+    /// multiply of each remainder word.
     ///
-    /// A step takes the remainder $R$ so far and the block $B$ of the next 64
-    /// message coefficients and reduces $R x^{64} + B x^{r}$, whose degree is
-    /// below $r + 64$, by one Barrett quotient and one product with the
-    /// generator. That is $1 + \lceil r/64 \rceil$ carry-less multiplies for
-    /// 64 message coefficients, against one shift and one conditional
-    /// generator exclusive-or per coefficient in the reference, so the cost
-    /// per message coefficient falls with the multiplier width rather than
-    /// with how many coefficients a table indexes.
+    /// For generators of degree up to 256 the message's 64-coefficient blocks
+    /// fold in chunks of $L$ into an unreduced accumulator of $L$ words, one
+    /// product with a precomputed $x^{64(L+i)} \bmod g$ per accumulator word
+    /// and remainder word, and the accumulator reduces once at the end by
+    /// Barrett steps. The products of a chunk are independent, so $L$, which
+    /// [`gf2_kernels_simd::bch_encode::fold_accumulators`] derives from the
+    /// multiplier's latency and issue rate, keeps the multiplier busy. Wider
+    /// generators fold one block at a time, reducing $R x^{64} + B x^{r}$ by
+    /// one Barrett quotient and one product with the generator. Either way it
+    /// is about $\lceil r/64 \rceil$ carry-less multiplies per 64 message
+    /// coefficients, against one shift and one conditional generator
+    /// exclusive-or per coefficient in the reference.
     ///
     /// The reduction is per message, so a batch buys it nothing beyond
-    /// amortizing the Barrett constant its preparation derives. The kernels
+    /// amortizing the constants its preparation derives. The kernels
     /// are [`gf2_kernels_simd::bch_encode`]'s: its PCLMULQDQ fold where the
     /// host detects the features that module names, and its portable
     /// carry-less multiply otherwise. Both write the same bits.
@@ -1187,7 +1191,8 @@ impl SystematicKernel<Fp<2>> for BitVec {
     /// $O(1024 \lceil r/64 \rceil)$ word writes per table preparation,
     /// against a batch's $O(m k \lceil r/64 \rceil)$ reduction, $O(r)$ words
     /// for the lane-group scratch, and $O(\lceil r/64 \rceil)$ word
-    /// operations over 64 division steps for the Barrett constant.
+    /// operations over 64 division steps for the Barrett constant plus one
+    /// per degree up to $x^{64(2L-1)}$ for the fold's chunk constants.
     fn reset_family(
         family: EncodeFamily,
         plan: &SystematicPlan<'_, Fp<2>>,
@@ -1234,8 +1239,8 @@ impl SystematicKernel<Fp<2>> for BitVec {
     /// [`EncodeFamily::REFERENCE`],
     /// $O((k / 32) \lceil r/64 \rceil)$ for
     /// [`EncodeFamily::TableRemainder`], and
-    /// $O((k / 64)(1 + \lceil r/64 \rceil))$ carry-less multiplies for
-    /// [`EncodeFamily::ClmulFold`], each plus $O(n / 64)$ word writes, over
+    /// $O((k / 64 + L) \lceil r/64 \rceil)$ carry-less multiplies for
+    /// [`EncodeFamily::ClmulFold`] with $L$ its accumulator count, each plus $O(n / 64)$ word writes, over
     /// the caller's registers and with no allocation.
     fn encode_systematic_family(
         family: EncodeFamily,
@@ -1270,8 +1275,9 @@ impl SystematicKernel<Fp<2>> for BitVec {
             EncodeFamily::ClmulFold if redundancy > 0 => {
                 plan.validate_lengths(message.len(), codeword.len())?;
                 validate_registers(words, registers)?;
+                let accumulators = registers.fold.get(1).map_or(0, |&count| count as usize);
                 validate_prepared(
-                    prepared_len(FOLD_CONSTANT_WORDS, words),
+                    prepared_len(fold_body_words(accumulators, words), words),
                     registers.fold.len(),
                 )?;
                 let EncodeRegisters {
@@ -1280,7 +1286,7 @@ impl SystematicKernel<Fp<2>> for BitVec {
                     fold,
                     ..
                 } = registers;
-                packed_fold_reduce(plan, message, register, low, fold[0]);
+                packed_fold_reduce(plan, message, register, low, fold);
                 packed_place_codeword(plan, message, register, codeword);
                 Ok(())
             }
@@ -1588,14 +1594,31 @@ fn packed_build_lanes(redundancy: usize, low: &[u64], lanes: &mut Vec<u64>) {
 }
 
 /// Message blocks [`packed_fold_reduce`] hands the fold kernel per call, a
-/// stack run long enough that the kernel's per-call register load and store
-/// are a small share of the blocks it folds.
-const FOLD_RUN_BLOCKS: usize = 16;
+/// stack run long enough that the kernel's per-call state load and store are
+/// a small share of the blocks it folds. A chunk fold hands it the largest
+/// multiple of its accumulator count that fits.
+const FOLD_RUN_BLOCKS: usize = 64;
 
-/// Words [`EncodeFamily::ClmulFold`] keeps in
-/// [`EncodeRegisters::fold`] ahead of its [`prepared_for`] stamp: the one
-/// Barrett constant its step reduces through.
-const FOLD_CONSTANT_WORDS: usize = 1;
+/// Words [`EncodeFamily::ClmulFold`] keeps in [`EncodeRegisters::fold`] ahead
+/// of its [`prepared_for`] stamp for `accumulators` accumulators of a
+/// `words`-word remainder: the Barrett constant its finishing step reduces
+/// through, the accumulator count, and the
+/// [`fold_chunk_constants`](bch_encode::fold_chunk_constants).
+fn fold_body_words(accumulators: usize, words: usize) -> usize {
+    2 + accumulators * words
+}
+
+/// The accumulator count [`EncodeFamily::ClmulFold`] prepares at
+/// `redundancy`: [`bch_encode::fold_accumulators`] for the bundle this
+/// process encodes with, and zero above the widths the chunk fold unrolls,
+/// where the fold runs one block at a time.
+fn fold_default_accumulators(redundancy: usize) -> usize {
+    if redundancy.div_ceil(64) <= bch_encode::FOLD_UNROLLED_WORDS {
+        bch_encode::fold_accumulators(redundancy, encode_kernels().fold_in_flight)
+    } else {
+        0
+    }
+}
 
 /// Words a prepared buffer of `body` words holds with its [`prepared_for`]
 /// stamp for a generator of `low_words` low words.
@@ -1621,43 +1644,54 @@ fn stamp_prepared(buffer: &mut Vec<u64>, body: usize, redundancy: usize, low: &[
     buffer.extend_from_slice(low);
 }
 
-/// Derives the Barrett constant [`EncodeFamily::ClmulFold`] folds through,
-/// unless `fold` already holds it for this generator.
+/// Derives the constants [`EncodeFamily::ClmulFold`] folds through, unless
+/// `fold` already holds them for this generator.
 ///
 /// The buffer is cleared and resized rather than replaced, so preparing
-/// registers that already carry the constant reaches no allocator. The
-/// division runs over `register`, whose contents carry no meaning outside an
-/// encode, so the constant costs no scratch of its own.
+/// registers that already carry the constants reaches no allocator. The
+/// Barrett division runs over `register`, whose contents carry no meaning
+/// outside an encode, so the constants cost no scratch of their own.
 fn packed_build_fold(redundancy: usize, low: &[u64], register: &mut [u64], fold: &mut Vec<u64>) {
-    if prepared_for(fold, FOLD_CONSTANT_WORDS, redundancy, low) {
+    let accumulators = fold_default_accumulators(redundancy);
+    let body = fold_body_words(accumulators, low.len());
+    if prepared_for(fold, body, redundancy, low) {
         return;
     }
     fold.clear();
-    fold.resize(FOLD_CONSTANT_WORDS, 0);
+    fold.resize(body, 0);
     fold[0] = bch_encode::fold_barrett_constant(low, redundancy, register);
-    stamp_prepared(fold, FOLD_CONSTANT_WORDS, redundancy, low);
+    fold[1] = accumulators as u64;
+    if accumulators > 0 {
+        bch_encode::fold_chunk_constants(low, redundancy, accumulators, &mut fold[2..body]);
+    }
+    stamp_prepared(fold, body, redundancy, low);
 }
 
 /// Reduces $x^r m(x)$ modulo the generator 64 message degrees at a time,
 /// leaving the remainder in `register`.
 ///
-/// One step folds the next block of message coefficients into the remainder
-/// through [`gf2_kernels_simd::bch_encode::BchFoldBlocksFn`], which multiplies
-/// the remainder by $x^{64}$ and Barrett-reduces the sum. The blocks run from
-/// the highest degrees down, exactly 64 degrees apart, and the top one is
-/// shorter than 64 degrees whenever the dimension is not a multiple of 64;
-/// the kernel reads its missing coefficients as zero, which is exact because
-/// the remainder is still zero when that block enters.
+/// The blocks run from the highest degrees down, exactly 64 degrees apart,
+/// and the top one is shorter than 64 degrees whenever the dimension is not a
+/// multiple of 64; its missing coefficients read as zero, which is exact
+/// because they sit above every coefficient of the message. With chunk
+/// constants in `fold`, the blocks fold in chunks of its accumulator count
+/// through [`gf2_kernels_simd::bch_encode::BchFoldChunksFn`], zero blocks
+/// padding the top to a whole chunk, and the accumulator reduces once at the
+/// end; without them each block folds into the remainder through
+/// [`gf2_kernels_simd::bch_encode::BchFoldBlocksFn`].
 fn packed_fold_reduce(
     plan: &SystematicPlan<'_, Fp<2>>,
     message: &BitVec,
     register: &mut [u64],
     low: &[u64],
-    barrett: u64,
+    fold: &[u64],
 ) {
     let redundancy = plan.redundancy();
     let fns = encode_kernels();
     let coefficients = message.words();
+    let barrett = fold[0];
+    let accumulators = fold[1] as usize;
+    let constants = &fold[2..fold_body_words(accumulators, low.len())];
     register.fill(0);
     // A zero remainder stays zero through zero blocks, so the fold starts at
     // the block holding the highest nonzero coefficient; a shortened
@@ -1681,18 +1715,38 @@ fn packed_fold_reduce(
         dimension - top - 64 * ((dimension - top - 1 - highest) / 64)
     };
     let mut run = [0u64; FOLD_RUN_BLOCKS];
-    let mut filled = 0;
+    let mut state = [0u64; bch_encode::FOLD_MAX_ACCUMULATORS];
+    let state = &mut state[..accumulators];
+    let (capacity, mut filled) = if accumulators == 0 {
+        (FOLD_RUN_BLOCKS, 0)
+    } else {
+        let blocks = degree.div_ceil(64);
+        (
+            FOLD_RUN_BLOCKS - FOLD_RUN_BLOCKS % accumulators,
+            (accumulators - blocks % accumulators) % accumulators,
+        )
+    };
+    let mut flush = |run: &[u64], register: &mut [u64]| {
+        if accumulators == 0 {
+            (fns.fold_blocks)(register, low, redundancy, barrett, run);
+        } else {
+            (fns.fold_chunks)(state, constants, run);
+        }
+    };
     while degree > 0 {
         let count = ((degree - 1) % 64) + 1;
         degree -= count;
         run[filled] = packed_message_window(plan, coefficients, degree, count);
         filled += 1;
-        if filled == FOLD_RUN_BLOCKS {
-            (fns.fold_blocks)(register, low, redundancy, barrett, &run);
+        if filled == capacity {
+            flush(&run[..filled], register);
             filled = 0;
         }
     }
-    (fns.fold_blocks)(register, low, redundancy, barrett, &run[..filled]);
+    flush(&run[..filled], register);
+    if accumulators > 0 {
+        bch_encode::fold_accumulator_finish(&fns, state, register, low, redundancy, barrett);
+    }
 }
 
 /// The kernel bundle this process encodes with.

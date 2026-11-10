@@ -1,7 +1,9 @@
 //! Batch-encoding kernels for binary BCH codes: one dispatch bundle carries two
 //! independent reductions of $x^r m(x)$ modulo the generator $g$. The
-//! carry-less-multiply fold reduces one frame 64 message coefficients at a time
-//! ([`BchFoldBlocksFn`]), and the bit-sliced reduction advances
+//! carry-less-multiply fold reduces one frame 64 message coefficients at a time,
+//! either into the remainder block by block ([`BchFoldBlocksFn`]) or in chunks
+//! of independent products into an unreduced accumulator
+//! ([`BchFoldChunksFn`]), and the bit-sliced reduction advances
 //! [`BITSLICE_LANES`] frames per step.
 //!
 //! # Bit-sliced register
@@ -16,10 +18,11 @@
 //! # Required processor features
 //!
 //! [`detect`] publishes the accelerated bundle only when
-//! `avx2 && pclmulqdq && sse4.1` holds. The predicate is the union over every
+//! `avx2 && pclmulqdq && sse4.1 && ssse3` holds. The predicate is the union over every
 //! kernel of the bundle, because a caller holding the bundle may call any
 //! entry: the bit-sliced reduction and the AVX2 transpose lane need `avx2`,
-//! and the fold needs `pclmulqdq` and `sse4.1`. [`scalar`] computes the same
+//! the fold needs `pclmulqdq` and `sse4.1`, and the chunk fold `ssse3` beside
+//! them. [`scalar`] computes the same
 //! words with no processor feature.
 //!
 //! # Examples
@@ -116,6 +119,170 @@ pub type BchFoldBlocksFn = fn(&mut [u64], &[u64], usize, u64, &[u64]);
 /// through memory. Four words cover every generator of degree up to 256.
 pub const FOLD_UNROLLED_WORDS: usize = 4;
 
+/// Independent carry-less-multiply fold of whole chunks of 64-degree message
+/// blocks into an unreduced accumulator.
+///
+/// The arguments are `(state, constants, blocks)`:
+///
+/// - `state` holds the accumulator $X = \sum_i X_i x^{64 i}$ in $L$ words,
+///   where $L$ is its length, [`fold_accumulators`] by default. A frame's
+///   fold starts from zero; the accumulator is congruent modulo the generator
+///   to the polynomial of the blocks consumed so far, and
+///   [`fold_accumulator_finish`] reduces it.
+/// - `constants` is [`fold_chunk_constants`] of the generator for $L$
+///   accumulators: $L$ runs of $W$ packed words, run $i$ holding
+///   $x^{64(L+i)} \bmod g$, with $W$ the remainder's word count, from one up
+///   to [`FOLD_UNROLLED_WORDS`].
+/// - `blocks` are consecutive blocks of the frame, the highest degrees first
+///   and 64 degrees apart, in whole chunks of $L$. A caller whose block count
+///   is not a multiple of $L$ passes zero blocks above the frame's top block,
+///   which leave the accumulator unchanged.
+///
+/// One chunk $C$ computes $X' = C \oplus \sum_i X_i \cdot k_i$. The $L W$
+/// products of a chunk depend only on the accumulator before it, so they
+/// issue together, and the chain from one chunk to the next is one multiply
+/// deep: $L$ at [`fold_accumulators`] keeps the multiplier's pipeline full.
+/// Each product has degree below $r + 64 \le 64 L$, so $L > W$ is what lets
+/// the accumulator hold it unreduced.
+pub type BchFoldChunksFn = fn(&mut [u64], &[u64], &[u64]);
+
+/// The accumulator counts [`BchFoldChunksFn`] accepts at most.
+pub const FOLD_MAX_ACCUMULATORS: usize = 16;
+
+/// Carry-less multiplies the scalar fold arm keeps in flight: its multiply is
+/// a dependent loop, which gains nothing from more independent ones than one.
+pub const FOLD_SCALAR_IN_FLIGHT: usize = 1;
+
+/// Carry-less multiplies the PCLMULQDQ arm needs in flight to cover the
+/// instruction's latency: its latency in cycles times its issue rate per
+/// cycle, at the deepest of the x86 cores uops.info tabulates (Skylake: 7
+/// cycles at one per cycle; Ice Lake 6 at one).
+pub const FOLD_PCLMUL_IN_FLIGHT: usize = 7;
+
+/// The accumulator count [`BchFoldChunksFn`] defaults to at `redundancy`, for
+/// a multiplier that needs `in_flight` independent products to stay busy.
+///
+/// It is the larger of $W + 1$, the fewest that hold a product unreduced, and
+/// $\lceil \text{in\_flight} / W \rceil$, the fewest whose $L W$ products per
+/// chunk fill the multiplier's pipeline, with $W$ =
+/// `redundancy.div_ceil(64)`. `in_flight` is the bundle's
+/// [`BchEncodeFns::fold_in_flight`].
+///
+/// # Panics
+///
+/// Panics when `redundancy` is zero or the count exceeds
+/// [`FOLD_MAX_ACCUMULATORS`].
+#[must_use]
+pub fn fold_accumulators(redundancy: usize, in_flight: usize) -> usize {
+    assert!(
+        redundancy > 0,
+        "a fold needs a generator of positive degree"
+    );
+    let words = redundancy.div_ceil(64);
+    let count = (words + 1).max(in_flight.div_ceil(words));
+    assert!(
+        count <= FOLD_MAX_ACCUMULATORS,
+        "{count} accumulators exceed {FOLD_MAX_ACCUMULATORS}"
+    );
+    count
+}
+
+/// Writes the constants [`BchFoldChunksFn`] multiplies by for `accumulators`
+/// accumulators: run $i$ of `constants` gets $x^{64(L+i)} \bmod g$ in
+/// `redundancy.div_ceil(64)` packed words, clear above degree $r - 1$.
+///
+/// `low` holds the generator's low $r$ coefficients packed little-endian.
+///
+/// # Panics
+///
+/// Panics when `redundancy` is zero or above `64 * FOLD_UNROLLED_WORDS`,
+/// when `accumulators` is not above the word count or above
+/// [`FOLD_MAX_ACCUMULATORS`], or when `low` and `constants` are not the
+/// word count and `accumulators` times it.
+///
+/// # Complexity
+///
+/// $O(\lceil r/64 \rceil)$ word operations per degree up to $x^{64(2L-1)}$,
+/// paid once per generator.
+pub fn fold_chunk_constants(
+    low: &[u64],
+    redundancy: usize,
+    accumulators: usize,
+    constants: &mut [u64],
+) {
+    let words = redundancy.div_ceil(64);
+    assert!(
+        (1..=FOLD_UNROLLED_WORDS).contains(&words),
+        "a chunk fold runs over 1 to {FOLD_UNROLLED_WORDS} remainder words, not {words}"
+    );
+    assert!(
+        accumulators > words && accumulators <= FOLD_MAX_ACCUMULATORS,
+        "{accumulators} accumulators cannot hold a product of {words} words"
+    );
+    assert_eq!(
+        (low.len(), constants.len()),
+        (words, accumulators * words),
+        "the constants are {accumulators} runs of {words} words"
+    );
+    let top = redundancy - 1;
+    let tail = packed_tail_mask(redundancy);
+    let mut running = [0u64; FOLD_UNROLLED_WORDS];
+    let running = &mut running[..words];
+    // x^r is the generator's low coefficients; each step multiplies by x.
+    running.copy_from_slice(low);
+    let mut degree = redundancy;
+    for (index, constant) in constants.chunks_exact_mut(words).enumerate() {
+        let target = 64 * (accumulators + index);
+        while degree < target {
+            let leaving = (running[top / 64] >> (top % 64)) & 1;
+            for word in (1..words).rev() {
+                running[word] = (running[word] << 1) | (running[word - 1] >> 63);
+            }
+            running[0] <<= 1;
+            running[words - 1] &= tail;
+            if leaving == 1 {
+                for (slot, coefficient) in running.iter_mut().zip(low) {
+                    *slot ^= *coefficient;
+                }
+            }
+            degree += 1;
+        }
+        constant.copy_from_slice(running);
+    }
+}
+
+/// Reduces a [`BchFoldChunksFn`] accumulator into the remainder of $x^r X$
+/// modulo the generator, through the bundle's `fold_blocks`: the accumulator's
+/// words enter as blocks, highest first, into a zeroed `register`.
+///
+/// `register`, `low`, `redundancy` and `barrett` are the
+/// [`BchFoldBlocksFn`] arguments.
+///
+/// # Panics
+///
+/// Panics as `fold_blocks` does.
+pub fn fold_accumulator_finish(
+    fns: &BchEncodeFns,
+    state: &[u64],
+    register: &mut [u64],
+    low: &[u64],
+    redundancy: usize,
+    barrett: u64,
+) {
+    register.fill(0);
+    let mut blocks = [0u64; FOLD_MAX_ACCUMULATORS];
+    let blocks = &mut blocks[..state.len()];
+    for (block, word) in blocks.iter_mut().zip(state.iter().rev()) {
+        *block = *word;
+    }
+    // Leading zero words of the accumulator leave a zero register unchanged.
+    let start = blocks
+        .iter()
+        .position(|&block| block != 0)
+        .unwrap_or(blocks.len());
+    (fns.fold_blocks)(register, low, redundancy, barrett, &blocks[start..]);
+}
+
 /// Bundle of dispatched BCH batch-encoding kernels.
 #[derive(Copy, Clone, Debug)]
 pub struct BchEncodeFns {
@@ -128,6 +295,11 @@ pub struct BchEncodeFns {
     /// Folds a run of 64-degree message blocks into one frame's packed
     /// remainder.
     pub fold_blocks: BchFoldBlocksFn,
+    /// Folds whole chunks of message blocks into an unreduced accumulator.
+    pub fold_chunks: BchFoldChunksFn,
+    /// Independent carry-less multiplies `fold_chunks` needs in flight to
+    /// keep its multiplier busy, which [`fold_accumulators`] reads.
+    pub fold_in_flight: usize,
     /// Human-readable tag of the chosen bundle, `"avx2-pclmul"` or
     /// `"scalar"`.
     pub name: &'static str,
@@ -329,6 +501,8 @@ pub fn scalar() -> BchEncodeFns {
         transpose_lane_block: crate::transpose::transpose_64x64_scalar,
         bitslice_reduce: bitslice_reduce_scalar,
         fold_blocks: fold_blocks_scalar,
+        fold_chunks: fold_chunks_scalar,
+        fold_in_flight: FOLD_SCALAR_IN_FLIGHT,
         name: "scalar",
     }
 }
@@ -340,7 +514,8 @@ fn detect_x86() -> Option<BchEncodeFns> {
     // The union of what every kernel of the bundle uses.
     if !(is_x86_feature_detected!("avx2")
         && is_x86_feature_detected!("pclmulqdq")
-        && is_x86_feature_detected!("sse4.1"))
+        && is_x86_feature_detected!("sse4.1")
+        && is_x86_feature_detected!("ssse3"))
     {
         return None;
     }
@@ -351,6 +526,8 @@ fn detect_x86() -> Option<BchEncodeFns> {
         transpose_lane_block: transpose.transpose_64x64,
         bitslice_reduce: bitslice_reduce_avx2_safe,
         fold_blocks: fold_blocks_pclmul_safe,
+        fold_chunks: fold_chunks_pclmul_safe,
+        fold_in_flight: FOLD_PCLMUL_IN_FLIGHT,
         name: "avx2-pclmul",
     })
 }
@@ -380,6 +557,17 @@ fn fold_blocks_pclmul_safe(
     unsafe {
         crate::x86::bch_encode::fold_blocks_pclmul(register, low, redundancy, barrett, blocks);
     }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn fold_chunks_pclmul_safe(state: &mut [u64], constants: &[u64], blocks: &[u64]) {
+    // SAFETY: `detect_x86` publishes this pointer only when
+    // `is_x86_feature_detected!("pclmulqdq")` and
+    // `is_x86_feature_detected!("sse4.1")` and `is_x86_feature_detected!("ssse3")`
+    // hold, which together are the whole safety condition of
+    // `x86::bch_encode::fold_chunks_pclmul`; the
+    // kernel decides the buffer geometry itself.
+    unsafe { crate::x86::bch_encode::fold_chunks_pclmul(state, constants, blocks) }
 }
 
 /// Reads the 64 packed coefficients starting at `offset`, bit $j$ carrying
@@ -592,6 +780,100 @@ pub fn fold_blocks_scalar(
         low,
         redundancy,
         barrett,
+        blocks,
+    );
+}
+
+/// [`BchFoldChunksFn`] over the carry-less multiply `mul`, unrolled by
+/// remainder width.
+///
+/// # Panics
+///
+/// Panics when the constants are not one run of 1 to
+/// [`FOLD_UNROLLED_WORDS`] words per accumulator, and as
+/// [`fold_chunks_words`] does.
+#[inline(always)]
+pub(crate) fn fold_chunks_over<M>(mul: M, state: &mut [u64], constants: &[u64], blocks: &[u64])
+where
+    M: Fn(u64, u64) -> u128,
+{
+    let accumulators = state.len();
+    assert!(
+        accumulators > 0 && constants.len().is_multiple_of(accumulators),
+        "the constants are one run per accumulator"
+    );
+    match constants.len() / accumulators {
+        1 => fold_chunks_words::<M, 1>(mul, state, constants, blocks),
+        2 => fold_chunks_words::<M, 2>(mul, state, constants, blocks),
+        3 => fold_chunks_words::<M, 3>(mul, state, constants, blocks),
+        4 => fold_chunks_words::<M, 4>(mul, state, constants, blocks),
+        words => panic!("a chunk fold runs over 1 to {FOLD_UNROLLED_WORDS} words, not {words}"),
+    }
+}
+
+/// [`BchFoldChunksFn`] for constants of `W` words.
+///
+/// # Panics
+///
+/// Panics when the accumulator count is not above `W` or above
+/// [`FOLD_MAX_ACCUMULATORS`], or when `blocks` is not whole chunks.
+#[inline(always)]
+fn fold_chunks_words<M, const W: usize>(
+    mul: M,
+    state: &mut [u64],
+    constants: &[u64],
+    blocks: &[u64],
+) where
+    M: Fn(u64, u64) -> u128,
+{
+    let accumulators = state.len();
+    assert!(
+        accumulators > W && accumulators <= FOLD_MAX_ACCUMULATORS,
+        "{accumulators} accumulators cannot hold a product of {W} words"
+    );
+    assert!(
+        blocks.len().is_multiple_of(accumulators),
+        "{} blocks are not whole chunks of {accumulators}",
+        blocks.len()
+    );
+    let mut x = [0u64; FOLD_MAX_ACCUMULATORS];
+    x[..accumulators].copy_from_slice(state);
+    for chunk in blocks.chunks_exact(accumulators) {
+        let mut next = [0u64; FOLD_MAX_ACCUMULATORS];
+        for (word, &block) in next[..accumulators].iter_mut().rev().zip(chunk) {
+            *word = block;
+        }
+        for (index, constant) in constants.chunks_exact(W).enumerate() {
+            let entering = x[index];
+            for (word, &k) in constant.iter().enumerate() {
+                let product = mul(entering, k);
+                next[word] ^= product as u64;
+                next[word + 1] ^= (product >> 64) as u64;
+            }
+        }
+        x = next;
+    }
+    state.copy_from_slice(&x[..accumulators]);
+}
+
+/// Portable [`BchFoldChunksFn`] over [`crate::clmul_u64_scalar`], the kernel
+/// the accelerated one is checked against.
+///
+/// # Panics
+///
+/// Panics when the constants are not one run of 1 to
+/// [`FOLD_UNROLLED_WORDS`] words per accumulator, when the accumulator count
+/// is not above that word count or above [`FOLD_MAX_ACCUMULATORS`], or when
+/// `blocks` is not whole chunks.
+///
+/// # Complexity
+///
+/// $W$ carry-less multiplies per block.
+pub fn fold_chunks_scalar(state: &mut [u64], constants: &[u64], blocks: &[u64]) {
+    fold_chunks_over(
+        crate::clmul_scalar::clmul_u64_scalar,
+        state,
+        constants,
         blocks,
     );
 }
@@ -1058,6 +1340,181 @@ mod tests {
                 "{} diverged at r={redundancy}",
                 fns.name
             );
+        }
+    }
+
+    /// Drives `fns`'s chunk fold over one frame with `accumulators`
+    /// accumulators: blocks from the highest degrees down, the top one
+    /// zero-padded, zero blocks above it to a whole chunk, in runs of `runs`
+    /// chunks, then the accumulator's reduction.
+    fn chunk_fold_parity(
+        fns: &BchEncodeFns,
+        message: &[u64],
+        dimension: usize,
+        low: &[u64],
+        redundancy: usize,
+        accumulators: usize,
+        runs: usize,
+    ) -> Vec<bool> {
+        let words = redundancy.div_ceil(64);
+        let mut scratch = vec![0u64; words];
+        let barrett = fold_barrett_constant(low, redundancy, &mut scratch);
+        let mut constants = vec![0u64; accumulators * words];
+        fold_chunk_constants(low, redundancy, accumulators, &mut constants);
+        let count = dimension.div_ceil(64);
+        let mut blocks = vec![0u64; (accumulators - count % accumulators) % accumulators];
+        let mut degree = dimension;
+        while degree > 0 {
+            let width = ((degree - 1) % 64) + 1;
+            degree -= width;
+            blocks.push(packed_window(message, degree) & mask_below(width));
+        }
+        let mut state = vec![0u64; accumulators];
+        for run in blocks.chunks(runs * accumulators) {
+            (fns.fold_chunks)(&mut state, &constants, run);
+        }
+        let mut register = vec![0u64; words];
+        fold_accumulator_finish(fns, &state, &mut register, low, redundancy, barrett);
+        (0..redundancy).map(|index| bit(&register, index)).collect()
+    }
+
+    /// Redundancies of the chunk fold, to its widest remainder.
+    const CHUNK_REDUNDANCIES: &[usize] = &[1, 27, 63, 64, 65, 168, 192, 255, 256];
+
+    fn check_chunk_fold(fns: &BchEncodeFns) {
+        let mut seeded = Seeded(0x2b69_68d3_0000_0007);
+        for &redundancy in CHUNK_REDUNDANCIES {
+            let words = redundancy.div_ceil(64);
+            let defaults = [
+                fold_accumulators(redundancy, FOLD_SCALAR_IN_FLIGHT),
+                fold_accumulators(redundancy, FOLD_PCLMUL_IN_FLIGHT),
+            ];
+            // The fewest that hold a product, the defaults, one past eight
+            // (beyond the counts the accelerated arm unrolls) and the most.
+            for accumulators in [
+                words + 1,
+                defaults[0],
+                defaults[1],
+                9,
+                FOLD_MAX_ACCUMULATORS,
+            ] {
+                let low = seeded.bits(redundancy);
+                // Dimensions 0, 1, 63, 64 and 65 put the top block at every
+                // word boundary; 1000 spans several chunks at every count.
+                for &dimension in &[0usize, 1, 63, 64, 65, 200, 1000] {
+                    let message = seeded.bits(dimension);
+                    let runs = 1 + dimension % 3;
+                    assert_eq!(
+                        chunk_fold_parity(
+                            fns,
+                            &message,
+                            dimension,
+                            &low,
+                            redundancy,
+                            accumulators,
+                            runs
+                        ),
+                        naive_parity(&message, dimension, &low, redundancy),
+                        "{} diverged at k={dimension} r={redundancy} L={accumulators}",
+                        fns.name
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn the_scalar_chunk_fold_matches_the_per_frame_reference() {
+        check_chunk_fold(&scalar());
+    }
+
+    #[test]
+    fn the_detected_chunk_fold_matches_the_per_frame_reference() {
+        let fns = crate::contract::require_detected("bch_encode::detect()", detect());
+        check_chunk_fold(&fns);
+    }
+
+    #[test]
+    fn the_detected_chunk_fold_matches_the_scalar_chunk_fold_word_for_word() {
+        let fns = crate::contract::require_detected("bch_encode::detect()", detect());
+        let mut seeded = Seeded(0x2b69_68d3_0000_0008);
+        for &redundancy in CHUNK_REDUNDANCIES {
+            let words = redundancy.div_ceil(64);
+            for accumulators in words + 1..=FOLD_MAX_ACCUMULATORS {
+                let low = seeded.bits(redundancy);
+                let mut constants = vec![0u64; accumulators * words];
+                fold_chunk_constants(&low, redundancy, accumulators, &mut constants);
+                let blocks: Vec<u64> = (0..3 * accumulators).map(|_| seeded.next()).collect();
+                let start: Vec<u64> = (0..accumulators).map(|_| seeded.next()).collect();
+                let mut expected = start.clone();
+                let mut produced = start;
+                fold_chunks_scalar(&mut expected, &constants, &blocks);
+                (fns.fold_chunks)(&mut produced, &constants, &blocks);
+                assert_eq!(
+                    produced, expected,
+                    "{} diverged at r={redundancy} L={accumulators}",
+                    fns.name
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn the_chunk_constants_are_the_shifted_monomials_modulo_the_generator() {
+        let mut seeded = Seeded(0x2b69_68d3_0000_0009);
+        for &redundancy in CHUNK_REDUNDANCIES {
+            let words = redundancy.div_ceil(64);
+            let accumulators = words + 2;
+            let low = seeded.bits(redundancy);
+            let mut constants = vec![0u64; accumulators * words];
+            fold_chunk_constants(&low, redundancy, accumulators, &mut constants);
+            for (index, run) in constants.chunks_exact(words).enumerate() {
+                // x^d mod g is the remainder of a message that is the single
+                // coefficient x^{d - r}.
+                let degree = 64 * (accumulators + index) - redundancy;
+                let mut message = vec![0u64; degree / 64 + 1];
+                set_bit(&mut message, degree);
+                let expected = naive_parity(&message, degree + 1, &low, redundancy);
+                let produced: Vec<bool> = (0..redundancy)
+                    .map(|bit_index| bit(run, bit_index))
+                    .collect();
+                assert_eq!(produced, expected, "r={redundancy} constant {index}");
+                assert_eq!(run[words - 1] & !packed_tail_mask(redundancy), 0);
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "whole chunks")]
+    fn a_chunk_fold_rejects_a_partial_chunk() {
+        let mut state = [0u64; 3];
+        fold_chunks_scalar(&mut state, &[1, 2, 3], &[7; 4]);
+    }
+
+    #[test]
+    #[should_panic(expected = "cannot hold a product")]
+    fn a_chunk_fold_rejects_too_few_accumulators() {
+        let mut state = [0u64; 2];
+        fold_chunks_scalar(&mut state, &[1, 2, 3, 4], &[7; 2]);
+    }
+
+    #[test]
+    fn the_default_accumulators_cover_the_product_and_the_pipeline() {
+        for redundancy in [1usize, 64, 65, 168, 192, 256] {
+            let words = redundancy.div_ceil(64);
+            for in_flight in [FOLD_SCALAR_IN_FLIGHT, FOLD_PCLMUL_IN_FLIGHT] {
+                let count = fold_accumulators(redundancy, in_flight);
+                assert!(
+                    count > words,
+                    "r={redundancy}: a product needs {} words",
+                    words + 1
+                );
+                assert!(
+                    count * words >= in_flight,
+                    "r={redundancy}: the pipeline needs {in_flight}"
+                );
+                assert!(count == words + 1 || (count - 1) * words < in_flight);
+            }
         }
     }
 
