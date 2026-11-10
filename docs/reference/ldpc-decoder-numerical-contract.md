@@ -100,7 +100,10 @@ The explicitly constructed `QcDecoder`
 with lanes representing lifted checks within one frame. The outputs of the
 check rule do not depend on the order of a check's edges, since tied magnitudes
 are equal values; a masked circulant entry carries a $+\infty$ input, which the
-sign and magnitude rules skip. Each variable accumulates in its canonical
+sign and magnitude rules skip. A check row forms each input as the previous
+iteration's belief minus the edge's previous check-to-variable message, the
+`f32` subtraction that defines the variable-to-check message, so no message
+plane of that direction is stored. Each variable accumulates in its canonical
 order: a column block's lanes split into segments that share one order of
 parity checks. [`ldpc_qc_contract`](../../crates/gf2-coding/tests/ldpc_qc_contract.rs)
 compares posterior bits, words and outcomes with the canonical decoder on both
