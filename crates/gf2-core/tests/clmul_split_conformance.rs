@@ -7,8 +7,8 @@
 #![cfg(feature = "test-support")]
 
 use gf2_core::gf2m::wide::{
-    clmul_slice, clmul_slice_with, clmul_wide, clmul_wide_slice, clmul_wide_slice_portable,
-    force_scalar_clmul_wide, ClmulSplit,
+    clmul_slice, clmul_slice_overwrite, clmul_slice_overwrite_with, clmul_slice_with, clmul_wide,
+    clmul_wide_slice, clmul_wide_slice_portable, force_scalar_clmul_wide, ClmulSplit,
 };
 use std::num::NonZeroUsize;
 use std::sync::Mutex;
@@ -64,9 +64,9 @@ fn operand_pairs(n: usize) -> Vec<(Vec<u64>, Vec<u64>)> {
 }
 
 /// Every split, structural or overridden, accumulates the schoolbook product
-/// into a dirty destination on both lanes.
+/// into a dirty destination, or replaces it with the product, on both lanes.
 #[test]
-fn every_split_accumulates_the_schoolbook_product_on_both_lanes() {
+fn every_split_accumulates_or_writes_the_schoolbook_product_on_both_lanes() {
     let _guard = LANE_MUTEX
         .lock()
         .unwrap_or_else(|poison| poison.into_inner());
@@ -82,10 +82,16 @@ fn every_split_accumulates_the_schoolbook_product_on_both_lanes() {
                 let mut got = dirty.clone();
                 clmul_slice(&a, &b, &mut got);
                 assert_eq!(got, expected, "structural, n {n}, forced {forced}");
+                let mut got = dirty.clone();
+                clmul_slice_overwrite(&a, &b, &mut got);
+                assert_eq!(got, want, "overwrite, n {n}, forced {forced}");
                 for split in overrides {
                     let mut got = dirty.clone();
                     clmul_slice_with(&a, &b, &mut got, split);
                     assert_eq!(got, expected, "{split:?}, n {n}, forced {forced}");
+                    let mut got = dirty.clone();
+                    clmul_slice_overwrite_with(&a, &b, &mut got, split);
+                    assert_eq!(got, want, "overwrite {split:?}, n {n}, forced {forced}");
                 }
             }
         }
