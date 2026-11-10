@@ -215,6 +215,14 @@ where
     }
 }
 
+/// Writes the zero matrix into a non-empty `out`, the product of operands
+/// with inner dimension 0. The zero comes from `out`: such operands hold no
+/// element, and a runtime-context field has no `zero_hint`.
+fn fill_zero<F: FiniteField>(out: &mut FieldMatrix<F>) {
+    let zero = <FieldMatrix<F> as MatrixLike<F>>::get(out, 0, 0).zero_like();
+    out.as_data_mut_slice().fill(zero);
+}
+
 /// Kernel `out <- A · B` over generic `MatrixLike` operands;
 /// [`gemm_concrete`] handles concrete ones.
 fn gemm_matrixlike<F, LA, LB>(a: &LA, b: &LB, out: &mut FieldMatrix<F>)
@@ -236,7 +244,11 @@ where
         (m, n),
         "gemm_matrixlike: output shape mismatch"
     );
-    if m == 0 || n == 0 || k1 == 0 {
+    if m == 0 || n == 0 {
+        return;
+    }
+    if k1 == 0 {
+        fill_zero(out);
         return;
     }
     let zero = a.get(0, 0).zero_like();
@@ -273,6 +285,10 @@ fn gemm_concrete<F: FiniteField>(a: &FieldMatrix<F>, b: &FieldMatrix<F>, out: &m
         "gemm_concrete: output shape mismatch"
     );
     if m == 0 || n == 0 {
+        return;
+    }
+    if k1 == 0 {
+        fill_zero(out);
         return;
     }
     // `gemm` returns a fresh matrix; the O(m·n) move into `out` is
@@ -422,7 +438,11 @@ fn gemm_trans_a_concrete_tiled<
         (m, n),
         "gemm_trans_a: output shape mismatch"
     );
-    if m == 0 || n == 0 || k1 == 0 {
+    if m == 0 || n == 0 {
+        return;
+    }
+    if k1 == 0 {
+        fill_zero(out);
         return;
     }
     let zero: F = <FieldMatrix<F> as MatrixLike<F>>::get(a, 0, 0).zero_like();
@@ -1077,6 +1097,12 @@ where
             "Sum::evaluate_into: operand shape mismatch"
         );
         if self.0.rows() == 0 || self.0.cols() == 0 {
+            // `axpy_linear` checks `out` on the non-empty path.
+            assert_eq!(
+                <FieldMatrix<F> as MatrixLike<F>>::shape(out),
+                self.0.shape(),
+                "Sum::evaluate_into: output shape mismatch"
+            );
             return;
         }
         let one = self.0.get(0, 0).one_like();
@@ -1256,6 +1282,7 @@ where
                 }
                 let k = self.0.rows();
                 if k == 0 {
+                    fill_zero(out);
                     return;
                 }
                 let zero = self.0.get(0, 0).zero_like();
@@ -1343,17 +1370,11 @@ where
             return;
         }
         let k = a.rows();
-        let zero = if k > 0 {
-            a.get(0, 0).zero_like()
-        } else {
-            // k = 0: the output is zero; take the witness from b.
-            if b.rows() > 0 && b.cols() > 0 {
-                b.get(0, 0).zero_like()
-            } else {
-                // All operands empty along k — nothing to write.
-                return;
-            }
-        };
+        if k == 0 {
+            fill_zero(out);
+            return;
+        }
+        let zero = a.get(0, 0).zero_like();
         // A zero-valued C adapter keeps this at one kernel call.
         struct ZeroC<'a, F: FiniteField> {
             m: usize,
@@ -2727,5 +2748,100 @@ mod tests {
                 assert_eq!(result.get(r, c), M31::new(0));
             }
         }
+    }
+
+    /// `A · B` with `A: m×k`, `B: k×n`, by definition.
+    fn naive_product(a: &FieldMatrix<M31>, b: &FieldMatrix<M31>) -> FieldMatrix<M31> {
+        let (m, k) = a.shape();
+        let n = b.shape().1;
+        let mut out = FieldMatrix::<M31>::zeros(m, n);
+        for i in 0..m {
+            for j in 0..n {
+                let mut acc = M31::new(0);
+                for t in 0..k {
+                    acc += a.get(i, t) * b.get(t, j);
+                }
+                out.set(i, j, acc);
+            }
+        }
+        out
+    }
+
+    /// Evaluates `expr` into an `out` holding stale non-zero values, so a
+    /// kernel that skips its writes is observable.
+    fn evaluate_over_stale<E: Evaluate<M31>>(expr: E) -> FieldMatrix<M31> {
+        let (m, n) = expr.shape();
+        let mut out = FieldMatrix::new(m, n, M31::new(7));
+        expr.evaluate_into(&mut out);
+        out
+    }
+
+    #[test]
+    fn test_products_overwrite_out_for_inner_dim_0_and_1() {
+        let (m, n) = (3, 4);
+        for k in [0usize, 1] {
+            let a = rand_m31(m, k, 0xA001);
+            let b = rand_m31(k, n, 0xA002);
+            let at = a.transpose();
+            let ab = naive_product(&a, &b);
+            let alpha = M31::new(5);
+            let mut alpha_ab = ab.clone();
+            for i in 0..m {
+                for j in 0..n {
+                    alpha_ab.set(i, j, alpha * ab.get(i, j));
+                }
+            }
+            let one = M31::new(1);
+            assert_eq!(
+                evaluate_over_stale(Product(&a, &b)),
+                ab,
+                "concrete A·B, k={k}"
+            );
+            assert_eq!(
+                evaluate_over_stale(Product(one * &a, &b)),
+                ab,
+                "generic A·B, k={k}"
+            );
+            assert_eq!(
+                evaluate_over_stale(TransposedProduct(&at, &b)),
+                ab,
+                "concrete Aᵀ·B, k={k}"
+            );
+            assert_eq!(
+                evaluate_over_stale(TransposedProduct(one * &at, &b)),
+                ab,
+                "generic Aᵀ·B, k={k}"
+            );
+            assert_eq!(
+                evaluate_over_stale(ScaledTransposedProduct(alpha, &at, &b)),
+                alpha_ab,
+                "concrete α·Aᵀ·B, k={k}"
+            );
+            assert_eq!(
+                evaluate_over_stale(ScaledTransposedProduct(alpha, one * &at, &b)),
+                alpha_ab,
+                "generic α·Aᵀ·B, k={k}"
+            );
+        }
+    }
+
+    /// A runtime-context field has no `zero_hint`; `out` supplies the zero.
+    #[test]
+    fn test_concrete_product_inner_dim_0_runtime_field_writes_zero() {
+        let field = crate::gf2m::Gf2mField::new(4, 0b1_0011);
+        let a = FieldMatrix::new(2, 0, field.one());
+        let b = FieldMatrix::new(0, 3, field.one());
+        let mut out = FieldMatrix::new(2, 3, field.one());
+        Product(&a, &b).evaluate_into(&mut out);
+        assert_eq!(out, FieldMatrix::new(2, 3, field.zero()));
+    }
+
+    #[test]
+    #[should_panic(expected = "output shape mismatch")]
+    fn test_sum_evaluate_into_empty_operands_checks_out_shape() {
+        let a = rand_m31(0, 4, 0xA101);
+        let b = rand_m31(0, 4, 0xA102);
+        let mut out = FieldMatrix::<M31>::zeros(2, 2);
+        (&a + &b).evaluate_into(&mut out);
     }
 }
