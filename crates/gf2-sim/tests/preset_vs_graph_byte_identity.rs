@@ -187,8 +187,8 @@ fn test_preset_vs_graph_50f_r23_16qam() {
         &ModcodPoint {
             rate: CodeRate::Rate2_3,
             modulation: DvbT2Modulation::Qam16,
-            es_n0_db: 8.8,
-            label: "50f r2/3 16-QAM @8.8dB",
+            es_n0_db: 8.7,
+            label: "50f r2/3 16-QAM @8.7dB",
         },
         SLOW_FRAMES,
     );
@@ -201,8 +201,8 @@ fn test_preset_vs_graph_50f_r23_64qam() {
         &ModcodPoint {
             rate: CodeRate::Rate2_3,
             modulation: DvbT2Modulation::Qam64,
-            es_n0_db: 13.8,
-            label: "50f r2/3 64-QAM @13.8dB",
+            es_n0_db: 13.4,
+            label: "50f r2/3 64-QAM @13.4dB",
         },
         SLOW_FRAMES,
     );
@@ -215,8 +215,8 @@ fn test_preset_vs_graph_50f_r34_16qam() {
         &ModcodPoint {
             rate: CodeRate::Rate3_4,
             modulation: DvbT2Modulation::Qam16,
-            es_n0_db: 10.0,
-            label: "50f r3/4 16-QAM @10.0dB",
+            es_n0_db: 9.8,
+            label: "50f r3/4 16-QAM @9.8dB",
         },
         SLOW_FRAMES,
     );
@@ -229,8 +229,8 @@ fn test_preset_vs_graph_50f_r34_64qam() {
         &ModcodPoint {
             rate: CodeRate::Rate3_4,
             modulation: DvbT2Modulation::Qam64,
-            es_n0_db: 15.4,
-            label: "50f r3/4 64-QAM @15.4dB",
+            es_n0_db: 14.9,
+            label: "50f r3/4 64-QAM @14.9dB",
         },
         SLOW_FRAMES,
     );

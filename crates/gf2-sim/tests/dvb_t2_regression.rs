@@ -329,8 +329,8 @@ fn test_dvb_t2_regression_50f_r23_16qam() {
         &ModcodPoint {
             rate: CodeRate::Rate2_3,
             modulation: DvbT2Modulation::Qam16,
-            waterfall_es_n0_db: 8.8,
-            label: "r2/3 16-QAM @8.8dB",
+            waterfall_es_n0_db: 8.7,
+            label: "r2/3 16-QAM @8.7dB",
         },
         slow_frames(),
     );
@@ -343,8 +343,8 @@ fn test_dvb_t2_regression_50f_r23_64qam() {
         &ModcodPoint {
             rate: CodeRate::Rate2_3,
             modulation: DvbT2Modulation::Qam64,
-            waterfall_es_n0_db: 13.8,
-            label: "r2/3 64-QAM @13.8dB",
+            waterfall_es_n0_db: 13.4,
+            label: "r2/3 64-QAM @13.4dB",
         },
         slow_frames(),
     );
@@ -357,8 +357,8 @@ fn test_dvb_t2_regression_50f_r34_16qam() {
         &ModcodPoint {
             rate: CodeRate::Rate3_4,
             modulation: DvbT2Modulation::Qam16,
-            waterfall_es_n0_db: 10.0,
-            label: "r3/4 16-QAM @10.0dB",
+            waterfall_es_n0_db: 9.8,
+            label: "r3/4 16-QAM @9.8dB",
         },
         slow_frames(),
     );
@@ -371,8 +371,8 @@ fn test_dvb_t2_regression_50f_r34_64qam() {
         &ModcodPoint {
             rate: CodeRate::Rate3_4,
             modulation: DvbT2Modulation::Qam64,
-            waterfall_es_n0_db: 15.4,
-            label: "r3/4 64-QAM @15.4dB",
+            waterfall_es_n0_db: 14.9,
+            label: "r3/4 64-QAM @14.9dB",
         },
         slow_frames(),
     );
