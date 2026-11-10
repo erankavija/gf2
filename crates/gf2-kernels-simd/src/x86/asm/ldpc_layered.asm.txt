@@ -1,0 +1,220 @@
+; gf2-core PPC-spiral asm artefact
+; ---------------------------------------------------------
+; crate         : gf2-kernels-simd
+; primary       : gf2_kernels_simd::x86::ldpc_layered::update_layer_avx2_unchecked
+; output        : crates/gf2-kernels-simd/src/x86/asm/ldpc_layered.asm.txt
+; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
+; host triple   : x86_64-unknown-linux-gnu
+; target-cpu    : <unset; rely on #[target_feature]>
+; RUSTFLAGS     : <empty>
+; commit        : 4b9183086
+; regenerated   : 2026-11-10T07:23:30Z
+; tool          : cargo-show-asm
+; ---------------------------------------------------------
+
+
+;==========================================================
+; symbol: gf2_kernels_simd::x86::ldpc_layered::update_layer_avx2_unchecked
+;==========================================================
+
+gf2_kernels_simd::x86::ldpc_layered::update_layer_avx2_unchecked:
+	push rbp
+	push r15
+	push r14
+	push r13
+	push r12
+	push rbx
+	sub rsp, 1032
+	mov rbx, rcx
+	cmp r9, 255
+	jbe .LBB77_1
+	mov rcx, rbx
+	add rsp, 1032
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+	jmp qword ptr [rip + gf2_kernels_simd::ldpc_layered::update_layer_scalar@GOTPCREL]
+.LBB77_1:
+	mov r14d, edi
+	mov qword ptr [rsp], rsi
+	mov rbp, r9
+	mov r15, qword ptr [rsp + 1096]
+	mov r12, qword ptr [rsp + 1088]
+	lea rdi, [rsp + 12]
+	xor r13d, r13d
+	mov edx, 1020
+	xor esi, esi
+	call qword ptr [rip + memset@GOTPCREL]
+	test r12, r12
+	je .LBB77_2
+	mov eax, r14d
+	mov ecx, r14d
+	shr ecx, 16
+	lea edx, [rcx - 127]
+	vmovd xmm3, ecx
+	xor cl, 127
+	vmovd xmm0, edx
+	vpbroadcastb ymm0, xmm0
+	vmovd xmm1, ecx
+	vpbroadcastb ymm1, xmm1
+	mov rdx, r12
+	shr rdx, 5
+	mov ecx, r12d
+	and ecx, 31
+	cmp rcx, 1
+	sbb rdx, -1
+	mov rsi, rbp
+	lea rdi, [4*rbp]
+	mov ecx, r14d
+	shr ecx, 8
+	movzx ecx, cl
+	vmovd xmm2, ecx
+	vpbroadcastw ymm2, xmm2
+	vpbroadcastb ymm3, xmm3
+	vmovd xmm4, ecx
+	vpbroadcastb ymm4, xmm4
+	vpbroadcastb ymm5, byte ptr [rip + .LCPI77_1]
+	vpxor xmm6, xmm6, xmm6
+	vpcmpeqd ymm7, ymm7, ymm7
+	xor ebp, ebp
+	mov r11, qword ptr [rsp]
+	jmp .LBB77_5
+.LBB77_19:
+	dec rdx
+	mov r8, r15
+	sub r8, rbp
+	mov ecx, 0
+	cmovae rcx, r8
+	mov r8d, -1
+	shl r8d, cl
+	add rbp, 32
+	cmp rcx, 32
+	not r8d
+	mov ecx, -1
+	cmovae r8d, ecx
+	and r8d, r9d
+	or r13d, r8d
+	add r11, 32
+	add rbx, 32
+	test rdx, rdx
+	je .LBB77_7
+.LBB77_5:
+	test rsi, rsi
+	je .LBB77_6
+	vpcmpeqd ymm9, ymm9, ymm9
+	xor r9d, r9d
+	vpxor xmm8, xmm8, xmm8
+	vpxor xmm11, xmm11, xmm11
+	xor ecx, ecx
+	xor r8d, r8d
+	vmovdqa ymm10, ymm5
+	vmovdqa ymm12, ymm5
+.LBB77_10:
+	vmovdqu ymm13, ymmword ptr [r11 + rcx]
+	vpsubsb ymm14, ymm13, ymmword ptr [rbx + rcx]
+	vpmaxsb ymm14, ymm14, ymm0
+	vpminsb ymm14, ymm14, ymm1
+	vmovdqu ymmword ptr [r11 + rcx], ymm14
+	vpmovmskb r14d, ymm13
+	mov dword ptr [rsp + r8 + 12], r14d
+	vpcmpgtb ymm13, ymm6, ymm14
+	vpxor ymm8, ymm8, ymm13
+	vpabsb ymm13, ymm14
+	vpcmpgtb ymm14, ymm12, ymm13
+	vpminsb ymm10, ymm10, ymm13
+	vpblendvb ymm10, ymm10, ymm12, ymm14
+	xor r9d, r14d
+	vpminsb ymm12, ymm12, ymm13
+	vpblendvb ymm9, ymm9, ymm11, ymm14
+	vpsubb ymm11, ymm11, ymm7
+	add r8, 4
+	add rcx, r12
+	cmp rdi, r8
+	jne .LBB77_10
+	vpxor xmm11, xmm11, xmm11
+	lea rcx, [rsp + 16]
+	vpxor xmm13, xmm13, xmm13
+	cmp rsi, 1
+	je .LBB77_17
+	test al, 1
+	je .LBB77_14
+.LBB77_13:
+	vpsubusb ymm11, ymm12, ymm4
+	vpminub ymm11, ymm11, ymm3
+	vpsubusb ymm10, ymm10, ymm4
+	test rsi, rsi
+	jne .LBB77_16
+	jmp .LBB77_19
+.LBB77_6:
+	xor r9d, r9d
+	vpxor xmm8, xmm8, xmm8
+	vmovdqa ymm10, ymm5
+	vmovdqa ymm12, ymm5
+	vpcmpeqd ymm9, ymm9, ymm9
+	test al, 1
+	jne .LBB77_13
+.LBB77_14:
+	vpunpcklbw ymm11, ymm12, ymm6
+	vpmullw ymm11, ymm11, ymm2
+	vpsrlw ymm11, ymm11, 3
+	vpunpckhbw ymm12, ymm12, ymm6
+	vpmullw ymm12, ymm12, ymm2
+	vpsrlw ymm12, ymm12, 3
+	vpackuswb ymm11, ymm11, ymm12
+	vpminub ymm11, ymm11, ymm3
+	vpunpcklbw ymm12, ymm10, ymm6
+	vpmullw ymm12, ymm12, ymm2
+	vpsrlw ymm12, ymm12, 3
+	vpunpckhbw ymm10, ymm10, ymm6
+	vpmullw ymm10, ymm10, ymm2
+	vpsrlw ymm10, ymm10, 3
+	vpackuswb ymm10, ymm12, ymm10
+	test rsi, rsi
+	je .LBB77_19
+.LBB77_16:
+	vpminub ymm13, ymm10, ymm3
+	lea rcx, [rsp + 4*rsi]
+	add rcx, 12
+.LBB77_17:
+	vpxor xmm10, xmm10, xmm10
+	xor r8d, r8d
+	lea r14, [rsp + 12]
+.LBB77_18:
+	vpcmpeqb ymm12, ymm9, ymm10
+	vpblendvb ymm12, ymm11, ymm13, ymm12
+	vmovdqu ymm14, ymmword ptr [r11 + r8]
+	vpsubb ymm10, ymm10, ymm7
+	vpxor ymm15, ymm14, ymm8
+	vpcmpgtb ymm15, ymm6, ymm15
+	vpxor ymm12, ymm12, ymm15
+	vpsubb ymm12, ymm12, ymm15
+	vpaddb ymm14, ymm12, ymm14
+	vpmovmskb r10d, ymm14
+	xor r10d, dword ptr [r14]
+	add r14, 4
+	or r9d, r10d
+	vmovdqu ymmword ptr [rbx + r8], ymm12
+	vmovdqu ymmword ptr [r11 + r8], ymm14
+	add r8, r12
+	cmp r14, rcx
+	jne .LBB77_18
+	jmp .LBB77_19
+.LBB77_7:
+	test r13d, r13d
+	sete al
+	jmp .LBB77_8
+.LBB77_2:
+	mov al, 1
+.LBB77_8:
+	add rsp, 1032
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+	vzeroupper
+	ret

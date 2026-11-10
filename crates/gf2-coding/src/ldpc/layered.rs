@@ -7,6 +7,7 @@ use crate::llr::Llr;
 use gf2_core::BitVec;
 pub use gf2_kernels_simd::ldpc_layered::LayeredRule;
 use gf2_kernels_simd::ldpc_layered::{LayerKernel, LayerParams, LAYER_LANES, LAYER_SATURATION};
+use gf2_kernels_simd::ldpc_signs::{pack_signs_portable, PackSignsFn};
 
 /// Quantization and update rules of a [`LayeredDecoder`].
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -399,6 +400,7 @@ pub struct LayeredDecoder {
     schedule: Schedule,
     config: LayeredConfig,
     kernel: LayerKernel,
+    pack_signs: PackSignsFn,
     backend: LaneBackend,
     /// Beliefs in schedule variable order.
     posterior: Vec<i8>,
@@ -475,10 +477,17 @@ impl LayeredDecoder {
         variables: Option<Vec<u32>>,
         config: LayeredConfig,
     ) -> Self {
-        let (kernel, backend) = (LayerKernel::portable(), LaneBackend::Portable);
+        let (kernel, pack_signs, backend) = (
+            LayerKernel::portable(),
+            pack_signs_portable as PackSignsFn,
+            LaneBackend::Portable,
+        );
         #[cfg(feature = "simd")]
-        let (kernel, backend) = gf2_kernels_simd::ldpc_layered::detect()
-            .map_or((kernel, backend), |fns| (fns, LaneBackend::Avx2));
+        let (kernel, pack_signs, backend) = gf2_kernels_simd::ldpc_layered::detect()
+            .zip(gf2_kernels_simd::ldpc_signs::detect())
+            .map_or((kernel, pack_signs, backend), |(fns, pack)| {
+                (fns, pack, LaneBackend::Avx2)
+            });
         Self {
             posterior: vec![0; schedule.n],
             output: if variables.is_some() {
@@ -495,6 +504,7 @@ impl LayeredDecoder {
             schedule,
             config,
             kernel,
+            pack_signs,
             backend,
             last_iterations: 0,
         }
@@ -504,6 +514,7 @@ impl LayeredDecoder {
     #[must_use]
     pub fn with_portable_kernel(mut self) -> Self {
         self.kernel = LayerKernel::portable();
+        self.pack_signs = pack_signs_portable;
         self.backend = LaneBackend::Portable;
         self
     }
@@ -615,7 +626,7 @@ impl LayeredDecoder {
             None => &self.posterior,
         };
         self.words.resize(beliefs.len().div_ceil(64), 0);
-        self.kernel.pack_signs(beliefs, &mut self.words);
+        (self.pack_signs)(beliefs, &mut self.words);
         codeword.resize(beliefs.len(), false);
         codeword.write_bits(0, &self.words, beliefs.len());
         DecodeOutcome {

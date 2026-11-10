@@ -97,13 +97,11 @@ impl LayerParams {
 }
 
 type LayerFn = fn(LayerParams, &mut [i8], &mut [i8], usize, usize, usize) -> bool;
-type SignFn = fn(&[i8], &mut [u64]);
 
 /// A safe layer kernel, with a portable implementation on every target.
 #[derive(Clone, Copy)]
 pub struct LayerKernel {
     pub(crate) layer_fn: LayerFn,
-    pub(crate) sign_fn: SignFn,
 }
 
 impl LayerKernel {
@@ -112,7 +110,6 @@ impl LayerKernel {
     pub const fn portable() -> Self {
         Self {
             layer_fn: update_layer_scalar,
-            sign_fn: pack_signs_scalar,
         }
     }
 
@@ -157,30 +154,6 @@ impl LayerKernel {
         assert_eq!(apps.len(), length, "layer a-posteriori length");
         assert_eq!(messages.len(), length, "layer message length");
         (self.layer_fn)(params, apps, messages, degree, stride, width)
-    }
-
-    /// Packs decisions under canonical bit indexing: bit `i & 63` of
-    /// `words[i >> 6]` is set exactly when `values[i] < 0`, and the bits past
-    /// `values.len()` are zero. Takes O(`values.len()`) time.
-    ///
-    /// # Panics
-    ///
-    /// Panics unless `words.len() == values.len().div_ceil(64)`.
-    pub fn pack_signs(&self, values: &[i8], words: &mut [u64]) {
-        assert_eq!(
-            words.len(),
-            values.len().div_ceil(64),
-            "one word per 64 decisions"
-        );
-        (self.sign_fn)(values, words);
-    }
-}
-
-pub(crate) fn pack_signs_scalar(values: &[i8], words: &mut [u64]) {
-    for (word, chunk) in words.iter_mut().zip(values.chunks(64)) {
-        *word = chunk.iter().enumerate().fold(0, |word, (bit, &value)| {
-            word | (u64::from(value < 0) << bit)
-        });
     }
 }
 
@@ -417,34 +390,6 @@ mod tests {
             33,
             33,
         );
-    }
-
-    #[test]
-    fn every_backend_packs_signs_by_the_definition() {
-        let mut state = 0x5eed;
-        for kernel in kernels() {
-            for len in [0usize, 1, 31, 32, 63, 64, 65, 127, 128, 129, 1000] {
-                let values: Vec<i8> = (0..len).map(|_| draw(&mut state, len as u64 % 4)).collect();
-                let mut words = vec![u64::MAX; len.div_ceil(64)];
-                kernel.pack_signs(&values, &mut words);
-                for (i, &value) in values.iter().enumerate() {
-                    assert_eq!(
-                        words[i >> 6] >> (i & 63) & 1 == 1,
-                        value < 0,
-                        "len {len} bit {i}"
-                    );
-                }
-                if len % 64 != 0 {
-                    assert_eq!(words[len >> 6] >> (len % 64), 0, "len {len} tail");
-                }
-            }
-        }
-    }
-
-    #[test]
-    #[should_panic(expected = "one word per 64 decisions")]
-    fn a_sign_word_count_mismatch_panics() {
-        LayerKernel::portable().pack_signs(&[0; 65], &mut [0; 1]);
     }
 
     #[test]

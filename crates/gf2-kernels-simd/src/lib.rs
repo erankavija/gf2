@@ -39,6 +39,7 @@ pub mod gf2m_wide;
 pub mod ldpc_lanes;
 pub mod ldpc_layered;
 pub mod ldpc_qc;
+pub mod ldpc_signs;
 pub mod llr;
 pub mod m4rm;
 pub mod mersenne;

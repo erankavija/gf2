@@ -2,7 +2,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 use crate::ldpc_layered::{
-    pack_signs_scalar, update_layer_scalar, LayerKernel, LayerParams, LayeredRule, LAYER_LANES,
+    update_layer_scalar, LayerKernel, LayerParams, LayeredRule, LAYER_LANES,
 };
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
@@ -12,33 +12,7 @@ use core::arch::x86_64::*;
 pub(crate) fn detect() -> Option<LayerKernel> {
     std::arch::is_x86_feature_detected!("avx2").then_some(LayerKernel {
         layer_fn: update_layer_avx2,
-        sign_fn: pack_signs_avx2,
     })
-}
-
-fn pack_signs_avx2(values: &[i8], words: &mut [u64]) {
-    // SAFETY: detect publishes this entry only on AVX2 hosts.
-    unsafe { pack_signs_avx2_unchecked(values, words) }
-}
-
-/// # Safety
-/// The host must support AVX2.
-#[target_feature(enable = "avx2")]
-unsafe fn pack_signs_avx2_unchecked(values: &[i8], words: &mut [u64]) {
-    let full = values.len() / 64;
-    for (word, chunk) in words.iter_mut().zip(values.chunks_exact(64)) {
-        // SAFETY: the chunk holds 64 values; unaligned loads are permitted.
-        let (low, high) = unsafe {
-            (
-                _mm256_loadu_si256(chunk.as_ptr().cast()),
-                _mm256_loadu_si256(chunk.as_ptr().add(32).cast()),
-            )
-        };
-        let low = u64::from(_mm256_movemask_epi8(low) as u32);
-        let high = u64::from(_mm256_movemask_epi8(high) as u32);
-        *word = low | high << 32;
-    }
-    pack_signs_scalar(&values[full * 64..], &mut words[full..]);
 }
 
 fn update_layer_avx2(
