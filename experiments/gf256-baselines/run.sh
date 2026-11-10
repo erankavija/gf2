@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Times gf2's default GF(2^8) region and matrix-product routes against ISA-L
+# and M4RIE on identical inputs and prints one row per cell with the host name.
+#
+# Usage: GF256_BASELINE_PREFIX=<install prefix> experiments/gf256-baselines/run.sh
+#
+# The prefix holds include/ and lib/ of ISA-L (libisal) and M4RIE (libm4rie,
+# libm4ri). GF256_BASELINE_CORE (default 2) is the core both arms run pinned
+# to. A run with GF2_BENCH_WINDOW=1 is labelled a window measurement, any
+# other an indication. The script exits 1 when the arms' outputs differ on a
+# cell.
+
+: "${GF256_BASELINE_PREFIX:?name the ISA-L and M4RIE install prefix}"
+core=${GF256_BASELINE_CORE:-2}
+here=$(cd "$(dirname "$0")" && pwd)
+root=$(cd "$here/../.." && pwd)
+out="$root/target/gf256-baselines"
+mkdir -p "$out"
+
+(cd "$root" && ./scripts/cargo-budget.sh cargo build --release -p gf256-baselines --quiet)
+cc -O2 -Wall -I"$GF256_BASELINE_PREFIX/include" -o "$out/arm" "$here/ext/arm.c" \
+  -L"$GF256_BASELINE_PREFIX/lib" -lisal -lm4rie -lm4ri -Wl,-rpath,"$GF256_BASELINE_PREFIX/lib"
+
+mode=indication
+[[ "${GF2_BENCH_WINDOW:-}" == 1 ]] && mode=window
+echo "host $(hostname), $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ //'), core $core, $mode"
+
+taskset -c "$core" "$root/target/release/gf256-baselines" >"$out/gf2.tsv"
+taskset -c "$core" "$out/arm" >"$out/ext.tsv"
+
+python3 -B - "$out/gf2.tsv" "$out/ext.tsv" <<'PY'
+import re, sys
+
+rows = {}
+for path in sys.argv[1:]:
+    for line in open(path):
+        op, size, arm, metric, digest = line.rstrip("\n").split("\t")
+        rows.setdefault((op, int(size)), []).append((arm, metric, digest))
+
+def rate(metric):
+    # GB/s for regions, Gmul-add/s for products: larger is faster.
+    return float(re.findall(r"([\d.]+) G", metric)[-1])
+
+failed = False
+print(f"{'cell':<12} {'gf2':<34} {'fastest reference':<58} gf2/ref")
+for (op, size), arms in sorted(rows.items()):
+    digests = {digest for _, _, digest in arms}
+    if len(digests) != 1:
+        failed = True
+    gf2 = next(a for a in arms if a[0].startswith("gf2"))
+    ref = max((a for a in arms if not a[0].startswith("gf2")), key=lambda a: rate(a[1]))
+    status = "" if len(digests) == 1 else "  OUTPUTS DIFFER"
+    print(f"{op + ' ' + str(size):<12} {gf2[1]:<34} {ref[0] + ': ' + ref[1]:<58} "
+          f"{rate(gf2[1]) / rate(ref[1]):.2f}{status}")
+sys.exit(1 if failed else 0)
+PY
