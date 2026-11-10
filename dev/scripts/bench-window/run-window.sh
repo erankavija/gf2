@@ -24,9 +24,23 @@
 # interrupted campaign resumes under its own identity without repeating cells.
 # Each campaign's own execution log stays the authoritative record of its run.
 #
+# Before its first job the window waits until the one-minute load average is
+# below LOAD_MAX, polling every LOAD_POLL_S seconds for at most LOAD_WAIT_MAX_S
+# seconds. When the bound passes with the host still loaded, it logs that and
+# starts the job anyway, so a window is never lost to a busy host; the job's
+# own start line records the load it ran under. GF2_WINDOW_LOAD_MAX,
+# GF2_WINDOW_LOAD_WAIT_MAX_S, GF2_WINDOW_LOAD_POLL_S and GF2_WINDOW_LOADAVG (a
+# file in /proc/loadavg format) override these for testing.
+#
 # --print-root prints the resolved repository root and exits before the window
-# opens.
+# opens. --load-wait-only runs the load wait into the window log and exits
+# before the window opens; run-window.test.sh drives it with a fake load.
 set -uo pipefail
+
+LOAD_MAX="${GF2_WINDOW_LOAD_MAX:-1.0}"
+LOAD_WAIT_MAX_S="${GF2_WINDOW_LOAD_WAIT_MAX_S:-1800}"
+LOAD_POLL_S="${GF2_WINDOW_LOAD_POLL_S:-30}"
+LOADAVG="${GF2_WINDOW_LOADAVG:-/proc/loadavg}"
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo=$(git -C "$here" rev-parse --show-toplevel) || exit 1
@@ -35,13 +49,36 @@ if [[ "${1:-}" == --print-root ]]; then
     printf '%s\n' "$repo"
     exit 0
 fi
-export GF2_BENCH_WINDOW=1
 mkdir -p "$state"
 log="$state/window.log"
 
 say() { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >> "$log"; }
+load() { cut -d' ' -f1-3 "$LOADAVG"; }
 
-say "window start host=$(hostname) load=$(cut -d' ' -f1-3 /proc/loadavg) queue_sha256=$(sha256sum "$here/queue.tsv" | cut -d' ' -f1)"
+wait_for_quiet_host() {
+    local start=$SECONDS one
+    say "load wait start max=$LOAD_MAX bound_s=$LOAD_WAIT_MAX_S load=$(load)"
+    while true; do
+        one=$(cut -d' ' -f1 "$LOADAVG")
+        if awk -v l="$one" -v m="$LOAD_MAX" 'BEGIN { exit !(l < m) }'; then
+            say "load wait quiet after_s=$((SECONDS - start)) load=$(load)"
+            return
+        fi
+        if ((SECONDS - start >= LOAD_WAIT_MAX_S)); then
+            say "load wait bound passed after_s=$((SECONDS - start)) load=$(load); starting anyway"
+            return
+        fi
+        sleep "$LOAD_POLL_S"
+    done
+}
+
+if [[ "${1:-}" == --load-wait-only ]]; then
+    wait_for_quiet_host
+    exit 0
+fi
+export GF2_BENCH_WINDOW=1
+
+say "window start host=$(hostname) load=$(load) queue_sha256=$(sha256sum "$here/queue.tsv" | cut -d' ' -f1)"
 
 # The lock wrappers on main release the CCX1 locks when the wrapped command
 # exits (jit:a387825e), so a compiler-cache server they spawned no longer keeps
@@ -68,6 +105,7 @@ if command -v sccache > /dev/null; then
     SCCACHE_IDLE_TIMEOUT=0 sccache --start-server > /dev/null 2>&1 || true
     say "sccache servers: $(pgrep -x sccache | tr '\n' ' ')"
 fi
+waited=0
 while IFS=$'\t' read -r issue worktree minutes command; do
     [[ -z "${issue// /}" || "$issue" == \#* ]] && continue
     key="$(printf '%s\t%s\t%s' "$issue" "$worktree" "$command" | sha256sum | cut -c1-16)"
@@ -79,7 +117,11 @@ while IFS=$'\t' read -r issue worktree minutes command; do
         say "missing issue=$issue key=$key worktree=$worktree"
         continue
     fi
-    say "job start issue=$issue key=$key est_min=$minutes worktree=$worktree load=$(cut -d' ' -f1-3 /proc/loadavg) command=$command"
+    if [[ $waited -eq 0 ]]; then
+        wait_for_quiet_host
+        waited=1
+    fi
+    say "job start issue=$issue key=$key est_min=$minutes worktree=$worktree load=$(load) command=$command"
     (cd "$repo/$worktree" && bash -c "$command") >> "$state/$key.out" 2>&1 < /dev/null
     rc=$?
     say "job exit issue=$issue key=$key rc=$rc"
