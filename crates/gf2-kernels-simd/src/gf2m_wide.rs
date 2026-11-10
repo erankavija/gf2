@@ -1,6 +1,6 @@
 //! SIMD kernels for fixed-size multi-word carry-less multiplication: dispatch
-//! for the 4×4 schoolbook multiply of GF(2^256) operands and the 9×9 multiply
-//! of GF(2^571) operands. The kernels produce the unreduced carry-less product;
+//! for the 4×4 schoolbook multiply of GF(2^256) operands, the 8×8 multiply of
+//! the long product's basecase and the 9×9 multiply of GF(2^571) operands. The kernels produce the unreduced carry-less product;
 //! the caller reduces. [`detect_wide`] prefers the AVX2 + VPCLMULQDQ YMM lane
 //! (two products per instruction), then PCLMULQDQ + SSE4.1 (one product per
 //! instruction), and returns `None` otherwise. No ZMM lane exists.
@@ -13,6 +13,10 @@
 /// call.
 pub type ClmulWide256Fn = fn(&[u64; 4], &[u64; 4], &mut [u64; 8]);
 
+/// Kernel signature: computes the 16-limb carry-less product of two 8-limb
+/// GF(2)-polynomial operands.
+pub type ClmulWide512Fn = fn(&[u64; 8], &[u64; 8], &mut [u64; 16]);
+
 /// Kernel signature: computes the 18-limb carry-less product of two 9-limb
 /// GF(2)-polynomial operands.
 pub type ClmulWide571Fn = fn(&[u64; 9], &[u64; 9], &mut [u64; 18]);
@@ -22,6 +26,16 @@ pub type ClmulWide571Fn = fn(&[u64; 9], &[u64; 9], &mut [u64; 18]);
 pub struct ClmulWide256Fns {
     /// 4×4 schoolbook carry-less multiply, writing the full 8-limb product.
     pub clmul: ClmulWide256Fn,
+    /// Human-readable tag of the chosen lane: one of
+    /// `"avx2+vpclmulqdq-ymm"`, `"pclmulqdq-scalar-xmm"`.
+    pub name: &'static str,
+}
+
+/// Bundle of dispatched carry-less multiply kernels for 8-limb operands.
+#[derive(Copy, Clone)]
+pub struct ClmulWide512Fns {
+    /// 8×8 schoolbook carry-less multiply, writing the full 16-limb product.
+    pub clmul: ClmulWide512Fn,
     /// Human-readable tag of the chosen lane: one of
     /// `"avx2+vpclmulqdq-ymm"`, `"pclmulqdq-scalar-xmm"`.
     pub name: &'static str,
@@ -43,6 +57,8 @@ pub struct ClmulWide571Fns {
 pub struct Gf2mWideFns {
     /// GF(2^256) / 4-limb clmul kernel.
     pub wide256: ClmulWide256Fns,
+    /// 8-limb clmul kernel.
+    pub wide512: ClmulWide512Fns,
     /// GF(2^571) / 9-limb clmul kernel.
     pub wide571: ClmulWide571Fns,
     /// Human-readable tag of the chosen lane.
@@ -88,6 +104,10 @@ fn detect_x86_wide() -> Option<Gf2mWideFns> {
                 clmul: clmul_wide4_ymm_safe,
                 name: "avx2+vpclmulqdq-ymm",
             },
+            wide512: ClmulWide512Fns {
+                clmul: clmul_wide8_ymm_safe,
+                name: "avx2+vpclmulqdq-ymm",
+            },
             wide571: ClmulWide571Fns {
                 clmul: clmul_wide9_ymm_safe,
                 name: "avx2+vpclmulqdq-ymm",
@@ -100,6 +120,10 @@ fn detect_x86_wide() -> Option<Gf2mWideFns> {
         return Some(Gf2mWideFns {
             wide256: ClmulWide256Fns {
                 clmul: clmul_wide4_xmm_safe,
+                name: "pclmulqdq-scalar-xmm",
+            },
+            wide512: ClmulWide512Fns {
+                clmul: clmul_wide8_xmm_safe,
                 name: "pclmulqdq-scalar-xmm",
             },
             wide571: ClmulWide571Fns {
@@ -125,6 +149,20 @@ fn clmul_wide4_ymm_safe(a: &[u64; 4], b: &[u64; 4], out: &mut [u64; 8]) {
     // SAFETY: `detect_x86_wide` only returns this pointer when AVX2,
     // VPCLMULQDQ, and SSE4.1 are available.
     unsafe { crate::x86::gf2m_wide::clmul_wide4_ymm(a, b, out) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn clmul_wide8_xmm_safe(a: &[u64; 8], b: &[u64; 8], out: &mut [u64; 16]) {
+    // SAFETY: `detect_x86_wide` only returns this pointer when PCLMULQDQ and
+    // SSE4.1 are available.
+    unsafe { crate::x86::gf2m_wide::clmul_wide8_xmm(a, b, out) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn clmul_wide8_ymm_safe(a: &[u64; 8], b: &[u64; 8], out: &mut [u64; 16]) {
+    // SAFETY: `detect_x86_wide` only returns this pointer when AVX2,
+    // VPCLMULQDQ, and SSE4.1 are available.
+    unsafe { crate::x86::gf2m_wide::clmul_wide8_ymm(a, b, out) }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

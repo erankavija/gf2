@@ -183,9 +183,13 @@ struct Kernels {
     #[cfg(feature = "simd")]
     k4: Option<&'static gf2_kernels_simd::gf2m_wide::ClmulWide256Fns>,
     #[cfg(feature = "simd")]
+    k8: Option<&'static gf2_kernels_simd::gf2m_wide::ClmulWide512Fns>,
+    #[cfg(feature = "simd")]
     k9: Option<&'static gf2_kernels_simd::gf2m_wide::ClmulWide571Fns>,
     #[cfg(not(feature = "simd"))]
     k4: Option<()>,
+    #[cfg(not(feature = "simd"))]
+    k8: Option<()>,
     #[cfg(not(feature = "simd"))]
     k9: Option<()>,
 }
@@ -196,10 +200,15 @@ impl Kernels {
         if clmul_wide_dispatch_enabled() {
             return Self {
                 k4: crate::simd::maybe_gf2m_wide256(),
+                k8: crate::simd::maybe_gf2m_wide().map(|fns| &fns.wide512),
                 k9: crate::simd::maybe_gf2m_wide571(),
             };
         }
-        Self { k4: None, k9: None }
+        Self {
+            k4: None,
+            k8: None,
+            k9: None,
+        }
     }
 
     /// Overwrites the `2m` words of `out` with the product of the `m`-word
@@ -211,6 +220,15 @@ impl Kernels {
             let m = a.len();
             if let (Some(fns), true) = (self.k4, m <= 4) {
                 let (mut x, mut y, mut z) = ([0u64; 4], [0u64; 4], [0u64; 8]);
+                x[..m].copy_from_slice(a);
+                y[..m].copy_from_slice(b);
+                record_clmul_wide_lane(fns.name);
+                (fns.clmul)(&x, &y, &mut z);
+                out.copy_from_slice(&z[..2 * m]);
+                return;
+            }
+            if let (Some(fns), true) = (self.k8, m <= 8) {
+                let (mut x, mut y, mut z) = ([0u64; 8], [0u64; 8], [0u64; 16]);
                 x[..m].copy_from_slice(a);
                 y[..m].copy_from_slice(b);
                 record_clmul_wide_lane(fns.name);
