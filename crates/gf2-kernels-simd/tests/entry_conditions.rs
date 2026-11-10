@@ -377,8 +377,11 @@ macro_rules! whole_gemm_cases {
         let (m, k, n) = OVERFLOWING;
         let mut c = [$zero; 1];
         kernel(&[$one; 1], &[$one; 1], 1, 1, 1, $p, &mut c);
-        // Shapes with a zero dimension pass the shape checks.
-        kernel(&[], &[], 2, 0, 2, $p, &mut [$zero; 4]);
+        // Shapes with a zero dimension pass the shape checks; an empty sum
+        // is zero.
+        let mut empty_sum = [$zero + 1; 4];
+        kernel(&[], &[], 2, 0, 2, $p, &mut empty_sum);
+        assert_eq!(empty_sum, [$zero; 4], "{}: k == 0 output", $name);
         kernel(&[], &[$one; 4], 0, 2, 2, $p, &mut []);
         kernel(&[$one; 4], &[], 2, 2, 0, $p, &mut []);
         kernel(&[], &[], 0, 0, 0, $p, &mut []);

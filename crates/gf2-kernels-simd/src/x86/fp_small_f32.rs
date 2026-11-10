@@ -74,9 +74,8 @@ pub unsafe fn fp_small_f32_gemm(
     assert_eq!(c.len(), m * n, "fp_small_f32_gemm: c shape");
 
     if m == 0 || k == 0 || n == 0 {
-        // c is already the m×n zero matrix because the caller
-        // passes a zero-initialised buffer (per the gemm contract);
-        // nothing to do.
+        // The empty sum over `k` is zero.
+        c.fill(0);
         return;
     }
 
@@ -230,6 +229,8 @@ pub unsafe fn fp_small_f32_gemm_route_a(
     assert_eq!(c.len(), m * n, "fp_small_f32_gemm_route_a: c shape");
 
     if m == 0 || k == 0 || n == 0 {
+        // The empty sum over `k` is zero.
+        c.fill(0);
         return;
     }
 
