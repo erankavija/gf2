@@ -94,6 +94,46 @@ pub mod block {
         /// Returns [`CodeError::IndexOutOfBounds`] when `index` is not in the
         /// sequence.
         fn set(&mut self, index: usize, value: F) -> Result<(), CodeError>;
+
+        /// Overwrites positions `offset..offset + len` with positions
+        /// `source_offset..source_offset + len` of `source`.
+        ///
+        /// The default copies one symbol at a time; a packed representation
+        /// copies whole words.
+        ///
+        /// # Errors
+        ///
+        /// Returns [`CodeError::IndexOutOfBounds`] when either range leaves
+        /// its sequence; nothing is written then.
+        fn copy_range(
+            &mut self,
+            offset: usize,
+            source: &Self,
+            source_offset: usize,
+            len: usize,
+        ) -> Result<(), CodeError> {
+            check_range(offset, len, self.len())?;
+            check_range(source_offset, len, source.len())?;
+            for i in 0..len {
+                let symbol = source
+                    .get(source_offset + i)
+                    .expect("the source range was checked");
+                self.set(offset + i, symbol)?;
+            }
+            Ok(())
+        }
+    }
+
+    /// Checks that `start..start + len` lies in a sequence of `length`
+    /// symbols.
+    fn check_range(start: usize, len: usize, length: usize) -> Result<(), CodeError> {
+        match start.checked_add(len) {
+            Some(end) if end <= length => Ok(()),
+            _ => Err(CodeError::IndexOutOfBounds {
+                index: start.saturating_add(len).saturating_sub(1).max(start),
+                length,
+            }),
+        }
     }
 
     /// Storage contract for a rectangular matrix of symbols from `F`.
@@ -219,6 +259,19 @@ pub mod block {
                 });
             }
             BitVec::set(self, index, value.is_one());
+            Ok(())
+        }
+
+        fn copy_range(
+            &mut self,
+            offset: usize,
+            source: &Self,
+            source_offset: usize,
+            len: usize,
+        ) -> Result<(), CodeError> {
+            check_range(offset, len, BitVec::len(self))?;
+            check_range(source_offset, len, BitVec::len(source))?;
+            self.copy_bits(offset, source, source_offset, len);
             Ok(())
         }
     }
@@ -2109,6 +2162,64 @@ pub trait StreamingDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn copy_range_matches_symbol_copies_at_the_word_boundaries() {
+        use block::SymbolSequence;
+        use gf2_core::field::FieldVec;
+        use gf2_core::gfp::Fp;
+        let zero = Fp::<2>::new(0);
+        let boundaries = [0usize, 1, 63, 64, 65, 129];
+        for &offset in &boundaries {
+            for &source_offset in &boundaries {
+                for &len in &boundaries {
+                    let seed = (offset * 10_000 + source_offset * 100 + len) as u64;
+                    let source = BitVec::random_seeded(source_offset + len + 1, seed);
+                    let target = BitVec::random_seeded(offset + len + 1, seed + 1);
+                    let mut expected = target.clone();
+                    for i in 0..len {
+                        expected.set(offset + i, source.get(source_offset + i));
+                    }
+                    let mut packed = target.clone();
+                    SymbolSequence::<Fp<2>>::copy_range(
+                        &mut packed,
+                        offset,
+                        &source,
+                        source_offset,
+                        len,
+                    )
+                    .expect("in range");
+                    assert_eq!(packed, expected, "{offset} {source_offset} {len}");
+
+                    let symbols = |bits: &BitVec| {
+                        let mut out =
+                            <FieldVec<Fp<2>> as SymbolSequence<Fp<2>>>::zeroed(bits.len(), &zero);
+                        for i in 0..bits.len() {
+                            SymbolSequence::set(&mut out, i, Fp::<2>::new(u64::from(bits.get(i))))
+                                .expect("in range");
+                        }
+                        out
+                    };
+                    let mut generic = symbols(&target);
+                    generic
+                        .copy_range(offset, &symbols(&source), source_offset, len)
+                        .expect("in range");
+                    assert_eq!(
+                        generic,
+                        symbols(&expected),
+                        "{offset} {source_offset} {len}"
+                    );
+                }
+            }
+        }
+        let mut short = BitVec::zeros(64);
+        assert!(
+            SymbolSequence::<Fp<2>>::copy_range(&mut short, 1, &BitVec::zeros(64), 0, 64).is_err()
+        );
+        assert!(
+            SymbolSequence::<Fp<2>>::copy_range(&mut short, 0, &BitVec::zeros(64), 1, 64).is_err()
+        );
+    }
 
     #[test]
     fn test_decoder_result_new() {

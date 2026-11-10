@@ -260,17 +260,19 @@ fn the_selected_family_is_bit_identical_across_worker_counts() {
 }
 
 #[test]
-fn the_conservative_profile_selects_the_scalar_reference() {
+fn the_default_profile_selects_an_available_family_beyond_the_reference() {
     for row in ROWS {
         let code = build(row);
         for &layout in LAYOUTS {
-            for &batch in row.batches {
-                assert_eq!(
-                    code.selected_encode_family(layout, batch),
+            for &batch in row.batches.iter().filter(|&&batch| batch > 0) {
+                let selected = code.selected_encode_family(layout, batch);
+                assert_ne!(
+                    selected,
                     EncodeFamily::REFERENCE,
                     "{} at batch {batch} under {layout:?}",
                     row.name
                 );
+                assert!(code.encode_family_available(selected, layout));
             }
         }
     }
@@ -300,8 +302,8 @@ fn the_selected_family_writes_the_bytes_the_batch_entry_points_write() {
 #[test]
 fn an_unavailable_family_is_reported_rather_than_substituted() {
     // B1 has redundancy 10, below the block width the table family reduces
-    // in, so the seam leaves it on the reference and an explicit request for
-    // it is a typed error rather than a silent substitution.
+    // in, so the seam never selects it and an explicit request for it is a
+    // typed error rather than a silent substitution.
     let row = &ROWS[0];
     let code = build(row);
     let layout = SystematicLayout::default();
@@ -324,9 +326,9 @@ fn an_unavailable_family_is_reported_rather_than_substituted() {
             family: EncodeFamily::TableRemainder
         }
     );
-    assert_eq!(
+    assert_ne!(
         code.selected_encode_family(layout, batch_messages.len()),
-        EncodeFamily::REFERENCE
+        EncodeFamily::TableRemainder
     );
 }
 

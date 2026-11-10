@@ -1,5 +1,5 @@
 //! Guarded fresh-process witness that a process which installs no profile
-//! encodes every batch under the scalar reference.
+//! encodes under the cheapest family its kernel bundle offers.
 
 #[path = "support/fresh_tuning_process.rs"]
 mod fresh;
@@ -7,9 +7,16 @@ mod fresh;
 use gf2_coding::bch::encode::EncodeFamily;
 
 #[test]
-fn an_uninstalled_process_encodes_under_the_scalar_reference() {
+fn an_uninstalled_process_encodes_under_the_preferred_family() {
     let result = fresh::fresh_tuning_process(fresh::FreshProcessCase::ConservativeDefault).unwrap();
-    assert_eq!(result["family"], EncodeFamily::REFERENCE.name());
+    // The corpus row's redundancy is one table block, so the default
+    // selectors admit every family at the child's batch and the preference
+    // order decides.
+    let accelerated = gf2_coding::test_support::selected_encode_kernel() != "scalar";
+    assert_eq!(
+        result["family"],
+        EncodeFamily::preference(accelerated)[0].name()
+    );
     assert_eq!(result["agrees_with_reference"], true);
     assert_eq!(result["resolution"], "frozen-before-install");
 }

@@ -346,7 +346,38 @@ enum ShortenedData<F: FiniteField> {
     /// symbol `i`.
     SystematicRestriction {
         kept_message_positions: Box<[usize]>,
+        /// `kept_message_positions` as runs of consecutive positions.
+        message_runs: Box<[CopyRun]>,
+        /// The derived-to-mother coordinate map as runs of consecutive
+        /// positions.
+        codeword_runs: Box<[CopyRun]>,
     },
+}
+
+/// `len` consecutive derived positions from `derived` up, carried by the
+/// consecutive mother positions from `mother` up.
+#[derive(Clone, Copy, Debug)]
+struct CopyRun {
+    derived: usize,
+    mother: usize,
+    len: usize,
+}
+
+/// Splits an ascending derived-to-mother position list into runs of
+/// consecutive positions.
+fn copy_runs(mother_positions: &[usize]) -> Box<[CopyRun]> {
+    let mut runs: Vec<CopyRun> = Vec::new();
+    for (derived, &mother) in mother_positions.iter().enumerate() {
+        match runs.last_mut() {
+            Some(run) if run.mother + run.len == mother => run.len += 1,
+            _ => runs.push(CopyRun {
+                derived,
+                mother,
+                len: 1,
+            }),
+        }
+    }
+    runs.into_boxed_slice()
 }
 
 /// A linear code obtained by shortening a mother code on a coordinate set.
@@ -695,8 +726,8 @@ where
     /// # Complexity
     ///
     /// O(`k · n`) field operations for the rank-derived path.  One mother
-    /// encode plus O(`n`) symbol moves for the systematic restriction, in
-    /// two buffers of the mother's size.
+    /// encode plus one range copy per run of consecutive kept positions for
+    /// the systematic restriction, in two buffers of the mother's size.
     fn encode_into(
         &self,
         message: &Self::Symbols,
@@ -730,24 +761,19 @@ where
                 }
             }
             ShortenedData::SystematicRestriction {
-                kept_message_positions,
+                message_runs,
+                codeword_runs,
+                ..
             } => {
                 let mut mother_message = Self::Symbols::zeroed(self.mother.k(), &zero);
-                for (derived_index, &mother_index) in kept_message_positions.iter().enumerate() {
-                    let symbol = message
-                        .get(derived_index)
-                        .expect("validated shortened message length");
-                    mother_message.set(mother_index, symbol)?;
+                for run in message_runs.iter() {
+                    mother_message.copy_range(run.mother, message, run.derived, run.len)?;
                 }
                 let mut mother_codeword = Self::Symbols::zeroed(self.mother.n(), &zero);
                 self.mother
                     .encode_into(&mother_message, &mut mother_codeword)?;
-                for derived_position in 0..self.n() {
-                    let mother_position = self.mother_position(derived_position);
-                    let symbol = mother_codeword
-                        .get(mother_position)
-                        .expect("the deletion map ranges over the mother coordinates");
-                    codeword.set(derived_position, symbol)?;
+                for run in codeword_runs.iter() {
+                    codeword.copy_range(run.derived, &mother_codeword, run.mother, run.len)?;
                 }
             }
         }
@@ -800,6 +826,7 @@ where
             }
             ShortenedData::SystematicRestriction {
                 kept_message_positions,
+                ..
             } => {
                 let mut mother_generator = Self::GeneratorMatrix::zeroed(
                     self.mother.k(),
@@ -1261,6 +1288,8 @@ where
             .take_while(|&position| position < mother.k())
             .collect::<Box<[usize]>>();
         let information_set = (0..kept_message_positions.len()).collect::<Box<[usize]>>();
+        let message_runs = copy_runs(&kept_message_positions);
+        let codeword_runs = copy_runs(&kept);
         return Ok(Shortened {
             mother,
             map,
@@ -1269,6 +1298,8 @@ where
             information_set,
             data: ShortenedData::SystematicRestriction {
                 kept_message_positions,
+                message_runs,
+                codeword_runs,
             },
         });
     }

@@ -277,11 +277,12 @@ impl<'a, F: FiniteField> SystematicPlan<'a, F> {
 /// step needs, which is what makes the choice between them a profile
 /// question rather than a semantic one.
 ///
-/// [`REGISTERED`](Self::REGISTERED) is the registry: the dispatch seam walks
-/// it in order and takes the first entry the representation implements for
-/// the plan and the active profile admits. [`REFERENCE`](Self::REFERENCE)
-/// closes it and is implemented for every plan in every representation, so
-/// the walk always terminates on an available family.
+/// [`REGISTERED`](Self::REGISTERED) is the registry. The dispatch seam walks
+/// [`preference`](Self::preference) of the host's kernel bundle and takes
+/// the first entry the representation implements for the plan and the active
+/// profile admits. [`REFERENCE`](Self::REFERENCE) closes it and is
+/// implemented for every plan in every representation, so the walk always
+/// terminates on an available family.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum EncodeFamily {
@@ -345,19 +346,44 @@ impl EncodeFamily {
     /// The family every representation implements for every plan.
     pub const REFERENCE: Self = Self::PolyRemainderScalar;
 
-    /// Every registered family, in the order the dispatch seam considers
-    /// them.
-    ///
-    /// The seam takes the first entry that is both available for the plan's
-    /// representation and admitted by the active profile, so a family placed
-    /// earlier is preferred wherever both admit it. [`REFERENCE`](Self::REFERENCE)
-    /// is last because it is the fallback the walk is guaranteed to reach.
+    /// Every registered family, [`REFERENCE`](Self::REFERENCE) last.
     pub const REGISTERED: &'static [Self] = &[
         Self::BitsliceInterleaved,
         Self::ClmulFold,
         Self::TableRemainder,
         Self::REFERENCE,
     ];
+
+    /// The order the dispatch seam considers the families in, cheapest per
+    /// message coefficient first, for a host whose kernel bundle is
+    /// `accelerated` or portable.
+    ///
+    /// The seam takes the first entry that is both available for the plan's
+    /// representation and admitted by the active profile, and ends at
+    /// [`REFERENCE`](Self::REFERENCE). An accelerated fold costs
+    /// $1 + \lceil r/64 \rceil$ carry-less multiplies per 64 coefficients,
+    /// below a table step's four lookups and $\lceil r/64 \rceil$-word shift
+    /// per 32 and below a lane group's $r$ word operations per coefficient
+    /// for 64 frames. A portable multiply is a loop over its operand's bits,
+    /// so without acceleration the table leads.
+    #[must_use]
+    pub const fn preference(accelerated: bool) -> &'static [Self] {
+        if accelerated {
+            &[
+                Self::ClmulFold,
+                Self::BitsliceInterleaved,
+                Self::TableRemainder,
+                Self::REFERENCE,
+            ]
+        } else {
+            &[
+                Self::TableRemainder,
+                Self::BitsliceInterleaved,
+                Self::ClmulFold,
+                Self::REFERENCE,
+            ]
+        }
+    }
 
     /// Returns this family's stable spelling.
     #[must_use]
@@ -401,37 +427,33 @@ const TABLE_REMAINDER_TABLES: usize = TABLE_REMAINDER_BLOCK_BITS / TABLE_REMAIND
 /// Entries in one reduction table, one per value of the slice it reads.
 const TABLE_REMAINDER_ENTRIES: usize = 1 << TABLE_REMAINDER_TABLE_BITS;
 
-/// Conservative minimum redundancy at which [`EncodeFamily::TableRemainder`]
-/// is selected.
+/// Default minimum redundancy at which [`EncodeFamily::TableRemainder`] is
+/// selected: one [`TABLE_REMAINDER_BLOCK_BITS`] block, the smallest register
+/// the family's step splits.
 ///
-/// The value is [`usize::MAX`], so the conservative profile never selects
-/// the table family. A profile with a lower
-/// `encode.table_remainder_min_redundancy` moves the boundary; the selected
-/// codewords are the same bytes either way.
-pub const TABLE_REMAINDER_MIN_REDUNDANCY: usize = usize::MAX;
+/// A profile's `encode.table_remainder_min_redundancy` moves the boundary;
+/// the selected codewords are the same bytes either way.
+pub const TABLE_REMAINDER_MIN_REDUNDANCY: usize = TABLE_REMAINDER_BLOCK_BITS;
 
-/// Conservative minimum batch length at which
-/// [`EncodeFamily::TableRemainder`] is selected.
-///
-/// The value is one, which excludes no batch.
+/// Default minimum batch length at which [`EncodeFamily::TableRemainder`] is
+/// selected: one, since the family reduces each message on its own.
 pub const TABLE_REMAINDER_MIN_BATCH: usize = 1;
 
-/// Conservative minimum batch length at which
-/// [`EncodeFamily::BitsliceInterleaved`] is selected.
+/// Default minimum batch length at which
+/// [`EncodeFamily::BitsliceInterleaved`] is selected: one full lane group of
+/// [`gf2_kernels_simd::bch_encode::BITSLICE_LANES`] frames, below which the
+/// group's unfilled lanes cost as much as filled ones.
 ///
-/// The value is [`usize::MAX`], so the conservative profile never selects
-/// the bit-sliced family. A profile with a lower
-/// `encode.bitslice_interleaved_min_batch` moves the boundary; the selected
-/// codewords are the same bytes either way.
-pub const BITSLICE_INTERLEAVED_MIN_BATCH: usize = usize::MAX;
+/// A profile's `encode.bitslice_interleaved_min_batch` moves the boundary;
+/// the selected codewords are the same bytes either way.
+pub const BITSLICE_INTERLEAVED_MIN_BATCH: usize = bch_encode::BITSLICE_LANES;
 
-/// Conservative minimum batch length at which [`EncodeFamily::ClmulFold`] is
-/// selected.
+/// Default minimum batch length at which [`EncodeFamily::ClmulFold`] is
+/// selected: one, since the fold reduces each message on its own.
 ///
-/// The value is [`usize::MAX`], so the conservative profile never selects
-/// the fold family. A profile with a lower `encode.clmul_fold_min_batch`
-/// moves the boundary; the selected codewords are the same bytes either way.
-pub const CLMUL_FOLD_MIN_BATCH: usize = usize::MAX;
+/// A profile's `encode.clmul_fold_min_batch` moves the boundary; the
+/// selected codewords are the same bytes either way.
+pub const CLMUL_FOLD_MIN_BATCH: usize = 1;
 
 /// Decides whether the active selectors admit `family` for a plan of
 /// redundancy `redundancy` over a batch of `batch_len` messages.
@@ -462,16 +484,18 @@ fn family_admitted(
 /// Reports the family the seam selects from already-resolved selectors.
 ///
 /// `available` answers [`SystematicKernel::family_available`] for the plan
-/// being encoded under. The walk is over [`EncodeFamily::REGISTERED`] in
-/// order and ends at [`EncodeFamily::REFERENCE`], which every representation
-/// makes available, so the result is always a family the caller can run.
+/// being encoded under. The walk is over [`EncodeFamily::preference`] of
+/// `accelerated` and ends at [`EncodeFamily::REFERENCE`], which every
+/// representation makes available, so the result is always a family the
+/// caller can run.
 fn select_family_resolved(
     selectors: &EncodeSelectors,
     redundancy: usize,
     batch_len: usize,
+    accelerated: bool,
     available: impl Fn(EncodeFamily) -> bool,
 ) -> EncodeFamily {
-    EncodeFamily::REGISTERED
+    EncodeFamily::preference(accelerated)
         .iter()
         .copied()
         .find(|&family| {
@@ -491,9 +515,13 @@ where
     S: SystematicKernel<F>,
 {
     let active = crate::tuning::active();
-    select_family_resolved(active.encode(), plan.redundancy(), batch_len, |family| {
-        S::family_available(family, plan)
-    })
+    select_family_resolved(
+        active.encode(),
+        plan.redundancy(),
+        batch_len,
+        encode_kernels_accelerated(),
+        |family| S::family_available(family, plan),
+    )
 }
 
 /// The buffers a systematic recurrence runs over.
@@ -549,9 +577,10 @@ pub struct EncodeRegisters<W> {
     /// Reduction constants for the families that fold a block at a time.
     ///
     /// [`EncodeFamily::ClmulFold`] is the family that reads it, and it holds
-    /// the single word
-    /// [`gf2_kernels_simd::bch_encode::fold_barrett_constant`] derives from
-    /// the plan's generator. It stays empty when no available family folds.
+    /// the word [`gf2_kernels_simd::bch_encode::fold_barrett_constant`]
+    /// derives from the plan's generator, followed by the redundancy and low
+    /// coefficients it was derived for. It stays empty when no available
+    /// family folds.
     pub fold: Vec<W>,
 }
 
@@ -928,17 +957,19 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
     ///
     /// # Complexity
     ///
-    /// That of [`encode_systematic_with`](Self::encode_systematic_with) plus
-    /// the $O(r)$ reset, which [`BchCode::encode_workspace`] pays once for a
-    /// whole sequence instead.
+    /// That of the family a batch of one selects, plus the $O(r)$ reset and
+    /// that family's preparation, which [`BchCode::encode_workspace`] pays
+    /// once for a whole sequence instead.
     fn encode_systematic_into(
         plan: &SystematicPlan<'_, F>,
         message: &Self,
         codeword: &mut Self,
     ) -> Result<(), CodeError> {
+        let family = select_family::<F, Self>(plan, 1);
         with_encode_scratch(|registers: &mut EncodeRegisters<Self::Word>| {
             Self::reset_registers(plan, registers);
-            Self::encode_systematic_with(plan, message, registers, codeword)
+            Self::reset_family(family, plan, registers);
+            Self::encode_systematic_family(family, plan, message, registers, codeword)
         })
     }
 }
@@ -1220,7 +1251,10 @@ impl SystematicKernel<Fp<2>> for BitVec {
                 plan.validate_lengths(message.len(), codeword.len())?;
                 validate_registers(words, registers)?;
                 validate_prepared(
-                    TABLE_REMAINDER_TABLES * TABLE_REMAINDER_ENTRIES * words,
+                    prepared_len(
+                        TABLE_REMAINDER_TABLES * TABLE_REMAINDER_ENTRIES * words,
+                        words,
+                    ),
                     registers.tables.len(),
                 )?;
                 let EncodeRegisters {
@@ -1236,7 +1270,10 @@ impl SystematicKernel<Fp<2>> for BitVec {
             EncodeFamily::ClmulFold if redundancy > 0 => {
                 plan.validate_lengths(message.len(), codeword.len())?;
                 validate_registers(words, registers)?;
-                validate_prepared(FOLD_CONSTANT_WORDS, registers.fold.len())?;
+                validate_prepared(
+                    prepared_len(FOLD_CONSTANT_WORDS, words),
+                    registers.fold.len(),
+                )?;
                 let EncodeRegisters {
                     register,
                     low,
@@ -1456,10 +1493,17 @@ fn packed_table_reduce(
     }
 
     let coefficients = message.words();
+    // A zero register stays zero through a zero block, as in the fold.
+    let mut started = register.iter().any(|&word| word != 0);
     for block in (0..blocks).rev() {
         let degree = block * TABLE_REMAINDER_BLOCK_BITS;
+        let incoming = packed_message_block(plan, coefficients, degree);
+        started |= incoming != 0;
+        if !started {
+            continue;
+        }
         let leaving = packed_read_block(register, redundancy - TABLE_REMAINDER_BLOCK_BITS);
-        let folded = leaving ^ packed_message_block(plan, coefficients, degree);
+        let folded = leaving ^ incoming;
         packed_shift_block(register, tail);
         for table in 0..TABLE_REMAINDER_TABLES {
             let slice =
@@ -1482,9 +1526,13 @@ fn packed_build_tables(redundancy: usize, low: &[u64], tables: &mut Vec<u64>) {
     let words = low.len();
     let top = redundancy - 1;
     let tail = packed_tail_mask(redundancy);
+    let body = TABLE_REMAINDER_TABLES * TABLE_REMAINDER_ENTRIES * words;
+    if prepared_for(tables, body, redundancy, low) {
+        return;
+    }
 
     tables.clear();
-    tables.resize(TABLE_REMAINDER_TABLES * TABLE_REMAINDER_ENTRIES * words, 0);
+    tables.resize(body, 0);
     for table in 0..TABLE_REMAINDER_TABLES {
         let base = table * TABLE_REMAINDER_ENTRIES * words;
         // The entry for value 1 carries x^{r + 8t}: that is x^r for the first
@@ -1522,6 +1570,7 @@ fn packed_build_tables(redundancy: usize, low: &[u64], tables: &mut Vec<u64>) {
             }
         }
     }
+    stamp_prepared(tables, body, redundancy, low);
 }
 
 /// Sizes the lane-group scratch [`EncodeFamily::BitsliceInterleaved`]
@@ -1539,20 +1588,49 @@ fn packed_build_lanes(redundancy: usize, low: &[u64], lanes: &mut Vec<u64>) {
 }
 
 /// Words [`EncodeFamily::ClmulFold`] keeps in
-/// [`EncodeRegisters::fold`]: the one Barrett constant its step reduces
-/// through.
+/// [`EncodeRegisters::fold`] ahead of its [`prepared_for`] stamp: the one
+/// Barrett constant its step reduces through.
 const FOLD_CONSTANT_WORDS: usize = 1;
 
-/// Derives the Barrett constant [`EncodeFamily::ClmulFold`] folds through.
+/// Words a prepared buffer of `body` words holds with its [`prepared_for`]
+/// stamp for a generator of `low_words` low words.
+fn prepared_len(body: usize, low_words: usize) -> usize {
+    body + 1 + low_words
+}
+
+/// Whether `buffer` holds `body` words prepared for the generator of
+/// redundancy `redundancy` and low coefficients `low`: the words after the
+/// body are that redundancy and those coefficients. The stamp lets the entry
+/// points that own no workspace keep a family's preparation across encodes
+/// of one code.
+fn prepared_for(buffer: &[u64], body: usize, redundancy: usize, low: &[u64]) -> bool {
+    buffer.len() == prepared_len(body, low.len())
+        && buffer[body] == redundancy as u64
+        && buffer[body + 1..] == *low
+}
+
+/// Writes the [`prepared_for`] stamp after the `body` words of `buffer`.
+fn stamp_prepared(buffer: &mut Vec<u64>, body: usize, redundancy: usize, low: &[u64]) {
+    buffer.truncate(body);
+    buffer.push(redundancy as u64);
+    buffer.extend_from_slice(low);
+}
+
+/// Derives the Barrett constant [`EncodeFamily::ClmulFold`] folds through,
+/// unless `fold` already holds it for this generator.
 ///
 /// The buffer is cleared and resized rather than replaced, so preparing
 /// registers that already carry the constant reaches no allocator. The
 /// division runs over `register`, whose contents carry no meaning outside an
 /// encode, so the constant costs no scratch of its own.
 fn packed_build_fold(redundancy: usize, low: &[u64], register: &mut [u64], fold: &mut Vec<u64>) {
+    if prepared_for(fold, FOLD_CONSTANT_WORDS, redundancy, low) {
+        return;
+    }
     fold.clear();
     fold.resize(FOLD_CONSTANT_WORDS, 0);
     fold[0] = bch_encode::fold_barrett_constant(low, redundancy, register);
+    stamp_prepared(fold, FOLD_CONSTANT_WORDS, redundancy, low);
 }
 
 /// Reduces $x^r m(x)$ modulo the generator 64 message degrees at a time,
@@ -1577,11 +1655,17 @@ fn packed_fold_reduce(
     let coefficients = message.words();
     register.fill(0);
     let mut degree = plan.dimension();
+    // While the remainder is zero a zero block leaves it zero, so the
+    // leading zero coefficients of a shortened message cost one read each.
+    let mut started = false;
     while degree > 0 {
         let count = ((degree - 1) % 64) + 1;
         degree -= count;
         let block = packed_message_window(plan, coefficients, degree, count);
-        (fns.fold_block)(register, low, redundancy, barrett, block);
+        started |= block != 0;
+        if started {
+            (fns.fold_block)(register, low, redundancy, barrett, block);
+        }
     }
 }
 
@@ -1597,6 +1681,16 @@ fn encode_kernels() -> BchEncodeFns {
     }
     static DETECTED: OnceLock<BchEncodeFns> = OnceLock::new();
     *DETECTED.get_or_init(|| bch_encode::detect().unwrap_or_else(bch_encode::scalar))
+}
+
+/// Whether [`encode_kernels`] runs the accelerated bundle.
+fn encode_kernels_accelerated() -> bool {
+    #[cfg(any(test, feature = "test-support"))]
+    if force_scalar_encode_kernels_active() {
+        return false;
+    }
+    static ACCELERATED: OnceLock<bool> = OnceLock::new();
+    *ACCELERATED.get_or_init(|| bch_encode::detect().is_some())
 }
 
 #[cfg(any(test, feature = "test-support"))]
@@ -1869,7 +1963,7 @@ where
     /// `codewords`, reusing one `workspace`.
     ///
     /// The algorithm family comes from the batch length and the active
-    /// profile, through the walk over [`EncodeFamily::REGISTERED`]. It is a
+    /// profile, through the walk over [`EncodeFamily::preference`]. It is a
     /// family this code's representation makes available, so the family error
     /// [`encode_batch_family_into`](Self::encode_batch_family_into) can
     /// report is unreachable from here.
@@ -1955,7 +2049,7 @@ where
     ///
     /// The report is the selection itself, not a prediction of it: the batch
     /// entry points resolve the same active profile through the same walk
-    /// over [`EncodeFamily::REGISTERED`].
+    /// over [`EncodeFamily::preference`].
     pub fn selected_encode_family(
         &self,
         layout: SystematicLayout,
@@ -3451,6 +3545,47 @@ mod tests {
     }
 
     #[test]
+    fn every_family_skips_leading_zero_coefficients_exactly() {
+        // Zero runs at either end of the user coordinates are the highest
+        // message degrees under one layout or the other, the coefficients a
+        // shortened message carries and the fold and table reductions skip
+        // while the remainder is zero.
+        let codes = [
+            binary_narrow_sense(7, 0b10000011, 21),
+            BinaryBchCode::construct(BchSpec::PrimitiveNarrowSense {
+                extension: BinaryPrimeExt::new(Gf2mField::gf256()).expect("a primitive modulus"),
+                designed_distance: DesignedDistance::try_from(17).expect("positive"),
+            })
+            .expect("a valid GF(2^8) narrow-sense spec"),
+        ];
+        for code in &codes {
+            let k = code.k();
+            for zeros in [0usize, 1, 31, 32, 33, 63, 64, 65, k - 1, k] {
+                let zeros = zeros.min(k);
+                let mut messages = seeded_bit_batch(k, 3, zeros as u64 + 7);
+                for message in &mut messages {
+                    for i in 0..zeros {
+                        message.set(i, false);
+                        message.set(k - 1 - i, false);
+                    }
+                }
+                for &family in EncodeFamily::REGISTERED {
+                    for &layout in LAYOUTS {
+                        if !code.encode_family_available(family, layout) {
+                            continue;
+                        }
+                        assert_eq!(
+                            batch_under(code, family, &messages, layout),
+                            bit_serial_batch(code, &messages, layout),
+                            "{family} at k = {k}, {zeros} zero coefficients, under {layout:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn the_kernel_families_hold_at_the_word_boundaries() {
         // A zero-dimensional code, then the redundancies 0, 1, 63, 64, and
         // 65: no message degree at all, an empty register, one bit, one word
@@ -4174,41 +4309,27 @@ mod tests {
         conformance::block_encoder_contract(&prime, &message);
     }
 
+    /// A selector bound no redundancy or batch length reaches.
+    const CLOSED: usize = usize::MAX;
+
     /// Selectors admitting the table family from `redundancy` and `batch` up,
     /// with the bit-sliced family left excluded so the table arm is the
     /// subject.
     fn admitting(redundancy: usize, batch: usize) -> EncodeSelectors {
-        EncodeSelectors::try_new(
-            redundancy,
-            batch,
-            BITSLICE_INTERLEAVED_MIN_BATCH,
-            CLMUL_FOLD_MIN_BATCH,
-        )
-        .expect("every bound is admissible")
+        EncodeSelectors::try_new(redundancy, batch, CLOSED, CLOSED)
+            .expect("every bound is admissible")
     }
 
     /// Selectors admitting the bit-sliced family from `batch` up, with the
     /// table family left excluded so the bit-sliced arm is the subject.
     fn admitting_bitslice(batch: usize) -> EncodeSelectors {
-        EncodeSelectors::try_new(
-            TABLE_REMAINDER_MIN_REDUNDANCY,
-            TABLE_REMAINDER_MIN_BATCH,
-            batch,
-            CLMUL_FOLD_MIN_BATCH,
-        )
-        .expect("every bound is admissible")
+        EncodeSelectors::try_new(CLOSED, CLOSED, batch, CLOSED).expect("every bound is admissible")
     }
 
     /// Selectors admitting the fold family from `batch` up, with the others
     /// left excluded so the fold arm is the subject.
     fn admitting_clmul(batch: usize) -> EncodeSelectors {
-        EncodeSelectors::try_new(
-            TABLE_REMAINDER_MIN_REDUNDANCY,
-            TABLE_REMAINDER_MIN_BATCH,
-            BITSLICE_INTERLEAVED_MIN_BATCH,
-            batch,
-        )
-        .expect("every bound is admissible")
+        EncodeSelectors::try_new(CLOSED, CLOSED, CLOSED, batch).expect("every bound is admissible")
     }
 
     fn everything_available(_: EncodeFamily) -> bool {
@@ -4216,38 +4337,60 @@ mod tests {
     }
 
     #[test]
-    fn the_conservative_selectors_hold_every_code_on_the_reference() {
-        let conservative = crate::tuning::CodingTuning::CONSERVATIVE;
-        for redundancy in [0, 1, 32, 63, 64, 65, 192, 4096] {
-            for batch in [0, 1, 16, 4096] {
-                assert_eq!(
-                    select_family_resolved(
-                        conservative.encode(),
-                        redundancy,
-                        batch,
-                        everything_available
-                    ),
-                    EncodeFamily::REFERENCE,
-                    "redundancy {redundancy}, batch {batch}"
-                );
-            }
+    fn the_default_selectors_select_the_cheapest_family_for_the_host() {
+        let defaults = crate::tuning::CodingTuning::CONSERVATIVE;
+        let select = |redundancy, batch, accelerated| {
+            select_family_resolved(
+                defaults.encode(),
+                redundancy,
+                batch,
+                accelerated,
+                everything_available,
+            )
+        };
+        for batch in [1, 16, 64, 4096] {
+            assert_eq!(
+                select(192, batch, true),
+                EncodeFamily::ClmulFold,
+                "batch {batch}"
+            );
+            assert_eq!(
+                select(192, batch, false),
+                EncodeFamily::TableRemainder,
+                "batch {batch}"
+            );
         }
+        assert_eq!(
+            select(31, 63, false),
+            EncodeFamily::ClmulFold,
+            "below one table block"
+        );
+        assert_eq!(
+            select(31, 64, false),
+            EncodeFamily::BitsliceInterleaved,
+            "a full lane group"
+        );
+        assert_eq!(
+            select(192, 0, true),
+            EncodeFamily::REFERENCE,
+            "the empty batch"
+        );
     }
 
     #[test]
     fn an_admitting_profile_moves_the_selection_off_the_reference() {
         let selectors = admitting(32, 16);
         assert_eq!(
-            select_family_resolved(&selectors, 32, 16, everything_available),
+            select_family_resolved(&selectors, 32, 16, true, everything_available),
             EncodeFamily::TableRemainder
         );
         assert_eq!(
-            select_family_resolved(&selectors, 31, 16, everything_available),
+            select_family_resolved(&selectors, 31, 16, true, everything_available),
             EncodeFamily::REFERENCE,
             "a redundancy below the bound stays on the reference"
         );
         assert_eq!(
-            select_family_resolved(&selectors, 32, 15, everything_available),
+            select_family_resolved(&selectors, 32, 15, true, everything_available),
             EncodeFamily::REFERENCE,
             "a batch below the bound stays on the reference"
         );
@@ -4257,11 +4400,11 @@ mod tests {
     fn an_admitting_profile_reaches_the_bit_sliced_family() {
         let selectors = admitting_bitslice(64);
         assert_eq!(
-            select_family_resolved(&selectors, 192, 64, everything_available),
+            select_family_resolved(&selectors, 192, 64, true, everything_available),
             EncodeFamily::BitsliceInterleaved
         );
         assert_eq!(
-            select_family_resolved(&selectors, 192, 63, everything_available),
+            select_family_resolved(&selectors, 192, 63, true, everything_available),
             EncodeFamily::REFERENCE,
             "a batch below the bound stays on the reference"
         );
@@ -4271,41 +4414,41 @@ mod tests {
     fn an_admitting_profile_reaches_the_fold_family() {
         let selectors = admitting_clmul(16);
         assert_eq!(
-            select_family_resolved(&selectors, 192, 16, everything_available),
+            select_family_resolved(&selectors, 192, 16, true, everything_available),
             EncodeFamily::ClmulFold
         );
         assert_eq!(
-            select_family_resolved(&selectors, 192, 15, everything_available),
+            select_family_resolved(&selectors, 192, 15, true, everything_available),
             EncodeFamily::REFERENCE,
             "a batch below the bound stays on the reference"
         );
     }
 
     #[test]
-    fn the_registry_order_decides_among_families_a_profile_admits() {
-        // Every bound open at once: the walk takes the first registered
+    fn the_preference_order_decides_among_families_a_profile_admits() {
+        // Every bound open at once: the walk takes the first preferred
         // family, and the codewords are the same bytes whichever it reaches.
         let selectors =
             EncodeSelectors::try_new(32, 16, 16, 16).expect("every bound is admissible");
-        for (available, expected) in [
+        let not = |excluded: &'static [EncodeFamily]| move |family| !excluded.contains(&family);
+        for (accelerated, excluded, expected) in [
+            (true, &[][..], EncodeFamily::ClmulFold),
             (
-                &everything_available as &dyn Fn(EncodeFamily) -> bool,
+                true,
+                &[EncodeFamily::ClmulFold][..],
                 EncodeFamily::BitsliceInterleaved,
             ),
+            (false, &[][..], EncodeFamily::TableRemainder),
             (
-                &|family| family != EncodeFamily::BitsliceInterleaved,
-                EncodeFamily::ClmulFold,
-            ),
-            (
-                &|family| {
-                    family != EncodeFamily::BitsliceInterleaved && family != EncodeFamily::ClmulFold
-                },
-                EncodeFamily::TableRemainder,
+                false,
+                &[EncodeFamily::TableRemainder][..],
+                EncodeFamily::BitsliceInterleaved,
             ),
         ] {
             assert_eq!(
-                select_family_resolved(&selectors, 192, 16, available),
-                expected
+                select_family_resolved(&selectors, 192, 16, accelerated, not(excluded)),
+                expected,
+                "accelerated {accelerated}, excluding {excluded:?}"
             );
         }
     }
@@ -4314,7 +4457,7 @@ mod tests {
     fn availability_overrides_an_admitting_profile() {
         let selectors = admitting(0, 0);
         assert_eq!(
-            select_family_resolved(&selectors, 192, 4096, |family| family
+            select_family_resolved(&selectors, 192, 4096, true, |family| family
                 == EncodeFamily::REFERENCE),
             EncodeFamily::REFERENCE,
             "a profile cannot select a family the representation does not implement"

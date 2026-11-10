@@ -220,9 +220,9 @@ pub struct CodingSelectors {
 }
 
 impl CodingSelectors {
-    /// The parser-free conservative selector families: every encode bound is
-    /// the corresponding [`crate::bch::encode`] constant, which selects the
-    /// scalar reference for every code, and the decode family is
+    /// The parser-free default selector families: every encode bound is the
+    /// corresponding structural [`crate::bch::encode`] constant, which opens
+    /// each family where its step shape is whole, and the decode family is
     /// [`DecodeSelectors::CONSERVATIVE`].
     pub const CONSERVATIVE: Self = Self {
         encode: EncodeSelectors {
