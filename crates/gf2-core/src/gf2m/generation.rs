@@ -188,8 +188,7 @@ impl PrimitiveGenerator {
     }
 
     fn is_primitive_poly(&self, poly: u64) -> bool {
-        Gf2mField::new_unchecked(self.degree, poly)
-            .verify_primitive_with_factors(&self.order_prime_factors)
+        Gf2mField::new(self.degree, poly).verify_primitive_with_factors(&self.order_prime_factors)
     }
 }
 
@@ -323,7 +322,7 @@ mod tests {
                 .find_first()
                 .unwrap();
             assert_eq!(poly >> m, 1, "{strategy:?}: {poly:#x} has degree {m}");
-            assert!(Gf2mField::new_unchecked(m, poly).verify_primitive());
+            assert!(Gf2mField::new(m, poly).verify_primitive());
         }
     }
 
