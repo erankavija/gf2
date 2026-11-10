@@ -66,26 +66,24 @@ unsafe fn mul_add_avx2_unchecked(table: &SplitTable, x: &[u8], y: &mut [u8]) {
     let len = x.len();
     let (xp, yp) = (x.as_ptr(), y.as_mut_ptr());
     let mut at = 0;
-    while at + 64 <= len {
-        // SAFETY: at + 64 <= len for both slices; unaligned accesses are
+    while at + 128 <= len {
+        // SAFETY: at + 128 <= len for both slices; unaligned accesses are
         // permitted and the borrows keep the slices disjoint.
         unsafe {
-            let x0 = _mm256_loadu_si256(xp.add(at).cast());
-            let x1 = _mm256_loadu_si256(xp.add(at + 32).cast());
-            let y0 = _mm256_loadu_si256(yp.add(at).cast());
-            let y1 = _mm256_loadu_si256(yp.add(at + 32).cast());
-            _mm256_storeu_si256(
-                yp.add(at).cast(),
-                _mm256_xor_si256(y0, products(low, high, x0)),
-            );
-            _mm256_storeu_si256(
-                yp.add(at + 32).cast(),
-                _mm256_xor_si256(y1, products(low, high, x1)),
-            );
+            let x: [__m256i; 4] =
+                core::array::from_fn(|v| _mm256_loadu_si256(xp.add(at + 32 * v).cast()));
+            let y: [__m256i; 4] =
+                core::array::from_fn(|v| _mm256_loadu_si256(yp.add(at + 32 * v).cast()));
+            for v in 0..4 {
+                _mm256_storeu_si256(
+                    yp.add(at + 32 * v).cast(),
+                    _mm256_xor_si256(y[v], products(low, high, x[v])),
+                );
+            }
         }
-        at += 64;
+        at += 128;
     }
-    if at + 32 <= len {
+    while at + 32 <= len {
         // SAFETY: as above, for one vector.
         unsafe {
             let x0 = _mm256_loadu_si256(xp.add(at).cast());
