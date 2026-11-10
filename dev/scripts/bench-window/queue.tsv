@@ -5,11 +5,9 @@
 de311215	.agents/worktrees/agent-de311215	60	GF2_AFF3CT_ROOT="$PWD/../../ext/c077a88b/aff3ct" GF2_LDPC_BUNDLES="$PWD/../../ext/c077a88b/inputs" bash experiments/aff3ct-ldpc-gaps/quick-compare.sh
 # de311215 perf profiles of the gf2 QC and layered routes at w1-b1, w1-b16 and w12-b16; est_minutes is an estimate
 de311215	.agents/worktrees/agent-de311215	20	GF2_LDPC_BUNDLES="$PWD/../../ext/c077a88b/inputs" bash experiments/aff3ct-ldpc-gaps/profile-routes.sh
-# c62356d2 QC route sweep with NR Z 8-48 added, on jit-c62356d2-bounds (main with the fused variable update); compare its QC times per cell with the jit-c62356d2-hot log; est_minutes is an estimate: 34 min for the 64 cells of the jit-c62356d2-hot run plus about 2 min per added code
-c62356d2	.agents/worktrees/jit-c62356d2-bounds	60	bash experiments/aff3ct-ldpc-gaps/qc-route-sweep.sh
 # be6d6f45 gf2 NR rate-matched encoding against srsRAN and AFF3CT at 1 and 12 workers; the comparator trees are host-local under .agents/ext; est_minutes is an estimate
 be6d6f45	.agents/worktrees/jit-be6d6f45-run	5	GF2_SRSRAN_ROOT="$PWD/../../ext/c077a88b/srsran" GF2_AFF3CT_ROOT="$PWD/../../ext/c077a88b/aff3ct" bash experiments/encode-compare/compare.sh nr
 # befccab3 gf2 long carry-less product against gf2x 1.3.0 (tuned and native prefixes, fastest reported) at 16, 64, 256 and 2048 words on one core; the gf2x prefixes are host-local under .agents/ext; est_minutes is an estimate: two prefix builds, then 2 builds x 2 arms x 4 sizes x 12 samples of at least 50 ms
-befccab3	.agents/worktrees/jit-befccab3	5	GF2_GF2X_ROOT="$PWD/../../ext/c7113c5a" bash experiments/clmul-compare/compare.sh
+befccab3	.agents/worktrees/jit-befccab3-run	5	GF2_GF2X_ROOT="$PWD/../../ext/c7113c5a" bash experiments/clmul-compare/compare.sh
 # c9cb0dd2 gf2 GF(2^8) region axpy (4 KiB to 16 MiB) and square products (n = 64, 256, 1024) against ISA-L gf_vect_mad and M4RIE (fastest of mzed_mul, Newton-John, bitsliced Karatsuba) on core 8; the library prefix is host-local under .agents/ext; est_minutes is an estimate: two release builds and under a minute of cells
 c9cb0dd2	.agents/worktrees/jit-c9cb0dd2-run	5	GF256_BASELINE_PREFIX="$PWD/../../ext/6c6b09b1/prefix" GF256_BASELINE_CORE=8 bash experiments/gf256-baselines/run.sh
