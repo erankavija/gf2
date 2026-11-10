@@ -8,7 +8,7 @@ use std::ops::Range;
 
 type CheckBlockFn = fn(LaneMinSumRule, &[f32], &mut [f32], usize, usize);
 type RotatedDifferenceFn = fn(&[f32], usize, &[f32], &mut [f32]);
-type AccumulateRotatedFn = fn(&mut [f32], Range<usize>, &[f32], &[f32], &[QcTerm]);
+type AccumulateFn = fn(&QcAccumulation, &mut [f32], &[f32], &[f32]);
 type CheckRowRotatedFn = fn(LaneMinSumRule, &[f32], &[QcBlock], &mut [f32], &mut [f32], usize);
 
 /// Safe QC kernels, with a portable implementation on every target.
@@ -16,7 +16,7 @@ type CheckRowRotatedFn = fn(LaneMinSumRule, &[f32], &[QcBlock], &mut [f32], &mut
 pub struct QcKernels {
     pub(crate) check_block_fn: CheckBlockFn,
     pub(crate) rotated_difference_fn: RotatedDifferenceFn,
-    pub(crate) accumulate_rotated_fn: AccumulateRotatedFn,
+    pub(crate) accumulate_fn: AccumulateFn,
     pub(crate) check_row_rotated_fn: CheckRowRotatedFn,
 }
 
@@ -28,6 +28,110 @@ pub struct QcTerm {
     pub offset: usize,
     /// Lane `j` reads message `(j - shift) mod z`.
     pub shift: usize,
+}
+
+/// Variable lanes `lanes` of a column block that add the terms `terms` of
+/// their [`QcAccumulation`] in that order.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct QcSegment {
+    /// Lanes of the column block, within `0..z`.
+    pub lanes: Range<usize>,
+    /// Indices into the plan's terms.
+    pub terms: Range<usize>,
+}
+
+/// The variable update of a QC code, validated once: per column block, lane
+/// segments with their terms over a message plane of a fixed length.
+///
+/// Column block `b` owns `segments[segment_offsets[b]..segment_offsets[b + 1]]`.
+/// Lanes no segment names keep their beliefs.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct QcAccumulation {
+    pub(crate) z: usize,
+    pub(crate) messages: usize,
+    pub(crate) segment_offsets: Vec<usize>,
+    pub(crate) segments: Vec<QcSegment>,
+    pub(crate) terms: Vec<QcTerm>,
+}
+
+impl QcAccumulation {
+    /// Builds the plan of lifting size `z` over a plane of `messages`
+    /// check-to-variable messages. Takes O(blocks + segments + terms) time.
+    ///
+    /// # Panics
+    ///
+    /// Panics unless `z > 0`; `segment_offsets` starts at zero, never
+    /// decreases and ends at `segments.len()`; every segment's lanes lie
+    /// within `0..z` and its terms within `terms`; and every term has
+    /// `shift < z` and `offset + z <= messages`.
+    #[must_use]
+    pub fn new(
+        z: usize,
+        messages: usize,
+        segment_offsets: Vec<usize>,
+        segments: Vec<QcSegment>,
+        terms: Vec<QcTerm>,
+    ) -> Self {
+        assert!(z > 0, "QC lifting size zero");
+        assert_eq!(
+            segment_offsets.first(),
+            Some(&0),
+            "QC segments start at zero"
+        );
+        assert_eq!(
+            segment_offsets.last(),
+            Some(&segments.len()),
+            "QC segment offsets end at the segment count"
+        );
+        assert!(
+            segment_offsets.windows(2).all(|pair| pair[0] <= pair[1]),
+            "QC segment offsets decrease"
+        );
+        for segment in &segments {
+            let (lanes, range) = (&segment.lanes, &segment.terms);
+            assert!(
+                lanes.start <= lanes.end && lanes.end <= z,
+                "QC lanes {lanes:?} outside lifting size {z}"
+            );
+            assert!(
+                range.start <= range.end && range.end <= terms.len(),
+                "QC terms {range:?} outside {} terms",
+                terms.len()
+            );
+        }
+        for term in &terms {
+            assert!(
+                term.shift < z,
+                "QC shift {} outside lifting size {z}",
+                term.shift
+            );
+            assert!(
+                term.offset
+                    .checked_add(z)
+                    .is_some_and(|end| end <= messages),
+                "QC messages from {} outside a plane of {messages}",
+                term.offset
+            );
+        }
+        Self {
+            z,
+            messages,
+            segment_offsets,
+            segments,
+            terms,
+        }
+    }
+
+    /// Returns the number of column blocks.
+    #[must_use]
+    pub fn col_blocks(&self) -> usize {
+        self.segment_offsets.len() - 1
+    }
+
+    /// The segments of column block `block`.
+    pub(crate) fn block_segments(&self, block: usize) -> &[QcSegment] {
+        &self.segments[self.segment_offsets[block]..self.segment_offsets[block + 1]]
+    }
 }
 
 /// One circulant's column block in a check update: `z` beliefs from `offset`,
@@ -49,7 +153,7 @@ impl QcKernels {
                 check_block_scalar(rule, inputs, outputs, degree, z, 0);
             },
             rotated_difference_fn: rotated_difference_runs,
-            accumulate_rotated_fn: accumulate_rotated_runs,
+            accumulate_fn: accumulate_runs,
             check_row_rotated_fn: check_row_rotated_portable,
         }
     }
@@ -102,48 +206,30 @@ impl QcKernels {
         (self.rotated_difference_fn)(block, shift, subtrahend, out);
     }
 
-    /// Writes `beliefs[j] = channel[j] + Σ_t messages[t.offset + (j - t.shift) mod z]`
-    /// for each lane `j` of `lanes`, with `z = beliefs.len()`, adding the
-    /// terms in their order: the beliefs of one column-block segment from its
-    /// channel values and the check-to-variable messages of its circulants, in
-    /// the segment's canonical accumulation order. Lanes outside `lanes` are
-    /// unchanged. Takes O(|lanes| · |terms|) time.
+    /// Writes, for every segment of column block `b` and lane `j` of its
+    /// lanes, `beliefs[b * z + j] = channel[b * z + j] + Σ_t
+    /// messages[t.offset + (j - t.shift) mod z]`, adding the segment's terms
+    /// in their order: the beliefs of every variable from its channel value
+    /// and the check-to-variable messages of its circulants, in its canonical
+    /// accumulation order. Lanes no segment names are unchanged. Takes
+    /// O(Σ |lanes| · |terms|) time over the segments.
     ///
     /// # Panics
     ///
-    /// Panics before writing unless `channel` holds `z` values, `lanes` lies
-    /// within `0..z`, and every term has `shift < z` and
-    /// `offset + z <= messages.len()`.
-    pub fn accumulate_rotated(
+    /// Panics before writing unless `beliefs` and `channel` hold
+    /// `plan.col_blocks() * z` values and `messages` the plan's message count.
+    pub fn accumulate(
         &self,
+        plan: &QcAccumulation,
         beliefs: &mut [f32],
-        lanes: Range<usize>,
         channel: &[f32],
         messages: &[f32],
-        terms: &[QcTerm],
     ) {
-        let z = beliefs.len();
-        assert_eq!(channel.len(), z, "QC channel length");
-        assert!(
-            lanes.start <= lanes.end && lanes.end <= z,
-            "QC lanes {lanes:?} outside lifting size {z}"
-        );
-        for term in terms {
-            assert!(
-                term.shift < z,
-                "QC shift {} outside lifting size {z}",
-                term.shift
-            );
-            assert!(
-                term.offset
-                    .checked_add(z)
-                    .is_some_and(|end| end <= messages.len()),
-                "QC messages from {} outside a plane of {}",
-                term.offset,
-                messages.len()
-            );
-        }
-        (self.accumulate_rotated_fn)(beliefs, lanes, channel, messages, terms);
+        let lanes = plan.col_blocks() * plan.z;
+        assert_eq!(beliefs.len(), lanes, "QC belief length");
+        assert_eq!(channel.len(), lanes, "QC channel length");
+        assert_eq!(messages.len(), plan.messages, "QC message length");
+        (self.accumulate_fn)(plan, beliefs, channel, messages);
     }
 
     /// Updates one base row's check-to-variable messages in place from the
@@ -245,9 +331,29 @@ fn rotated_difference_runs(block: &[f32], shift: usize, subtrahend: &[f32], out:
     }
 }
 
-/// [`QcKernels::accumulate_rotated`] one term at a time, each in at most two
-/// contiguous runs: lanes below `shift` read messages that wrap. Every lane
-/// still adds its terms in order.
+/// [`QcKernels::accumulate`] one segment at a time.
+fn accumulate_runs(plan: &QcAccumulation, beliefs: &mut [f32], channel: &[f32], messages: &[f32]) {
+    let z = plan.z;
+    for (block, (beliefs, channel)) in beliefs
+        .chunks_exact_mut(z)
+        .zip(channel.chunks_exact(z))
+        .enumerate()
+    {
+        for segment in plan.block_segments(block) {
+            accumulate_rotated_runs(
+                beliefs,
+                segment.lanes.clone(),
+                channel,
+                messages,
+                &plan.terms[segment.terms.clone()],
+            );
+        }
+    }
+}
+
+/// One segment of [`QcKernels::accumulate`], one term at a time, each in at
+/// most two contiguous runs: lanes below `shift` read messages that wrap.
+/// Every lane still adds its terms in order.
 fn accumulate_rotated_runs(
     beliefs: &mut [f32],
     lanes: Range<usize>,

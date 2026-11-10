@@ -2,11 +2,11 @@
 //! each column block splits into lane segments that share one canonical
 //! accumulation order, so variable sums equal the canonical decoder's.
 
-use super::decisions::{pack_bytes, pack_eight};
+use super::decisions::{pack_bits, pack_eight};
 use super::{DecodeOutcome, DecoderConfig, LaneBackend, LdpcCode, MinSumRule, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use gf2_core::BitVec;
-use gf2_kernels_simd::ldpc_qc::{QcBlock, QcKernels, QcTerm};
+use gf2_kernels_simd::ldpc_qc::{QcAccumulation, QcBlock, QcKernels, QcSegment, QcTerm};
 use std::ops::Range;
 
 /// One circulant of the block description.
@@ -14,13 +14,6 @@ use std::ops::Range;
 struct BaseEdge {
     col_block: usize,
     shift: usize,
-}
-
-/// Variable lanes `lanes` of a column block accumulate the circulants
-/// `seg_terms[edges]` in that order; the segments of a block cover its lanes.
-struct Segment {
-    lanes: Range<usize>,
-    edges: Range<usize>,
 }
 
 /// The block structure of a quasi-cyclic code, in both traversal orders.
@@ -38,9 +31,8 @@ struct QcLayout {
     /// Each edge of `check_edges` as the beliefs its check update reads.
     check_blocks: Vec<QcBlock>,
     check_offsets: Vec<usize>,
-    segments: Vec<Segment>,
-    segment_offsets: Vec<usize>,
-    seg_terms: Vec<QcTerm>,
+    /// The variable update: each column block's segments cover its lanes.
+    accumulation: QcAccumulation,
     /// (edge, check lane) pairs without an entry, ascending.
     masked: Vec<(usize, usize)>,
     masked_offsets: Vec<usize>,
@@ -112,7 +104,7 @@ impl QcLayout {
         // A lane's canonical accumulation order is its edges by ascending
         // parity check; adjacent lanes with one order share a segment.
         let check_of = |row: usize| code.row_order().map_or(row, |order| order[row]);
-        let mut segments: Vec<Segment> = Vec::new();
+        let mut segments: Vec<QcSegment> = Vec::new();
         let mut segment_offsets = vec![0usize];
         let mut seg_edges = Vec::new();
         let mut order: Vec<(usize, usize)> = Vec::new();
@@ -130,7 +122,7 @@ impl QcLayout {
                 }
                 order.sort_unstable();
                 if let Some(last) = segments[first..].last_mut() {
-                    let previous = &seg_edges[last.edges.clone()];
+                    let previous = &seg_edges[last.terms.clone()];
                     if previous.len() == order.len()
                         && previous.iter().zip(&order).all(|(&a, &(_, b))| a == b)
                     {
@@ -140,9 +132,9 @@ impl QcLayout {
                 }
                 let start = seg_edges.len();
                 seg_edges.extend(order.iter().map(|&(_, index)| index));
-                segments.push(Segment {
+                segments.push(QcSegment {
                     lanes: lane..lane + 1,
-                    edges: start..seg_edges.len(),
+                    terms: start..seg_edges.len(),
                 });
             }
             segment_offsets.push(segments.len());
@@ -167,6 +159,13 @@ impl QcLayout {
                 shift: check_edges[index].shift,
             })
             .collect();
+        let accumulation = QcAccumulation::new(
+            z,
+            check_edges.len() * z,
+            segment_offsets,
+            segments,
+            seg_terms,
+        );
         let check_blocks = check_edges
             .iter()
             .map(|edge| QcBlock {
@@ -187,9 +186,7 @@ impl QcLayout {
             check_edges,
             check_blocks,
             check_offsets,
-            segments,
-            segment_offsets,
-            seg_terms,
+            accumulation,
             masked,
             masked_offsets,
             max_row_degree,
@@ -383,7 +380,7 @@ impl QcDecoder {
                 for (slot, &belief) in self.posterior.iter_mut().zip(&self.belief) {
                     *slot = Llr::new(belief);
                 }
-                pack_bytes(&self.hard_bits, |bit| bit, 0, &mut self.words);
+                pack_bits(&self.hard_bits, &mut self.words);
             }
             Some((_, inverse)) => {
                 self.words.clear();
@@ -398,7 +395,7 @@ impl QcDecoder {
                             *slot = Llr::new(self.belief[column]);
                             *lane = self.hard_bits[column];
                         }
-                        word |= pack_eight(u64::from_le_bytes(lanes), 0) << (8 * byte);
+                        word |= pack_eight(u64::from_le_bytes(lanes)) << (8 * byte);
                     }
                     self.words.push(word);
                 }
@@ -458,23 +455,12 @@ impl QcDecoder {
     }
 
     fn variable_update(&mut self) {
-        let z = self.layout.z;
-        for col_block in 0..self.layout.col_blocks {
-            let lanes = col_block * z..(col_block + 1) * z;
-            let belief = &mut self.belief[lanes.clone()];
-            let channel = &self.channel[lanes];
-            let segments =
-                self.layout.segment_offsets[col_block]..self.layout.segment_offsets[col_block + 1];
-            for segment in &self.layout.segments[segments] {
-                self.kernel.accumulate_rotated(
-                    belief,
-                    segment.lanes.clone(),
-                    channel,
-                    &self.check_to_var,
-                    &self.layout.seg_terms[segment.edges.clone()],
-                );
-            }
-        }
+        self.kernel.accumulate(
+            &self.layout.accumulation,
+            &mut self.belief,
+            &self.channel,
+            &self.check_to_var,
+        );
     }
 
     /// Whether every lifted check of the current hard decisions has even
