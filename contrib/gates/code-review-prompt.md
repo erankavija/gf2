@@ -71,6 +71,8 @@ Every finding must include `disposition` (`blocking` or `advisory`) and `origin`
 
 A finding about evidence identity, provenance or record completeness is blocking only when it names an item of the closed identity set of `@/inv/campaign-evidence` that is missing or wrong, or a published number or acceptance decision that the gap could make wrong. Otherwise it is advisory. Do not require pinning or verification outside the closed set. Evidence machinery beyond what a success criterion names is an issue-impact finding.
 
+A finding that only a rewrite of history already on `main` could repair, such as the subject line or message of a merged commit, is advisory: that history is immutable.
+
 Verify every hard success criterion and that completed dependencies are correctly integrated. Judge implementation behavior against the applicable canonical prose and resolved items rather than against an engineering rubric embedded here.
 
 When an addressable policy item governs a finding, include valid resolved qualified IDs in that finding's `references` array. A finding based only on ordinary code correctness may use an empty array. Resolve policy items from the repository's configured registries; do not invent, hardcode, or emit unresolved references.
