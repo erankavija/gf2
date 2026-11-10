@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 8ceb50817
-; regenerated   : 2026-11-10T07:16:37Z
+; commit        : 6a97e20e7
+; regenerated   : 2026-11-10T07:51:38Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -393,12 +393,12 @@ gf2_kernels_simd::x86::ldpc_qc::difference_avx2:
 	vzeroupper
 	ret
 .LBB137_9:
-	lea rcx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.329]
+	lea rcx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.331]
 	mov rdx, rsi
 	vzeroupper
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
 .LBB137_10:
-	lea rax, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.330]
+	lea rax, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.332]
 	mov rsi, rcx
 	mov rdx, rcx
 	mov rcx, rax
@@ -418,13 +418,13 @@ gf2_kernels_simd::x86::ldpc_qc::accumulate_avx2_unchecked:
 	push r12
 	push rbx
 	and rsp, -32
-	sub rsp, 320
-	mov qword ptr [rsp + 136], rcx
-	mov qword ptr [rsp + 128], rsi
+	sub rsp, 224
+	mov qword ptr [rsp + 64], rcx
+	mov qword ptr [rsp + 56], rsi
 	mov rcx, qword ptr [rdi + 72]
 	test rcx, rcx
-	je .LBB141_121
-	mov r13, r9
+	je .LBB141_56
+	mov rbx, r9
 	mov rax, rdx
 	or rax, rcx
 	shr rax, 32
@@ -432,725 +432,295 @@ gf2_kernels_simd::x86::ldpc_qc::accumulate_avx2_unchecked:
 	mov rax, rdx
 	xor edx, edx
 	div rcx
-	mov rsi, rax
-	mov rax, r8
-	or rax, rcx
-	shr rax, 32
-	je .LBB141_5
-.LBB141_6:
-	mov rax, r8
-	xor edx, edx
-	div rcx
-	jmp .LBB141_7
+	mov r9, rax
+	jmp .LBB141_4
 .LBB141_2:
 	mov eax, edx
 	xor edx, edx
 	div ecx
-	mov esi, eax
+	mov r9d, eax
+.LBB141_4:
 	mov rax, r8
 	or rax, rcx
 	shr rax, 32
-	jne .LBB141_6
+	mov qword ptr [rsp], rcx
+	je .LBB141_5
+	mov rax, r8
+	xor edx, edx
+	div rcx
+	jmp .LBB141_7
 .LBB141_5:
 	mov eax, r8d
 	xor edx, edx
 	div ecx
 .LBB141_7:
-	mov r8, rcx
-	cmp rax, rsi
-	cmovb rsi, rax
-	mov qword ptr [rsp + 208], rsi
-	test rsi, rsi
-	je .LBB141_125
+	cmp rax, r9
+	cmovb r9, rax
+	mov qword ptr [rsp + 144], r9
+	test r9, r9
+	je .LBB141_60
 	mov rax, qword ptr [rdi + 8]
-	mov qword ptr [rsp + 192], rax
+	mov qword ptr [rsp + 128], rax
 	mov rax, qword ptr [rdi + 16]
 	mov rcx, qword ptr [rdi + 40]
-	mov qword ptr [rsp + 144], rcx
+	mov qword ptr [rsp + 72], rcx
 	mov rcx, qword ptr [rdi + 32]
-	mov qword ptr [rsp + 176], rcx
-	mov rcx, qword ptr [rdi + 64]
-	mov qword ptr [rsp + 152], rcx
-	mov rcx, qword ptr [rdi + 56]
-	mov qword ptr [rsp + 224], rcx
+	mov qword ptr [rsp + 112], rcx
+	mov r15, qword ptr [rdi + 64]
+	mov r14, qword ptr [rdi + 56]
 	cmp rax, 1
-	mov qword ptr [rsp + 72], rax
+	mov qword ptr [rsp + 32], rax
 	adc rax, 0
-	mov qword ptr [rsp + 168], rax
+	mov qword ptr [rsp + 104], rax
 	dec rax
-	mov qword ptr [rsp + 200], rax
-	lea rax, [4*r8]
-	mov qword ptr [rsp + 184], rax
-	mov rax, qword ptr [rsp + 128]
-	lea rdx, [rax + 32]
-	xor eax, eax
-	vxorps xmm5, xmm5, xmm5
-	mov r9, qword ptr [rsp + 136]
-	mov qword ptr [rsp + 160], r13
-	mov qword ptr [rsp + 24], r8
+	mov qword ptr [rsp + 136], rax
+	mov rax, qword ptr [rsp]
+	lea rax, [4*rax]
+	mov qword ptr [rsp + 120], rax
+	xor ecx, ecx
+	mov rax, qword ptr [rsp + 64]
+	mov qword ptr [rsp + 40], rax
+	mov rax, qword ptr [rsp + 56]
+	mov qword ptr [rsp + 80], rax
+	mov qword ptr [rsp + 48], r15
 	jmp .LBB141_10
 .LBB141_9:
-	mov rax, qword ptr [rsp + 184]
-	add r9, rax
-	add rdx, rax
-	mov rax, qword ptr [rsp + 216]
-	cmp rax, qword ptr [rsp + 208]
-	jae .LBB141_125
+	mov rax, qword ptr [rsp + 120]
+	add qword ptr [rsp + 80], rax
+	add qword ptr [rsp + 40], rax
+	mov rcx, qword ptr [rsp + 152]
+	cmp rcx, qword ptr [rsp + 144]
+	jae .LBB141_60
 .LBB141_10:
-	cmp rax, qword ptr [rsp + 72]
-	je .LBB141_122
-	cmp rax, qword ptr [rsp + 200]
-	je .LBB141_123
-	lea rdi, [rax + 1]
-	mov rcx, qword ptr [rsp + 192]
-	mov r10, qword ptr [rcx + 8*rax]
-	mov qword ptr [rsp + 216], rdi
-	mov rsi, qword ptr [rcx + 8*rdi]
-	mov rdi, r10
-	cmp rsi, r10
-	jb .LBB141_124
-	cmp rsi, qword ptr [rsp + 144]
-	ja .LBB141_124
-	cmp rdi, rsi
-	je .LBB141_9
-	mov r11, rdi
-	imul rax, r8
+	cmp rcx, qword ptr [rsp + 32]
+	je .LBB141_57
+	mov rax, rcx
+	cmp rcx, qword ptr [rsp + 136]
+	je .LBB141_58
+	lea rdx, [rax + 1]
 	mov rcx, qword ptr [rsp + 128]
+	mov r12, qword ptr [rcx + 8*rax]
+	mov r13, qword ptr [rcx + 8*rdx]
+	cmp r13, r12
+	jb .LBB141_59
+	cmp r13, qword ptr [rsp + 72]
+	ja .LBB141_59
+	mov qword ptr [rsp + 152], rdx
+	cmp r12, r13
+	je .LBB141_9
+	imul rax, qword ptr [rsp]
+	mov rcx, qword ptr [rsp + 56]
 	lea rcx, [rcx + 4*rax]
-	mov qword ptr [rsp + 104], rcx
-	mov rcx, qword ptr [rsp + 136]
+	mov qword ptr [rsp + 8], rcx
+	mov rcx, qword ptr [rsp + 64]
 	lea rax, [rcx + 4*rax]
-	mov qword ptr [rsp + 96], rax
-	mov rdi, rsi
-	shl rdi, 5
-	mov rax, qword ptr [rsp + 176]
-	add rdi, rax
-	mov qword ptr [rsp + 32], rdi
-	shl r11, 5
-	add r11, rax
-	mov qword ptr [rsp + 232], rdx
-	mov qword ptr [rsp + 40], r9
+	mov qword ptr [rsp + 16], rax
+	shl r13, 5
+	mov rax, qword ptr [rsp + 112]
+	add r13, rax
+	shl r12, 5
+	add r12, rax
+	mov qword ptr [rsp + 88], r13
 	jmp .LBB141_16
-.LBB141_120:
-	mov r11, qword ptr [rsp + 240]
-	add r11, 32
-	cmp r11, rax
-	mov rdx, qword ptr [rsp + 232]
+.LBB141_54:
+	vmovups ymmword ptr [r8], ymm0
+.LBB141_55:
+	add r12, 32
+	cmp r12, r13
 	je .LBB141_9
 .LBB141_16:
-	mov rcx, qword ptr [r11 + 16]
-	mov rsi, qword ptr [r11 + 24]
-	mov rax, rsi
-	mov qword ptr [rsp + 48], rcx
-	sub rax, rcx
-	mov qword ptr [rsp + 80], rax
-	jb .LBB141_126
-	cmp rsi, qword ptr [rsp + 152]
-	ja .LBB141_126
-	mov qword ptr [rsp + 88], rsi
-	mov rsi, qword ptr [rsp + 48]
-	mov rax, rsi
-	shl rax, 4
-	add rax, qword ptr [rsp + 224]
-	mov qword ptr [rsp + 56], rax
-	mov rdi, qword ptr [r11]
-	mov qword ptr [rsp + 240], r11
-	mov rcx, qword ptr [r11 + 8]
-	lea rax, [rdi + 16]
-	cmp rax, rcx
-	mov qword ptr [rsp + 112], rcx
-	jbe .LBB141_22
-	mov rdx, rdi
-	mov r9, qword ptr [rsp + 56]
-.LBB141_20:
-	lea rax, [rdx + 8]
-	cmp rax, rcx
-	jbe .LBB141_28
-	mov rdi, rdx
-	mov r9, qword ptr [rsp + 40]
-	mov rax, qword ptr [rsp + 32]
-	jmp .LBB141_56
-.LBB141_22:
-	cmp qword ptr [rsp + 88], rsi
-	jne .LBB141_23
-.LBB141_24:
-	mov rax, rdi
-	vmovups ymm0, ymmword ptr [r9 + 4*rdi]
-	vmovups ymm1, ymmword ptr [r9 + 4*rdi + 32]
-	vmovups ymmword ptr [rdx + 4*rdi - 32], ymm0
-	vmovups ymmword ptr [rdx + 4*rdi], ymm1
-	add rdi, 16
-	add rax, 32
-	cmp rax, rcx
-	jbe .LBB141_24
-	lea rax, [rdi + 8]
-	cmp rax, rcx
-	jbe .LBB141_27
-	mov rax, qword ptr [rsp + 32]
-	jmp .LBB141_56
-.LBB141_28:
-	mov qword ptr [rsp + 64], rax
-	mov rax, qword ptr [rsp + 96]
-	vmovups ymm0, ymmword ptr [rax + 4*rdx]
-	mov rax, qword ptr [rsp + 88]
-	cmp rax, qword ptr [rsp + 48]
-	mov rax, qword ptr [rsp + 32]
-	jne .LBB141_30
-	mov rdi, rdx
-	jmp .LBB141_54
-.LBB141_23:
-	mov rcx, qword ptr [rsp + 80]
-	shl rcx, 4
-	mov r9, qword ptr [rsp + 56]
-	add rcx, r9
-	mov qword ptr [rsp + 64], rcx
-	jmp .LBB141_98
-.LBB141_97:
-	mov rax, qword ptr [rsp + 104]
-	vmovups ymmword ptr [rax + 4*rdi], ymm0
-	vmovups ymmword ptr [rax + 4*rdi + 32], ymm1
-	mov rdx, qword ptr [rsp + 248]
-	lea rax, [rdx + 16]
-	mov rdi, rdx
-	mov rcx, qword ptr [rsp + 112]
-	cmp rax, rcx
-	mov r9, qword ptr [rsp + 56]
-	ja .LBB141_20
-.LBB141_98:
-	mov qword ptr [rsp + 248], rax
-	mov rax, qword ptr [rsp + 96]
-	vmovups ymm0, ymmword ptr [rax + 4*rdi]
-	vmovups ymm1, ymmword ptr [rax + 4*rdi + 32]
-	lea rax, [rdi + 8]
-	mov qword ptr [rsp + 120], rax
-	mov r10, rdi
-	jmp .LBB141_99
-.LBB141_94:
-	mov r8, r12
-	sub r8, rdx
-	neg r15
-	lea rdx, [r12 + r15]
-	inc rdx
-	neg rsi
-	add rsi, r12
-	add rsi, 2
-	neg r14
-	neg rbx
-	add rbx, r12
-	add rbx, 4
-	neg rdi
-	add rdi, r12
-	add rdi, 5
-	neg r11
-	add r11, r12
-	add r11, 6
-	neg rcx
-	vmovss xmm3, dword ptr [rax + 4*rbx]
-	vinsertps xmm3, xmm3, dword ptr [rax + 4*rdi], 16
-	vinsertps xmm3, xmm3, dword ptr [rax + 4*r11], 32
-	add rcx, r12
-	add rcx, 7
-	vinsertps xmm3, xmm3, dword ptr [rax + 4*rcx], 48
-	vmovss xmm4, dword ptr [rax + 4*r8]
-	mov r8, qword ptr [rsp + 24]
-	vinsertps xmm4, xmm4, dword ptr [rax + 4*rdx], 16
-	vinsertps xmm4, xmm4, dword ptr [rax + 4*rsi], 32
-	lea rcx, [r12 + r14]
-	add rcx, 3
-	vinsertps xmm4, xmm4, dword ptr [rax + 4*rcx], 48
-	vinsertf128 ymm3, ymm4, xmm3, 1
-	mov rdi, r10
-.LBB141_96:
-	vaddps ymm1, ymm1, ymm3
-	vaddps ymm0, ymm0, ymm2
-	add r9, 16
-	cmp r9, qword ptr [rsp + 64]
-	je .LBB141_97
-.LBB141_99:
-	mov rsi, qword ptr [r9 + 8]
-	mov rcx, rdi
-	mov rdx, r8
-	sub rcx, rsi
-	jb .LBB141_101
-	xor edx, edx
-.LBB141_101:
-	mov rax, qword ptr [r9]
-	lea r12, [rdx + rcx]
-	lea rax, [4*rax]
-	add rax, r13
-	add rcx, rdx
-	add rcx, 8
-	cmp rcx, r8
-	jbe .LBB141_74
-	mov ecx, 0
+	mov rdi, qword ptr [r12 + 16]
+	mov rsi, qword ptr [r12 + 24]
+	cmp rsi, rdi
+	jb .LBB141_61
+	cmp rsi, r15
+	ja .LBB141_61
+	mov r10, qword ptr [r12]
+	mov r9, qword ptr [r12 + 8]
+	mov rax, r9
+	sub rax, r10
 	mov edx, 0
-	cmp r12, r8
-	jae .LBB141_103
-	lea rdi, [r12 + 1]
-	mov r15d, 0
-	cmp rdi, r8
-	jae .LBB141_105
-.LBB141_106:
-	lea rdi, [r12 + 2]
-	mov ebx, 0
-	cmp rdi, r8
-	jae .LBB141_107
-.LBB141_108:
-	lea rdi, [r12 + 3]
-	mov r14d, 0
-	cmp rdi, r8
-	jae .LBB141_109
-.LBB141_110:
-	lea rdi, [r12 + 4]
-	mov r13d, 0
-	cmp rdi, r8
-	jae .LBB141_111
-.LBB141_112:
-	lea r11, [r12 + 5]
-	mov edi, 0
-	cmp r11, r8
-	jb .LBB141_114
-.LBB141_113:
-	mov rdi, r8
-.LBB141_114:
-	lea r8, [r12 + 6]
-	mov r11d, 0
-	cmp r8, qword ptr [rsp + 24]
-	mov r8, qword ptr [rsp + 24]
-	jb .LBB141_116
-	mov r11, r8
-.LBB141_116:
-	lea r8, [r12 + 7]
-	cmp r8, qword ptr [rsp + 24]
-	mov r8, qword ptr [rsp + 24]
-	jb .LBB141_118
-	mov rcx, r8
-.LBB141_118:
-	mov r8, r12
-	sub r8, rdx
-	neg r15
-	lea rdx, [r12 + r15]
-	inc rdx
-	neg rbx
-	add rbx, r12
-	add rbx, 2
-	neg r14
-	neg r13
-	lea r15, [r12 + r13]
-	add r15, 4
-	neg rdi
-	add rdi, r12
-	add rdi, 5
-	neg r11
-	add r11, r12
-	add r11, 6
-	neg rcx
-	vmovss xmm2, dword ptr [rax + 4*r15]
-	vinsertps xmm2, xmm2, dword ptr [rax + 4*rdi], 16
-	vinsertps xmm2, xmm2, dword ptr [rax + 4*r11], 32
-	add rcx, r12
-	add rcx, 7
-	vinsertps xmm2, xmm2, dword ptr [rax + 4*rcx], 48
-	vmovss xmm3, dword ptr [rax + 4*r8]
-	mov r8, qword ptr [rsp + 24]
-	vinsertps xmm3, xmm3, dword ptr [rax + 4*rdx], 16
-	vinsertps xmm3, xmm3, dword ptr [rax + 4*rbx], 32
-	lea rcx, [r12 + r14 + 3]
-	vinsertps xmm3, xmm3, dword ptr [rax + 4*rcx], 48
-	vinsertf128 ymm2, ymm3, xmm2, 1
-	mov r13, qword ptr [rsp + 160]
-	mov rdi, r10
-	mov rcx, qword ptr [rsp + 120]
-	mov rdx, r8
-	sub rcx, rsi
-	jae .LBB141_76
-	jmp .LBB141_77
-.LBB141_74:
-	vmovups ymm2, ymmword ptr [rax + 4*r12]
-	mov rcx, qword ptr [rsp + 120]
-	mov rdx, r8
-	sub rcx, rsi
-	jb .LBB141_77
-.LBB141_76:
-	xor edx, edx
-.LBB141_77:
-	lea r12, [rdx + rcx]
-	add rcx, rdx
-	add rcx, 8
-	cmp rcx, r8
-	jbe .LBB141_95
-	mov ecx, 0
-	mov edx, 0
-	cmp r12, r8
-	jae .LBB141_79
-	lea rsi, [r12 + 1]
-	mov r15d, 0
-	cmp rsi, r8
-	jae .LBB141_81
-.LBB141_82:
-	lea rdi, [r12 + 2]
-	mov esi, 0
-	cmp rdi, r8
-	jae .LBB141_83
-.LBB141_84:
-	lea rdi, [r12 + 3]
-	mov r14d, 0
-	cmp rdi, r8
-	jae .LBB141_85
-.LBB141_86:
-	lea rdi, [r12 + 4]
-	mov ebx, 0
-	cmp rdi, r8
-	jb .LBB141_88
-.LBB141_87:
-	mov rbx, r8
-.LBB141_88:
-	lea r8, [r12 + 5]
-	mov edi, 0
-	cmp r8, qword ptr [rsp + 24]
-	mov r8, qword ptr [rsp + 24]
-	jb .LBB141_90
-	mov rdi, r8
-.LBB141_90:
-	lea r8, [r12 + 6]
-	mov r11d, 0
-	cmp r8, qword ptr [rsp + 24]
-	mov r8, qword ptr [rsp + 24]
-	jb .LBB141_92
-	mov r11, r8
-.LBB141_92:
-	lea r8, [r12 + 7]
-	cmp r8, qword ptr [rsp + 24]
-	mov r8, qword ptr [rsp + 24]
-	jb .LBB141_94
-	mov rcx, r8
-	jmp .LBB141_94
-.LBB141_95:
-	vmovups ymm3, ymmword ptr [rax + 4*r12]
-	jmp .LBB141_96
-.LBB141_103:
-	mov rdx, r8
-	lea rdi, [r12 + 1]
-	mov r15d, 0
-	cmp rdi, r8
-	jb .LBB141_106
-.LBB141_105:
-	mov r15, r8
-	lea rdi, [r12 + 2]
-	mov ebx, 0
-	cmp rdi, r8
-	jb .LBB141_108
-.LBB141_107:
-	mov rbx, r8
-	lea rdi, [r12 + 3]
-	mov r14d, 0
-	cmp rdi, r8
-	jb .LBB141_110
-.LBB141_109:
-	mov r14, r8
-	lea rdi, [r12 + 4]
-	mov r13d, 0
-	cmp rdi, r8
-	jb .LBB141_112
-.LBB141_111:
-	mov r13, r8
-	lea r11, [r12 + 5]
-	mov edi, 0
-	cmp r11, r8
-	jae .LBB141_113
-	jmp .LBB141_114
-.LBB141_79:
-	mov rdx, r8
-	lea rsi, [r12 + 1]
-	mov r15d, 0
-	cmp rsi, r8
-	jb .LBB141_82
-.LBB141_81:
-	mov r15, r8
-	lea rdi, [r12 + 2]
-	mov esi, 0
-	cmp rdi, r8
-	jb .LBB141_84
-.LBB141_83:
-	mov rsi, r8
-	lea rdi, [r12 + 3]
-	mov r14d, 0
-	cmp rdi, r8
-	jb .LBB141_86
-.LBB141_85:
-	mov r14, r8
-	lea rdi, [r12 + 4]
-	mov ebx, 0
-	cmp rdi, r8
-	jae .LBB141_87
-	jmp .LBB141_88
-.LBB141_30:
-	mov rdi, qword ptr [rsp + 80]
-	shl rdi, 4
-	add rdi, r9
-	mov qword ptr [rsp + 120], rdi
-	jmp .LBB141_31
-.LBB141_50:
-	mov r13, r10
-	sub r13, rax
-	neg rdx
-	add rdx, r10
-	inc rdx
-	neg r15
-	lea r14, [r10 + r15]
-	add r14, 2
-	neg rcx
-	neg rsi
-	add rsi, r10
-	add rsi, 4
-	neg rbx
-	add rbx, r10
-	add rbx, 5
-	neg rdi
-	add rdi, r10
-	add rdi, 6
-	neg r12
-	vmovss xmm1, dword ptr [r11 + 4*rsi]
-	vinsertps xmm1, xmm1, dword ptr [r11 + 4*rbx], 16
-	vinsertps xmm1, xmm1, dword ptr [r11 + 4*rdi], 32
-	lea rsi, [r10 + r12]
-	add rsi, 7
-	vinsertps xmm1, xmm1, dword ptr [r11 + 4*rsi], 48
-	vmovss xmm2, dword ptr [r11 + 4*r13]
-	vinsertps xmm2, xmm2, dword ptr [r11 + 4*rdx], 16
-	vinsertps xmm2, xmm2, dword ptr [r11 + 4*r14], 32
-	lea rcx, [r10 + rcx + 3]
-	vinsertps xmm2, xmm2, dword ptr [r11 + 4*rcx], 48
-	vinsertf128 ymm1, ymm2, xmm1, 1
-	mov r13, qword ptr [rsp + 160]
-	mov rax, qword ptr [rsp + 32]
-	mov rdx, r8
-	mov rdi, qword ptr [rsp + 120]
-	vaddps ymm0, ymm0, ymm1
-	add r9, 16
-	cmp r9, rdi
-	je .LBB141_53
-.LBB141_31:
-	mov r8, rdx
-	mov rcx, rdx
-	mov rdx, qword ptr [rsp + 24]
-	sub rcx, qword ptr [r9 + 8]
-	jb .LBB141_33
-	xor edx, edx
-.LBB141_33:
-	mov rsi, qword ptr [r9]
-	lea r10, [rdx + rcx]
-	lea r11, [4*rsi]
-	add r11, r13
-	add rcx, rdx
-	add rcx, 8
-	mov r14, qword ptr [rsp + 24]
-	cmp rcx, r14
-	jbe .LBB141_51
-	mov r12d, 0
-	mov eax, 0
-	cmp r10, r14
-	jae .LBB141_35
-	lea rcx, [r10 + 1]
-	mov edx, 0
-	cmp rcx, r14
-	jae .LBB141_37
-.LBB141_38:
-	lea rcx, [r10 + 2]
-	mov r15d, 0
-	cmp rcx, r14
-	jae .LBB141_39
-.LBB141_40:
-	lea rsi, [r10 + 3]
-	mov ecx, 0
-	cmp rsi, r14
-	jae .LBB141_41
-.LBB141_42:
-	lea rdi, [r10 + 4]
-	mov esi, 0
-	cmp rdi, r14
-	jae .LBB141_43
-.LBB141_44:
-	lea rdi, [r10 + 5]
-	mov ebx, 0
-	cmp rdi, r14
-	jae .LBB141_45
-.LBB141_46:
-	lea r13, [r10 + 6]
-	mov edi, 0
-	cmp r13, r14
-	jae .LBB141_47
-.LBB141_48:
-	lea r13, [r10 + 7]
-	cmp r13, r14
-	jb .LBB141_50
-	jmp .LBB141_49
-.LBB141_51:
-	vmovups ymm1, ymmword ptr [r11 + 4*r10]
-	mov rdx, r8
-	vaddps ymm0, ymm0, ymm1
-	add r9, 16
-	cmp r9, rdi
-	jne .LBB141_31
-	jmp .LBB141_53
-.LBB141_35:
-	mov rax, r14
-	lea rcx, [r10 + 1]
-	mov edx, 0
-	cmp rcx, r14
-	jb .LBB141_38
-.LBB141_37:
-	mov rdx, r14
-	lea rcx, [r10 + 2]
-	mov r15d, 0
-	cmp rcx, r14
-	jb .LBB141_40
-.LBB141_39:
-	mov r15, r14
-	lea rsi, [r10 + 3]
-	mov ecx, 0
-	cmp rsi, r14
-	jb .LBB141_42
-.LBB141_41:
-	mov rcx, r14
-	lea rdi, [r10 + 4]
-	mov esi, 0
-	cmp rdi, r14
-	jb .LBB141_44
-.LBB141_43:
-	mov rsi, r14
-	lea rdi, [r10 + 5]
-	mov ebx, 0
-	cmp rdi, r14
-	jb .LBB141_46
-.LBB141_45:
-	mov rbx, r14
-	lea r13, [r10 + 6]
-	mov edi, 0
-	cmp r13, r14
-	jb .LBB141_48
-.LBB141_47:
-	mov rdi, r14
-	lea r13, [r10 + 7]
-	cmp r13, r14
-	jb .LBB141_50
-.LBB141_49:
-	mov r12, qword ptr [rsp + 24]
-	jmp .LBB141_50
-.LBB141_53:
-	mov rdi, rdx
-	mov r8, qword ptr [rsp + 24]
-.LBB141_54:
-	mov r9, qword ptr [rsp + 40]
-	jmp .LBB141_55
-.LBB141_27:
-	mov qword ptr [rsp + 64], rax
-	vmovups ymm0, ymmword ptr [r9 + 4*rdi]
-	mov rax, qword ptr [rsp + 32]
-.LBB141_55:
-	mov rcx, qword ptr [rsp + 104]
-	vmovups ymmword ptr [rcx + 4*rdi], ymm0
-	mov rdi, qword ptr [rsp + 64]
-	mov rcx, qword ptr [rsp + 112]
-.LBB141_56:
-	mov rdx, rcx
-	sub rdx, rdi
-	je .LBB141_120
+	cmovae rdx, rax
+	cmp rdx, 8
+	jb .LBB141_34
+	cmp rdx, 16
+	mov qword ptr [rsp + 96], r12
+	mov qword ptr [rsp + 24], r10
+	jae .LBB141_23
+	xor r12d, r12d
+	jmp .LBB141_21
+.LBB141_34:
+	mov r8, r9
+	sub r8, r10
+	jbe .LBB141_55
 	vmovd xmm0, edx
 	vpbroadcastd ymm0, xmm0
 	vpcmpgtd ymm1, ymm0, ymmword ptr [rip + .LCPI141_0]
-	mov rax, qword ptr [rsp + 96]
-	vmaskmovps ymm0, ymm1, ymmword ptr [rax + 4*rdi]
-	mov rax, qword ptr [rsp + 88]
-	cmp rax, qword ptr [rsp + 48]
-	je .LBB141_70
-	mov r11, qword ptr [rsp + 80]
-	shl r11, 4
-	mov r9, qword ptr [rsp + 56]
-	add r11, r9
-	cmp rdx, 8
-	ja .LBB141_64
-	lea rax, [4*rdx]
-	jmp .LBB141_60
-.LBB141_68:
-	vmaskmovps ymm2, ymm1, ymmword ptr [rsi + 4*rcx]
-	vaddps ymm0, ymm0, ymm2
-	add r9, 16
-	cmp r9, r11
-	je .LBB141_70
-.LBB141_60:
-	mov rcx, rdi
-	sub rcx, qword ptr [r9 + 8]
-	mov rsi, qword ptr [r9]
-	mov r10d, 0
-	cmovb r10, r8
-	add rcx, r10
-	lea rsi, [4*rsi]
-	add rsi, r13
-	lea r10, [rcx + rdx]
-	cmp r10, r8
-	jbe .LBB141_68
-	mov rbx, r9
-	vmovaps ymmword ptr [rsp + 256], ymm5
-	xor r14d, r14d
-.LBB141_62:
-	cmp rcx, r8
-	mov r9d, 0
-	cmovae r9, r8
-	shl r9, 2
-	mov r10, rsi
-	sub r10, r9
-	vmovss xmm2, dword ptr [r10 + 4*rcx]
-	vmovss dword ptr [rsp + r14 + 256], xmm2
-	inc rcx
-	add r14, 4
-	cmp rax, r14
-	jne .LBB141_62
-	vmovaps ymm2, ymmword ptr [rsp + 256]
-	mov r9, rbx
-	vaddps ymm0, ymm0, ymm2
-	add r9, 16
-	cmp r9, r11
-	jne .LBB141_60
-.LBB141_70:
-	vmovaps ymmword ptr [rsp + 256], ymm0
-	mov rsi, qword ptr [rsp + 112]
-	cmp rsi, r8
-	ja .LBB141_127
+	mov rax, qword ptr [rsp + 16]
+	vmaskmovps ymm0, ymm1, ymmword ptr [rax + 4*r10]
 	cmp rsi, rdi
-	jb .LBB141_127
-	cmp rdx, 9
-	jae .LBB141_73
-	mov rax, qword ptr [rsp + 104]
-	lea rdi, [rax + 4*rdi]
+	je .LBB141_38
+	shl rdi, 3
+	shl rsi, 3
+.LBB141_37:
+	mov rax, qword ptr [r14 + rdi]
+	vmaskmovps ymm2, ymm1, ymmword ptr [rbx + 4*rax]
+	vaddps ymm0, ymm0, ymm2
+	add rdi, 8
+	cmp rsi, rdi
+	jne .LBB141_37
+.LBB141_38:
+	vmovaps ymmword ptr [rsp + 160], ymm0
+	cmp r9, qword ptr [rsp]
+	ja .LBB141_62
+	cmp r8, rdx
+	jne .LBB141_63
+	mov rax, qword ptr [rsp + 8]
+	lea rdi, [rax + 4*r10]
 	shl rdx, 2
-	lea rsi, [rsp + 256]
+	lea rsi, [rsp + 160]
 	vzeroupper
 	call qword ptr [rip + memcpy@GOTPCREL]
-	mov r9, qword ptr [rsp + 40]
-	vxorps xmm5, xmm5, xmm5
-	mov r8, qword ptr [rsp + 24]
-	mov rax, qword ptr [rsp + 32]
-	jmp .LBB141_120
-.LBB141_64:
-	mov rax, rdi
-	sub rax, qword ptr [r9 + 8]
-	mov ecx, 0
-	cmovb rcx, r8
-	add rax, rcx
-	lea rcx, [rax + rdx]
-	cmp rcx, r8
-	ja .LBB141_66
-	mov rcx, qword ptr [r9]
-	lea rcx, [4*rcx]
-	add rcx, r13
-	vmaskmovps ymm2, ymm1, ymmword ptr [rcx + 4*rax]
-	add r9, 16
-	vaddps ymm0, ymm0, ymm2
-	cmp r9, r11
-	jne .LBB141_64
-	jmp .LBB141_70
-.LBB141_125:
+	jmp .LBB141_55
+.LBB141_23:
+	mov rax, qword ptr [rsp + 16]
+	lea rcx, [rax + 4*r10]
+	mov rax, qword ptr [rsp + 8]
+	lea r8, [rax + 4*r10]
+	cmp rsi, rdi
+	jne .LBB141_24
+	mov r11, r10
+	lea r10, [4*r10]
+	mov rax, qword ptr [rsp + 80]
+	lea r9, [rax + 4*r11]
+	mov rax, qword ptr [rsp + 40]
+	lea r11, [rax + 4*r11]
+	xor r12d, r12d
+.LBB141_31:
+	mov rax, r12
+	vmovups ymm0, ymmword ptr [r11 + 4*r12]
+	vmovups ymm1, ymmword ptr [r11 + 4*r12 + 32]
+	vmovups ymmword ptr [r9], ymm0
+	vmovups ymmword ptr [r9 + 32], ymm1
+	add r12, 16
+	add rax, 32
+	add r9, 64
+	cmp rax, rdx
+	jbe .LBB141_31
+	lea r11, [r12 + 8]
+	cmp r11, rdx
+	jbe .LBB141_33
+	cmp r12, rdx
+	mov r12, qword ptr [rsp + 96]
+	jae .LBB141_55
+	lea r8, [r8 + 4*rdx]
+	add r8, -32
+	vmovups ymm0, ymmword ptr [rcx + 4*rdx - 32]
+	jmp .LBB141_54
+.LBB141_24:
+	lea rax, [8*rdi]
+	lea r11, [8*rsi]
+	mov r13d, 16
+	xor r10d, r10d
+.LBB141_25:
+	mov r12, r13
+	vmovups ymm0, ymmword ptr [rcx + 4*r10]
+	mov r15, rbx
+	lea r13, [rbx + 4*r10]
+	mov r9, rax
+.LBB141_26:
+	mov rbx, qword ptr [r14 + r9]
+	vaddps ymm0, ymm0, ymmword ptr [r13 + 4*rbx]
+	add r9, 8
+	cmp r11, r9
+	jne .LBB141_26
+	vmovups ymm1, ymmword ptr [rcx + 4*r10 + 32]
+	lea r13, [r15 + 4*r10]
+	add r13, 32
+	mov r9, rax
+.LBB141_28:
+	mov rbx, qword ptr [r14 + r9]
+	vaddps ymm1, ymm1, ymmword ptr [r13 + 4*rbx]
+	add r9, 8
+	cmp r11, r9
+	jne .LBB141_28
+	vmovups ymmword ptr [r8 + 4*r10], ymm0
+	vmovups ymmword ptr [r8 + 4*r10 + 32], ymm1
+	lea r13, [r12 + 16]
+	mov r10, r12
+	cmp r13, rdx
+	mov rbx, r15
+	jbe .LBB141_25
+.LBB141_21:
+	mov r11, r12
+	or r11, 8
+	cmp r11, rdx
+	jbe .LBB141_41
+	mov r15, qword ptr [rsp + 48]
+	mov r13, qword ptr [rsp + 88]
+	mov rcx, qword ptr [rsp + 24]
+	cmp r12, rdx
+	mov r12, qword ptr [rsp + 96]
+	jae .LBB141_55
+	jmp .LBB141_49
+.LBB141_41:
+	mov rax, qword ptr [rsp + 8]
+	mov rcx, qword ptr [rsp + 24]
+	lea rax, [rax + 4*rcx]
+	lea r9, [rax + 4*r12]
+	mov rax, qword ptr [rsp + 16]
+	lea rax, [rax + 4*rcx]
+	vmovups ymm0, ymmword ptr [rax + 4*r12]
+	cmp rsi, rdi
+	mov r13, qword ptr [rsp + 88]
+	jne .LBB141_43
+	mov r15, qword ptr [rsp + 48]
+	jmp .LBB141_47
+.LBB141_43:
+	lea rcx, [rbx + 4*r12]
+	lea r8, [8*rdi]
+	lea r10, [8*rsi]
+.LBB141_44:
+	mov rax, qword ptr [r14 + r8]
+	vaddps ymm0, ymm0, ymmword ptr [rcx + 4*rax]
+	add r8, 8
+	cmp r10, r8
+	jne .LBB141_44
+	mov r15, qword ptr [rsp + 48]
+	jmp .LBB141_46
+.LBB141_33:
+	add r10, qword ptr [rsp + 40]
+	vmovups ymm0, ymmword ptr [r10 + 4*r12]
+.LBB141_46:
+	mov rcx, qword ptr [rsp + 24]
+.LBB141_47:
+	vmovups ymmword ptr [r9], ymm0
+	mov r12, r11
+	cmp r12, rdx
+	mov r12, qword ptr [rsp + 96]
+	jae .LBB141_55
+.LBB141_49:
+	mov rax, qword ptr [rsp + 8]
+	lea rax, [rax + 4*rcx]
+	lea r8, [rax + 4*rdx]
+	add r8, -32
+	mov rax, qword ptr [rsp + 16]
+	lea rax, [rax + 4*rcx]
+	vmovups ymm0, ymmword ptr [rax + 4*rdx - 32]
+	cmp rsi, rdi
+	je .LBB141_54
+	add rdx, -8
+	lea rax, [rbx + 4*rdx]
+	shl rdi, 3
+	shl rsi, 3
+.LBB141_51:
+	mov rcx, qword ptr [r14 + rdi]
+	vaddps ymm0, ymm0, ymmword ptr [rax + 4*rcx]
+	add rdi, 8
+	cmp rsi, rdi
+	jne .LBB141_51
+	jmp .LBB141_54
+.LBB141_60:
 	lea rsp, [rbp - 40]
 	pop rbx
 	pop r12
@@ -1160,53 +730,49 @@ gf2_kernels_simd::x86::ldpc_qc::accumulate_avx2_unchecked:
 	pop rbp
 	vzeroupper
 	ret
-.LBB141_126:
-	lea rcx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.338]
-	mov rdi, qword ptr [rsp + 48]
-	mov rdx, qword ptr [rsp + 152]
+.LBB141_61:
+	lea rcx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.533]
+	mov rdx, r15
 	vzeroupper
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB141_127:
-	lea rcx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.339]
-	mov rdx, r8
+.LBB141_62:
+	lea rcx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.329]
+	mov rdi, r10
+	mov rsi, r9
+	mov rdx, qword ptr [rsp]
 	vzeroupper
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB141_73:
-	lea rcx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.340]
+.LBB141_63:
+	lea rax, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.330]
+	mov rdi, r8
 	mov rsi, rdx
-	mov edx, 8
-	xor edi, edi
+	mov rdx, rax
+	vzeroupper
+	call qword ptr [rip + core::slice::copy_from_slice_impl::len_mismatch_fail@GOTPCREL]
+.LBB141_59:
+	lea rcx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.532]
+	mov rdi, r12
+	mov rsi, r13
+	mov rdx, qword ptr [rsp + 72]
 	vzeroupper
 	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB141_124:
-	lea rcx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.533]
-	mov rdx, qword ptr [rsp + 144]
-	vzeroupper
-	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
-.LBB141_121:
-	lea rdi, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.625]
-	lea rdx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.337]
+.LBB141_56:
+	lea rdi, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.624]
+	lea rdx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.339]
 	mov esi, 55
 	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
-.LBB141_123:
-	lea rdx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.532]
-	mov rdi, qword ptr [rsp + 168]
-	mov rsi, qword ptr [rsp + 72]
+.LBB141_58:
+	lea rdx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.531]
+	mov rdi, qword ptr [rsp + 104]
+	mov rsi, qword ptr [rsp + 32]
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
-.LBB141_122:
-	lea rdx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.531]
-	mov rdi, qword ptr [rsp + 72]
+.LBB141_57:
+	lea rdx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.530]
+	mov rdi, qword ptr [rsp + 32]
 	mov rsi, rdi
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
-.LBB141_66:
-	lea rcx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.328]
-	mov rsi, rdx
-	mov edx, 8
-	xor edi, edi
-	vzeroupper
-	call qword ptr [rip + core::slice::index::slice_index_fail@GOTPCREL]
 
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::ldpc_qc::fused_row (index 0)
@@ -7426,19 +6992,19 @@ gf2_kernels_simd::x86::ldpc_qc::fused_row:
 .LBB143_353:
 	sub r11, rdx
 	add r11, r13
-	lea rdx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.341]
+	lea rdx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.340]
 	mov rdi, r11
 	mov rsi, qword ptr [rsp + 1080]
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
 .LBB143_354:
-	lea rdx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.342]
+	lea rdx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.341]
 	mov rdi, rbx
 	mov rsi, qword ptr [rsp + 792]
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
 .LBB143_355:
-	lea rdx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.343]
+	lea rdx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.342]
 	mov rdi, rbx
 	mov rsi, rcx
 	vzeroupper
@@ -7450,10 +7016,10 @@ gf2_kernels_simd::x86::ldpc_qc::fused_row:
 	mov qword ptr [rsp + 1568], rax
 	mov rax, qword ptr [rip + <usize as core::fmt::Display>::fmt@GOTPCREL]
 	mov qword ptr [rsp + 1576], rax
-	lea rcx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.344]
+	lea rcx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.343]
 	mov qword ptr [rsp + 1584], rcx
 	mov qword ptr [rsp + 1592], rax
-	lea rdi, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.345]
-	lea rdx, [rip + .Lanon.b992cbe375f0b3ab994c27f03a59749d.346]
+	lea rdi, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.344]
+	lea rdx, [rip + .Lanon.c495c6465fd4013871b4d752fb2d8775.345]
 	lea rsi, [rsp + 1568]
 	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
