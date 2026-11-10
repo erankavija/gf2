@@ -1,0 +1,11 @@
+[package]
+name = "encode-compare"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+description = "Encoder throughput comparisons against srsRAN, AFF3CT and bchlib"
+
+[dependencies]
+gf2-core = { path = "../../crates/gf2-core" }
+gf2-coding = { path = "../../crates/gf2-coding" }
