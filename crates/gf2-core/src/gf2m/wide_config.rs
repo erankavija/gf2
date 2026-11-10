@@ -29,9 +29,6 @@
 /// }
 ///
 /// assert_eq!(Gf2m256Config::M, 256);
-/// // M = 256 means the high bit of a reduced element is bit 255, word 3.
-/// assert_eq!(Gf2m256Config::MODULUS_HIGH_BIT_WORD, 3);
-/// assert_eq!(Gf2m256Config::MODULUS_HIGH_BIT_MASK, 1u64 << 63);
 /// ```
 pub trait Gf2mWideConfig<const N: usize>: 'static {
     /// Extension degree: the field has `2^M` elements.
@@ -47,13 +44,6 @@ pub trait Gf2mWideConfig<const N: usize>: 'static {
     /// to one. For example, the polynomial `x^256 + x^10 + x^5 + x^2 + 1`
     /// is stored as `[0x425, 0, 0, 0]`.
     const MODULUS: [u64; N];
-
-    /// Index into a `[u64; N]` element at which the highest reduced bit lives.
-    const MODULUS_HIGH_BIT_WORD: usize = (Self::M - 1) >> 6;
-
-    /// Mask selecting the highest bit of a reduced element within
-    /// [`MODULUS_HIGH_BIT_WORD`](Self::MODULUS_HIGH_BIT_WORD).
-    const MODULUS_HIGH_BIT_MASK: u64 = 1u64 << ((Self::M - 1) & 63);
 
     /// Human-readable name of the field.
     const NAME: &'static str = "Gf2mWide";

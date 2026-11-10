@@ -422,7 +422,7 @@ mod tests {
                 assert_eq!(poly.count_ones(), 3, "m={m}: {poly:#b} is not a trinomial");
                 assert_eq!(poly & 1, 1, "m={m}: {poly:#b} has no constant term");
                 assert!(
-                    Gf2mField::new_unchecked(m, poly).verify_primitive(),
+                    Gf2mField::new(m, poly).verify_primitive(),
                     "m={m}: trinomial {poly:#b} is not primitive"
                 );
             }

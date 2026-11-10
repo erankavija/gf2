@@ -100,15 +100,6 @@ impl<V: UintExt> Gf2mField_<V> {
     /// Panics if `m == 0` or `m >= V::BITS` (the polynomial is stored with its
     /// leading coefficient explicit at bit `m`, which must fit in `V`).
     pub fn new(m: usize, primitive_poly: V) -> Self {
-        Self::new_internal(m, primitive_poly)
-    }
-
-    /// Crate-internal equivalent of [`Self::new`].
-    pub(crate) fn new_unchecked(m: usize, primitive_poly: V) -> Self {
-        Self::new_internal(m, primitive_poly)
-    }
-
-    fn new_internal(m: usize, primitive_poly: V) -> Self {
         assert!(m > 0, "Extension degree m must be positive");
         assert!(
             (m as u32) < V::BITS,

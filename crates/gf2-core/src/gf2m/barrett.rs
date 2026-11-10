@@ -329,17 +329,19 @@ impl<const N: usize> BarrettReducerWide<N> {
     ///
     /// # Panics
     ///
-    /// Panics if `m` is 0, greater than `64 * N`, or if bit `m` is set in
+    /// Panics unless `64*(N-1) < m <= 64*N`, or if bit `m` is set in
     /// `modulus`.
     ///
     /// # Complexity
     ///
     /// O(m · N) word operations for the long division that computes mu.
     pub fn new(modulus: [u64; N], m: u32) -> Self {
+        // `N == 0` fails here too: the range is then empty.
         assert!(
-            m > 0 && (m as usize) <= 64 * N,
-            "BarrettReducerWide: m must be in 1..={n64}",
-            n64 = 64 * N
+            (m as usize) > 64 * N.saturating_sub(1) && (m as usize) <= 64 * N,
+            "BarrettReducerWide: m must be in {lo}..={hi}",
+            lo = 64 * N.saturating_sub(1) + 1,
+            hi = 64 * N
         );
         // The implicit leading bit at position m must not be set in the stored
         // low bits. Position m is at word m/64, bit (m%64). For m == 64*N the
@@ -1150,5 +1152,41 @@ mod tests {
                 Ok(())
             })
             .unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "m must be in 65..=128")]
+    fn test_wide_new_rejects_degree_below_top_word_n2_m64() {
+        let _ = BarrettReducerWide::<2>::new([0x1bu64, 0u64], 64);
+    }
+
+    #[test]
+    #[should_panic(expected = "m must be in 65..=128")]
+    fn test_wide_new_rejects_degree_one_n2() {
+        let _ = BarrettReducerWide::<2>::new([1u64, 0u64], 1);
+    }
+
+    /// Lowest degree `new` accepts for N = 2: bit m sits at bit 0 of the top word.
+    #[test]
+    fn test_wide_reduce_n2_m65_matches_reference() {
+        // P(x) = x^65 + x^18 + 1; bit 65 is implicit.
+        let modulus = [(1u64 << 18) | 1, 0u64];
+        let m: u32 = 65;
+        let wide = BarrettReducerWide::<2>::new(modulus, m);
+        // Every bit up to degree 2m - 2 = 128 set.
+        for product in [[u64::MAX, u64::MAX, 1, 0], [0, 1, 0, 0], [1, 0, 0, 0]] {
+            let r = wide.reduce::<4>(&product);
+            assert_eq!(r, reference_reduce_wide::<2, 4>(&product, &modulus, m));
+            assert_eq!(r[1] >> 1, 0, "bits >= 65 must be zero after reduction");
+        }
+    }
+
+    /// Lowest degree `new` accepts for N = 1.
+    #[test]
+    fn test_wide_reduce_n1_m1_is_identity_on_field() {
+        // P(x) = x + 1; bit 1 is implicit.
+        let wide = BarrettReducerWide::<1>::new([1u64], 1);
+        assert_eq!(wide.reduce::<2>(&[0, 0]), [0]);
+        assert_eq!(wide.reduce::<2>(&[1, 0]), [1]);
     }
 }

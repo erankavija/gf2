@@ -1445,26 +1445,6 @@ mod tests {
     }
 
     #[test]
-    fn test_config_modulus_high_bit_word_and_mask_m256() {
-        assert_eq!(Gf2m256TestConfig::MODULUS_HIGH_BIT_WORD, 3);
-        assert_eq!(Gf2m256TestConfig::MODULUS_HIGH_BIT_MASK, 1u64 << 63);
-    }
-
-    #[test]
-    fn test_config_modulus_high_bit_word_and_mask_m250() {
-        assert_eq!(Gf2m250TestConfig::MODULUS_HIGH_BIT_WORD, 3);
-        // M - 1 = 249; 249 & 63 = 57; mask = 1 << 57
-        assert_eq!(Gf2m250TestConfig::MODULUS_HIGH_BIT_MASK, 1u64 << 57);
-    }
-
-    #[test]
-    fn test_config_modulus_high_bit_word_and_mask_m571() {
-        assert_eq!(Gf2m571TestConfig::MODULUS_HIGH_BIT_WORD, 8);
-        // M - 1 = 570; 570 & 63 = 58; mask = 1 << 58.
-        assert_eq!(Gf2m571TestConfig::MODULUS_HIGH_BIT_MASK, 1u64 << 58);
-    }
-
-    #[test]
     fn test_config_default_name() {
         assert_eq!(Gf2m250TestConfig::NAME, "Gf2mWide");
     }
