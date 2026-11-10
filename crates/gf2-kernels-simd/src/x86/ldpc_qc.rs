@@ -8,7 +8,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 use crate::ldpc_lanes::LaneMinSumRule;
-use crate::ldpc_qc::{check_block_scalar, QcKernels, QcTerm};
+use crate::ldpc_qc::{check_block_scalar, QcBlock, QcKernels, QcTerm};
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
@@ -20,6 +20,7 @@ pub(crate) fn detect() -> Option<QcKernels> {
         check_block_fn: check_block_avx2,
         rotated_difference_fn: rotated_difference_avx2,
         accumulate_rotated_fn: accumulate_rotated_avx2,
+        check_row_rotated_fn: check_row_rotated_avx2,
     })
 }
 
@@ -285,10 +286,6 @@ unsafe fn check_groups<const RULE: u8>(
 
 /// Eight lifted checks from `lane`, only the lanes of `mask` when given.
 ///
-/// The minima are never NaN, so the rule's product with a sign of ±1 is the
-/// sign-bit XOR applied here, and the offset floor, never NaN either, is
-/// taken once per minimum instead of once per edge.
-///
 /// # Safety
 /// The host must support AVX2; every unmasked lane `lane + k` of every edge
 /// lies within both slices.
@@ -305,53 +302,261 @@ unsafe fn check_group<const RULE: u8>(
 ) {
     // SAFETY: the caller bounds every unmasked access.
     unsafe {
-        let load = |edge: usize| {
-            let at = inputs.as_ptr().add(edge * z + lane);
-            match mask {
-                None => _mm256_loadu_ps(at),
-                Some(mask) => _mm256_maskload_ps(at, mask),
-            }
-        };
-        let sign_bit = _mm256_castsi256_ps(_mm256_set1_epi32(-0x8000_0000i32));
-        let zero = _mm256_setzero_ps();
-        let mut min1 = _mm256_set1_ps(f32::INFINITY);
-        let mut min2 = min1;
-        let mut signs = zero;
-        for edge in 0..degree {
-            let value = load(edge);
-            // `>= 0.0` is false for a NaN, which counts as negative.
-            let negative = _mm256_cmp_ps(value, zero, _CMP_NGE_UQ);
-            signs = _mm256_xor_ps(signs, _mm256_and_ps(negative, sign_bit));
-            let magnitude = _mm256_andnot_ps(sign_bit, value);
-            // max_ps returns its second operand for a NaN, so a NaN magnitude
-            // leaves min2 unchanged; min_ps(m, min1) is `m < min1 ? m : min1`.
-            min2 = _mm256_min_ps(_mm256_max_ps(min1, magnitude), min2);
-            min1 = _mm256_min_ps(magnitude, min1);
-        }
-        let (low, high) = if RULE == OFFSET {
-            (
-                _mm256_max_ps(_mm256_sub_ps(min1, parameter), zero),
-                _mm256_max_ps(_mm256_sub_ps(min2, parameter), zero),
-            )
+        check_lanes::<RULE>(
+            parameter,
+            degree,
+            |edge| {
+                let at = inputs.as_ptr().add(edge * z + lane);
+                match mask {
+                    None => _mm256_loadu_ps(at),
+                    Some(mask) => _mm256_maskload_ps(at, mask),
+                }
+            },
+            |edge, out| {
+                let at = outputs.as_mut_ptr().add(edge * z + lane);
+                match mask {
+                    None => _mm256_storeu_ps(at, out),
+                    Some(mask) => _mm256_maskstore_ps(at, mask, out),
+                }
+            },
+        );
+    }
+}
+
+/// Eight lifted checks of `degree` edges under rule `RULE`: reads each
+/// edge's inputs through `value` in both passes and writes its outputs
+/// through `store` in the second.
+///
+/// The minima are never NaN, so the rule's product with a sign of ±1 is the
+/// sign-bit XOR applied here, and the offset floor, never NaN either, is
+/// taken once per minimum instead of once per edge.
+///
+/// # Safety
+/// The host must support AVX2.
+#[target_feature(enable = "avx2")]
+#[inline]
+unsafe fn check_lanes<const RULE: u8>(
+    parameter: __m256,
+    degree: usize,
+    value: impl Fn(usize) -> __m256,
+    mut store: impl FnMut(usize, __m256),
+) {
+    let sign_bit = _mm256_castsi256_ps(_mm256_set1_epi32(-0x8000_0000i32));
+    let zero = _mm256_setzero_ps();
+    let mut min1 = _mm256_set1_ps(f32::INFINITY);
+    let mut min2 = min1;
+    let mut signs = zero;
+    for edge in 0..degree {
+        let value = value(edge);
+        // `>= 0.0` is false for a NaN, which counts as negative.
+        let negative = _mm256_cmp_ps(value, zero, _CMP_NGE_UQ);
+        signs = _mm256_xor_ps(signs, _mm256_and_ps(negative, sign_bit));
+        let magnitude = _mm256_andnot_ps(sign_bit, value);
+        // max_ps returns its second operand for a NaN, so a NaN magnitude
+        // leaves min2 unchanged; min_ps(m, min1) is `m < min1 ? m : min1`.
+        min2 = _mm256_min_ps(_mm256_max_ps(min1, magnitude), min2);
+        min1 = _mm256_min_ps(magnitude, min1);
+    }
+    let (low, high) = if RULE == OFFSET {
+        (
+            _mm256_max_ps(_mm256_sub_ps(min1, parameter), zero),
+            _mm256_max_ps(_mm256_sub_ps(min2, parameter), zero),
+        )
+    } else {
+        (min1, min2)
+    };
+    for edge in 0..degree {
+        let value = value(edge);
+        let negative = _mm256_cmp_ps(value, zero, _CMP_NGE_UQ);
+        let sign = _mm256_xor_ps(signs, _mm256_and_ps(negative, sign_bit));
+        let at_min = _mm256_cmp_ps(_mm256_andnot_ps(sign_bit, value), min1, _CMP_EQ_OQ);
+        let signed = _mm256_xor_ps(sign, _mm256_blendv_ps(low, high, at_min));
+        let out = if RULE == NORMALIZED {
+            _mm256_mul_ps(parameter, signed)
         } else {
-            (min1, min2)
+            signed
         };
-        for edge in 0..degree {
-            let value = load(edge);
-            let negative = _mm256_cmp_ps(value, zero, _CMP_NGE_UQ);
-            let sign = _mm256_xor_ps(signs, _mm256_and_ps(negative, sign_bit));
-            let at_min = _mm256_cmp_ps(_mm256_andnot_ps(sign_bit, value), min1, _CMP_EQ_OQ);
-            let signed = _mm256_xor_ps(sign, _mm256_blendv_ps(low, high, at_min));
-            let out = if RULE == NORMALIZED {
-                _mm256_mul_ps(parameter, signed)
-            } else {
-                signed
-            };
-            let at = outputs.as_mut_ptr().add(edge * z + lane);
-            match mask {
-                None => _mm256_storeu_ps(at, out),
-                Some(mask) => _mm256_maskstore_ps(at, mask, out),
+        store(edge, out);
+    }
+}
+
+/// Widest row whose rotated differences stay in registers; wider rows go
+/// through the scratch.
+const FUSED_MAX_DEGREE: usize = 12;
+
+fn check_row_rotated_avx2(
+    rule: LaneMinSumRule,
+    beliefs: &[f32],
+    edges: &[QcBlock],
+    messages: &mut [f32],
+    scratch: &mut [f32],
+    z: usize,
+) {
+    let degree = edges.len();
+    if !(2..=FUSED_MAX_DEGREE).contains(&degree) || z < 8 {
+        let scratch = &mut scratch[..degree * z];
+        for ((edge, out), messages) in edges
+            .iter()
+            .zip(scratch.chunks_exact_mut(z))
+            .zip(messages.chunks_exact(z))
+        {
+            let block = &beliefs[edge.offset..edge.offset + z];
+            rotated_difference_avx2(block, edge.shift, messages, out);
+        }
+        check_block_avx2(rule, scratch, messages, degree, z);
+        return;
+    }
+    // SAFETY: detect publishes this entry only on AVX2 hosts; QcKernels'
+    // public method has checked z > 0, shift < z and offset + z <=
+    // beliefs.len() for every edge, degree * z messages and at least as
+    // many scratch values; 2 <= degree <= FUSED_MAX_DEGREE and z >= 8 here.
+    unsafe {
+        match rule {
+            LaneMinSumRule::Plain => fused_row::<PLAIN>(0.0, beliefs, edges, messages, scratch, z),
+            LaneMinSumRule::Normalized(alpha) => {
+                fused_row::<NORMALIZED>(alpha, beliefs, edges, messages, scratch, z);
             }
+            LaneMinSumRule::Offset(beta) => {
+                fused_row::<OFFSET>(beta, beliefs, edges, messages, scratch, z);
+            }
+        }
+    }
+}
+
+/// [`QcKernels::check_row_rotated`] at a register-resident degree: full
+/// groups of eight checks in registers, the last `z % 8` through the
+/// scratch and the scalar check.
+///
+/// # Safety
+/// The host must support AVX2, `2 <= edges.len() <= FUSED_MAX_DEGREE`,
+/// `z >= 8`, every edge has `shift < z` and `offset + z <= beliefs.len()`,
+/// `messages` holds `edges.len() * z` values and `scratch` at least as many.
+#[target_feature(enable = "avx2")]
+unsafe fn fused_row<const RULE: u8>(
+    parameter: f32,
+    beliefs: &[f32],
+    edges: &[QcBlock],
+    messages: &mut [f32],
+    scratch: &mut [f32],
+    z: usize,
+) {
+    macro_rules! by_degree {
+        ($($degree:literal)*) => {
+            match edges.len() {
+                // SAFETY: the caller's contract, with edges.len() == $degree.
+                $($degree => unsafe {
+                    fused_groups::<RULE, $degree>(parameter, beliefs, edges, messages, z)
+                },)*
+                _ => unreachable!("fused degree {} outside 2..={FUSED_MAX_DEGREE}", edges.len()),
+            }
+        };
+    }
+    by_degree!(2 3 4 5 6 7 8 9 10 11 12);
+    let degree = edges.len();
+    let start = z / 8 * 8;
+    if start < z {
+        for (edge, block) in edges.iter().enumerate() {
+            for lane in start..z {
+                let index = lane + block.shift;
+                let index = if index >= z { index - z } else { index };
+                scratch[edge * z + lane] =
+                    beliefs[block.offset + index] - messages[edge * z + lane];
+            }
+        }
+        check_block_scalar(
+            rule_of::<RULE>(parameter),
+            scratch,
+            messages,
+            degree,
+            z,
+            start,
+        );
+    }
+}
+
+/// The rule `RULE` with its parameter.
+fn rule_of<const RULE: u8>(parameter: f32) -> LaneMinSumRule {
+    match RULE {
+        PLAIN => LaneMinSumRule::Plain,
+        NORMALIZED => LaneMinSumRule::Normalized(parameter),
+        _ => LaneMinSumRule::Offset(parameter),
+    }
+}
+
+/// The full groups of eight checks of a row of `DEGREE` edges, each with its
+/// rotated differences in registers, its outputs over its messages.
+///
+/// # Safety
+/// [`fused_row`]'s contract with `edges.len() == DEGREE`.
+#[target_feature(enable = "avx2")]
+unsafe fn fused_groups<const RULE: u8, const DEGREE: usize>(
+    parameter: f32,
+    beliefs: &[f32],
+    edges: &[QcBlock],
+    messages: &mut [f32],
+    z: usize,
+) {
+    let parameter = _mm256_set1_ps(parameter);
+    let edges: &[QcBlock; DEGREE] = edges.try_into().expect("DEGREE edges");
+    for lane in (0..z / 8 * 8).step_by(8) {
+        // SAFETY: lane + 8 <= z. Each block's beliefs are offset..offset + z
+        // within the slice; rotated_block reads at most offset + z - 1. Each
+        // edge's messages edge * z + lane..+8 lie within degree * z.
+        unsafe {
+            let firsts: [usize; DEGREE] = core::array::from_fn(|edge| {
+                let first = lane + edges[edge].shift;
+                if first >= z {
+                    first - z
+                } else {
+                    first
+                }
+            });
+            let at = messages.as_mut_ptr().add(lane);
+            let message = |edge: usize| _mm256_loadu_ps(at.add(edge * z));
+            let store = |edge: usize, out| _mm256_storeu_ps(at.add(edge * z), out);
+            // A group whose eight lanes wrap in no block loads every block
+            // contiguously. Each branch checks its own differences, so they
+            // stay in registers.
+            if firsts.iter().all(|&first| first + 8 <= z) {
+                let differences: [__m256; DEGREE] = core::array::from_fn(|edge| {
+                    let block = beliefs.as_ptr().add(edges[edge].offset + firsts[edge]);
+                    _mm256_sub_ps(_mm256_loadu_ps(block), message(edge))
+                });
+                check_lanes::<RULE>(parameter, DEGREE, |edge| differences[edge], store);
+            } else {
+                let differences: [__m256; DEGREE] = core::array::from_fn(|edge| {
+                    _mm256_sub_ps(rotated_block(beliefs, z, edges[edge], lane), message(edge))
+                });
+                check_lanes::<RULE>(parameter, DEGREE, |edge| differences[edge], store);
+            }
+        }
+    }
+}
+
+/// Eight beliefs from `lane` of one column block rotated by its shift.
+///
+/// # Safety
+/// The host must support AVX2, `lane + 8 <= z`, `block.shift < z` and
+/// `block.offset + z <= beliefs.len()`.
+#[target_feature(enable = "avx2")]
+#[inline]
+unsafe fn rotated_block(beliefs: &[f32], z: usize, block: QcBlock, lane: usize) -> __m256 {
+    let first = lane + block.shift;
+    let first = if first >= z { first - z } else { first };
+    // SAFETY: the block's beliefs are offset..offset + z within the slice; a
+    // contiguous load stays below first + 8 <= z, and a wrapping chunk reads
+    // first + k - z < z for first + k >= z.
+    unsafe {
+        let base = beliefs.as_ptr().add(block.offset);
+        if first + 8 <= z {
+            _mm256_loadu_ps(base.add(first))
+        } else {
+            let mut gathered = [0f32; 8];
+            for (k, slot) in gathered.iter_mut().enumerate() {
+                let index = first + k;
+                *slot = *base.add(if index >= z { index - z } else { index });
+            }
+            _mm256_loadu_ps(gathered.as_ptr())
         }
     }
 }

@@ -2,10 +2,11 @@
 //! each column block splits into lane segments that share one canonical
 //! accumulation order, so variable sums equal the canonical decoder's.
 
+use super::decisions::{pack_bytes, pack_eight};
 use super::{DecodeOutcome, DecoderConfig, LaneBackend, LdpcCode, MinSumRule, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use gf2_core::BitVec;
-use gf2_kernels_simd::ldpc_qc::{QcKernels, QcTerm};
+use gf2_kernels_simd::ldpc_qc::{QcBlock, QcKernels, QcTerm};
 use std::ops::Range;
 
 /// One circulant of the block description.
@@ -34,6 +35,8 @@ struct QcLayout {
     row_blocks: usize,
     col_blocks: usize,
     check_edges: Vec<BaseEdge>,
+    /// Each edge of `check_edges` as the beliefs its check update reads.
+    check_blocks: Vec<QcBlock>,
     check_offsets: Vec<usize>,
     segments: Vec<Segment>,
     segment_offsets: Vec<usize>,
@@ -164,6 +167,13 @@ impl QcLayout {
                 shift: check_edges[index].shift,
             })
             .collect();
+        let check_blocks = check_edges
+            .iter()
+            .map(|edge| QcBlock {
+                offset: edge.col_block * z,
+                shift: edge.shift,
+            })
+            .collect();
         let max_row_degree = check_offsets
             .windows(2)
             .map(|pair| pair[1] - pair[0])
@@ -175,6 +185,7 @@ impl QcLayout {
             row_blocks,
             col_blocks,
             check_edges,
+            check_blocks,
             check_offsets,
             segments,
             segment_offsets,
@@ -229,6 +240,8 @@ pub struct QcDecoder {
     /// Hard decisions by lifted column and the parities of one row block.
     hard_bits: Vec<u8>,
     parity: Vec<u8>,
+    /// Hard decisions by variable, 64 per word.
+    words: Vec<u64>,
     kernel: QcKernels,
     backend: LaneBackend,
     last_iterations: usize,
@@ -260,6 +273,7 @@ impl QcDecoder {
             posterior: vec![Llr::zero(); layout.n()],
             hard_bits: vec![0; layout.n()],
             parity: vec![0; layout.z()],
+            words: Vec::with_capacity(layout.n().div_ceil(64)),
             kernel,
             backend,
             layout,
@@ -303,7 +317,8 @@ impl QcDecoder {
     }
 
     /// Bytes of the decoding workspace: channel values, beliefs, messages,
-    /// row scratch, posteriors and hard decisions, without the layout.
+    /// row scratch, posteriors, hard decisions and their packed words, without
+    /// the layout.
     #[must_use]
     pub fn workspace_bytes(&self) -> usize {
         std::mem::size_of_val(self.channel.as_slice())
@@ -313,6 +328,7 @@ impl QcDecoder {
             + std::mem::size_of_val(self.posterior.as_slice())
             + std::mem::size_of_val(self.hard_bits.as_slice())
             + std::mem::size_of_val(self.parity.as_slice())
+            + std::mem::size_of::<u64>() * self.layout.n().div_ceil(64)
     }
 
     /// Decodes a mother-code frame, overwriting `codeword` with all n hard bits.
@@ -367,19 +383,29 @@ impl QcDecoder {
                 for (slot, &belief) in self.posterior.iter_mut().zip(&self.belief) {
                     *slot = Llr::new(belief);
                 }
-                for &bit in &self.hard_bits {
-                    codeword.push_bit(bit != 0);
-                }
+                pack_bytes(&self.hard_bits, |bit| bit, 0, &mut self.words);
             }
             Some((_, inverse)) => {
-                for (slot, &column) in self.posterior.iter_mut().zip(inverse) {
-                    *slot = Llr::new(self.belief[column]);
-                }
-                for &column in inverse {
-                    codeword.push_bit(self.hard_bits[column] != 0);
+                self.words.clear();
+                for (columns, posterior) in inverse.chunks(64).zip(self.posterior.chunks_mut(64)) {
+                    let mut word = 0;
+                    for (byte, (columns, posterior)) in
+                        columns.chunks(8).zip(posterior.chunks_mut(8)).enumerate()
+                    {
+                        let mut lanes = [0u8; 8];
+                        for ((lane, slot), &column) in lanes.iter_mut().zip(posterior).zip(columns)
+                        {
+                            *slot = Llr::new(self.belief[column]);
+                            *lane = self.hard_bits[column];
+                        }
+                        word |= pack_eight(u64::from_le_bytes(lanes), 0) << (8 * byte);
+                    }
+                    self.words.push(word);
                 }
             }
         }
+        codeword.resize(self.layout.n(), false);
+        codeword.write_bits(0, &self.words, self.layout.n());
         DecodeOutcome {
             iterations,
             converged: syndrome_check_passed,
@@ -396,6 +422,18 @@ impl QcDecoder {
             if degree == 0 {
                 continue;
             }
+            let masked = self.layout.row_masked(row_block);
+            if masked.is_empty() {
+                self.kernel.check_row_rotated(
+                    self.rule.into(),
+                    &self.belief,
+                    &self.layout.check_blocks[edges.clone()],
+                    &mut self.check_to_var[edges.start * z..edges.end * z],
+                    &mut self.row_scratch,
+                    z,
+                );
+                continue;
+            }
             let scratch = &mut self.row_scratch[..degree * z];
             for ((edge, out), messages) in self.layout.check_edges[edges.clone()]
                 .iter()
@@ -406,7 +444,7 @@ impl QcDecoder {
                 self.kernel
                     .rotated_difference(block, edge.shift, messages, out);
             }
-            for &(edge, lane) in self.layout.row_masked(row_block) {
+            for &(edge, lane) in masked {
                 scratch[(edge - edges.start) * z + lane] = f32::INFINITY;
             }
             self.kernel.check_block(
