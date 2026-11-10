@@ -112,6 +112,22 @@ unsafe fn accumulate_run(
     unsafe {
         if len >= 8 {
             let mut offset = 0;
+            // Four chunks per pass load each term's base once.
+            while offset + 32 <= len {
+                let mut sums: [__m256; 4] = core::array::from_fn(|k| {
+                    _mm256_loadu_ps(channel.as_ptr().add(start + offset + 8 * k))
+                });
+                for &base in bases {
+                    let at = messages.as_ptr().add(base + offset);
+                    for (k, sum) in sums.iter_mut().enumerate() {
+                        *sum = _mm256_add_ps(*sum, _mm256_loadu_ps(at.add(8 * k)));
+                    }
+                }
+                for (k, sum) in sums.iter().enumerate() {
+                    _mm256_storeu_ps(beliefs.as_mut_ptr().add(start + offset + 8 * k), *sum);
+                }
+                offset += 32;
+            }
             while offset + 16 <= len {
                 let (low, high) = (chunk(offset), chunk(offset + 8));
                 _mm256_storeu_ps(beliefs.as_mut_ptr().add(start + offset), low);
