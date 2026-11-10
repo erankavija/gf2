@@ -595,6 +595,8 @@ pub unsafe fn fp_medium_gemm_panel(
     assert_eq!(c.len(), m * n, "fp_medium_gemm_panel: c shape");
 
     if m == 0 || k == 0 || n == 0 {
+        // The empty sum over `k` is zero.
+        c.fill(0);
         return;
     }
 

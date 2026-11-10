@@ -7,8 +7,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 8ff1644cb
-; regenerated   : 2026-10-05T03:38:03Z
+; commit        : 79f9117d4
+; regenerated   : 2026-11-10T07:55:27Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -17,8 +17,6 @@
 ; symbol: gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm
 ;==========================================================
 
-    Finished `release` profile [optimized] target(s) in 0.03s
-
 gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	push rbp
 	push r15
@@ -26,426 +24,428 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	push r13
 	push r12
 	push rbx
-	sub rsp, 1080
-	mov rbx, r8
-	mov qword ptr [rsp + 80], rdi
-	mov r12, qword ptr [rsp + 1160]
-	mov rdi, qword ptr [rsp + 1152]
-	movzx r11d, word ptr [rsp + 1144]
-	mov r8, qword ptr [rsp + 1136]
-	mov qword ptr [rsp + 464], rsi
+	sub rsp, 1096
+	mov rbp, qword ptr [rsp + 1168]
+	lea rax, [rbp - 1]
+	cmp rax, 2097152
+	jae .LBB80_278
+	mov r15, qword ptr [rsp + 1184]
+	mov r14, qword ptr [rsp + 1176]
+	movzx r11d, word ptr [rsp + 1160]
+	mov r10, qword ptr [rsp + 1152]
+	mov qword ptr [rsp + 480], rsi
 	mov rax, r9
-	imul rax, rbx
-	mov qword ptr [rsp + 472], rax
-	cmp rsi, rax
-	jne .LBB60_1
-	mov qword ptr [rsp + 480], rcx
-	mov rax, r8
-	imul rax, r9
+	imul rax, r8
 	mov qword ptr [rsp + 488], rax
-	cmp rcx, rax
-	jne .LBB60_277
-	mov qword ptr [rsp + 496], r12
-	mov rax, r8
-	imul rax, rbx
+	cmp rsi, rax
+	jne .LBB80_2
+	mov qword ptr [rsp + 496], rcx
+	mov rax, r10
+	imul rax, r9
 	mov qword ptr [rsp + 504], rax
-	cmp r12, rax
-	jne .LBB60_5
-	test rbx, rbx
-	sete al
-	test r9, r9
-	sete sil
-	or sil, al
+	cmp rcx, rax
+	jne .LBB80_279
+	mov qword ptr [rsp + 512], r15
+	mov rax, r10
+	imul rax, r8
+	mov qword ptr [rsp + 520], rax
+	cmp r15, rax
+	jne .LBB80_6
 	test r8, r8
-	sete al
-	or al, sil
-	je .LBB60_7
-.LBB60_28:
-	add rsp, 1080
+	setne al
+	test r9, r9
+	setne sil
+	and sil, al
+	test r10, r10
+	setne al
+	test sil, al
+	jne .LBB80_8
+	add r15, r15
+	mov rdi, r14
+	xor esi, esi
+	mov rdx, r15
+	add rsp, 1096
 	pop rbx
 	pop r12
 	pop r13
 	pop r14
 	pop r15
 	pop rbp
-	vzeroupper
-	ret
-.LBB60_7:
-	mov qword ptr [rsp + 144], rdx
+	jmp qword ptr [rip + memset@GOTPCREL]
+.LBB80_8:
+	mov word ptr [rsp + 224], r11w
+	mov qword ptr [rsp + 264], r8
+	mov qword ptr [rsp + 160], rdx
 	movabs rdx, -6148914691236517205
-	mov rax, r8
+	mov rax, r10
 	mul rdx
-	movabs rbp, 9223372036854775800
+	movabs r8, 9223372036854775800
 	shr rdx, 3
 	ror rax, 2
 	movabs rsi, 1537228672809129301
-	xor r10d, r10d
+	xor r11d, r11d
 	cmp rax, rsi
-	seta r10b
-	add r10, rdx
+	seta r11b
+	add r11, rdx
 	lea rsi, [4*r9]
-	lea r15, [rsi + 2*rsi]
-	mov r14, r10
-	imul r14, r15
-	lea r13, [8*r14]
-	mov rax, r14
+	lea rbx, [rsi + 2*rsi]
+	mov r12, r11
+	imul r12, rbx
+	lea r13, [8*r12]
+	mov rax, r12
 	shr rax, 61
 	setne al
-	cmp r13, rbp
+	cmp r13, r8
 	seta dl
 	or dl, al
-	je .LBB60_10
-	xor r15d, r15d
-.LBB60_9:
-	mov rdi, r15
+	je .LBB80_11
+	xor ebx, ebx
+.LBB80_10:
+	mov rdi, rbx
 	mov rsi, r13
 	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
-.LBB60_10:
-	mov qword ptr [rsp + 208], r15
-	mov word ptr [rsp + 40], r11w
-	mov qword ptr [rsp + 56], r8
-	mov qword ptr [rsp + 16], rdi
-	mov qword ptr [rsp + 72], rsi
+.LBB80_11:
+	mov qword ptr [rsp + 56], rbx
+	mov qword ptr [rsp + 104], r11
+	mov qword ptr [rsp + 40], r10
+	mov qword ptr [rsp + 32], r14
+	mov qword ptr [rsp + 16], rsi
+	mov qword ptr [rsp + 88], rdi
 	test r13, r13
-	mov qword ptr [rsp + 88], r10
-	mov qword ptr [rsp + 216], rbx
-	je .LBB60_11
-	mov qword ptr [rsp + 112], rcx
-	mov rbp, r9
+	je .LBB80_12
+	mov qword ptr [rsp + 128], rcx
+	mov r14, r9
 	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
-	mov r15d, 8
+	mov ebx, 8
 	mov esi, 8
 	mov rdi, r13
 	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
-	mov qword ptr [rsp + 64], rax
+	mov qword ptr [rsp + 80], rax
 	test rax, rax
-	je .LBB60_9
-	mov qword ptr [rsp + 184], r14
-	mov r9, rbp
-	mov rcx, qword ptr [rsp + 112]
-	mov rdx, qword ptr [rsp + 144]
-	mov r10, qword ptr [rsp + 88]
-	test r10, r10
-	mov r15, qword ptr [rsp + 56]
-	jne .LBB60_15
-	jmp .LBB60_24
-.LBB60_11:
+	je .LBB80_10
+	mov qword ptr [rsp + 8], r12
+	mov r9, r14
+	mov rcx, qword ptr [rsp + 128]
+	jmp .LBB80_13
+.LBB80_12:
 	mov eax, 8
-	mov qword ptr [rsp + 64], rax
-	mov qword ptr [rsp + 184], 0
-	mov rdx, qword ptr [rsp + 144]
+	mov qword ptr [rsp + 80], rax
+	mov qword ptr [rsp + 8], 0
+.LBB80_13:
+	mov rdx, qword ptr [rsp + 160]
+	mov r8, qword ptr [rsp + 40]
+	mov r10, qword ptr [rsp + 104]
 	test r10, r10
-	mov r15, qword ptr [rsp + 56]
-	je .LBB60_24
-.LBB60_15:
-	mov edi, 12
-	mov qword ptr [rsp + 144], 0
-	xor r10d, r10d
+	je .LBB80_23
+	mov esi, 12
+	mov qword ptr [rsp + 160], 0
+	xor edi, edi
 	xor r11d, r11d
-	mov rbx, qword ptr [rsp + 64]
-	jmp .LBB60_16
-.LBB60_23:
+	jmp .LBB80_15
+.LBB80_22:
 	inc r11
-	mov rdi, qword ptr [rsp + 112]
-	add rdi, 12
-	add r10, -12
-	mov rax, qword ptr [rsp + 144]
-	add rax, qword ptr [rsp + 208]
-	mov qword ptr [rsp + 144], rax
-	cmp r11, qword ptr [rsp + 88]
-	mov r15, qword ptr [rsp + 56]
-	je .LBB60_24
-.LBB60_16:
-	cmp r15, rdi
-	mov qword ptr [rsp + 112], rdi
-	cmovb rdi, r15
-	lea rax, [rdi + r10]
+	mov rsi, qword ptr [rsp + 128]
+	add rsi, 12
+	mov rdi, qword ptr [rsp + 216]
+	add rdi, -12
+	mov rax, qword ptr [rsp + 160]
+	add rax, qword ptr [rsp + 56]
+	mov qword ptr [rsp + 160], rax
+	mov r10, qword ptr [rsp + 104]
+	cmp r11, r10
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_23
+.LBB80_15:
+	cmp r8, rsi
+	mov qword ptr [rsp + 128], rsi
+	cmovb rsi, r8
+	lea rax, [rsi + rdi]
 	cmp rax, 1
-	adc rdi, r10
+	mov qword ptr [rsp + 216], rdi
+	adc rsi, rdi
 	lea rax, [4*r11]
-	lea rsi, [rax + 2*rax]
+	lea rdi, [rax + 2*rax]
 	lea rax, [rax + 2*rax]
 	add rax, 12
-	cmp r15, rax
-	cmovb rax, r15
-	cmp rax, rsi
-	je .LBB60_23
-	mov r8, qword ptr [rsp + 144]
-	mov r13, r8
-	xor ebp, ebp
-.LBB60_18:
-	inc rbp
-	mov r15, rdi
-	mov rax, r13
-	mov rsi, r8
-.LBB60_19:
-	cmp rax, rcx
-	jae .LBB60_276
-	cmp rsi, r14
-	jae .LBB60_275
-	vmovsd xmm0, qword ptr [rdx + 8*rax]
-	vmovsd qword ptr [rbx + 8*rsi], xmm0
-	inc rsi
-	add rax, r9
-	dec r15
-	jne .LBB60_19
+	cmp r8, rax
+	cmovb rax, r8
+	cmp rax, rdi
+	je .LBB80_22
+	mov r8, qword ptr [rsp + 160]
+	mov rbx, r8
+	xor r14d, r14d
+.LBB80_17:
+	inc r14
+	mov r13, rsi
+	mov rdi, rbx
+	mov rax, r8
+.LBB80_18:
+	cmp rdi, rcx
+	jae .LBB80_277
+	cmp rax, r12
+	jae .LBB80_276
+	vmovsd xmm0, qword ptr [rdx + 8*rdi]
+	mov r10, qword ptr [rsp + 80]
+	vmovsd qword ptr [r10 + 8*rax], xmm0
+	inc rax
+	add rdi, r9
+	dec r13
+	jne .LBB80_18
 	add r8, 12
-	inc r13
-	cmp rbp, r9
-	jne .LBB60_18
-	jmp .LBB60_23
-.LBB60_24:
+	inc rbx
+	cmp r14, r9
+	jne .LBB80_17
+	jmp .LBB80_22
+.LBB80_23:
 	movabs rax, 2305843009213693951
-	mov rbx, r9
-	shl rbx, 5
-	cmp qword ptr [rsp + 72], rax
+	mov rsi, r9
+	shl rsi, 5
+	cmp qword ptr [rsp + 16], rax
 	seta al
 	movabs rcx, 9223372036854775800
-	cmp rbx, rcx
+	cmp rsi, rcx
 	seta cl
 	or cl, al
-	je .LBB60_33
-	xor r14d, r14d
-.LBB60_26:
-	mov rdi, r14
-	mov rsi, rbx
-	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
-	jmp .LBB60_27
-.LBB60_33:
-	test rbx, rbx
-	mov qword ptr [rsp + 192], rbx
-	je .LBB60_34
-	mov r15, r9
-	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
-	mov r14d, 8
-	mov esi, 8
+	mov rbx, qword ptr [rsp + 88]
+	je .LBB80_34
+	xor ebx, ebx
+.LBB80_25:
 	mov rdi, rbx
-	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
-	test rax, rax
-	mov rbp, qword ptr [rsp + 16]
-	je .LBB60_26
-	mov r9, r15
-	mov rdx, qword ptr [rsp + 72]
-	mov rbx, rax
-	mov r15, qword ptr [rsp + 56]
-	jmp .LBB60_37
-.LBB60_34:
+	mov rbx, qword ptr [rsp + 8]
+	call qword ptr [rip + alloc::raw_vec::handle_error@GOTPCREL]
+	jmp .LBB80_26
+.LBB80_34:
+	test rsi, rsi
+	mov qword ptr [rsp + 112], rsi
+	je .LBB80_35
+	mov r14, r9
+	call qword ptr [rip + __rustc::__rust_no_alloc_shim_is_unstable_v2@GOTPCREL]
 	mov ebx, 8
-	xor edx, edx
-	mov rbp, qword ptr [rsp + 16]
-.LBB60_37:
-	mov rdi, qword ptr [rsp + 88]
+	mov esi, 8
+	mov rdi, qword ptr [rsp + 112]
+	call qword ptr [rip + __rustc::__rust_alloc_zeroed@GOTPCREL]
+	mov rsi, qword ptr [rsp + 112]
+	test rax, rax
+	je .LBB80_25
+	mov r13, rax
+	mov r9, r14
+	mov rbx, qword ptr [rsp + 88]
+	mov r10, qword ptr [rsp + 104]
+	jmp .LBB80_38
+.LBB80_35:
+	mov r13d, 8
+	mov qword ptr [rsp + 16], 0
+.LBB80_38:
 	movabs rax, 192153584101141162
-	mov rcx, qword ptr [rsp + 192]
-	lea r8, [rcx + 2*rcx]
+	lea r11, [rsi + 2*rsi]
 	cmp r9, rax
-	ja .LBB60_38
-	mov rsi, r8
-.LBB60_42:
-	cmp rdi, 1
-	mov rcx, rdi
+	mov rdi, qword ptr [rsp + 32]
+	ja .LBB80_39
+	mov rsi, r11
+.LBB80_43:
+	mov r8, qword ptr [rsp + 40]
+	cmp r10, 1
+	mov rcx, r10
 	adc rcx, 0
 	cmp rsi, 16777216
-	mov qword ptr [rsp + 72], rdx
-	mov qword ptr [rsp + 104], r8
-	ja .LBB60_43
+	ja .LBB80_44
 	mov eax, 16777216
 	xor edx, edx
 	div esi
 	mov edx, eax
-	jmp .LBB60_45
-.LBB60_43:
+	jmp .LBB80_46
+.LBB80_44:
 	xor edx, edx
-.LBB60_45:
+.LBB80_46:
 	cmp rdx, 1
 	adc rdx, 0
 	cmp rcx, rdx
 	cmovb rdx, rcx
-	cmp r9, 4096
-	mov r11d, 4096
-	cmovb r11, r9
-	test rdi, rdi
-	je .LBB60_54
-	mov rax, qword ptr [rsp + 216]
+	cmp r9, rbp
+	cmovb rbp, r9
+	test r10, r10
+	je .LBB80_55
+	mov rax, qword ptr [rsp + 264]
 	and rax, -4
-	mov qword ptr [rsp + 224], rax
-	movzx eax, word ptr [rsp + 40]
+	mov qword ptr [rsp + 272], rax
+	movzx eax, word ptr [rsp + 224]
 	vcvtsi2sd xmm0, xmm15, eax
-	vmovsd xmm1, qword ptr [rip + .LCPI60_0]
+	vmovsd xmm1, qword ptr [rip + .LCPI80_0]
 	vdivsd xmm1, xmm1, xmm0
-	mov rsi, r9
-	shl rsi, 4
+	mov rcx, r9
+	shl rcx, 4
 	lea rax, [r9 + 2*r9]
 	vbroadcastsd ymm0, xmm0
-	vmovupd ymmword ptr [rsp + 144], ymm0
+	vmovupd ymmword ptr [rsp + 160], ymm0
 	vbroadcastsd ymm1, xmm1
-	mov rcx, qword ptr [rsp + 80]
-	lea rax, [rcx + 8*rax]
+	lea rax, [rbx + 8*rax]
+	mov qword ptr [rsp + 368], rax
+	mov qword ptr [rsp + 336], rcx
+	lea rax, [rbx + rcx]
+	mov qword ptr [rsp + 360], rax
+	lea rax, [rbx + 8*r9]
 	mov qword ptr [rsp + 352], rax
-	mov qword ptr [rsp + 320], rsi
-	lea rax, [rcx + rsi]
-	mov qword ptr [rsp + 344], rax
-	lea rax, [rcx + 8*r9]
-	mov qword ptr [rsp + 336], rax
-	lea rax, [rbx + 24]
-	mov qword ptr [rsp + 208], rax
-	mov rax, qword ptr [rsp + 192]
+	lea rax, [r13 + 24]
+	mov qword ptr [rsp + 216], rax
+	mov rax, qword ptr [rsp + 112]
 	lea rax, [rax + 2*rax]
 	mov qword ptr [rsp + 96], rax
-	lea rax, [4*r15]
-	mov qword ptr [rsp + 408], rax
-	lea rax, [8*r15]
-	mov qword ptr [rsp + 400], rax
-	lea rax, [r15 + r15]
-	mov qword ptr [rsp + 176], rax
-	lea rax, [rbp + 2*r15]
-	mov qword ptr [rsp + 328], rax
-	lea rax, [rbx + 16]
-	mov qword ptr [rsp + 264], rax
-	lea rax, [rbx + 8]
-	mov qword ptr [rsp + 272], rax
-	mov qword ptr [rsp + 48], 0
+	lea rax, [4*r8]
+	mov qword ptr [rsp + 424], rax
+	lea rax, [8*r8]
+	mov qword ptr [rsp + 416], rax
+	lea rax, [r8 + r8]
+	mov qword ptr [rsp + 200], rax
+	lea rax, [rdi + 2*r8]
+	mov qword ptr [rsp + 344], rax
+	lea rax, [r13 + 16]
+	mov qword ptr [rsp + 312], rax
+	lea rax, [r13 + 8]
+	mov qword ptr [rsp + 320], rax
+	mov qword ptr [rsp + 64], 0
 	vxorpd xmm13, xmm13, xmm13
-	mov qword ptr [rsp + 8], rbx
-	vmovupd ymmword ptr [rsp + 112], ymm1
-	mov qword ptr [rsp + 360], rdx
-	jmp .LBB60_47
-.LBB60_167:
-	mov rdi, qword ptr [rsp + 88]
-	cmp qword ptr [rsp + 368], rdi
-	mov rdx, qword ptr [rsp + 360]
+	mov qword ptr [rsp + 24], r13
+	mov qword ptr [rsp + 120], r11
+	vmovupd ymmword ptr [rsp + 128], ymm1
+	mov qword ptr [rsp + 376], rdx
+	jmp .LBB80_48
+.LBB80_167:
+	mov r10, qword ptr [rsp + 104]
+	cmp qword ptr [rsp + 384], r10
+	mov rdi, qword ptr [rsp + 32]
+	mov rdx, qword ptr [rsp + 376]
 	vmovapd ymm1, ymm2
-	jae .LBB60_54
-.LBB60_47:
-	mov rsi, qword ptr [rsp + 48]
-	lea rax, [rsi + rdx]
-	cmp rdi, rax
-	mov qword ptr [rsp + 368], rax
-	cmovb rax, rdi
-	mov qword ptr [rsp + 48], rax
-	cmp qword ptr [rsp + 224], 0
-	mov qword ptr [rsp + 24], rsi
-	je .LBB60_48
+	jae .LBB80_55
+.LBB80_48:
+	mov r14, qword ptr [rsp + 64]
+	lea rax, [r14 + rdx]
+	cmp r10, rax
+	mov qword ptr [rsp + 384], rax
+	cmovb rax, r10
+	mov qword ptr [rsp + 64], rax
+	cmp qword ptr [rsp + 272], 0
+	je .LBB80_49
 	mov rax, qword ptr [rsp + 96]
-	imul rax, rsi
-	add rax, qword ptr [rsp + 64]
-	mov qword ptr [rsp + 392], rax
-	lea rax, [4*rsi]
+	imul rax, r14
+	add rax, qword ptr [rsp + 80]
+	mov qword ptr [rsp + 408], rax
+	lea rax, [4*r14]
 	lea rdx, [rax + 2*rax]
-	lea rcx, [8*rsi]
+	lea rcx, [8*r14]
 	lea rcx, [rcx + 2*rcx]
-	lea rdi, [rbp + rcx]
-	mov qword ptr [rsp + 240], rdi
+	lea rsi, [rdi + rcx]
+	mov qword ptr [rsp + 288], rsi
 	lea rax, [rax + 2*rax]
 	add rax, 12
-	mov qword ptr [rsp + 384], rax
+	mov qword ptr [rsp + 400], rax
 	mov rax, rdx
 	neg rax
-	mov qword ptr [rsp + 376], rax
-	mov qword ptr [rsp + 256], rdx
-	lea rax, [r15 + rdx]
-	mov qword ptr [rsp + 232], rax
-	add rcx, qword ptr [rsp + 328]
-	mov qword ptr [rsp + 248], rcx
-	mov rdi, qword ptr [rsp + 80]
-	mov r8, qword ptr [rsp + 336]
-	mov r10, qword ptr [rsp + 344]
-	mov r14, qword ptr [rsp + 352]
-	mov qword ptr [rsp + 32], 0
-	jmp .LBB60_173
-.LBB60_272:
-	mov rdx, qword ptr [rsp + 32]
+	mov qword ptr [rsp + 392], rax
+	mov qword ptr [rsp + 304], rdx
+	lea rax, [r8 + rdx]
+	mov qword ptr [rsp + 280], rax
+	add rcx, qword ptr [rsp + 344]
+	mov qword ptr [rsp + 296], rcx
+	mov rsi, qword ptr [rsp + 88]
+	mov rdi, qword ptr [rsp + 352]
+	mov r10, qword ptr [rsp + 360]
+	mov r11, qword ptr [rsp + 368]
+	mov qword ptr [rsp + 48], 0
+	mov qword ptr [rsp + 72], r14
+	jmp .LBB80_173
+.LBB80_271:
+	mov rdx, qword ptr [rsp + 48]
 	add rdx, 4
-	mov rax, qword ptr [rsp + 192]
-	mov r14, qword ptr [rsp + 416]
-	add r14, rax
-	mov r10, qword ptr [rsp + 424]
+	mov rax, qword ptr [rsp + 112]
+	mov r11, qword ptr [rsp + 432]
+	add r11, rax
+	mov r10, qword ptr [rsp + 440]
 	add r10, rax
-	mov r8, qword ptr [rsp + 432]
-	add r8, rax
-	mov rdi, qword ptr [rsp + 440]
+	mov rdi, qword ptr [rsp + 448]
 	add rdi, rax
-	mov rax, qword ptr [rsp + 408]
-	add qword ptr [rsp + 256], rax
-	mov rcx, qword ptr [rsp + 400]
-	add qword ptr [rsp + 240], rcx
-	add qword ptr [rsp + 232], rax
-	add qword ptr [rsp + 248], rcx
-	mov qword ptr [rsp + 32], rdx
-	cmp rdx, qword ptr [rsp + 224]
-	mov rbx, qword ptr [rsp + 8]
-	mov rsi, qword ptr [rsp + 24]
-	jae .LBB60_49
-.LBB60_173:
+	mov rsi, qword ptr [rsp + 456]
+	add rsi, rax
+	mov rax, qword ptr [rsp + 424]
+	add qword ptr [rsp + 304], rax
+	mov rcx, qword ptr [rsp + 416]
+	add qword ptr [rsp + 288], rcx
+	add qword ptr [rsp + 280], rax
+	add qword ptr [rsp + 296], rcx
+	mov qword ptr [rsp + 48], rdx
+	cmp rdx, qword ptr [rsp + 272]
+	mov r13, qword ptr [rsp + 24]
+	mov r14, qword ptr [rsp + 72]
+	jae .LBB80_50
+.LBB80_173:
 	mov rax, r9
 	xor ecx, ecx
-.LBB60_174:
+.LBB80_174:
+	vmovsd xmm3, qword ptr [rsi + rcx]
+	vmovsd qword ptr [r13 + 4*rcx], xmm3
 	vmovsd xmm3, qword ptr [rdi + rcx]
-	vmovsd qword ptr [rbx + 4*rcx], xmm3
-	vmovsd xmm3, qword ptr [r8 + rcx]
-	vmovsd qword ptr [rbx + 4*rcx + 8], xmm3
+	vmovsd qword ptr [r13 + 4*rcx + 8], xmm3
 	vmovsd xmm3, qword ptr [r10 + rcx]
-	vmovsd qword ptr [rbx + 4*rcx + 16], xmm3
-	vmovsd xmm3, qword ptr [r14 + rcx]
-	vmovsd qword ptr [rbx + 4*rcx + 24], xmm3
+	vmovsd qword ptr [r13 + 4*rcx + 16], xmm3
+	vmovsd xmm3, qword ptr [r11 + rcx]
+	vmovsd qword ptr [r13 + 4*rcx + 24], xmm3
 	add rcx, 8
 	dec rax
-	jne .LBB60_174
-	mov qword ptr [rsp + 416], r14
-	mov qword ptr [rsp + 424], r10
-	mov qword ptr [rsp + 432], r8
-	mov qword ptr [rsp + 440], rdi
-	cmp rsi, qword ptr [rsp + 48]
-	jae .LBB60_272
-	mov rax, qword ptr [rsp + 32]
+	jne .LBB80_174
+	mov qword ptr [rsp + 432], r11
+	mov qword ptr [rsp + 440], r10
+	mov qword ptr [rsp + 448], rdi
+	mov qword ptr [rsp + 456], rsi
+	cmp r14, qword ptr [rsp + 64]
+	jae .LBB80_271
+	mov rax, qword ptr [rsp + 48]
 	mov rcx, rax
 	or rcx, 2
-	imul rcx, r15
-	mov qword ptr [rsp + 448], rcx
+	imul rcx, r8
+	mov qword ptr [rsp + 464], rcx
 	or rax, 3
-	imul rax, r15
-	mov qword ptr [rsp + 280], rax
-	mov rdi, qword ptr [rsp + 248]
-	mov rax, qword ptr [rsp + 232]
-	mov rcx, qword ptr [rsp + 376]
-	mov rbp, qword ptr [rsp + 384]
-	mov rbx, qword ptr [rsp + 240]
-	mov r8, qword ptr [rsp + 256]
-	mov r10, qword ptr [rsp + 392]
-	mov rdx, qword ptr [rsp + 24]
-	mov qword ptr [rsp + 40], rdx
-	jmp .LBB60_177
-.LBB60_247:
-	add r14, qword ptr [rsp + 280]
-	cmp r14, r12
-	jae .LBB60_246
+	imul rax, r8
+	mov qword ptr [rsp + 328], rax
+	mov r11, qword ptr [rsp + 296]
+	mov rax, qword ptr [rsp + 280]
+	mov rcx, qword ptr [rsp + 392]
+	mov r14, qword ptr [rsp + 400]
+	mov rbx, qword ptr [rsp + 288]
+	mov rsi, qword ptr [rsp + 304]
+	mov r12, qword ptr [rsp + 408]
+	mov rdx, qword ptr [rsp + 72]
+	mov qword ptr [rsp + 56], rdx
+	jmp .LBB80_177
+.LBB80_246:
+	add rcx, qword ptr [rsp + 328]
+	cmp rcx, r15
+	jae .LBB80_245
 	vmaxsd xmm2, xmm13, xmm8
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov word ptr [rbp + 2*r14], cx
-.LBB60_271:
-	mov rsi, qword ptr [rsp + 40]
-	inc rsi
-	add r10, qword ptr [rsp + 104]
-	add r8, 12
+	vcvttsd2si edx, xmm2
+	mov word ptr [r10 + 2*rcx], dx
+.LBB80_270:
+	mov rdi, qword ptr [rsp + 56]
+	inc rdi
+	add r12, qword ptr [rsp + 120]
+	add rsi, 12
 	add rbx, 24
-	mov rbp, qword ptr [rsp + 456]
-	add rbp, 12
-	mov rcx, qword ptr [rsp + 200]
+	mov r14, qword ptr [rsp + 472]
+	add r14, 12
+	mov rcx, qword ptr [rsp + 208]
 	add rcx, -12
 	add rax, 12
-	add rdi, 24
-	mov qword ptr [rsp + 40], rsi
-	cmp rsi, qword ptr [rsp + 48]
-	jae .LBB60_272
-.LBB60_177:
-	cmp r15, rbp
-	mov qword ptr [rsp + 456], rbp
-	cmovb rbp, r15
-	mov qword ptr [rsp + 200], rcx
-	add rbp, rcx
+	add r11, 24
+	mov qword ptr [rsp + 56], rdi
+	cmp rdi, qword ptr [rsp + 64]
+	jae .LBB80_271
+.LBB80_177:
+	cmp r8, r14
+	mov qword ptr [rsp + 472], r14
+	cmovb r14, r8
+	mov qword ptr [rsp + 208], rcx
+	add r14, rcx
 	vxorpd xmm3, xmm3, xmm3
-	xor r14d, r14d
+	xor edi, edi
 	vxorpd xmm15, xmm15, xmm15
 	vxorpd xmm14, xmm14, xmm14
 	vxorpd xmm13, xmm13, xmm13
@@ -457,61 +457,61 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vxorpd xmm7, xmm7, xmm7
 	vxorpd xmm6, xmm6, xmm6
 	vxorpd xmm5, xmm5, xmm5
-.LBB60_178:
-	lea r13, [r14 + r11]
+.LBB80_178:
+	lea r13, [rdi + rbp]
 	cmp r9, r13
 	mov rcx, r13
 	cmovb rcx, r9
 	mov rdx, rcx
 	sub rdx, 4
-	mov r15d, 0
-	cmovae r15, rdx
-	cmp r13, r14
-	jbe .LBB60_182
-	mov rdx, r14
-	shl rdx, 5
-	mov rsi, qword ptr [rsp + 208]
-	add rsi, rdx
-	lea rdx, [rdx + 2*rdx]
-	jmp .LBB60_180
-.LBB60_181:
-	vmovupd ymm2, ymmword ptr [r10 + rdx]
-	vmovupd ymm4, ymmword ptr [r10 + rdx + 32]
-	vmovupd ymm1, ymmword ptr [r10 + rdx + 64]
-	vbroadcastsd ymm0, qword ptr [rsi - 24]
+	mov r8d, 0
+	cmovae r8, rdx
+	cmp r13, rdi
+	jbe .LBB80_182
+	mov r10, rdi
+	shl r10, 5
+	mov rdx, qword ptr [rsp + 216]
+	add rdx, r10
+	lea r10, [r10 + 2*r10]
+	jmp .LBB80_180
+.LBB80_181:
+	vmovupd ymm2, ymmword ptr [r12 + r10]
+	vmovupd ymm4, ymmword ptr [r12 + r10 + 32]
+	vmovupd ymm1, ymmword ptr [r12 + r10 + 64]
+	vbroadcastsd ymm0, qword ptr [rdx - 24]
 	vfmadd231pd ymm3, ymm2, ymm0
 	vfmadd231pd ymm15, ymm4, ymm0
 	vfmadd231pd ymm14, ymm1, ymm0
-	vbroadcastsd ymm0, qword ptr [rsi - 16]
+	vbroadcastsd ymm0, qword ptr [rdx - 16]
 	vfmadd231pd ymm13, ymm2, ymm0
 	vfmadd231pd ymm12, ymm4, ymm0
 	vfmadd231pd ymm11, ymm1, ymm0
-	vbroadcastsd ymm0, qword ptr [rsi - 8]
-	inc r14
+	vbroadcastsd ymm0, qword ptr [rdx - 8]
+	inc rdi
 	vfmadd231pd ymm10, ymm2, ymm0
 	vfmadd231pd ymm9, ymm4, ymm0
 	vfmadd231pd ymm8, ymm1, ymm0
-	vbroadcastsd ymm0, qword ptr [rsi]
+	vbroadcastsd ymm0, qword ptr [rdx]
 	vfmadd231pd ymm7, ymm0, ymm2
 	vfmadd231pd ymm6, ymm0, ymm4
 	vfmadd231pd ymm5, ymm1, ymm0
-	add rsi, 32
-	add rdx, 96
-	cmp rcx, r14
-	je .LBB60_182
-.LBB60_180:
-	cmp r14, r15
-	jae .LBB60_181
-	prefetcht0 byte ptr [r10 + rdx + 384]
-	prefetcht0 byte ptr [r10 + rdx + 448]
-	jmp .LBB60_181
-.LBB60_182:
-	vmovupd ymm1, ymmword ptr [rsp + 112]
+	add rdx, 32
+	add r10, 96
+	cmp rcx, rdi
+	je .LBB80_182
+.LBB80_180:
+	cmp rdi, r8
+	jae .LBB80_181
+	prefetcht0 byte ptr [r12 + r10 + 384]
+	prefetcht0 byte ptr [r12 + r10 + 448]
+	jmp .LBB80_181
+.LBB80_182:
+	vmovupd ymm1, ymmword ptr [rsp + 128]
 	vmulpd ymm4, ymm1, ymm3
 	cmp r13, r9
-	jae .LBB60_183
+	jae .LBB80_183
 	vroundpd ymm2, ymm4, 8
-	vmovupd ymm0, ymmword ptr [rsp + 144]
+	vmovupd ymm0, ymmword ptr [rsp + 160]
 	vfnmadd213pd ymm2, ymm0, ymm3
 	vxorpd xmm3, xmm3, xmm3
 	vcmplt_oqpd ymm3, ymm2, ymm3
@@ -594,17 +594,17 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vcmplt_oqpd ymm4, ymm2, ymm1
 	vaddpd ymm5, ymm0, ymm2
 	vblendvpd ymm5, ymm2, ymm5, ymm4
-	mov r14, rcx
-	jmp .LBB60_178
-.LBB60_183:
+	mov rdi, rcx
+	jmp .LBB80_178
+.LBB80_183:
 	vroundpd ymm4, ymm4, 8
-	vmovupd ymm0, ymmword ptr [rsp + 144]
+	vmovupd ymm0, ymmword ptr [rsp + 160]
 	vfnmadd213pd ymm4, ymm0, ymm3
 	vxorpd xmm2, xmm2, xmm2
 	vcmplt_oqpd ymm3, ymm4, ymm2
 	vaddpd ymm2, ymm0, ymm4
 	vblendvpd ymm2, ymm4, ymm2, ymm3
-	vmovupd ymmword ptr [rsp + 288], ymm2
+	vmovupd ymmword ptr [rsp + 224], ymm2
 	vmulpd ymm2, ymm15, ymm1
 	vroundpd ymm2, ymm2, 8
 	vfnmadd213pd ymm2, ymm0, ymm15
@@ -673,479 +673,477 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vcmplt_oqpd ymm5, ymm2, ymm4
 	vaddpd ymm6, ymm0, ymm2
 	vblendvpd ymm5, ymm2, ymm6, ymm5
-	vmovupd ymm0, ymmword ptr [rsp + 288]
-	vmovupd ymmword ptr [rsp + 640], ymm0
-	vmovupd ymmword ptr [rsp + 672], ymm15
-	vmovupd ymmword ptr [rsp + 704], ymm14
-	vmovupd ymmword ptr [rsp + 736], ymm13
-	vmovupd ymmword ptr [rsp + 768], ymm12
-	vmovupd ymmword ptr [rsp + 800], ymm3
-	mov rcx, qword ptr [rsp + 40]
+	vmovupd ymm0, ymmword ptr [rsp + 224]
+	vmovupd ymmword ptr [rsp + 656], ymm0
+	vmovupd ymmword ptr [rsp + 688], ymm15
+	vmovupd ymmword ptr [rsp + 720], ymm14
+	vmovupd ymmword ptr [rsp + 752], ymm13
+	vmovupd ymmword ptr [rsp + 784], ymm12
+	vmovupd ymmword ptr [rsp + 816], ymm3
+	mov rcx, qword ptr [rsp + 56]
 	lea rcx, [4*rcx]
 	lea r13, [rcx + 2*rcx]
 	add r13, 12
-	mov r15, qword ptr [rsp + 56]
-	cmp r15, r13
-	cmovb r13, r15
-	lea r14, [rcx + 2*rcx]
-	vmovupd ymmword ptr [rsp + 832], ymm11
-	vmovupd ymmword ptr [rsp + 864], ymm10
-	vmovupd ymmword ptr [rsp + 896], ymm9
-	vmovupd ymmword ptr [rsp + 928], ymm8
-	vmovupd ymmword ptr [rsp + 960], ymm7
-	vmovupd ymmword ptr [rsp + 992], ymm5
-	sub r13, r14
+	mov r8, qword ptr [rsp + 40]
+	cmp r8, r13
+	cmovb r13, r8
+	lea rcx, [rcx + 2*rcx]
+	vmovupd ymmword ptr [rsp + 848], ymm11
+	vmovupd ymmword ptr [rsp + 880], ymm10
+	vmovupd ymmword ptr [rsp + 912], ymm9
+	vmovupd ymmword ptr [rsp + 944], ymm8
+	vmovupd ymmword ptr [rsp + 976], ymm7
+	vmovupd ymmword ptr [rsp + 1008], ymm5
+	sub r13, rcx
 	vxorpd xmm13, xmm13, xmm13
-	je .LBB60_271
+	je .LBB80_270
 	vshufpd xmm0, xmm8, xmm8, 1
-	vmovapd xmmword ptr [rsp + 288], xmm0
+	vmovapd xmmword ptr [rsp + 224], xmm0
 	vextractf128 xmm0, ymm8, 1
-	vmovapd xmmword ptr [rsp + 624], xmm0
+	vmovapd xmmword ptr [rsp + 640], xmm0
 	vshufpd xmm0, xmm0, xmm0, 1
-	vmovapd xmmword ptr [rsp + 608], xmm0
+	vmovapd xmmword ptr [rsp + 624], xmm0
 	vshufpd xmm0, xmm7, xmm7, 1
-	vmovapd xmmword ptr [rsp + 592], xmm0
+	vmovapd xmmword ptr [rsp + 608], xmm0
 	vmovapd ymm3, ymm7
 	vextractf128 xmm0, ymm7, 1
+	vmovapd xmmword ptr [rsp + 592], xmm0
+	vshufpd xmm0, xmm0, xmm0, 1
 	vmovapd xmmword ptr [rsp + 576], xmm0
-	vshufpd xmm0, xmm0, xmm0, 1
-	vmovapd xmmword ptr [rsp + 560], xmm0
 	vshufpd xmm0, xmm5, xmm5, 1
-	vmovapd xmmword ptr [rsp + 544], xmm0
+	vmovapd xmmword ptr [rsp + 560], xmm0
 	vextractf128 xmm0, ymm5, 1
-	vmovapd xmmword ptr [rsp + 528], xmm0
+	vmovapd xmmword ptr [rsp + 544], xmm0
 	vshufpd xmm0, xmm0, xmm0, 1
-	vmovapd xmmword ptr [rsp + 512], xmm0
+	vmovapd xmmword ptr [rsp + 528], xmm0
 	vshufpd xmm7, xmm11, xmm11, 1
 	vextractf128 xmm14, ymm11, 1
 	vshufpd xmm15, xmm14, xmm14, 1
 	vshufpd xmm4, xmm10, xmm10, 1
 	vextractf128 xmm6, ymm10, 1
 	vshufpd xmm0, xmm6, xmm6, 1
-	vmovapd xmmword ptr [rsp + 1056], xmm0
+	vmovapd xmmword ptr [rsp + 1072], xmm0
 	vshufpd xmm0, xmm9, xmm9, 1
-	vmovapd xmmword ptr [rsp + 1040], xmm0
+	vmovapd xmmword ptr [rsp + 1056], xmm0
 	xor edx, edx
 	vextractf128 xmm12, ymm9, 1
 	vshufpd xmm0, xmm12, xmm12, 1
-	vmovapd xmmword ptr [rsp + 1024], xmm0
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
-.LBB60_185:
+	vmovapd xmmword ptr [rsp + 1040], xmm0
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
+.LBB80_185:
 	cmp rdx, 48
-	je .LBB60_186
-	lea rcx, [r8 + rdx]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 8*rdx + 640]
+	je .LBB80_186
+	lea rdi, [rsi + rdx]
+	cmp rdi, r15
+	jae .LBB80_240
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 8*rdx + 656]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov word ptr [rbx + 2*rdx], cx
+	vcvttsd2si edi, xmm2
+	mov word ptr [rbx + 2*rdx], di
 	inc rdx
-	cmp rbp, rdx
-	jne .LBB60_185
+	cmp r14, rdx
+	jne .LBB80_185
 	xor edx, edx
-.LBB60_190:
+.LBB80_190:
 	cmp rdx, 36
-	je .LBB60_186
-	lea rcx, [rax + rdx]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 8*rdx + 736]
+	je .LBB80_186
+	lea rdi, [rax + rdx]
+	cmp rdi, r15
+	jae .LBB80_240
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 8*rdx + 752]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov word ptr [rdi + 2*rdx], cx
+	vcvttsd2si edi, xmm2
+	mov word ptr [r11 + 2*rdx], di
 	inc rdx
-	cmp rbp, rdx
-	jne .LBB60_190
-	mov rcx, qword ptr [rsp + 448]
-	add rcx, r14
-	cmp rcx, r12
-	jae .LBB60_240
+	cmp r14, rdx
+	jne .LBB80_190
+	mov rdx, qword ptr [rsp + 464]
+	lea rdi, [rcx + rdx]
+	cmp rdi, r15
+	jae .LBB80_240
 	vmaxsd xmm2, xmm13, xmm11
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov rbp, qword ptr [rsp + 16]
-	mov word ptr [rbp + 2*rcx], dx
+	mov r10, qword ptr [rsp + 32]
+	mov word ptr [r10 + 2*rdi], dx
 	cmp r13, 1
-	je .LBB60_247
-	mov rdx, rcx
+	je .LBB80_246
+	mov rdx, rdi
 	or rdx, 1
-	cmp rdx, r12
-	jae .LBB60_196
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm7
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si esi, xmm2
-	mov word ptr [rbp + 2*rdx], si
+	vcvttsd2si r8d, xmm2
+	mov word ptr [r10 + 2*rdx], r8w
 	cmp r13, 2
 	vmovapd ymm7, ymm3
-	vmovapd xmm11, xmmword ptr [rsp + 288]
-	je .LBB60_245
-	lea rdx, [rcx + 2]
-	cmp rdx, r12
-	jae .LBB60_196
+	vmovapd xmm11, xmmword ptr [rsp + 224]
+	je .LBB80_244
+	lea rdx, [rdi + 2]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm14
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 4], dx
+	mov word ptr [r10 + 2*rdi + 4], dx
 	cmp r13, 3
-	je .LBB60_245
-	lea rdx, [rcx + 3]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 3]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm15
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 6], dx
+	mov word ptr [r10 + 2*rdi + 6], dx
 	cmp r13, 4
-	je .LBB60_245
-	lea rdx, [rcx + 4]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 4]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm10
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 8], dx
+	mov word ptr [r10 + 2*rdi + 8], dx
 	cmp r13, 5
-	je .LBB60_245
-	lea rdx, [rcx + 5]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 5]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm4
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 10], dx
+	mov word ptr [r10 + 2*rdi + 10], dx
 	cmp r13, 6
-	je .LBB60_245
-	lea rdx, [rcx + 6]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 6]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm6
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 12], dx
+	mov word ptr [r10 + 2*rdi + 12], dx
 	cmp r13, 7
-	je .LBB60_245
-	lea rdx, [rcx + 7]
-	cmp rdx, r12
-	jae .LBB60_196
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 1056]
+	je .LBB80_244
+	lea rdx, [rdi + 7]
+	cmp rdx, r15
+	jae .LBB80_196
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 1072]
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 14], dx
+	mov word ptr [r10 + 2*rdi + 14], dx
 	cmp r13, 8
-	je .LBB60_245
-	lea rdx, [rcx + 8]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 8]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm9
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 16], dx
+	mov word ptr [r10 + 2*rdi + 16], dx
 	cmp r13, 9
-	je .LBB60_245
-	lea rdx, [rcx + 9]
-	cmp rdx, r12
-	jae .LBB60_196
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 1040]
+	je .LBB80_244
+	lea rdx, [rdi + 9]
+	cmp rdx, r15
+	jae .LBB80_196
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 1056]
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 18], dx
+	mov word ptr [r10 + 2*rdi + 18], dx
 	cmp r13, 10
-	je .LBB60_245
-	lea rdx, [rcx + 10]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 10]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm12
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 20], dx
+	mov word ptr [r10 + 2*rdi + 20], dx
 	cmp r13, 11
-	je .LBB60_245
-	lea rdx, [rcx + 11]
-	cmp rdx, r12
-	jae .LBB60_196
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 1024]
+	je .LBB80_244
+	lea rdx, [rdi + 11]
+	cmp rdx, r15
+	jae .LBB80_196
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 1040]
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 22], dx
+	mov word ptr [r10 + 2*rdi + 22], dx
 	cmp r13, 12
-	je .LBB60_245
-	lea rdx, [rcx + 12]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 12]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm8
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 24], dx
+	mov word ptr [r10 + 2*rdi + 24], dx
 	cmp r13, 13
-	je .LBB60_245
-	lea rdx, [rcx + 13]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 13]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm11
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 26], dx
+	mov word ptr [r10 + 2*rdi + 26], dx
 	cmp r13, 14
-	je .LBB60_245
-	lea rdx, [rcx + 14]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 14]
+	cmp rdx, r15
+	jae .LBB80_196
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 640]
+	vminsd xmm2, xmm0, xmm2
+	vcvttsd2si edx, xmm2
+	mov word ptr [r10 + 2*rdi + 28], dx
+	cmp r13, 15
+	je .LBB80_244
+	lea rdx, [rdi + 15]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, qword ptr [rsp + 624]
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 28], dx
-	cmp r13, 15
-	je .LBB60_245
-	lea rdx, [rcx + 15]
-	cmp rdx, r12
-	jae .LBB60_196
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 608]
-	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 30], dx
+	mov word ptr [r10 + 2*rdi + 30], dx
 	cmp r13, 16
-	je .LBB60_245
-	lea rdx, [rcx + 16]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 16]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm7
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 32], dx
+	mov word ptr [r10 + 2*rdi + 32], dx
 	cmp r13, 17
-	je .LBB60_245
-	lea rdx, [rcx + 17]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 17]
+	cmp rdx, r15
+	jae .LBB80_196
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 608]
+	vminsd xmm2, xmm0, xmm2
+	vcvttsd2si edx, xmm2
+	mov word ptr [r10 + 2*rdi + 34], dx
+	cmp r13, 18
+	je .LBB80_244
+	lea rdx, [rdi + 18]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, qword ptr [rsp + 592]
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 34], dx
-	cmp r13, 18
-	je .LBB60_245
-	lea rdx, [rcx + 18]
-	cmp rdx, r12
-	jae .LBB60_196
+	mov word ptr [r10 + 2*rdi + 36], dx
+	cmp r13, 19
+	je .LBB80_244
+	lea rdx, [rdi + 19]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, qword ptr [rsp + 576]
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 36], dx
-	cmp r13, 19
-	je .LBB60_245
-	lea rdx, [rcx + 19]
-	cmp rdx, r12
-	jae .LBB60_196
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 560]
-	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 38], dx
+	mov word ptr [r10 + 2*rdi + 38], dx
 	cmp r13, 20
-	je .LBB60_245
-	lea rdx, [rcx + 20]
-	cmp rdx, r12
-	jae .LBB60_196
+	je .LBB80_244
+	lea rdx, [rdi + 20]
+	cmp rdx, r15
+	jae .LBB80_196
 	vmaxsd xmm2, xmm13, xmm5
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 40], dx
+	mov word ptr [r10 + 2*rdi + 40], dx
 	cmp r13, 21
-	je .LBB60_245
-	lea rdx, [rcx + 21]
-	cmp rdx, r12
-	jae .LBB60_196
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 544]
+	je .LBB80_244
+	lea rdx, [rdi + 21]
+	cmp rdx, r15
+	jae .LBB80_196
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 560]
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si edx, xmm2
-	mov word ptr [rbp + 2*rcx + 42], dx
+	mov word ptr [r10 + 2*rdi + 42], dx
 	cmp r13, 22
-	je .LBB60_245
-	mov r15, r9
-	lea r9, [rcx + 22]
-	cmp r9, r12
-	jae .LBB60_239
+	je .LBB80_244
+	mov r8, r9
+	lea r9, [rdi + 22]
+	cmp r9, r15
+	jae .LBB80_239
 	vxorpd xmm13, xmm13, xmm13
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 528]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 544]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si r9d, xmm2
-	mov rbp, qword ptr [rsp + 16]
-	mov word ptr [rbp + 2*rcx + 44], r9w
+	mov r10, qword ptr [rsp + 32]
+	mov word ptr [r10 + 2*rdi + 44], r9w
 	cmp r13, 23
-	mov r9, r15
-	vmovupd ymm1, ymmword ptr [rsp + 112]
+	mov r9, r8
+	vmovupd ymm1, ymmword ptr [rsp + 128]
 	vmovapd ymm7, ymm3
-	vmovapd xmm11, xmmword ptr [rsp + 288]
-	je .LBB60_245
-	lea r9, [rcx + 23]
-	cmp r9, r12
-	jae .LBB60_239
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 512]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovapd xmm11, xmmword ptr [rsp + 224]
+	je .LBB80_244
+	lea r9, [rdi + 23]
+	cmp r9, r15
+	jae .LBB80_239
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 528]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
 	vcvttsd2si r9d, xmm2
-	mov rbp, qword ptr [rsp + 16]
-	mov word ptr [rbp + 2*rcx + 46], r9w
+	mov r10, qword ptr [rsp + 32]
+	mov word ptr [r10 + 2*rdi + 46], r9w
 	cmp r13, 24
-	mov r9, r15
-	vmovupd ymm1, ymmword ptr [rsp + 112]
+	mov r9, r8
+	vmovupd ymm1, ymmword ptr [rsp + 128]
 	vmovapd ymm7, ymm3
-	vmovapd xmm11, xmmword ptr [rsp + 288]
-	jne .LBB60_186
-.LBB60_245:
-	add r14, qword ptr [rsp + 280]
-	cmp r14, r12
-	jae .LBB60_246
+	vmovapd xmm11, xmmword ptr [rsp + 224]
+	jne .LBB80_186
+.LBB80_244:
+	add rcx, qword ptr [rsp + 328]
+	cmp rcx, r15
+	jae .LBB80_245
 	vmaxsd xmm2, xmm13, xmm8
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov word ptr [rbp + 2*r14], cx
-	lea rcx, [r14 + 1]
-	cmp rcx, r12
-	mov r15, qword ptr [rsp + 56]
-	jae .LBB60_240
+	vcvttsd2si edx, xmm2
+	mov word ptr [r10 + 2*rcx], dx
+	lea rdi, [rcx + 1]
+	cmp rdi, r15
+	mov r8, qword ptr [rsp + 40]
+	jae .LBB80_240
 	vmaxsd xmm2, xmm13, xmm11
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov word ptr [rbp + 2*r14 + 2], cx
+	vcvttsd2si edx, xmm2
+	mov word ptr [r10 + 2*rcx + 2], dx
 	cmp r13, 2
-	je .LBB60_271
-	lea rcx, [r14 + 2]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 624]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	je .LBB80_270
+	lea rdi, [rcx + 2]
+	cmp rdi, r15
+	jae .LBB80_240
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 640]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov rdx, qword ptr [rsp + 16]
-	mov word ptr [rdx + 2*r14 + 4], cx
+	vcvttsd2si edx, xmm2
+	mov rdi, qword ptr [rsp + 32]
+	mov word ptr [rdi + 2*rcx + 4], dx
 	cmp r13, 3
-	je .LBB60_271
-	lea rcx, [r14 + 3]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 608]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	je .LBB80_270
+	lea rdi, [rcx + 3]
+	cmp rdi, r15
+	jae .LBB80_240
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 624]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov rdx, qword ptr [rsp + 16]
-	mov word ptr [rdx + 2*r14 + 6], cx
+	vcvttsd2si edx, xmm2
+	mov rdi, qword ptr [rsp + 32]
+	mov word ptr [rdi + 2*rcx + 6], dx
 	cmp r13, 4
-	je .LBB60_271
-	lea rcx, [r14 + 4]
-	cmp rcx, r12
-	jae .LBB60_240
+	je .LBB80_270
+	lea rdi, [rcx + 4]
+	cmp rdi, r15
+	jae .LBB80_240
 	vmaxsd xmm2, xmm13, xmm7
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov rdx, qword ptr [rsp + 16]
-	mov word ptr [rdx + 2*r14 + 8], cx
+	vcvttsd2si edx, xmm2
+	mov rdi, qword ptr [rsp + 32]
+	mov word ptr [rdi + 2*rcx + 8], dx
 	cmp r13, 5
-	je .LBB60_271
-	lea rcx, [r14 + 5]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 592]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	je .LBB80_270
+	lea rdi, [rcx + 5]
+	cmp rdi, r15
+	jae .LBB80_240
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 608]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov rdx, qword ptr [rsp + 16]
-	mov word ptr [rdx + 2*r14 + 10], cx
+	vcvttsd2si edx, xmm2
+	mov rdi, qword ptr [rsp + 32]
+	mov word ptr [rdi + 2*rcx + 10], dx
 	cmp r13, 6
-	je .LBB60_271
-	lea rcx, [r14 + 6]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 576]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	je .LBB80_270
+	lea rdi, [rcx + 6]
+	cmp rdi, r15
+	jae .LBB80_240
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 592]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov rdx, qword ptr [rsp + 16]
-	mov word ptr [rdx + 2*r14 + 12], cx
+	vcvttsd2si edx, xmm2
+	mov rdi, qword ptr [rsp + 32]
+	mov word ptr [rdi + 2*rcx + 12], dx
 	cmp r13, 7
-	je .LBB60_271
-	lea rcx, [r14 + 7]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 560]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	je .LBB80_270
+	lea rdi, [rcx + 7]
+	cmp rdi, r15
+	jae .LBB80_240
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 576]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov rdx, qword ptr [rsp + 16]
-	mov word ptr [rdx + 2*r14 + 14], cx
+	vcvttsd2si edx, xmm2
+	mov rdi, qword ptr [rsp + 32]
+	mov word ptr [rdi + 2*rcx + 14], dx
 	cmp r13, 8
-	je .LBB60_271
-	lea rcx, [r14 + 8]
-	cmp rcx, r12
-	jae .LBB60_240
+	je .LBB80_270
+	lea rdi, [rcx + 8]
+	cmp rdi, r15
+	jae .LBB80_240
 	vmaxsd xmm2, xmm13, xmm5
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov rdx, qword ptr [rsp + 16]
-	mov word ptr [rdx + 2*r14 + 16], cx
+	vcvttsd2si edx, xmm2
+	mov rdi, qword ptr [rsp + 32]
+	mov word ptr [rdi + 2*rcx + 16], dx
 	cmp r13, 9
-	je .LBB60_271
-	lea rcx, [r14 + 9]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 544]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	je .LBB80_270
+	lea rdi, [rcx + 9]
+	cmp rdi, r15
+	jae .LBB80_240
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 560]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov rdx, qword ptr [rsp + 16]
-	mov word ptr [rdx + 2*r14 + 18], cx
+	vcvttsd2si edx, xmm2
+	mov rdi, qword ptr [rsp + 32]
+	mov word ptr [rdi + 2*rcx + 18], dx
 	cmp r13, 10
-	je .LBB60_271
-	lea rcx, [r14 + 10]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 528]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	je .LBB80_270
+	lea rdi, [rcx + 10]
+	cmp rdi, r15
+	jae .LBB80_240
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 544]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov rdx, qword ptr [rsp + 16]
-	mov word ptr [rdx + 2*r14 + 20], cx
+	vcvttsd2si edx, xmm2
+	mov rdi, qword ptr [rsp + 32]
+	mov word ptr [rdi + 2*rcx + 20], dx
 	cmp r13, 11
-	je .LBB60_271
-	lea rcx, [r14 + 11]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm2, xmm13, qword ptr [rsp + 512]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	je .LBB80_270
+	lea rdi, [rcx + 11]
+	cmp rdi, r15
+	jae .LBB80_240
+	vmaxsd xmm2, xmm13, qword ptr [rsp + 528]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm2, xmm0, xmm2
-	vcvttsd2si ecx, xmm2
-	mov rdx, qword ptr [rsp + 16]
-	mov word ptr [rdx + 2*r14 + 22], cx
+	vcvttsd2si edx, xmm2
+	mov rdi, qword ptr [rsp + 32]
+	mov word ptr [rdi + 2*rcx + 22], dx
 	cmp r13, 12
-	je .LBB60_271
-	jmp .LBB60_186
-.LBB60_48:
-	mov qword ptr [rsp + 32], 0
-.LBB60_49:
+	je .LBB80_270
+	jmp .LBB80_186
+.LBB80_49:
+	mov qword ptr [rsp + 48], 0
+.LBB80_50:
 	vmovapd ymm2, ymm1
-	mov rax, qword ptr [rsp + 216]
-	sub rax, qword ptr [rsp + 32]
-	mov rbp, qword ptr [rsp + 16]
-	jbe .LBB60_167
+	mov rax, qword ptr [rsp + 264]
+	sub rax, qword ptr [rsp + 48]
+	jbe .LBB80_167
 	cmp rax, 1
-	je .LBB60_58
+	je .LBB80_59
 	cmp rax, 2
-	mov r8, qword ptr [rsp + 24]
-	je .LBB60_77
+	je .LBB80_78
 	cmp rax, 3
-	jne .LBB60_53
-	mov rax, qword ptr [rsp + 32]
+	jne .LBB80_54
+	mov rax, qword ptr [rsp + 48]
 	imul rax, r9
-	mov rcx, qword ptr [rsp + 80]
+	mov rcx, qword ptr [rsp + 88]
 	lea rax, [rcx + 8*rax]
 	lea rcx, [rax + 8*r9]
-	mov rdx, qword ptr [rsp + 320]
+	mov rdx, qword ptr [rsp + 336]
 	add rdx, rax
-	mov rsi, qword ptr [rsp + 264]
+	mov rsi, qword ptr [rsp + 312]
 	xor edi, edi
-.LBB60_100:
+.LBB80_101:
 	vmovsd xmm3, qword ptr [rax + 8*rdi]
 	vmovsd qword ptr [rsi - 16], xmm3
 	vmovsd xmm3, qword ptr [rcx + 8*rdi]
@@ -1155,67 +1153,67 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vmovsd qword ptr [rsi], xmm3
 	add rsi, 32
 	cmp r9, rdi
-	jne .LBB60_100
-	cmp r8, qword ptr [rsp + 48]
-	jae .LBB60_167
-	mov r14, qword ptr [rsp + 32]
-	mov rax, r14
-	imul rax, r15
-	lea rdx, [r14 + 1]
-	mov rdi, rdx
-	imul rdi, r15
-	lea rcx, [r14 + 2]
-	imul rcx, r15
-	mov qword ptr [rsp + 200], rcx
-	mov r10, qword ptr [rsp + 96]
-	mov rsi, qword ptr [rsp + 24]
-	imul r10, rsi
-	add r10, qword ptr [rsp + 64]
-	lea rcx, [4*rsi]
-	lea r13, [rcx + 2*rcx]
-	add rax, r13
-	mov r8, qword ptr [rsp + 176]
-	imul r14, r8
-	lea rsi, [8*rsi]
-	lea rsi, [rsi + 2*rsi]
-	add r14, rsi
-	add r14, rbp
-	lea rcx, [rcx + 2*rcx]
-	add rcx, 12
-	add rdi, r13
-	neg r13
+	jne .LBB80_101
+	cmp r14, qword ptr [rsp + 64]
+	jae .LBB80_167
+	mov rbx, qword ptr [rsp + 48]
+	mov rax, rbx
+	imul rax, r8
+	lea rcx, [rbx + 1]
+	mov rsi, rcx
+	imul rsi, r8
+	lea rdx, [rbx + 2]
 	imul rdx, r8
-	mov r8, r13
-	mov r13, rcx
-	add rdx, rsi
-	add rdx, rbp
-	jmp .LBB60_103
-.LBB60_166:
-	mov rsi, qword ptr [rsp + 24]
-	inc rsi
-	add r10, qword ptr [rsp + 104]
-	add rax, 12
-	add r14, 24
-	mov r13, qword ptr [rsp + 288]
+	mov qword ptr [rsp + 208], rdx
+	mov r10, qword ptr [rsp + 96]
+	imul r10, r14
+	add r10, qword ptr [rsp + 80]
+	lea rdx, [4*r14]
+	lea r12, [rdx + 2*rdx]
+	add rax, r12
+	mov r11, qword ptr [rsp + 200]
+	imul rbx, r11
+	lea rdi, [8*r14]
+	lea rdi, [rdi + 2*rdi]
+	add rbx, rdi
+	mov r8, qword ptr [rsp + 32]
+	add rbx, r8
+	lea r13, [rdx + 2*rdx]
 	add r13, 12
+	mov rdx, r12
+	mov r12, r13
+	add rsi, rdx
+	neg rdx
+	imul rcx, r11
+	add rcx, rdi
+	add rcx, r8
 	mov r8, qword ptr [rsp + 40]
-	add r8, -12
-	add rdi, 12
-	add rdx, 24
-	mov qword ptr [rsp + 24], rsi
-	cmp rsi, qword ptr [rsp + 48]
-	mov rbp, qword ptr [rsp + 16]
-	mov r15, qword ptr [rsp + 56]
+	jmp .LBB80_104
+.LBB80_166:
+	mov r14, qword ptr [rsp + 72]
+	inc r14
+	add r10, qword ptr [rsp + 120]
+	add rax, 12
+	add rbx, 24
+	mov r12, qword ptr [rsp + 224]
+	add r12, 12
+	mov rdx, qword ptr [rsp + 56]
+	add rdx, -12
+	add rsi, 12
+	add rcx, 24
+	cmp r14, qword ptr [rsp + 64]
+	mov r13, qword ptr [rsp + 24]
 	vxorpd xmm13, xmm13, xmm13
-	jae .LBB60_167
-.LBB60_103:
-	cmp r15, r13
-	mov qword ptr [rsp + 288], r13
-	cmovb r13, r15
-	mov qword ptr [rsp + 40], r8
-	add r13, r8
+	jae .LBB80_167
+.LBB80_104:
+	mov qword ptr [rsp + 72], r14
+	cmp r8, r12
+	mov qword ptr [rsp + 224], r12
+	cmovb r12, r8
+	mov qword ptr [rsp + 56], rdx
+	add r12, rdx
 	vxorpd xmm12, xmm12, xmm12
-	xor esi, esi
+	xor edi, edi
 	vxorpd xmm11, xmm11, xmm11
 	vxorpd xmm10, xmm10, xmm10
 	vxorpd xmm9, xmm9, xmm9
@@ -1224,34 +1222,34 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vxorpd xmm6, xmm6, xmm6
 	vxorpd xmm5, xmm5, xmm5
 	vxorpd xmm3, xmm3, xmm3
-.LBB60_104:
-	lea r15, [rsi + r11]
-	cmp r9, r15
-	mov rcx, r15
-	cmovb rcx, r9
-	mov r8, rcx
+.LBB80_105:
+	lea r14, [rdi + rbp]
+	cmp r9, r14
+	mov rdx, r14
+	cmovb rdx, r9
+	mov r8, rdx
 	sub r8, 4
-	mov ebp, 0
-	cmovae rbp, r8
-	cmp r15, rsi
-	jbe .LBB60_105
-	mov rbx, rsi
-	shl rbx, 5
-	mov r8, qword ptr [rsp + 264]
-	add r8, rbx
-	lea rbx, [rbx + 2*rbx]
+	mov r13d, 0
+	cmovae r13, r8
+	cmp r14, rdi
+	jbe .LBB80_106
+	mov r11, rdi
+	shl r11, 5
+	mov r8, qword ptr [rsp + 312]
+	add r8, r11
+	lea r11, [r11 + 2*r11]
 	vmovapd ymm1, ymm2
-	jmp .LBB60_169
-.LBB60_170:
-	vmovupd ymm4, ymmword ptr [r10 + rbx]
-	vmovupd ymm13, ymmword ptr [r10 + rbx + 32]
-	vmovupd ymm14, ymmword ptr [r10 + rbx + 64]
+	jmp .LBB80_169
+.LBB80_170:
+	vmovupd ymm4, ymmword ptr [r10 + r11]
+	vmovupd ymm13, ymmword ptr [r10 + r11 + 32]
+	vmovupd ymm14, ymmword ptr [r10 + r11 + 64]
 	vbroadcastsd ymm15, qword ptr [r8 - 16]
 	vfmadd231pd ymm12, ymm4, ymm15
 	vfmadd231pd ymm11, ymm13, ymm15
 	vfmadd231pd ymm10, ymm14, ymm15
 	vbroadcastsd ymm15, qword ptr [r8 - 8]
-	inc rsi
+	inc rdi
 	vfmadd231pd ymm9, ymm4, ymm15
 	vfmadd231pd ymm8, ymm13, ymm15
 	vfmadd231pd ymm7, ymm14, ymm15
@@ -1260,24 +1258,23 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vfmadd231pd ymm5, ymm15, ymm13
 	vfmadd231pd ymm3, ymm14, ymm15
 	add r8, 32
-	add rbx, 96
-	cmp rcx, rsi
-	je .LBB60_106
-.LBB60_169:
-	cmp rsi, rbp
-	jae .LBB60_170
-	prefetcht0 byte ptr [r10 + rbx + 384]
-	prefetcht0 byte ptr [r10 + rbx + 448]
-	jmp .LBB60_170
-.LBB60_105:
+	add r11, 96
+	cmp rdx, rdi
+	je .LBB80_107
+.LBB80_169:
+	cmp rdi, r13
+	jae .LBB80_170
+	prefetcht0 byte ptr [r10 + r11 + 384]
+	prefetcht0 byte ptr [r10 + r11 + 448]
+	jmp .LBB80_170
+.LBB80_106:
 	vmovapd ymm1, ymm2
-.LBB60_106:
-	cmp r15, r9
-	mov rbx, qword ptr [rsp + 8]
-	jae .LBB60_107
+.LBB80_107:
+	cmp r14, r9
+	jae .LBB80_108
 	vmulpd ymm4, ymm12, ymm1
 	vroundpd ymm4, ymm4, 8
-	vmovupd ymm0, ymmword ptr [rsp + 144]
+	vmovupd ymm0, ymmword ptr [rsp + 160]
 	vfnmadd213pd ymm4, ymm0, ymm12
 	vmovapd ymm14, ymm1
 	vxorpd xmm1, xmm1, xmm1
@@ -1332,19 +1329,19 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vcmplt_oqpd ymm3, ymm4, ymm1
 	vaddpd ymm13, ymm0, ymm4
 	vblendvpd ymm3, ymm4, ymm13, ymm3
-	mov rsi, rcx
-	jmp .LBB60_104
-.LBB60_107:
-	mov rcx, qword ptr [rsp + 24]
-	lea rcx, [4*rcx]
-	lea rsi, [rcx + 2*rcx]
-	add rsi, 12
-	mov r8, qword ptr [rsp + 56]
-	cmp r8, rsi
-	cmovb rsi, r8
+	mov rdi, rdx
+	jmp .LBB80_105
+.LBB80_108:
+	mov rdx, qword ptr [rsp + 72]
+	lea rdi, [4*rdx]
+	lea rdx, [rdi + 2*rdi]
+	add rdx, 12
+	mov r8, qword ptr [rsp + 40]
+	cmp r8, rdx
+	cmovb rdx, r8
 	vmulpd ymm4, ymm12, ymm1
 	vroundpd ymm4, ymm4, 8
-	vmovupd ymm0, ymmword ptr [rsp + 144]
+	vmovupd ymm0, ymmword ptr [rsp + 160]
 	vfnmadd213pd ymm4, ymm0, ymm12
 	vmovapd ymm14, ymm1
 	vxorpd xmm1, xmm1, xmm1
@@ -1363,29 +1360,29 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vcmplt_oqpd ymm10, ymm12, ymm1
 	vaddpd ymm13, ymm12, ymm0
 	vblendvpd ymm10, ymm12, ymm13, ymm10
-	lea r15, [rcx + 2*rcx]
+	lea r14, [rdi + 2*rdi]
 	vmulpd ymm12, ymm14, ymm9
 	vroundpd ymm12, ymm12, 8
 	vfnmadd213pd ymm12, ymm0, ymm9
 	vcmplt_oqpd ymm9, ymm12, ymm1
 	vaddpd ymm13, ymm12, ymm0
 	vblendvpd ymm12, ymm12, ymm13, ymm9
-	lea rcx, [rsp + 928]
-	vmovupd ymmword ptr [rcx + 64], ymm1
+	lea rdi, [rsp + 944]
+	vmovupd ymmword ptr [rdi + 64], ymm1
 	vmulpd ymm9, ymm14, ymm8
 	vroundpd ymm9, ymm9, 8
 	vfnmadd213pd ymm9, ymm0, ymm8
 	vcmplt_oqpd ymm8, ymm9, ymm1
 	vaddpd ymm13, ymm9, ymm0
 	vblendvpd ymm8, ymm9, ymm13, ymm8
-	vmovupd ymmword ptr [rcx + 32], ymm1
+	vmovupd ymmword ptr [rdi + 32], ymm1
 	vmulpd ymm9, ymm14, ymm7
 	vroundpd ymm9, ymm9, 8
 	vfnmadd213pd ymm9, ymm0, ymm7
 	vcmplt_oqpd ymm7, ymm9, ymm1
 	vaddpd ymm13, ymm9, ymm0
 	vblendvpd ymm7, ymm9, ymm13, ymm7
-	vmovupd ymmword ptr [rcx], ymm1
+	vmovupd ymmword ptr [rdi], ymm1
 	vmulpd ymm9, ymm14, ymm6
 	vroundpd ymm9, ymm9, 8
 	vfnmadd213pd ymm9, ymm0, ymm6
@@ -1404,17 +1401,17 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vcmplt_oqpd ymm3, ymm5, ymm1
 	vaddpd ymm6, ymm0, ymm5
 	vblendvpd ymm5, ymm5, ymm6, ymm3
-	vmovupd ymmword ptr [rsp + 640], ymm4
-	vmovupd ymmword ptr [rsp + 672], ymm11
-	vmovupd ymmword ptr [rsp + 704], ymm10
-	vmovupd ymmword ptr [rsp + 736], ymm12
-	vmovupd ymmword ptr [rsp + 768], ymm8
-	vmovupd ymmword ptr [rsp + 800], ymm7
-	vmovupd ymmword ptr [rsp + 832], ymm13
-	vmovupd ymmword ptr [rsp + 864], ymm9
-	vmovupd ymmword ptr [rsp + 896], ymm5
-	sub rsi, r15
-	je .LBB60_166
+	vmovupd ymmword ptr [rsp + 656], ymm4
+	vmovupd ymmword ptr [rsp + 688], ymm11
+	vmovupd ymmword ptr [rsp + 720], ymm10
+	vmovupd ymmword ptr [rsp + 752], ymm12
+	vmovupd ymmword ptr [rsp + 784], ymm8
+	vmovupd ymmword ptr [rsp + 816], ymm7
+	vmovupd ymmword ptr [rsp + 848], ymm13
+	vmovupd ymmword ptr [rsp + 880], ymm9
+	vmovupd ymmword ptr [rsp + 912], ymm5
+	sub rdx, r14
+	je .LBB80_166
 	vshufpd xmm15, xmm13, xmm13, 1
 	vextractf128 xmm14, ymm13, 1
 	vshufpd xmm12, xmm14, xmm14, 1
@@ -1425,363 +1422,378 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vextractf128 xmm6, ymm5, 1
 	vshufpd xmm3, xmm6, xmm6, 1
 	xor r8d, r8d
-	mov rbp, qword ptr [rsp + 16]
-.LBB60_109:
+.LBB80_110:
 	cmp r8, 48
-	je .LBB60_69
-	lea rcx, [rax + r8]
-	cmp rcx, r12
-	jae .LBB60_118
+	je .LBB80_186
+	lea rdi, [rax + r8]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
-	vmaxsd xmm4, xmm0, qword ptr [rsp + 8*r8 + 640]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmaxsd xmm4, xmm0, qword ptr [rsp + 8*r8 + 656]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov word ptr [r14 + 2*r8], cx
+	vcvttsd2si edi, xmm4
+	mov word ptr [rbx + 2*r8], di
 	inc r8
-	cmp r13, r8
-	jne .LBB60_109
+	cmp r12, r8
+	jne .LBB80_110
 	xor r8d, r8d
-.LBB60_113:
+.LBB80_114:
 	cmp r8, 36
-	je .LBB60_69
-	lea rcx, [rdi + r8]
-	cmp rcx, r12
-	jae .LBB60_118
+	je .LBB80_186
+	lea rdi, [rsi + r8]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
-	vmaxsd xmm4, xmm0, qword ptr [rsp + 8*r8 + 736]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmaxsd xmm4, xmm0, qword ptr [rsp + 8*r8 + 752]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov word ptr [rdx + 2*r8], cx
+	vcvttsd2si edi, xmm4
+	mov word ptr [rcx + 2*r8], di
 	inc r8
-	cmp r13, r8
-	jne .LBB60_113
-	add r15, qword ptr [rsp + 200]
-	cmp r15, r12
-	jae .LBB60_117
+	cmp r12, r8
+	jne .LBB80_114
+	add r14, qword ptr [rsp + 208]
+	cmp r14, r15
+	jae .LBB80_118
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm4, xmm0, xmm13
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov word ptr [rbp + 2*r15], cx
-	cmp rsi, 1
-	je .LBB60_166
-	mov rcx, r15
-	or rcx, 1
-	cmp rcx, r12
-	jae .LBB60_118
+	vcvttsd2si edi, xmm4
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14], di
+	cmp rdx, 1
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	mov rdi, r14
+	or rdi, 1
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm4, xmm0, xmm15
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
 	vcvttsd2si r8d, xmm4
-	mov r13, qword ptr [rsp + 16]
-	mov word ptr [r13 + 2*rcx], r8w
-	cmp rsi, 2
-	je .LBB60_166
-	lea rcx, [r15 + 2]
-	cmp rcx, r12
-	jae .LBB60_118
+	mov r11, qword ptr [rsp + 32]
+	mov word ptr [r11 + 2*rdi], r8w
+	cmp rdx, 2
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 2]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm4, xmm0, xmm14
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 4], cx
-	cmp rsi, 3
-	je .LBB60_166
-	lea rcx, [r15 + 3]
-	cmp rcx, r12
-	jae .LBB60_118
+	vcvttsd2si edi, xmm4
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 4], di
+	cmp rdx, 3
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 3]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm4, xmm0, xmm12
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 6], cx
-	cmp rsi, 4
-	je .LBB60_166
-	lea rcx, [r15 + 4]
-	cmp rcx, r12
-	jae .LBB60_118
+	vcvttsd2si edi, xmm4
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 6], di
+	cmp rdx, 4
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 4]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm4, xmm0, xmm9
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 8], cx
-	cmp rsi, 5
-	je .LBB60_166
-	lea rcx, [r15 + 5]
-	cmp rcx, r12
-	jae .LBB60_118
+	vcvttsd2si edi, xmm4
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 8], di
+	cmp rdx, 5
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 5]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm4, xmm0, xmm11
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 10], cx
-	cmp rsi, 6
-	je .LBB60_166
-	lea rcx, [r15 + 6]
-	cmp rcx, r12
-	jae .LBB60_118
+	vcvttsd2si edi, xmm4
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 10], di
+	cmp rdx, 6
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 6]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm4, xmm0, xmm10
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 12], cx
-	cmp rsi, 7
-	je .LBB60_166
-	lea rcx, [r15 + 7]
-	cmp rcx, r12
-	jae .LBB60_118
+	vcvttsd2si edi, xmm4
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 12], di
+	cmp rdx, 7
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 7]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm4, xmm0, xmm8
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 14], cx
-	cmp rsi, 8
-	je .LBB60_166
-	lea rcx, [r15 + 8]
-	cmp rcx, r12
-	jae .LBB60_118
+	vcvttsd2si edi, xmm4
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 14], di
+	cmp rdx, 8
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 8]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm4, xmm0, xmm5
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 16], cx
-	cmp rsi, 9
-	je .LBB60_166
-	lea rcx, [r15 + 9]
-	cmp rcx, r12
-	jae .LBB60_118
+	vcvttsd2si edi, xmm4
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 16], di
+	cmp rdx, 9
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 9]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm4, xmm0, xmm7
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 18], cx
-	cmp rsi, 10
-	je .LBB60_166
-	lea rcx, [r15 + 10]
-	cmp rcx, r12
-	jae .LBB60_118
+	vcvttsd2si edi, xmm4
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 18], di
+	cmp rdx, 10
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 10]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm4, xmm0, xmm6
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm4, xmm0, xmm4
-	vcvttsd2si ecx, xmm4
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 20], cx
-	cmp rsi, 11
-	je .LBB60_166
-	lea rcx, [r15 + 11]
-	cmp rcx, r12
-	jae .LBB60_118
+	vcvttsd2si edi, xmm4
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 20], di
+	cmp rdx, 11
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 11]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm3, xmm0, xmm3
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 22], cx
-	cmp rsi, 12
-	je .LBB60_166
-	lea rcx, [r15 + 12]
-	cmp rcx, r12
-	jae .LBB60_118
-	vxorpd xmm0, xmm0, xmm0
-	vmaxsd xmm3, xmm0, qword ptr [rsp + 928]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
-	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 24], cx
-	cmp rsi, 13
-	je .LBB60_166
-	lea rcx, [r15 + 13]
-	cmp rcx, r12
-	jae .LBB60_118
-	vxorpd xmm0, xmm0, xmm0
-	vmaxsd xmm3, xmm0, qword ptr [rsp + 936]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
-	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 26], cx
-	cmp rsi, 14
-	je .LBB60_166
-	lea rcx, [r15 + 14]
-	cmp rcx, r12
-	jae .LBB60_118
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 22], di
+	cmp rdx, 12
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 12]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm3, xmm0, qword ptr [rsp + 944]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 28], cx
-	cmp rsi, 15
-	je .LBB60_166
-	lea rcx, [r15 + 15]
-	cmp rcx, r12
-	jae .LBB60_240
-	mov r13, r9
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 24], di
+	cmp rdx, 13
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 13]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm3, xmm0, qword ptr [rsp + 952]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 30], cx
-	cmp rsi, 16
-	mov rbx, qword ptr [rsp + 8]
-	vmovupd ymm2, ymmword ptr [rsp + 112]
-	je .LBB60_166
-	lea rcx, [r15 + 16]
-	cmp rcx, r12
-	jae .LBB60_240
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 26], di
+	cmp rdx, 14
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 14]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm3, xmm0, qword ptr [rsp + 960]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 32], cx
-	cmp rsi, 17
-	mov r9, r13
-	mov rbx, qword ptr [rsp + 8]
-	vmovupd ymm2, ymmword ptr [rsp + 112]
-	je .LBB60_166
-	lea rcx, [r15 + 17]
-	cmp rcx, r12
-	jae .LBB60_240
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 28], di
+	cmp rdx, 15
+	mov r8, qword ptr [rsp + 40]
+	je .LBB80_166
+	lea rdi, [r14 + 15]
+	cmp rdi, r15
+	jae .LBB80_240
+	mov r13, r9
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm3, xmm0, qword ptr [rsp + 968]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 34], cx
-	cmp rsi, 18
-	mov r9, r13
-	mov rbx, qword ptr [rsp + 8]
-	vmovupd ymm2, ymmword ptr [rsp + 112]
-	je .LBB60_166
-	lea rcx, [r15 + 18]
-	cmp rcx, r12
-	jae .LBB60_240
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 30], di
+	cmp rdx, 16
+	mov r8, qword ptr [rsp + 40]
+	vmovupd ymm2, ymmword ptr [rsp + 128]
+	je .LBB80_166
+	lea rdi, [r14 + 16]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm3, xmm0, qword ptr [rsp + 976]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 36], cx
-	cmp rsi, 19
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 32], di
+	cmp rdx, 17
 	mov r9, r13
-	mov rbx, qword ptr [rsp + 8]
-	vmovupd ymm2, ymmword ptr [rsp + 112]
-	je .LBB60_166
-	lea rcx, [r15 + 19]
-	cmp rcx, r12
-	jae .LBB60_240
+	mov r8, qword ptr [rsp + 40]
+	vmovupd ymm2, ymmword ptr [rsp + 128]
+	je .LBB80_166
+	lea rdi, [r14 + 17]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm3, xmm0, qword ptr [rsp + 984]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 38], cx
-	cmp rsi, 20
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 34], di
+	cmp rdx, 18
 	mov r9, r13
-	mov rbx, qword ptr [rsp + 8]
-	vmovupd ymm2, ymmword ptr [rsp + 112]
-	je .LBB60_166
-	lea rcx, [r15 + 20]
-	cmp rcx, r12
-	jae .LBB60_240
+	mov r8, qword ptr [rsp + 40]
+	vmovupd ymm2, ymmword ptr [rsp + 128]
+	je .LBB80_166
+	lea rdi, [r14 + 18]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm3, xmm0, qword ptr [rsp + 992]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 40], cx
-	cmp rsi, 21
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 36], di
+	cmp rdx, 19
 	mov r9, r13
-	mov rbx, qword ptr [rsp + 8]
-	vmovupd ymm2, ymmword ptr [rsp + 112]
-	je .LBB60_166
-	lea rcx, [r15 + 21]
-	cmp rcx, r12
-	jae .LBB60_240
+	mov r8, qword ptr [rsp + 40]
+	vmovupd ymm2, ymmword ptr [rsp + 128]
+	je .LBB80_166
+	lea rdi, [r14 + 19]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm3, xmm0, qword ptr [rsp + 1000]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 42], cx
-	cmp rsi, 22
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 38], di
+	cmp rdx, 20
 	mov r9, r13
-	mov rbx, qword ptr [rsp + 8]
-	vmovupd ymm2, ymmword ptr [rsp + 112]
-	je .LBB60_166
-	lea rcx, [r15 + 22]
-	cmp rcx, r12
-	jae .LBB60_240
+	mov r8, qword ptr [rsp + 40]
+	vmovupd ymm2, ymmword ptr [rsp + 128]
+	je .LBB80_166
+	lea rdi, [r14 + 20]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm3, xmm0, qword ptr [rsp + 1008]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 44], cx
-	cmp rsi, 23
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 40], di
+	cmp rdx, 21
 	mov r9, r13
-	mov rbx, qword ptr [rsp + 8]
-	vmovupd ymm2, ymmword ptr [rsp + 112]
-	je .LBB60_166
-	lea rcx, [r15 + 23]
-	cmp rcx, r12
-	jae .LBB60_240
+	mov r8, qword ptr [rsp + 40]
+	vmovupd ymm2, ymmword ptr [rsp + 128]
+	je .LBB80_166
+	lea rdi, [r14 + 21]
+	cmp rdi, r15
+	jae .LBB80_240
 	vxorpd xmm0, xmm0, xmm0
 	vmaxsd xmm3, xmm0, qword ptr [rsp + 1016]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov r8, qword ptr [rsp + 16]
-	mov word ptr [r8 + 2*r15 + 46], cx
-	cmp rsi, 24
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 42], di
+	cmp rdx, 22
 	mov r9, r13
-	mov rbx, qword ptr [rsp + 8]
-	vmovupd ymm2, ymmword ptr [rsp + 112]
-	je .LBB60_166
-	jmp .LBB60_69
-.LBB60_77:
-	mov rax, qword ptr [rsp + 32]
+	mov r8, qword ptr [rsp + 40]
+	vmovupd ymm2, ymmword ptr [rsp + 128]
+	je .LBB80_166
+	lea rdi, [r14 + 22]
+	cmp rdi, r15
+	jae .LBB80_240
+	vxorpd xmm0, xmm0, xmm0
+	vmaxsd xmm3, xmm0, qword ptr [rsp + 1024]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
+	vminsd xmm3, xmm0, xmm3
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 44], di
+	cmp rdx, 23
+	mov r9, r13
+	mov r8, qword ptr [rsp + 40]
+	vmovupd ymm2, ymmword ptr [rsp + 128]
+	je .LBB80_166
+	lea rdi, [r14 + 23]
+	cmp rdi, r15
+	jae .LBB80_240
+	vxorpd xmm0, xmm0, xmm0
+	vmaxsd xmm3, xmm0, qword ptr [rsp + 1032]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
+	vminsd xmm3, xmm0, xmm3
+	vcvttsd2si edi, xmm3
+	mov r8, qword ptr [rsp + 32]
+	mov word ptr [r8 + 2*r14 + 46], di
+	cmp rdx, 24
+	mov r9, r13
+	mov r8, qword ptr [rsp + 40]
+	vmovupd ymm2, ymmword ptr [rsp + 128]
+	je .LBB80_166
+	jmp .LBB80_186
+.LBB80_78:
+	mov rax, qword ptr [rsp + 48]
 	imul rax, r9
-	mov rcx, qword ptr [rsp + 80]
+	mov rcx, qword ptr [rsp + 88]
 	lea rax, [rcx + 8*rax]
 	lea rcx, [rax + 8*r9]
-	mov rdx, qword ptr [rsp + 272]
+	mov rdx, qword ptr [rsp + 320]
 	xor esi, esi
-.LBB60_78:
+.LBB80_79:
 	vmovsd xmm3, qword ptr [rax + 8*rsi]
 	vmovsd qword ptr [rdx - 8], xmm3
 	vmovsd xmm3, qword ptr [rcx + 8*rsi]
@@ -1789,114 +1801,115 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vmovsd qword ptr [rdx], xmm3
 	add rdx, 32
 	cmp r9, rsi
-	jne .LBB60_78
-	cmp r8, qword ptr [rsp + 48]
-	jae .LBB60_167
-	mov r10, qword ptr [rsp + 32]
+	jne .LBB80_79
+	cmp r14, qword ptr [rsp + 64]
+	jae .LBB80_167
+	mov r10, qword ptr [rsp + 48]
 	mov rax, r10
-	imul rax, r15
-	lea rdx, [r10 + 1]
-	mov rsi, rdx
-	imul rsi, r15
-	mov rdi, qword ptr [rsp + 96]
-	mov r8, qword ptr [rsp + 24]
-	imul rdi, r8
-	add rdi, qword ptr [rsp + 64]
-	lea rcx, [4*r8]
-	lea r14, [rcx + 2*rcx]
-	add rax, r14
-	mov rbx, qword ptr [rsp + 176]
+	imul rax, r8
+	lea rcx, [r10 + 1]
+	mov rdx, rcx
+	imul rdx, r8
+	mov rsi, qword ptr [rsp + 96]
+	imul rsi, r14
+	add rsi, qword ptr [rsp + 80]
+	lea rdi, [4*r14]
+	lea r12, [rdi + 2*rdi]
+	add rax, r12
+	mov rbx, qword ptr [rsp + 200]
 	imul r10, rbx
-	lea r8, [8*r8]
+	lea r8, [8*r14]
 	lea r8, [r8 + 2*r8]
 	add r10, r8
-	add r10, rbp
-	lea r13, [rcx + 2*rcx]
-	add r13, 12
-	add rsi, r14
-	neg r14
-	imul rdx, rbx
-	add rdx, r8
-	add rdx, rbp
-	jmp .LBB60_81
-.LBB60_94:
-	mov r8, qword ptr [rsp + 24]
-	inc r8
-	add rdi, qword ptr [rsp + 104]
+	mov r11, qword ptr [rsp + 32]
+	add r10, r11
+	lea rdi, [rdi + 2*rdi]
+	add rdi, 12
+	add rdx, r12
+	neg r12
+	imul rcx, rbx
+	add rcx, r8
+	mov r8, qword ptr [rsp + 40]
+	add rcx, r11
+	jmp .LBB80_82
+.LBB80_95:
+	inc r14
+	add rsi, rbx
 	add rax, 12
 	add r10, 24
-	add r13, 12
-	add r14, -12
-	add rsi, 12
-	add rdx, 24
-	mov qword ptr [rsp + 24], r8
-	cmp r8, qword ptr [rsp + 48]
-	mov rbx, qword ptr [rsp + 8]
-	jae .LBB60_167
-.LBB60_81:
-	cmp r15, r13
-	mov qword ptr [rsp + 288], r13
-	mov rbx, r13
-	cmovb rbx, r15
-	mov qword ptr [rsp + 40], r14
-	add rbx, r14
+	mov rdi, qword ptr [rsp + 224]
+	add rdi, 12
+	add r12, -12
+	add rdx, 12
+	add rcx, 24
+	cmp r14, qword ptr [rsp + 64]
+	mov r8, qword ptr [rsp + 40]
+	jae .LBB80_167
+.LBB80_82:
+	mov qword ptr [rsp + 72], r14
+	cmp r8, rdi
+	mov qword ptr [rsp + 224], rdi
+	mov r11, rdi
+	cmovb r11, r8
+	mov qword ptr [rsp + 56], r12
+	add r11, r12
 	vxorpd xmm9, xmm9, xmm9
-	xor r14d, r14d
+	xor ebx, ebx
 	vxorpd xmm8, xmm8, xmm8
 	vxorpd xmm7, xmm7, xmm7
 	vxorpd xmm6, xmm6, xmm6
 	vxorpd xmm5, xmm5, xmm5
 	vxorpd xmm3, xmm3, xmm3
-.LBB60_82:
-	lea r15, [r14 + r11]
-	cmp r9, r15
-	mov rcx, r15
-	cmovb rcx, r9
-	mov r8, rcx
+.LBB80_83:
+	lea r14, [rbx + rbp]
+	cmp r9, r14
+	mov rdi, r14
+	cmovb rdi, r9
+	mov r8, rdi
 	sub r8, 4
-	mov r13d, 0
-	cmovae r13, r8
-	cmp r15, r14
-	jbe .LBB60_83
-	mov r8, r14
+	mov r12d, 0
+	cmovae r12, r8
+	cmp r14, rbx
+	jbe .LBB80_84
+	mov r8, rbx
 	shl r8, 5
-	mov rbp, qword ptr [rsp + 272]
-	add rbp, r8
+	mov r13, qword ptr [rsp + 320]
+	add r13, r8
 	lea r8, [r8 + 2*r8]
 	vmovapd ymm1, ymm2
-	jmp .LBB60_96
-.LBB60_97:
-	inc r14
-	vmovupd ymm4, ymmword ptr [rdi + r8]
-	vmovupd ymm10, ymmword ptr [rdi + r8 + 32]
-	vbroadcastsd ymm11, qword ptr [rbp - 8]
-	vmovupd ymm12, ymmword ptr [rdi + r8 + 64]
+	jmp .LBB80_97
+.LBB80_98:
+	inc rbx
+	vmovupd ymm4, ymmword ptr [rsi + r8]
+	vmovupd ymm10, ymmword ptr [rsi + r8 + 32]
+	vbroadcastsd ymm11, qword ptr [r13 - 8]
+	vmovupd ymm12, ymmword ptr [rsi + r8 + 64]
 	vfmadd231pd ymm9, ymm4, ymm11
 	vfmadd231pd ymm8, ymm10, ymm11
 	vfmadd231pd ymm7, ymm12, ymm11
-	vbroadcastsd ymm11, qword ptr [rbp]
+	vbroadcastsd ymm11, qword ptr [r13]
 	vfmadd231pd ymm6, ymm11, ymm4
 	vfmadd231pd ymm5, ymm11, ymm10
 	vfmadd231pd ymm3, ymm12, ymm11
-	add rbp, 32
+	add r13, 32
 	add r8, 96
-	cmp rcx, r14
-	je .LBB60_84
-.LBB60_96:
-	cmp r14, r13
-	jae .LBB60_97
-	prefetcht0 byte ptr [rdi + r8 + 384]
-	prefetcht0 byte ptr [rdi + r8 + 448]
-	jmp .LBB60_97
-.LBB60_83:
+	cmp rdi, rbx
+	je .LBB80_85
+.LBB80_97:
+	cmp rbx, r12
+	jae .LBB80_98
+	prefetcht0 byte ptr [rsi + r8 + 384]
+	prefetcht0 byte ptr [rsi + r8 + 448]
+	jmp .LBB80_98
+.LBB80_84:
 	vmovapd ymm1, ymm2
-.LBB60_84:
-	cmp r15, r9
-	mov rbp, qword ptr [rsp + 16]
-	jae .LBB60_85
+.LBB80_85:
+	cmp r14, r9
+	mov r13, qword ptr [rsp + 24]
+	jae .LBB80_86
 	vmulpd ymm4, ymm9, ymm1
 	vroundpd ymm4, ymm4, 8
-	vmovupd ymm0, ymmword ptr [rsp + 144]
+	vmovupd ymm0, ymmword ptr [rsp + 160]
 	vfnmadd213pd ymm4, ymm0, ymm9
 	vmovapd ymm11, ymm1
 	vxorpd xmm1, xmm1, xmm1
@@ -1933,202 +1946,201 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vcmplt_oqpd ymm3, ymm4, ymm1
 	vaddpd ymm10, ymm0, ymm4
 	vblendvpd ymm3, ymm4, ymm10, ymm3
-	mov r14, rcx
-	jmp .LBB60_82
-.LBB60_85:
-	mov rcx, qword ptr [rsp + 24]
-	lea r8, [4*rcx]
-	lea rcx, [r8 + 2*r8]
-	add rcx, 12
-	mov r15, qword ptr [rsp + 56]
-	cmp r15, rcx
-	cmovb rcx, r15
+	mov rbx, rdi
+	jmp .LBB80_83
+.LBB80_86:
+	mov r14, qword ptr [rsp + 72]
+	lea r8, [4*r14]
+	lea rdi, [r8 + 2*r8]
+	add rdi, 12
+	mov rbx, qword ptr [rsp + 40]
+	cmp rbx, rdi
+	cmovb rdi, rbx
 	lea r8, [r8 + 2*r8]
 	vmulpd ymm4, ymm9, ymm1
 	vroundpd ymm4, ymm4, 8
-	vmovupd ymm0, ymmword ptr [rsp + 144]
+	vmovupd ymm0, ymmword ptr [rsp + 160]
 	vfnmadd213pd ymm4, ymm0, ymm9
 	vmovapd ymm11, ymm1
 	vxorpd xmm1, xmm1, xmm1
 	vcmplt_oqpd ymm9, ymm4, ymm1
 	vaddpd ymm10, ymm0, ymm4
 	vblendvpd ymm4, ymm4, ymm10, ymm9
-	lea r14, [rsp + 928]
-	vmovupd ymmword ptr [r14 + 64], ymm1
+	lea rbx, [rsp + 944]
+	vmovupd ymmword ptr [rbx + 64], ymm1
 	vmulpd ymm9, ymm11, ymm8
 	vroundpd ymm9, ymm9, 8
 	vfnmadd213pd ymm9, ymm0, ymm8
 	vcmplt_oqpd ymm8, ymm9, ymm1
 	vaddpd ymm10, ymm9, ymm0
 	vblendvpd ymm8, ymm9, ymm10, ymm8
-	vmovupd ymmword ptr [r14 + 32], ymm1
+	vmovupd ymmword ptr [rbx + 32], ymm1
 	vmulpd ymm9, ymm11, ymm7
 	vroundpd ymm9, ymm9, 8
 	vfnmadd213pd ymm9, ymm0, ymm7
 	vcmplt_oqpd ymm7, ymm9, ymm1
 	vaddpd ymm10, ymm9, ymm0
 	vblendvpd ymm7, ymm9, ymm10, ymm7
-	vmovupd ymmword ptr [r14], ymm1
+	vmovupd ymmword ptr [rbx], ymm1
 	vmulpd ymm9, ymm11, ymm6
 	vroundpd ymm9, ymm9, 8
 	vfnmadd213pd ymm9, ymm0, ymm6
 	vcmplt_oqpd ymm6, ymm9, ymm1
 	vaddpd ymm10, ymm9, ymm0
 	vblendvpd ymm6, ymm9, ymm10, ymm6
-	vmovupd ymmword ptr [r14 - 32], ymm1
+	vmovupd ymmword ptr [rbx - 32], ymm1
 	vmulpd ymm9, ymm11, ymm5
 	vroundpd ymm9, ymm9, 8
 	vfnmadd213pd ymm9, ymm0, ymm5
 	vcmplt_oqpd ymm5, ymm9, ymm1
 	vaddpd ymm10, ymm9, ymm0
 	vblendvpd ymm5, ymm9, ymm10, ymm5
-	vmovupd ymmword ptr [r14 - 64], ymm1
+	vmovupd ymmword ptr [rbx - 64], ymm1
 	vmulpd ymm9, ymm11, ymm3
 	vroundpd ymm9, ymm9, 8
 	vfnmadd213pd ymm9, ymm0, ymm3
 	vcmplt_oqpd ymm3, ymm9, ymm1
 	vaddpd ymm10, ymm9, ymm0
 	vblendvpd ymm3, ymm9, ymm10, ymm3
-	vmovupd ymmword ptr [r14 - 96], ymm1
-	vmovupd ymmword ptr [rsp + 640], ymm4
-	vmovupd ymmword ptr [rsp + 672], ymm8
-	vmovupd ymmword ptr [rsp + 704], ymm7
-	vmovupd ymmword ptr [rsp + 736], ymm6
-	vmovupd ymmword ptr [rsp + 768], ymm5
-	vmovupd ymmword ptr [rsp + 800], ymm3
-	cmp rcx, r8
-	mov r14, qword ptr [rsp + 40]
-	mov r13, qword ptr [rsp + 288]
-	je .LBB60_94
+	vmovupd ymmword ptr [rbx - 96], ymm1
+	vmovupd ymmword ptr [rsp + 656], ymm4
+	vmovupd ymmword ptr [rsp + 688], ymm8
+	vmovupd ymmword ptr [rsp + 720], ymm7
+	vmovupd ymmword ptr [rsp + 752], ymm6
+	vmovupd ymmword ptr [rsp + 784], ymm5
+	vmovupd ymmword ptr [rsp + 816], ymm3
+	cmp rdi, r8
+	mov rbx, qword ptr [rsp + 120]
+	mov r12, qword ptr [rsp + 56]
+	je .LBB80_95
 	xor r8d, r8d
-.LBB60_87:
+.LBB80_88:
 	cmp r8, 48
-	je .LBB60_186
-	lea rcx, [rax + r8]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm3, xmm13, qword ptr [rsp + 8*r8 + 640]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	je .LBB80_70
+	lea rdi, [rax + r8]
+	cmp rdi, r15
+	jae .LBB80_272
+	vmaxsd xmm3, xmm13, qword ptr [rsp + 8*r8 + 656]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov word ptr [r10 + 2*r8], cx
+	vcvttsd2si edi, xmm3
+	mov word ptr [r10 + 2*r8], di
 	inc r8
-	cmp rbx, r8
-	jne .LBB60_87
+	cmp r11, r8
+	jne .LBB80_88
 	xor r8d, r8d
-.LBB60_91:
+.LBB80_92:
 	cmp r8, 36
-	je .LBB60_186
-	lea rcx, [rsi + r8]
-	cmp rcx, r12
-	jae .LBB60_240
-	vmaxsd xmm3, xmm13, qword ptr [rsp + 8*r8 + 736]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	je .LBB80_70
+	lea rdi, [rdx + r8]
+	cmp rdi, r15
+	jae .LBB80_272
+	vmaxsd xmm3, xmm13, qword ptr [rsp + 8*r8 + 752]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov word ptr [rdx + 2*r8], cx
+	vcvttsd2si edi, xmm3
+	mov word ptr [rcx + 2*r8], di
 	inc r8
-	cmp rbx, r8
-	jne .LBB60_91
-	jmp .LBB60_94
-.LBB60_58:
-	mov rax, qword ptr [rsp + 32]
+	cmp r11, r8
+	jne .LBB80_92
+	jmp .LBB80_95
+.LBB80_59:
+	mov rax, qword ptr [rsp + 48]
 	imul rax, r9
-	mov rcx, qword ptr [rsp + 80]
+	mov rcx, qword ptr [rsp + 88]
 	lea rax, [rcx + 8*rax]
-	mov rcx, rbx
+	mov rcx, r13
 	xor edx, edx
-	mov rsi, qword ptr [rsp + 24]
-.LBB60_59:
+.LBB80_60:
 	vmovsd xmm3, qword ptr [rax + 8*rdx]
 	inc rdx
 	vmovsd qword ptr [rcx], xmm3
 	add rcx, 32
 	cmp r9, rdx
-	jne .LBB60_59
-	cmp rsi, qword ptr [rsp + 48]
-	jae .LBB60_167
-	mov rcx, qword ptr [rsp + 176]
-	mov rdx, qword ptr [rsp + 32]
-	imul rcx, rdx
-	imul rdx, r15
+	jne .LBB80_60
+	cmp r14, qword ptr [rsp + 64]
+	jae .LBB80_167
+	mov rdx, qword ptr [rsp + 200]
+	mov rcx, qword ptr [rsp + 48]
+	imul rdx, rcx
+	imul rcx, r8
 	mov rax, qword ptr [rsp + 96]
-	mov rsi, qword ptr [rsp + 24]
-	imul rax, rsi
-	add rax, qword ptr [rsp + 64]
-	lea rdi, [4*rsi]
-	lea r10, [rdi + 2*rdi]
-	add rdx, r10
+	imul rax, r14
+	add rax, qword ptr [rsp + 80]
+	lea rsi, [4*r14]
+	lea r10, [rsi + 2*rsi]
+	add rcx, r10
+	lea rdi, [r14 + 2*r14]
+	lea rdx, [rdx + 8*rdi]
+	add rdx, qword ptr [rsp + 32]
 	lea rsi, [rsi + 2*rsi]
-	lea rsi, [rcx + 8*rsi]
-	add rsi, rbp
-	lea rdi, [rdi + 2*rdi]
-	add rdi, 12
+	add rsi, 12
 	neg r10
-	jmp .LBB60_62
-.LBB60_72:
+	jmp .LBB80_63
+.LBB80_73:
 	inc r14
-	add rax, qword ptr [rsp + 104]
-	add rdx, 12
-	add rsi, 24
-	add rdi, 12
-	mov r10, qword ptr [rsp + 40]
+	add rax, r11
+	add rcx, 12
+	add rdx, 24
+	add rsi, 12
+	mov r10, qword ptr [rsp + 56]
 	add r10, -12
-	mov qword ptr [rsp + 24], r14
-	cmp r14, qword ptr [rsp + 48]
-	jae .LBB60_167
-.LBB60_62:
-	cmp r15, rdi
-	mov r8, rdi
-	cmovb r8, r15
-	mov qword ptr [rsp + 40], r10
+	cmp r14, qword ptr [rsp + 64]
+	mov r8, qword ptr [rsp + 40]
+	jae .LBB80_167
+.LBB80_63:
+	mov qword ptr [rsp + 72], r14
+	cmp r8, rsi
+	mov rdi, r8
+	mov r8, rsi
+	cmovb r8, rdi
+	mov qword ptr [rsp + 56], r10
 	add r8, r10
 	vxorpd xmm6, xmm6, xmm6
 	xor r10d, r10d
 	vxorpd xmm5, xmm5, xmm5
 	vxorpd xmm3, xmm3, xmm3
-.LBB60_63:
-	lea rbx, [r10 + r11]
-	cmp r9, rbx
-	mov rcx, rbx
-	cmovb rcx, r9
-	mov r15, rcx
-	sub r15, 4
-	mov r14d, 0
-	cmovae r14, r15
-	cmp rbx, r10
-	jbe .LBB60_64
-	mov r13, r10
-	shl r13, 5
-	mov r15, qword ptr [rsp + 8]
-	add r15, r13
-	lea r13, [r13 + 2*r13]
+.LBB80_64:
+	lea r11, [r10 + rbp]
+	cmp r9, r11
+	mov rdi, r11
+	cmovb rdi, r9
+	mov r14, rdi
+	sub r14, 4
+	mov ebx, 0
+	cmovae rbx, r14
+	cmp r11, r10
+	jbe .LBB80_65
+	mov r12, r10
+	shl r12, 5
+	lea r14, [r12 + r13]
+	lea r12, [r12 + 2*r12]
 	vmovapd ymm1, ymm2
-	jmp .LBB60_74
-.LBB60_75:
-	vbroadcastsd ymm4, qword ptr [r15]
-	vfmadd231pd ymm6, ymm4, ymmword ptr [rax + r13]
-	vfmadd231pd ymm5, ymm4, ymmword ptr [rax + r13 + 32]
-	vfmadd231pd ymm3, ymm4, ymmword ptr [rax + r13 + 64]
+	jmp .LBB80_75
+.LBB80_76:
+	vbroadcastsd ymm4, qword ptr [r14]
+	vfmadd231pd ymm6, ymm4, ymmword ptr [rax + r12]
+	vfmadd231pd ymm5, ymm4, ymmword ptr [rax + r12 + 32]
+	vfmadd231pd ymm3, ymm4, ymmword ptr [rax + r12 + 64]
 	inc r10
-	add r15, 32
-	add r13, 96
-	cmp rcx, r10
-	je .LBB60_65
-.LBB60_74:
-	cmp r10, r14
-	jae .LBB60_75
-	prefetcht0 byte ptr [rax + r13 + 384]
-	prefetcht0 byte ptr [rax + r13 + 448]
-	jmp .LBB60_75
-.LBB60_64:
+	add r14, 32
+	add r12, 96
+	cmp rdi, r10
+	je .LBB80_66
+.LBB80_75:
+	cmp r10, rbx
+	jae .LBB80_76
+	prefetcht0 byte ptr [rax + r12 + 384]
+	prefetcht0 byte ptr [rax + r12 + 448]
+	jmp .LBB80_76
+.LBB80_65:
 	vmovapd ymm1, ymm2
-.LBB60_65:
-	cmp rbx, r9
-	jae .LBB60_66
+.LBB80_66:
+	cmp r11, r9
+	jae .LBB80_67
 	vmulpd ymm4, ymm1, ymm6
 	vroundpd ymm4, ymm4, 8
-	vmovupd ymm0, ymmword ptr [rsp + 144]
+	vmovupd ymm0, ymmword ptr [rsp + 160]
 	vfnmadd213pd ymm4, ymm0, ymm6
 	vmovapd ymm8, ymm1
 	vxorpd xmm1, xmm1, xmm1
@@ -2147,87 +2159,87 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	vcmplt_oqpd ymm3, ymm4, ymm1
 	vaddpd ymm7, ymm0, ymm4
 	vblendvpd ymm3, ymm4, ymm7, ymm3
-	mov r10, rcx
-	jmp .LBB60_63
-.LBB60_66:
-	mov r14, qword ptr [rsp + 24]
+	mov r10, rdi
+	jmp .LBB80_64
+.LBB80_67:
+	mov r14, qword ptr [rsp + 72]
 	lea r10, [4*r14]
-	lea rcx, [r10 + 2*r10]
+	lea rdi, [r10 + 2*r10]
 	lea r10, [r10 + 2*r10]
 	add r10, 12
-	mov r15, qword ptr [rsp + 56]
-	cmp r15, r10
-	cmovb r10, r15
-	lea rbx, [rsp + 928]
+	mov r11, qword ptr [rsp + 40]
+	cmp r11, r10
+	cmovb r10, r11
+	lea r11, [rsp + 944]
 	vmovapd ymm8, ymm1
 	vxorpd xmm1, xmm1, xmm1
-	vmovupd ymmword ptr [rbx + 64], ymm1
-	vmovupd ymmword ptr [rbx + 32], ymm1
-	vmovupd ymmword ptr [rbx], ymm1
-	vmovupd ymmword ptr [rbx - 32], ymm1
-	vmovupd ymmword ptr [rbx - 64], ymm1
-	vmovupd ymmword ptr [rbx - 96], ymm1
-	vmovupd ymmword ptr [rbx - 128], ymm1
+	vmovupd ymmword ptr [r11 + 64], ymm1
+	vmovupd ymmword ptr [r11 + 32], ymm1
+	vmovupd ymmword ptr [r11], ymm1
+	vmovupd ymmword ptr [r11 - 32], ymm1
+	vmovupd ymmword ptr [r11 - 64], ymm1
+	vmovupd ymmword ptr [r11 - 96], ymm1
+	vmovupd ymmword ptr [r11 - 128], ymm1
 	vmulpd ymm4, ymm8, ymm6
 	vroundpd ymm4, ymm4, 8
-	vmovupd ymm0, ymmword ptr [rsp + 144]
+	vmovupd ymm0, ymmword ptr [rsp + 160]
 	vfnmadd213pd ymm4, ymm0, ymm6
 	vcmplt_oqpd ymm6, ymm4, ymm1
 	vaddpd ymm7, ymm0, ymm4
 	vblendvpd ymm4, ymm4, ymm7, ymm6
-	vmovupd ymmword ptr [rbx - 160], ymm1
+	vmovupd ymmword ptr [r11 - 160], ymm1
 	vmulpd ymm6, ymm8, ymm5
 	vroundpd ymm6, ymm6, 8
 	vfnmadd213pd ymm6, ymm0, ymm5
 	vcmplt_oqpd ymm5, ymm6, ymm1
 	vaddpd ymm7, ymm0, ymm6
 	vblendvpd ymm5, ymm6, ymm7, ymm5
-	vmovupd ymmword ptr [rbx - 192], ymm1
+	vmovupd ymmword ptr [r11 - 192], ymm1
 	vmulpd ymm6, ymm8, ymm3
 	vroundpd ymm6, ymm6, 8
 	vfnmadd213pd ymm6, ymm0, ymm3
 	vcmplt_oqpd ymm3, ymm6, ymm1
 	vaddpd ymm7, ymm0, ymm6
 	vblendvpd ymm3, ymm6, ymm7, ymm3
-	vmovupd ymmword ptr [rsp + 640], ymm4
-	vmovupd ymmword ptr [rsp + 672], ymm5
-	vmovupd ymmword ptr [rsp + 704], ymm3
-	cmp r10, rcx
-	mov rbx, qword ptr [rsp + 8]
-	je .LBB60_72
+	vmovupd ymmword ptr [rsp + 656], ymm4
+	vmovupd ymmword ptr [rsp + 688], ymm5
+	vmovupd ymmword ptr [rsp + 720], ymm3
+	cmp r10, rdi
+	mov r11, qword ptr [rsp + 120]
+	je .LBB80_73
 	xor r10d, r10d
-.LBB60_68:
+.LBB80_69:
 	cmp r10, 48
-	je .LBB60_69
-	lea rcx, [rdx + r10]
-	cmp rcx, r12
-	jae .LBB60_118
-	vmaxsd xmm3, xmm13, qword ptr [rsp + 8*r10 + 640]
-	vmovsd xmm0, qword ptr [rip + .LCPI60_1]
+	je .LBB80_70
+	lea rdi, [rcx + r10]
+	cmp rdi, r15
+	jae .LBB80_272
+	vmaxsd xmm3, xmm13, qword ptr [rsp + 8*r10 + 656]
+	vmovsd xmm0, qword ptr [rip + .LCPI80_1]
 	vminsd xmm3, xmm0, xmm3
-	vcvttsd2si ecx, xmm3
-	mov word ptr [rsi + 2*r10], cx
+	vcvttsd2si edi, xmm3
+	mov word ptr [rdx + 2*r10], di
 	inc r10
 	cmp r8, r10
-	jne .LBB60_68
-	jmp .LBB60_72
-.LBB60_54:
-	mov rsi, qword ptr [rsp + 72]
+	jne .LBB80_69
+	jmp .LBB80_73
+.LBB80_55:
+	mov rsi, qword ptr [rsp + 16]
 	test rsi, rsi
-	je .LBB60_56
+	je .LBB80_57
 	shl rsi, 3
 	mov edx, 8
-	mov rdi, rbx
+	mov rdi, r13
 	vzeroupper
 	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
-.LBB60_56:
-	mov rsi, qword ptr [rsp + 184]
+.LBB80_57:
+	mov rsi, qword ptr [rsp + 8]
 	test rsi, rsi
-	je .LBB60_28
+	je .LBB80_29
 	shl rsi, 3
 	mov edx, 8
-	mov rdi, qword ptr [rsp + 64]
-	add rsp, 1080
+	mov rdi, qword ptr [rsp + 80]
+	add rsp, 1096
 	pop rbx
 	pop r12
 	pop r13
@@ -2236,104 +2248,130 @@ gf2_kernels_simd::x86::fp_medium_f64::fp_medium_f64_gemm:
 	pop rbp
 	vzeroupper
 	jmp qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
-.LBB60_186:
-	mov ecx, 48
-	mov r12d, 48
+.LBB80_29:
+	add rsp, 1096
+	pop rbx
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbp
+	vzeroupper
+	ret
+.LBB80_186:
+	mov edi, 48
+	mov r15d, 48
 	mov rbx, qword ptr [rsp + 8]
-	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.118]
-	jmp .LBB60_241
-.LBB60_276:
-	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.116]
-	mov rdi, rax
+	mov r12, qword ptr [rsp + 16]
+	mov r13, qword ptr [rsp + 24]
+	lea rdx, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.219]
+	jmp .LBB80_273
+.LBB80_277:
+	lea rdx, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.217]
 	mov rsi, rcx
+	mov rbx, qword ptr [rsp + 8]
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
-	jmp .LBB60_27
-.LBB60_275:
-	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.117]
-	mov rdi, rsi
-	mov rsi, r14
+	jmp .LBB80_26
+.LBB80_276:
+	lea rdx, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.218]
+	mov rdi, rax
+	mov rsi, r12
+	mov rbx, qword ptr [rsp + 8]
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
-	jmp .LBB60_27
-.LBB60_1:
-	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.109]
-	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.110]
-	lea rsi, [rsp + 464]
-	lea rdx, [rsp + 472]
+	jmp .LBB80_26
+.LBB80_278:
+	lea rdi, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.208]
+	lea rdx, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.209]
+	mov esi, 63
+	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
+.LBB80_2:
+	lea rcx, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.210]
+	lea r9, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.211]
+	lea rsi, [rsp + 480]
+	lea rdx, [rsp + 488]
 	mov r8d, 55
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB60_277:
-	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.111]
-	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.112]
-	lea rsi, [rsp + 480]
-	lea rdx, [rsp + 488]
+.LBB80_279:
+	lea rcx, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.212]
+	lea r9, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.213]
+	lea rsi, [rsp + 496]
+	lea rdx, [rsp + 504]
 	mov r8d, 57
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB60_5:
-	lea rcx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.113]
-	lea r9, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.114]
-	lea rsi, [rsp + 496]
-	lea rdx, [rsp + 504]
+.LBB80_6:
+	lea rcx, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.214]
+	lea r9, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.215]
+	lea rsi, [rsp + 512]
+	lea rdx, [rsp + 520]
 	mov r8d, 55
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
-.LBB60_246:
-	mov rcx, r14
-	jmp .LBB60_240
-.LBB60_196:
-	mov rcx, rdx
-.LBB60_240:
-	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.119]
-	mov rbx, qword ptr [rsp + 8]
-.LBB60_241:
+.LBB80_245:
 	mov rdi, rcx
-	mov rsi, r12
+	jmp .LBB80_240
+.LBB80_196:
+	mov rdi, rdx
+.LBB80_240:
+	lea rdx, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.220]
+	mov rbx, qword ptr [rsp + 8]
+	mov r12, qword ptr [rsp + 16]
+	mov r13, qword ptr [rsp + 24]
+.LBB80_273:
+	mov rsi, r15
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_bounds_check@GOTPCREL]
-	jmp .LBB60_27
-.LBB60_69:
-	mov ecx, 48
-	mov r12d, 48
-	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.118]
-	jmp .LBB60_241
-.LBB60_53:
-	lea rdi, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.87]
-	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.115]
+	jmp .LBB80_26
+.LBB80_272:
+	lea rdx, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.220]
+	mov rbx, qword ptr [rsp + 8]
+	mov r12, qword ptr [rsp + 16]
+	jmp .LBB80_273
+.LBB80_70:
+	mov edi, 48
+	mov r15d, 48
+	mov rbx, qword ptr [rsp + 8]
+	mov r12, qword ptr [rsp + 16]
+	lea rdx, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.219]
+	jmp .LBB80_273
+.LBB80_54:
+	lea rdi, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.184]
+	lea rdx, [rip + .Lanon.cdbd3da3d2df11a7423256471527b2c0.216]
 	mov esi, 40
+	mov rbx, qword ptr [rsp + 8]
+	mov r12, qword ptr [rsp + 16]
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic@GOTPCREL]
-.LBB60_27:
+.LBB80_26:
 	ud2
-.LBB60_38:
+.LBB80_39:
 	mov rsi, -1
-	jmp .LBB60_42
-.LBB60_117:
-	mov rcx, r15
-.LBB60_118:
-	lea rdx, [rip + .Lanon.58cb5cbc18ae84d2b27976a36797d469.119]
-	jmp .LBB60_241
-.LBB60_239:
-	mov rcx, r9
-	jmp .LBB60_240
+	jmp .LBB80_43
+.LBB80_118:
+	mov rdi, r14
+	jmp .LBB80_240
+.LBB80_239:
+	mov rdi, r9
+	jmp .LBB80_240
 	mov r14, rax
-	mov rsi, qword ptr [rsp + 72]
-	test rsi, rsi
-	je .LBB60_30
-	shl rsi, 3
+	test r12, r12
+	je .LBB80_31
+	shl r12, 3
 	mov edx, 8
-	mov rdi, rbx
+	mov rdi, r13
+	mov rsi, r12
 	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
-	jmp .LBB60_30
+	jmp .LBB80_31
 	mov r14, rax
-.LBB60_30:
-	mov rsi, qword ptr [rsp + 184]
-	test rsi, rsi
-	je .LBB60_32
-	shl rsi, 3
+.LBB80_31:
+	test rbx, rbx
+	je .LBB80_33
+	shl rbx, 3
 	mov edx, 8
-	mov rdi, qword ptr [rsp + 64]
+	mov rdi, qword ptr [rsp + 80]
+	mov rsi, rbx
 	call qword ptr [rip + __rustc::__rust_dealloc@GOTPCREL]
-.LBB60_32:
+.LBB80_33:
 	mov rdi, r14
 	call _Unwind_Resume@PLT

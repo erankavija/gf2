@@ -80,8 +80,8 @@ pub unsafe fn fp_medium_f64_gemm(
     assert_eq!(c.len(), m * n, "fp_medium_f64_gemm: c shape");
 
     if m == 0 || k == 0 || n == 0 {
-        // Output is the m×n zero matrix; nothing to do (caller passes
-        // a zero-initialised buffer per the gemm contract).
+        // The empty sum over `k` is zero.
+        c.fill(0);
         return;
     }
 
@@ -705,9 +705,8 @@ mod tests {
                 for &k in &lens {
                     for &n in &lens {
                         if m == 0 || k == 0 || n == 0 {
-                            // zero-dim cases short-circuit on either
-                            // the kernel or the scalar oracle; the
-                            // kernel returns early without touching `c`.
+                            // `tests/entry_conditions.rs` covers the
+                            // zero-dimension shapes.
                             continue;
                         }
                         let a: Vec<u16> = (0..(m * k) as u32)
