@@ -51,17 +51,27 @@ impl LayeredConfig {
     }
 
     /// The 5G NR setting: normalized min-sum at 6/8, scale 4, channel limit
-    /// 31, message limit 40, early termination.
+    /// 23, message limit 24, early termination.
     ///
     /// The normalization factor is tuned per code family; this one and
     /// [`Self::dvb_t2`]'s were chosen on frame error rate under
-    /// `crates/gf2-coding/tests/ldpc_layered_fer.rs`.
+    /// `crates/gf2-coding/tests/ldpc_layered_fer.rs`. NR base graph 1 has
+    /// columns of degree up to 30 whose beliefs saturate, and each check
+    /// turning against one removes twice the message limit, so the bound
+    /// of 127 must hold several messages: with message limit 40 the decoder
+    /// leaves decoded NR codewords at high SNR, and with 31 it keeps an
+    /// error floor. The message limit exceeds the channel limit so that one
+    /// check can overrule the channel on a degree-2 parity bit. Frame error
+    /// rate depends on the scale relative to the input LLRs; scale 4 suits
+    /// natural-log LLRs and their half.
     #[must_use]
     pub fn nr_5g() -> Self {
-        Self::new(LayeredRule::Normalized { eighths: 6 }, 4.0, 31, 40, true)
+        Self::new(LayeredRule::Normalized { eighths: 6 }, 4.0, 23, 24, true)
     }
 
-    /// The DVB-T2 setting: [`Self::nr_5g`] with normalization 7/8.
+    /// The DVB-T2 setting: normalized min-sum at 7/8, scale 4, channel
+    /// limit 31, message limit 40, early termination. DVB-T2 columns have
+    /// degree at most 13, which leaves the finer scale stable.
     #[must_use]
     pub fn dvb_t2() -> Self {
         Self::new(LayeredRule::Normalized { eighths: 7 }, 4.0, 31, 40, true)

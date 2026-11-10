@@ -287,7 +287,9 @@ flags over 5G NR codes of both base graphs at lifting sizes below, at and
 above the vector width, DVB-T2 short codes through their QC structure, and a
 hand-built code with rows of degree zero, one and two, at caps zero to 25 and
 under reuse; it also asserts quantization, termination and rate-matched
-decoding. The unit tests of the kernel hold both backends to the update
+decoding, and decodes noiseless and noisy random codewords of every DVB-T2
+code and of every NR lifting size off the 32-lane grid, with and without
+early termination, under the recommended settings. The unit tests of the kernel hold both backends to the update
 definition at saturation boundaries.
 [`ldpc_layered_fer`](../../crates/gf2-coding/tests/ldpc_layered_fer.rs)
 compares the Eb/N0 at frame error rate $10^{-3}$, counted on the first $k$
