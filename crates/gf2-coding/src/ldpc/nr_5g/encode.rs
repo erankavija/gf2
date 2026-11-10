@@ -38,8 +38,6 @@ pub(super) struct NrQcEncoder {
     kb: usize,
     /// Words of one $Z$-bit block.
     block_words: usize,
-    /// Words of one doubled block, with slack for the last shifted read.
-    doubled_words: usize,
     /// Information blocks holding message bits; the rest are filler zeros.
     info_blocks: usize,
     /// Information circulants of the four core rows.
@@ -156,12 +154,10 @@ impl NrQcEncoder {
             })
             .collect();
 
-        let block_words = z.div_ceil(64);
         Self {
             z,
             kb,
-            block_words,
-            doubled_words: (2 * z).div_ceil(64) + 1,
+            block_words: z.div_ceil(64),
             info_blocks,
             core_info,
             first_col,
@@ -174,158 +170,200 @@ impl NrQcEncoder {
         }
     }
 
-    /// Encodes `message` (`target_k` bits) into `output`, the rate-matched
-    /// codeword: message bits `punctured..target_k`, then the first
-    /// `parity_kept` parity bits.
+    /// Encodes `message` (`target_k` bits) into the rate-matched codeword:
+    /// message bits `punctured..target_k`, then the first `parity_kept`
+    /// parity bits.
     ///
     /// # Panics
     ///
-    /// Panics if `message.len() != target_k` or
-    /// `output.len() != target_k - punctured + parity_kept` (saturating).
-    pub(super) fn encode_into(&self, message: &BitVec, output: &mut BitVec) {
+    /// Panics if `message.len() != target_k`.
+    pub(super) fn encode(&self, message: &BitVec) -> BitVec {
         assert_eq!(
             message.len(),
             self.target_k,
             "message length must equal target_k"
         );
-        let systematic = self.target_k.saturating_sub(self.punctured);
-        assert_eq!(
-            output.len(),
-            systematic + self.parity_kept,
-            "output length must equal target_n"
-        );
-        let (z, bw, dw) = (self.z, self.block_words, self.doubled_words);
-        let mut sources = vec![0u64; (self.kb + 4) * dw];
-        let mut block = vec![0u64; bw];
-
-        let words = message.words();
-        for j in 0..self.info_blocks {
-            for (w, word) in block.iter_mut().enumerate() {
-                *word = gf2_core::packed_window(words, j * z + 64 * w);
-            }
-            self.store_doubled(&mut block, &mut sources[j * dw..(j + 1) * dw]);
-        }
-
-        let mut lambda = [
-            vec![0u64; bw],
-            vec![0u64; bw],
-            vec![0u64; bw],
-            vec![0u64; bw],
-        ];
-        let mut sum = vec![0u64; bw];
-        for (row, acc) in lambda.iter_mut().enumerate() {
-            for edge in &self.core_info[row] {
-                self.xor_circulant(acc, &sources, *edge);
-            }
-            for (s, a) in sum.iter_mut().zip(acc.iter()) {
-                *s ^= *a;
-            }
-        }
-
-        let mut doubled = vec![0u64; dw];
-        self.store_inverse(
-            &mut sum,
-            self.first_shift,
-            &mut doubled,
-            &mut sources,
-            self.first_col,
-        );
-        for step in &self.steps {
-            let rhs = &mut lambda[step.row];
-            for edge in &step.known {
-                self.xor_circulant(rhs, &sources, *edge);
-            }
-            self.store_inverse(rhs, step.shift, &mut doubled, &mut sources, step.col);
-        }
-
-        output.copy_bits(0, message, self.punctured.min(self.target_k), systematic);
-        let mut offset = systematic;
-        let mut remaining = self.parity_kept;
-        for c in 0..4 {
-            if remaining == 0 {
-                return;
-            }
-            let count = remaining.min(z);
-            let start = (self.kb + c) * dw;
-            output.write_bits(offset, &sources[start..start + bw], count);
-            offset += count;
-            remaining -= count;
-        }
-        for edges in &self.extension {
-            block.fill(0);
-            for edge in edges {
-                self.xor_circulant(&mut block, &sources, *edge);
-            }
-            let count = remaining.min(z);
-            output.write_bits(offset, &block, count);
-            offset += count;
-            remaining -= count;
-        }
-        debug_assert_eq!(remaining, 0);
-    }
-
-    /// XORs circulant `edge` of its doubled source into the $Z$-bit block
-    /// `acc`; bits of `acc` at or above $Z$ take garbage that
-    /// [`Self::store_doubled`] and the output writes ignore.
-    #[inline]
-    fn xor_circulant(&self, acc: &mut [u64], sources: &[u64], edge: Edge) {
-        let dw = self.doubled_words;
-        let source = &sources[edge.source * dw..(edge.source + 1) * dw];
-        let (q, r) = (edge.shift / 64, edge.shift % 64);
-        let window = &source[q..q + acc.len() + 1];
-        if r == 0 {
-            for (a, s) in acc.iter_mut().zip(window) {
-                *a ^= *s;
-            }
-        } else {
-            for (a, pair) in acc.iter_mut().zip(window.windows(2)) {
-                *a ^= (pair[0] >> r) | (pair[1] << (64 - r));
-            }
+        match self.block_words {
+            1 => self.encode_blocks::<1>(message),
+            2 => self.encode_blocks::<2>(message),
+            3 => self.encode_blocks::<3>(message),
+            4 => self.encode_blocks::<4>(message),
+            5 => self.encode_blocks::<5>(message),
+            6 => self.encode_blocks::<6>(message),
+            words => unreachable!("NR lifting sizes span at most six words, got {words}"),
         }
     }
 
-    /// Masks `block` to $Z$ bits and writes it twice in a row into `doubled`.
-    #[inline]
-    fn store_doubled(&self, block: &mut [u64], doubled: &mut [u64]) {
-        let z = self.z;
-        let tail = z % 64;
-        if tail != 0 {
-            *block.last_mut().expect("a block has a word") &= (1u64 << tail) - 1;
-        }
-        doubled.fill(0);
-        doubled[..block.len()].copy_from_slice(block);
-        let (q, r) = (z / 64, z % 64);
-        for (w, &word) in block.iter().enumerate() {
-            doubled[q + w] |= word << r;
-            if r != 0 {
-                doubled[q + w + 1] |= word >> (64 - r);
+    /// [`Self::encode`] for $\lceil Z/64 \rceil = W$. A doubled block takes
+    /// $2W + 1$ words, the last one slack for the shifted read; the slot
+    /// after the core-parity sources is the scratch of the core solve.
+    fn encode_blocks<const W: usize>(&self, message: &BitVec) -> BitVec {
+        let (z, kb) = (self.z, self.kb);
+        let stride = 2 * W + 1;
+        SOURCES.with_borrow_mut(|sources| {
+            if sources.len() < (kb + 5) * stride {
+                sources.resize((kb + 5) * stride, 0);
             }
-        }
+            let words = message.words();
+            for j in 0..self.info_blocks {
+                let block = std::array::from_fn(|w| gf2_core::packed_window(words, j * z + 64 * w));
+                store_doubled::<W>(z, block, &mut sources[j * stride..(j + 1) * stride]);
+            }
+
+            let mut lambda = [[0u64; W]; 4];
+            let mut sum = [0u64; W];
+            for (acc, edges) in lambda.iter_mut().zip(&self.core_info) {
+                for edge in edges {
+                    xor_circulant::<W>(acc, sources, stride, *edge);
+                }
+                xor_into(&mut sum, acc);
+            }
+            self.solve_core::<W>(sum, self.first_shift, self.first_col, sources);
+            for step in &self.steps {
+                let mut rhs = lambda[step.row];
+                for edge in &step.known {
+                    xor_circulant::<W>(&mut rhs, sources, stride, *edge);
+                }
+                self.solve_core::<W>(rhs, step.shift, step.col, sources);
+            }
+
+            let systematic = self.target_k.saturating_sub(self.punctured);
+            let len = systematic + self.parity_kept;
+            let start = self.punctured.min(self.target_k);
+            let mut out: Vec<u64> = (0..len.div_ceil(64))
+                .map(|w| gf2_core::packed_window(words, start + 64 * w))
+                .collect();
+            // Words past the systematic run picked up message bits beyond
+            // it; the parity ORs into zeros.
+            let (q, r) = (systematic / 64, systematic % 64);
+            if q < out.len() {
+                if r != 0 {
+                    out[q] &= (1u64 << r) - 1;
+                    out[q + 1..].fill(0);
+                } else {
+                    out[q..].fill(0);
+                }
+            }
+
+            let mut offset = systematic;
+            let mut remaining = self.parity_kept;
+            for c in 0..4 {
+                if remaining == 0 {
+                    break;
+                }
+                let slot = (kb + c) * stride;
+                let block = std::array::from_fn(|w| sources[slot + w]);
+                let count = remaining.min(z);
+                or_bits::<W>(&mut out, offset, block, count);
+                offset += count;
+                remaining -= count;
+            }
+            for edges in &self.extension {
+                let mut block = [0u64; W];
+                for edge in edges {
+                    xor_circulant::<W>(&mut block, sources, stride, *edge);
+                }
+                let count = remaining.min(z);
+                or_bits::<W>(&mut out, offset, block, count);
+                offset += count;
+                remaining -= count;
+            }
+            debug_assert_eq!(remaining, 0);
+            BitVec::from_words(out, len)
+        })
     }
 
     /// Solves $P^{t} p = $ `rhs` for core block `col` and stores $p$ doubled
-    /// as source `kb + col`; `scratch` is a doubled-block buffer.
-    fn store_inverse(
+    /// as source `kb + col`.
+    fn solve_core<const W: usize>(
         &self,
-        rhs: &mut [u64],
+        rhs: [u64; W],
         shift: usize,
-        scratch: &mut [u64],
-        sources: &mut [u64],
         col: usize,
+        sources: &mut [u64],
     ) {
-        let dw = self.doubled_words;
-        self.store_doubled(rhs, scratch);
-        let inverse = (self.z - shift) % self.z;
-        let (q, r) = (inverse / 64, inverse % 64);
-        let mut block = vec![0u64; rhs.len()];
-        for (w, word) in block.iter_mut().enumerate() {
-            *word = if r == 0 {
-                scratch[q + w]
-            } else {
-                (scratch[q + w] >> r) | (scratch[q + w + 1] << (64 - r))
-            };
+        let (z, kb) = (self.z, self.kb);
+        let stride = 2 * W + 1;
+        let scratch = (kb + 4) * stride;
+        store_doubled::<W>(z, rhs, &mut sources[scratch..scratch + stride]);
+        let inverse = (z - shift) % z;
+        let block = rotate::<W>(&sources[scratch..scratch + stride], inverse);
+        let slot = (kb + col) * stride;
+        store_doubled::<W>(z, block, &mut sources[slot..slot + stride]);
+    }
+}
+
+thread_local! {
+    /// Doubled information and core-parity blocks of the calling thread's
+    /// encode; every slot an encode reads it writes first.
+    static SOURCES: std::cell::RefCell<Vec<u64>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+#[inline(always)]
+fn xor_into<const W: usize>(acc: &mut [u64; W], other: &[u64; W]) {
+    for (a, o) in acc.iter_mut().zip(other) {
+        *a ^= *o;
+    }
+}
+
+/// The $Z$-bit window at bit `shift` of a doubled block, the circulant of
+/// that shift applied to the block. Bits at or above $Z$ of the result are
+/// garbage that [`store_doubled`] and [`or_bits`] mask.
+#[inline(always)]
+fn rotate<const W: usize>(slot: &[u64], shift: usize) -> [u64; W] {
+    let (q, r) = (shift / 64, shift % 64);
+    let window = &slot[q..q + W + 1];
+    // `(hi << 1) << (63 - r)` is `hi << (64 - r)` and zero at `r == 0`.
+    std::array::from_fn(|w| (window[w] >> r) | ((window[w + 1] << 1) << (63 - r)))
+}
+
+/// XORs circulant `edge` of its doubled source into `acc`.
+#[inline(always)]
+fn xor_circulant<const W: usize>(acc: &mut [u64; W], sources: &[u64], stride: usize, edge: Edge) {
+    let slot = &sources[edge.source * stride..(edge.source + 1) * stride];
+    xor_into(acc, &rotate::<W>(slot, edge.shift));
+}
+
+/// Masks `block` to $Z$ bits and writes it twice in a row into `slot`.
+#[inline(always)]
+fn store_doubled<const W: usize>(z: usize, mut block: [u64; W], slot: &mut [u64]) {
+    mask_bits(&mut block, z);
+    slot.fill(0);
+    slot[..W].copy_from_slice(&block);
+    let (q, r) = (z / 64, z % 64);
+    for (w, &word) in block.iter().enumerate() {
+        slot[q + w] |= word << r;
+        if r != 0 {
+            slot[q + w + 1] |= word >> (64 - r);
         }
-        let slot = self.kb + col;
-        self.store_doubled(&mut block, &mut sources[slot * dw..(slot + 1) * dw]);
+    }
+}
+
+/// Clears the bits of `block` at or above `count`.
+#[inline(always)]
+fn mask_bits<const W: usize>(block: &mut [u64; W], count: usize) {
+    for (w, word) in block.iter_mut().enumerate() {
+        let low = 64 * w;
+        if count <= low {
+            *word = 0;
+        } else if count < low + 64 {
+            *word &= (1u64 << (count - low)) - 1;
+        }
+    }
+}
+
+/// ORs the low `count` bits of `block` into `out` from bit `offset` up;
+/// the target bits are zero.
+#[inline(always)]
+fn or_bits<const W: usize>(out: &mut [u64], offset: usize, mut block: [u64; W], count: usize) {
+    mask_bits(&mut block, count);
+    let (q, r) = (offset / 64, offset % 64);
+    for (w, &word) in block.iter().enumerate().take(count.div_ceil(64)) {
+        out[q + w] |= word << r;
+        if r != 0 {
+            if let Some(next) = out.get_mut(q + w + 1) {
+                *next |= word >> (64 - r);
+            }
+        }
     }
 }

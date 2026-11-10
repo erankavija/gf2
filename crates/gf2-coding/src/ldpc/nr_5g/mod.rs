@@ -495,9 +495,7 @@ impl Nr5gRateMatchedCode {
             message.len(),
             self.params.target_k
         );
-        let mut output = BitVec::zeros(self.params.target_n);
-        self.encoder.encode_into(message, &mut output);
-        output
+        self.encoder.encode(message)
     }
 
     /// Constructs the full-length LLR vector from target_n channel LLRs.
