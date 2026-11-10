@@ -76,7 +76,7 @@
 set -euo pipefail
 
 # Invoker policy (2026-09-13): the host is never locked during a working
-# session; every measurement runs in the overnight benchmark window, which
+# session; every stated result runs in the benchmark window, which
 # exports GF2_BENCH_WINDOW=1. Outside it this wrapper refuses to run.
 if [[ -z "${GF2_BENCH_WINDOW:-}" ]]; then
   echo "ccx1-bench-flock: refusing to take the host mutex outside a benchmark window (GF2_BENCH_WINDOW is unset); queue the run in dev/scripts/bench-window/queue.tsv" >&2

@@ -2,7 +2,8 @@
 # Benchmark window.
 #
 # Invoker policy (2026-09-13): the host is never locked during a working
-# session; every measurement runs in a benchmark window outside the session.
+# session; every stated result runs in a benchmark window outside the session,
+# and indications run unlocked at any time.
 # This script is that window. It exports GF2_BENCH_WINDOW=1, which is what
 # lets dev/scripts/ccx1-bench-flock.sh take the host mutex and makes
 # scripts/cargo-budget.sh apply its lock discipline. Outside the window,

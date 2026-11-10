@@ -69,7 +69,7 @@ If `run_history` is non-empty, use its one latest run: structured findings, verd
 
 Every finding must include `disposition` (`blocking` or `advisory`) and `origin` (`issue-impact` or `pre-existing`). An unresolved issue-impact defect or material issue-introduced technical debt is blocking. Useful pre-existing debt is advisory and cannot fail this issue; do not perform an exhaustive pre-existing-debt audit. The verdict is `fail` if and only if at least one unresolved issue-impact blocking finding exists. A passing verdict may therefore contain pre-existing advisory findings.
 
-A finding about evidence identity, provenance or record completeness is blocking only when it names an item of the closed identity set of `@/inv/behavioral-evidence-validity` that is missing or wrong, or a published number or acceptance decision that the gap could make wrong. Otherwise it is advisory. Do not require pinning or verification outside the closed set. Evidence machinery beyond what a success criterion names is an issue-impact finding.
+A finding about evidence identity, provenance or record completeness is blocking only when it names an item of the closed identity set of `@/inv/campaign-evidence` that is missing or wrong, or a published number or acceptance decision that the gap could make wrong. Otherwise it is advisory. Do not require pinning or verification outside the closed set. Evidence machinery beyond what a success criterion names is an issue-impact finding.
 
 Verify every hard success criterion and that completed dependencies are correctly integrated. Judge implementation behavior against the applicable canonical prose and resolved items rather than against an engineering rubric embedded here.
 

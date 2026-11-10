@@ -6,7 +6,7 @@ A campaign plan that names no family closure pins the shared closure
 decides which bytes the campaign's behaviour identity covers. A
 source the runner compiles and the closure omits leaves a file that can change
 what a campaign measures outside the receipt's input digests, which
-`@/inv/behavioral-evidence-validity` forbids. The closure is maintained by
+`@/inv/campaign-evidence` forbids. The closure is maintained by
 hand and this check owns its completeness;
 a family closure generated from its own tree is checked by that generator's
 `--check`.

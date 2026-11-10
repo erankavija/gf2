@@ -578,7 +578,7 @@ It appends and flushes campaign-start for a new campaign and session-prepared
 with run/session identity, source and binary identities, declared counts, and
 checkpoint directory before returning its prepared session descriptor. The
 file is the authoritative execution record under
-`@/inv/campaign-resumability`. Console output, `tee`, or `tail` is only
+`@/inv/campaign-evidence`. Console output, `tee`, or `tail` is only
 a view; none consumes or replaces the record. The driver never uses
 `producer | tail` as its persistence mechanism.
 

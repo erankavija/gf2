@@ -193,9 +193,9 @@ itself unavailable during a shard halts the campaign under `backend_unavailable`
 
 ## Identity and bounded runs
 
-Each run record pins the closed set of `@/inv/behavioral-evidence-validity`:
-executable digest, build flags, configuration digest, seed, RNG implementation and
-version, toolchain version, and observed host facts. A cell's first `start` event
+Each run record pins executable digest, build flags, configuration digest, seed,
+RNG implementation and version, toolchain version, and observed host facts, a
+superset of the set `@/inv/campaign-evidence` requires. A cell's first `start` event
 fixes its identity, and resuming it under a different identity refuses. Other
 cells may use another build or host. The source revision is a rebuild pointer.
 Worker count, argument vector, and availability policy are logged observations

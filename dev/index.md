@@ -18,7 +18,7 @@ declares the development root, the issue-scoped area and the permanent paths.
 ## Epic documents: `active/`
 
 `active/<epic-short-id>-<slug>/` holds the prose and code of one open epic, per
-`@/inv/active-document-layout`, and `active/<issue-short-id>/` those of one open
+`@/inv/document-placement`, and `active/<issue-short-id>/` those of one open
 issue outside an epic. The epic id resolves the directory, and `jit doc add`
 links each document to its owning issue:
 

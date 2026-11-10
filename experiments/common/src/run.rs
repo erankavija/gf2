@@ -85,7 +85,7 @@ pub struct HostFacts {
     pub accelerator: AcceleratorIdentity,
 }
 
-/// The closed identity set of `@/inv/behavioral-evidence-validity`. Equality of
+/// The closed identity set of `@/inv/campaign-evidence`. Equality of
 /// two values is equality of that set; only a change to it invalidates evidence.
 #[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

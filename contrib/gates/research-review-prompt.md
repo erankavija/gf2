@@ -21,7 +21,7 @@ Verify every prior blocking finding's state at HEAD before any new judgment and 
 ## Rubric — blocking on failure
 
 - Trace every quantitative claim (speedup, BLER, threshold, probability estimate, crossover, sample statistic) in attributable text to a committed artifact. Reject prose-only numbers. A number the text marks as a projection, budget, or worked example, and from which no reported result derives, traces to its derivation rather than to a measurement artifact.
-- Require every stochastic or performance result to record the closed identity set of `@/inv/behavioral-evidence-validity`. Do not require a record outside that set unless a success criterion names it.
+- Require every campaign result to record the pinned set of `@/inv/campaign-evidence`; any other measurement carries its harness, configuration and host name. Do not require a record outside that unless a success criterion names it.
 - Require sample counts and confidence intervals for every Monte Carlo estimate. Require error bars or interval columns in result tables and plots. Reject bare point estimates.
 - Require unmeasured numbers to be labeled as estimates. Reject estimates presented as measurements.
 - Require every comparison to name its baseline with version and provenance, and state the hardware. Require reproduction targets to quote the source's numbers under a registry citekey.
