@@ -1,5 +1,5 @@
 use gf2_kernels_simd::ldpc_lanes::{lane_check_step_portable, F32x8, LaneMinSumRule};
-use gf2_kernels_simd::ldpc_qc::{detect, QcBlock, QcKernels, QcTerm};
+use gf2_kernels_simd::ldpc_qc::{detect, QcAccumulation, QcBlock, QcKernels, QcSegment, QcTerm};
 
 fn backends() -> Vec<QcKernels> {
     let mut kernels = vec![QcKernels::portable()];
@@ -189,8 +189,18 @@ fn every_backend_rotates_differences_and_accumulates_in_term_order() {
             ];
             for terms in &lists {
                 for lanes in [0..z, 0..z / 2, z / 3..z, z / 2..z / 2, (z - 1)..z] {
+                    let plan = QcAccumulation::new(
+                        z,
+                        plane.len(),
+                        vec![0, 1],
+                        vec![QcSegment {
+                            lanes: lanes.clone(),
+                            terms: 0..terms.len(),
+                        }],
+                        terms.clone(),
+                    );
                     let mut beliefs = vec![123.0; z];
-                    kernel.accumulate_rotated(&mut beliefs, lanes.clone(), &block, &plane, terms);
+                    kernel.accumulate(&plan, &mut beliefs, &block, &plane);
                     for j in 0..z {
                         let want = if lanes.contains(&j) {
                             terms.iter().fold(block[j], |sum, term| {
@@ -211,6 +221,94 @@ fn every_backend_rotates_differences_and_accumulates_in_term_order() {
     }
 }
 
+/// Several column blocks, each split into segments with their own term
+/// lists, one block without segments: every lane equals its segment's sum.
+#[test]
+fn every_backend_accumulates_each_segment_of_each_column_block() {
+    for kernel in backends() {
+        for z in [1, 7, 8, 9, 17, 64, 65] {
+            let plane: Vec<f32> = (0..3 * z).map(|i| (i as f32).mul_add(0.25, -3.0)).collect();
+            let term = |circulant: usize, shift: usize| QcTerm {
+                offset: circulant * z,
+                shift: shift % z,
+            };
+            let terms = vec![
+                term(0, 1),
+                term(2, z / 2),
+                term(1, 3),
+                term(1, 0),
+                term(2, 5),
+            ];
+            let split = z / 3;
+            let segments = vec![
+                QcSegment {
+                    lanes: 0..split,
+                    terms: 0..2,
+                },
+                QcSegment {
+                    lanes: split..z,
+                    terms: 2..5,
+                },
+                QcSegment {
+                    lanes: 0..z,
+                    terms: 1..4,
+                },
+            ];
+            let plan = QcAccumulation::new(
+                z,
+                plane.len(),
+                vec![0, 2, 2, 3],
+                segments.clone(),
+                terms.clone(),
+            );
+            assert_eq!(plan.col_blocks(), 3);
+            let channel: Vec<f32> = (0..3 * z).map(|i| i as f32 - 1.5).collect();
+            let mut beliefs = vec![123.0; 3 * z];
+            kernel.accumulate(&plan, &mut beliefs, &channel, &plane);
+            let owner = [vec![0, 1], vec![], vec![2]];
+            for block in 0..3 {
+                for j in 0..z {
+                    let segment = owner[block]
+                        .iter()
+                        .map(|&s| &segments[s])
+                        .find(|s| s.lanes.contains(&j));
+                    let want = segment.map_or(123.0, |segment| {
+                        terms[segment.terms.clone()]
+                            .iter()
+                            .fold(channel[block * z + j], |sum, term| {
+                                sum + plane[term.offset + (j + z - term.shift) % z]
+                            })
+                    });
+                    assert_eq!(
+                        beliefs[block * z + j].to_bits(),
+                        want.to_bits(),
+                        "z {z}, block {block}, lane {j}"
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn accumulation_plans_outside_their_domain_are_refused() {
+    let term = |offset, shift| QcTerm { offset, shift };
+    let segment = |lanes, terms| QcSegment { lanes, terms };
+    for (offsets, segments, terms) in [
+        (vec![0, 1], vec![segment(0..10, 0..1)], vec![term(0, 0)]),
+        (vec![0, 1], vec![segment(0..9, 0..2)], vec![term(0, 0)]),
+        (vec![0, 1], vec![segment(0..9, 0..1)], vec![term(0, 9)]),
+        (vec![0, 1], vec![segment(0..9, 0..1)], vec![term(10, 0)]),
+        (vec![1, 1], vec![segment(0..9, 0..1)], vec![term(0, 0)]),
+        (vec![0, 2], vec![segment(0..9, 0..1)], vec![term(0, 0)]),
+        (vec![], vec![], vec![]),
+    ] {
+        let result =
+            std::panic::catch_unwind(|| QcAccumulation::new(9, 18, offsets, segments, terms));
+        assert!(result.is_err());
+    }
+}
+
 #[test]
 fn rotations_panic_before_writing_outside_their_domain() {
     for kernel in backends() {
@@ -223,49 +321,38 @@ fn rotations_panic_before_writing_outside_their_domain() {
             assert!(result.is_err());
         }
         assert!(out.iter().all(|&value| value == 123.0));
+        let plan = QcAccumulation::new(
+            9,
+            18,
+            vec![0, 1],
+            vec![QcSegment {
+                lanes: 0..9,
+                terms: 0..1,
+            }],
+            vec![QcTerm {
+                offset: 0,
+                shift: 0,
+            }],
+        );
         let mut beliefs = vec![123.0; 9];
-        let plane = vec![0.0; 18];
-        let cases: [(std::ops::Range<usize>, &[f32], QcTerm); 4] = [
-            (
-                0..10,
-                &block,
-                QcTerm {
-                    offset: 0,
-                    shift: 0,
-                },
-            ),
-            (
-                0..9,
-                &block,
-                QcTerm {
-                    offset: 0,
-                    shift: 9,
-                },
-            ),
-            (
-                0..9,
-                &block,
-                QcTerm {
-                    offset: 10,
-                    shift: 0,
-                },
-            ),
-            (
-                0..9,
-                &block[..8],
-                QcTerm {
-                    offset: 0,
-                    shift: 0,
-                },
-            ),
-        ];
-        for (lanes, channel, term) in cases {
+        for (beliefs_len, channel, plane) in [
+            (9, &block[..8], 18),
+            (8, &block[..], 18),
+            (9, &block[..], 17),
+        ] {
+            let mut beliefs = vec![123.0; beliefs_len];
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                kernel.accumulate_rotated(&mut beliefs, lanes.clone(), channel, &plane, &[term])
+                kernel.accumulate(&plan, &mut beliefs, channel, &vec![0.0; plane])
             }));
-            assert!(result.is_err(), "{lanes:?} {term:?}");
+            assert!(
+                result.is_err(),
+                "{beliefs_len} beliefs, {} channel, {plane} messages",
+                channel.len()
+            );
+            assert!(beliefs.iter().all(|&value| value == 123.0));
         }
-        assert!(beliefs.iter().all(|&value| value == 123.0));
+        kernel.accumulate(&plan, &mut beliefs, &block, &[0.0; 18]);
+        assert!(beliefs.iter().all(|&value| value == 1.0));
     }
 }
 

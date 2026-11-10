@@ -8,7 +8,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 use crate::ldpc_lanes::LaneMinSumRule;
-use crate::ldpc_qc::{check_block_scalar, QcBlock, QcKernels, QcTerm};
+use crate::ldpc_qc::{check_block_scalar, QcAccumulation, QcBlock, QcKernels, QcTerm};
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
@@ -19,7 +19,7 @@ pub(crate) fn detect() -> Option<QcKernels> {
     std::arch::is_x86_feature_detected!("avx2").then_some(QcKernels {
         check_block_fn: check_block_avx2,
         rotated_difference_fn: rotated_difference_avx2,
-        accumulate_rotated_fn: accumulate_rotated_avx2,
+        accumulate_fn: accumulate_avx2,
         check_row_rotated_fn: check_row_rotated_avx2,
     })
 }
@@ -49,17 +49,46 @@ fn rotated_difference_avx2(block: &[f32], shift: usize, subtrahend: &[f32], out:
     }
 }
 
-fn accumulate_rotated_avx2(
+fn accumulate_avx2(plan: &QcAccumulation, beliefs: &mut [f32], channel: &[f32], messages: &[f32]) {
+    // SAFETY: detect publishes this entry only on AVX2 hosts; QcKernels'
+    // public method has checked col_blocks * z beliefs and channel values
+    // and the plan's message count, and the plan's constructor every
+    // segment's lanes and terms against z and that count.
+    unsafe { accumulate_avx2_unchecked(plan, beliefs, channel, messages) }
+}
+
+/// # Safety
+/// The host must support AVX2 and the arguments must satisfy the checks of
+/// [`QcKernels::accumulate`].
+#[target_feature(enable = "avx2")]
+unsafe fn accumulate_avx2_unchecked(
+    plan: &QcAccumulation,
     beliefs: &mut [f32],
-    lanes: Range<usize>,
     channel: &[f32],
     messages: &[f32],
-    terms: &[QcTerm],
 ) {
-    // SAFETY: detect publishes this entry only on AVX2 hosts; QcKernels'
-    // public method has checked z channel values, lanes within 0..z, and
-    // shift < z and offset + z <= messages.len() for every term.
-    unsafe { accumulate_rotated_avx2_unchecked(beliefs, lanes, channel, messages, terms) }
+    let z = plan.z;
+    for (block, (beliefs, channel)) in beliefs
+        .chunks_exact_mut(z)
+        .zip(channel.chunks_exact(z))
+        .enumerate()
+    {
+        for segment in plan.block_segments(block) {
+            let terms = &plan.terms[segment.terms.clone()];
+            // SAFETY: z beliefs and channel values per block; the plan holds
+            // lanes within 0..z, and shift < z and offset + z <=
+            // messages.len() for every term.
+            unsafe {
+                accumulate_rotated_avx2_unchecked(
+                    beliefs,
+                    segment.lanes.clone(),
+                    channel,
+                    messages,
+                    terms,
+                );
+            }
+        }
+    }
 }
 
 /// Eight lanes from `lane` of one term's rotated messages.
@@ -134,10 +163,15 @@ unsafe fn rotated_tail(
     }
 }
 
+/// One segment of [`QcKernels::accumulate`]: `beliefs` and `channel` are
+/// one column block's `z` values.
+///
 /// # Safety
-/// The host must support AVX2 and the arguments must satisfy the checks of
-/// [`QcKernels::accumulate_rotated`].
+/// The host must support AVX2, both slices hold `z` values, `lanes` lies
+/// within `0..z`, and every term has `shift < z` and `offset + z <=
+/// messages.len()`.
 #[target_feature(enable = "avx2")]
+#[inline]
 unsafe fn accumulate_rotated_avx2_unchecked(
     beliefs: &mut [f32],
     lanes: Range<usize>,
