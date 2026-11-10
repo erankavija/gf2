@@ -327,3 +327,71 @@ fn test_polar_transform_matrix_equivalence_n4() {
         assert_eq!(transform_result, matrix_result);
     }
 }
+
+/// Bit-by-bit butterfly `(a, b) -> (a, a ^ b)` over the first `n` bits; the
+/// reference for the word-level paths `polar_transform_into` takes for
+/// `n >= 64`.
+fn polar_transform_bitwise_reference(bv: &mut BitVec, n: usize) {
+    let mut stride = 1;
+    while stride < n {
+        for i in (0..n).step_by(2 * stride) {
+            for j in i..i + stride {
+                let low = bv.get(j);
+                let high = bv.get(j + stride);
+                bv.set(j + stride, low ^ high);
+            }
+        }
+        stride *= 2;
+    }
+}
+
+fn seeded_bitvec(len: usize, mut state: u64) -> BitVec {
+    let mut bv = BitVec::zeros(len);
+    for i in 0..len {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        bv.set(i, state & 1 == 1);
+    }
+    bv
+}
+
+fn assert_matches_bitwise_reference(bv: &BitVec, n: usize) {
+    let mut expected = bv.clone();
+    polar_transform_bitwise_reference(&mut expected, n);
+    let mut forward = bv.clone();
+    forward.polar_transform_into(n);
+    assert_eq!(forward, expected, "forward, n = {n}, len = {}", bv.len());
+    let mut inverse = bv.clone();
+    inverse.polar_transform_inverse_into(n);
+    assert_eq!(inverse, expected, "inverse, n = {n}, len = {}", bv.len());
+
+    let tail = bv.len() % 64;
+    if tail != 0 {
+        let last = *forward.words().last().unwrap();
+        assert_eq!(last >> tail, 0, "tail padding, n = {n}, len = {}", bv.len());
+    }
+}
+
+#[test]
+fn test_polar_transform_matches_bitwise_reference_across_word_boundaries() {
+    for n in [1usize, 2, 64, 128, 256, 1024] {
+        for extra in [0usize, 1, 63, 64, 65] {
+            let len = n + extra;
+            let seed = 0x9E37_79B9_7F4A_7C15 ^ ((n as u64) << 8) ^ extra as u64;
+            assert_matches_bitwise_reference(&seeded_bitvec(len, seed), n);
+        }
+    }
+}
+
+proptest! {
+    #[test]
+    fn prop_polar_transform_matches_bitwise_reference(
+        log_n in 0u32..=11,
+        extra in 0usize..=130,
+        seed in 1u64..,
+    ) {
+        let n = 1usize << log_n;
+        assert_matches_bitwise_reference(&seeded_bitvec(n + extra, seed), n);
+    }
+}
