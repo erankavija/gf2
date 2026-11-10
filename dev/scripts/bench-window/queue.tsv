@@ -8,4 +8,6 @@ de311215	.agents/worktrees/agent-de311215	20	GF2_LDPC_BUNDLES="$PWD/../../ext/c0
 # c62356d2 QC route sweep with NR Z 8-48 added, on jit-c62356d2-bounds (main with the fused variable update); compare its QC times per cell with the jit-c62356d2-hot log; est_minutes is an estimate: 34 min for the 64 cells of the jit-c62356d2-hot run plus about 2 min per added code
 c62356d2	.agents/worktrees/jit-c62356d2-bounds	60	bash experiments/aff3ct-ldpc-gaps/qc-route-sweep.sh
 # be6d6f45 gf2 NR rate-matched encoding against srsRAN and AFF3CT at 1 and 12 workers; the comparator trees are host-local under .agents/ext; est_minutes is an estimate
-be6d6f45	.agents/worktrees/jit-be6d6f45-run	5	GF2_SRSRAN_ROOT="$PWD/../../ext/c077a88b/srsran" GF2_AFF3CT_ROOT="$PWD/../../ext/c077a88b/aff3ct" bash experiments/encode-compare/compare.sh nr
+be6d6f45	.agents/worktrees/jit-be6d6f45-run	5	GF2_SRSRAN_ROOT="$PWD/../../ext/c077a88b/srsran" GF2_AFF3CT_ROOT="$PWD/../../ext/c077a88b/aff3ct" GF2_BCHLIB_ROOT="$PWD/../../ext/040bc2b8/bchlib" bash experiments/encode-compare/compare.sh nr
+# 040bc2b8 gf2 DVB-T2 BCH encoding against bchlib at batch 1 and 256; the comparator trees are host-local under .agents/ext; est_minutes is an estimate
+040bc2b8	.agents/worktrees/jit-be6d6f45-run	3	GF2_SRSRAN_ROOT="$PWD/../../ext/c077a88b/srsran" GF2_AFF3CT_ROOT="$PWD/../../ext/c077a88b/aff3ct" GF2_BCHLIB_ROOT="$PWD/../../ext/040bc2b8/bchlib" bash experiments/encode-compare/compare.sh bch

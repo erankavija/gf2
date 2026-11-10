@@ -1,5 +1,6 @@
 //! Compiles the comparator shims against the host-local source trees that
-//! `GF2_SRSRAN_ROOT` and `GF2_AFF3CT_ROOT` name, all `-O3 -march=native`.
+//! `GF2_SRSRAN_ROOT`, `GF2_AFF3CT_ROOT` and `GF2_BCHLIB_ROOT` name, all
+//! `-O3 -march=native`.
 //! srsRAN's LDPC translation units are compiled directly, which needs none
 //! of its other layers; AFF3CT links its static library and must see the
 //! definitions that library was built with.
@@ -54,6 +55,18 @@ fn main() {
         build.file(srsran.join(source));
     }
     build.compile("srsran_nr");
+
+    let bchlib = root("GF2_BCHLIB_ROOT");
+    cc::Build::new()
+        .file("cpp/bchlib.c")
+        .file(bchlib.join("src/bch.c"))
+        .include(bchlib.join("src"))
+        .flag("-std=c99")
+        .flag("-O3")
+        .flag("-march=native")
+        .flag("-w")
+        .define("NDEBUG", None)
+        .compile("bchlib");
 
     let aff3ct = root("GF2_AFF3CT_ROOT");
     let mut build = cc::Build::new();

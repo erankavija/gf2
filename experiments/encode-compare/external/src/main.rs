@@ -1,19 +1,26 @@
 //! `encode-compare nr` times gf2's NR rate-matched encoder against srsRAN's
 //! and AFF3CT's on the cells of [`encode_compare::nr::NR_CELLS`] and prints one
-//! table row per cell, worker count and arm. Before timing, every arm must
-//! reproduce gf2's codewords for all the cell's messages; an arm that does not,
-//! or whose library derives another base graph or lifting size, is reported
-//! and not timed. `ENCODE_COMPARE_WORKERS` (default `1,12`) lists the worker
-//! counts.
+//! table row per cell, worker count and arm; `ENCODE_COMPARE_WORKERS` (default
+//! `1,12`) lists the worker counts. `encode-compare bch` times gf2's DVB-T2
+//! BCH encoder against bchlib's on [`encode_compare::bch::BCH_CELLS`] at one
+//! worker. Before timing, every arm must reproduce gf2's codewords for all
+//! the cell's messages; an arm that does not, or whose library derives
+//! another base graph or lifting size, is reported and not timed.
 
+use encode_compare::bch::{BchCell, Gf2BchArm, BCH_CELLS};
 use encode_compare::nr::{Gf2NrArm, NrCell, NR_CELLS};
-use encode_compare::{frames_per_second, host_description, messages, Arm};
+use encode_compare::{frames_per_second, host_description, messages, Arm, MESSAGES};
+use gf2_coding::traits::block::BlockCode;
 use gf2_coding::traits::BlockEncoder;
 use gf2_core::BitVec;
 use std::ffi::{c_char, c_void, CString};
 use std::sync::Arc;
 
 extern "C" {
+    fn gf2_bchlib_new(m: i32, t: i32, prim_poly: u32) -> *mut c_void;
+    fn gf2_bchlib_free(handle: *mut c_void);
+    fn gf2_bchlib_ecc_bits(handle: *mut c_void) -> u32;
+    fn gf2_bchlib_encode(handle: *mut c_void, data: *const u8, len: u32, ecc: *mut u8);
     fn gf2_srsran_nr_avx2() -> i32;
     fn gf2_srsran_nr_k_ldpc(bg: i32, z: i32) -> i32;
     fn gf2_srsran_nr_new() -> *mut c_void;
@@ -217,7 +224,7 @@ fn nr() {
     for spec in NR_CELLS {
         let code = Arc::new(spec.code());
         let z = code.params().lifting_factor;
-        let messages = Arc::new(messages(spec.k, spec.seed()));
+        let messages = Arc::new(messages(spec.k, MESSAGES, spec.seed()));
         let expected = messages.iter().map(|m| code.encode(m)).collect();
         let cell = Cell {
             spec,
@@ -314,13 +321,14 @@ fn nr() {
         }
 
         for &w in &workers() {
-            let gf2 = frames_per_second(w, || {
+            let gf2 = frames_per_second(w, MESSAGES, || {
                 Box::new(Gf2NrArm::new(code.clone(), messages.clone()))
             });
             row(&cell, w, "gf2", gf2, None);
             if srsran_ok {
-                let fps =
-                    frames_per_second(w, || Box::new(SrsranArm::new(&cell, srsran_inputs.clone())));
+                let fps = frames_per_second(w, MESSAGES, || {
+                    Box::new(SrsranArm::new(&cell, srsran_inputs.clone()))
+                });
                 row(
                     &cell,
                     w,
@@ -330,13 +338,142 @@ fn nr() {
                 );
             }
             if i8_ok {
-                let fps = frames_per_second(w, || Box::new(new_i8().expect("validated above")));
+                let fps =
+                    frames_per_second(w, MESSAGES, || Box::new(new_i8().expect("validated above")));
                 row(&cell, w, "AFF3CT int8", fps, Some(gf2));
             }
             if i32_ok {
-                let fps = frames_per_second(w, || Box::new(new_i32().expect("validated above")));
+                let fps = frames_per_second(w, MESSAGES, || {
+                    Box::new(new_i32().expect("validated above"))
+                });
                 row(&cell, w, "AFF3CT int32", fps, Some(gf2));
             }
+        }
+    }
+}
+
+/// bchlib's encoder for one code, over messages packed most significant bit
+/// first, the byte order its polynomial convention reads.
+struct BchlibArm {
+    handle: *mut c_void,
+    inputs: Arc<Vec<Vec<u8>>>,
+    ecc: Vec<u8>,
+}
+
+impl BchlibArm {
+    /// `None` when bchlib rejects the field or the correction radius.
+    fn new(m: i32, t: i32, prim_poly: u32, inputs: Arc<Vec<Vec<u8>>>) -> Option<Self> {
+        // SAFETY: null signals rejection; a non-null handle is owned here.
+        let handle = unsafe { gf2_bchlib_new(m, t, prim_poly) };
+        if handle.is_null() {
+            return None;
+        }
+        // SAFETY: `handle` is a live bchlib control.
+        let ecc_bits = unsafe { gf2_bchlib_ecc_bits(handle) } as usize;
+        Some(Self {
+            handle,
+            inputs,
+            ecc: vec![0; ecc_bits.div_ceil(8)],
+        })
+    }
+
+    /// The data bits then the parity bits, both most significant bit first.
+    fn codeword(&self, index: usize, k: usize, r: usize) -> BitVec {
+        let mut bits = from_msb_first(&self.inputs[index], k);
+        let parity = from_msb_first(&self.ecc, r);
+        let mut out = BitVec::zeros(k + r);
+        out.copy_bits(0, &bits, 0, k);
+        out.copy_bits(k, &parity, 0, r);
+        bits.clear();
+        out
+    }
+}
+
+impl Arm for BchlibArm {
+    fn encode(&mut self, index: usize) {
+        let data = &self.inputs[index];
+        // SAFETY: `data` holds the message bytes and `ecc` the control's
+        // ecc_bytes, the lengths `bch_encode` reads and writes.
+        unsafe {
+            gf2_bchlib_encode(
+                self.handle,
+                data.as_ptr(),
+                data.len() as u32,
+                self.ecc.as_mut_ptr(),
+            )
+        }
+    }
+}
+
+impl Drop for BchlibArm {
+    fn drop(&mut self) {
+        // SAFETY: `handle` came from `gf2_bchlib_new` and is freed once.
+        unsafe { gf2_bchlib_free(self.handle) }
+    }
+}
+
+/// The field degree, correction radius and primitive polynomial of a
+/// DVB-T2 rate-1/2 outer code (`@/citation/Etsi2015` Tables 6a and 6b).
+fn bch_parameters(cell: &BchCell) -> (i32, i32, u32) {
+    match cell.frame {
+        gf2_coding::bch::dvb_t2::FrameSize::Short => (14, 12, 0b100000000101011),
+        gf2_coding::bch::dvb_t2::FrameSize::Normal => (16, 12, 0b10000000000101101),
+    }
+}
+
+fn bch() {
+    println!("# host: {}", host_description());
+    println!("# bchlib bch_encode (four-table remainder); gf2 DvbT2BchCode::encode_into");
+    println!("# ratio: gf2 codewords/s over the arm's; above 1 means gf2 is faster");
+    println!("| cell | batch | arm | codewords/s | info Mb/s | gf2 ratio |");
+    println!("|---|---|---|---|---|---|");
+    for cell in BCH_CELLS {
+        let code = Arc::new(cell.code());
+        let (n, k) = (BlockCode::n(code.as_ref()), BlockCode::k(code.as_ref()));
+        let r = n - k;
+        let messages = Arc::new(messages(k, cell.batch, cell.seed()));
+        let expected: Vec<BitVec> = messages
+            .iter()
+            .map(|m| {
+                gf2_coding::traits::block::BlockEncoder::encode(code.as_ref(), m)
+                    .expect("a message of length k")
+            })
+            .collect();
+        let inputs = Arc::new(
+            messages
+                .iter()
+                .map(|m| msb_first(m, k.div_ceil(8)))
+                .collect::<Vec<_>>(),
+        );
+        let (m, t, prim) = bch_parameters(&cell);
+        let name = format!("{:?} n={n} k={k}", cell.frame);
+        let row = |arm: &str, fps: f64, gf2: Option<f64>| {
+            let ratio = gf2.map_or("-".to_owned(), |g| format!("{:.2}", g / fps));
+            println!(
+                "| {name} | {} | {arm} | {fps:.0} | {:.1} | {ratio} |",
+                cell.batch,
+                fps * k as f64 / 1e6
+            );
+        };
+        let bchlib_ok = k % 8 == 0
+            && BchlibArm::new(m, t, prim, inputs.clone()).is_some_and(|mut arm| {
+                (0..messages.len()).all(|i| {
+                    arm.encode(i);
+                    arm.codeword(i, k, r) == expected[i]
+                })
+            });
+        if !bchlib_ok {
+            println!("# {name}: bchlib does not reproduce gf2's codewords; not timed");
+        }
+        let gf2 = frames_per_second(1, cell.batch, || {
+            Box::new(Gf2BchArm::new(code.clone(), messages.clone()))
+        });
+        row("gf2", gf2, None);
+        if bchlib_ok {
+            let fps = frames_per_second(1, cell.batch, || {
+                Box::new(BchlibArm::new(m, t, prim, inputs.clone()).expect("validated above"))
+            });
+            row("bchlib", fps, Some(gf2));
         }
     }
 }
@@ -344,8 +481,9 @@ fn nr() {
 fn main() {
     match std::env::args().nth(1).as_deref() {
         Some("nr") => nr(),
+        Some("bch") => bch(),
         _ => {
-            eprintln!("usage: encode-compare nr");
+            eprintln!("usage: encode-compare nr|bch");
             std::process::exit(2);
         }
     }

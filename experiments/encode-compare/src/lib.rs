@@ -1,6 +1,7 @@
 //! Throughput harness of the encoder comparisons (@/issue/be6d6f45,
 //! @/issue/040bc2b8): a cell's arms encode the same seeded messages, each in
-//! its own input format, and report frames per second at a worker count.
+//! its own input format, and report frames per second at a worker count and
+//! message pool size.
 //!
 //! Every worker builds its own arm and encodes the shared messages in turn
 //! for [`REP_SECONDS`]; a cell's rate is the median over [`REPS`] such
@@ -17,7 +18,7 @@ pub const REP_SECONDS: f64 = 0.5;
 pub const REPS: usize = 5;
 /// Untimed encoding before the first repetition.
 pub const WARMUP_SECONDS: f64 = 0.2;
-/// Distinct messages a cell cycles through.
+/// Distinct messages an NR cell cycles through.
 pub const MESSAGES: usize = 64;
 
 /// One implementation's encoder, owned by one worker.
@@ -28,8 +29,8 @@ pub trait Arm {
 }
 
 /// Median frames per second of `workers` workers, each running the arm
-/// `make` builds.
-pub fn frames_per_second<F>(workers: usize, make: F) -> f64
+/// `make` builds over messages `0..pool` in turn.
+pub fn frames_per_second<F>(workers: usize, pool: usize, make: F) -> f64
 where
     F: Fn() -> Box<dyn Arm> + Sync,
 {
@@ -46,7 +47,7 @@ where
                     let mut done = 0;
                     while !stop.load(Ordering::Relaxed) {
                         for _ in 0..8 {
-                            arm.encode(black_box(index % MESSAGES));
+                            arm.encode(black_box(index % pool));
                             index += 1;
                         }
                         done += 8;
@@ -100,11 +101,13 @@ pub fn host_description() -> String {
     format!("{host} ({cpu})")
 }
 
-/// Seeded messages of `k` bits each, the inputs every arm of a cell encodes.
-pub fn messages(k: usize, seed: u64) -> Vec<gf2_core::BitVec> {
-    (0..MESSAGES as u64)
+/// `count` seeded messages of `k` bits each, the inputs every arm of a cell
+/// encodes.
+pub fn messages(k: usize, count: usize, seed: u64) -> Vec<gf2_core::BitVec> {
+    (0..count as u64)
         .map(|i| gf2_core::BitVec::random_seeded(k, seed ^ (i << 32)))
         .collect()
 }
 
+pub mod bch;
 pub mod nr;
