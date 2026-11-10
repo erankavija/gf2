@@ -342,6 +342,8 @@ pub struct LayeredDecoder {
     /// Beliefs in code variable order, when the orders differ.
     output: Vec<i8>,
     messages: Vec<i8>,
+    /// Packed decisions of the last decode.
+    words: Vec<u64>,
     buffer: Vec<i8>,
     hard: Vec<u8>,
     parity: Vec<u8>,
@@ -421,6 +423,7 @@ impl LayeredDecoder {
             },
             variables,
             messages: vec![0; schedule.message_len],
+            words: Vec::with_capacity(schedule.n.div_ceil(64)),
             buffer: vec![0; schedule.buffer_len],
             hard: vec![0; schedule.n],
             parity: vec![0; schedule.max_stride],
@@ -487,16 +490,17 @@ impl LayeredDecoder {
         codeword: &mut BitVec,
     ) -> DecodeOutcome {
         assert_eq!(llrs.len(), self.schedule.n, "LLR length must equal n");
-        match &self.variables {
-            Some(variables) => {
-                for (slot, &v) in self.posterior.iter_mut().zip(variables) {
-                    *slot = self.config.quantize(llrs[v as usize]);
-                }
-            }
-            None => {
-                for (slot, &llr) in self.posterior.iter_mut().zip(llrs) {
-                    *slot = self.config.quantize(llr);
-                }
+        // Quantize in code order, which vectorizes, then permute bytes.
+        let quantized = match &self.variables {
+            Some(_) => &mut self.output,
+            None => &mut self.posterior,
+        };
+        for (slot, &llr) in quantized.iter_mut().zip(llrs) {
+            *slot = self.config.quantize(llr);
+        }
+        if let Some(variables) = &self.variables {
+            for (slot, &v) in self.posterior.iter_mut().zip(variables) {
+                *slot = self.output[v as usize];
             }
         }
         self.messages.fill(0);
@@ -533,9 +537,16 @@ impl LayeredDecoder {
             }
             None => &self.posterior,
         };
-        for &value in beliefs {
-            codeword.push_bit(value < 0);
-        }
+        // Sign bits, 64 decisions per word.
+        self.words.clear();
+        self.words.extend(beliefs.chunks(64).map(|chunk| {
+            chunk
+                .iter()
+                .enumerate()
+                .fold(0u64, |word, (i, &value)| word | (u64::from(value < 0) << i))
+        }));
+        codeword.resize(beliefs.len(), false);
+        codeword.write_bits(0, &self.words, beliefs.len());
         DecodeOutcome {
             iterations,
             converged: syndrome_check_passed,
