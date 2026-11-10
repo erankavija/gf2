@@ -12,7 +12,7 @@
 - In progress, code merged, review findings open: `040bc2b8`, `c9cb0dd2`, `259acf37`, `07a1813a`; `069e3c33` (claim released, state ready) and `8a8a3bc9` (doc-review failed).
 - In progress, code merged, review not run: `befccab3`, `de311215`.
 - `4f21da96` is WIP on branch `jit-4f21da96` at `309ab9985`, unmerged, blocked (see open questions). Its claim is recorded inside that commit only.
-- Disk: 205 GB free after deleting cargo build directories in 58 idle worktrees. Measurement outputs under their `target/` directories were kept. 62 worktrees remain registered.
+- Disk: 292 GB free. Five worktrees remain besides the main checkout: the four run worktrees and `jit-4f21da96`. Every other worktree was removed after a per-worktree check; their branches remain, except the superseded `jit-befccab3-k8` and `jit-c62356d2-bounds`, which were deleted.
 - `cargo-ci` gate: passes on a warm build; a cold run after merges exceeds its 900 s timeout.
 
 ## What just happened
@@ -26,6 +26,7 @@
 - `07a1813a`: polar butterfly on words, about 1500 to 3100 times faster than the bit loop on the criterion bench (indication).
 - `de311215` REQ-04 rests on route tests over all 12 DVB-T2 codes; no bundles were generated.
 - Process changes by owner decision: a window defers jobs estimated above 5 minutes unless the cap is lifted; the quiet-host wait uses load 4.0; the code-review prompt treats findings that only a history rewrite could repair as advisory; `259acf37` REQ-06 and `7a5ee7c7` REQ-03 were reworded.
+- About 570 local branches exist; pruning the merged ones is not analysed.
 - A dashboard of today's ratios is published privately at `https://claude.ai/artifact/4ZoceRZh2aYohYxaumogP7`.
 
 ## What to do next
@@ -39,8 +40,7 @@
 7. `07a1813a`: rerun `cargo-ci`, code-review and doc-review on main; the plain-loop change merged after the last `cargo-ci` verdict.
 8. Run code-review for `befccab3` and `de311215`; both have recorded results and merged code.
 9. `ccaed736` and `a33fda32`: plans approved (shared rank-derived parity-check helper; `WorkspaceEncoder` trait with rustdoc workflow example, one family selection, and a default `encode_into` that is not the slow path). No code exists.
-10. Remove merged worktrees after checking each for untracked files: the `fix-*` set, `jit-befccab3-*`, `jit-c62356d2-*`, the three `gf2-wt-*` directories beside the repository, `tracker`, `agent-de311215-pin`.
-11. Epic `d77176e5` keeps `12a3c312` and `f768c925` ready and untouched.
+10. Epic `d77176e5` keeps `12a3c312` and `f768c925` ready and untouched.
 
 ## Traps — do not repeat these
 
