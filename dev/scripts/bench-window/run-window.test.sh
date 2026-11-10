@@ -53,11 +53,19 @@ capped=$(run_wait capped 3.50 1 5)
 expect capped 'load wait bound passed after_s=1 load=3\.50 2\.00 3\.00; starting anyway$' "$capped"
 
 # The estimate cap admits jobs up to its value; 0 lifts it.
-"$HERE/run-window.sh" --cap-check 5
-! "$HERE/run-window.sh" --cap-check 6
-GF2_WINDOW_MAX_EST_MIN=0 "$HERE/run-window.sh" --cap-check 60
-GF2_WINDOW_MAX_EST_MIN=60 "$HERE/run-window.sh" --cap-check 60
-! GF2_WINDOW_MAX_EST_MIN=20 "$HERE/run-window.sh" --cap-check 60
+cap_check() {
+  local want=$1 cap=$2 minutes=$3 got=runs
+  GF2_WINDOW_MAX_EST_MIN=$cap "$HERE/run-window.sh" --cap-check "$minutes" || got=deferred
+  if [[ $got != "$want" ]]; then
+    printf 'run-window.test: cap %s, estimate %s: %s, expected %s\n' "$cap" "$minutes" "$got" "$want" >&2
+    exit 1
+  fi
+}
+cap_check runs 5 5
+cap_check deferred 5 6
+cap_check runs 0 60
+cap_check runs 60 60
+cap_check deferred 20 60
 
 printf '%s\n' "$quiet" "$loaded" "$capped"
 echo "run-window.test: ok"

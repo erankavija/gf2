@@ -50,7 +50,6 @@ LOAD_POLL_S="${GF2_WINDOW_LOAD_POLL_S:-30}"
 LOADAVG="${GF2_WINDOW_LOADAVG:-/proc/loadavg}"
 MAX_EST_MIN="${GF2_WINDOW_MAX_EST_MIN:-5}"
 
-# True when a job estimated at $1 minutes runs in this window.
 under_cap() { ((MAX_EST_MIN == 0 || $1 <= MAX_EST_MIN)); }
 if [[ "${1:-}" == --cap-check ]]; then
     under_cap "$2"
