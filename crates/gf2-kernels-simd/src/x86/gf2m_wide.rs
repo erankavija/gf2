@@ -215,13 +215,15 @@ pub unsafe fn clmul_wide9_xmm(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {
     fold_diagonals_9x9(diag, out);
 }
 
-/// 9×9 schoolbook carry-less multiply using VPCLMULQDQ on YMM lanes.
+/// 9×9 schoolbook carry-less multiply using 41 VPCLMULQDQ-on-YMM
+/// instructions.
 ///
-/// The 81 scalar word-pair products are scheduled row-major two at a time.
-/// Each VPCLMULQDQ-on-YMM instruction computes two independent 64×64
-/// carry-less products, one in each 128-bit lane; the odd final product is
-/// paired with a zero lane. Products are accumulated by anti-diagonal in
-/// XMM registers and folded to the 18 output limbs once at the end.
+/// `a[0..8]` loads as two YMM vectors of word pairs and each `b[j]` is
+/// broadcast, as in [`clmul_wide8_ymm`]: 36 instructions give `a[i] · b[j]`
+/// for `i < 8`. A broadcast `a[8]` against the loads `b[0..4]` and `b[4..8]`
+/// under immediates `0x00` and `0x10` gives `a[8] · b[j]` for `j < 8` in four
+/// more, and one gives `a[8] · b[8]`. Register `k` accumulates the
+/// anti-diagonal pair `(k, k + 2)`. `out` is overwritten.
 ///
 /// # Safety
 ///
@@ -231,92 +233,46 @@ pub unsafe fn clmul_wide9_xmm(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {
 /// exclusive access to `out`.
 #[target_feature(enable = "avx2", enable = "vpclmulqdq")]
 pub unsafe fn clmul_wide9_ymm(a: &[u64; 9], b: &[u64; 9], out: &mut [u64; 18]) {
-    for slot in out.iter_mut() {
-        *slot = 0;
+    // SAFETY: each load reads four of a's or b's first eight words.
+    let (low, high, b_low, b_high) = unsafe {
+        (
+            _mm256_loadu_si256(a.as_ptr().cast()),
+            _mm256_loadu_si256(a.as_ptr().add(4).cast()),
+            _mm256_loadu_si256(b.as_ptr().cast()),
+            _mm256_loadu_si256(b.as_ptr().add(4).cast()),
+        )
+    };
+    let mut pairs = [_mm256_setzero_si256(); 14];
+    macro_rules! column {
+        ($($j:literal)*) => {$(
+            let bj = _mm256_set1_epi64x(b[$j] as i64);
+            pairs[$j] = _mm256_xor_si256(pairs[$j], _mm256_clmulepi64_epi128::<0x00>(low, bj));
+            pairs[$j + 1] =
+                _mm256_xor_si256(pairs[$j + 1], _mm256_clmulepi64_epi128::<0x01>(low, bj));
+            pairs[$j + 4] =
+                _mm256_xor_si256(pairs[$j + 4], _mm256_clmulepi64_epi128::<0x00>(high, bj));
+            pairs[$j + 5] =
+                _mm256_xor_si256(pairs[$j + 5], _mm256_clmulepi64_epi128::<0x01>(high, bj));
+        )*};
     }
-
-    let mut d0 = _mm_setzero_si128();
-    let mut d1 = _mm_setzero_si128();
-    let mut d2 = _mm_setzero_si128();
-    let mut d3 = _mm_setzero_si128();
-    let mut d4 = _mm_setzero_si128();
-    let mut d5 = _mm_setzero_si128();
-    let mut d6 = _mm_setzero_si128();
-    let mut d7 = _mm_setzero_si128();
-    let mut d8 = _mm_setzero_si128();
-    let mut d9 = _mm_setzero_si128();
-    let mut d10 = _mm_setzero_si128();
-    let mut d11 = _mm_setzero_si128();
-    let mut d12 = _mm_setzero_si128();
-    let mut d13 = _mm_setzero_si128();
-    let mut d14 = _mm_setzero_si128();
-    let mut d15 = _mm_setzero_si128();
-    let mut d16 = _mm_setzero_si128();
-
-    macro_rules! mul_pair {
-        ($i0:literal, $j0:literal, $d0:ident, $i1:literal, $j1:literal, $d1:ident) => {{
-            let a_vec = _mm256_set_epi64x(0, a[$i1] as i64, 0, a[$i0] as i64);
-            let b_vec = _mm256_set_epi64x(0, b[$j1] as i64, 0, b[$j0] as i64);
-            let product = _mm256_clmulepi64_epi128::<0x00>(a_vec, b_vec);
-            $d0 = _mm_xor_si128($d0, _mm256_extracti128_si256::<0>(product));
-            $d1 = _mm_xor_si128($d1, _mm256_extracti128_si256::<1>(product));
-        }};
+    column!(0 1 2 3 4 5 6 7 8);
+    // a[8] · (b[j], b[j + 2]) and a[8] · (b[j + 1], b[j + 3]) land on the
+    // pairs (8 + j, 10 + j) and (9 + j, 11 + j).
+    let a8 = _mm256_set1_epi64x(a[8] as i64);
+    pairs[8] = _mm256_xor_si256(pairs[8], _mm256_clmulepi64_epi128::<0x00>(a8, b_low));
+    pairs[9] = _mm256_xor_si256(pairs[9], _mm256_clmulepi64_epi128::<0x10>(a8, b_low));
+    pairs[12] = _mm256_xor_si256(pairs[12], _mm256_clmulepi64_epi128::<0x00>(a8, b_high));
+    pairs[13] = _mm256_xor_si256(pairs[13], _mm256_clmulepi64_epi128::<0x10>(a8, b_high));
+    let last = _mm256_clmulepi64_epi128::<0x00>(a8, _mm256_set1_epi64x(b[8] as i64));
+    let mut diag = [_mm_setzero_si128(); 17];
+    for (k, pair) in pairs.iter().enumerate() {
+        diag[k] = _mm_xor_si128(diag[k], _mm256_castsi256_si128(*pair));
+        diag[k + 2] = _mm_xor_si128(diag[k + 2], _mm256_extracti128_si256::<1>(*pair));
     }
-
-    mul_pair!(0, 0, d0, 0, 1, d1);
-    mul_pair!(0, 2, d2, 0, 3, d3);
-    mul_pair!(0, 4, d4, 0, 5, d5);
-    mul_pair!(0, 6, d6, 0, 7, d7);
-    mul_pair!(0, 8, d8, 1, 0, d1);
-    mul_pair!(1, 1, d2, 1, 2, d3);
-    mul_pair!(1, 3, d4, 1, 4, d5);
-    mul_pair!(1, 5, d6, 1, 6, d7);
-    mul_pair!(1, 7, d8, 1, 8, d9);
-    mul_pair!(2, 0, d2, 2, 1, d3);
-    mul_pair!(2, 2, d4, 2, 3, d5);
-    mul_pair!(2, 4, d6, 2, 5, d7);
-    mul_pair!(2, 6, d8, 2, 7, d9);
-    mul_pair!(2, 8, d10, 3, 0, d3);
-    mul_pair!(3, 1, d4, 3, 2, d5);
-    mul_pair!(3, 3, d6, 3, 4, d7);
-    mul_pair!(3, 5, d8, 3, 6, d9);
-    mul_pair!(3, 7, d10, 3, 8, d11);
-    mul_pair!(4, 0, d4, 4, 1, d5);
-    mul_pair!(4, 2, d6, 4, 3, d7);
-    mul_pair!(4, 4, d8, 4, 5, d9);
-    mul_pair!(4, 6, d10, 4, 7, d11);
-    mul_pair!(4, 8, d12, 5, 0, d5);
-    mul_pair!(5, 1, d6, 5, 2, d7);
-    mul_pair!(5, 3, d8, 5, 4, d9);
-    mul_pair!(5, 5, d10, 5, 6, d11);
-    mul_pair!(5, 7, d12, 5, 8, d13);
-    mul_pair!(6, 0, d6, 6, 1, d7);
-    mul_pair!(6, 2, d8, 6, 3, d9);
-    mul_pair!(6, 4, d10, 6, 5, d11);
-    mul_pair!(6, 6, d12, 6, 7, d13);
-    mul_pair!(6, 8, d14, 7, 0, d7);
-    mul_pair!(7, 1, d8, 7, 2, d9);
-    mul_pair!(7, 3, d10, 7, 4, d11);
-    mul_pair!(7, 5, d12, 7, 6, d13);
-    mul_pair!(7, 7, d14, 7, 8, d15);
-    mul_pair!(8, 0, d8, 8, 1, d9);
-    mul_pair!(8, 2, d10, 8, 3, d11);
-    mul_pair!(8, 4, d12, 8, 5, d13);
-    mul_pair!(8, 6, d14, 8, 7, d15);
-    {
-        let a_vec = _mm256_set_epi64x(0, 0, 0, a[8] as i64);
-        let b_vec = _mm256_set_epi64x(0, 0, 0, b[8] as i64);
-        let product = _mm256_clmulepi64_epi128::<0x00>(a_vec, b_vec);
-        d16 = _mm_xor_si128(d16, _mm256_extracti128_si256::<0>(product));
-    }
-
-    fold_diagonals_9x9(
-        [
-            d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16,
-        ],
-        out,
-    );
+    diag[16] = _mm_xor_si128(diag[16], _mm256_castsi256_si128(last));
+    fold_diagonals_9x9(diag, out);
 }
+
 /// Fold anti-diagonal 128-bit products into little-endian output limbs.
 ///
 /// `diag[k]` holds the XOR of all 128-bit word products with `i + j == k`.
@@ -398,7 +354,24 @@ mod tests {
                 ],
             ),
             ([u64::MAX; 9], [u64::MAX; 9]),
+            ([0, 0, 0, 0, 0, 0, 0, 0, u64::MAX], [u64::MAX; 9]),
+            ([u64::MAX; 9], [0, 0, 0, 0, 0, 0, 0, 0, u64::MAX]),
         ]
+        .into_iter()
+        .chain((0..16u64).map(|seed| {
+            let mut state = 0x9e37_79b9_7f4a_7c15 ^ seed;
+            let mut next = || {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                state
+            };
+            (
+                core::array::from_fn(|_| next()),
+                core::array::from_fn(|_| next()),
+            )
+        }))
+        .collect()
     }
 
     #[test]
