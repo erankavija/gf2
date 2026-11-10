@@ -21,7 +21,8 @@ decoder's under these rules.
   from the variable-to-check messages of the preceding iteration, then every
   variable from the resulting check-to-variable messages.
 - **Outside the contract.** Quantized message alphabets and layered schedules
-  are outside the contract.
+  are outside the contract. The layered quantized decoder has its own rules,
+  stated in [Layered quantized decoder](#layered-quantized-decoder).
 - **Iteration cap.** The rules hold for every iteration cap. At a cap of zero
   no iteration runs: the posterior equals the frame's channel LLRs, the
   decoded codeword is their hard decision, `iterations` is 0, and
@@ -223,6 +224,61 @@ batch assigns it no frame.
 - **QC backends.** The QC kernels of `gf2-kernels-simd` have the same two
   backends under the same detection, each clause holds on either, and
   `batch_route` names the backend of a QC-route wave.
+
+## Layered quantized decoder
+
+`gf2_coding::ldpc::LayeredDecoder`
+([`layered.rs`](../../crates/gf2-coding/src/ldpc/layered.rs)) is constructed
+explicitly; no route selects it. Its results are not the canonical decoder's
+frame for frame, and frame error rate is its quality measure. Its kernel,
+`gf2_kernels_simd::ldpc_layered`
+([`ldpc_layered.rs`](../../crates/gf2-kernels-simd/src/ldpc_layered.rs)),
+has a portable and an AVX2 backend, selected as for the QC kernels; both write
+the same bit patterns, so every rule below holds on either.
+
+- **Channel quantization.** With `LayeredConfig` scale $s$ and channel limit
+  $C \le 127$, channel LLR $L$ becomes $q = \operatorname{clamp}(\operatorname{round}(s L), -C, C)$,
+  rounding half away from zero. NaN quantizes to 0 and $\pm\infty$ to $\pm C$.
+  A punctured or truncated position's zero LLR quantizes to 0, and a filler at
+  `FILLER_LLR` saturates to $C$ for every scale at least $C$ / `FILLER_LLR`.
+- **State.** Each variable holds an `i8` belief $A_v$, initially $q_v$; each
+  edge holds an `i8` check-to-variable message $\lambda_e$, initially 0.
+- **Layers.** A layer is a set of checks sharing no variable, updated at
+  once. `LayeredDecoder::new` takes a code with retained QC structure and
+  layers it by base row block in ascending order; a row block whose
+  circulants share a column block is split, each check, in lifted-row order,
+  joining the first of the block's layers it shares no variable with.
+  `LayeredDecoder::with_layers` takes an explicit partition in the given order.
+  Checks of degree at most one send only zero messages.
+- **Check update.** For check $c$ with message bound $M \le 126$, each edge
+  forms $\mu_e = \operatorname{clamp}(A_v - \lambda_e, -(127 - M), 127 - M)$. The
+  sign of $\mu \ge 0$ is positive. The excluded minimum magnitude $m_e$ over
+  the other edges follows the [tie rule](#magnitude-and-tie-rule) with an
+  initial value of 127. `Normalized { eighths: k }` scales it to
+  $\lfloor k\, m_e / 8 \rfloor$ and `Offset { beta }` to
+  $\max(m_e - \beta, 0)$; the result is bounded by $M$ and signed by the
+  product of the other signs. A degree-one check writes 0. Each belief becomes
+  $A_v = \mu_e + \lambda_e$, exact in `i8` because of the bound on $\mu_e$.
+- **Iteration.** One iteration updates every layer in order; a layer reads
+  the beliefs its predecessors wrote.
+- **Hard decision and termination.** Variable $v$ decides 1 when $A_v < 0$.
+  The syndrome, early termination, iteration count, flags and cap-zero rules
+  are those of [per-frame termination](#per-frame-termination), over these
+  decisions; at cap zero the posterior is $q$.
+
+[`ldpc_layered_contract`](../../crates/gf2-coding/tests/ldpc_layered_contract.rs)
+holds both backends to identical posteriors, words, iteration counts and
+flags over 5G NR codes of both base graphs at lifting sizes below, at and
+above the vector width, DVB-T2 short codes through their QC structure, and a
+hand-built code with rows of degree zero, one and two, at caps zero to 25 and
+under reuse; it also asserts quantization, termination and rate-matched
+decoding. The unit tests of the kernel hold both backends to the update
+definition at saturation boundaries.
+[`ldpc_layered_fer`](../../crates/gf2-coding/tests/ldpc_layered_fer.rs)
+compares the Eb/N0 at frame error rate $10^{-3}$, counted on the first $k$
+positions, with the canonical decoder on 5G NR BG1 $Z = 384$ and DVB-T2
+normal rate 1/2 over BPSK AWGN, under `LayeredConfig::nr_5g` and
+`LayeredConfig::dvb_t2`.
 
 ## Evidence
 

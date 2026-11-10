@@ -50,6 +50,23 @@ impl LayeredConfig {
         }
     }
 
+    /// The 5G NR setting: normalized min-sum at 6/8, scale 4, channel limit
+    /// 31, message limit 40, early termination.
+    ///
+    /// The normalization factor is tuned per code family; this one and
+    /// [`Self::dvb_t2`]'s were chosen on frame error rate under
+    /// `crates/gf2-coding/tests/ldpc_layered_fer.rs`.
+    #[must_use]
+    pub fn nr_5g() -> Self {
+        Self::new(LayeredRule::Normalized { eighths: 6 }, 4.0, 31, 40, true)
+    }
+
+    /// The DVB-T2 setting: [`Self::nr_5g`] with normalization 7/8.
+    #[must_use]
+    pub fn dvb_t2() -> Self {
+        Self::new(LayeredRule::Normalized { eighths: 7 }, 4.0, 31, 40, true)
+    }
+
     /// The check rule.
     #[must_use]
     pub fn rule(&self) -> LayeredRule {

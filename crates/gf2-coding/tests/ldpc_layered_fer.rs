@@ -1,5 +1,7 @@
 //! Frame error rate of the layered quantized decoder against the canonical
-//! flooding decoder over BPSK AWGN, on random codewords.
+//! flooding decoder over BPSK AWGN, on random codewords. A frame error is a
+//! wrong decision among the first k positions, the information columns of
+//! both codes' standards and the window of the AFF3CT comparison harness.
 //!
 //! `GF2_LAYERED_FER_FRAMES` bounds the frames per point (default 200 000),
 //! `GF2_LAYERED_FER_ERRORS` the errors both decoders reach before a point
@@ -7,8 +9,8 @@
 //! list of Eb/N0 values in dB, replaces a test's grid.
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::ldpc::{
-    DecoderAlgorithm, DecoderConfig, LayeredConfig, LayeredDecoder, LayeredRule, LdpcCode,
-    LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc,
+    DecoderAlgorithm, DecoderConfig, LayeredConfig, LayeredDecoder, LdpcCode, LdpcDecoder,
+    LdpcEncoder, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::BlockEncoder;
@@ -44,7 +46,8 @@ fn point(
 ) -> (usize, usize, usize) {
     let max_frames = setting("GF2_LAYERED_FER_FRAMES", 200_000);
     let target_errors = setting("GF2_LAYERED_FER_ERRORS", 100);
-    let rate = encoder.k() as f64 / code.n() as f64;
+    let k = encoder.k();
+    let rate = k as f64 / code.n() as f64;
     let variance = 1.0 / (2.0 * rate * 10f64.powf(ebn0_db / 10.0));
     let errors = [AtomicUsize::new(0), AtomicUsize::new(0)];
     let workers = std::thread::available_parallelism().map_or(1, |n| n.get());
@@ -82,12 +85,14 @@ fn point(
                                     Llr::new((2.0 * y / variance) as f32)
                                 })
                                 .collect();
+                            let wrong =
+                                |word: &BitVec| (0..k).any(|i| word.get(i) != codeword.get(i));
                             flooding.decode_codeword_into(&llrs, FLOODING_CAP, &mut word);
-                            if word != codeword {
+                            if wrong(&word) {
                                 errors[0].fetch_add(1, Ordering::Relaxed);
                             }
                             layered.decode_codeword_into(&llrs, LAYERED_CAP, &mut word);
-                            if word != codeword {
+                            if wrong(&word) {
                                 errors[1].fetch_add(1, Ordering::Relaxed);
                             }
                         }
@@ -161,7 +166,7 @@ fn compare(name: &str, code: &LdpcCode, layered: LayeredConfig, grid: &[f64]) {
 #[ignore = "sim: NR BG1 Z=384 mother code FER curves to 1e-3, flooding and layered"]
 fn nr_bg1_z384_layered_is_within_a_tenth_of_a_db_of_flooding() {
     let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(1, 384));
-    let layered = LayeredConfig::new(LayeredRule::Normalized { eighths: 6 }, 4.0, 31, 40, true);
+    let layered = LayeredConfig::nr_5g();
     let grid: Vec<f64> = (0..16).map(|i| 0.1 * f64::from(i)).collect();
     compare("nr bg1 z384", &code, layered, &grid);
 }
@@ -170,7 +175,7 @@ fn nr_bg1_z384_layered_is_within_a_tenth_of_a_db_of_flooding() {
 #[ignore = "sim: DVB-T2 normal R1/2 FER curves to 1e-3, flooding and layered"]
 fn dvb_t2_normal_r12_layered_is_within_a_tenth_of_a_db_of_flooding() {
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-    let layered = LayeredConfig::new(LayeredRule::Normalized { eighths: 7 }, 4.0, 31, 40, true);
+    let layered = LayeredConfig::dvb_t2();
     let grid: Vec<f64> = (0..21).map(|i| 0.8 + 0.1 * f64::from(i)).collect();
     compare("dvb-t2 normal 1/2", &code, layered, &grid);
 }

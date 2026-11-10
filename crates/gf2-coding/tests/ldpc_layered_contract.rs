@@ -11,15 +11,14 @@ use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 
-/// Normalized min-sum at 3/4 with two fractional bits, channel values
-/// within ±31 and messages within ±40.
 fn standard() -> LayeredConfig {
-    LayeredConfig::new(LayeredRule::Normalized { eighths: 6 }, 4.0, 31, 40, true)
+    LayeredConfig::nr_5g()
 }
 
 fn configs() -> Vec<LayeredConfig> {
     vec![
         standard(),
+        LayeredConfig::dvb_t2(),
         LayeredConfig::new(LayeredRule::Normalized { eighths: 8 }, 2.0, 127, 126, false),
         LayeredConfig::new(LayeredRule::Offset { beta: 1 }, 8.0, 63, 15, true),
     ]
