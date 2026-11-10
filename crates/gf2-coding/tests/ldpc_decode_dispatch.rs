@@ -257,19 +257,19 @@ fn each_qc_bound_moves_its_region_to_the_route_without_qc() {
         let z = code.quasi_cyclic().unwrap().expansion_factor();
         let cases = [
             (
-                QcRouteBounds::try_new(z, usize::MAX, usize::MAX).unwrap(),
+                QcRouteBounds::try_new(z, usize::MAX, usize::MAX, usize::MAX).unwrap(),
                 "at Z",
             ),
             (
-                QcRouteBounds::try_new(z + 1, usize::MAX, usize::MAX).unwrap(),
+                QcRouteBounds::try_new(z + 1, usize::MAX, usize::MAX, usize::MAX).unwrap(),
                 "above Z",
             ),
             (
-                QcRouteBounds::try_new(0, 6, usize::MAX).unwrap(),
+                QcRouteBounds::try_new(0, 6, usize::MAX, usize::MAX).unwrap(),
                 "six workers",
             ),
             (
-                QcRouteBounds::try_new(0, usize::MAX, 4).unwrap(),
+                QcRouteBounds::try_new(0, usize::MAX, 4, usize::MAX).unwrap(),
                 "lanes from four",
             ),
         ];
@@ -312,7 +312,8 @@ fn every_wave_of_a_longer_batch_takes_the_qc_route() {
     let mut decoder = decoder(
         &nr_bg1_z384(),
         DecoderAlgorithm::NormalizedMinSum(0.75),
-        lane_selectors().with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4).unwrap()),
+        lane_selectors()
+            .with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4, usize::MAX).unwrap()),
     );
     let mut decode = |frames: usize| {
         let views = vec![frame.as_slice(); frames];

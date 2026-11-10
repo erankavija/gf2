@@ -155,8 +155,9 @@ explicit caller width; simulation stages pass their executing pool's width.
 A wave of a code that retains quasi-cyclic structure takes `Qc` instead under
 a min-sum rule, within the bounds of the `qc_route` selector: the lifting size
 is at least `min_lifting_size`, configured decode concurrency is at most
-`max_workers`, and the lane route is ineligible or the wave holds fewer than
-`lane_claim_min_frames` frames. Every bound is on lifting size, worker count
+`max_workers`, and the lane route is ineligible, the wave holds fewer than
+`lane_claim_min_frames` frames or the lifting size exceeds
+`lane_claim_max_lifting_size`. Every bound is on lifting size, worker count
 or occupied lanes. An omitted `qc_route` resolves to open bounds
 (`QcRouteBounds::OPEN`), which give every such wave `Qc`.
 `LdpcCode::from_quasi_cyclic` retains the structure;
@@ -171,8 +172,8 @@ process that installs no section decodes a code with QC structure on `Qc` and
 every other code frame by frame. Take the bounds from a measurement on the
 target host; the committed coding envelope under
 `crates/gf2-coding/data/tuning-profiles/` records the calibration campaign's
-lane selectors with their provenance and states no `qc_route`. The calibration
-harness measures no QC bound, so `tuning-profile-compose coding-owner` adds one
+lane selectors with their provenance and a `qc_route` fixed from the route
+sweep of @/issue/c62356d2. The calibration harness measures no QC bound, so `tuning-profile-compose coding-owner` adds one
 to a calibrated owner through `--fixed-selector decode.qc_route BOUNDS_JSON`. With
 `gf2-coding`'s `tuning-profile`
 feature enabled, registering `CodingTuning` with `CodingTuningCodec` in the
@@ -194,7 +195,7 @@ trait
 
 ```rust
 let selectors = DecodeSelectors::try_new(1, usize::MAX, 1, 1)?
-    .with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4)?);
+    .with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4, usize::MAX)?);
 let decoder = LdpcBatchDecoder::with_selectors(
     code,
     DecoderConfig::default(),

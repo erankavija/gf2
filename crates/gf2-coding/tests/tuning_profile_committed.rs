@@ -288,11 +288,47 @@ fn committed_lane_domain_rejects_multicore_loss_configurations() {
     }
 }
 
+/// The committed bounds hand full lane waves of NR codes up to Z=24 to the
+/// lane route wherever lanes are eligible, at every worker count of the
+/// route sweep, and keep every other wave on the QC route.
 #[test]
-fn the_committed_envelope_leaves_the_qc_route_open() {
+fn the_committed_envelope_lets_lanes_claim_full_waves_of_small_lifting_sizes() {
     let (selectors, stated) = measured_decode();
-    assert!(!stated.iter().any(|field| field == "qc_route"));
-    assert_eq!(selectors.qc_route(), QcRouteBounds::OPEN);
+    assert!(stated.iter().any(|field| field == "qc_route"));
+    let bounds = selectors.qc_route();
+    assert_eq!(
+        bounds.min_lifting_size(),
+        QcRouteBounds::OPEN.min_lifting_size()
+    );
+    assert_eq!(bounds.max_workers(), QcRouteBounds::OPEN.max_workers());
+    for base_graph in [1, 2] {
+        for z in [6, 24, 32, 384] {
+            let decoder = LdpcBatchDecoder::with_selectors(
+                LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(base_graph, z)),
+                DecoderConfig::default(),
+                1,
+                DecodedWord::Codeword,
+                selectors.clone(),
+            );
+            for frames in [1, LANES - 1, LANES] {
+                for workers in [1, 6, 12, 24] {
+                    let route = decoder
+                        .batch_route_with_workers(frames, NonZeroUsize::new(workers).unwrap());
+                    let lanes_claim = z <= 24 && frames == LANES && workers == 1;
+                    assert_eq!(
+                        matches!(route, BatchRoute::Lane(_)),
+                        lanes_claim,
+                        "BG{base_graph} Z {z}, {frames} frames, {workers} workers: {route:?}"
+                    );
+                    assert_eq!(
+                        matches!(route, BatchRoute::Qc(_)),
+                        !lanes_claim,
+                        "BG{base_graph} Z {z}, {frames} frames, {workers} workers: {route:?}"
+                    );
+                }
+            }
+        }
+    }
 }
 
 /// The installed envelope routes each of [`fresh::QC_CALLS`] on NR BG1
