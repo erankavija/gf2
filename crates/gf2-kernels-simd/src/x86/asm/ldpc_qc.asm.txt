@@ -8,8 +8,8 @@
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 631d277d4
-; regenerated   : 2026-11-10T03:23:16Z
+; commit        : 6f018ec43
+; regenerated   : 2026-11-10T05:19:31Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -21,10 +21,8 @@
 gf2_kernels_simd::x86::ldpc_qc::check_block_avx2_unchecked:
 	push r15
 	push r14
-	push r12
 	push rbx
-	push rax
-	mov rax, qword ptr [rsp + 48]
+	mov rax, qword ptr [rsp + 32]
 	cmp r9, 2
 	setae r10b
 	test rax, rax
@@ -34,152 +32,315 @@ gf2_kernels_simd::x86::ldpc_qc::check_block_avx2_unchecked:
 	push 0
 	push rax
 	call qword ptr [rip + gf2_kernels_simd::ldpc_qc::check_block_scalar@GOTPCREL]
-	add rsp, 24
-	jmp .LBB136_23
-.LBB136_2:
-	mov r8, rax
-	shr r8, 3
-	mov edx, eax
-	and edx, 7
-	test r8, r8
-	je .LBB136_13
-	vbroadcastss ymm1, xmm0
-	lea r10, [4*rax]
-	xor r11d, r11d
-	vbroadcastss ymm2, dword ptr [rip + .LCPI136_0]
-	vxorps xmm3, xmm3, xmm3
-	vbroadcastss ymm4, dword ptr [rip + .LCPI136_1]
-	vbroadcastss ymm5, dword ptr [rip + .LCPI136_2]
-	vbroadcastss ymm6, dword ptr [rip + .LCPI136_3]
-	mov rbx, rcx
-	mov r14, rsi
-	jmp .LBB136_5
-.LBB136_4:
-	inc r11
-	add r14, 32
-	add rbx, 32
-	cmp r11, r8
-	je .LBB136_13
-.LBB136_5:
-	mov r15, r9
-	mov r12, r14
-	vxorps xmm9, xmm9, xmm9
-	vmovaps ymm7, ymm2
-	vmovaps ymm8, ymm2
-.LBB136_6:
-	vmovups ymm10, ymmword ptr [r12]
-	vcmpnge_uqps ymm11, ymm10, ymm3
-	vandps ymm11, ymm11, ymm4
-	vxorps ymm9, ymm11, ymm9
-	vandps ymm10, ymm10, ymm5
-	vmaxps ymm11, ymm8, ymm10
-	vminps ymm7, ymm11, ymm7
-	vminps ymm8, ymm10, ymm8
-	add r12, r10
-	dec r15
-	jne .LBB136_6
-	vorps ymm9, ymm9, ymm6
-	mov r15, r9
-	xor r12d, r12d
-	jmp .LBB136_8
-.LBB136_11:
-	vmulps ymm10, ymm11, ymm10
-.LBB136_12:
-	vmovups ymmword ptr [rbx + r12], ymm10
-	add r12, r10
-	dec r15
-	je .LBB136_4
-.LBB136_8:
-	vmovups ymm11, ymmword ptr [r14 + r12]
-	vcmpnge_uqps ymm10, ymm11, ymm3
-	vandps ymm10, ymm10, ymm4
-	vxorps ymm10, ymm10, ymm9
-	vandps ymm11, ymm11, ymm5
-	vcmpeqps ymm11, ymm11, ymm8
-	vblendvps ymm11, ymm8, ymm7, ymm11
-	cmp edi, 1
-	je .LBB136_24
-	test edi, edi
-	je .LBB136_11
-	vsubps ymm11, ymm11, ymm1
-	vmaxps ymm11, ymm11, ymm3
-	jmp .LBB136_11
-.LBB136_24:
-	vmulps ymm10, ymm11, ymm10
-	vmulps ymm10, ymm10, ymm1
-	jmp .LBB136_12
-.LBB136_13:
-	test rdx, rdx
-	je .LBB136_22
-	vmovd xmm1, edx
-	vpbroadcastd ymm2, xmm1
-	movabs rdx, 4611686018427387896
-	and rdx, rax
-	lea rdx, [rsi + 4*rdx]
-	shl rax, 2
-	vbroadcastss ymm1, dword ptr [rip + .LCPI136_0]
-	vpcmpgtd ymm2, ymm2, ymmword ptr [rip + .LCPI136_4]
-	vbroadcastss ymm3, dword ptr [rip + .LCPI136_1]
-	vbroadcastss ymm4, dword ptr [rip + .LCPI136_2]
-	vxorps xmm6, xmm6, xmm6
-	mov r8, r9
-	vxorps xmm7, xmm7, xmm7
-	vmovaps ymm5, ymm1
-.LBB136_15:
-	vmaskmovps ymm8, ymm2, ymmword ptr [rdx]
-	vcmpnge_uqps ymm9, ymm8, ymm6
-	vandps ymm9, ymm9, ymm3
-	vxorps ymm7, ymm9, ymm7
-	vandps ymm8, ymm8, ymm4
-	vmaxps ymm9, ymm5, ymm8
-	vminps ymm1, ymm9, ymm1
-	vminps ymm5, ymm8, ymm5
-	add rdx, rax
-	dec r8
-	jne .LBB136_15
-	vbroadcastss ymm6, dword ptr [rip + .LCPI136_3]
-	vorps ymm6, ymm7, ymm6
-	vbroadcastss ymm0, xmm0
-	mov rdx, rax
-	and rdx, -32
-	vxorps xmm7, xmm7, xmm7
-	jmp .LBB136_17
-.LBB136_19:
-	vsubps ymm9, ymm9, ymm0
-	vmaxps ymm9, ymm9, ymm7
-.LBB136_20:
-	vmulps ymm8, ymm9, ymm8
-	vmaskmovps ymmword ptr [rcx + rdx], ymm2, ymm8
-	add rdx, rax
-	dec r9
-	je .LBB136_22
-.LBB136_17:
-	vmaskmovps ymm9, ymm2, ymmword ptr [rsi + rdx]
-	vcmpnge_uqps ymm8, ymm9, ymm7
-	vandps ymm8, ymm8, ymm3
-	vxorps ymm8, ymm8, ymm6
-	vandps ymm9, ymm9, ymm4
-	vcmpeqps ymm9, ymm9, ymm5
-	vblendvps ymm9, ymm5, ymm1, ymm9
-	test edi, edi
-	je .LBB136_20
-	cmp edi, 1
-	jne .LBB136_19
-	vmulps ymm8, ymm9, ymm8
-	vmulps ymm8, ymm8, ymm0
-	vmaskmovps ymmword ptr [rcx + rdx], ymm2, ymm8
-	add rdx, rax
-	dec r9
-	jne .LBB136_17
-.LBB136_22:
-	add rsp, 8
-.LBB136_23:
+	add rsp, 16
+.LBB136_40:
 	pop rbx
-	pop r12
 	pop r14
 	pop r15
 	vzeroupper
 	ret
+.LBB136_2:
+	mov rdx, rax
+	shr rdx, 3
+	mov r8d, eax
+	and r8d, 7
+	test edi, edi
+	je .LBB136_6
+	vbroadcastss ymm0, xmm0
+	cmp edi, 1
+	jne .LBB136_28
+	test rdx, rdx
+	je .LBB136_23
+	lea rdi, [4*rax]
+	vbroadcastss ymm1, dword ptr [rip + .LCPI136_0]
+	xor r10d, r10d
+	vxorps xmm2, xmm2, xmm2
+	vbroadcastss ymm3, dword ptr [rip + .LCPI136_1]
+	vbroadcastss ymm4, dword ptr [rip + .LCPI136_2]
+	mov r11, rcx
+	mov rbx, rsi
+.LBB136_19:
+	mov r14, r9
+	mov r15, rbx
+	vxorps xmm5, xmm5, xmm5
+	vmovaps ymm6, ymm1
+	vmovaps ymm7, ymm1
+.LBB136_20:
+	vmovups ymm8, ymmword ptr [r15]
+	vcmpnge_uqps ymm9, ymm8, ymm2
+	vandps ymm9, ymm9, ymm3
+	vxorps ymm5, ymm9, ymm5
+	vandps ymm8, ymm8, ymm4
+	vmaxps ymm9, ymm7, ymm8
+	vminps ymm6, ymm9, ymm6
+	vminps ymm7, ymm8, ymm7
+	add r15, rdi
+	dec r14
+	jne .LBB136_20
+	mov r14, r9
+	xor r15d, r15d
+.LBB136_22:
+	vmovups ymm8, ymmword ptr [rbx + r15]
+	vcmpnge_uqps ymm9, ymm8, ymm2
+	vandps ymm9, ymm9, ymm3
+	vandps ymm8, ymm8, ymm4
+	vcmpeqps ymm8, ymm8, ymm7
+	vblendvps ymm8, ymm7, ymm6, ymm8
+	vxorps ymm9, ymm9, ymm5
+	vxorps ymm8, ymm9, ymm8
+	vmulps ymm8, ymm8, ymm0
+	vmovups ymmword ptr [r11 + r15], ymm8
+	add r15, rdi
+	dec r14
+	jne .LBB136_22
+	inc r10
+	add rbx, 32
+	add r11, 32
+	cmp r10, rdx
+	jne .LBB136_19
+.LBB136_23:
+	test r8, r8
+	je .LBB136_40
+	vmovd xmm1, r8d
+	vpbroadcastd ymm2, xmm1
+	movabs rdi, 4611686018427387896
+	and rdi, rax
+	lea rdi, [rsi + 4*rdi]
+	shl rax, 2
+	vbroadcastss ymm1, dword ptr [rip + .LCPI136_0]
+	vpcmpgtd ymm2, ymm2, ymmword ptr [rip + .LCPI136_3]
+	vbroadcastss ymm3, dword ptr [rip + .LCPI136_1]
+	vbroadcastss ymm4, dword ptr [rip + .LCPI136_2]
+	vxorps xmm7, xmm7, xmm7
+	mov r8, r9
+	vxorps xmm5, xmm5, xmm5
+	vmovaps ymm6, ymm1
+.LBB136_25:
+	vmaskmovps ymm8, ymm2, ymmword ptr [rdi]
+	vcmpnge_uqps ymm9, ymm8, ymm7
+	vandps ymm9, ymm9, ymm3
+	vxorps ymm5, ymm9, ymm5
+	vandps ymm8, ymm8, ymm4
+	vmaxps ymm9, ymm6, ymm8
+	vminps ymm1, ymm9, ymm1
+	vminps ymm6, ymm8, ymm6
+	add rdi, rax
+	dec r8
+	jne .LBB136_25
+	shl rdx, 5
+	vxorps xmm7, xmm7, xmm7
+.LBB136_27:
+	vmaskmovps ymm8, ymm2, ymmword ptr [rsi + rdx]
+	vcmpnge_uqps ymm9, ymm8, ymm7
+	vandps ymm8, ymm8, ymm4
+	vcmpeqps ymm8, ymm8, ymm6
+	vblendvps ymm8, ymm6, ymm1, ymm8
+	vandps ymm9, ymm9, ymm3
+	vxorps ymm9, ymm9, ymm5
+	vxorps ymm8, ymm9, ymm8
+	vmulps ymm8, ymm8, ymm0
+	vmaskmovps ymmword ptr [rcx + rdx], ymm2, ymm8
+	add rdx, rax
+	dec r9
+	jne .LBB136_27
+	jmp .LBB136_40
+.LBB136_6:
+	test rdx, rdx
+	je .LBB136_13
+	lea rdi, [4*rax]
+	vbroadcastss ymm0, dword ptr [rip + .LCPI136_0]
+	xor r10d, r10d
+	vxorps xmm1, xmm1, xmm1
+	vbroadcastss ymm2, dword ptr [rip + .LCPI136_1]
+	vbroadcastss ymm3, dword ptr [rip + .LCPI136_2]
+	mov r11, rcx
+	mov rbx, rsi
+.LBB136_9:
+	mov r14, r9
+	mov r15, rbx
+	vxorps xmm4, xmm4, xmm4
+	vmovaps ymm5, ymm0
+	vmovaps ymm6, ymm0
+.LBB136_10:
+	vmovups ymm7, ymmword ptr [r15]
+	vcmpnge_uqps ymm8, ymm7, ymm1
+	vandps ymm8, ymm8, ymm2
+	vxorps ymm4, ymm8, ymm4
+	vandps ymm7, ymm7, ymm3
+	vmaxps ymm8, ymm6, ymm7
+	vminps ymm5, ymm8, ymm5
+	vminps ymm6, ymm7, ymm6
+	add r15, rdi
+	dec r14
+	jne .LBB136_10
+	mov r14, r9
+	xor r15d, r15d
+.LBB136_12:
+	vmovups ymm7, ymmword ptr [rbx + r15]
+	vcmpnge_uqps ymm8, ymm7, ymm1
+	vandps ymm8, ymm8, ymm2
+	vandps ymm7, ymm7, ymm3
+	vcmpeqps ymm7, ymm7, ymm6
+	vblendvps ymm7, ymm6, ymm5, ymm7
+	vxorps ymm8, ymm8, ymm4
+	vxorps ymm7, ymm8, ymm7
+	vmovups ymmword ptr [r11 + r15], ymm7
+	add r15, rdi
+	dec r14
+	jne .LBB136_12
+	inc r10
+	add rbx, 32
+	add r11, 32
+	cmp r10, rdx
+	jne .LBB136_9
+.LBB136_13:
+	test r8, r8
+	je .LBB136_40
+	vmovd xmm0, r8d
+	vpbroadcastd ymm1, xmm0
+	movabs rdx, 4611686018427387896
+	and rdx, rax
+	lea rdx, [rsi + 4*rdx]
+	shl rax, 2
+	vbroadcastss ymm0, dword ptr [rip + .LCPI136_0]
+	vpcmpgtd ymm1, ymm1, ymmword ptr [rip + .LCPI136_3]
+	vbroadcastss ymm2, dword ptr [rip + .LCPI136_1]
+	vbroadcastss ymm3, dword ptr [rip + .LCPI136_2]
+	vxorps xmm6, xmm6, xmm6
+	mov rdi, r9
+	vxorps xmm4, xmm4, xmm4
+	vmovaps ymm5, ymm0
+.LBB136_15:
+	vmaskmovps ymm7, ymm1, ymmword ptr [rdx]
+	vcmpnge_uqps ymm8, ymm7, ymm6
+	vandps ymm8, ymm8, ymm2
+	vxorps ymm4, ymm8, ymm4
+	vandps ymm7, ymm7, ymm3
+	vmaxps ymm8, ymm5, ymm7
+	vminps ymm0, ymm8, ymm0
+	vminps ymm5, ymm7, ymm5
+	add rdx, rax
+	dec rdi
+	jne .LBB136_15
+	mov rdx, rax
+	and rdx, -32
+	vxorps xmm6, xmm6, xmm6
+.LBB136_17:
+	vmaskmovps ymm7, ymm1, ymmword ptr [rsi + rdx]
+	vcmpnge_uqps ymm8, ymm7, ymm6
+	vandps ymm8, ymm8, ymm2
+	vandps ymm7, ymm7, ymm3
+	vcmpeqps ymm7, ymm7, ymm5
+	vblendvps ymm7, ymm5, ymm0, ymm7
+	vxorps ymm8, ymm8, ymm4
+	vxorps ymm7, ymm8, ymm7
+	vmaskmovps ymmword ptr [rcx + rdx], ymm1, ymm7
+	add rdx, rax
+	dec r9
+	jne .LBB136_17
+	jmp .LBB136_40
+.LBB136_28:
+	test rdx, rdx
+	je .LBB136_35
+	lea rdi, [4*rax]
+	vbroadcastss ymm1, dword ptr [rip + .LCPI136_0]
+	xor r10d, r10d
+	vxorps xmm2, xmm2, xmm2
+	vbroadcastss ymm3, dword ptr [rip + .LCPI136_1]
+	vbroadcastss ymm4, dword ptr [rip + .LCPI136_2]
+	mov r11, rcx
+	mov rbx, rsi
+.LBB136_31:
+	mov r14, r9
+	mov r15, rbx
+	vxorps xmm5, xmm5, xmm5
+	vmovaps ymm6, ymm1
+	vmovaps ymm7, ymm1
+.LBB136_32:
+	vmovups ymm8, ymmword ptr [r15]
+	vcmpnge_uqps ymm9, ymm8, ymm2
+	vandps ymm9, ymm9, ymm3
+	vxorps ymm5, ymm9, ymm5
+	vandps ymm8, ymm8, ymm4
+	vmaxps ymm9, ymm6, ymm8
+	vminps ymm7, ymm9, ymm7
+	vminps ymm6, ymm8, ymm6
+	add r15, rdi
+	dec r14
+	jne .LBB136_32
+	vsubps ymm8, ymm6, ymm0
+	vmaxps ymm8, ymm8, ymm2
+	vsubps ymm7, ymm7, ymm0
+	vmaxps ymm7, ymm7, ymm2
+	mov r14, r9
+	xor r15d, r15d
+.LBB136_34:
+	vmovups ymm9, ymmword ptr [rbx + r15]
+	vcmpnge_uqps ymm10, ymm9, ymm2
+	vandps ymm10, ymm10, ymm3
+	vandps ymm9, ymm9, ymm4
+	vcmpeqps ymm9, ymm9, ymm6
+	vblendvps ymm9, ymm8, ymm7, ymm9
+	vxorps ymm10, ymm10, ymm5
+	vxorps ymm9, ymm10, ymm9
+	vmovups ymmword ptr [r11 + r15], ymm9
+	add r15, rdi
+	dec r14
+	jne .LBB136_34
+	inc r10
+	add rbx, 32
+	add r11, 32
+	cmp r10, rdx
+	jne .LBB136_31
+.LBB136_35:
+	test r8, r8
+	je .LBB136_40
+	vmovd xmm1, r8d
+	vpbroadcastd ymm2, xmm1
+	movabs rdi, 4611686018427387896
+	and rdi, rax
+	lea rdi, [rsi + 4*rdi]
+	shl rax, 2
+	vbroadcastss ymm1, dword ptr [rip + .LCPI136_0]
+	vpcmpgtd ymm2, ymm2, ymmword ptr [rip + .LCPI136_3]
+	vbroadcastss ymm3, dword ptr [rip + .LCPI136_1]
+	vbroadcastss ymm4, dword ptr [rip + .LCPI136_2]
+	vxorps xmm6, xmm6, xmm6
+	mov r8, r9
+	vxorps xmm5, xmm5, xmm5
+	vmovaps ymm7, ymm1
+.LBB136_37:
+	vmaskmovps ymm8, ymm2, ymmword ptr [rdi]
+	vcmpnge_uqps ymm9, ymm8, ymm6
+	vandps ymm9, ymm9, ymm3
+	vxorps ymm5, ymm9, ymm5
+	vandps ymm8, ymm8, ymm4
+	vmaxps ymm9, ymm1, ymm8
+	vminps ymm7, ymm9, ymm7
+	vminps ymm1, ymm8, ymm1
+	add rdi, rax
+	dec r8
+	jne .LBB136_37
+	vsubps ymm8, ymm1, ymm0
+	vxorps xmm6, xmm6, xmm6
+	vmaxps ymm8, ymm8, ymm6
+	vsubps ymm0, ymm7, ymm0
+	vmaxps ymm0, ymm0, ymm6
+	shl rdx, 5
+.LBB136_39:
+	vmaskmovps ymm7, ymm2, ymmword ptr [rsi + rdx]
+	vcmpnge_uqps ymm9, ymm7, ymm6
+	vandps ymm9, ymm9, ymm3
+	vandps ymm7, ymm7, ymm4
+	vcmpeqps ymm7, ymm7, ymm1
+	vblendvps ymm7, ymm8, ymm0, ymm7
+	vxorps ymm9, ymm9, ymm5
+	vxorps ymm7, ymm9, ymm7
+	vmaskmovps ymmword ptr [rcx + rdx], ymm2, ymm7
+	add rdx, rax
+	dec r9
+	jne .LBB136_39
+	jmp .LBB136_40
 
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::ldpc_qc::difference_avx2

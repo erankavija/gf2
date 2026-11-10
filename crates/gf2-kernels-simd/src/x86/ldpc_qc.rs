@@ -172,6 +172,12 @@ unsafe fn difference_avx2(minuend: &[f32], subtrahend: &[f32], out: &mut [f32]) 
     }
 }
 
+/// Rule kinds of [`check_groups`], so each rule's group loop is compiled
+/// without a per-edge rule branch.
+const PLAIN: u8 = 0;
+const NORMALIZED: u8 = 1;
+const OFFSET: u8 = 2;
+
 /// # Safety
 /// The host must support AVX2 and both slices must contain degree * z values.
 #[target_feature(enable = "avx2")]
@@ -186,6 +192,34 @@ unsafe fn check_block_avx2_unchecked(
         check_block_scalar(rule, inputs, outputs, degree, z, 0);
         return;
     }
+    // SAFETY: the caller's contract is check_groups' contract.
+    unsafe {
+        match rule {
+            LaneMinSumRule::Plain => check_groups::<PLAIN>(0.0, inputs, outputs, degree, z),
+            LaneMinSumRule::Normalized(alpha) => {
+                check_groups::<NORMALIZED>(alpha, inputs, outputs, degree, z);
+            }
+            LaneMinSumRule::Offset(beta) => {
+                check_groups::<OFFSET>(beta, inputs, outputs, degree, z);
+            }
+        }
+    }
+}
+
+/// Every group of eight lifted checks under rule `RULE` with parameter
+/// `parameter`.
+///
+/// # Safety
+/// The host must support AVX2, `degree >= 2`, and both slices must contain
+/// degree * z values.
+#[target_feature(enable = "avx2")]
+unsafe fn check_groups<const RULE: u8>(
+    parameter: f32,
+    inputs: &[f32],
+    outputs: &mut [f32],
+    degree: usize,
+    z: usize,
+) {
     let full = z / 8;
     let tail = z % 8;
     // SAFETY: slices have degree * z elements. A full group accesses eight
@@ -193,25 +227,31 @@ unsafe fn check_block_avx2_unchecked(
     // group accesses only its `tail` unmasked lanes, lane + tail == z. Unaligned
     // accesses are permitted and the mutable output cannot alias the input.
     unsafe {
+        let parameter = _mm256_set1_ps(parameter);
         for group in 0..full {
-            check_group(rule, inputs, outputs, degree, z, group * 8, None);
+            check_group::<RULE>(parameter, inputs, outputs, degree, z, group * 8, None);
         }
         if tail > 0 {
             let lanes = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
             let mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(tail as i32), lanes);
-            check_group(rule, inputs, outputs, degree, z, full * 8, Some(mask));
+            check_group::<RULE>(parameter, inputs, outputs, degree, z, full * 8, Some(mask));
         }
     }
 }
 
 /// Eight lifted checks from `lane`, only the lanes of `mask` when given.
 ///
+/// The minima are never NaN, so the rule's product with a sign of ±1 is the
+/// sign-bit XOR applied here, and the offset floor, never NaN either, is
+/// taken once per minimum instead of once per edge.
+///
 /// # Safety
 /// The host must support AVX2; every unmasked lane `lane + k` of every edge
 /// lies within both slices.
 #[target_feature(enable = "avx2")]
-unsafe fn check_group(
-    rule: LaneMinSumRule,
+#[inline]
+unsafe fn check_group<const RULE: u8>(
+    parameter: __m256,
     inputs: &[f32],
     outputs: &mut [f32],
     degree: usize,
@@ -244,22 +284,24 @@ unsafe fn check_group(
             min2 = _mm256_min_ps(_mm256_max_ps(min1, magnitude), min2);
             min1 = _mm256_min_ps(magnitude, min1);
         }
-        let product = _mm256_or_ps(_mm256_set1_ps(1.0), signs);
+        let (low, high) = if RULE == OFFSET {
+            (
+                _mm256_max_ps(_mm256_sub_ps(min1, parameter), zero),
+                _mm256_max_ps(_mm256_sub_ps(min2, parameter), zero),
+            )
+        } else {
+            (min1, min2)
+        };
         for edge in 0..degree {
             let value = load(edge);
             let negative = _mm256_cmp_ps(value, zero, _CMP_NGE_UQ);
-            let sign = _mm256_xor_ps(product, _mm256_and_ps(negative, sign_bit));
+            let sign = _mm256_xor_ps(signs, _mm256_and_ps(negative, sign_bit));
             let at_min = _mm256_cmp_ps(_mm256_andnot_ps(sign_bit, value), min1, _CMP_EQ_OQ);
-            let magnitude = _mm256_blendv_ps(min1, min2, at_min);
-            let out = match rule {
-                LaneMinSumRule::Plain => _mm256_mul_ps(sign, magnitude),
-                LaneMinSumRule::Normalized(alpha) => {
-                    _mm256_mul_ps(_mm256_set1_ps(alpha), _mm256_mul_ps(sign, magnitude))
-                }
-                LaneMinSumRule::Offset(beta) => _mm256_mul_ps(
-                    sign,
-                    _mm256_max_ps(_mm256_sub_ps(magnitude, _mm256_set1_ps(beta)), zero),
-                ),
+            let signed = _mm256_xor_ps(sign, _mm256_blendv_ps(low, high, at_min));
+            let out = if RULE == NORMALIZED {
+                _mm256_mul_ps(parameter, signed)
+            } else {
+                signed
             };
             let at = outputs.as_mut_ptr().add(edge * z + lane);
             match mask {

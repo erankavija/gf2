@@ -41,6 +41,7 @@ fn every_backend_matches_the_shared_check_contract() {
                     LaneMinSumRule::Normalized(1.0),
                     LaneMinSumRule::Offset(0.0),
                     LaneMinSumRule::Offset(0.5),
+                    LaneMinSumRule::Offset(f32::MAX),
                 ] {
                     let input: Vec<f32> = (0..degree * z)
                         .map(|i| special[i % special.len()])
@@ -122,6 +123,7 @@ fn every_backend_matches_the_check_contract_on_ties() {
                     LaneMinSumRule::Plain,
                     LaneMinSumRule::Normalized(0.75),
                     LaneMinSumRule::Offset(0.5),
+                    LaneMinSumRule::Offset(2.0),
                 ] {
                     for _ in 0..8 {
                         let input: Vec<f32> = (0..degree * z).map(|_| next()).collect();
