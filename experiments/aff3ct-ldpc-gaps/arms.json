@@ -41,7 +41,7 @@
       "environment": {},
       "package": "aff3ct-ldpc-gaps",
       "quality": "gf2-nms-f32",
-      "tuning_profile": "crates/gf2-coding/data/tuning-profiles/gf2-c62356d2-20261109t233411z-3067230.json"
+      "tuning_profile": "crates/gf2-coding/data/tuning-profiles/gf2-c62356d2-20261110t053902z-287464.json"
     },
     "gf2-batch-qc-candidate": {
       "executable": "gf2-batch-qc-candidate-arm",

@@ -172,8 +172,8 @@ process that installs no section decodes a code with QC structure on `Qc` and
 every other code frame by frame. Take the bounds from a measurement on the
 target host; the committed coding envelope under
 `crates/gf2-coding/data/tuning-profiles/` records the calibration campaign's
-lane selectors with their provenance and states no `qc_route`. The calibration
-harness measures no QC bound, so `tuning-profile-compose coding-owner` adds one
+lane selectors with their provenance and a `qc_route` fixed from the route
+sweep of @/issue/c62356d2. The calibration harness measures no QC bound, so `tuning-profile-compose coding-owner` adds one
 to a calibrated owner through `--fixed-selector decode.qc_route BOUNDS_JSON`. With
 `gf2-coding`'s `tuning-profile`
 feature enabled, registering `CodingTuning` with `CodingTuningCodec` in the

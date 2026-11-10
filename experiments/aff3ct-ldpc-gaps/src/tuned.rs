@@ -24,12 +24,12 @@ const QC_CORPUS: &str = "nr-bg1-r12";
 /// The committed coding owner envelope, embedded so the executable digest
 /// pins it.
 pub const ENVELOPE: &str = include_str!(
-    "../../../crates/gf2-coding/data/tuning-profiles/gf2-c62356d2-20261109t233411z-3067230.json"
+    "../../../crates/gf2-coding/data/tuning-profiles/gf2-c62356d2-20261110t053902z-287464.json"
 );
 
 /// The candidate envelope `55c3e433-integrated-adoption` confirmed: the
-/// selectors of [`ENVELOPE`] under an inherited measurement, embedded so the
-/// executable digest pins it.
+/// selectors of [`ENVELOPE`] with open QC route bounds, under an inherited
+/// measurement, embedded so the executable digest pins it.
 pub const CANDIDATE_ENVELOPE: &str = include_str!("../tuning-profiles/qc-route-candidate.json");
 
 /// The installed envelope as a plan's `tuning_profile` names it.
@@ -369,10 +369,12 @@ mod tests {
     }
 
     #[test]
-    fn the_committed_envelope_selects_the_candidates_decode_family() {
+    fn the_committed_envelope_selects_the_candidates_decode_family_and_qc_bounds() {
         let committed = decode_section(ENVELOPE);
-        assert_eq!(committed.qc_route(), QcRouteBounds::OPEN);
-        assert_eq!(committed, decode_section(CANDIDATE_ENVELOPE));
+        let candidate = decode_section(CANDIDATE_ENVELOPE);
+        assert_eq!(candidate.qc_route(), QcRouteBounds::OPEN);
+        assert_ne!(committed.qc_route(), QcRouteBounds::OPEN);
+        assert_eq!(committed, candidate.with_qc_route(committed.qc_route()));
     }
 
     #[test]
