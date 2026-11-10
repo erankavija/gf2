@@ -2,6 +2,7 @@
 //! no variable, updated at once with one SIMD lane per check; the rules are
 //! in `docs/reference/ldpc-decoder-numerical-contract.md`.
 
+use super::decisions::pack_bytes;
 use super::{DecodeOutcome, LaneBackend, LdpcCode};
 use crate::llr::Llr;
 use gf2_core::BitVec;
@@ -565,23 +566,7 @@ impl LayeredDecoder {
             None => &self.posterior,
         };
         // Sign bits, 64 decisions per word.
-        self.words.clear();
-        self.words.extend(beliefs.chunks(64).map(|chunk| {
-            chunk
-                .chunks(8)
-                .enumerate()
-                .fold(0u64, |word, (byte, eight)| {
-                    let mut lanes = [0u8; 8];
-                    for (lane, &value) in lanes.iter_mut().zip(eight) {
-                        *lane = value as u8;
-                    }
-                    // Sign bits to bit positions 56..64 of the product, lane i
-                    // to bit 56 + i.
-                    let signs = (u64::from_le_bytes(lanes) >> 7) & 0x0101_0101_0101_0101;
-                    let packed = signs.wrapping_mul(0x0102_0408_1020_4080) >> 56;
-                    word | (packed << (8 * byte))
-                })
-        }));
+        pack_bytes(beliefs, |value| value as u8, 7, &mut self.words);
         codeword.resize(beliefs.len(), false);
         codeword.write_bits(0, &self.words, beliefs.len());
         DecodeOutcome {

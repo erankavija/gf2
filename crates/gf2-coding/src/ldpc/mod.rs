@@ -2,6 +2,7 @@
 
 mod batch;
 mod core;
+mod decisions;
 pub mod dvb_t2;
 mod edge_layout;
 pub mod encoding;
