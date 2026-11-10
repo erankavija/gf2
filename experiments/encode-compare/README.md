@@ -9,7 +9,9 @@ factory selects and AFF3CT 4.7.0 (`@/citation/Cassagne2019`)
 `compare.sh bch` times the DVB-T2 rate-1/2 outer BCH codes of both frame sizes
 (`@/citation/Etsi2015`) through `DvbT2BchCode::encode_into` against bchlib
 (`@/citation/Bchlib2026`) `bch_encode`, cycling a pool of 1 or 256 distinct
-messages.
+messages. bchlib runs in two builds: its runtime-parameter one and one with
+`CONFIG_BCH_CONST_PARAMS` fixed to each cell's (m, t), the configuration its
+source documents as the faster encoder; the table marks the faster per cell.
 
 Each arm takes its library's native input format, converted before timing.
 An arm is timed only after it reproduces gf2's codewords for every message of

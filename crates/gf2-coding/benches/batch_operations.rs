@@ -169,15 +169,14 @@ fn bench_bch_sequential_vs_batch(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("bch_sequential_vs_batch");
     group.throughput(Throughput::Bytes((k * batch_size) as u64 / 8));
-    // The single-message path runs the reference recurrence; the family seam
-    // belongs to the batch entry points.
+    // A single-message encode selects as a batch of one.
     record_bch(
         "bch_sequential_vs_batch/sequential_loop".to_owned(),
         code.n(),
         k,
         batch_size,
         "BlockEncoder::encode",
-        EncodeFamily::REFERENCE,
+        code.selected_encode_family(SystematicLayout::default(), 1),
     );
     record_bch(
         "bch_sequential_vs_batch/batch_operation".to_owned(),

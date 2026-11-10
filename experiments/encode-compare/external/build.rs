@@ -27,6 +27,11 @@ const SRSRAN_SOURCES: [&str; 7] = [
     "lib/srsvec/bit.cpp",
 ];
 
+/// The (m, t) of the DVB-T2 rate-1/2 outer codes, short then normal frame
+/// (`@/citation/Etsi2015` Tables 6a and 6b): bchlib's const-parameter
+/// builds, which `src/main.rs` declares under the same prefixes.
+const BCHLIB_CONST: [(u32, u32); 2] = [(14, 12), (16, 12)];
+
 fn root(variable: &str) -> PathBuf {
     println!("cargo:rerun-if-env-changed={variable}");
     PathBuf::from(
@@ -56,17 +61,33 @@ fn main() {
     }
     build.compile("srsran_nr");
 
+    // bchlib's runtime-parameter build, then one CONFIG_BCH_CONST_PARAMS
+    // build per (m, t) of BCHLIB_CONST, each under its own symbol prefix.
     let bchlib = root("GF2_BCHLIB_ROOT");
-    cc::Build::new()
-        .file("cpp/bchlib.c")
-        .file(bchlib.join("src/bch.c"))
-        .include(bchlib.join("src"))
-        .flag("-std=c99")
-        .flag("-O3")
-        .flag("-march=native")
-        .flag("-w")
-        .define("NDEBUG", None)
-        .compile("bchlib");
+    let configurations = std::iter::once(("gf2_bchlib".to_owned(), None)).chain(
+        BCHLIB_CONST
+            .iter()
+            .map(|&(m, t)| (format!("gf2_bchlib_m{m}t{t}"), Some((m, t)))),
+    );
+    for (prefix, constant) in configurations {
+        let mut build = cc::Build::new();
+        build
+            .file("cpp/bchlib.c")
+            .include(bchlib.join("src"))
+            .flag("-std=c99")
+            .flag("-O3")
+            .flag("-march=native")
+            .flag("-w")
+            .define("NDEBUG", None)
+            .define("GF2_BCH_PREFIX", prefix.as_str());
+        if let Some((m, t)) = constant {
+            build
+                .define("CONFIG_BCH_CONST_PARAMS", None)
+                .define("CONFIG_BCH_CONST_M", m.to_string().as_str())
+                .define("CONFIG_BCH_CONST_T", t.to_string().as_str());
+        }
+        build.compile(&prefix);
+    }
 
     let aff3ct = root("GF2_AFF3CT_ROOT");
     let mut build = cc::Build::new();

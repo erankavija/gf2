@@ -16,11 +16,72 @@ use gf2_core::BitVec;
 use std::ffi::{c_char, c_void, CString};
 use std::sync::Arc;
 
+/// Declares the entry points of one bchlib build of `cpp/bchlib.c` and
+/// names them as a [`BchlibBuild`].
+macro_rules! bchlib_build {
+    ($build:ident, $label:expr, $constant:expr, $new:ident, $free:ident, $ecc_bits:ident, $encode:ident) => {
+        extern "C" {
+            fn $new(m: i32, t: i32, prim_poly: u32) -> *mut c_void;
+            fn $free(handle: *mut c_void);
+            fn $ecc_bits(handle: *mut c_void) -> u32;
+            fn $encode(handle: *mut c_void, data: *const u8, len: u32, ecc: *mut u8);
+        }
+        const $build: BchlibBuild = BchlibBuild {
+            label: $label,
+            constant: $constant,
+            new: $new,
+            free: $free,
+            ecc_bits: $ecc_bits,
+            encode: $encode,
+        };
+    };
+}
+
+bchlib_build!(
+    BCHLIB_RUNTIME,
+    "bchlib runtime (m, t)",
+    None,
+    gf2_bchlib_new,
+    gf2_bchlib_free,
+    gf2_bchlib_ecc_bits,
+    gf2_bchlib_encode
+);
+bchlib_build!(
+    BCHLIB_M14T12,
+    "bchlib const m=14 t=12",
+    Some((14, 12)),
+    gf2_bchlib_m14t12_new,
+    gf2_bchlib_m14t12_free,
+    gf2_bchlib_m14t12_ecc_bits,
+    gf2_bchlib_m14t12_encode
+);
+bchlib_build!(
+    BCHLIB_M16T12,
+    "bchlib const m=16 t=12",
+    Some((16, 12)),
+    gf2_bchlib_m16t12_new,
+    gf2_bchlib_m16t12_free,
+    gf2_bchlib_m16t12_ecc_bits,
+    gf2_bchlib_m16t12_encode
+);
+
+/// Every bchlib build `build.rs` compiles: the runtime-parameter one and the
+/// `CONFIG_BCH_CONST_PARAMS` ones, which accept only their own (m, t).
+const BCHLIB_BUILDS: [BchlibBuild; 3] = [BCHLIB_RUNTIME, BCHLIB_M14T12, BCHLIB_M16T12];
+
+/// The entry points of one bchlib build.
+#[derive(Clone, Copy)]
+struct BchlibBuild {
+    label: &'static str,
+    /// The (m, t) a const-parameter build is fixed to.
+    constant: Option<(i32, i32)>,
+    new: unsafe extern "C" fn(i32, i32, u32) -> *mut c_void,
+    free: unsafe extern "C" fn(*mut c_void),
+    ecc_bits: unsafe extern "C" fn(*mut c_void) -> u32,
+    encode: unsafe extern "C" fn(*mut c_void, *const u8, u32, *mut u8),
+}
+
 extern "C" {
-    fn gf2_bchlib_new(m: i32, t: i32, prim_poly: u32) -> *mut c_void;
-    fn gf2_bchlib_free(handle: *mut c_void);
-    fn gf2_bchlib_ecc_bits(handle: *mut c_void) -> u32;
-    fn gf2_bchlib_encode(handle: *mut c_void, data: *const u8, len: u32, ecc: *mut u8);
     fn gf2_srsran_nr_avx2() -> i32;
     fn gf2_srsran_nr_k_ldpc(bg: i32, z: i32) -> i32;
     fn gf2_srsran_nr_new() -> *mut c_void;
@@ -355,6 +416,7 @@ fn nr() {
 /// bchlib's encoder for one code, over messages packed most significant bit
 /// first, the byte order its polynomial convention reads.
 struct BchlibArm {
+    build: BchlibBuild,
     handle: *mut c_void,
     inputs: Arc<Vec<Vec<u8>>>,
     ecc: Vec<u8>,
@@ -362,15 +424,25 @@ struct BchlibArm {
 
 impl BchlibArm {
     /// `None` when bchlib rejects the field or the correction radius.
-    fn new(m: i32, t: i32, prim_poly: u32, inputs: Arc<Vec<Vec<u8>>>) -> Option<Self> {
+    fn new(
+        build: BchlibBuild,
+        m: i32,
+        t: i32,
+        prim_poly: u32,
+        inputs: Arc<Vec<Vec<u8>>>,
+    ) -> Option<Self> {
+        if build.constant.is_some_and(|fixed| fixed != (m, t)) {
+            return None;
+        }
         // SAFETY: null signals rejection; a non-null handle is owned here.
-        let handle = unsafe { gf2_bchlib_new(m, t, prim_poly) };
+        let handle = unsafe { (build.new)(m, t, prim_poly) };
         if handle.is_null() {
             return None;
         }
-        // SAFETY: `handle` is a live bchlib control.
-        let ecc_bits = unsafe { gf2_bchlib_ecc_bits(handle) } as usize;
+        // SAFETY: `handle` is a live control of this build.
+        let ecc_bits = unsafe { (build.ecc_bits)(handle) } as usize;
         Some(Self {
+            build,
             handle,
             inputs,
             ecc: vec![0; ecc_bits.div_ceil(8)],
@@ -395,7 +467,7 @@ impl Arm for BchlibArm {
         // SAFETY: `data` holds the message bytes and `ecc` the control's
         // ecc_bytes, the lengths `bch_encode` reads and writes.
         unsafe {
-            gf2_bchlib_encode(
+            (self.build.encode)(
                 self.handle,
                 data.as_ptr(),
                 data.len() as u32,
@@ -407,8 +479,8 @@ impl Arm for BchlibArm {
 
 impl Drop for BchlibArm {
     fn drop(&mut self) {
-        // SAFETY: `handle` came from `gf2_bchlib_new` and is freed once.
-        unsafe { gf2_bchlib_free(self.handle) }
+        // SAFETY: `handle` came from this build's `new` and is freed once.
+        unsafe { (self.build.free)(self.handle) }
     }
 }
 
@@ -423,7 +495,10 @@ fn bch_parameters(cell: &BchCell) -> (i32, i32, u32) {
 
 fn bch() {
     println!("# host: {}", host_description());
-    println!("# bchlib bch_encode (four-table remainder); gf2 DvbT2BchCode::encode_into");
+    println!(
+        "# bchlib bch_encode (four-table remainder), runtime and CONFIG_BCH_CONST_PARAMS builds; \
+         gf2 DvbT2BchCode::encode_into"
+    );
     println!("# ratio: gf2 codewords/s over the arm's; above 1 means gf2 is faster");
     println!("| cell | batch | arm | codewords/s | info Mb/s | gf2 ratio |");
     println!("|---|---|---|---|---|---|");
@@ -455,25 +530,44 @@ fn bch() {
                 fps * k as f64 / 1e6
             );
         };
-        let bchlib_ok = k % 8 == 0
-            && BchlibArm::new(m, t, prim, inputs.clone()).is_some_and(|mut arm| {
-                (0..messages.len()).all(|i| {
-                    arm.encode(i);
-                    arm.codeword(i, k, r) == expected[i]
-                })
-            });
-        if !bchlib_ok {
-            println!("# {name}: bchlib does not reproduce gf2's codewords; not timed");
+        let validated: Vec<BchlibBuild> = BCHLIB_BUILDS
+            .into_iter()
+            .filter(|&build| {
+                k % 8 == 0
+                    && BchlibArm::new(build, m, t, prim, inputs.clone()).is_some_and(|mut arm| {
+                        (0..messages.len()).all(|i| {
+                            arm.encode(i);
+                            arm.codeword(i, k, r) == expected[i]
+                        })
+                    })
+            })
+            .collect();
+        if validated.is_empty() {
+            println!("# {name}: no bchlib build reproduces gf2's codewords; not timed");
         }
         let gf2 = frames_per_second(1, cell.batch, || {
             Box::new(Gf2BchArm::new(code.clone(), messages.clone()))
         });
         row("gf2", gf2, None);
-        if bchlib_ok {
-            let fps = frames_per_second(1, cell.batch, || {
-                Box::new(BchlibArm::new(m, t, prim, inputs.clone()).expect("validated above"))
-            });
-            row("bchlib", fps, Some(gf2));
+        let timed: Vec<(BchlibBuild, f64)> = validated
+            .into_iter()
+            .map(|build| {
+                let fps = frames_per_second(1, cell.batch, || {
+                    Box::new(
+                        BchlibArm::new(build, m, t, prim, inputs.clone()).expect("validated above"),
+                    )
+                });
+                (build, fps)
+            })
+            .collect();
+        let fastest = timed.iter().map(|&(_, fps)| fps).fold(0.0, f64::max);
+        for (build, fps) in timed {
+            let label = if fps == fastest {
+                format!("{} (fastest bchlib)", build.label)
+            } else {
+                build.label.to_owned()
+            };
+            row(&label, fps, Some(gf2));
         }
     }
 }

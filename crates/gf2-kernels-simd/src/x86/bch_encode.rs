@@ -127,3 +127,159 @@ pub(crate) unsafe fn fold_blocks_pclmul(
         blocks,
     );
 }
+
+/// PCLMULQDQ lane of `crate::bch_encode::BchFoldChunksFn`: folds whole chunks
+/// of message blocks into an unreduced accumulator.
+///
+/// The accumulator stays in vector registers as word pairs, and each product
+/// selects its accumulator word and constant word by the instruction's
+/// immediate, so no word moves between vector and general registers inside a
+/// chunk. A product with an even constant word lands on a word pair; one with
+/// an odd word lands one word up and is realigned once per chunk.
+///
+/// # Safety
+///
+/// The caller must ensure the `pclmulqdq`, `sse4.1` and `ssse3` processor
+/// features are available at runtime; that set is this function's whole
+/// safety condition, and the complete feature set its instructions need.
+/// `crate::bch_encode::detect` publishes a pointer to this kernel only when
+/// all three, with `avx2`, are detected. The buffer geometry is not a safety
+/// condition: the kernel decides it below and panics rather than reading out
+/// of bounds.
+///
+/// # Panics
+///
+/// Panics as `crate::bch_encode::fold_chunks_scalar` does.
+///
+/// # Complexity
+///
+/// $\lceil r/64 \rceil$ `pclmulqdq` instructions per block, independent
+/// within a chunk.
+#[target_feature(enable = "pclmulqdq", enable = "sse4.1", enable = "ssse3")]
+pub(crate) unsafe fn fold_chunks_pclmul(state: &mut [u64], constants: &[u64], blocks: &[u64]) {
+    let accumulators = state.len();
+    assert!(
+        accumulators > 0 && constants.len().is_multiple_of(accumulators),
+        "the constants are one run per accumulator"
+    );
+    // Accumulator counts up to eight, which covers every default count,
+    // compile with the count constant so the chunk loop unrolls into
+    // registers; larger overrides run the same body with a runtime count.
+    macro_rules! counts {
+        ($w:literal) => {
+            match accumulators {
+                2 => fold_chunks_pclmul_words::<$w>(2, state, constants, blocks),
+                3 => fold_chunks_pclmul_words::<$w>(3, state, constants, blocks),
+                4 => fold_chunks_pclmul_words::<$w>(4, state, constants, blocks),
+                5 => fold_chunks_pclmul_words::<$w>(5, state, constants, blocks),
+                6 => fold_chunks_pclmul_words::<$w>(6, state, constants, blocks),
+                7 => fold_chunks_pclmul_words::<$w>(7, state, constants, blocks),
+                8 => fold_chunks_pclmul_words::<$w>(8, state, constants, blocks),
+                other => fold_chunks_pclmul_words::<$w>(other, state, constants, blocks),
+            }
+        };
+    }
+    match constants.len() / accumulators {
+        1 => counts!(1),
+        2 => counts!(2),
+        3 => counts!(3),
+        4 => counts!(4),
+        words => panic!(
+            "a chunk fold runs over 1 to {} words, not {words}",
+            crate::bch_encode::FOLD_UNROLLED_WORDS
+        ),
+    }
+}
+
+/// Word pairs of the largest accumulator.
+const FOLD_PAIRS: usize = crate::bch_encode::FOLD_MAX_ACCUMULATORS / 2;
+
+/// The chunk fold for constants of `W` words and `accumulators` accumulators,
+/// inlined into each call site so that a constant count unrolls.
+#[inline(always)]
+unsafe fn fold_chunks_pclmul_words<const W: usize>(
+    accumulators: usize,
+    state: &mut [u64],
+    constants: &[u64],
+    blocks: &[u64],
+) {
+    assert_eq!(state.len(), accumulators);
+    assert!(
+        accumulators > W && accumulators <= crate::bch_encode::FOLD_MAX_ACCUMULATORS,
+        "{accumulators} accumulators cannot hold a product of {W} words"
+    );
+    assert_eq!(constants.len(), accumulators * W);
+    assert!(
+        blocks.len().is_multiple_of(accumulators),
+        "{} blocks are not whole chunks of {accumulators}",
+        blocks.len()
+    );
+    let pairs = accumulators.div_ceil(2);
+    // Constant word pairs of each accumulator, the odd tail word paired with
+    // zero.
+    let constant_pairs = W.div_ceil(2);
+    let mut k = [[_mm_setzero_si128(); 2]; crate::bch_encode::FOLD_MAX_ACCUMULATORS];
+    for (index, run) in constants.chunks_exact(W).enumerate() {
+        for pair in 0..constant_pairs {
+            let high = if 2 * pair + 1 < W {
+                run[2 * pair + 1]
+            } else {
+                0
+            };
+            k[index][pair] = _mm_set_epi64x(high as i64, run[2 * pair] as i64);
+        }
+    }
+    let mut x = [_mm_setzero_si128(); FOLD_PAIRS];
+    for (pair, slot) in x.iter_mut().enumerate().take(pairs) {
+        let high = state.get(2 * pair + 1).copied().unwrap_or(0);
+        *slot = _mm_set_epi64x(high as i64, state[2 * pair] as i64);
+    }
+
+    for chunk in blocks.chunks_exact(accumulators) {
+        // Word w of the chunk is chunk[accumulators - 1 - w].
+        let mut even = [_mm_setzero_si128(); FOLD_PAIRS];
+        let mut odd = [_mm_setzero_si128(); FOLD_PAIRS + 1];
+        for (pair, slot) in even.iter_mut().enumerate().take(pairs) {
+            let top = accumulators - 1 - 2 * pair;
+            *slot = if top == 0 {
+                _mm_cvtsi64_si128(chunk[0] as i64)
+            } else {
+                // chunk[top - 1], chunk[top] are words 2p + 1, 2p.
+                let loaded = _mm_loadu_si128(chunk.as_ptr().add(top - 1).cast::<__m128i>());
+                _mm_shuffle_epi32::<0x4E>(loaded)
+            };
+        }
+        for index in 0..accumulators {
+            let source = x[index / 2];
+            for word in 0..W {
+                let constant = k[index][word / 2];
+                let product = match (index % 2, word % 2) {
+                    (0, 0) => _mm_clmulepi64_si128::<0x00>(source, constant),
+                    (0, _) => _mm_clmulepi64_si128::<0x10>(source, constant),
+                    (_, 0) => _mm_clmulepi64_si128::<0x01>(source, constant),
+                    _ => _mm_clmulepi64_si128::<0x11>(source, constant),
+                };
+                if word % 2 == 0 {
+                    even[word / 2] = _mm_xor_si128(even[word / 2], product);
+                } else {
+                    odd[word / 2] = _mm_xor_si128(odd[word / 2], product);
+                }
+            }
+        }
+        // odd[p] covers words 2p + 1 and 2p + 2; realign onto pairs.
+        let mut below = _mm_setzero_si128();
+        for pair in 0..pairs {
+            let aligned = _mm_alignr_epi8::<8>(odd[pair], below);
+            below = odd[pair];
+            x[pair] = _mm_xor_si128(even[pair], aligned);
+        }
+    }
+    for pair in 0..pairs {
+        let mut words = [0u64; 2];
+        _mm_storeu_si128(words.as_mut_ptr().cast::<__m128i>(), x[pair]);
+        state[2 * pair] = words[0];
+        if 2 * pair + 1 < accumulators {
+            state[2 * pair + 1] = words[1];
+        }
+    }
+}

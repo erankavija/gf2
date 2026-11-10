@@ -326,9 +326,10 @@ fn shortened_rows(c: &mut Criterion) {
         assert_eq!(derivation, ShortenedDerivation::SystematicRestriction);
         let (n, k) = (code.n(), code.k());
         let messages = binary_messages(k, largest);
-        // The single-message path runs the mother's reference recurrence;
-        // the family seam belongs to the batch entry points.
-        let family = EncodeFamily::REFERENCE;
+        // Each message encodes through the mother, which selects as a batch
+        // of one.
+        let mother = code.mother();
+        let family = mother.code().selected_encode_family(mother.layout(), 1);
 
         for &batch in &BATCHES {
             let batch_messages = &messages[..batch];
