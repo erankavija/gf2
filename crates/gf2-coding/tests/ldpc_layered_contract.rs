@@ -1,6 +1,6 @@
 //! The layered quantized decoder's contract, run on each kernel backend.
 use gf2_coding::channel::AwgnChannel;
-use gf2_coding::ldpc::nr_5g::FILLER_LLR;
+use gf2_coding::ldpc::nr_5g::{all_lifting_sizes, FILLER_LLR};
 use gf2_coding::ldpc::{
     LaneBackend, LayerError, LayeredConfig, LayeredDecoder, LayeredRule, LdpcCode, LdpcEncoder,
     QuasiCyclicLdpc,
@@ -256,7 +256,8 @@ fn cap_zero_reports_the_quantized_channel_and_its_syndrome() {
 
 #[test]
 fn quantization_rounds_saturates_and_maps_rate_matching_values() {
-    let config = standard();
+    // Scale 4, channel limit 31.
+    let config = LayeredConfig::dvb_t2();
     let q = |x: f32| config.quantize(Llr::new(x));
     assert_eq!((q(0.0), q(-0.0), q(f32::NAN)), (0, 0, 0));
     assert_eq!((q(0.125), q(-0.125), q(0.124), q(-0.375)), (1, -1, 0, -2));
@@ -390,4 +391,81 @@ fn any_valid_partition_decodes() {
     let outcome = decoder.decode_codeword_into(&clean, 5, &mut word);
     assert!(outcome.converged && word.count_ones() == 0);
     assert_eq!(outcome.iterations, 1);
+}
+
+/// Decodes a noiseless and a noisy random codeword at Eb/N0 6 dB on every
+/// backend, with and without early termination: the backends agree and both
+/// frames decode to the codeword. Without early termination the decoder must
+/// also stay on a codeword it has reached.
+fn decodes_random_codewords(name: &str, code: &LdpcCode, config: LayeredConfig, seed: u64) {
+    let encoder = LdpcEncoder::new(code.clone());
+    let mut rng = StdRng::seed_from_u64(seed);
+    let codeword = encoder.encode(&BitVec::random(encoder.k(), &mut rng));
+    let rate = encoder.k() as f64 / code.n() as f64;
+    let channel = AwgnChannel::from_variance(1.0 / (2.0 * rate * 10f64.powf(0.6)));
+    let gain = 2.0 / channel.variance();
+    let symbol = |i: usize| if codeword.get(i) { -1.0 } else { 1.0 };
+    let noiseless: Vec<Llr> = (0..code.n())
+        .map(|i| Llr::new((gain * symbol(i)) as f32))
+        .collect();
+    let noisy: Vec<Llr> = (0..code.n())
+        .map(|i| Llr::new((gain * channel.transmit(symbol(i), &mut rng)) as f32))
+        .collect();
+    let flipped = (0..code.n())
+        .filter(|&i| (noisy[i].value() < 0.0) != codeword.get(i))
+        .count();
+    assert!(flipped > 0, "{name}: the noisy frame has no hard errors");
+    let case = Case {
+        name: name.into(),
+        code: code.clone(),
+        layers: None,
+        sigma: 0.0,
+    };
+    let toggled = LayeredConfig::new(
+        config.rule(),
+        config.channel_scale(),
+        config.channel_limit(),
+        config.message_limit(),
+        !config.early_termination(),
+    );
+    for (llrs, config) in [&noiseless, &noisy]
+        .into_iter()
+        .flat_map(|l| [(l, config), (l, toggled)])
+    {
+        let seen: Vec<Observation> = backends(&case, config)
+            .iter_mut()
+            .map(|decoder| observe(decoder, llrs, 25))
+            .collect();
+        for other in &seen[1..] {
+            assert_eq!(&seen[0], other, "{name} {config:?}");
+        }
+        let (_, word, _, converged, passed, _) = &seen[0];
+        assert!(*converged && *passed, "{name} {config:?}");
+        assert_eq!(word, &codeword, "{name} {config:?}");
+    }
+}
+
+#[test]
+fn every_dvb_t2_code_decodes_on_every_backend() {
+    use CodeRate::*;
+    for rate in [Rate1_2, Rate3_5, Rate2_3, Rate3_4, Rate4_5, Rate5_6] {
+        for (size, code) in [
+            ("short", LdpcCode::dvb_t2_short(rate)),
+            ("normal", LdpcCode::dvb_t2_normal(rate)),
+        ] {
+            let name = format!("dvb-t2 {size} {rate:?}");
+            decodes_random_codewords(&name, &code, LayeredConfig::dvb_t2(), 0xd7b);
+        }
+    }
+}
+
+#[test]
+fn every_nr_lifting_size_off_the_lane_grid_decodes_on_every_backend() {
+    for base_graph in [1, 2] {
+        for z in all_lifting_sizes().into_iter().filter(|z| z % 32 != 0) {
+            let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(base_graph, z.into()));
+            let name = format!("nr bg{base_graph} z{z}");
+            decodes_random_codewords(&name, &code, standard(), u64::from(z));
+        }
+    }
 }
