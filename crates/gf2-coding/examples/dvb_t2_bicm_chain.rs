@@ -1,15 +1,15 @@
 //! End-to-end DVB-T2 BICM chain for Normal × 1/2 × 16-QAM: `DvbT2Concat`
-//! (BCH + LDPC) encoding, `DvbT2BitInterleaver`, Gray-QAM mapping, then soft
-//! demapping of the transmitted symbols at noise variance 1e-6, LLR
-//! deinterleaving and `DvbT2Concat::decode_soft`.
+//! (BCH + LDPC) encoding, `DvbT2BitInterleaver`, `DvbT2CellMapper` cell
+//! demultiplexing and mapping, then soft demapping of the transmitted cells at
+//! noise variance 1e-6, LLR deinterleaving and `DvbT2Concat::decode_soft`.
 
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
 };
 use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
-use gf2_coding::ldpc::dvb_t2::FrameSize;
+use gf2_coding::ldpc::dvb_t2::{DvbT2CellMapper, FrameSize};
 use gf2_coding::llr::Llr;
-use gf2_coding::modem::{BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec};
+use gf2_coding::modem::{DemapInput, DemapMethod};
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 
@@ -17,7 +17,6 @@ fn main() {
     let frame_size = FrameSize::Normal;
     let code_rate = CodeRate::Rate1_2;
     let modulation = DvbT2Modulation::Qam16;
-    let qam_order: usize = 16; // matches DvbT2Modulation::Qam16
 
     println!("DVB-T2 BICM chain — Normal × Rate 1/2 × 16-QAM");
     println!("------------------------------------------------");
@@ -39,15 +38,11 @@ fn main() {
         interleaver.frame_bits()
     );
 
-    let spec = ModemSpec::<f32>::gray_square_qam(qam_order);
-    let m = spec.bits_per_symbol() as usize; // 4 for 16-QAM
-    let mapper = spec.preferred_mapper();
-    let demapper = spec.preferred_soft_demapper();
+    let cell_mapper = DvbT2CellMapper::new(modcod);
     println!(
-        "Modem:       {}-QAM, {} bits/symbol, {} symbols/FECFRAME",
-        qam_order,
-        m,
-        concat.n_ldpc() / m
+        "Modem:       16-QAM, {} bits/cell, {} cells/FECFRAME",
+        cell_mapper.bits_per_cell(),
+        cell_mapper.num_cells()
     );
     println!();
 
@@ -80,20 +75,18 @@ fn main() {
     assert_eq!(interleaved.len(), concat.n_ldpc());
     println!("Interleaved FECFRAME: {} bits", interleaved.len());
 
-    let num_symbols = concat.n_ldpc() / m;
-    let interleaved_bits: Vec<bool> = (0..interleaved.len()).map(|i| interleaved.get(i)).collect();
-    let mut tx_i = vec![0.0_f32; num_symbols];
-    let mut tx_q = vec![0.0_f32; num_symbols];
-    mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
-    println!("QAM mapped: {} symbols (16-QAM)", num_symbols);
+    let num_cells = cell_mapper.num_cells();
+    let mut tx_i = vec![0.0_f32; num_cells];
+    let mut tx_q = vec![0.0_f32; num_cells];
+    cell_mapper.map(&interleaved, &mut tx_i, &mut tx_q);
+    println!("Cell mapped: {} cells (16-QAM)", num_cells);
 
     println!("Receive: noiseless (noise_var = 1e-6, equivalent to Eb/N0 >> 30 dB)");
 
-    // out_llrs are in interleaved order: out_llrs[s * m + k] is the LLR
-    // for bit k of symbol s (MSB-first, k=0 is MSB).
-    let noise_var = vec![1e-6_f32; num_symbols];
+    // out_llrs[j] is the LLR of bit-interleaver output bit j.
+    let noise_var = vec![1e-6_f32; num_cells];
     let mut out_llrs = vec![Llr::new(0.0); concat.n_ldpc()];
-    demapper.demap_llrs(
+    cell_mapper.demap_llrs(
         DemapInput {
             rx_i: &tx_i,
             rx_q: &tx_q,

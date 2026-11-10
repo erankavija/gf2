@@ -14,10 +14,13 @@ codeword bit order and the external evidence each conformance test consumes.
 | BCH outer code | `bch::dvb_t2::dvb_t2_bch_code`, `DvbT2BchDecoder` | every `FrameSize` × `CodeRate`; parameters of EN 302 755 Tables 6a and 6b in [`params.rs`](../../crates/gf2-coding/src/bch/dvb_t2/params.rs) |
 | LDPC inner code | `LdpcCode::dvb_t2_normal`, `LdpcCode::dvb_t2_short` | every `FrameSize` × `CodeRate`; `(N_ldpc, K_ldpc, Q_ldpc)` in `DvbParams::for_code`, parity address tables beside it in [`ldpc/dvb_t2/`](../../crates/gf2-coding/src/ldpc/dvb_t2/) |
 | BCH + LDPC chain | `ldpc::dvb_t2::concat::DvbT2Concat`; `DvbT2ConcatBatchDecoder` beside it for batches of FECFRAMEs | every `FrameSize` × `CodeRate` |
-| Bit interleaver (§6.1.3) | `ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver` | QPSK, 16-QAM, 64-QAM at rates 1/2, 2/3, 3/4 on both frame sizes and rate 3/5 on normal frames; QPSK is the identity, as §6.1.3 prescribes |
+| Bit interleaver (§6.1.3) | `ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver` | QPSK, 16-QAM, 64-QAM, 256-QAM at rates 1/2, 2/3, 3/4 on both frame sizes and rate 3/5 on normal frames; QPSK is the identity, as §6.1.3 prescribes |
+| Bit-to-cell-word demultiplexer (§6.2.1) and cell-word mapping (§6.2.2) | `ldpc::dvb_t2::cell_mapper::{DvbT2CellDemux, DvbT2CellMapper}` | QPSK, 16-QAM, 64-QAM, 256-QAM at every `FrameSize` × `CodeRate`; Tables 13(a) to 13(c) and 14(b) to 14(i), cells normalized per Table 15 |
 
-The bit interleaver panics on other rates and has no 256-QAM mode. The cell-word
-demultiplexer and cell interleaver are outside the library.
+The bit interleaver panics on other rates. Constellation rotation and the cell
+interleaver are outside the library. The `gf2-sim` DVB-T2 stage chain
+(`gf2_sim::stages::dvb_t2_bicm_stages`) composes the codec, the bit interleaver
+and the cell mapper.
 
 ### Bit order
 
@@ -38,8 +41,8 @@ streams (`@/citation/DvbVerification2010`), distributed by the DVB Project at
 They are not redistributed in the repository. The tests read them from
 `$DVB_TEST_VECTORS_PATH`, which holds
 one unpacked `<stream>_CSP` archive per stream. The consumed test points are
-TP04 (BBFRAME), TP05 (BCH codeword), TP06 (FECFRAME) and TP07a (bit-interleaved
-FECFRAME).
+TP04 (BBFRAME), TP05 (BCH codeword), TP06 (FECFRAME), TP07a (bit-interleaved
+FECFRAME), TP07 (cell words) and TP08a (unrotated cells).
 
 | Test target | Stream | Asserts |
 |---|---|---|
@@ -47,17 +50,27 @@ FECFRAME).
 | [`dvb_t2_ldpc_verification_suite`](../../crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs) | VV001-CR35 | `encode(TP05) = TP06` and error-free decode on every block of the first frame; TP06 begins with TP05; `H·c = 0`; round trip |
 | [`dvb_t2_concat_batch_decoder`](../../crates/gf2-coding/tests/dvb_t2_concat_batch_decoder.rs) | VV001-CR35 | error-free `decode(TP06) = TP04` on every block of the first frame, through `DvbT2Concat::decode_soft_counted` and through `DvbT2ConcatBatchDecoder` on each route |
 | [`dvb_t2_chain_tp07a`](../../crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs) | VV020-FEF, VV009-4KFFT, VV014-64QAM34 | `interleave(TP06) = TP07a` and `deinterleave(TP07a) = TP06` bit-exact (16-QAM 1/2, 64-QAM 2/3, 64-QAM 3/4, normal frame) |
+| [`dvb_t2_cell_mapping_vv001`](../../crates/gf2-coding/tests/dvb_t2_cell_mapping_vv001.rs) | VV001-CR35 | on the first block: `interleave(TP06) = TP07a`, `demux(TP07a) = TP07`, `mux(TP07) = TP07a`, and the mapped cells of TP07a and of TP07 equal TP08a within the stream's seven printed digits (256-QAM 3/5, normal frame) |
+| [`dvb_t2_chain_cells_vv001`](../../crates/gf2-sim/tests/dvb_t2_chain_cells_vv001.rs) (`gf2-sim`) | VV001-CR35 | the forward stages of `dvb_t2_bicm_stages` map the first TP04 BBFRAME to the TP08a cells within seven digits (256-QAM 3/5, normal frame) |
 
-The `dvb_t2_bch_verification` tests outside its slow error-correction case run
-in the fast tier and pass without assertion when the vectors are absent; the
-other vector tests of this table are ignored by default. The BCH generator construction is
+No test of this table checks the QPSK, 16-QAM or 64-QAM rows of the
+demultiplexer or their cell mapping against a stream; unit tests of `cell_mapper` check the mapping of every order
+against Tables 14(b) to 14(i).
+
+The `dvb_t2_bch_verification` tests outside its slow error-correction case, and
+the `dvb_t2_cell_mapping_vv001` and `dvb_t2_chain_cells_vv001` tests, run in the
+fast tier and pass without assertion when the vectors are absent; the other
+vector tests of this table are ignored by default. The BCH generator construction is
 checked against the standard's minimal polynomials `g₁`…`g₁₂` by unit tests in
 `bch::dvb_t2`.
 
 ```bash
 DVB_TEST_VECTORS_PATH=/path/to/streams ./scripts/cargo-budget.sh --test \
   cargo nextest run -p gf2-coding --release --profile slow --run-ignored all \
-  -E 'binary(dvb_t2_bch_verification) | binary(dvb_t2_ldpc_verification_suite) | binary(dvb_t2_concat_batch_decoder) | binary(dvb_t2_chain_tp07a)'
+  -E 'binary(dvb_t2_bch_verification) | binary(dvb_t2_ldpc_verification_suite) | binary(dvb_t2_concat_batch_decoder) | binary(dvb_t2_chain_tp07a) | binary(dvb_t2_cell_mapping_vv001)'
+DVB_TEST_VECTORS_PATH=/path/to/streams ./scripts/cargo-budget.sh --test \
+  cargo nextest run -p gf2-sim --cargo-profile ci-test --profile ci \
+  -E 'binary(dvb_t2_chain_cells_vv001)'
 ```
 
 ## 5G NR LDPC

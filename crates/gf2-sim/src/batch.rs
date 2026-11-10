@@ -27,7 +27,7 @@ impl BatchSize for BitPackedBatch {
     }
 }
 
-/// A batch of Gray-QAM IQ symbol frames in structure-of-arrays form.
+/// A batch of IQ symbol frames in structure-of-arrays form.
 ///
 /// Each batch element is one frame; within a frame the in-phase (`i`) and
 /// quadrature (`q`) components are stored as parallel `f32` lanes

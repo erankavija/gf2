@@ -1,6 +1,6 @@
-//! DVB-T2 BICM chain round trips: BCH and LDPC encode, bit interleave, QAM
-//! map, soft demap at noise variance 1e-6, deinterleave, soft decode on the
-//! single-frame codec and on its batch decoder.
+//! DVB-T2 BICM chain round trips: BCH and LDPC encode, bit interleave, cell
+//! demultiplex and map, soft demap at noise variance 1e-6, deinterleave, soft
+//! decode on the single-frame codec and on its batch decoder.
 
 #[path = "support/dvb_t2_concat_batch.rs"]
 mod concat_batch;
@@ -9,18 +9,32 @@ use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
 };
 use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
-use gf2_coding::ldpc::dvb_t2::FrameSize;
+use gf2_coding::ldpc::dvb_t2::{DvbT2CellMapper, FrameSize};
 use gf2_coding::llr::Llr;
-use gf2_coding::modem::{BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec};
+use gf2_coding::modem::{DemapInput, DemapMethod};
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 
-fn qam_order(modulation: DvbT2Modulation) -> usize {
-    match modulation {
-        DvbT2Modulation::Qpsk => 4,
-        DvbT2Modulation::Qam16 => 16,
-        DvbT2Modulation::Qam64 => 64,
-    }
+/// Maps the bit-interleaved FECFRAME `interleaved` to cells and soft-demaps
+/// them noise-free (`N0 = 1e-6`, max-log) into bit-interleaver order LLRs.
+fn map_and_demap(mapper: &DvbT2CellMapper, interleaved: &BitVec) -> Vec<Llr> {
+    let cells = mapper.num_cells();
+    let mut tx_i = vec![0.0_f32; cells];
+    let mut tx_q = vec![0.0_f32; cells];
+    mapper.map(interleaved, &mut tx_i, &mut tx_q);
+    let mut llrs = vec![Llr::new(0.0); interleaved.len()];
+    mapper.demap_llrs(
+        DemapInput {
+            rx_i: &tx_i,
+            rx_q: &tx_q,
+            gain_i: None,
+            gain_q: None,
+            noise_var: &vec![1e-6_f32; cells],
+            method: DemapMethod::MaxLog,
+        },
+        &mut llrs,
+    );
+    llrs
 }
 
 /// Pseudo-random BBFRAME from the MMIX LCG multiplier (`@/citation/Knuth1997`).
@@ -32,10 +46,6 @@ fn random_bbframe(k_bch: usize, seed: u64) -> BitVec {
         bv.push_bit((state >> 63) != 0);
     }
     bv
-}
-
-fn bitvec_to_bools(bv: &BitVec) -> Vec<bool> {
-    (0..bv.len()).map(|i| bv.get(i)).collect()
 }
 
 fn noiseless_llrs_from_bitvec(bv: &BitVec, magnitude: f32) -> Vec<Llr> {
@@ -51,7 +61,7 @@ fn noiseless_llrs_from_bitvec(bv: &BitVec, magnitude: f32) -> Vec<Llr> {
 }
 
 #[test]
-fn test_qam_mapper_demap_path_16qam_normal_rate1_2() {
+fn test_cell_mapper_demap_path_16qam_normal_rate1_2() {
     let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
     let interleaver = DvbT2BitInterleaver::new(modcod);
     let n = interleaver.frame_bits(); // 64800
@@ -61,32 +71,7 @@ fn test_qam_mapper_demap_path_16qam_normal_rate1_2() {
     let interleaved = interleaver.interleave(&fecframe);
     assert_eq!(interleaved.len(), n);
 
-    let spec = ModemSpec::<f32>::gray_square_qam(16);
-    let m = spec.bits_per_symbol() as usize; // 4
-    let num_symbols = n / m;
-    assert_eq!(n % m, 0, "frame_bits must be a multiple of bits_per_symbol");
-
-    let mapper = spec.preferred_mapper();
-    let demapper = spec.preferred_soft_demapper();
-
-    let interleaved_bits: Vec<bool> = bitvec_to_bools(&interleaved);
-    let mut tx_i = vec![0.0_f32; num_symbols];
-    let mut tx_q = vec![0.0_f32; num_symbols];
-    mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
-
-    // Noiseless demap: very small noise_var so LLR magnitudes are large.
-    let noise_var = vec![1e-6_f32; num_symbols];
-    let mut out_llrs = vec![Llr::new(0.0); n];
-    let input = DemapInput {
-        rx_i: &tx_i,
-        rx_q: &tx_q,
-        gain_i: None,
-        gain_q: None,
-        noise_var: &noise_var,
-        method: DemapMethod::MaxLog,
-    };
-    demapper.demap_llrs(input, &mut out_llrs);
-
+    let out_llrs = map_and_demap(&DvbT2CellMapper::new(modcod), &interleaved);
     let fecframe_llrs = interleaver.deinterleave_llrs(&out_llrs);
     assert_eq!(fecframe_llrs.len(), n);
 
@@ -101,40 +86,14 @@ fn test_qam_mapper_demap_path_16qam_normal_rate1_2() {
 }
 
 #[test]
-fn test_qam_mapper_demap_path_64qam_normal_rate1_2() {
+fn test_cell_mapper_demap_path_64qam_normal_rate1_2() {
     let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam64);
     let interleaver = DvbT2BitInterleaver::new(modcod);
     let n = interleaver.frame_bits(); // 64800
 
     let fecframe = BitVec::zeros(n);
     let interleaved = interleaver.interleave(&fecframe);
-
-    let spec = ModemSpec::<f32>::gray_square_qam(64);
-    let m = spec.bits_per_symbol() as usize; // 6
-    let num_symbols = n / m;
-    assert_eq!(n % m, 0);
-
-    let mapper = spec.preferred_mapper();
-    let demapper = spec.preferred_soft_demapper();
-
-    let interleaved_bits = bitvec_to_bools(&interleaved);
-    let mut tx_i = vec![0.0_f32; num_symbols];
-    let mut tx_q = vec![0.0_f32; num_symbols];
-    mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
-
-    let noise_var = vec![1e-6_f32; num_symbols];
-    let mut out_llrs = vec![Llr::new(0.0); n];
-    demapper.demap_llrs(
-        DemapInput {
-            rx_i: &tx_i,
-            rx_q: &tx_q,
-            gain_i: None,
-            gain_q: None,
-            noise_var: &noise_var,
-            method: DemapMethod::MaxLog,
-        },
-        &mut out_llrs,
-    );
+    let out_llrs = map_and_demap(&DvbT2CellMapper::new(modcod), &interleaved);
 
     let fecframe_llrs = interleaver.deinterleave_llrs(&out_llrs);
     for (i, &llr) in fecframe_llrs.iter().enumerate() {
@@ -240,30 +199,7 @@ fn run_full_bicm_roundtrip_fs(
     let interleaved = interleaver.interleave(&fecframe);
     assert_eq!(interleaved.len(), concat.n_ldpc());
 
-    let spec = ModemSpec::<f32>::gray_square_qam(qam_order(modulation));
-    let m = spec.bits_per_symbol() as usize;
-    let num_symbols = concat.n_ldpc() / m;
-    assert_eq!(concat.n_ldpc() % m, 0);
-    let mapper = spec.preferred_mapper();
-    let demapper = spec.preferred_soft_demapper();
-    let interleaved_bits = bitvec_to_bools(&interleaved);
-    let mut tx_i = vec![0.0_f32; num_symbols];
-    let mut tx_q = vec![0.0_f32; num_symbols];
-    mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
-
-    let noise_var = vec![1e-6_f32; num_symbols];
-    let mut interleaved_llrs = vec![Llr::new(0.0); concat.n_ldpc()];
-    demapper.demap_llrs(
-        DemapInput {
-            rx_i: &tx_i,
-            rx_q: &tx_q,
-            gain_i: None,
-            gain_q: None,
-            noise_var: &noise_var,
-            method: DemapMethod::MaxLog,
-        },
-        &mut interleaved_llrs,
-    );
+    let interleaved_llrs = map_and_demap(&DvbT2CellMapper::new(modcod), &interleaved);
 
     let fecframe_llrs = interleaver.deinterleave_llrs(&interleaved_llrs);
     assert_eq!(fecframe_llrs.len(), concat.n_ldpc());
@@ -293,6 +229,16 @@ fn test_bicm_roundtrip_short_rate1_2_qpsk() {
         CodeRate::Rate1_2,
         DvbT2Modulation::Qpsk,
         0xA1B2_C3D4_E5F6_0718,
+    );
+}
+
+#[test]
+fn test_bicm_roundtrip_short_rate1_2_256qam() {
+    run_full_bicm_roundtrip_fs(
+        FrameSize::Short,
+        CodeRate::Rate1_2,
+        DvbT2Modulation::Qam256,
+        0x2B5E_7C11_93AD_4F60,
     );
 }
 
@@ -391,11 +337,4 @@ fn test_interleaver_frame_bits_matches_fecframe_size_all_in_scope() {
             modulation
         );
     }
-}
-
-#[test]
-fn test_qam_order_helper() {
-    assert_eq!(qam_order(DvbT2Modulation::Qpsk), 4);
-    assert_eq!(qam_order(DvbT2Modulation::Qam16), 16);
-    assert_eq!(qam_order(DvbT2Modulation::Qam64), 64);
 }

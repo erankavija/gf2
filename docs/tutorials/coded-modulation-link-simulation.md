@@ -3,8 +3,8 @@
 This tutorial simulates the DVB-T2 bit-interleaved coded modulation link of
 `@/citation/Etsi2015` over an Es/N0 sweep and reads its frame error rate (FER)
 with confidence intervals. The chain is the BCH and LDPC normal-frame code,
-bit interleaving, 16-QAM mapping, AWGN, soft demapping and belief-propagation
-decoding. The program is the campaign binary
+bit interleaving, cell-word demultiplexing and 16-QAM cell mapping, AWGN, soft
+demapping and belief-propagation decoding. The program is the campaign binary
 [`dvb_t2_awgn_campaign.rs`](../../experiments/dvb-t2-awgn/src/bin/dvb_t2_awgn_campaign.rs),
 which builds the chain with the `gf2-sim` DVB-T2 preset and checkpoints every
 point. Supported code configurations are in

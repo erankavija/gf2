@@ -1,11 +1,11 @@
 //! DVB-T2 codec and modem [`Stage`] wrappers over the `gf2-coding` types
-//! [`DvbT2Concat`], [`GrayQamMapper`], [`FastGrayQamDemapper`] and
-//! [`DvbT2BitInterleaver`]; [`dvb_t2_bicm_stages`] wires them in BICM order:
-//! encode → bit-interleave → QAM-map → (channel) → QAM-demap → bit-deinterleave
-//! → decode. Every stage is `ExecutionClass::CpuOnly` with `CpuFallback = Self`
-//! and `Scratch = ()`, except [`DvbT2Decode`], which decodes through
-//! [`BatchDecode`] and whose [`DecodeScratch`] exposes the per-frame LDPC BP
-//! iteration counts.
+//! [`DvbT2Concat`], [`DvbT2BitInterleaver`] and [`DvbT2CellMapper`];
+//! [`dvb_t2_bicm_stages`] wires them in BICM order: encode → bit-interleave →
+//! cell demultiplex and map → (channel) → cell demap and multiplex →
+//! bit-deinterleave → decode. Every stage is `ExecutionClass::CpuOnly` with
+//! `CpuFallback = Self` and `Scratch = ()`, except [`DvbT2Decode`], which
+//! decodes through [`BatchDecode`] and whose [`DecodeScratch`] exposes the
+//! per-frame LDPC BP iteration counts.
 
 pub mod batch_decode;
 pub mod nr_5g;
@@ -16,7 +16,7 @@ use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
 };
 use gf2_coding::ldpc::dvb_t2::concat::{DvbT2Concat, DvbT2ConcatBatchDecoder};
-use gf2_coding::ldpc::dvb_t2::FrameSize;
+use gf2_coding::ldpc::dvb_t2::{DvbT2CellMapper, FrameSize};
 use gf2_coding::ldpc::DecoderConfig;
 use gf2_coding::modem::{
     BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, GrayQamMapper,
@@ -32,18 +32,13 @@ use crate::stage::{erase, AnyStage, ExecutionClass, Stage};
 use batch_decode::{BatchDecode, BatchDecodeScratch};
 
 /// Default per-symbol total noise variance (`N0 = 2 sigma^2`) used by
-/// [`GrayQamDemap`] when none is supplied.
+/// [`DvbT2CellDemap`] when none is supplied.
 ///
 /// Callers that simulate a channel pass the true `N0` via
-/// [`GrayQamDemap::with_noise_var`].
+/// [`DvbT2CellDemap::with_noise_var`].
 pub const DEFAULT_DEMAP_NOISE_VAR: f32 = 0.1;
 
-fn bits_per_symbol(modulation: DvbT2Modulation) -> usize {
-    modulation.bits_per_cell()
-}
-
-/// Gray-QAM map kernel shared by [`GrayQamMap`] and
-/// [`NrGrayQamMap`](nr_5g::NrGrayQamMap): [`BitPackedBatch`] →
+/// Gray-QAM map kernel of [`NrGrayQamMap`](nr_5g::NrGrayQamMap): [`BitPackedBatch`] →
 /// [`SymbolBatch`] via [`GrayQamMapper::map_bits`].
 pub(crate) struct GrayQamMapCore {
     mapper: GrayQamMapper<f32>,
@@ -78,7 +73,7 @@ impl GrayQamMapCore {
     }
 }
 
-/// Gray-QAM soft-demap kernel shared by [`GrayQamDemap`],
+/// Gray-QAM soft-demap kernel shared by
 /// [`NrGrayQamDemap`](nr_5g::NrGrayQamDemap) and the hip-gated
 /// `gpu::demap::CpuGrayQamDemapper`: [`SymbolBatch`] → [`LlrBatch`] via
 /// [`FastGrayQamDemapper::demap_llrs`] under AWGN with a constant per-symbol
@@ -290,25 +285,24 @@ impl Stage<LlrBatch, LlrBatch> for BitDeinterleave {
     }
 }
 
-/// Gray-QAM map stage: interleaved coded bits → IQ symbols.
+/// Cell map stage: bit-interleaved FECFRAME → cells.
 ///
-/// Wraps [`GrayQamMapper::map_bits`]. Each input frame's bit count must be a
-/// multiple of `m = log2(order)`; each output frame has `bits / m` symbols
-/// stored as parallel I/Q `f32` lanes.
-pub struct GrayQamMap {
-    core: GrayQamMapCore,
+/// Wraps [`DvbT2CellMapper::map`]: the bit-to-cell-word demultiplexer and
+/// cell-word mapping of `@/citation/Etsi2015` clauses 6.2.1 and 6.2.2. Each
+/// input frame is `N_ldpc` bits; each output frame holds
+/// [`DvbT2CellMapper::num_cells`] cells as parallel I/Q `f32` lanes.
+pub struct DvbT2CellMap {
+    mapper: Arc<DvbT2CellMapper>,
 }
 
-impl GrayQamMap {
-    /// Builds a Gray-QAM map stage for a DVB-T2 modulation.
-    pub fn new(modulation: DvbT2Modulation) -> Self {
-        Self {
-            core: GrayQamMapCore::new(bits_per_symbol(modulation)),
-        }
+impl DvbT2CellMap {
+    /// Builds a cell map stage over a shared [`DvbT2CellMapper`].
+    pub fn new(mapper: Arc<DvbT2CellMapper>) -> Self {
+        Self { mapper }
     }
 }
 
-impl Stage<BitPackedBatch, SymbolBatch> for GrayQamMap {
+impl Stage<BitPackedBatch, SymbolBatch> for DvbT2CellMap {
     type Scratch = ();
     type CpuFallback = Self;
 
@@ -317,7 +311,15 @@ impl Stage<BitPackedBatch, SymbolBatch> for GrayQamMap {
         input: &BitPackedBatch,
         _scratch: &mut (),
     ) -> Result<SymbolBatch, StageError> {
-        Ok(self.core.map_batch(input))
+        let cells = self.mapper.num_cells();
+        let (mut i_lanes, mut q_lanes) = (Vec::new(), Vec::new());
+        for frame in &input.frames {
+            let (mut out_i, mut out_q) = (vec![0.0_f32; cells], vec![0.0_f32; cells]);
+            self.mapper.map(frame, &mut out_i, &mut out_q);
+            i_lanes.push(out_i);
+            q_lanes.push(out_q);
+        }
+        Ok(SymbolBatch::new(i_lanes, q_lanes))
     }
 
     fn execution_class(&self) -> ExecutionClass {
@@ -325,59 +327,85 @@ impl Stage<BitPackedBatch, SymbolBatch> for GrayQamMap {
     }
 }
 
-/// Gray-QAM soft-demap stage: IQ symbols → soft LLRs.
+/// Cell soft-demap stage: cells → LLRs in bit-interleaver output order.
 ///
-/// Wraps [`FastGrayQamDemapper::demap_llrs`] under AWGN-shaped log-MAP. Each
-/// input frame of `s` symbols produces `s * m` LLRs (`m = log2(order)`). The
-/// per-symbol total noise variance (`N0`) defaults to
+/// Wraps [`DvbT2CellMapper::demap_llrs`] under AWGN with a constant
+/// per-cell total noise variance (`N0`), the receive-path inverse of
+/// [`DvbT2CellMap`]. Each input frame of [`DvbT2CellMapper::num_cells`]
+/// cells produces `N_ldpc` LLRs. `N0` defaults to
 /// [`DEFAULT_DEMAP_NOISE_VAR`]; set the true channel `N0` via
-/// [`GrayQamDemap::with_noise_var`].
-pub struct GrayQamDemap {
-    core: GrayQamDemapCore,
+/// [`DvbT2CellDemap::with_noise_var`].
+pub struct DvbT2CellDemap {
+    mapper: Arc<DvbT2CellMapper>,
+    method: DemapMethod,
+    noise_var: f32,
 }
 
-impl GrayQamDemap {
-    /// Builds a Gray-QAM demap stage with [`DEFAULT_DEMAP_NOISE_VAR`].
-    pub fn new(modulation: DvbT2Modulation, method: DemapMethod) -> Self {
-        Self::with_noise_var(modulation, method, DEFAULT_DEMAP_NOISE_VAR)
+impl DvbT2CellDemap {
+    /// Builds a cell demap stage with [`DEFAULT_DEMAP_NOISE_VAR`].
+    pub fn new(mapper: Arc<DvbT2CellMapper>, method: DemapMethod) -> Self {
+        Self::with_noise_var(mapper, method, DEFAULT_DEMAP_NOISE_VAR)
     }
 
-    /// Builds a Gray-QAM demap stage with the per-symbol total complex AWGN
-    /// noise variance `noise_var` (`N0 = 2 sigma^2`).
+    /// Builds a cell demap stage with the per-cell total complex AWGN noise
+    /// variance `noise_var` (`N0 = 2 sigma^2`).
     ///
     /// # Panics
     ///
     /// Panics if `noise_var` is not strictly positive and finite.
     pub fn with_noise_var(
-        modulation: DvbT2Modulation,
+        mapper: Arc<DvbT2CellMapper>,
         method: DemapMethod,
         noise_var: f32,
     ) -> Self {
+        assert!(
+            noise_var.is_finite() && noise_var > 0.0,
+            "DvbT2CellDemap: noise_var must be finite and > 0, got {noise_var}"
+        );
         Self {
-            core: GrayQamDemapCore::new(
-                bits_per_symbol(modulation),
-                method,
-                noise_var,
-                "GrayQamDemap",
-            ),
+            mapper,
+            method,
+            noise_var,
         }
     }
 
-    /// The per-symbol total complex AWGN noise variance (`N0 = 2 sigma^2`) this
+    /// The per-cell total complex AWGN noise variance (`N0 = 2 sigma^2`) this
     /// demapper assumes when computing LLRs.
     #[inline]
     #[must_use]
     pub fn noise_var(&self) -> f32 {
-        self.core.noise_var()
+        self.noise_var
     }
 }
 
-impl Stage<SymbolBatch, LlrBatch> for GrayQamDemap {
+impl Stage<SymbolBatch, LlrBatch> for DvbT2CellDemap {
     type Scratch = ();
     type CpuFallback = Self;
 
     fn process(&self, input: &SymbolBatch, _scratch: &mut ()) -> Result<LlrBatch, StageError> {
-        Ok(self.core.demap_batch(input))
+        let noise_var = vec![self.noise_var; self.mapper.num_cells()];
+        let n = self.mapper.num_cells() * self.mapper.bits_per_cell();
+        let frames = input
+            .i
+            .iter()
+            .zip(&input.q)
+            .map(|(rx_i, rx_q)| {
+                let mut out = vec![Llr::zero(); n];
+                self.mapper.demap_llrs(
+                    DemapInput {
+                        rx_i,
+                        rx_q,
+                        gain_i: None,
+                        gain_q: None,
+                        noise_var: &noise_var,
+                        method: self.method,
+                    },
+                    &mut out,
+                );
+                out
+            })
+            .collect();
+        Ok(LlrBatch::new(frames))
     }
 
     fn execution_class(&self) -> ExecutionClass {
@@ -528,9 +556,9 @@ impl Stage<HardDecisionBatch, HardDecisionBatch> for DvbT2BchTail {
 
 /// The ordered DVB-T2 BICM stage wiring returned by [`dvb_t2_bicm_stages`].
 ///
-/// * `forward` — `[DvbT2Encode, BitInterleave, GrayQamMap]`
+/// * `forward` — `[DvbT2Encode, BitInterleave, DvbT2CellMap]`
 ///   (`BitPackedBatch` → `BitPackedBatch` → `BitPackedBatch` → `SymbolBatch`).
-/// * `inverse` — `[GrayQamDemap, BitDeinterleave, DvbT2Decode]`
+/// * `inverse` — `[DvbT2CellDemap, BitDeinterleave, DvbT2Decode]`
 ///   (`SymbolBatch` → `LlrBatch` → `LlrBatch` → `HardDecisionBatch`).
 ///
 /// A channel stage (`SymbolBatch` → `SymbolBatch`) slots between `forward` and
@@ -544,12 +572,22 @@ pub struct DvbT2BicmStages {
     pub codec: Arc<DvbT2Concat>,
     /// Shared DVB-T2 bit interleaver.
     pub interleaver: Arc<DvbT2BitInterleaver>,
+    /// Shared DVB-T2 cell mapper of the map and demap stages.
+    pub cell_mapper: Arc<DvbT2CellMapper>,
 }
 
 /// Builds the ordered DVB-T2 BICM forward + inverse stage chains for a MODCOD.
 ///
+/// The forward chain produces the cells of `@/citation/Etsi2015` clause 6.2
+/// before constellation rotation: BCH and LDPC encoding, bit interleaving,
+/// the bit-to-cell-word demultiplexer and cell-word mapping normalized to
+/// unit average energy. The 256-QAM chain reproduces the cells of an
+/// external reference stream (`crates/gf2-sim/tests/dvb_t2_chain_cells_vv001.rs`);
+/// the other orders follow the same clause 6.2 tables without an external
+/// stream check.
+///
 /// The codec is constructed for [`FrameSize::Normal`] (n=64800) with the
-/// `decoder` configuration applied. `demap_noise_var` is the per-symbol total
+/// `decoder` configuration applied. `demap_noise_var` is the per-cell total
 /// complex AWGN noise variance (`N0 = 2 sigma^2`) the soft demapper assumes;
 /// a chain with no channel passes [`DEFAULT_DEMAP_NOISE_VAR`].
 ///
@@ -558,7 +596,7 @@ pub struct DvbT2BicmStages {
 /// Panics if the `(FrameSize::Normal, rate)` pair cannot construct a codec, if
 /// `rate` / `modulation` is unsupported by the bit interleaver, or if
 /// `demap_noise_var` is not finite and strictly positive (per
-/// [`GrayQamDemap::with_noise_var`]).
+/// [`DvbT2CellDemap::with_noise_var`]).
 pub fn dvb_t2_bicm_stages(
     rate: CodeRate,
     modulation: DvbT2Modulation,
@@ -573,15 +611,16 @@ pub fn dvb_t2_bicm_stages(
 
     let modcod = DvbT2Modcod::new(FrameSize::Normal, rate, modulation);
     let interleaver = Arc::new(DvbT2BitInterleaver::new(modcod));
+    let cell_mapper = Arc::new(DvbT2CellMapper::new(modcod));
 
     let forward: Vec<Box<dyn AnyStage>> = vec![
         erase(DvbT2Encode::new(codec.clone())),
         erase(BitInterleave::new(interleaver.clone())),
-        erase(GrayQamMap::new(modulation)),
+        erase(DvbT2CellMap::new(cell_mapper.clone())),
     ];
     let inverse: Vec<Box<dyn AnyStage>> = vec![
-        erase(GrayQamDemap::with_noise_var(
-            modulation,
+        erase(DvbT2CellDemap::with_noise_var(
+            cell_mapper.clone(),
             demap,
             demap_noise_var,
         )),
@@ -594,6 +633,7 @@ pub fn dvb_t2_bicm_stages(
         inverse,
         codec,
         interleaver,
+        cell_mapper,
     }
 }
 
@@ -673,13 +713,6 @@ mod tests {
     }
 
     #[test]
-    fn test_bits_per_symbol() {
-        assert_eq!(bits_per_symbol(DvbT2Modulation::Qpsk), 2);
-        assert_eq!(bits_per_symbol(DvbT2Modulation::Qam16), 4);
-        assert_eq!(bits_per_symbol(DvbT2Modulation::Qam64), 6);
-    }
-
-    #[test]
     fn test_factory_emits_three_plus_three_stages() {
         let s = dvb_t2_bicm_stages(
             CodeRate::Rate1_2,
@@ -726,6 +759,11 @@ mod tests {
     #[test]
     #[should_panic(expected = "noise_var must be finite and > 0")]
     fn test_demap_rejects_nonpositive_noise_var() {
-        let _ = GrayQamDemap::with_noise_var(DvbT2Modulation::Qam16, DemapMethod::ExactLogMap, 0.0);
+        let mapper = Arc::new(DvbT2CellMapper::new(DvbT2Modcod::new(
+            FrameSize::Normal,
+            CodeRate::Rate1_2,
+            DvbT2Modulation::Qam16,
+        )));
+        let _ = DvbT2CellDemap::with_noise_var(mapper, DemapMethod::ExactLogMap, 0.0);
     }
 }

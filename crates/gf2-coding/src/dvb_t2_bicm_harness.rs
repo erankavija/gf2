@@ -4,11 +4,11 @@
 #![deny(unsafe_code)]
 
 use crate::info_theory::ebn0_to_esn0;
-use crate::ldpc::dvb_t2::bit_interleaver::DvbT2BitInterleaver;
-use crate::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+use crate::ldpc::dvb_t2::bit_interleaver::{DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation};
+use crate::ldpc::dvb_t2::cell_mapper::DvbT2CellMapper;
 use crate::ldpc::dvb_t2::concat::DvbT2Concat;
 use crate::llr::Llr;
-use crate::modem::{BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec};
+use crate::modem::{DemapInput, DemapMethod};
 use crate::simulation::ChannelModel;
 use crate::traits::BlockEncoder;
 use crate::CodeRate;
@@ -99,35 +99,30 @@ impl BlockEncoder for BicmFecEncoder {
     }
 }
 
-/// [`ChannelModel`] for the DVB-T2 BICM chain over AWGN: bit interleave, QAM
-/// map, per-axis AWGN, soft demap, bit deinterleave. Es/N0 follows from
-/// `eb_n0_db` and the code rate through [`ebn0_to_esn0`].
+/// [`ChannelModel`] for the DVB-T2 BICM chain over AWGN: bit interleave, cell
+/// demultiplex and map ([`DvbT2CellMapper`]), per-axis AWGN, soft demap and
+/// multiplex, bit deinterleave. Es/N0 follows from `eb_n0_db` and the code
+/// rate through [`ebn0_to_esn0`].
 pub struct BicmAwgnChannel {
     /// Interleaves the coded bits before mapping and deinterleaves the LLRs after demapping.
     pub interleaver: DvbT2BitInterleaver,
-    /// Bits per QAM symbol (4 for 16-QAM, 6 for 64-QAM).
+    /// Bits per cell, `η_mod`.
     pub bits_per_symbol: usize,
-    spec: ModemSpec<f32>,
+    cell_mapper: DvbT2CellMapper,
     demap: DemapMethod,
 }
 
 impl BicmAwgnChannel {
-    /// Uses the Gray square QAM of order `2^bits_per_symbol`.
+    /// Builds the interleaver and cell mapper of `modcod`.
     ///
     /// # Panics
     ///
-    /// Panics if `bits_per_symbol` is not one of `1, 2, 4, 6, 8`.
-    pub fn new(
-        interleaver: DvbT2BitInterleaver,
-        bits_per_symbol: usize,
-        demap: DemapMethod,
-    ) -> Self {
-        let order = 1usize << bits_per_symbol;
-        let spec = ModemSpec::<f32>::gray_square_qam(order);
+    /// As [`DvbT2BitInterleaver::new`].
+    pub fn new(modcod: DvbT2Modcod, demap: DemapMethod) -> Self {
         Self {
-            interleaver,
-            bits_per_symbol,
-            spec,
+            interleaver: DvbT2BitInterleaver::new(modcod),
+            bits_per_symbol: modcod.modulation.bits_per_cell(),
+            cell_mapper: DvbT2CellMapper::new(modcod),
             demap,
         }
     }
@@ -153,16 +148,11 @@ impl BicmAwgnChannel {
         let n_ldpc = bits.len();
         let num_symbols = n_ldpc / self.bits_per_symbol;
 
-        let mapper = self.spec.preferred_mapper();
-        let demapper = self.spec.preferred_soft_demapper();
-
         let interleaved = self.interleaver.interleave(bits);
 
-        let interleaved_bits: Vec<bool> =
-            (0..interleaved.len()).map(|i| interleaved.get(i)).collect();
         let mut tx_i = vec![0.0_f32; num_symbols];
         let mut tx_q = vec![0.0_f32; num_symbols];
-        mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
+        self.cell_mapper.map(&interleaved, &mut tx_i, &mut tx_q);
 
         for s in tx_i.iter_mut() {
             *s += sigma * next_noise();
@@ -173,7 +163,7 @@ impl BicmAwgnChannel {
 
         let noise_var_buf = vec![noise_var; num_symbols];
         let mut interleaved_llrs = vec![Llr::new(0.0); n_ldpc];
-        demapper.demap_llrs(
+        self.cell_mapper.demap_llrs(
             DemapInput {
                 rx_i: &tx_i,
                 rx_q: &tx_q,

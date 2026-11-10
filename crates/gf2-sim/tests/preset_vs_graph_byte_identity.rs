@@ -145,8 +145,8 @@ fn test_preset_vs_graph_smoke_r12_16qam() {
         &ModcodPoint {
             rate: CodeRate::Rate1_2,
             modulation: DvbT2Modulation::Qam16,
-            es_n0_db: 6.0,
-            label: "smoke r1/2 16-QAM @6.0dB",
+            es_n0_db: 5.9,
+            label: "smoke r1/2 16-QAM @5.9dB",
         },
         SMOKE_FRAMES,
     );

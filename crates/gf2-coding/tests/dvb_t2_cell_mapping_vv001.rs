@@ -1,84 +1,113 @@
-//! [`ModemSpec::gray_square_qam`] at order 256 against the cell mapping of
-//! the VV001-CR35 reference stream (`@/citation/DvbVerification2010`), a
-//! 256-QAM stream of `@/citation/Etsi2015`: TP07 carries one 8-bit cell word
-//! per unrotated constellation point of TP08a.
+//! Bit interleaver, cell-word demultiplexer and cell mapping against the
+//! first FEC block of the VV001-CR35 reference stream
+//! (`@/citation/DvbVerification2010`), a normal-frame, rate 3/5, 256-QAM
+//! stream of `@/citation/Etsi2015`: TP06 is the FECFRAME, TP07a the
+//! bit-interleaved FECFRAME, TP07 the cell words and TP08a the unrotated
+//! cells.
+//!
+//! The 16-QAM and 64-QAM rows of the demultiplexer and their cell mapping are
+//! unverified against external vectors: no stream of those orders is
+//! available to this suite. Their mapping is checked against Tables 14(d) to
+//! 14(g) by the `cell_mapper` unit tests.
 
 mod common;
 
-use gf2_coding::modem::{BatchMapper, ModemSpec};
+use gf2_coding::ldpc::dvb_t2::{
+    DvbT2BitInterleaver, DvbT2CellMapper, DvbT2Modcod, DvbT2Modulation, FrameSize,
+};
 use gf2_coding::test_support::{parse_tp_block_prefix, parse_tp_complex_block_prefix, tp_path};
-
-const BITS_PER_CELL: usize = 8;
+use gf2_coding::CodeRate;
+use gf2_core::BitVec;
 
 /// The reference streams print seven significant digits.
 const CELL_TOL: f64 = 2e-6;
 
-/// Cell-word bits and unrotated `(re, im)` cells of one FEC block.
-type Block = (Vec<bool>, Vec<(f64, f64)>);
+const VV001: DvbT2Modcod = DvbT2Modcod {
+    frame_size: FrameSize::Normal,
+    code_rate: CodeRate::Rate3_5,
+    modulation: DvbT2Modulation::Qam256,
+};
 
-/// The first FEC block, or `None` when the stream is absent.
-fn first_block() -> Option<Block> {
-    let config_dir = common::dvb_vectors_dir()?.join("VV001-CR35_CSP");
-    let (tp07, tp08a) = (tp_path(&config_dir, "07"), tp_path(&config_dir, "08a"));
-    if !(tp07.is_file() && tp08a.is_file()) {
-        return None;
-    }
-    let words = parse_tp_block_prefix(&tp07, 1).remove(0);
-    let cells = parse_tp_complex_block_prefix(&tp08a, 1).remove(0);
-    assert_eq!(
-        words.len(),
-        cells.len() * BITS_PER_CELL,
-        "TP07 carries {BITS_PER_CELL} bits per TP08a cell"
-    );
-    Some(((0..words.len()).map(|i| words.get(i)).collect(), cells))
+/// First blocks of TP06, TP07a, TP07 and TP08a.
+struct Block {
+    tp06: BitVec,
+    tp07a: BitVec,
+    tp07: BitVec,
+    tp08a: Vec<(f64, f64)>,
 }
 
-/// Number of cells the order-256 preset maps away from the reference cell.
-fn mismatched_cells(labels: &[bool], cells: &[(f64, f64)]) -> usize {
-    let mapper = ModemSpec::gray_square_qam(256).preferred_mapper();
-    let mut out_i = vec![0.0_f32; cells.len()];
-    let mut out_q = vec![0.0_f32; cells.len()];
-    mapper.map_bits(labels, &mut out_i, &mut out_q);
+/// The first FEC block, or `None` after a skip notice when the stream is
+/// absent.
+fn first_block(test: &str) -> Option<Block> {
+    let dir = common::dvb_vectors_dir().map(|d| d.join("VV001-CR35_CSP"));
+    let paths = dir
+        .as_ref()
+        .map(|d| ["06", "07a", "07", "08a"].map(|tp| tp_path(d, tp)));
+    let Some(paths) = paths.filter(|p| p.iter().all(|p| p.is_file())) else {
+        common::skip(
+            test,
+            "VV001-CR35 TP06, TP07a, TP07 and TP08a streams absent under DVB_TEST_VECTORS_PATH",
+        );
+        return None;
+    };
+    let bits = |i: usize| parse_tp_block_prefix(&paths[i], 1).remove(0);
+    Some(Block {
+        tp06: bits(0),
+        tp07a: bits(1),
+        tp07: bits(2),
+        tp08a: parse_tp_complex_block_prefix(&paths[3], 1).remove(0),
+    })
+}
+
+/// Number of cells off their TP08a value.
+fn mismatched_cells(i: &[f32], q: &[f32], cells: &[(f64, f64)]) -> usize {
+    assert_eq!(i.len(), cells.len());
     cells
         .iter()
-        .zip(out_i.iter().zip(&out_q))
+        .zip(i.iter().zip(q))
         .filter(|(&(re, im), (&i, &q))| {
             (f64::from(i) - re).abs() > CELL_TOL || (f64::from(q) - im).abs() > CELL_TOL
         })
         .count()
 }
 
-/// The preset reads its I label from the first half of a label, the reference
-/// stream from the even-indexed bits of a cell word: the preset reproduces
-/// every TP08a cell from the even-indexed bits followed by the odd-indexed
-/// bits, and not from the cell word itself.
 #[test]
-fn test_gray_square_qam_256_maps_vv001_cells_from_even_then_odd_word_bits() {
-    let Some((words, cells)) = first_block() else {
-        common::skip(
-            "test_gray_square_qam_256_maps_vv001_cells_from_even_then_odd_word_bits",
-            "VV001-CR35 TP07 and TP08a streams absent under DVB_TEST_VECTORS_PATH",
-        );
+fn test_interleaver_maps_vv001_tp06_to_tp07a() {
+    let Some(block) = first_block("test_interleaver_maps_vv001_tp06_to_tp07a") else {
         return;
     };
+    let interleaver = DvbT2BitInterleaver::new(VV001);
+    assert_eq!(interleaver.interleave(&block.tp06), block.tp07a);
+    assert_eq!(interleaver.deinterleave(&block.tp07a), block.tp06);
+}
 
-    let even_then_odd: Vec<bool> = words
-        .chunks_exact(BITS_PER_CELL)
-        .flat_map(|word| {
-            let even = word.iter().step_by(2);
-            let odd = word.iter().skip(1).step_by(2);
-            even.chain(odd).copied().collect::<Vec<_>>()
-        })
-        .collect();
+#[test]
+fn test_demux_maps_vv001_tp07a_to_tp07_cell_words() {
+    let Some(block) = first_block("test_demux_maps_vv001_tp07a_to_tp07_cell_words") else {
+        return;
+    };
+    let mapper = DvbT2CellMapper::new(VV001);
+    assert_eq!(mapper.demux().demux(&block.tp07a), block.tp07);
+    assert_eq!(mapper.demux().mux(&block.tp07), block.tp07a);
+}
 
+#[test]
+fn test_cell_mapper_maps_vv001_to_tp08a_cells() {
+    let Some(block) = first_block("test_cell_mapper_maps_vv001_to_tp08a_cells") else {
+        return;
+    };
+    let mapper = DvbT2CellMapper::new(VV001);
+    let cells = mapper.num_cells();
+    assert_eq!(block.tp08a.len(), cells, "TP08a carries one cell per word");
+    let (mut i, mut q) = (vec![0.0_f32; cells], vec![0.0_f32; cells]);
+
+    mapper.map(&block.tp07a, &mut i, &mut q);
+    assert_eq!(mismatched_cells(&i, &q, &block.tp08a), 0, "map(TP07a)");
+
+    mapper.map_cell_words(&block.tp07, &mut i, &mut q);
     assert_eq!(
-        mismatched_cells(&even_then_odd, &cells),
+        mismatched_cells(&i, &q, &block.tp08a),
         0,
-        "even-then-odd cell-word bits must reproduce every TP08a cell"
-    );
-    assert_ne!(
-        mismatched_cells(&words, &cells),
-        0,
-        "the preset label is not the VV001-CR35 cell word"
+        "map_cell_words(TP07)"
     );
 }

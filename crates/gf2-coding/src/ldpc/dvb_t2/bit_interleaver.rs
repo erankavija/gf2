@@ -18,6 +18,9 @@ pub enum DvbT2Modulation {
     /// 64-QAM: 6 bits per cell, parity interleave + column-twist per
     /// Tables 9 and 10 (Nc=12).
     Qam64,
+    /// 256-QAM: 8 bits per cell, parity interleave + column-twist per
+    /// Tables 9 and 10 (Nc=16 on normal, Nc=8 on short frames).
+    Qam256,
 }
 
 impl DvbT2Modulation {
@@ -30,6 +33,7 @@ impl DvbT2Modulation {
             DvbT2Modulation::Qpsk => 2,
             DvbT2Modulation::Qam16 => 4,
             DvbT2Modulation::Qam64 => 6,
+            DvbT2Modulation::Qam256 => 8,
         }
     }
 }
@@ -115,6 +119,11 @@ impl InterleaverConfig {
             (DvbT2Modulation::Qam64, FrameSize::Short) => {
                 (12, vec![0, 0, 0, 2, 2, 2, 3, 3, 3, 6, 7, 7])
             }
+            (DvbT2Modulation::Qam256, FrameSize::Normal) => (
+                16,
+                vec![0, 2, 2, 2, 2, 3, 7, 15, 16, 20, 22, 22, 27, 27, 28, 32],
+            ),
+            (DvbT2Modulation::Qam256, FrameSize::Short) => (8, vec![0, 0, 0, 1, 7, 20, 20, 21]),
         };
         let nr = n / nc;
 
@@ -141,8 +150,8 @@ impl InterleaverConfig {
 /// DVB-T2 bit interleaver (§6.1.3): parity interleaving + column-twist.
 ///
 /// Given an FECFRAME of `N_ldpc` coded bits (the LDPC encoder output Λ),
-/// two sequential stages produce V. Both apply to 16-QAM and 64-QAM only;
-/// for QPSK the bits pass through unchanged.
+/// two sequential stages produce V. Both apply to 16-QAM, 64-QAM and
+/// 256-QAM; for QPSK the bits pass through unchanged.
 ///
 /// **Stage 1 — parity interleaving.**
 /// The `K_ldpc` information bits pass through unchanged.  The parity

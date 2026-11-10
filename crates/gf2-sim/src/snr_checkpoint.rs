@@ -241,6 +241,7 @@ fn hash_run_plan(hasher: &mut blake3::Hasher, plan: &RunPlan) {
         DvbT2Modulation::Qpsk => 0,
         DvbT2Modulation::Qam16 => 1,
         DvbT2Modulation::Qam64 => 2,
+        DvbT2Modulation::Qam256 => 3,
     }]);
     let (algorithm, parameter) = match decoder.algorithm() {
         DecoderAlgorithm::MinSum => (0u8, 0u32),

@@ -37,7 +37,7 @@ fn run_pipeline_stages(
 }
 
 fn assert_graph_chain_roundtrip(rate: CodeRate, modulation: DvbT2Modulation, seed: u64) {
-    // No channel node: GrayQamMap connects straight into GrayQamDemap, so the
+    // No channel node: DvbT2CellMap connects straight into DvbT2CellDemap, so the
     // demapper uses the default N0.
     let factory = dvb_t2_bicm_stages(
         rate,

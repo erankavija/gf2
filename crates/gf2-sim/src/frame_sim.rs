@@ -9,9 +9,7 @@ use rand::Rng as _;
 
 use gf2_coding::dvb_t2_bicm_harness::{box_muller_cos, rate_f64, BicmAwgnChannel};
 use gf2_coding::info_theory::{ebn0_to_esn0, esn0_to_ebn0};
-use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
-    DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
-};
+use gf2_coding::ldpc::dvb_t2::bit_interleaver::{DvbT2Modcod, DvbT2Modulation};
 use gf2_coding::ldpc::dvb_t2::concat::{ConcatError, DvbT2Concat};
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::ldpc::DecoderConfig;
@@ -85,8 +83,7 @@ impl DvbT2BicmFrameSim {
         let bits_per_symbol = modulation.bits_per_cell();
 
         let modcod = DvbT2Modcod::new(FrameSize::Normal, rate, modulation);
-        let interleaver = DvbT2BitInterleaver::new(modcod);
-        let channel = BicmAwgnChannel::new(interleaver, bits_per_symbol, demap);
+        let channel = BicmAwgnChannel::new(modcod, demap);
 
         // Both conversions take the unrounded f64 `es_n0_db`, so sigma and N0
         // correspond to the same SNR.
@@ -205,7 +202,7 @@ impl DvbT2BicmFrameSim {
     }
 
     /// Simulates one frame: random `k`-bit BBFRAME, BCH+LDPC encode,
-    /// interleave, Gray-QAM map, per-axis Box-Muller AWGN, soft demap with the
+    /// interleave, cell demultiplex and map, per-axis Box-Muller AWGN, soft demap with the
     /// channel `N0`, deinterleave, soft decode, information-bit error count.
     ///
     /// All randomness comes from `ctx`'s RNG; `_global_frame_idx` is unused
@@ -268,7 +265,7 @@ impl DvbT2BicmFrameSim {
     ///
     /// # Complexity
     ///
-    /// O(`n_ldpc`) encode + interleave + map + demap (no BP decode).
+    /// O(`n_ldpc`) encode + interleave + cell map + demap (no BP decode).
     pub fn prepare_frame(&self, _global_frame_idx: usize, ctx: &mut WorkerCtx) -> FramePrep {
         let rng = ctx.rng_mut();
         let message = random_bitvec(self.k, rng);

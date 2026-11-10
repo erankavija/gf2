@@ -8,7 +8,7 @@ use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
 };
 use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
-use gf2_coding::ldpc::dvb_t2::FrameSize;
+use gf2_coding::ldpc::dvb_t2::{DvbT2CellMapper, FrameSize};
 use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
@@ -20,8 +20,8 @@ use std::sync::Arc;
 use gf2_sim::batch::{BitPackedBatch, HardDecisionBatch, SymbolBatch};
 use gf2_sim::stage::{AnyScratch, AnyStage, TypedBatch};
 use gf2_sim::stages::{
-    dvb_t2_bicm_stages, BitDeinterleave, BitInterleave, DecodeScratch, DvbT2Decode, DvbT2Encode,
-    GrayQamDemap, GrayQamMap, DEFAULT_DEMAP_NOISE_VAR,
+    dvb_t2_bicm_stages, BitDeinterleave, BitInterleave, DecodeScratch, DvbT2CellDemap,
+    DvbT2CellMap, DvbT2Decode, DvbT2Encode, DEFAULT_DEMAP_NOISE_VAR,
 };
 use gf2_sim::Stage;
 
@@ -47,7 +47,7 @@ fn run_erased_chain(
 }
 
 fn assert_factory_roundtrip(rate: CodeRate, modulation: DvbT2Modulation, seed: u64) {
-    // No channel: GrayQamMap connects straight to GrayQamDemap, so the demapper
+    // No channel: DvbT2CellMap connects straight to DvbT2CellDemap, so the demapper
     // uses the default N0.
     let stages = dvb_t2_bicm_stages(
         rate,
@@ -80,16 +80,14 @@ fn assert_noiseless_roundtrip(rate: CodeRate, modulation: DvbT2Modulation, seed:
     let mut concat = DvbT2Concat::new(FrameSize::Normal, rate).expect("codec construction");
     concat.set_decoder_config(DecoderConfig::new(DecoderAlgorithm::SumProduct, true));
     let codec = Arc::new(concat);
-    let interleaver = Arc::new(DvbT2BitInterleaver::new(DvbT2Modcod::new(
-        FrameSize::Normal,
-        rate,
-        modulation,
-    )));
+    let modcod = DvbT2Modcod::new(FrameSize::Normal, rate, modulation);
+    let interleaver = Arc::new(DvbT2BitInterleaver::new(modcod));
+    let mapper = Arc::new(DvbT2CellMapper::new(modcod));
 
     let encode = DvbT2Encode::new(codec.clone());
     let interleave = BitInterleave::new(interleaver.clone());
-    let map = GrayQamMap::new(modulation);
-    let demap = GrayQamDemap::new(modulation, DemapMethod::ExactLogMap);
+    let map = DvbT2CellMap::new(mapper.clone());
+    let demap = DvbT2CellDemap::new(mapper, DemapMethod::ExactLogMap);
     let deinterleave = BitDeinterleave::new(interleaver.clone());
     let decode = DvbT2Decode::new(codec.clone());
 

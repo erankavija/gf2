@@ -1,10 +1,10 @@
 //! Bit-interleaver tests on the VV001-CR35 reference stream
 //! (`@/citation/DvbVerification2010`).
-//! VV001-CR35 is a Normal-frame, rate 3/5, 256-QAM stream, a modulation
-//! `DvbT2Modulation` does not represent. These tests check the TP06 and TP07a
-//! block structure and the rate 3/5 round trip on TP06 data;
-//! `dvb_t2_chain_tp07a` asserts the bit-exact TP06 → TP07a mapping on the
-//! 16-QAM and 64-QAM streams.
+//! VV001-CR35 is a Normal-frame, rate 3/5, 256-QAM stream. These tests check
+//! the TP06 and TP07a block structure and the rate 3/5 QPSK round trip on TP06
+//! data; `dvb_t2_cell_mapping_vv001` asserts the bit-exact 256-QAM TP06 →
+//! TP07a mapping on this stream and `dvb_t2_chain_tp07a` on the 16-QAM and
+//! 64-QAM streams.
 
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,

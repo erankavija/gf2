@@ -142,7 +142,7 @@ fn build_gpu_pipeline_with_oom_injection(
 }
 
 fn run_and_assert_oom_fallback(frames: usize, workers: usize, label: &str) {
-    let es_n0 = 6.0_f32;
+    let es_n0 = 5.9_f32;
 
     let scratch = scratch("gf2sim-oom-fallback-run");
     let dump_dir = scratch.path().to_path_buf();
@@ -296,7 +296,7 @@ fn test_oom_fallback_run_matches_cpu_only_3_columns() {
         eprintln!("skipping test_oom_fallback_run_matches_cpu_only_3_columns: no usable GPU");
         return;
     }
-    run_and_assert_oom_fallback(2, 2, "OOM-fallback smoke @6dB (modulus=2)");
+    run_and_assert_oom_fallback(2, 2, "OOM-fallback smoke @5.9dB (modulus=2)");
 }
 
 #[test]
@@ -306,7 +306,7 @@ fn test_oom_fallback_run_waterfall_matches_cpu_only() {
         eprintln!("skipping test_oom_fallback_run_waterfall_matches_cpu_only: no usable GPU");
         return;
     }
-    run_and_assert_oom_fallback(32, 4, "OOM-fallback waterfall @6dB (modulus=2)");
+    run_and_assert_oom_fallback(32, 4, "OOM-fallback waterfall @5.9dB (modulus=2)");
 }
 
 #[test]
