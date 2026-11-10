@@ -4,7 +4,9 @@
 
 /// LLR operation function bundle for f32.
 pub struct LlrFnsF32 {
-    /// Compute sign-preserving horizontal minimum: sign_product * min(|inputs|)
+    /// Compute sign-preserving horizontal minimum: sign_product * min(|inputs|),
+    /// under the sign rule of `docs/reference/ldpc-decoder-numerical-contract.md`
+    /// (an input counts as positive when `x >= 0.0`, so both zeros are positive).
     pub minsum_fn: fn(&[f32]) -> f32,
     /// Compute maximum of absolute values.
     pub maxabs_fn: fn(&[f32]) -> f32,
@@ -12,7 +14,9 @@ pub struct LlrFnsF32 {
 
 /// LLR operation function bundle for f64.
 pub struct LlrFnsF64 {
-    /// Compute sign-preserving horizontal minimum: sign_product * min(|inputs|)
+    /// Compute sign-preserving horizontal minimum: sign_product * min(|inputs|),
+    /// under the sign rule of `docs/reference/ldpc-decoder-numerical-contract.md`
+    /// (an input counts as positive when `x >= 0.0`, so both zeros are positive).
     pub minsum_fn: fn(&[f64]) -> f64,
     /// Compute maximum of absolute values.
     pub maxabs_fn: fn(&[f64]) -> f64,
@@ -124,7 +128,8 @@ unsafe fn minsum_avx2_f32(inputs: &[f32]) -> f32 {
     let sign_mask = _mm256_set1_ps(-0.0f32);
 
     let mut vec_min = _mm256_set1_ps(f32::INFINITY);
-    let mut vec_sign = _mm256_setzero_ps();
+    let zero = _mm256_setzero_ps();
+    let mut vec_sign = zero;
 
     let chunks = n / 8;
     for i in 0..chunks {
@@ -132,10 +137,12 @@ unsafe fn minsum_avx2_f32(inputs: &[f32]) -> f32 {
         let vals = _mm256_loadu_ps(ptr);
 
         let abs_vals = _mm256_andnot_ps(sign_mask, vals);
-        vec_min = _mm256_min_ps(vec_min, abs_vals);
+        // MINPS returns its second operand when either is NaN, so a NaN
+        // magnitude is skipped as `f32::min` skips it.
+        vec_min = _mm256_min_ps(abs_vals, vec_min);
 
-        let signs = _mm256_and_ps(vals, sign_mask);
-        vec_sign = _mm256_xor_ps(vec_sign, signs);
+        let negative = _mm256_cmp_ps::<_CMP_NGE_UQ>(vals, zero);
+        vec_sign = _mm256_xor_ps(vec_sign, _mm256_and_ps(negative, sign_mask));
     }
 
     let mut temp = [0.0f32; 8];
@@ -155,7 +162,7 @@ unsafe fn minsum_avx2_f32(inputs: &[f32]) -> f32 {
 
     for &val in &inputs[chunks * 8..] {
         min_abs = min_abs.min(val.abs());
-        if val < 0.0 {
+        if val.partial_cmp(&0.0).is_none_or(|order| order.is_lt()) {
             sign_product = -sign_product;
         }
     }
@@ -232,16 +239,19 @@ unsafe fn minsum_avx2_f64(inputs: &[f64]) -> f64 {
     let n = inputs.len();
     let sign_mask = _mm256_set1_pd(-0.0f64);
     let mut vec_min = _mm256_set1_pd(f64::INFINITY);
-    let mut vec_sign = _mm256_setzero_pd();
+    let zero = _mm256_setzero_pd();
+    let mut vec_sign = zero;
 
     let chunks = n / 4;
     for i in 0..chunks {
         let ptr = inputs.as_ptr().add(i * 4);
         let vals = _mm256_loadu_pd(ptr);
         let abs_vals = _mm256_andnot_pd(sign_mask, vals);
-        vec_min = _mm256_min_pd(vec_min, abs_vals);
-        let signs = _mm256_and_pd(vals, sign_mask);
-        vec_sign = _mm256_xor_pd(vec_sign, signs);
+        // MINPD returns its second operand when either is NaN, so a NaN
+        // magnitude is skipped as `f64::min` skips it.
+        vec_min = _mm256_min_pd(abs_vals, vec_min);
+        let negative = _mm256_cmp_pd::<_CMP_NGE_UQ>(vals, zero);
+        vec_sign = _mm256_xor_pd(vec_sign, _mm256_and_pd(negative, sign_mask));
     }
 
     let mut temp = [0.0f64; 4];
@@ -261,7 +271,7 @@ unsafe fn minsum_avx2_f64(inputs: &[f64]) -> f64 {
 
     for &val in &inputs[chunks * 4..] {
         min_abs = min_abs.min(val.abs());
-        if val < 0.0 {
+        if val.partial_cmp(&0.0).is_none_or(|order| order.is_lt()) {
             sign_product = -sign_product;
         }
     }
@@ -317,6 +327,8 @@ unsafe fn maxabs_avx2_f64(inputs: &[f64]) -> f64 {
 mod tests {
     use super::*;
 
+    /// The scalar reduction under the sign rule `val >= 0.0` of
+    /// `docs/reference/ldpc-decoder-numerical-contract.md`.
     fn scalar_minsum(inputs: &[f32]) -> f32 {
         if inputs.is_empty() {
             return 0.0;
@@ -327,12 +339,88 @@ mod tests {
 
         for &val in inputs {
             min_abs = min_abs.min(val.abs());
-            if val < 0.0 {
+            if val.partial_cmp(&0.0).is_none_or(|order| order.is_lt()) {
                 sign_product = -sign_product;
             }
         }
 
         sign_product * min_abs
+    }
+
+    fn scalar_minsum_f64(inputs: &[f64]) -> f64 {
+        let narrowed: Vec<f32> = inputs.iter().map(|&val| val as f32).collect();
+        f64::from(scalar_minsum(&narrowed))
+    }
+
+    /// Inputs of length `len` with a signed zero at `zero_at` among nonzero
+    /// values of alternating sign, so the zero lands in a vector lane or in
+    /// the remainder depending on `len` and `zero_at`; `zero_at >= len` places
+    /// no zero.
+    fn with_signed_zero(len: usize, zero_at: usize, zero: f32) -> Vec<f32> {
+        (0..len)
+            .map(|i| match i {
+                _ if i == zero_at => zero,
+                _ if i % 2 == 0 => (i + 1) as f32,
+                _ => -((i + 1) as f32),
+            })
+            .collect()
+    }
+
+    #[test]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    fn minsum_follows_the_sign_and_magnitude_rules_in_lanes_and_remainder() {
+        use std::arch::is_x86_feature_detected;
+        crate::contract::require(&[("avx2", is_x86_feature_detected!("avx2"))]);
+
+        let f32_fns = detect_f32().unwrap();
+        let f64_fns = detect_f64().unwrap();
+        for len in [0usize, 1, 3, 4, 5, 7, 8, 9, 16, 17] {
+            for zero_at in 0..len.max(1) {
+                for zero in [0.0f32, -0.0] {
+                    let inputs = with_signed_zero(len, zero_at, zero);
+                    let wide: Vec<f64> = inputs.iter().map(|&val| f64::from(val)).collect();
+                    assert_eq!(
+                        (f32_fns.minsum_fn)(&inputs).to_bits(),
+                        scalar_minsum(&inputs).to_bits(),
+                        "f32 {inputs:?}"
+                    );
+                    assert_eq!(
+                        (f64_fns.minsum_fn)(&wide).to_bits(),
+                        scalar_minsum_f64(&wide).to_bits(),
+                        "f64 {wide:?}"
+                    );
+                }
+            }
+            for nan_at in 0..len {
+                let mut inputs = with_signed_zero(len, len, 0.0);
+                inputs[nan_at] = f32::NAN;
+                let wide: Vec<f64> = inputs.iter().map(|&val| f64::from(val)).collect();
+                assert_eq!(
+                    (f32_fns.minsum_fn)(&inputs).to_bits(),
+                    scalar_minsum(&inputs).to_bits(),
+                    "f32 {inputs:?}"
+                );
+                assert_eq!(
+                    (f64_fns.minsum_fn)(&wide).to_bits(),
+                    scalar_minsum_f64(&wide).to_bits(),
+                    "f64 {wide:?}"
+                );
+            }
+            let zeros: Vec<f32> = (0..len)
+                .map(|i| if i % 3 == 0 { -0.0 } else { 0.0 })
+                .collect();
+            let wide: Vec<f64> = zeros.iter().map(|&val| f64::from(val)).collect();
+            assert_eq!(
+                (f32_fns.minsum_fn)(&zeros).to_bits(),
+                scalar_minsum(&zeros).to_bits(),
+                "f32 {zeros:?}"
+            );
+            assert_eq!(
+                (f64_fns.minsum_fn)(&wide).to_bits(),
+                scalar_minsum_f64(&wide).to_bits(),
+                "f64 {wide:?}"
+            );
+        }
     }
 
     fn scalar_maxabs(inputs: &[f32]) -> f32 {

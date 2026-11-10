@@ -519,6 +519,29 @@ mod tests {
     }
 
     #[test]
+    fn boxplus_minsum_n_dispatch_matches_the_scalar_on_signed_zero_and_nan() {
+        // Lengths 7 to 17 place the special value in the AVX2 lanes or remainder.
+        for len in [1usize, 7, 8, 9, 16, 17] {
+            for special_at in 0..len {
+                for special in [0.0f32, -0.0, f32::NAN] {
+                    let llrs: Vec<Llr> = (0..len)
+                        .map(|i| match i {
+                            _ if i == special_at => Llr::new(special),
+                            _ if i % 2 == 0 => Llr::new((i + 1) as f32),
+                            _ => Llr::new(-((i + 1) as f32)),
+                        })
+                        .collect();
+                    assert_eq!(
+                        Llr::boxplus_minsum_n(&llrs).value().to_bits(),
+                        Llr::boxplus_minsum_n_scalar(&llrs).value().to_bits(),
+                        "length {len}, {special:?} at {special_at}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn test_boxplus_minsum_n_matches_binary() {
         let llrs = vec![Llr::new(3.0), Llr::new(2.0)];
         let result_n = Llr::boxplus_minsum_n(&llrs);

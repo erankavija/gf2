@@ -225,10 +225,7 @@ struct ReferenceDecoder {
 
 /// Which min-sum reduction a reference decoder performs per outgoing edge.
 ///
-/// The two agree on every input a channel produces. They part on a negative
-/// zero or a NaN among nine or more inputs, which is where the public API's
-/// AVX2 kernel takes the IEEE sign bit and propagates a NaN through its vector
-/// lanes.
+/// The two agree bit for bit, the public API's AVX2 kernel included.
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Reduction {
     /// The crate's public LLR operations, which dispatch to a SIMD kernel under
@@ -529,19 +526,18 @@ fn decoder_matches_the_scalar_contract_on_saturating_and_extreme_llrs() {
 }
 
 /// On a code with checks of degree nine or more, an input set that reaches a
-/// NaN message decodes differently under the public reduction API, whose AVX2
-/// kernel propagates a NaN through its vector lanes, than under the supported
-/// scalar reference, whose `f32::min` fold skips it. The decoder follows the
-/// scalar reference.
+/// NaN message decodes identically under the public reduction API, whose AVX2
+/// kernel reads the NaN in a vector lane, and under the supported scalar
+/// reference, whose `f32::min` fold skips it.
 #[cfg(feature = "simd")]
 #[test]
-fn the_public_reduction_api_and_the_scalar_contract_part_on_non_finite_messages() {
+fn the_public_reduction_api_and_the_scalar_contract_agree_on_non_finite_messages() {
     let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(2, 8));
     assert!(
         (0..code.m())
             .map(|check| code.parity_check_matrix().row_iter(check).count())
             .any(|degree| degree >= 9),
-        "the divergence needs a check whose excluded input set fills a vector lane"
+        "the case needs a check whose excluded input set fills a vector lane"
     );
     let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
     let mut public = ReferenceDecoder::new(code.clone(), config, Reduction::PublicApi);
@@ -552,9 +548,9 @@ fn the_public_reduction_api_and_the_scalar_contract_part_on_non_finite_messages(
     let llrs = &extreme_patterns(code.n())[1];
     let from_public = public.decode(llrs, 8);
     let from_scalar = scalar.decode(llrs, 8);
-    assert_ne!(
+    assert_eq!(
         from_public.codeword, from_scalar.codeword,
-        "if the two reductions agree here, the disclosed change no longer exists"
+        "the public reduction follows the scalar reference"
     );
 
     let mut decoder = LdpcDecoder::with_config(code, config);

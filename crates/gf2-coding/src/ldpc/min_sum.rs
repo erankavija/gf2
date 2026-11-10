@@ -74,13 +74,11 @@ impl DecoderAlgorithm {
 /// The sign, magnitude and tie, scaling and low-degree rules are the
 /// check-node update of `docs/reference/ldpc-decoder-numerical-contract.md`.
 /// Under them the reduction reproduces, bit for bit, the scalar reference for
-/// the same excluded input set: [`Llr::boxplus_minsum_n`] as it is implemented
-/// without the `simd` cargo feature, and the corresponding scalar
+/// the same excluded input set: [`Llr::boxplus_minsum_n`] under either setting
+/// of the `simd` cargo feature, and the corresponding scalar
 /// [`Llr::boxplus_normalized_minsum_n`] and [`Llr::boxplus_offset_minsum_n`].
 ///
-/// This function is scalar and performs no runtime dispatch. The AVX2 kernel
-/// that `Llr::boxplus_minsum_n` reaches under `simd` takes the IEEE sign bit
-/// in its vector lanes and so disagrees with the sign rule.
+/// This function is scalar and performs no runtime dispatch.
 ///
 /// Both factors of a leave-one-out result are exact. A sign is `±1.0`, so
 /// removing one input's sign from the shared product is a multiplication by
