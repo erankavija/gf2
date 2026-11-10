@@ -12,10 +12,10 @@ trap 'rm -rf "$TMP"' EXIT
 
 # Runs the wait with fake load $1 and prints the window log it wrote.
 run_wait() {
-  local name=$1 one=$2
+  local name=$1 one=$2 bound=${3:-2} poll=${4:-1}
   printf '%s 2.00 3.00 1/100 4242\n' "$one" >"$TMP/$name.loadavg"
   GF2_WINDOW_STATE="$TMP/$name" GF2_WINDOW_LOADAVG="$TMP/$name.loadavg" \
-    GF2_WINDOW_LOAD_MAX=1.0 GF2_WINDOW_LOAD_WAIT_MAX_S=2 GF2_WINDOW_LOAD_POLL_S=1 \
+    GF2_WINDOW_LOAD_MAX=1.0 GF2_WINDOW_LOAD_WAIT_MAX_S=$bound GF2_WINDOW_LOAD_POLL_S=$poll \
     "$HERE/run-window.sh" --load-wait-only
   cat "$TMP/$name/window.log"
 }
@@ -48,5 +48,16 @@ expect loaded 'load wait start max=1\.0 bound_s=2 load=3\.50 2\.00 3\.00$' "$loa
 expect loaded 'load wait bound passed after_s=[2-9] load=3\.50 2\.00 3\.00; starting anyway$' "$loaded"
 reject loaded 'load wait quiet|window start' "$loaded"
 
-printf '%s\n' "$quiet" "$loaded"
+# A poll interval that does not divide the bound stops at the bound.
+capped=$(run_wait capped 3.50 1 5)
+expect capped 'load wait bound passed after_s=1 load=3\.50 2\.00 3\.00; starting anyway$' "$capped"
+
+# The estimate cap admits jobs up to its value; 0 lifts it.
+"$HERE/run-window.sh" --cap-check 5
+! "$HERE/run-window.sh" --cap-check 6
+GF2_WINDOW_MAX_EST_MIN=0 "$HERE/run-window.sh" --cap-check 60
+GF2_WINDOW_MAX_EST_MIN=60 "$HERE/run-window.sh" --cap-check 60
+! GF2_WINDOW_MAX_EST_MIN=20 "$HERE/run-window.sh" --cap-check 60
+
+printf '%s\n' "$quiet" "$loaded" "$capped"
 echo "run-window.test: ok"

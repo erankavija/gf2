@@ -32,15 +32,30 @@
 # GF2_WINDOW_LOAD_WAIT_MAX_S, GF2_WINDOW_LOAD_POLL_S and GF2_WINDOW_LOADAVG (a
 # file in /proc/loadavg format) override these for testing.
 #
+# A window runs the jobs whose estimated minutes are at most MAX_EST_MIN and
+# logs every longer job as deferred. The default, 5, is the longest pause a
+# working session's builds take for a window; the night window sets
+# GF2_WINDOW_MAX_EST_MIN=0, which lifts the cap.
+#
 # --print-root prints the resolved repository root and exits before the window
 # opens. --load-wait-only runs the load wait into the window log and exits
-# before the window opens; run-window.test.sh drives it with a fake load.
+# before the window opens, and --cap-check <minutes> exits 0 when a job of
+# that estimate runs under the cap and 1 when it is deferred;
+# run-window.test.sh drives both.
 set -uo pipefail
 
 LOAD_MAX="${GF2_WINDOW_LOAD_MAX:-4.0}"
 LOAD_WAIT_MAX_S="${GF2_WINDOW_LOAD_WAIT_MAX_S:-1800}"
 LOAD_POLL_S="${GF2_WINDOW_LOAD_POLL_S:-30}"
 LOADAVG="${GF2_WINDOW_LOADAVG:-/proc/loadavg}"
+MAX_EST_MIN="${GF2_WINDOW_MAX_EST_MIN:-5}"
+
+# True when a job estimated at $1 minutes runs in this window.
+under_cap() { ((MAX_EST_MIN == 0 || $1 <= MAX_EST_MIN)); }
+if [[ "${1:-}" == --cap-check ]]; then
+    under_cap "$2"
+    exit
+fi
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo=$(git -C "$here" rev-parse --show-toplevel) || exit 1
@@ -56,7 +71,7 @@ say() { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >> "$log"; }
 load() { cut -d' ' -f1-3 "$LOADAVG"; }
 
 wait_for_quiet_host() {
-    local start=$SECONDS one
+    local start=$SECONDS one left
     say "load wait start max=$LOAD_MAX bound_s=$LOAD_WAIT_MAX_S load=$(load)"
     while true; do
         one=$(cut -d' ' -f1 "$LOADAVG")
@@ -68,7 +83,8 @@ wait_for_quiet_host() {
             say "load wait bound passed after_s=$((SECONDS - start)) load=$(load); starting anyway"
             return
         fi
-        sleep "$LOAD_POLL_S"
+        left=$((LOAD_WAIT_MAX_S - (SECONDS - start)))
+        sleep "$((left < LOAD_POLL_S ? left : LOAD_POLL_S))"
     done
 }
 
@@ -115,6 +131,10 @@ while IFS=$'\t' read -r issue worktree minutes command; do
     fi
     if [[ ! -d "$repo/$worktree" ]]; then
         say "missing issue=$issue key=$key worktree=$worktree"
+        continue
+    fi
+    if ! under_cap "$minutes"; then
+        say "defer issue=$issue key=$key est_min=$minutes (cap $MAX_EST_MIN)"
         continue
     fi
     if [[ $waited -eq 0 ]]; then
