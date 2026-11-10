@@ -6,6 +6,7 @@ pub mod arm;
 pub mod batch;
 pub mod bundle;
 pub mod driver;
+pub mod fast;
 pub mod pool;
 pub mod route_sweep;
 pub mod tuned;

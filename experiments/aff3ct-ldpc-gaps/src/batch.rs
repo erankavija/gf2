@@ -7,14 +7,19 @@ use crate::arm::{
 use crate::driver::{report_iterations, run_cell, CellRun, IterationSource};
 use gf2_coding::ldpc::DecoderAlgorithm;
 pub use gf2_coding::ldpc::{BatchRoute, LaneBackend};
-use gf2_coding::ldpc::{DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode};
+use gf2_coding::ldpc::{
+    DecodedWord, DecoderConfig, LayeredConfig, LayeredDecoder, LdpcBatchDecoder, LdpcCode,
+    QcDecoder, QuasiCyclicLdpc,
+};
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
 use gf2_coding::tuning::{DecodeSelectors, QcRouteBounds};
 use gf2_core::BitVec;
 use gf2_kernels_simd::ldpc_lanes::LANES;
 
-fn config(factor: f32, stopping: bool) -> DecoderConfig {
+/// Flooding NMS with factor `factor` and syndrome stopping when `stopping`.
+#[must_use]
+pub fn config(factor: f32, stopping: bool) -> DecoderConfig {
     DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(factor), stopping)
 }
 use crate::workload::{check_request, median_u64, Workload};
@@ -221,6 +226,184 @@ impl BatchWorker {
         black_box(&self.decisions);
         lap(Stage::Extract);
     }
+}
+
+/// A decoder that decodes one frame per call.
+pub trait FrameDecoder {
+    /// Decodes `llrs` with at most `cap` iterations into `codeword`.
+    fn decode_frame(&mut self, llrs: &[Llr], cap: usize, codeword: &mut BitVec) -> DecodeOutcome;
+}
+
+impl FrameDecoder for QcDecoder {
+    fn decode_frame(&mut self, llrs: &[Llr], cap: usize, codeword: &mut BitVec) -> DecodeOutcome {
+        self.decode_codeword_into(llrs, cap, codeword)
+    }
+}
+
+/// One worker's reused frame decoder and buffers, decoding a batch one frame
+/// at a time with the conversion and extraction stages of [`BatchWorker`].
+pub struct FrameWorker<D> {
+    decoder: D,
+    cap: usize,
+    packed: Vec<Llr>,
+    word: BitVec,
+    n: usize,
+    k: usize,
+    /// Information-window decisions of the last batch, `k` bytes per frame.
+    pub decisions: Vec<u8>,
+}
+
+impl<D: FrameDecoder> FrameWorker<D> {
+    /// Wraps `decoder` of `code` for batches of `batch` frames.
+    #[must_use]
+    pub fn new(decoder: D, code: &LdpcCode, cap: usize, batch: usize) -> Self {
+        let (n, k) = (code.n(), code.k());
+        Self {
+            decoder,
+            cap,
+            packed: vec![Llr::zero(); batch * n],
+            word: BitVec::with_capacity(n),
+            n,
+            k,
+            decisions: vec![0; batch * k],
+        }
+    }
+
+    /// The wrapped decoder.
+    #[must_use]
+    pub fn decoder(&self) -> &D {
+        &self.decoder
+    }
+
+    /// Decodes every frame of `llrs`, `n` values per frame, and extracts the
+    /// information-window hard decisions.
+    ///
+    /// # Panics
+    ///
+    /// Panics when `llrs` holds another frame count than the worker's batch.
+    pub fn decode_batch(&mut self, llrs: &[f32]) {
+        assert_eq!(llrs.len(), self.packed.len(), "batch size");
+        for (slot, value) in self.packed.iter_mut().zip(llrs) {
+            *slot = Llr::new(*value);
+        }
+        for (frame, decided) in self
+            .packed
+            .chunks_exact(self.n)
+            .zip(self.decisions.chunks_exact_mut(self.k))
+        {
+            self.decoder
+                .decode_frame(black_box(frame), self.cap, &mut self.word);
+            for (position, bit) in decided.iter_mut().enumerate() {
+                *bit = u8::from(self.word.get(position));
+            }
+        }
+        black_box(&self.decisions);
+    }
+}
+
+/// A [`FrameWorker`] on [`QcDecoder`], on the portable kernel when `portable`
+/// is set.
+///
+/// # Errors
+///
+/// Returns an error when the code retains no QC structure the decoder accepts.
+pub fn qc_worker(
+    code: &LdpcCode,
+    config: DecoderConfig,
+    cap: usize,
+    batch: usize,
+    portable: bool,
+) -> Result<FrameWorker<QcDecoder>, String> {
+    let decoder = QcDecoder::new(code, config)
+        .ok_or("the code retains no QC structure the QC decoder accepts")?;
+    let decoder = if portable {
+        decoder.with_portable_kernel()
+    } else {
+        decoder
+    };
+    Ok(FrameWorker::new(decoder, code, cap, batch))
+}
+
+impl FrameDecoder for LayeredDecoder {
+    fn decode_frame(&mut self, llrs: &[Llr], cap: usize, codeword: &mut BitVec) -> DecodeOutcome {
+        self.decode_codeword_into(llrs, cap, codeword)
+    }
+}
+
+/// Iteration cap of the layered route.
+pub const LAYERED_ITERATION_CAP: usize = 25;
+
+/// A [`FrameWorker`] on [`LayeredDecoder`] with the corpus code's layered
+/// configuration and [`LAYERED_ITERATION_CAP`], on the portable kernel when
+/// `portable` is set.
+///
+/// # Errors
+///
+/// Returns an error for a corpus without a layered configuration or when the
+/// decoder refuses the code.
+pub fn layered_worker(
+    code: &LdpcCode,
+    corpus: &str,
+    batch: usize,
+    portable: bool,
+) -> Result<FrameWorker<LayeredDecoder>, String> {
+    let config = match corpus {
+        "dvb-t2-r12" => LayeredConfig::dvb_t2(),
+        "nr-bg1-r12" => LayeredConfig::nr_5g(),
+        other => return Err(format!("no layered configuration for {other}")),
+    };
+    let decoder =
+        LayeredDecoder::new(code, config).ok_or("the layered decoder refuses the code")?;
+    let decoder = if portable {
+        decoder.with_portable_kernel()
+    } else {
+        decoder
+    };
+    Ok(FrameWorker::new(
+        decoder,
+        code,
+        LAYERED_ITERATION_CAP,
+        batch,
+    ))
+}
+
+/// The block description of the comparison code a case names: DVB-T2 R1/2
+/// normal frames or NR BG1 Z=384.
+///
+/// # Errors
+///
+/// Returns an error for another code name.
+pub fn corpus_structure(corpus: &str) -> Result<QuasiCyclicLdpc, String> {
+    match corpus {
+        "dvb-t2-r12" => Ok(LdpcCode::dvb_t2_normal(gf2_coding::CodeRate::Rate1_2)
+            .quasi_cyclic()
+            .expect("DVB-T2 codes retain their structure")
+            .clone()),
+        "nr-bg1-r12" => Ok(QuasiCyclicLdpc::nr_5g(1, 384)),
+        other => Err(format!("no block description for {other}")),
+    }
+}
+
+/// The bundle's AList code with its corpus structure attached after an
+/// exact parity-check comparison.
+///
+/// # Errors
+///
+/// Returns an error when the AList is unreadable, the dimensions differ from
+/// the manifest, the code has no block description, or its parity-check
+/// matrix differs from the description's lifted matrix.
+pub fn structured_corpus_code(workload: &Workload) -> Result<LdpcCode, String> {
+    let mut code = crate::bundle::read_alist_code(&workload.alist()).map_err(|e| e.to_string())?;
+    if code.n() != workload.manifest.n || code.k() != workload.manifest.k {
+        return Err("the bundle dimensions differ from the built code".to_owned());
+    }
+    let corpus = &workload.manifest.code;
+    if !code.attach_quasi_cyclic(&corpus_structure(corpus)?) {
+        return Err(format!(
+            "the parity-check matrix of {corpus} differs from its block description"
+        ));
+    }
+    Ok(code)
 }
 
 /// Median stage costs of [`STAGE_PROBES`] batches on a decoder with a zero
@@ -580,7 +763,10 @@ pub fn run_with_policy(arm_name: &str, policy: impl ArmPolicy) -> Result<(), Str
 
 #[cfg(test)]
 mod tests {
-    use super::{probe_stages, BatchWorker, NonZeroUsize, LANES, ROUTE_WORKERS};
+    use super::{
+        corpus_structure, layered_worker, probe_stages, qc_worker, BatchWorker, NonZeroUsize,
+        LANES, ROUTE_WORKERS,
+    };
     use crate::reference::{config, Gf2Worker};
     use gf2_coding::ldpc::{BatchRoute, LaneBackend, LdpcCode, LdpcEncoder, QuasiCyclicLdpc};
     use gf2_coding::traits::BlockEncoder;
@@ -662,6 +848,52 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn the_qc_frame_worker_decodes_the_single_frame_decisions() {
+        let code = code();
+        let decoder_config = config(0.75, true);
+        for batch in [1, LANES + 1] {
+            let llrs = recorded(&code, batch);
+            let mut reference = Gf2Worker::new(&code, decoder_config, batch, CAP);
+            reference.decode_batch(&llrs);
+            for portable in [true, false] {
+                let mut worker =
+                    qc_worker(&code, decoder_config, CAP, batch, portable).expect("QC");
+                worker.decode_batch(&llrs);
+                worker.decode_batch(&llrs);
+                assert_eq!(worker.decisions, reference.decisions, "batch {batch}");
+            }
+        }
+        let plain = LdpcCode::from_edges(3, 6, &[(0, 0), (1, 1), (2, 2)]);
+        assert!(qc_worker(&plain, decoder_config, CAP, 1, true).is_err());
+    }
+
+    #[test]
+    fn the_layered_worker_decodes_a_clean_corpus_frame() {
+        let code = attached_nr_bg1_z384();
+        for portable in [true, false] {
+            let mut worker = layered_worker(&code, "nr-bg1-r12", 2, portable).expect("layered");
+            worker.decode_batch(&vec![4.0; 2 * code.n()]);
+            assert!(worker.decisions.iter().all(|&bit| bit == 0));
+        }
+        assert!(layered_worker(&code, "other", 1, true).is_err());
+    }
+
+    #[test]
+    fn corpus_structures_lift_to_the_corpus_codes() {
+        let dvb = LdpcCode::dvb_t2_normal(gf2_coding::CodeRate::Rate1_2);
+        let h = dvb.parity_check_matrix();
+        let edges: Vec<_> = (0..dvb.m())
+            .flat_map(|row| h.row_iter(row).map(move |col| (row, col)))
+            .collect();
+        let mut plain = LdpcCode::from_edges(dvb.m(), dvb.n(), &edges);
+        assert!(plain.attach_quasi_cyclic(&corpus_structure("dvb-t2-r12").unwrap()));
+        let mut nr = attached_nr_bg1_z384();
+        assert!(nr.attach_quasi_cyclic(&corpus_structure("nr-bg1-r12").unwrap()));
+        assert!(!plain.attach_quasi_cyclic(&corpus_structure("nr-bg1-r12").unwrap()));
+        assert!(corpus_structure("other").is_err());
     }
 
     #[test]
