@@ -2,7 +2,7 @@
 
 ## Tutorials
 
-Reproducible research workflows, placed per `@/inv/adapted-diataxis-placement`.
+Reproducible research workflows, placed per `@/inv/document-placement`.
 
 | Page | Workflow |
 |---|---|
@@ -11,7 +11,7 @@ Reproducible research workflows, placed per `@/inv/adapted-diataxis-placement`.
 
 ## How-to guides
 
-Focused adoption tasks, placed per `@/inv/adapted-diataxis-placement`.
+Focused adoption tasks, placed per `@/inv/document-placement`.
 
 | Page | Task |
 |---|---|
@@ -22,7 +22,7 @@ Focused adoption tasks, placed per `@/inv/adapted-diataxis-placement`.
 
 ## Concepts
 
-Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis-placement`.
+Current architecture and algorithmic choices, placed per `@/inv/document-placement`.
 
 | Page | Topic |
 |---|---|
@@ -31,7 +31,7 @@ Current architecture and algorithmic choices, placed per `@/inv/adapted-diataxis
 
 ## Reference
 
-Supported configurations, limits, evidence methods and stable contracts, placed per `@/inv/adapted-diataxis-placement`.
+Supported configurations, limits, evidence methods and stable contracts, placed per `@/inv/document-placement`.
 
 | Page | Contents |
 |---|---|

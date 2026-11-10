@@ -1,14 +1,15 @@
 # Engineering contract for gf2
 
 This is the canonical guidance for human and automated contributors. Its rules
-apply recursively under `@/inv/agents-md-scope`, and `CLAUDE.md` is a symlink to
+apply recursively under `@/inv/document-placement`, and `CLAUDE.md` is a symlink to
 this file.
 
 ## Mission
 
-Build a research-grade finite-field and coding-theory toolkit with composable
-APIs, standards-backed correctness, reproducible research, and production-safe
-acceleration. Optimization never relaxes mathematical or standards conformance.
+Build a fast, ergonomic research toolkit for finite fields and coding theory:
+composable APIs with sensible defaults, standards-backed correctness, throughput
+competitive with the strongest reference implementations, and reproducible
+results. Optimization never relaxes mathematical or standards conformance.
 
 ## Supported toolchain and commands
 
@@ -39,8 +40,9 @@ release mode.
 
 - Test execution goes through `./scripts/cargo-budget.sh --test`; a direct
   `cargo nextest` is not a permitted path for a suite run.
-- The host is never locked during a working session. Every timed measurement
-  is a queue line for the overnight benchmark window (`GF2_BENCH_WINDOW=1`,
+- The host is never locked during a working session. An indication is a short
+  run on a few pinned cores, allowed at any time and labelled as an indication.
+  A stated result is a queue line for the benchmark window (`GF2_BENCH_WINDOW=1`,
   exported by the window runner); outside it `dev/scripts/ccx1-bench-flock.sh`
   refuses to run and `scripts/cargo-budget.sh` applies no budget or lock.
 - `./scripts/cargo-ci.sh` wraps its own steps; do not wrap it again.
@@ -62,18 +64,11 @@ release mode.
   without becoming a kernel layer itself.
 - `gf2-sim` owns the generic CPU/GPU simulation pipeline and orchestration
   primitives. JIT item `@/issue/ec530af9` links its design source of truth.
-  Experiment code stays outside it under `@/inv/experiment-library-separation`.
-- `gf2-kernels-simd` and `gf2-kernels-hip` are the only production crates that
-  may contain `unsafe`. Every unsafe boundary requires an explicit safety
-  contract. Other production crates deny unsafe code.
+  Experiment code stays outside it under `@/inv/library-first-generality`.
+- `gf2-kernels-simd` and `gf2-kernels-hip` own the machine-specific kernels.
 - `proofs/` owns Lean verification of selected arithmetic and algorithm paths.
-- `experiments/<name>/` holds an experiment's code, protocol and configuration,
-  and `experiments/common` the mechanics several share. No `crates/*/Cargo.toml` depends on `experiments/`.
-
-Keep mathematical primitives, coding-domain behavior, orchestration, and
-machine-specific kernels separated. Dependencies point inward; a lower layer
-must not acquire a production dependency on a higher one. See
-`@/inv/crate-dependency-direction` and `@/inv/unsafe-kernel-isolation`.
+- `experiments/<name>/` holds one experiment and `experiments/common` the
+  mechanics several share. No `crates/*/Cargo.toml` depends on `experiments/`.
 
 ## Correctness and test policy
 
@@ -81,16 +76,8 @@ Work test-first: establish failing behavioral evidence, implement the smallest
 coherent change, then add shared property or conformance coverage where the
 contract is mathematical or implemented by several backends.
 
-- Test observable semantics, not private layout, except in the one canonical
-  suite for an intentionally stable external representation.
 - Exercise word-boundary cases 0, 1, 63, 64, and 65 when bit-packed behavior is
   involved. Preserve zero tail padding and canonical little-endian bit indexing.
-- Every finite-field implementation runs the shared field-law suite. Standards
-  implementations cite the authoritative edition or named vector source and
-  include external conformance evidence.
-- Scalar, SIMD, parallel, and GPU implementations share behavioral suites.
-  Seeded work remains deterministic across supported worker counts, scheduling,
-  checkpoint/resume, and fallbacks.
 - Public APIs need rustdoc stating purpose, panics, safety conditions, and
   non-obvious complexity.
 
@@ -105,17 +92,16 @@ Do not widen a wall-clock assertion to accommodate a busy runner.
 
 ## Performance and research evidence
 
-Profile before optimizing. Make performance claims sparingly: a claim names the
-harness and configuration that reproduce it, under
-`@/inv/benchmark-backed-performance`. Machine-dependent assertions are benchmark
-gates, not ordinary tests. Use `GF2_BENCH=1` only on a prepared benchmark host
-and use the applicable lock wrapper under `dev/scripts/`. Runs write to `target/`
-or another untracked location; their output is never committed.
+Profile and read the assembly before optimizing; check each change with an
+indication and state results from the benchmark window, under
+`@/inv/benchmark-backed-performance`. Compare against the reference's fastest
+configuration, under `@/inv/performance-deliverable`. Machine-dependent
+assertions are benchmark gates, not ordinary tests; `GF2_BENCH=1` runs use the
+lock wrapper under `dev/scripts/`.
 
-Keep permanent documentation under `README.md`, crate-level rustdoc, or
-`docs/`. Prefer citations or generated projections over copied facts. See
-`@/inv/single-source-prose`. Prose and Rustdoc reference a JIT issue as
-`@/issue/<short-id>`, the form the mechanical documentation check resolves.
+Permanent documentation lives in `README.md`, crate-level rustdoc, or `docs/`.
+Prose and Rustdoc reference a JIT issue as `@/issue/<short-id>`, the form the
+mechanical documentation check resolves.
 
 ## Planning, proof, and change discipline
 
@@ -129,9 +115,6 @@ Keep permanent documentation under `README.md`, crate-level rustdoc, or
 - Formal-proof or model-checking work needs an approved sketch before proof code:
   lemma statements, proof strategy, exact production path, and, for Kani,
   unwind bounds and dispatched paths.
-- Preserve one canonical abstraction. Change a shared convention at its source
-  or record a named, tracked exception instead of creating a private parallel
-  variant.
 - Commit subjects are `<type>(<scope>): <summary>`, with type one of `feat`,
   `fix`, `docs`, `test`, `refactor`, `perf`, `chore`; the list is closed. The
   whole subject line is at most 71 characters. A commit that implements or
@@ -153,35 +136,30 @@ Keep permanent documentation under `README.md`, crate-level rustdoc, or
 - **standards-vector-conformance** — Standards-based coding and modem behavior is checked against the authoritative standard or a named, versioned vector source; generated fixtures do not replace external conformance evidence.
 - **backend-behavioral-equivalence** — Scalar, SIMD, parallel CPU, and GPU implementations expose equivalent observable results within their declared numerical contract.
 - **single-source-prose** — Every fact with a single source of truth reaches prose by projection or citation; volatile facts (counts, enumerations, registry contents) are stated structurally or derived, and a hand-maintained copy is a staleness defect.
-- **semantic-test-assertions** — Tests assert observable semantic properties or relationships; exact field-name inventories and literal-value assertions are confined to one canonical suite for an intentionally stable external contract.
-- **shared-test-contracts** — Every implementation of a shared field, codec, modem, pipeline, or kernel interface runs the same behavioral conformance suite; implementation-specific tests cover only implementation-specific behavior.
+- **shared-test-contracts** — Tests assert observable semantics; literal inventories live in one canonical suite per stable external contract. Every implementation of a shared field, codec, modem, pipeline, or kernel interface runs the same behavioral conformance suite.
 - **accelerator-safe-fallback** — Unsupported SIMD or GPU capabilities and recoverable accelerator resource failures select a tested safe fallback; fatal kernel or driver failures remain explicit.
 - **semantic-types** — Every identity, constrained token, closed vocabulary, and protocol sentinel has one canonical semantic type; raw strings exist only at parsing and serialization boundaries.
 - **canonical-cutover** — Superseded aliases, fields, and representations are removed after cutover; compatibility code is allowed only in a named, versioned migration boundary with a tracked removal condition.
 - **unsafe-kernel-isolation** — Production unsafe code is isolated to gf2-kernels-simd and gf2-kernels-hip, with explicit safety contracts at every unsafe boundary.
 - **crate-dependency-direction** — Crate dependencies point from domain orchestration toward mathematical primitives and isolated kernels; mathematical, coding-domain, simulation, and kernel layers do not acquire reverse production dependencies.
 - **deterministic-seeded-execution** — A fixed seed and configuration produce identical observable results across supported worker counts, scheduling paths, checkpoint/resume boundaries, and accelerator fallbacks.
-- **benchmark-backed-performance** — Performance, crossover and scalability claims are rare and name the reproducible harness and configuration that demonstrate them. A value measured on one host appears only as an example labelled with that host and supports no claim; estimates are identified as estimates.
+- **benchmark-backed-performance** — Measurements have two tiers. An indication is a short run on a few pinned cores at any time; it guides the next change, is labelled an indication, and supports no stated result. A result comes from the benchmark window and names the harness, configuration and host that reproduce it. Estimates are identified as estimates.
+- **performance-deliverable** — Throughput of field arithmetic, kernels and decoders is a deliverable beside correctness. A comparison against another implementation uses that implementation's fastest configuration at matched error rate; a result against a weaker configuration is labelled as such.
+- **structural-performance-defaults** — Default routes, thresholds and block sizes derive from the code's structure and the selected backend's vector width and cache sizes. A host measurement motivates a default and is cited as an example; a default that names a host, a benchmark cell or a measured constant without its structural form is a defect. Every such default is caller-overridable.
 - **test-tier-budgets** — Every test respects its tier's configured time budget: release-mode fast-tier tests within the per-test and suite budgets, ignored slow and simulation tests within the nightly budget or through an explicitly serialized or host-gated execution path; slower work carries a descriptive ignore tier.
 - **convention-convergence** — A shared convention or abstraction has one form: work that finds it harmful or ill-fitting changes it at its source, or reports the mismatch as a blocking concern before proceeding. A local parallel variant, a private helper duplicating a shared mechanism, or a bypass around an abstraction is a defect unless it is a named, cited exception with a tracked convergence condition.
-- **present-tense-prose** — Permanent artifacts describe the current state of the system; change-relative narration — old/new contrasts, previously/now framing, legacy markers, migration history — lives in commit messages and issue history.
-- **library-first-generality** — New generic behavior lands as a reusable API in the layer-appropriate library crate, generic over its natural domain; binaries, simulations, and orchestration stay thin consumers. A generic capability implemented privately inside a consumer that a library layer could own is a defect unless cited as a tracked exception.
+- **present-tense-prose** — Permanent artifacts state the system's current behavior and limits. Change history lives in commit messages and issue history; plans, deferrals and non-goals live in JIT issues.
+- **library-first-generality** — Generic behavior lands as a reusable API in the layer-appropriate library crate, and binaries, simulations, and orchestration stay thin consumers. An experiment's protocol, constants, records, validation and orchestration live with that experiment outside the library crates and consume library APIs.
 - **committed-evidence-budget** — Measurements, receipts, execution logs, result tables, copied source and inputs, and third-party archives are never committed; the repository holds harnesses and their configuration, and a run writes outside the tracked tree. A decision record may state the measured values its pre-registered rule decides on, labelled with the host; receipts, logs and result tables stay outside the tree. `scripts/check-tracked-budget.py` enforces this and the file, commit and tree limits, which only fall.
-- **experiment-library-separation** — Library crates contain only capabilities applicable to several experiments. An experiment's protocol, constants, records, validation and orchestration live with that experiment outside the library crates and consume library APIs.
 - **no-deferred-defects** — Quality defects surfaced while implementing a change are fixed in that change or filed as a tracked issue before completion; a TODO or FIXME marker without a tracked issue is a defect.
 - **resolvable-references** — Tracked text names only what a fresh clone resolves: no host-local path and no repository path that does not exist. `scripts/check-references.py` enforces this.
 - **falsification-preserved** — Data that contradicts a criterion, hypothesis, or cited claim is recorded together with the contradiction; silent rework of the falsified statement is a defect.
-- **campaign-resumability** — A campaign is a resumable sequence of bounded runs: completed cells persist as checkpointed evidence, an interrupted, censored or budget-exhausted run continues without repeating completed work, and no protocol step requires one uninterrupted session. Each campaign writes one append-only execution log, opened before its first run, that records cell progress and terminal status and is the authoritative record of the run.
-- **behavioral-evidence-validity** — A measurement record pins a closed identity set: the executable digest, the build flags, the frozen configuration, the seed, the RNG implementation and version, the toolchain version, and the host facts the tool observes at run time. Evidence is invalidated only by a change to that set or to the producing tool's measurement behavior (sampling, evaluation, timing, output semantics). The source revision is recorded as a pointer for rebuilding; Git commit IDs, clean/dirty status, source line numbers and documentation changes never decide acceptance, invalidation or resume. Tools and records state only run-time observations, the tool's own labelled constants, and citations of tracked files. Pinning or verifying anything outside the closed set, or adding a ledger, schema, checker or protocol version, is a defect unless a success criterion names it.
+- **campaign-evidence** — A campaign is a measurement whose result a decision record or publication cites, or that spans several benchmark windows. It is a resumable sequence of bounded runs with one append-only execution log, and its record pins the executable digest, the configuration, the seed and the host facts the tool observes. Evidence is invalidated only by a change to those or to the tool's measurement behavior; Git commit IDs, clean/dirty status and documentation changes decide nothing. A ledger, schema, checker or protocol version beyond this is a defect unless a success criterion names it. Any other measurement carries a harness, a configuration and a host name.
 - **caller-trusted-fast-paths** — API contracts trust the caller: validation exists to catch mistakes and to amortize cost, never to defend against an adversary. A path that skips validation for performance is a distinct method under the _unchecked naming convention with its precondition documented, and violating that precondition is caller error with unspecified mathematical results — never grounds for sealing types, policing evidence provenance, or other adversarial hardening in a library that does HPC, not security.
-- **non-obvious-comments** — Comments and rustdoc carry only what the code leaves non-obvious — a contract, an invariant, the reason for a choice, or a pointer to evidence — in the shortest form that conveys it and without restating code, signatures, or other documentation; a module-level orientation is at most one short paragraph.
-- **current-state-scope** — Documentation states the current behavior and limits of the system only; speculation, future promises, non-goals, and deferrals are omitted, and planned work lives in JIT issues.
-- **teaching-rustdoc-examples** — A rustdoc example teaches a workflow or clarifies a material contract that prose and focused tests leave unclear; examples for accessors, constants, constructors, predicates, and direct field mappings are a defect.
-- **active-document-layout** — Active development documents live under `dev/active/<epic-short-id>-<slug>/` and are linked to their owning issues with `jit doc`.
-- **agents-md-scope** — Every `AGENTS.md` governs its directory subtree, overrides less specific guidance only within that subtree, states nothing that belongs to a broader or narrower scope, and stays at or below 200 lines.
-- **researcher-audience** — Permanent documentation addresses researchers evaluating or adopting gf2: it assumes relevant technical competence, omits elementary finite-field and simplest-code primers, and limits tutorials to research-grade end-to-end workflows over advanced supported capabilities.
-- **adapted-diataxis-placement** — Every permanent documentation page under `docs/` other than `docs/index.md` lives in exactly one of `tutorials/` (reproducible research workflows), `how-to/` (focused adoption tasks), `concepts/` (current architecture and algorithmic choices), or `reference/` (supported configurations, limitations, evidence methodology, and stable contracts), and its content matches that directory's purpose.
-- **no-marketing** — Permanent documentation and rustdoc state capabilities and measured results in neutral technical terms; promotional adjectives, superlatives, and unquantified comparative claims are a defect.
+- **ergonomic-defaults** — Constructing a standard's code and decoding with defaults selects the fastest conforming path the host supports. Defaults follow the field's standard conventions, deviations are optional parameters, and where the algorithm permits the library adapts to its input instead of asking the caller.
+- **non-obvious-comments** — Comments and rustdoc carry only what the code leaves non-obvious, in the shortest form that conveys it. A rustdoc example shows a workflow a researcher would copy, including constructing a standard's code and its decoder; examples for accessors and direct field mappings are a defect.
+- **researcher-audience** — Permanent documentation addresses researchers evaluating or adopting gf2: it assumes relevant technical competence and states capabilities and measured results in neutral technical terms.
+- **document-placement** — Every permanent page under `docs/` other than `docs/index.md` lives in exactly one of `tutorials/`, `how-to/`, `concepts/`, or `reference/`. Active development documents live under `dev/active/<epic-short-id>-<slug>/`, linked to their owning issues with `jit doc`. Every `AGENTS.md` governs its directory subtree and stays at or below 200 lines.
 - **no-dev-path-coupling** — Code that locates development artifacts at run time resolves them through one configured repository root or by content identity; a hard-coded `dev/` location, a historical-path allow-list, or a path that depends on the caller's directory depth is a defect. Paths a build system requires literally, such as Cargo manifest dependencies and workspace members, are outside this rule.
 <!-- jit:invariants:end -->
 

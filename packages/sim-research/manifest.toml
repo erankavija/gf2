@@ -700,21 +700,11 @@ enforced-by = "@/gate/code-review"
 [[contribution]]
 kind = "keyed-array"
 target = "invariants"
-identity = "semantic-test-assertions"
-
-[contribution.value]
-id = "semantic-test-assertions"
-statement = "Tests assert observable semantic properties or relationships; exact field-name inventories and literal-value assertions are confined to one canonical suite for an intentionally stable external contract."
-kind = "advisory"
-
-[[contribution]]
-kind = "keyed-array"
-target = "invariants"
 identity = "shared-test-contracts"
 
 [contribution.value]
 id = "shared-test-contracts"
-statement = "Every implementation of a shared field, codec, modem, pipeline, or kernel interface runs the same behavioral conformance suite; implementation-specific tests cover only implementation-specific behavior."
+statement = "Tests assert observable semantics; literal inventories live in one canonical suite per stable external contract. Every implementation of a shared field, codec, modem, pipeline, or kernel interface runs the same behavioral conformance suite."
 kind = "advisory"
 
 [[contribution]]
@@ -790,7 +780,7 @@ identity = "benchmark-backed-performance"
 
 [contribution.value]
 id = "benchmark-backed-performance"
-statement = "Performance, crossover and scalability claims are rare and name the reproducible harness and configuration that demonstrate them. A value measured on one host appears only as an example labelled with that host and supports no claim; estimates are identified as estimates."
+statement = "Measurements have two tiers. An indication is a short run on a few pinned cores at any time; it guides the next change, is labelled an indication, and supports no stated result. A result comes from the benchmark window and names the harness, configuration and host that reproduce it. Estimates are identified as estimates."
 kind = "enforced"
 enforced-by = "@/gate/code-review"
 
@@ -823,7 +813,7 @@ identity = "present-tense-prose"
 
 [contribution.value]
 id = "present-tense-prose"
-statement = "Permanent artifacts describe the current state of the system; change-relative narration — old/new contrasts, previously/now framing, legacy markers, migration history — lives in commit messages and issue history."
+statement = "Permanent artifacts state the system's current behavior and limits. Change history lives in commit messages and issue history; plans, deferrals and non-goals live in JIT issues."
 kind = "enforced"
 enforced-by = "@/gate/code-review"
 
@@ -834,7 +824,7 @@ identity = "library-first-generality"
 
 [contribution.value]
 id = "library-first-generality"
-statement = "New behavior lands as a reusable API in the layer-appropriate library crate, generic over its natural domain; binaries, simulations, and orchestration stay thin consumers. A capability implemented privately inside a consumer that a library layer could own is a defect unless cited as a tracked exception."
+statement = "Generic behavior lands as a reusable API in the layer-appropriate library crate, and binaries, simulations, and orchestration stay thin consumers. An experiment's protocol, constants, records, validation and orchestration live with that experiment outside the library crates and consume library APIs."
 kind = "advisory"
 
 [[contribution]]
