@@ -72,29 +72,30 @@ unsafe fn update_layer_avx2_unchecked(
     let limit = params.extrinsic_limit() as i8;
     let (low, high) = (_mm256_set1_epi8(-limit), _mm256_set1_epi8(limit));
     let mut unsettled = 0u32;
+    // The entry sign bits of each edge of one lane group; degree <= 255.
+    let mut signs = [0u32; 255];
     for lane in (0..stride).step_by(LAYER_LANES) {
         let mut min1 = _mm256_set1_epi8(127);
         let mut min2 = _mm256_set1_epi8(127);
         let mut arg1 = _mm256_set1_epi8(-1);
         let mut parity = zero;
-        let mut entry_parity = zero;
+        let mut entry_parity = 0u32;
         let mut index = zero;
-        for edge in 0..degree {
+        for (edge, entry) in signs[..degree].iter_mut().enumerate() {
             let at = edge * stride + lane;
             // SAFETY: at + 32 <= degree * stride, the length of both slices;
             // unaligned accesses are permitted and the slices cannot alias.
-            let value = unsafe {
+            let (value, entry_signs) = unsafe {
                 let app = _mm256_loadu_si256(apps.as_ptr().add(at).cast());
                 let message = _mm256_loadu_si256(messages.as_ptr().add(at).cast());
                 // Saturation at ±128 lies outside the extrinsic bound.
                 let value =
                     _mm256_min_epi8(_mm256_max_epi8(_mm256_subs_epi8(app, message), low), high);
                 _mm256_storeu_si256(apps.as_mut_ptr().add(at).cast(), value);
-                // The old message is spent; its slot keeps the entry value.
-                _mm256_storeu_si256(messages.as_mut_ptr().add(at).cast(), app);
-                entry_parity = _mm256_xor_si256(entry_parity, app);
-                value
+                (value, _mm256_movemask_epi8(app) as u32)
             };
+            *entry = entry_signs;
+            entry_parity ^= entry_signs;
             parity = _mm256_xor_si256(parity, _mm256_cmpgt_epi8(zero, value));
             let magnitude = _mm256_abs_epi8(value);
             let below1 = _mm256_cmpgt_epi8(min1, magnitude);
@@ -109,15 +110,14 @@ unsafe fn update_layer_avx2_unchecked(
         } else {
             (scale(params, min1), scale(params, min2))
         };
-        // Sign bits: entry parity, then any change of sign.
+        // Lane bits: odd entry parity, then any change of sign.
         let mut flags = entry_parity;
         index = zero;
-        for edge in 0..degree {
+        for (edge, &entry) in signs[..degree].iter().enumerate() {
             let at = edge * stride + lane;
             // SAFETY: as in the first pass.
             unsafe {
                 let value = _mm256_loadu_si256(apps.as_ptr().add(at).cast());
-                let entry = _mm256_loadu_si256(messages.as_ptr().add(at).cast());
                 let negative = _mm256_xor_si256(parity, _mm256_cmpgt_epi8(zero, value));
                 let at_min = _mm256_cmpeq_epi8(arg1, index);
                 index = _mm256_add_epi8(index, one);
@@ -127,7 +127,7 @@ unsafe fn update_layer_avx2_unchecked(
                 _mm256_storeu_si256(messages.as_mut_ptr().add(at).cast(), message);
                 let app = _mm256_add_epi8(value, message);
                 _mm256_storeu_si256(apps.as_mut_ptr().add(at).cast(), app);
-                flags = _mm256_or_si256(flags, _mm256_xor_si256(entry, app));
+                flags |= entry ^ _mm256_movemask_epi8(app) as u32;
             }
         }
         let real = width.saturating_sub(lane);
@@ -136,7 +136,7 @@ unsafe fn update_layer_avx2_unchecked(
         } else {
             (1u32 << real) - 1
         };
-        unsettled |= _mm256_movemask_epi8(flags) as u32 & mask;
+        unsettled |= flags & mask;
     }
     unsettled == 0
 }

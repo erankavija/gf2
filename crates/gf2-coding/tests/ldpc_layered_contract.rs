@@ -263,6 +263,18 @@ fn quantization_rounds_saturates_and_maps_rate_matching_values() {
     assert_eq!((q(f32::INFINITY), q(f32::NEG_INFINITY)), (31, -31));
     assert_eq!((q(7.75), q(7.876), q(-1e30)), (31, 31, -31));
     assert_eq!(q(FILLER_LLR), config.channel_limit() as i8);
+    // Every half-integer level and its float neighbours, against the definition.
+    for config in configs() {
+        let limit = f32::from(config.channel_limit());
+        for half in -400..=400 {
+            let level = 0.5 * half as f32;
+            for scaled in [level.next_down(), level, level.next_up()] {
+                let llr = scaled / config.channel_scale();
+                let expected = (llr * config.channel_scale()).round().clamp(-limit, limit);
+                assert_eq!(config.quantize(Llr::new(llr)), expected as i8, "{llr}");
+            }
+        }
+    }
 }
 
 #[test]
