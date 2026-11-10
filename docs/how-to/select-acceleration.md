@@ -8,11 +8,11 @@ GPU requirements and each crate's feature defaults are in
 
 ## Enable the features
 
-Each path is a Cargo feature:
+Each path is a Cargo feature; `gf2-core`'s `simd` is on by default:
 
 ```toml
 [dependencies]
-gf2-core = { git = "https://github.com/erankavija/gf2", features = ["simd", "parallel"] }
+gf2-core = { git = "https://github.com/erankavija/gf2", features = ["parallel"] }
 gf2-coding = { git = "https://github.com/erankavija/gf2", features = ["parallel", "hip"] }
 ```
 
@@ -32,9 +32,9 @@ on scalar code
 In `gf2-core` and for `gf2-coding`'s LLR operations, detection runs only with
 the `simd` feature; the `gf2-coding` Gray-QAM demapper and BCH encode kernels
 detect in every build. The `avx2` and `avx512` features of `gf2-kernels-simd`
-gate no code. To pin scalar code on a SIMD-capable host, build with no
-dependency enabling `gf2-core/simd` (for `gf2-coding`,
-`default-features = false`), construct the demapper with
+gate no code. To pin scalar code on a SIMD-capable host, build `gf2-core` with
+`default-features = false` and no dependency enabling `gf2-core/simd` (for
+`gf2-coding`, `default-features = false` as well), construct the demapper with
 `FastGrayQamDemapper::new_with_scalar_kernel`, and keep the conservative BCH
 encode section.
 

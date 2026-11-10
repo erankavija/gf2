@@ -33,7 +33,8 @@ tuning-campaign-support = { workspace = true }
 # Per-thread counting allocator of the allocation-witness tests.
 thread-allocations = { workspace = true }
 criterion = { workspace = true }
-gf2-core = { path = ".", features = ["test-support"] }
+# Without default features, so `--no-default-features` builds leave `simd` off.
+gf2-core = { path = ".", default-features = false, features = ["rand", "io", "test-support"] }
 # The shared population-count suite calls each kernel of the detected bundle
 # directly, including routes a default build's compile-time thresholds do not
 # select; the shared 64x64 block contracts that
@@ -52,10 +53,11 @@ sha2 = "0.10"
 serial_test = "3"
 
 [features]
-default = ["rand", "io"]
-# Opt-in to SIMD accelerated kernels. The `gf2-kernels-simd` crate is
-# always linked (it hosts the scalar `clmul_u64_scalar` SSOT); this
-# feature only gates the runtime detection / kernel dispatch paths.
+default = ["rand", "io", "simd"]
+# Runtime CPU detection and kernel dispatch, with the tested portable
+# fallback on hosts without the instructions. The `gf2-kernels-simd` crate is
+# always linked (it hosts the scalar `clmul_u64_scalar` SSOT); this feature
+# only gates the detection and dispatch paths.
 simd = []
 # Random generation functions (enabled by default for testing/examples).
 rand = ["dep:rand"]

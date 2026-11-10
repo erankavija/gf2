@@ -10,7 +10,7 @@ categories = ["algorithms", "encoding", "mathematics"]
 rust-version = "1.95"
 
 [dependencies]
-gf2-core = { path = "../gf2-core" }
+gf2-core = { path = "../gf2-core", default-features = false, features = ["rand", "io"] }
 gf2-kernels-simd = { path = "../gf2-kernels-simd" }
 gf2-kernels-hip = { path = "../gf2-kernels-hip", optional = true }
 rand = { workspace = true }
@@ -29,7 +29,7 @@ tracing = { version = "0.1", optional = true }
 tracing-subscriber = { version = "0.3", optional = true, features = ["json", "env-filter"] }
 
 [dev-dependencies]
-gf2-core = { path = "../gf2-core", features = ["test-support"] }
+gf2-core = { path = "../gf2-core", default-features = false, features = ["rand", "io", "test-support"] }
 gf2-kernels-simd = { path = "../gf2-kernels-simd", features = ["test-support"] }
 proptest = { workspace = true }
 rand = { workspace = true }
