@@ -3,7 +3,7 @@
 //! JSON line shared by `gf2-fast-bench` and `aff3ct-fast-bench`.
 
 use crate::arm::DecoderCase;
-use crate::pool::pin_current_thread;
+use crate::pool::{physical_first_cpus, pin_current_thread};
 use crate::workload::{median_u64, Workload};
 use std::time::Instant;
 
@@ -14,7 +14,39 @@ pub const NORMALIZATION: f32 = 0.75;
 /// Untimed calls of each worker before its timed calls.
 pub const WARM_CALLS: usize = 2;
 
-/// `BUNDLE CODE KIND SIMD PRECISION WORKERS BATCH CALLS`.
+/// Worker placement of a timed run.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Pinning {
+    /// Worker `i` pinned to the `i`-th CPU of [`physical_first_cpus`].
+    Pinned,
+    /// Workers left to the scheduler.
+    Unpinned,
+}
+
+impl Pinning {
+    /// Parses `pinned` or `unpinned`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for another word.
+    pub fn parse(text: &str) -> Result<Self, String> {
+        match text {
+            "pinned" => Ok(Self::Pinned),
+            "unpinned" => Ok(Self::Unpinned),
+            other => Err(format!("PINNING is pinned or unpinned, not {other}")),
+        }
+    }
+
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Pinned => "pinned",
+            Self::Unpinned => "unpinned",
+        }
+    }
+}
+
+/// `BUNDLE CODE KIND SIMD PRECISION WORKERS BATCH CALLS PINNING`.
 pub struct FastCell {
     pub bundle: String,
     pub code: String,
@@ -25,6 +57,7 @@ pub struct FastCell {
     pub workers: usize,
     pub batch: usize,
     pub calls: usize,
+    pub pinning: Pinning,
 }
 
 fn positive(text: &str, what: &str) -> Result<usize, String> {
@@ -35,15 +68,17 @@ fn positive(text: &str, what: &str) -> Result<usize, String> {
 }
 
 impl FastCell {
-    /// Parses the eight positional arguments.
+    /// Parses the nine positional arguments.
     ///
     /// # Errors
     ///
     /// Returns the usage on another argument count, and an error for a
-    /// non-positive count.
+    /// non-positive count or an unknown pinning.
     pub fn parse(args: &[String]) -> Result<Self, String> {
-        let [bundle, code, kind, simd, precision, workers, batch, calls] = args else {
-            return Err("usage: BUNDLE CODE KIND SIMD PRECISION WORKERS BATCH CALLS".to_owned());
+        let [bundle, code, kind, simd, precision, workers, batch, calls, pinning] = args else {
+            return Err(
+                "usage: BUNDLE CODE KIND SIMD PRECISION WORKERS BATCH CALLS PINNING".to_owned(),
+            );
         };
         Ok(Self {
             bundle: bundle.clone(),
@@ -54,6 +89,7 @@ impl FastCell {
             workers: positive(workers, "WORKERS")?,
             batch: positive(batch, "BATCH")?,
             calls: positive(calls, "CALLS")?,
+            pinning: Pinning::parse(pinning)?,
         })
     }
 
@@ -81,27 +117,46 @@ impl FastCell {
     }
 
     /// Runs `init` and then [`WARM_CALLS`] and `calls` calls of `call` on
-    /// each of `workers` threads, worker `i` pinned to CPU `i`, and returns
-    /// the median over workers of each worker's median call time. Timed calls
+    /// each of `workers` threads placed as `pinning` says, and returns the
+    /// median over workers of each worker's median call time. Timed calls
     /// start together.
     ///
     /// # Errors
     ///
-    /// Returns an error when pinning or `init` fails or a worker panics.
+    /// Returns an error when the host has fewer CPUs than pinned workers,
+    /// when pinning or `init` fails, or when a worker panics.
     pub fn median_call_ns<W>(
         &self,
         init: impl Fn(usize) -> Result<W, String> + Sync,
         call: impl Fn(&mut W) + Sync,
     ) -> Result<u64, String> {
+        let cpus = match self.pinning {
+            Pinning::Pinned => {
+                let cpus = physical_first_cpus()?;
+                if cpus.len() < self.workers {
+                    return Err(format!(
+                        "{} pinned workers on {} CPUs",
+                        self.workers,
+                        cpus.len()
+                    ));
+                }
+                Some(cpus)
+            }
+            Pinning::Unpinned => None,
+        };
         let start = std::sync::Barrier::new(self.workers);
         let medians = std::thread::scope(|scope| {
             let handles: Vec<_> = (0..self.workers)
-                .map(|cpu| {
-                    let (init, call, start) = (&init, &call, &start);
+                .map(|index| {
+                    let (init, call, start, cpus) = (&init, &call, &start, &cpus);
                     scope.spawn(move || -> Result<u64, String> {
                         // Every worker reaches the barrier, so one failure
                         // cannot leave the others waiting.
-                        let worker = pin_current_thread(cpu as u32).and_then(|_| init(cpu));
+                        let worker = match cpus {
+                            Some(cpus) => pin_current_thread(cpus[index]).map(drop),
+                            None => Ok(()),
+                        }
+                        .and_then(|()| init(index));
                         start.wait();
                         let mut worker = worker?;
                         for _ in 0..WARM_CALLS {
@@ -152,6 +207,7 @@ impl FastCell {
                 "workers": self.workers,
                 "batch": self.batch,
                 "calls": self.calls,
+                "pinning": self.pinning.as_str(),
                 "median_call_ns": median_call_ns,
                 "frames_per_second": frames_per_second,
                 "info_mbps": frames_per_second * k as f64 / 1e6,
@@ -186,5 +242,30 @@ pub fn main_with(
             eprintln!("{program}: {error}");
             std::process::ExitCode::FAILURE
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{FastCell, Pinning};
+
+    fn args(pinning: &str) -> Vec<String> {
+        ["dir", "code", "qc", "avx2", "f32", "2", "16", "3", pinning]
+            .map(str::to_owned)
+            .to_vec()
+    }
+
+    #[test]
+    fn the_last_argument_names_the_pinning() {
+        assert_eq!(
+            FastCell::parse(&args("pinned")).unwrap().pinning,
+            Pinning::Pinned
+        );
+        assert_eq!(
+            FastCell::parse(&args("unpinned")).unwrap().pinning,
+            Pinning::Unpinned
+        );
+        assert!(FastCell::parse(&args("cpu0")).is_err());
+        assert!(FastCell::parse(&args("pinned")[..8]).is_err());
     }
 }

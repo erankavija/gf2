@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # gf2 decoder routes against AFF3CT NMS configurations on identical recorded
-# bundles, worker i pinned to CPU i: flooding NMS 0.75 with cap 50, and gf2's
-# layered i8 route under its corpus configuration with cap 25, all with
-# syndrome stopping. FER counts information-window frame errors.
+# bundles: flooding NMS 0.75 with cap 50, and gf2's layered i8 route under its
+# corpus configuration with cap 25, all with syndrome stopping. FER counts information-window frame errors.
 #
 # Environment: GF2_AFF3CT_ROOT names the staged AFF3CT tree (as for the AFF3CT
 # arm) and GF2_LDPC_BUNDLES the directory holding the bundle directories named
@@ -68,7 +67,12 @@ aff3ct_configs=(
     "flooding INTER f32" "layered INTER f32" "layered-onms INTER f32"
     "flooding INTER i16" "layered INTER i16" "layered-onms INTER i16"
 )
-cells=("1 1" "1 8" "1 16" "12 8" "12 16" "24 16")
+# "workers batch pinning"; pinned workers take one CPU of every physical core
+# before any SMT sibling, and the unpinned cells show what pinning costs or gains.
+cells=(
+    "1 1 pinned" "1 8 pinned" "1 16 pinned" "12 8 pinned" "12 16 pinned" "24 16 pinned"
+    "12 16 unpinned" "24 16 unpinned"
+)
 
 run() {
     local side=$1 executable=$2
@@ -94,9 +98,10 @@ cells = {}
 for row in rows:
     run = row.get("run")
     if run and run["code"] == code:
-        cells.setdefault((run["workers"], run["batch"]), []).append((row["side"], run))
-for (workers, batch), runs in cells.items():
-    print(f"\n{code}  workers {workers}  batch {batch}")
+        key = (run["workers"], run["batch"], run["pinning"])
+        cells.setdefault(key, []).append((row["side"], run))
+for (workers, batch, pinning), runs in cells.items():
+    print(f"\n{code}  workers {workers}  batch {batch}  {pinning}")
     print(f"  {'side':7} {'decoder':44} {'prec':4} {'cap':>4} {'FER':>9} {'frames/s':>10} {'info Mb/s':>10}")
     best, flooding = {}, {}
     for side, run in runs:
@@ -123,15 +128,16 @@ EOF
     arm_codes | while read -r bundle code; do
         dir="$GF2_LDPC_BUNDLES/$bundle"
         for cell in "${cells[@]}"; do
-            read -r workers batch <<< "$cell"
+            read -r workers batch pinning <<< "$cell"
             for route in "${gf2_routes[@]}"; do
                 read -r kind simd <<< "$route"
-                run gf2 "$gf2_bin" "$dir" "$code" "$kind" "$simd" f32 "$workers" "$batch" "$calls"
+                run gf2 "$gf2_bin" "$dir" "$code" "$kind" "$simd" f32 \
+                    "$workers" "$batch" "$calls" "$pinning"
             done
             for config in "${aff3ct_configs[@]}"; do
                 read -r kind simd precision <<< "$config"
                 run aff3ct "$aff3ct_bin" "$dir" "$code" "$kind" "$simd" "$precision" \
-                    "$workers" "$batch" "$calls"
+                    "$workers" "$batch" "$calls" "$pinning"
             done
         done
         table "$code"

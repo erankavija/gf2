@@ -68,6 +68,27 @@ pub fn pin_current_thread(cpu: u32) -> Result<Vec<u32>, String> {
         .collect())
 }
 
+/// The host's logical CPUs one per physical core first: every core's lowest
+/// CPU, cores by ascending CPU, then every core's second SMT thread, and so on.
+///
+/// # Errors
+///
+/// Returns an error when sysfs does not describe the CPU topology.
+pub fn physical_first_cpus() -> Result<Vec<u32>, String> {
+    let topology = tuning_campaign_support::host::CpuTopology::observe()
+        .map_err(|error| format!("cannot read the CPU topology: {error}"))?;
+    Ok(physical_first(topology.physical_cores()))
+}
+
+/// Orders cores whose logical CPUs are each sorted ascending.
+fn physical_first(mut cores: Vec<Vec<u32>>) -> Vec<u32> {
+    cores.sort_unstable_by_key(|cpus| cpus[0]);
+    let threads = cores.iter().map(Vec::len).max().unwrap_or(0);
+    (0..threads)
+        .flat_map(|rank| cores.iter().filter_map(move |cpus| cpus.get(rank).copied()))
+        .collect()
+}
+
 /// The CPU the calling thread runs on now.
 #[must_use]
 pub fn current_cpu() -> u32 {
@@ -206,7 +227,24 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{current_cpu, run};
+    use super::{current_cpu, physical_first, physical_first_cpus, run};
+
+    #[test]
+    fn physical_first_lists_every_core_before_any_second_thread() {
+        let cores = vec![vec![1, 13], vec![0, 12], vec![2]];
+        assert_eq!(physical_first(cores), [0, 1, 2, 12, 13]);
+        let interleaved = vec![vec![2, 3], vec![0, 1]];
+        assert_eq!(physical_first(interleaved), [0, 2, 1, 3]);
+    }
+
+    #[test]
+    fn the_host_order_is_a_permutation_of_its_cpus() {
+        let mut order = physical_first_cpus().expect("topology");
+        let observed = tuning_campaign_support::host::CpuTopology::observe().expect("topology");
+        order.sort_unstable();
+        let cpus: Vec<u32> = observed.cpus.iter().map(|cpu| cpu.cpu).collect();
+        assert_eq!(order, cpus);
+    }
 
     fn own_cpus() -> Vec<u32> {
         tuning_campaign_support::host::CpuAffinity::observe()
