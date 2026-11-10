@@ -58,6 +58,24 @@ impl PartialEq for BitVec {
 
 impl Eq for BitVec {}
 
+/// Reads the 64 packed bits of `words` starting at bit `offset`, bit $j$ of
+/// the result carrying bit `offset + j`.
+///
+/// Bits past the end of `words` read as zero, the zero tail padding a packed
+/// buffer maintains.
+#[inline]
+pub fn packed_window(words: &[u64], offset: usize) -> u64 {
+    let word = offset / 64;
+    let bit = offset % 64;
+    let low = words.get(word).copied().unwrap_or(0) >> bit;
+    let high = if bit == 0 {
+        0
+    } else {
+        words.get(word + 1).copied().unwrap_or(0) << (64 - bit)
+    };
+    low | high
+}
+
 impl BitVec {
     /// Creates an empty `BitVec`.
     pub fn new() -> Self {
@@ -244,30 +262,67 @@ impl BitVec {
     /// $O(\lceil \text{len\_bits}/64 \rceil)$ word operations; a word-aligned
     /// `offset` copies whole words.
     pub fn write_bits(&mut self, offset: usize, source: &[u64], len_bits: usize) {
-        let end = offset
-            .checked_add(len_bits)
-            .filter(|&end| end <= self.len_bits)
-            .expect("bit range out of bounds");
         assert!(
             source.len() >= len_bits.div_ceil(64),
             "Insufficient words: need {}, got {}",
             len_bits.div_ceil(64),
             source.len()
         );
+        self.write_run(offset, len_bits, |run| packed_window(source, run));
+    }
+
+    /// Overwrites bits `offset..offset + len_bits` with bits
+    /// `source_offset..source_offset + len_bits` of `source`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if either range exceeds its vector's length.
+    ///
+    /// # Complexity
+    ///
+    /// $O(\lceil \text{len\_bits}/64 \rceil)$ word operations.
+    pub fn copy_bits(
+        &mut self,
+        offset: usize,
+        source: &BitVec,
+        source_offset: usize,
+        len_bits: usize,
+    ) {
+        assert!(
+            source_offset
+                .checked_add(len_bits)
+                .is_some_and(|end| end <= source.len_bits),
+            "source bit range out of bounds"
+        );
+        let words = source.words();
+        self.write_run(offset, len_bits, |run| {
+            packed_window(words, source_offset + run)
+        });
+    }
+
+    /// Writes at `offset` the `len_bits`-bit run whose 64 bits from run
+    /// position `run` up are `window(run)`.
+    #[inline]
+    fn write_run(&mut self, offset: usize, len_bits: usize, window: impl Fn(usize) -> u64) {
+        let end = offset
+            .checked_add(len_bits)
+            .filter(|&end| end <= self.len_bits)
+            .expect("bit range out of bounds");
         if len_bits == 0 {
             return;
         }
-
         let data = self.words_mut();
         let first = offset / 64;
-        let shift = offset % 64;
-        if shift == 0 {
+        if offset.is_multiple_of(64) {
             let whole = len_bits / 64;
-            data[first..first + whole].copy_from_slice(&source[..whole]);
+            for (w, target) in data[first..first + whole].iter_mut().enumerate() {
+                *target = window(w * 64);
+            }
             let rest = len_bits % 64;
             if rest != 0 {
                 let mask = (1u64 << rest) - 1;
-                data[first + whole] = (data[first + whole] & !mask) | (source[whole] & mask);
+                let target = &mut data[first + whole];
+                *target = (*target & !mask) | (window(whole * 64) & mask);
             }
             return;
         }
@@ -276,15 +331,8 @@ impl BitVec {
         for (word, target) in data.iter_mut().enumerate().take(last + 1).skip(first) {
             let low = (word * 64).max(offset);
             let count = ((word + 1) * 64).min(end) - low;
-            // The 64 run bits from `low - offset` up, bits past the run's
-            // words reading zero.
-            let run = low - offset;
-            let mut window = source[run / 64] >> (run % 64);
-            if !run.is_multiple_of(64) {
-                window |= source.get(run / 64 + 1).copied().unwrap_or(0) << (64 - run % 64);
-            }
             let mask = (u64::MAX >> (64 - count)) << (low % 64);
-            *target = (*target & !mask) | ((window << (low % 64)) & mask);
+            *target = (*target & !mask) | ((window(low - offset) << (low % 64)) & mask);
         }
     }
 
@@ -1102,6 +1150,37 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn copy_bits_matches_bit_serial_copies_at_the_word_boundaries() {
+        let boundaries = [0usize, 1, 63, 64, 65, 127, 128, 129];
+        for &offset in &boundaries {
+            for &source_offset in &boundaries {
+                for &len_bits in &boundaries {
+                    let seed = (offset * 100_000 + source_offset * 1000 + len_bits) as u64;
+                    let source = BitVec::random_seeded(source_offset + len_bits + 1, seed);
+                    let mut written = BitVec::random_seeded(offset + len_bits + 1, seed + 1);
+                    let mut expected = written.clone();
+                    for bit in 0..len_bits {
+                        expected.set(offset + bit, source.get(source_offset + bit));
+                    }
+
+                    written.copy_bits(offset, &source, source_offset, len_bits);
+                    assert_eq!(
+                        written.words(),
+                        expected.words(),
+                        "offset {offset}, source offset {source_offset}, length {len_bits}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "source bit range out of bounds")]
+    fn copy_bits_rejects_a_source_run_past_the_end() {
+        BitVec::zeros(130).copy_bits(0, &BitVec::zeros(65), 2, 64);
     }
 
     #[test]

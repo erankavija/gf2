@@ -57,7 +57,7 @@ use std::sync::OnceLock;
 use gf2_core::field::extension::{FieldExtension, FieldId, FieldIdentity};
 use gf2_core::field::{FieldPoly, FieldVec, FiniteField};
 use gf2_core::gfp::Fp;
-use gf2_core::BitVec;
+use gf2_core::{packed_window, BitVec};
 use gf2_kernels_simd::bch_encode::{self, BchEncodeFns, BITSLICE_LANES};
 
 use crate::bch::error::BchError;
@@ -1349,27 +1349,10 @@ fn packed_shift_block(register: &mut [u64], tail: u64) {
     register[words - 1] &= tail;
 }
 
-/// Reads the 64 packed bits starting at `offset`, bit $j$ of the result
-/// carrying the bit at `offset + j`.
-///
-/// Bits above the buffer read as zero, which is the zero tail padding a
-/// packed buffer maintains.
-fn packed_read_window(words: &[u64], offset: usize) -> u64 {
-    let word = offset / 64;
-    let bit = offset % 64;
-    let low = words.get(word).copied().unwrap_or(0) >> bit;
-    let high = if bit == 0 {
-        0
-    } else {
-        words.get(word + 1).copied().unwrap_or(0) << (64 - bit)
-    };
-    low | high
-}
-
 /// Reads the [`TABLE_REMAINDER_BLOCK_BITS`] packed bits starting at `offset`,
 /// bit $j$ of the result carrying the bit at `offset + j`.
 fn packed_read_block(words: &[u64], offset: usize) -> u32 {
-    (packed_read_window(words, offset) & u64::from(u32::MAX)) as u32
+    (packed_window(words, offset) & u64::from(u32::MAX)) as u32
 }
 
 /// Reads the message coefficients of degrees `degree` to `degree + count`,
@@ -1398,7 +1381,7 @@ fn packed_message_window(
     );
     match plan.layout() {
         SystematicLayout::MessageParityAscending => {
-            let raw = packed_read_window(message, degree);
+            let raw = packed_window(message, degree);
             if count == 64 {
                 raw
             } else {
@@ -1410,7 +1393,7 @@ fn packed_message_window(
             // degrees are one descending run of coordinates and reversing the
             // read puts them back in ascending degree order.
             let offset = plan.dimension() - degree - count;
-            packed_read_window(message, offset).reverse_bits() >> (64 - count)
+            packed_window(message, offset).reverse_bits() >> (64 - count)
         }
     }
 }
@@ -1723,8 +1706,7 @@ fn packed_place_codeword(
             let mut placed = 0;
             while placed < redundancy {
                 let count = (redundancy - placed).min(64);
-                let window = packed_read_window(register, redundancy - placed - count)
-                    .reverse_bits()
+                let window = packed_window(register, redundancy - placed - count).reverse_bits()
                     >> (64 - count);
                 codeword.write_bits(dimension + placed, slice::from_ref(&window), count);
                 placed += count;
