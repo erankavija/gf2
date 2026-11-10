@@ -92,6 +92,47 @@ unsafe fn rotated_lanes(messages: &[f32], z: usize, term: QcTerm, lane: usize) -
     }
 }
 
+/// The first `count` lanes from `lane` of one term's rotated messages, the
+/// lanes of `mask`; the other lanes are zero.
+///
+/// # Safety
+/// The host must support AVX2, `0 < count < 8`, `lane + count <= z`,
+/// `mask` holds exactly the first `count` lanes, `term.shift < z` and
+/// `term.offset + z <= messages.len()`.
+#[target_feature(enable = "avx2")]
+#[inline]
+unsafe fn rotated_tail(
+    messages: &[f32],
+    z: usize,
+    term: QcTerm,
+    lane: usize,
+    count: usize,
+    mask: __m256i,
+) -> __m256 {
+    let first = if lane >= term.shift {
+        lane - term.shift
+    } else {
+        lane + z - term.shift
+    };
+    // SAFETY: the term's messages are offset..offset + z within the slice.
+    // A masked load reads only its first count lanes, below first + count
+    // <= z; a wrapping tail reads first + k - z < z for first + k >= z,
+    // since first < z and k < count <= z.
+    unsafe {
+        let base = messages.as_ptr().add(term.offset);
+        if first + count <= z {
+            _mm256_maskload_ps(base.add(first), mask)
+        } else {
+            let mut gathered = [0f32; 8];
+            for (k, slot) in gathered[..count].iter_mut().enumerate() {
+                let index = first + k;
+                *slot = *base.add(if index >= z { index - z } else { index });
+            }
+            _mm256_loadu_ps(gathered.as_ptr())
+        }
+    }
+}
+
 /// # Safety
 /// The host must support AVX2 and the arguments must satisfy the checks of
 /// [`QcKernels::accumulate_rotated`].
@@ -106,7 +147,8 @@ unsafe fn accumulate_rotated_avx2_unchecked(
     let z = beliefs.len();
     let (mut lane, end) = (lanes.start, lanes.end);
     // SAFETY: every chunk ends at lane + 8 <= end <= z, within beliefs and
-    // channel, so z >= 8 inside both loops, as rotated_lanes requires.
+    // channel, so z >= 8 inside both loops, as rotated_lanes requires; the
+    // tail's masked channel load reads count lanes from lane, below end.
     unsafe {
         // Two independent chunks overlap their chains of additions.
         while lane + 16 <= end {
@@ -128,20 +170,22 @@ unsafe fn accumulate_rotated_avx2_unchecked(
             _mm256_storeu_ps(beliefs.as_mut_ptr().add(lane), sum);
             lane += 8;
         }
-    }
-    for (j, (slot, &value)) in
-        (lane..end).zip(beliefs[lane..end].iter_mut().zip(&channel[lane..end]))
-    {
-        let mut sum = value;
-        for term in terms {
-            let index = if j >= term.shift {
-                j - term.shift
-            } else {
-                j + z - term.shift
-            };
-            sum += messages[term.offset + index];
+        // The last 1..7 lanes, loaded under a mask and written through a
+        // stack array: a masked store is slow on Zen 3.
+        let count = end - lane;
+        if count > 0 {
+            let mask = _mm256_cmpgt_epi32(
+                _mm256_set1_epi32(count as i32),
+                _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7),
+            );
+            let mut sum = _mm256_maskload_ps(channel.as_ptr().add(lane), mask);
+            for &term in terms {
+                sum = _mm256_add_ps(sum, rotated_tail(messages, z, term, lane, count, mask));
+            }
+            let mut out = [0f32; 8];
+            _mm256_storeu_ps(out.as_mut_ptr(), sum);
+            beliefs[lane..end].copy_from_slice(&out[..count]);
         }
-        *slot = sum;
     }
 }
 
