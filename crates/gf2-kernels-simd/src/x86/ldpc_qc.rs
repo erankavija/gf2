@@ -8,7 +8,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 use crate::ldpc_lanes::LaneMinSumRule;
-use crate::ldpc_qc::{check_block_scalar, QcAccumulation, QcBlock, QcKernels, QcTerm};
+use crate::ldpc_qc::{check_block_scalar, QcAccumulation, QcBlock, QcKernels};
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
@@ -73,153 +73,76 @@ unsafe fn accumulate_avx2_unchecked(
         .zip(channel.chunks_exact(z))
         .enumerate()
     {
-        for segment in plan.block_segments(block) {
-            let terms = &plan.terms[segment.terms.clone()];
-            // SAFETY: z beliefs and channel values per block; the plan holds
-            // lanes within 0..z, and shift < z and offset + z <=
-            // messages.len() for every term.
-            unsafe {
-                accumulate_rotated_avx2_unchecked(
-                    beliefs,
-                    segment.lanes.clone(),
-                    channel,
-                    messages,
-                    terms,
-                );
-            }
+        for (lanes, bases) in plan.block_runs(block) {
+            // SAFETY: the plan's runs lie within 0..z, z beliefs and channel
+            // values per block, and every base + run length stays within
+            // messages.len(), the run reading one contiguous slice per term.
+            unsafe { accumulate_run(beliefs, channel, messages, lanes, bases) };
         }
     }
 }
 
-/// Eight lanes from `lane` of one term's rotated messages.
+/// One run: `beliefs[lanes.start + k] = channel[lanes.start + k] +
+/// Σ_b messages[b + k]` over `bases` in order.
 ///
 /// # Safety
-/// The host must support AVX2, `lane + 8 <= z`, `term.shift < z` and
-/// `term.offset + z <= messages.len()`.
+/// The host must support AVX2, `lanes` lies within both slices, and
+/// `base + lanes.len() <= messages.len()` for every base.
 #[target_feature(enable = "avx2")]
 #[inline]
-unsafe fn rotated_lanes(messages: &[f32], z: usize, term: QcTerm, lane: usize) -> __m256 {
-    let first = if lane >= term.shift {
-        lane - term.shift
-    } else {
-        lane + z - term.shift
-    };
-    // SAFETY: the messages of the term are offset..offset + z within the
-    // slice; a contiguous load stays below first + 8 <= z, and a wrapping
-    // chunk reads first + k - z < z for first + k >= z, since z >= 8.
-    unsafe {
-        let base = messages.as_ptr().add(term.offset);
-        if first + 8 <= z {
-            _mm256_loadu_ps(base.add(first))
-        } else {
-            let mut gathered = [0f32; 8];
-            for (k, slot) in gathered.iter_mut().enumerate() {
-                let index = first + k;
-                *slot = *base.add(if index >= z { index - z } else { index });
-            }
-            _mm256_loadu_ps(gathered.as_ptr())
-        }
-    }
-}
-
-/// The first `count` lanes from `lane` of one term's rotated messages, the
-/// lanes of `mask`; the other lanes are zero.
-///
-/// # Safety
-/// The host must support AVX2, `0 < count < 8`, `lane + count <= z`,
-/// `mask` holds exactly the first `count` lanes, `term.shift < z` and
-/// `term.offset + z <= messages.len()`.
-#[target_feature(enable = "avx2")]
-#[inline]
-unsafe fn rotated_tail(
-    messages: &[f32],
-    z: usize,
-    term: QcTerm,
-    lane: usize,
-    count: usize,
-    mask: __m256i,
-) -> __m256 {
-    let first = if lane >= term.shift {
-        lane - term.shift
-    } else {
-        lane + z - term.shift
-    };
-    // SAFETY: the term's messages are offset..offset + z within the slice.
-    // A masked load reads only its first count lanes, below first + count
-    // <= z; a wrapping tail reads first + k - z < z for first + k >= z,
-    // since first < z and k < count <= z.
-    unsafe {
-        let base = messages.as_ptr().add(term.offset);
-        if first + count <= z {
-            _mm256_maskload_ps(base.add(first), mask)
-        } else {
-            let mut gathered = [0f32; 8];
-            for (k, slot) in gathered[..count].iter_mut().enumerate() {
-                let index = first + k;
-                *slot = *base.add(if index >= z { index - z } else { index });
-            }
-            _mm256_loadu_ps(gathered.as_ptr())
-        }
-    }
-}
-
-/// One segment of [`QcKernels::accumulate`]: `beliefs` and `channel` are
-/// one column block's `z` values.
-///
-/// # Safety
-/// The host must support AVX2, both slices hold `z` values, `lanes` lies
-/// within `0..z`, and every term has `shift < z` and `offset + z <=
-/// messages.len()`.
-#[target_feature(enable = "avx2")]
-#[inline]
-unsafe fn accumulate_rotated_avx2_unchecked(
+unsafe fn accumulate_run(
     beliefs: &mut [f32],
-    lanes: Range<usize>,
     channel: &[f32],
     messages: &[f32],
-    terms: &[QcTerm],
+    lanes: Range<usize>,
+    bases: &[usize],
 ) {
-    let z = beliefs.len();
-    let (mut lane, end) = (lanes.start, lanes.end);
-    // SAFETY: every chunk ends at lane + 8 <= end <= z, within beliefs and
-    // channel, so z >= 8 inside both loops, as rotated_lanes requires; the
-    // tail's masked channel load reads count lanes from lane, below end.
+    let (start, len) = (lanes.start, lanes.len());
+    let chunk = |offset: usize| {
+        // SAFETY: offset + 8 <= len, so every access lies within the run.
+        unsafe {
+            let mut sum = _mm256_loadu_ps(channel.as_ptr().add(start + offset));
+            for &base in bases {
+                sum = _mm256_add_ps(sum, _mm256_loadu_ps(messages.as_ptr().add(base + offset)));
+            }
+            sum
+        }
+    };
+    // SAFETY: as each access's comment states, within the caller's bounds.
     unsafe {
-        // Two independent chunks overlap their chains of additions.
-        while lane + 16 <= end {
-            let mut low = _mm256_loadu_ps(channel.as_ptr().add(lane));
-            let mut high = _mm256_loadu_ps(channel.as_ptr().add(lane + 8));
-            for &term in terms {
-                low = _mm256_add_ps(low, rotated_lanes(messages, z, term, lane));
-                high = _mm256_add_ps(high, rotated_lanes(messages, z, term, lane + 8));
+        if len >= 8 {
+            let mut offset = 0;
+            while offset + 16 <= len {
+                let (low, high) = (chunk(offset), chunk(offset + 8));
+                _mm256_storeu_ps(beliefs.as_mut_ptr().add(start + offset), low);
+                _mm256_storeu_ps(beliefs.as_mut_ptr().add(start + offset + 8), high);
+                offset += 16;
             }
-            _mm256_storeu_ps(beliefs.as_mut_ptr().add(lane), low);
-            _mm256_storeu_ps(beliefs.as_mut_ptr().add(lane + 8), high);
-            lane += 16;
-        }
-        if lane + 8 <= end {
-            let mut sum = _mm256_loadu_ps(channel.as_ptr().add(lane));
-            for &term in terms {
-                sum = _mm256_add_ps(sum, rotated_lanes(messages, z, term, lane));
+            if offset + 8 <= len {
+                _mm256_storeu_ps(beliefs.as_mut_ptr().add(start + offset), chunk(offset));
+                offset += 8;
             }
-            _mm256_storeu_ps(beliefs.as_mut_ptr().add(lane), sum);
-            lane += 8;
-        }
-        // The last 1..7 lanes, loaded under a mask and written through a
-        // stack array: a masked store is slow on Zen 3.
-        let count = end - lane;
-        if count > 0 {
+            // The last 1..7 lanes as the run's last eight: each lane is a
+            // function of channel values and messages only, so lanes written
+            // twice get one value.
+            if offset < len {
+                let last = len - 8;
+                _mm256_storeu_ps(beliefs.as_mut_ptr().add(start + last), chunk(last));
+            }
+        } else if len > 0 {
+            // A short run, loaded under a mask and written through a stack
+            // array: a masked store is slow on Zen 3.
             let mask = _mm256_cmpgt_epi32(
-                _mm256_set1_epi32(count as i32),
+                _mm256_set1_epi32(len as i32),
                 _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7),
             );
-            let mut sum = _mm256_maskload_ps(channel.as_ptr().add(lane), mask);
-            for &term in terms {
-                sum = _mm256_add_ps(sum, rotated_tail(messages, z, term, lane, count, mask));
+            let mut sum = _mm256_maskload_ps(channel.as_ptr().add(start), mask);
+            for &base in bases {
+                sum = _mm256_add_ps(sum, _mm256_maskload_ps(messages.as_ptr().add(base), mask));
             }
             let mut out = [0f32; 8];
             _mm256_storeu_ps(out.as_mut_ptr(), sum);
-            beliefs[lane..end].copy_from_slice(&out[..count]);
+            beliefs[lanes].copy_from_slice(&out[..len]);
         }
     }
 }
@@ -522,6 +445,8 @@ fn rule_of<const RULE: u8>(parameter: f32) -> LaneMinSumRule {
 ///
 /// # Safety
 /// [`fused_row`]'s contract with `edges.len() == DEGREE`.
+// One call per row; kept out of line so each degree reads as its own symbol.
+#[inline(never)]
 #[target_feature(enable = "avx2")]
 unsafe fn fused_groups<const RULE: u8, const DEGREE: usize>(
     parameter: f32,
@@ -532,28 +457,34 @@ unsafe fn fused_groups<const RULE: u8, const DEGREE: usize>(
 ) {
     let parameter = _mm256_set1_ps(parameter);
     let edges: &[QcBlock; DEGREE] = edges.try_into().expect("DEGREE edges");
+    // Lane i of edge e reads belief offset + i + shift before its wrap lane
+    // z - shift and offset + i + shift - z from it on, so each edge's index
+    // is a start plus the lane, the start changing once at the wrap.
+    let mut starts: [isize; DEGREE] =
+        core::array::from_fn(|edge| (edges[edge].offset + edges[edge].shift) as isize);
+    let mut wraps: [(usize, usize); DEGREE] =
+        core::array::from_fn(|edge| (z - edges[edge].shift, edge));
+    wraps.sort_unstable();
+    let mut next = 0;
     for lane in (0..z / 8 * 8).step_by(8) {
+        while next < DEGREE && wraps[next].0 <= lane {
+            starts[wraps[next].1] -= z as isize;
+            next += 1;
+        }
         // SAFETY: lane + 8 <= z. Each block's beliefs are offset..offset + z
-        // within the slice; rotated_block reads at most offset + z - 1. Each
-        // edge's messages edge * z + lane..+8 lie within degree * z.
+        // within the slice; a group no wrap lane splits reads start + lane..+8
+        // within its block, and rotated_block reads at most offset + z - 1.
+        // Each edge's messages edge * z + lane..+8 lie within degree * z.
         unsafe {
-            let firsts: [usize; DEGREE] = core::array::from_fn(|edge| {
-                let first = lane + edges[edge].shift;
-                if first >= z {
-                    first - z
-                } else {
-                    first
-                }
-            });
             let at = messages.as_mut_ptr().add(lane);
             let message = |edge: usize| _mm256_loadu_ps(at.add(edge * z));
             let store = |edge: usize, out| _mm256_storeu_ps(at.add(edge * z), out);
-            // A group whose eight lanes wrap in no block loads every block
+            // A group no edge's wrap lane splits loads every block
             // contiguously. Each branch checks its own differences, so they
             // stay in registers.
-            if firsts.iter().all(|&first| first + 8 <= z) {
+            if next == DEGREE || lane + 8 <= wraps[next].0 {
                 let differences: [__m256; DEGREE] = core::array::from_fn(|edge| {
-                    let block = beliefs.as_ptr().add(edges[edge].offset + firsts[edge]);
+                    let block = beliefs.as_ptr().offset(starts[edge] + lane as isize);
                     _mm256_sub_ps(_mm256_loadu_ps(block), message(edge))
                 });
                 check_lanes::<RULE>(parameter, DEGREE, |edge| differences[edge], store);

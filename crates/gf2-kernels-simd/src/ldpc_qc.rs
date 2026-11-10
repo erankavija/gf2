@@ -43,20 +43,33 @@ pub struct QcSegment {
 /// The variable update of a QC code, validated once: per column block, lane
 /// segments with their terms over a message plane of a fixed length.
 ///
-/// Column block `b` owns `segments[segment_offsets[b]..segment_offsets[b + 1]]`.
-/// Lanes no segment names keep their beliefs.
+/// Construction splits each segment at every term's wrap lane into runs in
+/// which each term reads one contiguous slice of its messages, so the
+/// kernels add contiguous slices in each lane's term order. Lanes no
+/// segment names keep their beliefs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct QcAccumulation {
     pub(crate) z: usize,
     pub(crate) messages: usize,
-    pub(crate) segment_offsets: Vec<usize>,
-    pub(crate) segments: Vec<QcSegment>,
-    pub(crate) terms: Vec<QcTerm>,
+    /// Column block `b` owns `runs[run_offsets[b]..run_offsets[b + 1]]`.
+    pub(crate) run_offsets: Vec<usize>,
+    pub(crate) runs: Vec<QcRun>,
+    /// Per run and term, the message index its first lane reads.
+    pub(crate) bases: Vec<usize>,
+}
+
+/// Lanes `lanes` of a column block: lane `lanes.start + k` adds
+/// `messages[base + k]` for each base of `bases`, in order.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct QcRun {
+    pub(crate) lanes: Range<usize>,
+    pub(crate) bases: Range<usize>,
 }
 
 impl QcAccumulation {
     /// Builds the plan of lifting size `z` over a plane of `messages`
-    /// check-to-variable messages. Takes O(blocks + segments + terms) time.
+    /// check-to-variable messages. Takes O(blocks + Σ t² log t) time and
+    /// O(Σ t²) space over the segments, `t` a segment's term count.
     ///
     /// # Panics
     ///
@@ -113,24 +126,65 @@ impl QcAccumulation {
                 term.offset
             );
         }
+        let mut run_offsets = vec![0];
+        let mut runs = Vec::new();
+        let mut bases = Vec::new();
+        let mut splits = Vec::new();
+        for block in segment_offsets.windows(2) {
+            for segment in &segments[block[0]..block[1]] {
+                let terms = &terms[segment.terms.clone()];
+                let (start, end) = (segment.lanes.start, segment.lanes.end);
+                // Lane j reads message (j - shift) mod z, which wraps from
+                // z - 1 to 0 between lanes shift - 1 and shift.
+                splits.clear();
+                splits.push(start);
+                splits.extend(
+                    terms
+                        .iter()
+                        .map(|term| term.shift)
+                        .filter(|&shift| start < shift && shift < end),
+                );
+                splits.push(end);
+                splits.sort_unstable();
+                splits.dedup();
+                for pair in splits.windows(2) {
+                    let first = bases.len();
+                    bases.extend(
+                        terms
+                            .iter()
+                            .map(|term| term.offset + (pair[0] + z - term.shift) % z),
+                    );
+                    runs.push(QcRun {
+                        lanes: pair[0]..pair[1],
+                        bases: first..bases.len(),
+                    });
+                }
+            }
+            run_offsets.push(runs.len());
+        }
         Self {
             z,
             messages,
-            segment_offsets,
-            segments,
-            terms,
+            run_offsets,
+            runs,
+            bases,
         }
     }
 
     /// Returns the number of column blocks.
     #[must_use]
     pub fn col_blocks(&self) -> usize {
-        self.segment_offsets.len() - 1
+        self.run_offsets.len() - 1
     }
 
-    /// The segments of column block `block`.
-    pub(crate) fn block_segments(&self, block: usize) -> &[QcSegment] {
-        &self.segments[self.segment_offsets[block]..self.segment_offsets[block + 1]]
+    /// The runs of column block `block`, each with its message bases.
+    pub(crate) fn block_runs(
+        &self,
+        block: usize,
+    ) -> impl Iterator<Item = (Range<usize>, &[usize])> {
+        self.runs[self.run_offsets[block]..self.run_offsets[block + 1]]
+            .iter()
+            .map(|run| (run.lanes.clone(), &self.bases[run.bases.clone()]))
     }
 }
 
@@ -331,7 +385,7 @@ fn rotated_difference_runs(block: &[f32], shift: usize, subtrahend: &[f32], out:
     }
 }
 
-/// [`QcKernels::accumulate`] one segment at a time.
+/// [`QcKernels::accumulate`] one run at a time, one term at a time.
 fn accumulate_runs(plan: &QcAccumulation, beliefs: &mut [f32], channel: &[f32], messages: &[f32]) {
     let z = plan.z;
     for (block, (beliefs, channel)) in beliefs
@@ -339,49 +393,14 @@ fn accumulate_runs(plan: &QcAccumulation, beliefs: &mut [f32], channel: &[f32], 
         .zip(channel.chunks_exact(z))
         .enumerate()
     {
-        for segment in plan.block_segments(block) {
-            accumulate_rotated_runs(
-                beliefs,
-                segment.lanes.clone(),
-                channel,
-                messages,
-                &plan.terms[segment.terms.clone()],
-            );
-        }
-    }
-}
-
-/// One segment of [`QcKernels::accumulate`], one term at a time, each in at
-/// most two contiguous runs: lanes below `shift` read messages that wrap.
-/// Every lane still adds its terms in order.
-fn accumulate_rotated_runs(
-    beliefs: &mut [f32],
-    lanes: Range<usize>,
-    channel: &[f32],
-    messages: &[f32],
-    terms: &[QcTerm],
-) {
-    let z = beliefs.len();
-    let (start, end) = (lanes.start, lanes.end);
-    beliefs[start..end].copy_from_slice(&channel[start..end]);
-    for term in terms {
-        let messages = &messages[term.offset..term.offset + z];
-        let shift = term.shift;
-        let split = shift.clamp(start, end);
-        if start < split {
-            for (slot, &value) in beliefs[start..split]
-                .iter_mut()
-                .zip(&messages[start + z - shift..split + z - shift])
-            {
-                *slot += value;
-            }
-        }
-        if split < end {
-            for (slot, &value) in beliefs[split..end]
-                .iter_mut()
-                .zip(&messages[split - shift..end - shift])
-            {
-                *slot += value;
+        for (lanes, bases) in plan.block_runs(block) {
+            let len = lanes.len();
+            let beliefs = &mut beliefs[lanes.clone()];
+            beliefs.copy_from_slice(&channel[lanes]);
+            for &base in bases {
+                for (slot, &value) in beliefs.iter_mut().zip(&messages[base..base + len]) {
+                    *slot += value;
+                }
             }
         }
     }
