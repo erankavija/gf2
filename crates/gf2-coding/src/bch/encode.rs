@@ -106,6 +106,8 @@ pub enum SystematicLayout {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SystematicPlan<'a, F: FiniteField> {
     generator: &'a FieldPoly<F>,
+    /// [`packed_low_words`] of `generator`.
+    packed_low: &'a [u64],
     zero: F,
     length: usize,
     dimension: usize,
@@ -266,6 +268,21 @@ impl<'a, F: FiniteField> SystematicPlan<'a, F> {
     fn low_coefficient(&self, degree: usize) -> &F {
         self.generator.try_coeff(degree).unwrap_or(&self.zero)
     }
+}
+
+/// The low `redundancy` coefficients of `generator` as one bit per degree,
+/// set where the coefficient is nonzero, packed little-endian in
+/// `redundancy.div_ceil(64)` words. Over `GF(2)` this is the packed
+/// generator the shift register reduces by.
+pub(crate) fn packed_low_words<F: FiniteField>(
+    generator: &FieldPoly<F>,
+    redundancy: usize,
+) -> Box<[u64]> {
+    let mut words = vec![0u64; redundancy.div_ceil(64)];
+    for (degree, coefficient) in generator.iter().take(redundancy).enumerate() {
+        words[degree / 64] |= u64::from(!coefficient.is_zero()) << (degree % 64);
+    }
+    words.into_boxed_slice()
 }
 
 /// One registered batch-encoding algorithm family.
@@ -1113,12 +1130,8 @@ impl SystematicKernel<Fp<2>> for BitVec {
         let words = plan.redundancy().div_ceil(64);
         registers.register.resize(words, 0);
         registers.low.clear();
-        registers.low.resize(words, 0);
-        for degree in 0..plan.redundancy() {
-            if plan.low_coefficient(degree).is_one() {
-                registers.low[degree / 64] |= 1u64 << (degree % 64);
-            }
-        }
+        registers.low.extend_from_slice(plan.packed_low);
+        debug_assert_eq!(registers.low.len(), words);
     }
 
     /// Runs the shift-register recurrence over packed `u64` words.
@@ -1902,6 +1915,7 @@ where
     pub fn systematic_plan(&self, layout: SystematicLayout) -> SystematicPlan<'_, X::Base> {
         SystematicPlan {
             generator: self.generator(),
+            packed_low: self.packed_low(),
             zero: BlockCode::symbol_zero(self),
             length: self.n(),
             dimension: self.k(),
@@ -2694,6 +2708,7 @@ where
     pub fn plan(&self) -> SystematicPlan<'_, X::Base> {
         SystematicPlan {
             generator: self.code.generator(),
+            packed_low: self.code.packed_low(),
             zero: BlockCode::symbol_zero(&self.code),
             length: self.code.n(),
             dimension: self.code.k(),
@@ -3537,8 +3552,10 @@ mod tests {
         for &dimension in &boundaries {
             for &redundancy in &boundaries {
                 for &layout in LAYOUTS {
+                    let packed_low = packed_low_words(&generator, redundancy);
                     let plan = SystematicPlan {
                         generator: &generator,
+                        packed_low: &packed_low,
                         zero: Fp::<2>::new(0),
                         length: dimension + redundancy,
                         dimension,
@@ -4158,6 +4175,25 @@ mod tests {
             error,
             CodeError::BufferLengthMismatch { actual: 0, .. }
         ));
+    }
+
+    #[test]
+    fn the_cached_low_words_are_the_generator_coefficients() {
+        for (m, modulus, distance) in [
+            (4, 0b10011, 3),
+            (8, 0b100011101, 9),
+            (10, 0b10000001001, 21),
+        ] {
+            let code = binary_narrow_sense(m, modulus, distance);
+            let plan = code.systematic_plan(SystematicLayout::default());
+            let redundancy = plan.redundancy();
+            assert_eq!(plan.packed_low.len(), redundancy.div_ceil(64));
+            for degree in 0..redundancy.div_ceil(64) * 64 {
+                let bit = (plan.packed_low[degree / 64] >> (degree % 64)) & 1 == 1;
+                let expected = degree < redundancy && plan.low_coefficient(degree).is_one();
+                assert_eq!(bit, expected, "m={m} degree {degree}");
+            }
+        }
     }
 
     #[test]

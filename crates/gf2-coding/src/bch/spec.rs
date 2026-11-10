@@ -328,6 +328,10 @@ where
     length: usize,
     dimension: usize,
     generator: FieldPoly<X::Base>,
+    /// The generator's low coefficients as one bit per degree, set where the
+    /// coefficient is nonzero, packed little-endian; the packed encoder's
+    /// register words, derived once rather than per encode.
+    packed_low: Box<[u64]>,
     defining_set: Box<[RootExponent]>,
     distance_bound: BchDistanceBound,
     correction_radius: usize,
@@ -632,6 +636,11 @@ where
     /// Returns the monic generator polynomial over the base field.
     pub fn generator(&self) -> &FieldPoly<X::Base> {
         &self.generator
+    }
+
+    /// The generator's low coefficients packed one bit per degree.
+    pub(crate) fn packed_low(&self) -> &[u64] {
+        &self.packed_low
     }
 
     /// Returns the closed defining set in ascending exponent order.
@@ -1163,12 +1172,14 @@ where
     let distance_bound = witness_longest_run(&defining_set, length);
     let correction_radius = distance_bound.consecutive_root_count / 2;
 
+    let packed_low = crate::bch::encode::packed_low_words(&generator, degree);
     Ok(BchCode {
         extension: derived.extension,
         root: derived.root,
         length,
         dimension,
         generator,
+        packed_low,
         defining_set,
         distance_bound,
         correction_radius,
