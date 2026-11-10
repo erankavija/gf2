@@ -246,6 +246,16 @@ the same bit patterns, so every rule below holds on either.
   rounding half away from zero. NaN quantizes to 0 and $\pm\infty$ to $\pm C$.
   A punctured or truncated position's zero LLR quantizes to 0, and a filler at
   `FILLER_LLR` saturates to $C$ for every scale at least $C$ / `FILLER_LLR`.
+- **Input scale.** The arithmetic is not scale-invariant: LLRs multiplied by
+  $r$ decode as the original LLRs would at scale $r s$, so frame error rate
+  depends on the input convention. `LayeredConfig::nr_5g` and
+  `LayeredConfig::dvb_t2` assume natural-log LLRs, $2y/\sigma^2$ for BPSK
+  over AWGN, under which
+  [`ldpc_layered_fer`](../../crates/gf2-coding/tests/ldpc_layered_fer.rs)
+  chose them. The input bundles of the AFF3CT comparison carry $y/\sigma^2$,
+  half that scale, and decode at an effective scale $s/2$. A caller whose
+  LLRs are $r$ times natural-log keeps the chosen resolution with scale
+  $s/r$.
 - **State.** Each variable holds an `i8` belief $A_v$, initially $q_v$; each
   edge holds an `i8` check-to-variable message $\lambda_e$, initially 0.
 - **Layers.** A layer is a set of checks sharing no variable, updated at

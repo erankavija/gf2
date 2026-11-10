@@ -61,17 +61,21 @@ impl LayeredConfig {
     /// of 127 must hold several messages: with message limit 40 the decoder
     /// leaves decoded NR codewords at high SNR, and with 31 it keeps an
     /// error floor. The message limit exceeds the channel limit so that one
-    /// check can overrule the channel on a degree-2 parity bit. Frame error
-    /// rate depends on the scale relative to the input LLRs; scale 4 suits
-    /// natural-log LLRs and their half.
+    /// check can overrule the channel on a degree-2 parity bit.
+    ///
+    /// The setting assumes natural-log channel LLRs, `2y/σ²` for BPSK over
+    /// AWGN; LLRs at `r` times that scale decode as at scale `4r`, so a
+    /// caller with another convention passes scale `4/r` to
+    /// [`Self::new`].
     #[must_use]
     pub fn nr_5g() -> Self {
         Self::new(LayeredRule::Normalized { eighths: 6 }, 4.0, 23, 24, true)
     }
 
     /// The DVB-T2 setting: normalized min-sum at 7/8, scale 4, channel
-    /// limit 31, message limit 40, early termination. DVB-T2 columns have
-    /// degree at most 13, which leaves the finer scale stable.
+    /// limit 31, message limit 40, early termination, for natural-log channel
+    /// LLRs as in [`Self::nr_5g`]. DVB-T2 columns have degree at most 13,
+    /// which leaves this message limit stable.
     #[must_use]
     pub fn dvb_t2() -> Self {
         Self::new(LayeredRule::Normalized { eighths: 7 }, 4.0, 31, 40, true)
@@ -227,6 +231,43 @@ struct Run {
     len: u32,
 }
 
+/// Schedule positions `schedule..schedule + len` hold the code variables
+/// `code + i * step`.
+#[derive(Debug, Clone, Copy)]
+struct Stride {
+    schedule: u32,
+    code: u32,
+    step: u32,
+    len: u32,
+}
+
+/// Splits a variable order into maximal arithmetic runs of positive step;
+/// the column orders of DVB-T2 parity are transposes, a few hundred runs.
+fn strides(order: &[u32]) -> Vec<Stride> {
+    let mut strides = Vec::new();
+    let mut start = 0;
+    while start < order.len() {
+        let code = order[start];
+        let step = match order.get(start + 1) {
+            Some(&next) if next > code => next - code,
+            _ => 1,
+        };
+        let len = order[start..]
+            .iter()
+            .zip(0u32..)
+            .take_while(|&(&v, i)| u64::from(v) == u64::from(code) + u64::from(i) * u64::from(step))
+            .count();
+        strides.push(Stride {
+            schedule: start as u32,
+            code,
+            step,
+            len: len as u32,
+        });
+        start += len;
+    }
+    strides
+}
+
 /// One layer: its checks of degree two or more, as lanes.
 #[derive(Debug, Clone)]
 struct Layer {
@@ -361,10 +402,8 @@ pub struct LayeredDecoder {
     backend: LaneBackend,
     /// Beliefs in schedule variable order.
     posterior: Vec<i8>,
-    /// The code variable of each schedule variable, when they differ.
-    variables: Option<Vec<u32>>,
-    /// The length of the prefix on which the two orders agree.
-    fixed: usize,
+    /// The code variables of the schedule variables, when the orders differ.
+    strides: Option<Vec<Stride>>,
     /// Beliefs in code variable order, when the orders differ.
     output: Vec<i8>,
     messages: Vec<i8>,
@@ -447,14 +486,7 @@ impl LayeredDecoder {
             } else {
                 Vec::new()
             },
-            fixed: variables.as_ref().map_or(schedule.n, |order| {
-                order
-                    .iter()
-                    .enumerate()
-                    .take_while(|&(c, &v)| c == v as usize)
-                    .count()
-            }),
-            variables,
+            strides: variables.as_deref().map(strides),
             messages: vec![0; schedule.message_len],
             words: Vec::with_capacity(schedule.n.div_ceil(64)),
             buffer: vec![0; schedule.buffer_len],
@@ -498,7 +530,7 @@ impl LayeredDecoder {
     /// cap leaves the quantized channel values. A negative value decides 1.
     #[must_use]
     pub fn posterior(&self) -> &[i8] {
-        if self.variables.is_some() {
+        if self.strides.is_some() {
             &self.output
         } else {
             &self.posterior
@@ -524,18 +556,22 @@ impl LayeredDecoder {
     ) -> DecodeOutcome {
         assert_eq!(llrs.len(), self.schedule.n, "LLR length must equal n");
         // Quantize in code order, which vectorizes, then permute bytes.
-        let quantized = match &self.variables {
+        let quantized = match &self.strides {
             Some(_) => &mut self.output,
             None => &mut self.posterior,
         };
         for (slot, &llr) in quantized.iter_mut().zip(llrs) {
             *slot = self.config.quantize(llr);
         }
-        if let Some(variables) = &self.variables {
-            let fixed = self.fixed;
-            self.posterior[..fixed].copy_from_slice(&self.output[..fixed]);
-            for (slot, &v) in self.posterior[fixed..].iter_mut().zip(&variables[fixed..]) {
-                *slot = self.output[v as usize];
+        if let Some(strides) = &self.strides {
+            for run in strides {
+                let (schedule, len) = (run.schedule as usize, run.len as usize);
+                let (code, step) = (run.code as usize, run.step as usize);
+                let to = &mut self.posterior[schedule..schedule + len];
+                let from = &self.output[code..=code + (len - 1) * step];
+                for (slot, &value) in to.iter_mut().zip(from.iter().step_by(step)) {
+                    *slot = value;
+                }
             }
         }
         self.messages.fill(0);
@@ -563,35 +599,23 @@ impl LayeredDecoder {
         self.last_iterations = iterations;
         let syndrome_check_passed = settled || self.syndrome_passes();
         codeword.clear();
-        let beliefs = match &self.variables {
-            Some(variables) => {
-                let fixed = self.fixed;
-                self.output[..fixed].copy_from_slice(&self.posterior[..fixed]);
-                for (&v, &value) in variables[fixed..].iter().zip(&self.posterior[fixed..]) {
-                    self.output[v as usize] = value;
+        let beliefs = match &self.strides {
+            Some(strides) => {
+                for run in strides {
+                    let (schedule, len) = (run.schedule as usize, run.len as usize);
+                    let (code, step) = (run.code as usize, run.step as usize);
+                    let from = &self.posterior[schedule..schedule + len];
+                    let to = &mut self.output[code..=code + (len - 1) * step];
+                    for (slot, &value) in to.iter_mut().step_by(step).zip(from) {
+                        *slot = value;
+                    }
                 }
                 &self.output
             }
             None => &self.posterior,
         };
-        // Sign bits, 64 decisions per word.
-        self.words.clear();
-        self.words.extend(beliefs.chunks(64).map(|chunk| {
-            chunk
-                .chunks(8)
-                .enumerate()
-                .fold(0u64, |word, (byte, eight)| {
-                    let mut lanes = [0u8; 8];
-                    for (lane, &value) in lanes.iter_mut().zip(eight) {
-                        *lane = value as u8;
-                    }
-                    // Sign bits to bit positions 56..64 of the product, lane i
-                    // to bit 56 + i.
-                    let signs = (u64::from_le_bytes(lanes) >> 7) & 0x0101_0101_0101_0101;
-                    let packed = signs.wrapping_mul(0x0102_0408_1020_4080) >> 56;
-                    word | (packed << (8 * byte))
-                })
-        }));
+        self.words.resize(beliefs.len().div_ceil(64), 0);
+        self.kernel.pack_signs(beliefs, &mut self.words);
         codeword.resize(beliefs.len(), false);
         codeword.write_bits(0, &self.words, beliefs.len());
         DecodeOutcome {
