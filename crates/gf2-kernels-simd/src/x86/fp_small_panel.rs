@@ -22,6 +22,13 @@ pub(crate) const NR: usize = 24;
 
 pub use crate::fp_small_panel::KC;
 
+/// Pair-steps a u32 accumulator lane absorbs between reductions: a reduced
+/// lane holds at most `p − 1` and each pair-step adds at most `2 · (p − 1)²`,
+/// so `250 + 34 359 · 125 000 < 2³²` at `p = 251`.
+const REDUCE_PAIRS: usize = (u32::MAX as usize - 250) / (2 * 250 * 250);
+
+const _: () = assert!(KC / 2 <= REDUCE_PAIRS);
+
 /// Whole-GEMM panelized integer kernel for canonical-byte `Fp<P>`
 /// operands with `P <= 251`.
 ///
@@ -286,9 +293,10 @@ unsafe fn run_one_m_block<const M_EFF: usize>(
 /// Compute one MR×NR output tile (for one MR-row block × one n-panel).
 ///
 /// Steps through the k-axis in pair-of-rows increments, blocked by
-/// `KC / 2` pair-steps per cache chunk. After the last chunk for
-/// this panel, the 12 u32 SIMD accumulators are reduced mod p and
-/// packed to u8 output bytes.
+/// `KC / 2` pair-steps per cache chunk. The 12 u32 SIMD accumulators are
+/// reduced mod p before a chunk that would take them past
+/// [`REDUCE_PAIRS`] pair-steps, and after the last chunk they are reduced
+/// and packed to u8 output bytes.
 ///
 /// # Safety
 ///
@@ -339,8 +347,19 @@ unsafe fn run_one_panel<const M_EFF: usize>(
     const PREFETCH_DIST_PAIRS: usize = 4;
 
     let mut t_pair = 0usize;
+    let mut pairs_since_reduce = 0usize;
     while t_pair < total_pairs {
         let chunk_end = (t_pair + kc_pairs).min(total_pairs);
+        if pairs_since_reduce + (chunk_end - t_pair) > REDUCE_PAIRS {
+            for acc in [
+                &mut acc00, &mut acc01, &mut acc02, &mut acc10, &mut acc11, &mut acc12, &mut acc20,
+                &mut acc21, &mut acc22, &mut acc30, &mut acc31, &mut acc32,
+            ] {
+                *acc = super::fp_small::barrett_reduce_lane32(*acc, mu_vec, p_vec32);
+            }
+            pairs_since_reduce = 0;
+        }
+        pairs_since_reduce += chunk_end - t_pair;
         let prefetch_end = chunk_end.saturating_sub(PREFETCH_DIST_PAIRS);
 
         for tp in t_pair..chunk_end {
@@ -390,9 +409,6 @@ unsafe fn run_one_panel<const M_EFF: usize>(
         t_pair = chunk_end;
     }
 
-    // Per-lane bound after the full k axis:
-    // `(k_padded / 2) · 2 · (p−1)² = k_padded · (p−1)²`, below 2^32 for
-    // k ≤ 2^32 / 62500 ≈ 68 719 at p = 251.
     let reduced = [
         super::fp_small::barrett_reduce_lane32(acc00, mu_vec, p_vec32),
         super::fp_small::barrett_reduce_lane32(acc01, mu_vec, p_vec32),
@@ -415,9 +431,9 @@ unsafe fn run_one_panel<const M_EFF: usize>(
         let row_acc0 = reduced[i_off * 3];
         let row_acc1 = reduced[i_off * 3 + 1];
         let row_acc2 = reduced[i_off * 3 + 2];
-        let bytes0 = pack_i32x8_to_u8_local(row_acc0);
-        let bytes1 = pack_i32x8_to_u8_local(row_acc1);
-        let bytes2 = pack_i32x8_to_u8_local(row_acc2);
+        let bytes0 = super::fp_small_f32::pack_i32x8_to_u8(row_acc0);
+        let bytes1 = super::fp_small_f32::pack_i32x8_to_u8(row_acc1);
+        let bytes2 = super::fp_small_f32::pack_i32x8_to_u8(row_acc2);
         let c_row_base = (i_blk + i_off) * n + j_blk;
         for j_off in 0..n_eff {
             let src = if j_off < 8 {
@@ -430,29 +446,6 @@ unsafe fn run_one_panel<const M_EFF: usize>(
             *c.get_unchecked_mut(c_row_base + j_off) = src;
         }
     }
-}
-
-/// Pack 8 reduced i32 lanes (each in `[0, p)`) into an 8-byte u8 array.
-///
-/// The same pack sequence as `pack_i32x8_to_u8` in
-/// `crate::x86::fp_small_f32`.
-///
-/// # Safety
-///
-/// The host supports AVX2. Every argument is a value, so no pointer, length or
-/// aliasing condition applies.
-#[inline]
-#[target_feature(enable = "avx2")]
-unsafe fn pack_i32x8_to_u8_local(reduced: __m256i) -> [u8; 8] {
-    let packed16 = _mm256_packus_epi32(reduced, reduced);
-    let permuted = _mm256_permute4x64_epi64::<0xD8>(packed16);
-    let packed8 = _mm256_packus_epi16(permuted, permuted);
-    let lower = _mm256_castsi256_si128(packed8);
-    let mut out = [0u8; 16];
-    _mm_storeu_si128(out.as_mut_ptr() as *mut __m128i, lower);
-    [
-        out[0], out[1], out[2], out[3], out[4], out[5], out[6], out[7],
-    ]
 }
 
 #[cfg(test)]
