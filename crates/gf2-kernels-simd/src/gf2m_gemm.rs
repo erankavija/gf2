@@ -10,6 +10,11 @@
 /// `a_flat[i*k + ki] = A[i, ki]`; `b_flat[ki*n + j] = B[ki, j]`;
 /// `out[i*n + j] = sum_k a[i,k]*b[k,j]`. `out` must be zeroed before the
 /// call.
+///
+/// # Panics
+///
+/// Panics unless `a_flat.len() == m * k`, `b_flat.len() == k * n` and
+/// `out.len() == m * n`.
 pub type Gf2mGemmFn = fn(
     a_flat: &[u64],
     b_flat: &[u64],
@@ -73,8 +78,13 @@ fn gf2m_gemm_panelized_safe(
     modulus: u64,
     degree: u32,
 ) {
+    const KERNEL: &str = "gf2m_gemm_panelized";
+    crate::entry_check::assert_shape(KERNEL, "a_flat", a_flat.len(), m, k);
+    crate::entry_check::assert_shape(KERNEL, "b_flat", b_flat.len(), k, n);
+    crate::entry_check::assert_shape(KERNEL, "out", out.len(), m, n);
     // SAFETY: `detect_x86` only returns this pointer when avx2, vpclmulqdq,
-    // pclmulqdq, and sse4.1 are all present at runtime.
+    // pclmulqdq, and sse4.1 are all present at runtime. The assertions above
+    // keep the shape products from wrapping in the kernel's own assertions.
     unsafe {
         crate::x86::gf2m_gemm::gf2m_gemm_panelized(
             a_flat, b_flat, out, m, k, n, mu, modulus, degree,
@@ -98,6 +108,39 @@ mod tests {
             }
         }
         mu
+    }
+
+    /// Calls the dispatched kernel on a 2 x 3 by 3 x 4 GF(2^8) product with
+    /// `extra` cells appended to the operand `grow` names. Oversized operands
+    /// stay inside every slice index, so only the entry check rejects them.
+    fn gemm_with_oversized(grow: &str, extra: usize) {
+        let fns = crate::contract::require_detected("gf2m_gemm::detect()", detect());
+        let (m, k, n) = (2usize, 3usize, 4usize);
+        let poly: u64 = 0b100011101;
+        let mu = compute_mu(poly, 8);
+        let len = |operand: &str, cells: usize| cells + if operand == grow { extra } else { 0 };
+        let a = vec![1u64; len("a_flat", m * k)];
+        let b = vec![1u64; len("b_flat", k * n)];
+        let mut out = vec![0u64; len("out", m * n)];
+        (fns.gemm_fn)(&a, &b, &mut out, m, k, n, mu, poly, 8);
+    }
+
+    #[test]
+    #[should_panic(expected = "gf2m_gemm_panelized: a_flat shape")]
+    fn panelized_gemm_rejects_a_mismatched_a() {
+        gemm_with_oversized("a_flat", 1);
+    }
+
+    #[test]
+    #[should_panic(expected = "gf2m_gemm_panelized: b_flat shape")]
+    fn panelized_gemm_rejects_a_mismatched_b() {
+        gemm_with_oversized("b_flat", 1);
+    }
+
+    #[test]
+    #[should_panic(expected = "gf2m_gemm_panelized: out shape")]
+    fn panelized_gemm_rejects_a_mismatched_out() {
+        gemm_with_oversized("out", 1);
     }
 
     #[test]
