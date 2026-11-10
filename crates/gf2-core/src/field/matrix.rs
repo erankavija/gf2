@@ -1798,6 +1798,17 @@ fn gemm_tiled<
         kmax
     );
 
+    if F::try_simd_gemm_row_major(
+        a.data.as_slice(),
+        b.data.as_slice(),
+        a.rows,
+        a.cols,
+        b.cols,
+        out.data.as_mut_slice(),
+    ) {
+        return out;
+    }
+
     // Transpose B once so the inner dot product walks contiguous memory in
     // both operands. `b_t` is `b.cols × b.rows` row-major, so `b_t` row `j`
     // is exactly column `j` of `b`.

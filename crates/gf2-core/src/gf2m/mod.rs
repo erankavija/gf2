@@ -6,6 +6,7 @@ mod byte_table;
 mod field;
 pub mod generation;
 mod gf256;
+mod gf256_bytes;
 /// Monomorphized u64 GF(2^m) multiplication for formal verification via
 /// Charon/Aeneas (`@/citation/AeneasVerif2026`).
 pub mod mul_raw;

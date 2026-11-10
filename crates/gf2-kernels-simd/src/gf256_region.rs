@@ -54,13 +54,6 @@ pub struct GemmBlock<'a> {
 /// Panics unless `x.len() == y.len()`.
 pub type MulAddFn = fn(&SplitTable, &[u8], &mut [u8]);
 
-/// `y[i] = table.apply(x[i])` for every `i`. Takes O(`x.len()`) time.
-///
-/// # Panics
-///
-/// Panics unless `x.len() == y.len()`.
-pub type MulFn = fn(&SplitTable, &[u8], &mut [u8]);
-
 /// `c[r * c_stride + j] ^= XOR over p of tables[a[r * a_stride + p]]
 /// .apply(b[p * b_stride + j])` for `r < rows`, `j < width`. Takes
 /// O(`rows * depth * width`) time.
@@ -77,8 +70,6 @@ pub type GemmBlockFn = fn(&GemmBlock<'_>, &mut [u8], usize);
 pub struct Gf256RegionFns {
     /// Region multiply-add.
     pub mul_add: MulAddFn,
-    /// Region multiply.
-    pub mul: MulFn,
     /// Matrix-product block.
     pub gemm_block: GemmBlockFn,
     /// The backend, for diagnostics.
@@ -90,7 +81,6 @@ pub struct Gf256RegionFns {
 pub const fn portable() -> Gf256RegionFns {
     Gf256RegionFns {
         mul_add: mul_add_portable,
-        mul: mul_portable,
         gemm_block: gemm_block_portable,
         name: "portable",
     }
@@ -111,11 +101,6 @@ pub fn detect() -> Option<Gf256RegionFns> {
 fn mul_add_portable(table: &SplitTable, x: &[u8], y: &mut [u8]) {
     check_mul_add(x, y);
     mul_add_scalar(table, x, y);
-}
-
-fn mul_portable(table: &SplitTable, x: &[u8], y: &mut [u8]) {
-    check_mul_add(x, y);
-    mul_scalar(table, x, y);
 }
 
 fn gemm_block_portable(block: &GemmBlock<'_>, c: &mut [u8], c_stride: usize) {
@@ -163,12 +148,6 @@ pub(crate) fn check_gemm_block(block: &GemmBlock<'_>, c: &[u8], c_stride: usize)
 pub(crate) fn mul_add_scalar(table: &SplitTable, x: &[u8], y: &mut [u8]) {
     for (y, &x) in y.iter_mut().zip(x) {
         *y ^= table.apply(x);
-    }
-}
-
-pub(crate) fn mul_scalar(table: &SplitTable, x: &[u8], y: &mut [u8]) {
-    for (y, &x) in y.iter_mut().zip(x) {
-        *y = table.apply(x);
     }
 }
 
@@ -267,20 +246,6 @@ mod tests {
                         for c in [0u8, 1, 2, 0x53, 0x80, 0xff, lcg(&mut state)] {
                             let x: Vec<u8> = (0..len + offset).map(|_| lcg(&mut state)).collect();
                             let y: Vec<u8> = (0..len + offset).map(|_| lcg(&mut state)).collect();
-                            let mut product = y.clone();
-                            (fns.mul)(
-                                &tables[usize::from(c)],
-                                &x[offset..],
-                                &mut product[offset..],
-                            );
-                            for i in 0..len + offset {
-                                let expected = if i < offset {
-                                    y[i]
-                                } else {
-                                    multiply(c, x[i], low)
-                                };
-                                assert_eq!(product[i], expected, "{} mul len {len}", fns.name);
-                            }
                             let mut got = y.clone();
                             (fns.mul_add)(
                                 &tables[usize::from(c)],
@@ -355,9 +320,6 @@ mod tests {
             let table = tables[3];
             assert!(
                 std::panic::catch_unwind(|| (fns.mul_add)(&table, &[0; 33], &mut [0; 32])).is_err()
-            );
-            assert!(
-                std::panic::catch_unwind(|| (fns.mul)(&table, &[0; 32], &mut [0; 33])).is_err()
             );
             let (a, b) = (vec![0u8; 8], vec![0u8; 64]);
             for (rows, depth, width, c_len, c_stride) in [

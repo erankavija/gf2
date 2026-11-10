@@ -2,8 +2,8 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 use crate::gf256_region::{
-    check_gemm_block, check_mul_add, gemm_block_scalar, mul_add_scalar, mul_scalar, GemmBlock,
-    Gf256RegionFns, SplitTable,
+    check_gemm_block, check_mul_add, gemm_block_scalar, mul_add_scalar, GemmBlock, Gf256RegionFns,
+    SplitTable,
 };
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
@@ -16,7 +16,6 @@ const ROWS: usize = 4;
 pub(crate) fn detect() -> Option<Gf256RegionFns> {
     std::arch::is_x86_feature_detected!("avx2").then_some(Gf256RegionFns {
         mul_add: mul_add_avx2,
-        mul: mul_avx2,
         gemm_block: gemm_block_avx2,
         name: "avx2-pshufb",
     })
@@ -26,31 +25,6 @@ fn mul_add_avx2(table: &SplitTable, x: &[u8], y: &mut [u8]) {
     check_mul_add(x, y);
     // SAFETY: detect publishes this entry only on AVX2 hosts.
     unsafe { mul_add_avx2_unchecked(table, x, y) }
-}
-
-fn mul_avx2(table: &SplitTable, x: &[u8], y: &mut [u8]) {
-    check_mul_add(x, y);
-    // SAFETY: detect publishes this entry only on AVX2 hosts.
-    unsafe { mul_avx2_unchecked(table, x, y) }
-}
-
-/// # Safety
-/// The host must support AVX2 and `x.len() == y.len()`.
-#[target_feature(enable = "avx2")]
-unsafe fn mul_avx2_unchecked(table: &SplitTable, x: &[u8], y: &mut [u8]) {
-    let (low, high) = broadcast(table);
-    let (xp, yp) = (x.as_ptr(), y.as_mut_ptr());
-    let mut at = 0;
-    while at + 32 <= x.len() {
-        // SAFETY: at + 32 <= len for both slices; unaligned accesses are
-        // permitted and the borrows keep the slices disjoint.
-        unsafe {
-            let x0 = _mm256_loadu_si256(xp.add(at).cast());
-            _mm256_storeu_si256(yp.add(at).cast(), products(low, high, x0));
-        }
-        at += 32;
-    }
-    mul_scalar(table, &x[at..], &mut y[at..]);
 }
 
 fn gemm_block_avx2(block: &GemmBlock<'_>, c: &mut [u8], c_stride: usize) {

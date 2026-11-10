@@ -1,7 +1,8 @@
 //! One-byte GF(2^8) elements with the modulus fixed at compile time, so that
 //! `FieldVec` and `FieldMatrix` over GF(2^8) hold one byte per element.
 
-use super::byte_table::{gemm_region, split_tables, GemmShape, Gf256SplitTables};
+use super::byte_table::{gemm_bytes, split_tables, GemmShape, Gf256SplitTables};
+use super::gf256_bytes::{as_bytes, as_bytes_mut};
 use super::{Gf2mWide, Gf2mWideConfig};
 use core::fmt;
 use core::hash::{Hash, Hasher};
@@ -16,7 +17,8 @@ use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAss
 /// compile time. Products run through the 8 KiB split tables of the modulus,
 /// built once per process. [`crate::field::FieldVec::axpy`] and the dense
 /// product of [`crate::field::matrix::FieldMatrix`] run the byte-region kernels
-/// `Gf2mField::gf256_axpy` and `Gf2mField::gf256_gemm` use.
+/// `Gf2mField::gf256_axpy` and `Gf2mField::gf256_gemm` use, directly on the
+/// element storage.
 #[repr(transparent)]
 pub struct Gf256<Cfg: Gf2mWideConfig<1>> {
     value: u8,
@@ -185,9 +187,6 @@ impl<Cfg: Gf2mWideConfig<1>> Neg for Gf256<Cfg> {
     }
 }
 
-/// Elements one step of the axpy hook copies into bytes.
-const CHUNK: usize = 1024;
-
 impl<Cfg: Gf2mWideConfig<1>> crate::field::FiniteField for Gf256<Cfg> {
     type Characteristic = u64;
 
@@ -257,27 +256,37 @@ impl<Cfg: Gf2mWideConfig<1>> crate::field::FiniteField for Gf256<Cfg> {
         Some(Self::new(sum))
     }
 
-    /// Multiplies stack copies of [`CHUNK`] source bytes through the byte
-    /// kernel, then XORs the products into `y` in one pass; a call allocates
-    /// nothing.
+    /// Runs the byte-region kernel on the element storage itself; a call
+    /// allocates nothing.
     fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {
         let table = &Self::tables()[usize::from(a.value)];
-        let mul = crate::gf256_region().mul;
-        let (mut sources, mut products) = ([0u8; CHUNK], [0u8; CHUNK]);
-        for (y, x) in y.chunks_mut(CHUNK).zip(x.chunks(CHUNK)) {
-            let (sources, products) = (&mut sources[..x.len()], &mut products[..x.len()]);
-            for (byte, element) in sources.iter_mut().zip(x) {
-                *byte = element.value;
-            }
-            mul(table, sources, products);
-            for (element, &product) in y.iter_mut().zip(products.iter()) {
-                element.value ^= product;
-            }
-        }
+        (crate::gf256_region().mul_add)(table, as_bytes(x), as_bytes_mut(y));
         true
     }
 
-    /// Runs the blocked byte product of `Gf2mField::gf256_gemm`.
+    /// Runs the blocked byte product of `Gf2mField::gf256_gemm` on the
+    /// element storage of all three operands.
+    fn try_simd_gemm_row_major(
+        a: &[Self],
+        b: &[Self],
+        m: usize,
+        k: usize,
+        n: usize,
+        out: &mut [Self],
+    ) -> bool {
+        gemm_bytes(
+            Self::tables(),
+            &GemmShape { m, k, n },
+            as_bytes(a),
+            as_bytes(b),
+            as_bytes_mut(out),
+        );
+        true
+    }
+
+    /// Runs the blocked byte product on the element storage of `a` and
+    /// `out`; only the right operand, which this hook receives transposed, is
+    /// copied back into row order.
     fn try_simd_gemm_classical(
         a: &[Self],
         b_t: &[Self],
@@ -286,14 +295,19 @@ impl<Cfg: Gf2mWideConfig<1>> crate::field::FiniteField for Gf256<Cfg> {
         n: usize,
         out: &mut [Self],
     ) -> bool {
-        gemm_region(
-            a,
-            b_t,
-            &GemmShape { m, k, n },
-            out,
+        let b_t = as_bytes(b_t);
+        let mut b = vec![0u8; k * n];
+        for (j, column) in b_t.chunks_exact(k.max(1)).take(n).enumerate() {
+            for (p, &value) in column.iter().enumerate() {
+                b[p * n + j] = value;
+            }
+        }
+        gemm_bytes(
             Self::tables(),
-            |element| element.value,
-            |element, value| element.value = value,
+            &GemmShape { m, k, n },
+            as_bytes(a),
+            &b,
+            as_bytes_mut(out),
         );
         true
     }

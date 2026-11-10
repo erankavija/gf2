@@ -229,6 +229,26 @@ pub trait FiniteField:
         false
     }
 
+    /// Whole-product hook on row-major operands: writes `a · b` into `out`
+    /// and returns `true`, or declines with `false`, leaving `out` untouched.
+    /// `a` is `m × k`, `b` `k × n` and `out` `m × n`, all row-major.
+    /// [`crate::field::matrix::gemm`] offers it before transposing `b` for
+    /// [`try_simd_gemm_classical`](Self::try_simd_gemm_classical), so a field
+    /// whose kernel reads `b` by rows skips both transposes. The default
+    /// declines.
+    #[doc(hidden)]
+    fn try_simd_gemm_row_major(
+        a: &[Self],
+        b: &[Self],
+        m: usize,
+        k: usize,
+        n: usize,
+        out: &mut [Self],
+    ) -> bool {
+        let _ = (a, b, m, k, n, out);
+        false
+    }
+
     /// Non-allocating probe: `true` when callers should allocate contiguous
     /// operand scratch for
     /// [`try_simd_gemm_classical`](Self::try_simd_gemm_classical) or

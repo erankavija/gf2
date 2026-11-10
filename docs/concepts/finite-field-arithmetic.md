@@ -73,11 +73,12 @@ does not check it.
 `Gf256<Cfg>` is the compile-time $\mathrm{GF}(2^8)$ type: one byte per
 element under the degree-8 modulus of a `Gf2mWideConfig<1>`, so
 `FieldVec` and `FieldMatrix` over it hold one byte per element. Its
-products read the split tables of the byte-region kernels, its axpy copies
-the sources into stack bytes for the kernel and XORs the products into the
-destination in one pass, and its dense product runs the blocked byte
-product. A `Gf2mWide<1, Cfg>` element of the same field takes 8 bytes and a
-`Gf2mElement` 16, so the generic API over them moves 8 and 16 times the
+products read the split tables of the byte-region kernels, and its axpy and
+dense product run those kernels on the element storage itself, through the
+byte views of
+[`gf256_bytes.rs`](../../crates/gf2-core/src/gf2m/gf256_bytes.rs), the one
+module of `gf2-core` that contains `unsafe`. A `Gf2mWide<1, Cfg>` element of
+the same field takes 8 bytes and a `Gf2mElement` 16, so the generic API over them moves 8 and 16 times the
 memory per element and its region operations make one table lookup per
 element instead of running the byte kernel.
 [`experiments/gf256-baselines`](../../experiments/gf256-baselines/README.md)
