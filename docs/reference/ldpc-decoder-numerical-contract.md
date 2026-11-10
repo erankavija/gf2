@@ -91,9 +91,9 @@ writes nothing.
 
 `min_sum_check_row` is scalar and performs no runtime dispatch, so the rules
 hold for every setting of the `simd` cargo feature and every host capability.
-The decoder does not reach the AVX2 kernel of `Llr::boxplus_minsum_n`, whose
-vector lanes take the sign bit and so disagree with the sign rule; the rustdoc
-of `min_sum_check_row` states the divergence.
+The AVX2 kernel of `Llr::boxplus_minsum_n`, which the decoder does not reach,
+follows the same sign and magnitude rules in its vector lanes and its
+remainder.
 
 The explicitly constructed `QcDecoder`
 ([`qc.rs`](../../crates/gf2-coding/src/ldpc/qc.rs)) applies these same rules
