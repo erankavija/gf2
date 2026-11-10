@@ -87,6 +87,7 @@ fn modulation_label(modulation: DvbT2Modulation) -> &'static str {
         DvbT2Modulation::Qpsk => "QPSK",
         DvbT2Modulation::Qam16 => "16-QAM",
         DvbT2Modulation::Qam64 => "64-QAM",
+        DvbT2Modulation::Qam256 => "256-QAM",
     }
 }
 
@@ -135,7 +136,7 @@ impl Channel {
     /// implies on success.
     ///
     /// The rejected inputs are those that panic
-    /// [`GrayQamDemap::with_noise_var`](crate::stages::GrayQamDemap::with_noise_var).
+    /// [`DvbT2CellDemap::with_noise_var`](crate::stages::DvbT2CellDemap::with_noise_var).
     ///
     /// # Errors
     ///

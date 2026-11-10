@@ -19,7 +19,7 @@ use gf2_sim::batch::{BitPackedBatch, HardDecisionBatch, LlrBatch};
 use gf2_sim::graph::Chain;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::stage::{erase, AnyScratch, BatchSize, ExecutionClass, Stage, TypedBatch};
-use gf2_sim::stages::{dvb_t2_bicm_stages, GrayQamDemap};
+use gf2_sim::stages::{dvb_t2_bicm_stages, DvbT2CellDemap};
 use gf2_sim::{Pipeline, Scheduler, StageError, TopologyExecutor};
 
 /// High enough that the BP decoder terminates early; the channel still adds
@@ -311,13 +311,13 @@ fn test_fan_out_double_demap_both_branches_execute() {
     }
     let ch = chain.add(erase(gf2_sim::channels::Awgn::new(ES_N0_DB, 4)));
     ids.push(ch);
-    let demap_true = chain.add(erase(GrayQamDemap::with_noise_var(
-        DvbT2Modulation::Qam16,
+    let demap_true = chain.add(erase(DvbT2CellDemap::with_noise_var(
+        factory.cell_mapper.clone(),
         DemapMethod::ExactLogMap,
         demap_n0(ES_N0_DB),
     )));
-    let demap_default = chain.add(erase(GrayQamDemap::new(
-        DvbT2Modulation::Qam16,
+    let demap_default = chain.add(erase(DvbT2CellDemap::new(
+        factory.cell_mapper.clone(),
         DemapMethod::ExactLogMap,
     )));
     for pair in ids.windows(2) {
@@ -373,6 +373,7 @@ fn test_fan_in_two_demap_branches_feed_one_decoder() {
     let k = factory.codec.k_bch();
     let codec = factory.codec.clone();
     let interleaver = factory.interleaver.clone();
+    let cell_mapper = factory.cell_mapper.clone();
 
     let mut chain = Chain::new();
     let mut ids = Vec::new();
@@ -386,8 +387,8 @@ fn test_fan_in_two_demap_branches_feed_one_decoder() {
     }
 
     let mk_branch = |chain: &mut Chain| {
-        let demap = chain.add(erase(GrayQamDemap::with_noise_var(
-            DvbT2Modulation::Qam16,
+        let demap = chain.add(erase(DvbT2CellDemap::with_noise_var(
+            cell_mapper.clone(),
             DemapMethod::ExactLogMap,
             demap_n0(ES_N0_DB),
         )));

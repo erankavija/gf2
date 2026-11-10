@@ -132,9 +132,9 @@ mod gpu {
             eprintln!("skipping test_stage_driven_gpu_smoke_matches_ssot_3_columns: no usable GPU");
             return;
         }
-        // At 6.0 dB this seed's first 4 global frames decode to a mixed verdict.
+        // At 5.9 dB this seed's first 4 global frames decode to a mixed verdict.
         const SMOKE_SEED: u64 = 0xDE16_0FC5;
-        let es_n0 = 6.0_f32;
+        let es_n0 = 5.9_f32;
         let frames = 4usize;
         let pipeline = build_pipeline_seeded(es_n0, 4, true, SMOKE_SEED);
         assert_eq!(
@@ -163,7 +163,40 @@ mod gpu {
         assert_three_columns_byte_identical_log_mean_iters(
             &staged,
             &ssot,
-            "stage-driven GPU smoke @6dB staged(GPU)-vs-ssot(CPU)",
+            "stage-driven GPU smoke @5.9dB staged(GPU)-vs-ssot(CPU)",
+        );
+    }
+
+    /// The CPU and GPU routes of the chain at one seed and configuration.
+    #[test]
+    fn test_stage_driven_gpu_route_matches_cpu_route_3_columns() {
+        if !gpu_present() {
+            eprintln!(
+                "skipping test_stage_driven_gpu_route_matches_cpu_route_3_columns: no usable GPU"
+            );
+            return;
+        }
+        let (es_n0, frames) = (5.9_f32, 4usize);
+        let run = |gpu: bool| {
+            let pipeline = build_pipeline(es_n0, 4, gpu);
+            let scheduler = Scheduler::from_pipeline(&pipeline);
+            assert_eq!(scheduler.gpu_active(), gpu, "route selection");
+            TopologyExecutor::run_dvb_t2_snr_point(&pipeline, &scheduler, 0, frames)
+                .expect("stage-driven sweep runs")
+        };
+        let (gpu, cpu) = (run(true), run(false));
+
+        assert!(
+            cpu.errors > 0 && cpu.errors < cpu.frames,
+            "expected a mixed decode-success/failure smoke at the waterfall, got \
+             {}/{} errored frames (re-pin es_n0 if the chain changes)",
+            cpu.errors,
+            cpu.frames
+        );
+        assert_three_columns_byte_identical_log_mean_iters(
+            &gpu,
+            &cpu,
+            "stage-driven GPU route vs CPU route @5.9dB",
         );
     }
 

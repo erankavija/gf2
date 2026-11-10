@@ -6,7 +6,9 @@
 
 mod common;
 
-use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+use std::sync::Arc;
+
+use gf2_coding::ldpc::dvb_t2::{DvbT2CellMapper, DvbT2Modcod, DvbT2Modulation, FrameSize};
 use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
@@ -20,7 +22,7 @@ use gf2_sim::channels::awgn::ChannelScratch;
 use gf2_sim::channels::es_n0_db_to_n0;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::stage::{AnyScratch, ExecutionClass, TypedBatch};
-use gf2_sim::stages::{dvb_t2_bicm_stages, GrayQamDemap};
+use gf2_sim::stages::{dvb_t2_bicm_stages, DvbT2CellDemap};
 use gf2_sim::Pipeline;
 
 /// Above the waterfall of r3/4 64-QAM, the hardest MODCOD tested, so every
@@ -239,9 +241,9 @@ fn test_preset_matches_graph_r3_4_64qam() {
     assert_preset_matches_graph(CodeRate::Rate3_4, DvbT2Modulation::Qam64, 0xABCD_0004);
 }
 
-/// `GrayQamDemap`'s `noise_var` is not readable through the erased `AnyStage`,
+/// `DvbT2CellDemap`'s `noise_var` is not readable through the erased `AnyStage`,
 /// so the check is behavioral: the built pipeline's demapper LLRs equal those of
-/// a `GrayQamDemap` with the channel-derived `N0 = 2 * sigma^2` and differ from
+/// a `DvbT2CellDemap` with the channel-derived `N0 = 2 * sigma^2` and differ from
 /// one with the default N0.
 #[test]
 fn test_demap_n0_tracks_channel_es_n0() {
@@ -283,8 +285,19 @@ fn test_demap_n0_tracks_channel_es_n0() {
         .find(|s| s.input_type() == sym_in && s.output_type() == llr_out)
         .expect("the built pipeline has a SymbolBatch->LlrBatch demapper stage");
 
-    // Off-constellation symbols, so the LLRs depend on the assumed N0.
-    let batch = SymbolBatch::new(vec![vec![0.6_f32, -0.2_f32]], vec![vec![0.3_f32, 0.9_f32]]);
+    let mapper = Arc::new(DvbT2CellMapper::new(DvbT2Modcod::new(
+        FrameSize::Normal,
+        CodeRate::Rate1_2,
+        modulation,
+    )));
+    // Off-constellation cells, so the LLRs depend on the assumed N0.
+    let cells = mapper.num_cells();
+    let lane = |phase: f32| {
+        (0..cells)
+            .map(|c| (c as f32 * 0.37 + phase).sin())
+            .collect()
+    };
+    let batch = SymbolBatch::new(vec![lane(0.0)], vec![lane(1.0)]);
 
     let mut scratch: Box<dyn AnyScratch> = Box::new(());
     let built_out = demap_stage
@@ -296,8 +309,8 @@ fn test_demap_n0_tracks_channel_es_n0() {
         .expect("demapper outputs LlrBatch")
         .frames[0];
 
-    let ref_channel = GrayQamDemap::with_noise_var(modulation, DemapMethod::ExactLogMap, n0);
-    let ref_default = GrayQamDemap::new(modulation, DemapMethod::ExactLogMap);
+    let ref_channel = DvbT2CellDemap::with_noise_var(mapper.clone(), DemapMethod::ExactLogMap, n0);
+    let ref_default = DvbT2CellDemap::new(mapper, DemapMethod::ExactLogMap);
 
     let channel_llrs = ref_channel
         .process(&batch, &mut ())

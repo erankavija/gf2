@@ -166,8 +166,9 @@ pub fn kernel_config_hash(config: &PipelineConfig, kernel_identity: &str) -> Str
 
 /// Computes the checkpoint identity of a [`Pipeline`]: the fields
 /// [`config_hash`] covers, followed by every field of the pipeline's
-/// [`RunPlan`] (code rate, modulation, decoder and demapper). A pipeline
-/// without a run plan has the [`config_hash`] identity of its configuration.
+/// [`RunPlan`] (code rate, modulation, decoder and demapper) and the chain's
+/// cell mapping, [`DVB_T2_CELL_MAPPING`]. A pipeline without a run plan has
+/// the [`config_hash`] identity of its configuration.
 ///
 /// [`Scheduler::run_sweep_checkpointed`](crate::Scheduler::run_sweep_checkpointed)
 /// writes this identity into each checkpoint and rejects a resume whose
@@ -175,10 +176,28 @@ pub fn kernel_config_hash(config: &PipelineConfig, kernel_identity: &str) -> Str
 /// [`BuildError::ConfigHashMismatch`].
 #[must_use]
 pub fn pipeline_config_hash(pipeline: &Pipeline) -> String {
+    pipeline_hash_with_mapping(pipeline, Some(DVB_T2_CELL_MAPPING))
+}
+
+/// The cell mapping of the DVB-T2 chain's [`RunPlan`]: the
+/// `gf2_coding::ldpc::dvb_t2::DvbT2CellMapper` demultiplexer and cell-word
+/// mapping of `@/citation/Etsi2015` clause 6.2. It is hashed into
+/// [`pipeline_config_hash`], so a checkpoint of a chain with another mapping
+/// does not resume.
+pub const DVB_T2_CELL_MAPPING: &str = "dvb-t2-cell-demux";
+
+/// [`pipeline_config_hash`] with `mapping` hashed after the run plan, or no
+/// mapping when `None`.
+fn pipeline_hash_with_mapping(pipeline: &Pipeline, mapping: Option<&str>) -> String {
     let mut hasher = blake3::Hasher::new();
     hash_run_config(&mut hasher, pipeline.config());
     if let Some(plan) = pipeline.run_plan() {
         hash_run_plan(&mut hasher, &plan);
+        if let Some(mapping) = mapping {
+            hasher.update(b"cell-mapping:");
+            hasher.update(&(mapping.len() as u64).to_le_bytes());
+            hasher.update(mapping.as_bytes());
+        }
     }
     finish_hash(&hasher)
 }
@@ -241,6 +260,7 @@ fn hash_run_plan(hasher: &mut blake3::Hasher, plan: &RunPlan) {
         DvbT2Modulation::Qpsk => 0,
         DvbT2Modulation::Qam16 => 1,
         DvbT2Modulation::Qam64 => 2,
+        DvbT2Modulation::Qam256 => 3,
     }]);
     let (algorithm, parameter) = match decoder.algorithm() {
         DecoderAlgorithm::MinSum => (0u8, 0u32),
@@ -1011,6 +1031,65 @@ mod tests {
                 BuildError::ConfigHashMismatch { .. }
             ))
         ));
+    }
+
+    /// A checkpoint of the chain hashed without a cell mapping, or with the
+    /// generic Gray square-QAM one, does not resume.
+    #[test]
+    fn test_resume_refuses_checkpoint_of_another_cell_mapping() {
+        use crate::presets::dvb_t2::{Channel, Modcod};
+        use gf2_coding::ldpc::DecoderConfig;
+
+        let dir = tempdir();
+        let mut pipeline = Pipeline::dvb_t2()
+            .modcod(Modcod::Normal {
+                rate: CodeRate::Rate1_2,
+                modulation: DvbT2Modulation::Qam16,
+            })
+            .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
+            .demap(DemapMethod::MaxLog)
+            .channel(Channel::awgn(6.0))
+            .checkpoint_dir(Some(dir.path().to_path_buf()))
+            .build()
+            .unwrap();
+        pipeline.config_mut().esn0_db_points = vec![6.0];
+        pipeline.config_mut().max_frames = 1;
+        let current = pipeline_config_hash(&pipeline);
+
+        for stale in [
+            pipeline_hash_with_mapping(&pipeline, None),
+            pipeline_hash_with_mapping(&pipeline, Some("gray-square-qam")),
+        ] {
+            assert_ne!(stale, current);
+            let ckpt = build_checkpoint(
+                pipeline.config(),
+                0,
+                6.0,
+                &stale,
+                &WorkerCounters::default(),
+                &[0],
+                true,
+            );
+            CheckpointWriter::new(dir.path())
+                .unwrap()
+                .write(&ckpt)
+                .unwrap();
+            let outcome = crate::Scheduler::from_pipeline(&pipeline).run_sweep_checkpointed(
+                &pipeline,
+                true,
+                &|_, _| panic!("a refused resume simulates no frame"),
+            );
+            match outcome {
+                Err(SweepError::Load(FatalError::BuildError(BuildError::ConfigHashMismatch {
+                    loaded,
+                    expected,
+                }))) => {
+                    assert_eq!(loaded, stale);
+                    assert_eq!(expected, current);
+                }
+                other => panic!("expected ConfigHashMismatch, got {other:?}"),
+            }
+        }
     }
 
     #[test]

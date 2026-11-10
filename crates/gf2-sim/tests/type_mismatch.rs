@@ -3,24 +3,28 @@
 
 use std::sync::Arc;
 
-use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
 use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
-use gf2_coding::ldpc::dvb_t2::FrameSize;
+use gf2_coding::ldpc::dvb_t2::{DvbT2CellMapper, DvbT2Modcod, DvbT2Modulation, FrameSize};
 use gf2_coding::CodeRate;
 
 use gf2_sim::error::BuildError;
 use gf2_sim::graph::Chain;
 use gf2_sim::stage::erase;
-use gf2_sim::stages::{DvbT2Encode, GrayQamMap};
+use gf2_sim::stages::{DvbT2CellMap, DvbT2Encode};
 
 #[test]
 fn test_incompatible_connect_is_type_mismatch() {
-    // GrayQamMap: BitPackedBatch → SymbolBatch.
+    // DvbT2CellMap: BitPackedBatch → SymbolBatch.
     // DvbT2Encode: BitPackedBatch → BitPackedBatch.
     let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
 
     let mut chain = Chain::new();
-    let map = chain.add(erase(GrayQamMap::new(DvbT2Modulation::Qam16)));
+    let mapper = DvbT2CellMapper::new(DvbT2Modcod::new(
+        FrameSize::Normal,
+        CodeRate::Rate1_2,
+        DvbT2Modulation::Qam16,
+    ));
+    let map = chain.add(erase(DvbT2CellMap::new(Arc::new(mapper))));
     let enc = chain.add(erase(DvbT2Encode::new(codec)));
 
     match chain.connect(map, enc) {

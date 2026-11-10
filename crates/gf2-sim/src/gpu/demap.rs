@@ -37,6 +37,11 @@ mod imp {
     /// `FastGrayQamDemapper`, so this type carries the impl over the shared
     /// `GrayQamDemapCore`. It emits the GPU stage's LLR layout and serves the
     /// `ExactLogMap` method.
+    ///
+    /// It implements the generic Gray square-QAM layout of
+    /// [`ModemSpec::gray_square_qam`](gf2_coding::modem::ModemSpec::gray_square_qam),
+    /// not the DVB-T2 cell mapping of
+    /// [`DvbT2CellMapper`](gf2_coding::ldpc::dvb_t2::DvbT2CellMapper).
     pub struct CpuGrayQamDemapper {
         core: GrayQamDemapCore,
     }
@@ -117,6 +122,11 @@ mod imp {
     /// [`DemapMethod::ExactLogMap`] reports [`ExecutionClass::CpuOnly`] and is
     /// served by its [`cpu_fallback`](Self::cpu_fallback); one constructed for
     /// [`DemapMethod::MaxLog`] reports [`ExecutionClass::GpuOnly`].
+    ///
+    /// It implements the generic Gray square-QAM layout of
+    /// [`ModemSpec::gray_square_qam`](gf2_coding::modem::ModemSpec::gray_square_qam),
+    /// not the DVB-T2 cell mapping of
+    /// [`DvbT2CellMapper`](gf2_coding::ldpc::dvb_t2::DvbT2CellMapper).
     pub struct GpuGrayQamDemapper {
         modulation: DvbT2Modulation,
         method: DemapMethod,
