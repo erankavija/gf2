@@ -241,14 +241,16 @@ pub fn assert_fallback_contract() -> Vec<RouteWitness> {
             lane == PORTABLE_LANE,
         ));
     };
+    // Widths without their own kernel take the split, whose last basecase
+    // product runs on the narrowest kernel that holds it.
     let _: [u64; 2] = clmul_wide(&[3u64; 1], &[5u64; 1]);
-    wide(1, None);
+    wide(1, wide_kernels.as_ref().map(|fns| fns.wide256.name));
     let _: [u64; 8] = clmul_wide(&[3u64; 4], &[5u64; 4]);
     wide(4, wide_kernels.as_ref().map(|fns| fns.wide256.name));
     let _: [u64; 18] = clmul_wide(&[3u64; 9], &[5u64; 9]);
     wide(9, wide_kernels.as_ref().map(|fns| fns.wide571.name));
     let _: [u64; 32] = clmul_wide(&[3u64; 16], &[5u64; 16]);
-    wide(16, None);
+    wide(16, wide_kernels.as_ref().map(|fns| fns.wide571.name));
 
     let block_rows = crate::sparse::SpBitMatrix::identity(1)
         .to_default_block_csr()

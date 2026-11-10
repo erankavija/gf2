@@ -165,16 +165,30 @@ fn check_public_product<const N: usize, const M: usize>(seed: u64) {
 }
 
 /// The lane a width is required to run on when the host has the capability
-/// and the build enables it.
+/// and the build enables it: its own kernel at 4 and 9 words, otherwise the
+/// kernel of the split's last basecase product, the narrowest that holds it.
 #[cfg(feature = "simd")]
 fn expected_lane<const N: usize>() -> &'static str {
-    match N {
-        4 => gf2_kernels_simd::gf2m_wide::detect()
-            .map(|fns| fns.name)
-            .unwrap_or(PORTABLE_LANE),
-        9 => gf2_kernels_simd::gf2m_wide::detect_571()
-            .map(|fns| fns.name)
-            .unwrap_or(PORTABLE_LANE),
+    let (k4, k9) = (
+        gf2_kernels_simd::gf2m_wide::detect(),
+        gf2_kernels_simd::gf2m_wide::detect_571(),
+    );
+    let basecase = if k9.is_some() {
+        9
+    } else if k4.is_some() {
+        4
+    } else {
+        return PORTABLE_LANE;
+    };
+    let mut words = N;
+    if N != 4 && N != 9 {
+        while words > basecase {
+            words = words.div_ceil(2);
+        }
+    }
+    match (k4, k9) {
+        (Some(fns), _) if words <= 4 => fns.name,
+        (_, Some(fns)) if words <= 9 => fns.name,
         _ => PORTABLE_LANE,
     }
 }
