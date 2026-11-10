@@ -61,17 +61,21 @@ impl LayeredConfig {
     /// of 127 must hold several messages: with message limit 40 the decoder
     /// leaves decoded NR codewords at high SNR, and with 31 it keeps an
     /// error floor. The message limit exceeds the channel limit so that one
-    /// check can overrule the channel on a degree-2 parity bit. Frame error
-    /// rate depends on the scale relative to the input LLRs; scale 4 suits
-    /// natural-log LLRs and their half.
+    /// check can overrule the channel on a degree-2 parity bit.
+    ///
+    /// The setting assumes natural-log channel LLRs, `2y/σ²` for BPSK over
+    /// AWGN; LLRs at `r` times that scale decode as at scale `4r`, so a
+    /// caller with another convention passes scale `4/r` to
+    /// [`Self::new`].
     #[must_use]
     pub fn nr_5g() -> Self {
         Self::new(LayeredRule::Normalized { eighths: 6 }, 4.0, 23, 24, true)
     }
 
     /// The DVB-T2 setting: normalized min-sum at 7/8, scale 4, channel
-    /// limit 31, message limit 40, early termination. DVB-T2 columns have
-    /// degree at most 13, which leaves the finer scale stable.
+    /// limit 31, message limit 40, early termination, for natural-log channel
+    /// LLRs as in [`Self::nr_5g`]. DVB-T2 columns have degree at most 13,
+    /// which leaves this message limit stable.
     #[must_use]
     pub fn dvb_t2() -> Self {
         Self::new(LayeredRule::Normalized { eighths: 7 }, 4.0, 31, 40, true)
