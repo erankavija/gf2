@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Times gf2's default GF(2^8) region and matrix-product routes against ISA-L
-# and M4RIE on identical inputs and prints one row per cell with the host name.
+# Times gf2's GF(2^8) region and matrix-product routes, the byte-region API
+# and the generic API over one-byte Gf256 elements, against ISA-L and M4RIE on
+# identical inputs, and prints one row per cell with the host name.
 #
 # Usage: GF256_BASELINE_PREFIX=<install prefix> experiments/gf256-baselines/run.sh
 #
@@ -53,15 +54,18 @@ def rate(metric):
     return float(re.findall(r"([\d.]+) G", metric)[-1])
 
 failed = False
-print(f"{'cell':<12} {'gf2':<34} {'fastest reference':<58} gf2/ref")
+print(f"{'cell':<14} {'byte API':<28} {'generic Gf256':<28} {'gen/byte':<9} "
+      f"{'fastest reference':<58} byte/ref")
 for (op, size), arms in sorted(rows.items()):
     digests = {digest for _, _, digest in arms}
     if len(digests) != 1:
         failed = True
-    gf2 = next(a for a in arms if a[0].startswith("gf2"))
+    byte = next(a for a in arms if "Gf2mField" in a[0])
+    generic = next(a for a in arms if "Gf256" in a[0] and "Gf2mField" not in a[0])
     ref = max((a for a in arms if not a[0].startswith("gf2")), key=lambda a: rate(a[1]))
     status = "" if len(digests) == 1 else "  OUTPUTS DIFFER"
-    print(f"{op + ' ' + str(size):<12} {gf2[1]:<34} {ref[0] + ': ' + ref[1]:<58} "
-          f"{rate(gf2[1]) / rate(ref[1]):.2f}{status}")
+    print(f"{op + ' ' + str(size):<14} {byte[1]:<28} {generic[1]:<28} "
+          f"{rate(generic[1]) / rate(byte[1]):<9.2f} {ref[0] + ': ' + ref[1]:<58} "
+          f"{rate(byte[1]) / rate(ref[1]):.2f}{status}")
 sys.exit(1 if failed else 0)
 PY

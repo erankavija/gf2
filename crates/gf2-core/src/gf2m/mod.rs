@@ -5,6 +5,7 @@ pub mod batch;
 mod byte_table;
 mod field;
 pub mod generation;
+mod gf256;
 /// Monomorphized u64 GF(2^m) multiplication for formal verification via
 /// Charon/Aeneas (`@/citation/AeneasVerif2026`).
 pub mod mul_raw;
@@ -20,6 +21,7 @@ pub use byte_table::{
     GF256_TABLE_LANE,
 };
 pub use field::*;
+pub use gf256::Gf256;
 pub use uint_ext::UintExt;
 pub use wide::Gf2mWide;
 pub use wide_config::Gf2mWideConfig;

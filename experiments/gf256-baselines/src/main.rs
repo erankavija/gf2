@@ -1,7 +1,10 @@
-//! gf2's arm of the GF(2^8) comparison: the default byte-region routes on the
-//! cells and inputs `ext/arm.c` shares, one line per cell.
+//! gf2's arm of the GF(2^8) comparison: the byte-region API and the generic
+//! `FieldVec`/`FieldMatrix` API over one-byte `Gf256` elements, on the cells
+//! and inputs `ext/arm.c` shares, one line per cell and route.
 
-use gf2_core::gf2m::Gf2mField;
+use gf2_core::field::matrix::{gemm, FieldMatrix};
+use gf2_core::field::FieldVec;
+use gf2_core::gf2m::{Gf256, Gf2mField, Gf2mWideConfig};
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -9,6 +12,23 @@ use std::time::Instant;
 const BATCHES: usize = 5;
 const AXPY_LENGTHS: [usize; 4] = [4 << 10, 64 << 10, 1 << 20, 16 << 20];
 const GEMM_SIZES: [usize; 3] = [64, 256, 1024];
+
+/// GF(2^8) under 0x11D, the modulus of `Gf2mField::gf256` and of both
+/// references.
+struct Poly11d;
+impl Gf2mWideConfig<1> for Poly11d {
+    const M: usize = 8;
+    const MODULUS: [u64; 1] = [0x1d];
+}
+type Element = Gf256<Poly11d>;
+
+fn elements(bytes: &[u8]) -> FieldVec<Element> {
+    bytes.iter().map(|&b| Element::new(b)).collect()
+}
+
+fn matrix(n: usize, bytes: &[u8]) -> FieldMatrix<Element> {
+    FieldMatrix::from_rows(bytes.chunks(n).map(elements).collect())
+}
 
 /// The splitmix64 stream both arms draw their inputs from.
 struct SplitMix(u64);
@@ -77,6 +97,22 @@ fn main() {
             (len * reps) as f64 / seconds / 1e9,
             checksum(&y)
         );
+
+        let mut rng = SplitMix(len as u64);
+        let c = Element::new(rng.byte());
+        let x = elements(&rng.bytes(len));
+        let mut y = elements(&rng.bytes(len));
+        let seconds = best(|| {
+            for _ in 0..reps {
+                y.axpy(&c, black_box(&x));
+            }
+        });
+        let y: Vec<u8> = y.iter().map(|e| e.value()).collect();
+        println!(
+            "axpy\t{len}\tgf2 FieldVec<Gf256>::axpy\t{:.2} GB/s\t{:016x}",
+            (len * reps) as f64 / seconds / 1e9,
+            checksum(&y)
+        );
     }
     for n in GEMM_SIZES {
         let mut rng = SplitMix(n as u64 ^ 0x6e6d);
@@ -91,6 +127,23 @@ fn main() {
         }) / reps as f64;
         println!(
             "gemm\t{n}\tgf2 Gf2mField::gf256_gemm\t{:.3} ms {:.2} Gmul-add/s\t{:016x}",
+            seconds * 1e3,
+            (n * n * n) as f64 / seconds / 1e9,
+            checksum(&c)
+        );
+
+        let (a, b) = (matrix(n, &a), matrix(n, &b));
+        let mut product = FieldMatrix::new(n, n, Element::zero());
+        let seconds = best(|| {
+            for _ in 0..reps {
+                product = gemm(black_box(&a), &b);
+            }
+        }) / reps as f64;
+        let c: Vec<u8> = (0..n * n)
+            .map(|i| product.get(i / n, i % n).value())
+            .collect();
+        println!(
+            "gemm\t{n}\tgf2 FieldMatrix<Gf256> gemm\t{:.3} ms {:.2} Gmul-add/s\t{:016x}",
             seconds * 1e3,
             (n * n * n) as f64 / seconds / 1e9,
             checksum(&c)
