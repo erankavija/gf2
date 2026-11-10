@@ -5,8 +5,10 @@
 use std::hint::black_box;
 use std::time::Instant;
 
-/// Operand lengths in 64-bit words the comparison times.
-pub const SIZES: [usize; 4] = [16, 64, 256, 2048];
+/// Operand lengths in 64-bit words the comparison times: powers of two, one
+/// length three times a power of two (1536) and one with no power-of-two
+/// factor beyond 8 (1000).
+pub const SIZES: [usize; 6] = [16, 64, 256, 1000, 1536, 2048];
 
 /// Timed samples per arm and size; the reported rate is their median.
 pub const SAMPLES: usize = 11;
