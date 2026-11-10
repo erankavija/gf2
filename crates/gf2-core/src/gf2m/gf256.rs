@@ -15,7 +15,7 @@ use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAss
 /// modulus's low eight bits. Every constructor rejects another degree at
 /// compile time. Products run through the 8 KiB split tables of the modulus,
 /// built once per process. [`crate::field::FieldVec::axpy`] and the dense
-/// product of [`crate::field::FieldMatrix`] run the byte-region kernels
+/// product of [`crate::field::matrix::FieldMatrix`] run the byte-region kernels
 /// `Gf2mField::gf256_axpy` and `Gf2mField::gf256_gemm` use.
 #[repr(transparent)]
 pub struct Gf256<Cfg: Gf2mWideConfig<1>> {
@@ -257,23 +257,21 @@ impl<Cfg: Gf2mWideConfig<1>> crate::field::FiniteField for Gf256<Cfg> {
         Some(Self::new(sum))
     }
 
-    /// Runs the byte-region kernel over stack copies of [`CHUNK`] bytes; a
-    /// call allocates nothing.
+    /// Multiplies stack copies of [`CHUNK`] source bytes through the byte
+    /// kernel, then XORs the products into `y` in one pass; a call allocates
+    /// nothing.
     fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {
         let table = &Self::tables()[usize::from(a.value)];
-        let mul_add = crate::gf256_region().mul_add;
-        let (mut sources, mut destinations) = ([0u8; CHUNK], [0u8; CHUNK]);
+        let mul = crate::gf256_region().mul;
+        let (mut sources, mut products) = ([0u8; CHUNK], [0u8; CHUNK]);
         for (y, x) in y.chunks_mut(CHUNK).zip(x.chunks(CHUNK)) {
-            let (sources, destinations) = (&mut sources[..x.len()], &mut destinations[..y.len()]);
+            let (sources, products) = (&mut sources[..x.len()], &mut products[..x.len()]);
             for (byte, element) in sources.iter_mut().zip(x) {
                 *byte = element.value;
             }
-            for (byte, element) in destinations.iter_mut().zip(y.iter()) {
-                *byte = element.value;
-            }
-            mul_add(table, sources, destinations);
-            for (element, &byte) in y.iter_mut().zip(destinations.iter()) {
-                element.value = byte;
+            mul(table, sources, products);
+            for (element, &product) in y.iter_mut().zip(products.iter()) {
+                element.value ^= product;
             }
         }
         true
