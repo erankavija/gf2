@@ -1,7 +1,7 @@
 //! Throughput of one gf2 NMS decoder route over a recorded bundle.
 //!
-//! `gf2-fast-bench BUNDLE CODE KIND SIMD PRECISION WORKERS BATCH CALLS` prints
-//! one JSON line through [`aff3ct_ldpc_gaps::fast`]. `KIND` and `SIMD` name a
+//! `gf2-fast-bench BUNDLE CODE KIND SIMD PRECISION WORKERS BATCH CALLS PINNING`
+//! prints one JSON line through [`aff3ct_ldpc_gaps::fast`]. `KIND` and `SIMD` name a
 //! [`Route`]; `PRECISION` is `f32`, the precision of the input LLRs. The code retains its corpus block
 //! description after an exact parity-check comparison. The quality pass
 //! decodes the bundle's whole batches untimed.

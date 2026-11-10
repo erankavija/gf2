@@ -45,8 +45,10 @@ The adapter's second executable, `aff3ct-fast-bench`, times one AFF3CT NMS
 decoder outside the campaign lifecycle: scalar or inter-frame SIMD, flooding,
 horizontal-layered or the layered ONMS decoder, in f32 or i16. It takes a
 bundle directory, the code name, the decoder type, `none` or `INTER`, the
-precision, and the worker, batch and call counts, decodes the whole bundle
-untimed for frame errors, and prints one JSON line with the median call time.
+precision, the worker, batch and call counts, and `pinned` (worker `i` on the
+`i`-th CPU in an order that lists one CPU of every physical core before any
+SMT sibling) or `unpinned`, decodes the whole bundle untimed for frame errors,
+and prints one JSON line with the median call time.
 The shim compiles as C++17, which AFF3CT's SIMD update rules require.
 `gf2-fast-bench` takes the same arguments for a gf2 route: `single`, `lanes`,
 `qc` (`QcDecoder` one frame at a time), `default` (`LdpcBatchDecoder` as
@@ -55,10 +57,10 @@ shipped) or `layered` (`LayeredDecoder` in i8 under the corpus code's
 `auto` for `default`) and input precision `f32`; its JSON line adds the
 iteration cap. It attaches the corpus block description after
 an exact parity-check comparison. Both executables share the argument parsing,
-pinned call loop and JSON line of `src/fast.rs`.
+call loop and JSON line of `src/fast.rs`.
 [quick-compare.sh](quick-compare.sh) builds both, runs every gf2 route and
 AFF3CT configuration whose wave divides the batch over both bundles and a fixed
-worker and batch grid inside a benchmark window, and writes a table per code of
+worker, batch and pinning grid inside a benchmark window, and writes a table per code of
 frames per second, information throughput, frame errors and the best-gf2 to
 best-AFF3CT ratio, overall and over flooding decoders only, under `target/`; its
 header names the environment it reads.

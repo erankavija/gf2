@@ -1,7 +1,7 @@
 //! Throughput of one AFF3CT NMS decoder configuration over a recorded bundle.
 //!
-//! `aff3ct-fast-bench BUNDLE CODE KIND SIMD PRECISION WORKERS BATCH CALLS`
-//! prints one JSON line through [`aff3ct_ldpc_gaps::fast`]. `SIMD` is `none`
+//! `aff3ct-fast-bench BUNDLE CODE KIND SIMD PRECISION WORKERS BATCH CALLS
+//! PINNING` prints one JSON line through [`aff3ct_ldpc_gaps::fast`]. `SIMD` is `none`
 //! or `INTER`. The quality pass decodes the bundle's whole native waves untimed.
 
 use aff3ct_ldpc_arm::{Aff3ctWorker, Handle, Selection};

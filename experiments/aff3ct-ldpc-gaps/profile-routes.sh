@@ -50,7 +50,7 @@ arm_codes | while read -r bundle code; do
             # perf_event_paranoid 2 refuses kernel callchains.
             perf record -q -e cycles:u --call-graph fp --user-callchains \
                 -o "$out/$name.data" -- \
-                "$gf2_bin" "$dir" "$code" "$kind" avx2 f32 "$workers" "$batch" "$calls" \
+                "$gf2_bin" "$dir" "$code" "$kind" avx2 f32 "$workers" "$batch" "$calls" pinned \
                 < /dev/null > "$out/$name.json"
             perf report -q --stdio --no-children -g none --percent-limit 1 \
                 -i "$out/$name.data" --sort symbol > "$out/$name.txt" 2> /dev/null
