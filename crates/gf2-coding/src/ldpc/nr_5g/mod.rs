@@ -566,11 +566,10 @@ impl Nr5gRateMatchedCode {
     ///
     /// # Panics
     ///
-    /// Panics if `decoded_codeword.len() < full_n` (the codeword is shorter than
-    /// the full mother code length, so systematic column indices may be out of bounds).
+    /// Panics if `decoded_codeword.len() < target_k`.
     pub fn extract_message(&self, decoded_codeword: &BitVec) -> BitVec {
-        let mut msg = BitVec::zeros(self.params.target_k);
-        msg.copy_bits(0, decoded_codeword, 0, self.params.target_k);
+        let mut msg = BitVec::new();
+        self.natural_order_message_into(decoded_codeword, &mut msg);
         msg
     }
 }
