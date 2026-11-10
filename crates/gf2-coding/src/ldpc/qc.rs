@@ -5,7 +5,7 @@
 use super::{DecodeOutcome, DecoderConfig, LaneBackend, LdpcCode, MinSumRule, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use gf2_core::BitVec;
-use gf2_kernels_simd::ldpc_qc::QcKernels;
+use gf2_kernels_simd::ldpc_qc::{QcKernels, QcTerm};
 use std::ops::Range;
 
 /// One circulant of the block description.
@@ -15,8 +15,8 @@ struct BaseEdge {
     shift: usize,
 }
 
-/// Variable lanes `lanes` of a column block accumulate the edges
-/// `seg_edges[edges]` in that order.
+/// Variable lanes `lanes` of a column block accumulate the circulants
+/// `seg_terms[edges]` in that order; the segments of a block cover its lanes.
 struct Segment {
     lanes: Range<usize>,
     edges: Range<usize>,
@@ -37,7 +37,7 @@ struct QcLayout {
     check_offsets: Vec<usize>,
     segments: Vec<Segment>,
     segment_offsets: Vec<usize>,
-    seg_edges: Vec<usize>,
+    seg_terms: Vec<QcTerm>,
     /// (edge, check lane) pairs without an entry, ascending.
     masked: Vec<(usize, usize)>,
     masked_offsets: Vec<usize>,
@@ -157,6 +157,13 @@ impl QcLayout {
             .iter()
             .map(|&edge| masked.partition_point(|&(index, _)| index < edge))
             .collect();
+        let seg_terms = seg_edges
+            .iter()
+            .map(|&index| QcTerm {
+                offset: index * z,
+                shift: check_edges[index].shift,
+            })
+            .collect();
         let max_row_degree = check_offsets
             .windows(2)
             .map(|pair| pair[1] - pair[0])
@@ -171,7 +178,7 @@ impl QcLayout {
             check_offsets,
             segments,
             segment_offsets,
-            seg_edges,
+            seg_terms,
             masked,
             masked_offsets,
             max_row_degree,
@@ -417,18 +424,17 @@ impl QcDecoder {
         for col_block in 0..self.layout.col_blocks {
             let lanes = col_block * z..(col_block + 1) * z;
             let belief = &mut self.belief[lanes.clone()];
-            belief.copy_from_slice(&self.channel[lanes]);
+            let channel = &self.channel[lanes];
             let segments =
                 self.layout.segment_offsets[col_block]..self.layout.segment_offsets[col_block + 1];
             for segment in &self.layout.segments[segments] {
-                for &index in &self.layout.seg_edges[segment.edges.clone()] {
-                    self.kernel.add_rotated(
-                        belief,
-                        segment.lanes.clone(),
-                        &self.check_to_var[index * z..(index + 1) * z],
-                        self.layout.check_edges[index].shift,
-                    );
-                }
+                self.kernel.accumulate_rotated(
+                    belief,
+                    segment.lanes.clone(),
+                    channel,
+                    &self.check_to_var,
+                    &self.layout.seg_terms[segment.edges.clone()],
+                );
             }
         }
     }

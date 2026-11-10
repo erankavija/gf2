@@ -1,5 +1,5 @@
 use gf2_kernels_simd::ldpc_lanes::{lane_check_step_portable, F32x8, LaneMinSumRule};
-use gf2_kernels_simd::ldpc_qc::{detect, QcKernels};
+use gf2_kernels_simd::ldpc_qc::{detect, QcKernels, QcTerm};
 
 fn backends() -> Vec<QcKernels> {
     let mut kernels = vec![QcKernels::portable()];
@@ -143,7 +143,7 @@ fn every_backend_matches_the_check_contract_on_ties() {
 }
 
 #[test]
-fn every_backend_rotates_differences_and_sums_lane_by_lane() {
+fn every_backend_rotates_differences_and_accumulates_in_term_order() {
     let special = [
         0.0,
         -0.0,
@@ -170,19 +170,37 @@ fn every_backend_rotates_differences_and_sums_lane_by_lane() {
                         "z {z}, shift {shift}, lane {i}"
                     );
                 }
-                for lanes in [0..z, 0..z / 2, z / 3..z, shift..shift, shift.min(z - 1)..z] {
-                    let mut sums = block.clone();
-                    kernel.add_rotated(&mut sums, lanes.clone(), &other, shift);
+            }
+
+            // A plane of four circulants; the term lists repeat one, wrap
+            // inside every eight-lane chunk and add in a fixed order.
+            let plane: Vec<f32> = (0..4 * z).map(|i| value(i, 5) * 0.5).collect();
+            let term = |circulant: usize, shift: usize| QcTerm {
+                offset: circulant * z,
+                shift: shift % z,
+            };
+            let lists = [
+                vec![],
+                vec![term(0, 0)],
+                vec![term(1, z - 1), term(0, 3), term(3, z / 2)],
+                vec![term(2, 5), term(2, 5), term(0, 11), term(3, 1), term(1, 7)],
+            ];
+            for terms in &lists {
+                for lanes in [0..z, 0..z / 2, z / 3..z, z / 2..z / 2, (z - 1)..z] {
+                    let mut beliefs = vec![123.0; z];
+                    kernel.accumulate_rotated(&mut beliefs, lanes.clone(), &block, &plane, terms);
                     for j in 0..z {
                         let want = if lanes.contains(&j) {
-                            block[j] + other[(j + z - shift) % z]
+                            terms.iter().fold(block[j], |sum, term| {
+                                sum + plane[term.offset + (j + z - term.shift) % z]
+                            })
                         } else {
-                            block[j]
+                            123.0
                         };
                         assert_eq!(
-                            sums[j].to_bits(),
+                            beliefs[j].to_bits(),
                             want.to_bits(),
-                            "z {z}, shift {shift}, lane {j}"
+                            "z {z}, terms {terms:?}, lanes {lanes:?}, lane {j}"
                         );
                     }
                 }
@@ -203,13 +221,48 @@ fn rotations_panic_before_writing_outside_their_domain() {
             assert!(result.is_err());
         }
         assert!(out.iter().all(|&value| value == 123.0));
-        let mut sums = vec![123.0; 9];
-        for (lanes, shift) in [(0..10, 0), (0..9, 9)] {
+        let mut beliefs = vec![123.0; 9];
+        let plane = vec![0.0; 18];
+        let cases: [(std::ops::Range<usize>, &[f32], QcTerm); 4] = [
+            (
+                0..10,
+                &block,
+                QcTerm {
+                    offset: 0,
+                    shift: 0,
+                },
+            ),
+            (
+                0..9,
+                &block,
+                QcTerm {
+                    offset: 0,
+                    shift: 9,
+                },
+            ),
+            (
+                0..9,
+                &block,
+                QcTerm {
+                    offset: 10,
+                    shift: 0,
+                },
+            ),
+            (
+                0..9,
+                &block[..8],
+                QcTerm {
+                    offset: 0,
+                    shift: 0,
+                },
+            ),
+        ];
+        for (lanes, channel, term) in cases {
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                kernel.add_rotated(&mut sums, lanes.clone(), &block, shift)
+                kernel.accumulate_rotated(&mut beliefs, lanes.clone(), channel, &plane, &[term])
             }));
-            assert!(result.is_err());
+            assert!(result.is_err(), "{lanes:?} {term:?}");
         }
-        assert!(sums.iter().all(|&value| value == 123.0));
+        assert!(beliefs.iter().all(|&value| value == 123.0));
     }
 }

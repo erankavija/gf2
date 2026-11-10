@@ -8,7 +8,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 use crate::ldpc_lanes::LaneMinSumRule;
-use crate::ldpc_qc::{check_block_scalar, QcKernels};
+use crate::ldpc_qc::{check_block_scalar, QcKernels, QcTerm};
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
@@ -19,7 +19,7 @@ pub(crate) fn detect() -> Option<QcKernels> {
     std::arch::is_x86_feature_detected!("avx2").then_some(QcKernels {
         check_block_fn: check_block_avx2,
         rotated_difference_fn: rotated_difference_avx2,
-        add_rotated_fn: add_rotated_avx2,
+        accumulate_rotated_fn: accumulate_rotated_avx2,
     })
 }
 
@@ -48,26 +48,100 @@ fn rotated_difference_avx2(block: &[f32], shift: usize, subtrahend: &[f32], out:
     }
 }
 
-fn add_rotated_avx2(block: &mut [f32], lanes: Range<usize>, messages: &[f32], shift: usize) {
-    let z = block.len();
-    let (start, end) = (lanes.start, lanes.end);
-    let split = shift.clamp(start, end);
+fn accumulate_rotated_avx2(
+    beliefs: &mut [f32],
+    lanes: Range<usize>,
+    channel: &[f32],
+    messages: &[f32],
+    terms: &[QcTerm],
+) {
     // SAFETY: detect publishes this entry only on AVX2 hosts; QcKernels'
-    // public method has checked lanes within 0..z, shift < z and z messages,
-    // so each run and its messages have equal lengths within their slices.
+    // public method has checked z channel values, lanes within 0..z, and
+    // shift < z and offset + z <= messages.len() for every term.
+    unsafe { accumulate_rotated_avx2_unchecked(beliefs, lanes, channel, messages, terms) }
+}
+
+/// Eight lanes from `lane` of one term's rotated messages.
+///
+/// # Safety
+/// The host must support AVX2, `lane + 8 <= z`, `term.shift < z` and
+/// `term.offset + z <= messages.len()`.
+#[target_feature(enable = "avx2")]
+#[inline]
+unsafe fn rotated_lanes(messages: &[f32], z: usize, term: QcTerm, lane: usize) -> __m256 {
+    let first = if lane >= term.shift {
+        lane - term.shift
+    } else {
+        lane + z - term.shift
+    };
+    // SAFETY: the messages of the term are offset..offset + z within the
+    // slice; a contiguous load stays below first + 8 <= z, and a wrapping
+    // chunk reads first + k - z < z for first + k >= z, since z >= 8.
     unsafe {
-        if start < split {
-            add_avx2(
-                &mut block[start..split],
-                &messages[start + z - shift..split + z - shift],
-            );
+        let base = messages.as_ptr().add(term.offset);
+        if first + 8 <= z {
+            _mm256_loadu_ps(base.add(first))
+        } else {
+            let mut gathered = [0f32; 8];
+            for (k, slot) in gathered.iter_mut().enumerate() {
+                let index = first + k;
+                *slot = *base.add(if index >= z { index - z } else { index });
+            }
+            _mm256_loadu_ps(gathered.as_ptr())
         }
-        if split < end {
-            add_avx2(
-                &mut block[split..end],
-                &messages[split - shift..end - shift],
-            );
+    }
+}
+
+/// # Safety
+/// The host must support AVX2 and the arguments must satisfy the checks of
+/// [`QcKernels::accumulate_rotated`].
+#[target_feature(enable = "avx2")]
+unsafe fn accumulate_rotated_avx2_unchecked(
+    beliefs: &mut [f32],
+    lanes: Range<usize>,
+    channel: &[f32],
+    messages: &[f32],
+    terms: &[QcTerm],
+) {
+    let z = beliefs.len();
+    let (mut lane, end) = (lanes.start, lanes.end);
+    // SAFETY: every chunk ends at lane + 8 <= end <= z, within beliefs and
+    // channel, so z >= 8 inside both loops, as rotated_lanes requires.
+    unsafe {
+        // Two independent chunks overlap their chains of additions.
+        while lane + 16 <= end {
+            let mut low = _mm256_loadu_ps(channel.as_ptr().add(lane));
+            let mut high = _mm256_loadu_ps(channel.as_ptr().add(lane + 8));
+            for &term in terms {
+                low = _mm256_add_ps(low, rotated_lanes(messages, z, term, lane));
+                high = _mm256_add_ps(high, rotated_lanes(messages, z, term, lane + 8));
+            }
+            _mm256_storeu_ps(beliefs.as_mut_ptr().add(lane), low);
+            _mm256_storeu_ps(beliefs.as_mut_ptr().add(lane + 8), high);
+            lane += 16;
         }
+        if lane + 8 <= end {
+            let mut sum = _mm256_loadu_ps(channel.as_ptr().add(lane));
+            for &term in terms {
+                sum = _mm256_add_ps(sum, rotated_lanes(messages, z, term, lane));
+            }
+            _mm256_storeu_ps(beliefs.as_mut_ptr().add(lane), sum);
+            lane += 8;
+        }
+    }
+    for (j, (slot, &value)) in
+        (lane..end).zip(beliefs[lane..end].iter_mut().zip(&channel[lane..end]))
+    {
+        let mut sum = value;
+        for term in terms {
+            let index = if j >= term.shift {
+                j - term.shift
+            } else {
+                j + z - term.shift
+            };
+            sum += messages[term.offset + index];
+        }
+        *slot = sum;
     }
 }
 
@@ -95,29 +169,6 @@ unsafe fn difference_avx2(minuend: &[f32], subtrahend: &[f32], out: &mut [f32]) 
         .zip(&subtrahend[full..])
     {
         *slot = a - b;
-    }
-}
-
-/// `sums[i] += addend[i]`.
-///
-/// # Safety
-/// The host must support AVX2 and both slices must have one length.
-#[target_feature(enable = "avx2")]
-unsafe fn add_avx2(sums: &mut [f32], addend: &[f32]) {
-    let full = sums.len() / 8 * 8;
-    // SAFETY: every access is eight f32s below `full`, within both slices of
-    // the caller's common length; `sums` does not alias `addend`.
-    unsafe {
-        for i in (0..full).step_by(8) {
-            let at = sums.as_mut_ptr().add(i);
-            _mm256_storeu_ps(
-                at,
-                _mm256_add_ps(_mm256_loadu_ps(at), _mm256_loadu_ps(addend.as_ptr().add(i))),
-            );
-        }
-    }
-    for (slot, &value) in sums[full..].iter_mut().zip(&addend[full..]) {
-        *slot += value;
     }
 }
 

@@ -8,14 +8,24 @@ use std::ops::Range;
 
 type CheckBlockFn = fn(LaneMinSumRule, &[f32], &mut [f32], usize, usize);
 type RotatedDifferenceFn = fn(&[f32], usize, &[f32], &mut [f32]);
-type AddRotatedFn = fn(&mut [f32], Range<usize>, &[f32], usize);
+type AccumulateRotatedFn = fn(&mut [f32], Range<usize>, &[f32], &[f32], &[QcTerm]);
 
 /// Safe QC kernels, with a portable implementation on every target.
 #[derive(Clone, Copy)]
 pub struct QcKernels {
     pub(crate) check_block_fn: CheckBlockFn,
     pub(crate) rotated_difference_fn: RotatedDifferenceFn,
-    pub(crate) add_rotated_fn: AddRotatedFn,
+    pub(crate) accumulate_rotated_fn: AccumulateRotatedFn,
+}
+
+/// One circulant's check-to-variable messages in a variable accumulation:
+/// `z` messages from `offset` of the message plane, rotated by `shift`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct QcTerm {
+    /// Index of the circulant's first message in the message plane.
+    pub offset: usize,
+    /// Lane `j` reads message `(j - shift) mod z`.
+    pub shift: usize,
 }
 
 impl QcKernels {
@@ -27,7 +37,7 @@ impl QcKernels {
                 check_block_scalar(rule, inputs, outputs, degree, z, 0);
             },
             rotated_difference_fn: rotated_difference_runs,
-            add_rotated_fn: add_rotated_runs,
+            accumulate_rotated_fn: accumulate_rotated_runs,
         }
     }
 
@@ -79,30 +89,48 @@ impl QcKernels {
         (self.rotated_difference_fn)(block, shift, subtrahend, out);
     }
 
-    /// Adds `messages[(j - shift) mod z]` to `block[j]` for each lane `j` of
-    /// `lanes`, with `z = block.len()`: one circulant's check-to-variable
-    /// messages into the beliefs of its column block. Each lane is one `f32`
-    /// addition.
+    /// Writes `beliefs[j] = channel[j] + Σ_t messages[t.offset + (j - t.shift) mod z]`
+    /// for each lane `j` of `lanes`, with `z = beliefs.len()`, adding the
+    /// terms in their order: the beliefs of one column-block segment from its
+    /// channel values and the check-to-variable messages of its circulants, in
+    /// the segment's canonical accumulation order. Lanes outside `lanes` are
+    /// unchanged. Takes O(|lanes| · |terms|) time.
     ///
     /// # Panics
     ///
-    /// Panics before writing unless `messages` holds `z` values, `shift < z`
-    /// and `lanes` lies within `0..z`.
-    pub fn add_rotated(
+    /// Panics before writing unless `channel` holds `z` values, `lanes` lies
+    /// within `0..z`, and every term has `shift < z` and
+    /// `offset + z <= messages.len()`.
+    pub fn accumulate_rotated(
         &self,
-        block: &mut [f32],
+        beliefs: &mut [f32],
         lanes: Range<usize>,
+        channel: &[f32],
         messages: &[f32],
-        shift: usize,
+        terms: &[QcTerm],
     ) {
-        let z = block.len();
-        assert!(shift < z, "QC shift {shift} outside lifting size {z}");
-        assert_eq!(messages.len(), z, "QC message length");
+        let z = beliefs.len();
+        assert_eq!(channel.len(), z, "QC channel length");
         assert!(
             lanes.start <= lanes.end && lanes.end <= z,
             "QC lanes {lanes:?} outside lifting size {z}"
         );
-        (self.add_rotated_fn)(block, lanes, messages, shift);
+        for term in terms {
+            assert!(
+                term.shift < z,
+                "QC shift {} outside lifting size {z}",
+                term.shift
+            );
+            assert!(
+                term.offset
+                    .checked_add(z)
+                    .is_some_and(|end| end <= messages.len()),
+                "QC messages from {} outside a plane of {}",
+                term.offset,
+                messages.len()
+            );
+        }
+        (self.accumulate_rotated_fn)(beliefs, lanes, channel, messages, terms);
     }
 }
 
@@ -130,26 +158,38 @@ fn rotated_difference_runs(block: &[f32], shift: usize, subtrahend: &[f32], out:
     }
 }
 
-/// [`QcKernels::add_rotated`] as at most two contiguous runs: lanes below
-/// `shift` read messages that wrap.
-fn add_rotated_runs(block: &mut [f32], lanes: Range<usize>, messages: &[f32], shift: usize) {
-    let z = block.len();
+/// [`QcKernels::accumulate_rotated`] one term at a time, each in at most two
+/// contiguous runs: lanes below `shift` read messages that wrap. Every lane
+/// still adds its terms in order.
+fn accumulate_rotated_runs(
+    beliefs: &mut [f32],
+    lanes: Range<usize>,
+    channel: &[f32],
+    messages: &[f32],
+    terms: &[QcTerm],
+) {
+    let z = beliefs.len();
     let (start, end) = (lanes.start, lanes.end);
-    let split = shift.clamp(start, end);
-    if start < split {
-        for (slot, &value) in block[start..split]
-            .iter_mut()
-            .zip(&messages[start + z - shift..split + z - shift])
-        {
-            *slot += value;
+    beliefs[start..end].copy_from_slice(&channel[start..end]);
+    for term in terms {
+        let messages = &messages[term.offset..term.offset + z];
+        let shift = term.shift;
+        let split = shift.clamp(start, end);
+        if start < split {
+            for (slot, &value) in beliefs[start..split]
+                .iter_mut()
+                .zip(&messages[start + z - shift..split + z - shift])
+            {
+                *slot += value;
+            }
         }
-    }
-    if split < end {
-        for (slot, &value) in block[split..end]
-            .iter_mut()
-            .zip(&messages[split - shift..end - shift])
-        {
-            *slot += value;
+        if split < end {
+            for (slot, &value) in beliefs[split..end]
+                .iter_mut()
+                .zip(&messages[split - shift..end - shift])
+            {
+                *slot += value;
+            }
         }
     }
 }
