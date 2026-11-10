@@ -92,6 +92,47 @@ unsafe fn rotated_lanes(messages: &[f32], z: usize, term: QcTerm, lane: usize) -
     }
 }
 
+/// The first `count` lanes from `lane` of one term's rotated messages, the
+/// lanes of `mask`; the other lanes are zero.
+///
+/// # Safety
+/// The host must support AVX2, `0 < count < 8`, `lane + count <= z`,
+/// `mask` holds exactly the first `count` lanes, `term.shift < z` and
+/// `term.offset + z <= messages.len()`.
+#[target_feature(enable = "avx2")]
+#[inline]
+unsafe fn rotated_tail(
+    messages: &[f32],
+    z: usize,
+    term: QcTerm,
+    lane: usize,
+    count: usize,
+    mask: __m256i,
+) -> __m256 {
+    let first = if lane >= term.shift {
+        lane - term.shift
+    } else {
+        lane + z - term.shift
+    };
+    // SAFETY: the term's messages are offset..offset + z within the slice.
+    // A masked load reads only its first count lanes, below first + count
+    // <= z; a wrapping tail reads first + k - z < z for first + k >= z,
+    // since first < z and k < count <= z.
+    unsafe {
+        let base = messages.as_ptr().add(term.offset);
+        if first + count <= z {
+            _mm256_maskload_ps(base.add(first), mask)
+        } else {
+            let mut gathered = [0f32; 8];
+            for (k, slot) in gathered[..count].iter_mut().enumerate() {
+                let index = first + k;
+                *slot = *base.add(if index >= z { index - z } else { index });
+            }
+            _mm256_loadu_ps(gathered.as_ptr())
+        }
+    }
+}
+
 /// # Safety
 /// The host must support AVX2 and the arguments must satisfy the checks of
 /// [`QcKernels::accumulate_rotated`].
@@ -106,7 +147,8 @@ unsafe fn accumulate_rotated_avx2_unchecked(
     let z = beliefs.len();
     let (mut lane, end) = (lanes.start, lanes.end);
     // SAFETY: every chunk ends at lane + 8 <= end <= z, within beliefs and
-    // channel, so z >= 8 inside both loops, as rotated_lanes requires.
+    // channel, so z >= 8 inside both loops, as rotated_lanes requires; the
+    // tail's masked channel load reads count lanes from lane, below end.
     unsafe {
         // Two independent chunks overlap their chains of additions.
         while lane + 16 <= end {
@@ -128,20 +170,22 @@ unsafe fn accumulate_rotated_avx2_unchecked(
             _mm256_storeu_ps(beliefs.as_mut_ptr().add(lane), sum);
             lane += 8;
         }
-    }
-    for (j, (slot, &value)) in
-        (lane..end).zip(beliefs[lane..end].iter_mut().zip(&channel[lane..end]))
-    {
-        let mut sum = value;
-        for term in terms {
-            let index = if j >= term.shift {
-                j - term.shift
-            } else {
-                j + z - term.shift
-            };
-            sum += messages[term.offset + index];
+        // The last 1..7 lanes, loaded under a mask and written through a
+        // stack array: a masked store is slow on Zen 3.
+        let count = end - lane;
+        if count > 0 {
+            let mask = _mm256_cmpgt_epi32(
+                _mm256_set1_epi32(count as i32),
+                _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7),
+            );
+            let mut sum = _mm256_maskload_ps(channel.as_ptr().add(lane), mask);
+            for &term in terms {
+                sum = _mm256_add_ps(sum, rotated_tail(messages, z, term, lane, count, mask));
+            }
+            let mut out = [0f32; 8];
+            _mm256_storeu_ps(out.as_mut_ptr(), sum);
+            beliefs[lane..end].copy_from_slice(&out[..count]);
         }
-        *slot = sum;
     }
 }
 
@@ -172,6 +216,12 @@ unsafe fn difference_avx2(minuend: &[f32], subtrahend: &[f32], out: &mut [f32]) 
     }
 }
 
+/// Rule kinds of [`check_groups`], so each rule's group loop is compiled
+/// without a per-edge rule branch.
+const PLAIN: u8 = 0;
+const NORMALIZED: u8 = 1;
+const OFFSET: u8 = 2;
+
 /// # Safety
 /// The host must support AVX2 and both slices must contain degree * z values.
 #[target_feature(enable = "avx2")]
@@ -186,6 +236,34 @@ unsafe fn check_block_avx2_unchecked(
         check_block_scalar(rule, inputs, outputs, degree, z, 0);
         return;
     }
+    // SAFETY: the caller's contract is check_groups' contract.
+    unsafe {
+        match rule {
+            LaneMinSumRule::Plain => check_groups::<PLAIN>(0.0, inputs, outputs, degree, z),
+            LaneMinSumRule::Normalized(alpha) => {
+                check_groups::<NORMALIZED>(alpha, inputs, outputs, degree, z);
+            }
+            LaneMinSumRule::Offset(beta) => {
+                check_groups::<OFFSET>(beta, inputs, outputs, degree, z);
+            }
+        }
+    }
+}
+
+/// Every group of eight lifted checks under rule `RULE` with parameter
+/// `parameter`.
+///
+/// # Safety
+/// The host must support AVX2, `degree >= 2`, and both slices must contain
+/// degree * z values.
+#[target_feature(enable = "avx2")]
+unsafe fn check_groups<const RULE: u8>(
+    parameter: f32,
+    inputs: &[f32],
+    outputs: &mut [f32],
+    degree: usize,
+    z: usize,
+) {
     let full = z / 8;
     let tail = z % 8;
     // SAFETY: slices have degree * z elements. A full group accesses eight
@@ -193,25 +271,31 @@ unsafe fn check_block_avx2_unchecked(
     // group accesses only its `tail` unmasked lanes, lane + tail == z. Unaligned
     // accesses are permitted and the mutable output cannot alias the input.
     unsafe {
+        let parameter = _mm256_set1_ps(parameter);
         for group in 0..full {
-            check_group(rule, inputs, outputs, degree, z, group * 8, None);
+            check_group::<RULE>(parameter, inputs, outputs, degree, z, group * 8, None);
         }
         if tail > 0 {
             let lanes = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
             let mask = _mm256_cmpgt_epi32(_mm256_set1_epi32(tail as i32), lanes);
-            check_group(rule, inputs, outputs, degree, z, full * 8, Some(mask));
+            check_group::<RULE>(parameter, inputs, outputs, degree, z, full * 8, Some(mask));
         }
     }
 }
 
 /// Eight lifted checks from `lane`, only the lanes of `mask` when given.
 ///
+/// The minima are never NaN, so the rule's product with a sign of ±1 is the
+/// sign-bit XOR applied here, and the offset floor, never NaN either, is
+/// taken once per minimum instead of once per edge.
+///
 /// # Safety
 /// The host must support AVX2; every unmasked lane `lane + k` of every edge
 /// lies within both slices.
 #[target_feature(enable = "avx2")]
-unsafe fn check_group(
-    rule: LaneMinSumRule,
+#[inline]
+unsafe fn check_group<const RULE: u8>(
+    parameter: __m256,
     inputs: &[f32],
     outputs: &mut [f32],
     degree: usize,
@@ -244,22 +328,24 @@ unsafe fn check_group(
             min2 = _mm256_min_ps(_mm256_max_ps(min1, magnitude), min2);
             min1 = _mm256_min_ps(magnitude, min1);
         }
-        let product = _mm256_or_ps(_mm256_set1_ps(1.0), signs);
+        let (low, high) = if RULE == OFFSET {
+            (
+                _mm256_max_ps(_mm256_sub_ps(min1, parameter), zero),
+                _mm256_max_ps(_mm256_sub_ps(min2, parameter), zero),
+            )
+        } else {
+            (min1, min2)
+        };
         for edge in 0..degree {
             let value = load(edge);
             let negative = _mm256_cmp_ps(value, zero, _CMP_NGE_UQ);
-            let sign = _mm256_xor_ps(product, _mm256_and_ps(negative, sign_bit));
+            let sign = _mm256_xor_ps(signs, _mm256_and_ps(negative, sign_bit));
             let at_min = _mm256_cmp_ps(_mm256_andnot_ps(sign_bit, value), min1, _CMP_EQ_OQ);
-            let magnitude = _mm256_blendv_ps(min1, min2, at_min);
-            let out = match rule {
-                LaneMinSumRule::Plain => _mm256_mul_ps(sign, magnitude),
-                LaneMinSumRule::Normalized(alpha) => {
-                    _mm256_mul_ps(_mm256_set1_ps(alpha), _mm256_mul_ps(sign, magnitude))
-                }
-                LaneMinSumRule::Offset(beta) => _mm256_mul_ps(
-                    sign,
-                    _mm256_max_ps(_mm256_sub_ps(magnitude, _mm256_set1_ps(beta)), zero),
-                ),
+            let signed = _mm256_xor_ps(sign, _mm256_blendv_ps(low, high, at_min));
+            let out = if RULE == NORMALIZED {
+                _mm256_mul_ps(parameter, signed)
+            } else {
+                signed
             };
             let at = outputs.as_mut_ptr().add(edge * z + lane);
             match mask {
