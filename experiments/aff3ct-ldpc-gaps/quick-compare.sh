@@ -104,16 +104,17 @@ for row in rows:
     if "run" in row:
         run = row["run"]
         cells[(run["code"], run["workers"], run["batch"])].append((row["side"], run))
-print(f"host {sys.argv[2]}; ratio = best gf2 frames/s / best AFF3CT frames/s")
+print(f"host {sys.argv[2]}; FER = frames with an information-bit error over the decoded frames;")
+print("ratio = best gf2 frames/s / best AFF3CT frames/s")
 for (code, workers, batch), runs in cells.items():
     print(f"\n{code}  workers {workers}  batch {batch}")
-    print(f"  {'side':7} {'decoder':44} {'frames/s':>10} {'info Mb/s':>10} {'errors':>9}")
+    print(f"  {'side':7} {'decoder':44} {'FER':>9} {'frames/s':>10} {'info Mb/s':>10}")
     best = {}
     for side, run in runs:
         fps = run["frames_per_second"]
         best[side] = max(best.get(side, 0.0), fps)
         errors = f"{run['frame_errors']}/{run['quality_frames']}"
-        print(f"  {side:7} {run['decoder'][:44]:44} {fps:10.1f} {run['info_mbps']:10.2f} {errors:>9}")
+        print(f"  {side:7} {run['decoder'][:44]:44} {errors:>9} {fps:10.1f} {run['info_mbps']:10.2f}")
     if "gf2" in best and "aff3ct" in best:
         print(f"  ratio {best['gf2'] / best['aff3ct']:.3f}")
 for row in failed:

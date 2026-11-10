@@ -227,10 +227,22 @@ impl BatchWorker {
     }
 }
 
-/// One worker's reused [`QcDecoder`] and buffers, decoding a batch one frame
+/// A decoder that decodes one frame per call.
+pub trait FrameDecoder {
+    /// Decodes `llrs` with at most `cap` iterations into `codeword`.
+    fn decode_frame(&mut self, llrs: &[Llr], cap: usize, codeword: &mut BitVec) -> DecodeOutcome;
+}
+
+impl FrameDecoder for QcDecoder {
+    fn decode_frame(&mut self, llrs: &[Llr], cap: usize, codeword: &mut BitVec) -> DecodeOutcome {
+        self.decode_codeword_into(llrs, cap, codeword)
+    }
+}
+
+/// One worker's reused frame decoder and buffers, decoding a batch one frame
 /// at a time with the conversion and extraction stages of [`BatchWorker`].
-pub struct QcWorker {
-    decoder: QcDecoder,
+pub struct FrameWorker<D> {
+    decoder: D,
     cap: usize,
     packed: Vec<Llr>,
     word: BitVec,
@@ -240,30 +252,12 @@ pub struct QcWorker {
     pub decisions: Vec<u8>,
 }
 
-impl QcWorker {
-    /// Builds a worker for batches of `batch` frames of `code`, on the
-    /// portable kernel when `portable` is set.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error when the code retains no QC structure the decoder
-    /// accepts.
-    pub fn new(
-        code: &LdpcCode,
-        config: DecoderConfig,
-        cap: usize,
-        batch: usize,
-        portable: bool,
-    ) -> Result<Self, String> {
-        let decoder = QcDecoder::new(code, config)
-            .ok_or("the code retains no QC structure the QC decoder accepts")?;
-        let decoder = if portable {
-            decoder.with_portable_kernel()
-        } else {
-            decoder
-        };
+impl<D: FrameDecoder> FrameWorker<D> {
+    /// Wraps `decoder` of `code` for batches of `batch` frames.
+    #[must_use]
+    pub fn new(decoder: D, code: &LdpcCode, cap: usize, batch: usize) -> Self {
         let (n, k) = (code.n(), code.k());
-        Ok(Self {
+        Self {
             decoder,
             cap,
             packed: vec![Llr::zero(); batch * n],
@@ -271,13 +265,13 @@ impl QcWorker {
             n,
             k,
             decisions: vec![0; batch * k],
-        })
+        }
     }
 
-    /// The backend of the decoder's kernel.
+    /// The wrapped decoder.
     #[must_use]
-    pub fn backend(&self) -> LaneBackend {
-        self.decoder.backend()
+    pub fn decoder(&self) -> &D {
+        &self.decoder
     }
 
     /// Decodes every frame of `llrs`, `n` values per frame, and extracts the
@@ -297,13 +291,36 @@ impl QcWorker {
             .zip(self.decisions.chunks_exact_mut(self.k))
         {
             self.decoder
-                .decode_codeword_into(black_box(frame), self.cap, &mut self.word);
+                .decode_frame(black_box(frame), self.cap, &mut self.word);
             for (position, bit) in decided.iter_mut().enumerate() {
                 *bit = u8::from(self.word.get(position));
             }
         }
         black_box(&self.decisions);
     }
+}
+
+/// A [`FrameWorker`] on [`QcDecoder`], on the portable kernel when `portable`
+/// is set.
+///
+/// # Errors
+///
+/// Returns an error when the code retains no QC structure the decoder accepts.
+pub fn qc_worker(
+    code: &LdpcCode,
+    config: DecoderConfig,
+    cap: usize,
+    batch: usize,
+    portable: bool,
+) -> Result<FrameWorker<QcDecoder>, String> {
+    let decoder = QcDecoder::new(code, config)
+        .ok_or("the code retains no QC structure the QC decoder accepts")?;
+    let decoder = if portable {
+        decoder.with_portable_kernel()
+    } else {
+        decoder
+    };
+    Ok(FrameWorker::new(decoder, code, cap, batch))
 }
 
 /// The block description of the comparison code a case names: DVB-T2 R1/2
@@ -703,7 +720,7 @@ pub fn run_with_policy(arm_name: &str, policy: impl ArmPolicy) -> Result<(), Str
 #[cfg(test)]
 mod tests {
     use super::{
-        corpus_structure, probe_stages, BatchWorker, NonZeroUsize, QcWorker, LANES, ROUTE_WORKERS,
+        corpus_structure, probe_stages, qc_worker, BatchWorker, NonZeroUsize, LANES, ROUTE_WORKERS,
     };
     use crate::reference::{config, Gf2Worker};
     use gf2_coding::ldpc::{BatchRoute, LaneBackend, LdpcCode, LdpcEncoder, QuasiCyclicLdpc};
@@ -789,7 +806,7 @@ mod tests {
     }
 
     #[test]
-    fn the_qc_worker_decodes_the_single_frame_decisions() {
+    fn the_qc_frame_worker_decodes_the_single_frame_decisions() {
         let code = code();
         let decoder_config = config(0.75, true);
         for batch in [1, LANES + 1] {
@@ -798,14 +815,14 @@ mod tests {
             reference.decode_batch(&llrs);
             for portable in [true, false] {
                 let mut worker =
-                    QcWorker::new(&code, decoder_config, CAP, batch, portable).expect("QC");
+                    qc_worker(&code, decoder_config, CAP, batch, portable).expect("QC");
                 worker.decode_batch(&llrs);
                 worker.decode_batch(&llrs);
                 assert_eq!(worker.decisions, reference.decisions, "batch {batch}");
             }
         }
         let plain = LdpcCode::from_edges(3, 6, &[(0, 0), (1, 1), (2, 2)]);
-        assert!(QcWorker::new(&plain, decoder_config, CAP, 1, true).is_err());
+        assert!(qc_worker(&plain, decoder_config, CAP, 1, true).is_err());
     }
 
     #[test]

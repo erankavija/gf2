@@ -1,94 +1,129 @@
 //! Throughput of one gf2 NMS decoder route over a recorded bundle.
 //!
 //! `gf2-fast-bench BUNDLE CODE KIND SIMD PRECISION WORKERS BATCH CALLS` prints
-//! one JSON line through [`aff3ct_ldpc_gaps::fast`]. `KIND` is `single`
-//! (single-frame route), `lanes` (inter-frame lane route), `qc` (`QcDecoder`,
-//! one frame at a time) or `default` (`LdpcBatchDecoder` as shipped). `SIMD` is
-//! `none` or `avx2` for `lanes` and `qc`, `none` for `single` and `auto` for
-//! `default`; `PRECISION` is `f32`. The code retains its block description
-//! after an exact parity-check comparison. The quality pass decodes the
-//! bundle's whole batches untimed.
+//! one JSON line through [`aff3ct_ldpc_gaps::fast`]. `KIND` and `SIMD` name a
+//! [`Route`]; `PRECISION` is `f32`. The code retains its corpus block
+//! description after an exact parity-check comparison. The quality pass
+//! decodes the bundle's whole batches untimed.
 
 use aff3ct_ldpc_gaps::batch::{
-    config, structured_corpus_code, ArmPolicy, BatchRoute, BatchWorker, LaneBackend, QcWorker,
+    config, qc_worker, structured_corpus_code, ArmPolicy, BatchRoute, BatchWorker, FrameDecoder,
+    FrameWorker, LaneBackend,
 };
 use aff3ct_ldpc_gaps::fast::{self, FastCell, ITERATION_CAP, NORMALIZATION};
 use gf2_coding::ldpc::{DecodedWord, LdpcBatchDecoder, LdpcCode};
 use std::num::NonZeroUsize;
 use std::process::ExitCode;
 
-enum Worker {
-    Batch(Box<BatchWorker>),
-    Qc(Box<QcWorker>),
+/// A gf2 decoder route, as `KIND SIMD` names it.
+#[derive(Clone, Copy, Debug)]
+enum Route {
+    /// `single none`: the batch decoder pinned to the single-frame route.
+    Single,
+    /// `lanes none|avx2`: the batch decoder pinned to the inter-frame lanes.
+    Lanes(LaneBackend),
+    /// `qc none|avx2`: `QcDecoder`, one frame at a time.
+    Qc(LaneBackend),
+    /// `default auto`: `LdpcBatchDecoder` of default construction.
+    Default,
 }
 
-impl Worker {
-    fn decode(&mut self, llrs: &[f32], workers: NonZeroUsize) {
-        match self {
-            Self::Batch(worker) => worker.decode_batch_with_workers(llrs, workers),
-            Self::Qc(worker) => worker.decode_batch(llrs),
+impl Route {
+    fn parse(kind: &str, simd: &str) -> Result<Self, String> {
+        let backend = || match simd {
+            "none" => Ok(LaneBackend::Portable),
+            "avx2" => Ok(LaneBackend::Avx2),
+            other => Err(format!("SIMD for {kind} is none or avx2, not {other}")),
+        };
+        match (kind, simd) {
+            ("single", "none") => Ok(Self::Single),
+            ("lanes", _) => Ok(Self::Lanes(backend()?)),
+            ("qc", _) => Ok(Self::Qc(backend()?)),
+            ("default", "auto") => Ok(Self::Default),
+            _ => Err(format!("no gf2 route {kind} with SIMD {simd}")),
         }
     }
 
-    fn decisions(&self) -> &[u8] {
+    fn build(self, code: &LdpcCode, batch: usize) -> Result<Box<dyn Worker>, String> {
+        let decoder_config = config(NORMALIZATION, true);
+        let cap = ITERATION_CAP as usize;
+        let batch_worker = |decoder| -> Result<Box<dyn Worker>, String> {
+            Ok(Box::new(BatchWorker::from_decoder(code, batch, decoder)?))
+        };
         match self {
-            Self::Batch(worker) => &worker.decisions,
-            Self::Qc(worker) => &worker.decisions,
-        }
-    }
-}
-
-fn build(cell: &FastCell, code: &LdpcCode, batch: usize) -> Result<Worker, String> {
-    let decoder_config = config(NORMALIZATION, true);
-    let cap = ITERATION_CAP as usize;
-    let pinned = |route: BatchRoute| -> Result<Worker, String> {
-        let decoder = route.build_decoder(code, decoder_config, cap, batch)?;
-        Ok(Worker::Batch(Box::new(BatchWorker::from_decoder(
-            code, batch, decoder,
-        )?)))
-    };
-    let backend = match cell.simd.as_str() {
-        "none" => LaneBackend::Portable,
-        "avx2" => LaneBackend::Avx2,
-        "auto" => LaneBackend::detected(),
-        other => return Err(format!("SIMD is none, avx2 or auto, not {other}")),
-    };
-    match (cell.kind.as_str(), cell.simd.as_str()) {
-        ("single", "none") => pinned(BatchRoute::SingleFrame),
-        ("lanes", "none" | "avx2") => pinned(BatchRoute::Lane(backend)),
-        ("qc", "none" | "avx2") => {
-            let worker = QcWorker::new(code, decoder_config, cap, batch, cell.simd == "none")?;
-            if worker.backend() != backend {
-                return Err(format!(
-                    "the QC decoder runs {:?}, not {backend:?}",
-                    worker.backend()
-                ));
+            Self::Single => batch_worker(BatchRoute::SingleFrame.build_decoder(
+                code,
+                decoder_config,
+                cap,
+                batch,
+            )?),
+            Self::Lanes(backend) => batch_worker(BatchRoute::Lane(backend).build_decoder(
+                code,
+                decoder_config,
+                cap,
+                batch,
+            )?),
+            Self::Qc(backend) => {
+                let worker = qc_worker(
+                    code,
+                    decoder_config,
+                    cap,
+                    batch,
+                    backend == LaneBackend::Portable,
+                )?;
+                let running = worker.decoder().backend();
+                if running != backend {
+                    return Err(format!("the QC decoder runs {running:?}, not {backend:?}"));
+                }
+                Ok(Box::new(worker))
             }
-            Ok(Worker::Qc(Box::new(worker)))
+            Self::Default => batch_worker(LdpcBatchDecoder::new(
+                code.clone(),
+                decoder_config,
+                cap,
+                DecodedWord::Codeword,
+            )),
         }
-        ("default", "auto") => {
-            let decoder =
-                LdpcBatchDecoder::new(code.clone(), decoder_config, cap, DecodedWord::Codeword);
-            Ok(Worker::Batch(Box::new(BatchWorker::from_decoder(
-                code, batch, decoder,
-            )?)))
-        }
-        (kind, simd) => Err(format!("no gf2 route {kind} with SIMD {simd}")),
+    }
+}
+
+/// One worker's decoder and its last batch's information-window decisions.
+trait Worker {
+    fn decode(&mut self, llrs: &[f32], workers: NonZeroUsize);
+    fn decisions(&self) -> &[u8];
+}
+
+impl Worker for BatchWorker {
+    fn decode(&mut self, llrs: &[f32], workers: NonZeroUsize) {
+        self.decode_batch_with_workers(llrs, workers);
+    }
+    fn decisions(&self) -> &[u8] {
+        &self.decisions
+    }
+}
+
+impl<D: FrameDecoder> Worker for FrameWorker<D> {
+    fn decode(&mut self, llrs: &[f32], _: NonZeroUsize) {
+        self.decode_batch(llrs);
+    }
+    fn decisions(&self) -> &[u8] {
+        &self.decisions
     }
 }
 
 fn run(args: &[String]) -> Result<(), String> {
     let cell = FastCell::parse(args)?;
+    let route = Route::parse(&cell.kind, &cell.simd)?;
     if cell.precision != "f32" {
         return Err(format!("gf2 decodes f32, not {}", cell.precision));
     }
     let workload = cell.load()?;
     let code = structured_corpus_code(&workload)?;
-    let (n, k) = (workload.manifest.n, workload.manifest.k);
+    let k = workload.manifest.k;
     let workers = NonZeroUsize::new(cell.workers).expect("a positive worker count");
 
     let quality_frames = workload.manifest.frames / cell.batch * cell.batch;
-    let mut quality = build(&cell, &code, cell.batch)?;
+    let mut quality = route.build(&code, cell.batch)?;
     let mut decisions = Vec::with_capacity(quality_frames * k);
     for first in (0..quality_frames).step_by(cell.batch) {
         quality.decode(workload.frames(first, cell.batch), workers);
@@ -98,9 +133,8 @@ fn run(args: &[String]) -> Result<(), String> {
     drop(quality);
 
     let llrs = workload.frames(0, cell.batch);
-    debug_assert_eq!(llrs.len(), cell.batch * n);
     let median_call_ns = cell.median_call_ns(
-        |_| build(&cell, &code, cell.batch),
+        |_| route.build(&code, cell.batch),
         |worker| worker.decode(llrs, workers),
     )?;
     let decoder = format!("gf2-{}-{}", cell.kind, cell.simd);
