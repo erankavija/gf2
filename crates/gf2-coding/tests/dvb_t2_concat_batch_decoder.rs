@@ -15,6 +15,7 @@ use gf2_coding::ldpc::dvb_t2::concat::{DvbT2Concat, DvbT2ConcatBatchDecoder};
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::llr::Llr;
+use gf2_coding::test_support::ldpc_batch_route_of;
 use gf2_coding::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
 use gf2_coding::tuning::{self, DecodeSelectors};
@@ -77,7 +78,10 @@ fn assert_batch_contract(lane_min_frames: usize) {
     for (selectors, backend, full_wave) in setups {
         let mut decoder = decoder_on(backend, &codec, selectors);
         let lanes = decoder.batch_granularity();
-        assert_eq!(decoder.ldpc().batch_route(lanes), full_wave);
+        assert_eq!(
+            decoder.ldpc().batch_route(lanes),
+            ldpc_batch_route_of(&codec.ldpc_code(), full_wave)
+        );
 
         let frames = noisy_frames(&codec, 2 * lanes + 1);
         batch_soft_decoder_contract(

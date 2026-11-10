@@ -11,11 +11,11 @@ use std::collections::BTreeMap;
 use std::path::Path;
 
 use gf2_coding::ldpc::{
-    BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, EdgeLayout, LaneBackend,
-    LdpcBatchDecoder, LdpcCode, QuasiCyclicLdpc,
+    decide_batch_route, BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, EdgeLayout,
+    LaneBackend, LaneCapability, LdpcBatchDecoder, LdpcCode, QcCapability, QuasiCyclicLdpc,
 };
 use gf2_coding::test_support;
-use gf2_coding::tuning::{CodingTuning, CodingTuningCodec, DecodeSelectors, QcRouteCase};
+use gf2_coding::tuning::{CodingTuning, CodingTuningCodec, DecodeSelectors, QcRouteBounds};
 use gf2_core::tuning::{MeasurementProvenance, SectionCodec, TuningSection};
 use gf2_kernels_simd::ldpc_lanes::LANES;
 use std::num::NonZeroUsize;
@@ -90,7 +90,8 @@ fn measured_decode() -> (DecodeSelectors, Vec<String>) {
 }
 
 /// The route [`gf2_coding::ldpc::decide_batch_route`] documents for a
-/// min-sum wave of `frames` frames on a code of `edges` edges.
+/// min-sum wave of `frames` frames at one worker on a code of `edges` edges
+/// without QC structure.
 fn documented_route(
     decode: &DecodeSelectors,
     backend: LaneBackend,
@@ -149,8 +150,8 @@ fn the_installed_envelope_routes_each_side_of_each_stated_selector() {
                 ),
                 route(LANES, max_edges),
             ),
-            // The QC route's own test covers its cases.
-            "granules_per_task" | "qc_route_cases" => continue,
+            // The QC route's own test covers its bounds.
+            "granules_per_task" | "qc_route" => continue,
             other => panic!("{other} is no decode selector"),
         };
         assert_eq!(
@@ -175,27 +176,43 @@ fn a_decode_under_the_installed_envelope_equals_the_single_frame_decoder() {
 
     let code = test_support::ldpc_batch_code();
     let edges = EdgeLayout::from_parity_check(code.parity_check_matrix()).edges();
-    let expected: Vec<serde_json::Value> = (0..=LANES)
+    let backend = LaneBackend::detected();
+    let qc = QcCapability::Present {
+        lifting_size: code.quasi_cyclic().unwrap().expansion_factor(),
+        backend,
+    };
+    let unstructured: Vec<serde_json::Value> = (0..=LANES)
+        .map(|frames| fresh::route_report(documented_route(&decode, backend, frames, edges)))
+        .collect();
+    let structured: Vec<serde_json::Value> = (0..=LANES)
         .map(|frames| {
-            fresh::route_report(documented_route(
+            fresh::route_report(decide_batch_route(
                 &decode,
-                LaneBackend::detected(),
+                DecoderConfig::default().algorithm(),
+                LaneCapability::Present(backend),
+                qc,
                 frames,
                 edges,
+                NonZeroUsize::MIN,
             ))
         })
         .collect();
     assert_eq!(
-        result["wave_routes"],
-        serde_json::Value::from(expected.clone())
+        result["wave_routes"]["unstructured"],
+        serde_json::Value::from(unstructured.clone())
     );
-    // The suite's batch sizes reach both routes, so the contract held on each.
-    for route in [
-        BatchRoute::SingleFrame,
-        BatchRoute::Lane(LaneBackend::detected()),
+    assert_eq!(
+        result["wave_routes"]["structured"],
+        serde_json::Value::from(structured.clone())
+    );
+    // The suite's batch sizes reach each route, so the contract held on each.
+    for (routes, route) in [
+        (&unstructured, BatchRoute::SingleFrame),
+        (&unstructured, BatchRoute::Lane(backend)),
+        (&structured, BatchRoute::Qc(backend)),
     ] {
         assert!(
-            expected[1..].contains(&fresh::route_report(route)),
+            routes[1..].contains(&fresh::route_report(route)),
             "{route:?}"
         );
     }
@@ -250,8 +267,9 @@ fn fresh_tuning_process_child() {
 fn committed_lane_domain_rejects_multicore_loss_configurations() {
     let (selectors, _) = measured_decode();
     for code in [
-        test_support::ldpc_batch_code(),
-        gf2_coding::ldpc::LdpcCode::dvb_t2_normal(gf2_coding::CodeRate::Rate1_2),
+        fresh::unstructured_batch_code(),
+        gf2_coding::ldpc::LdpcCode::dvb_t2_normal(gf2_coding::CodeRate::Rate1_2)
+            .without_quasi_cyclic(),
     ] {
         let decoder = LdpcBatchDecoder::with_selectors(
             code,
@@ -271,42 +289,25 @@ fn committed_lane_domain_rejects_multicore_loss_configurations() {
 }
 
 #[test]
-fn the_committed_envelope_states_the_qc_route_cases_of_qc_go_rule() {
+fn the_committed_envelope_leaves_the_qc_route_open() {
     let (selectors, stated) = measured_decode();
-    assert!(stated.iter().any(|field| field == "qc_route_cases"));
-    let case = |workers, frames| QcRouteCase::try_new(1, 384, workers, frames).unwrap();
-    assert_eq!(selectors.qc_route_cases(), [case(1, 1), case(12, 8)]);
+    assert!(!stated.iter().any(|field| field == "qc_route"));
+    assert_eq!(selectors.qc_route(), QcRouteBounds::OPEN);
 }
 
-/// The installed envelope takes the QC route on attached NR BG1 Z=384 at
-/// exactly its cases, on the detected backend and on the portable fallback,
-/// and every other call takes the route the envelope's selectors without the
-/// QC cases give it.
+/// The installed envelope routes each of [`fresh::QC_CALLS`] on NR BG1
+/// Z=384, with its structure attached and without it, on the detected
+/// backend and on the portable fallback, as
+/// [`decide_batch_route`] documents for its decode family.
 #[test]
-fn the_installed_envelope_takes_the_qc_route_on_its_cases_and_keeps_every_other_route() {
+fn the_installed_envelope_routes_each_qc_call_as_its_bounds_document() {
     let (decode, _) = measured_decode();
     let result = fresh::fresh_tuning_process(fresh::FreshProcessCase::MeasuredOwnerQc).unwrap();
     assert_eq!(result["decode"], fresh::decode_report(&decode));
     assert_eq!(result["resolution"], "installed");
 
-    let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
     let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(1, 384));
-    let existing = |portable: bool| {
-        let decoder = LdpcBatchDecoder::with_selectors(
-            code.clone(),
-            config,
-            2,
-            DecodedWord::Codeword,
-            decode.clone().with_qc_route_cases(Vec::new()),
-        );
-        if portable {
-            decoder.with_portable_lanes()
-        } else {
-            decoder
-        }
-    };
-    let existing = [existing(false), existing(true)];
-
+    let edges = EdgeLayout::from_parity_check(code.parity_check_matrix()).edges();
     let reports = result["routes"].as_array().expect("a route list");
     assert_eq!(reports.len(), 2 * 2 * fresh::QC_CALLS.len());
     let mut qc_calls = 0;
@@ -315,22 +316,29 @@ fn the_installed_envelope_takes_the_qc_route_on_its_cases_and_keeps_every_other_
         let portable = report["portable"].as_bool().unwrap();
         let workers = report["workers"].as_u64().unwrap() as usize;
         let frames = report["frames"].as_u64().unwrap() as usize;
-        let selected = structured
-            && decode
-                .qc_route_cases()
-                .iter()
-                .any(|case| case.workers().get() == workers && case.frames().get() == frames);
-        let expected = if selected {
-            qc_calls += 1;
-            BatchRoute::Qc(if portable {
-                LaneBackend::Portable
-            } else {
-                LaneBackend::detected()
-            })
+        let backend = if portable {
+            LaneBackend::Portable
         } else {
-            existing[usize::from(portable)]
-                .batch_route_with_workers(frames, NonZeroUsize::new(workers).unwrap())
+            LaneBackend::detected()
         };
+        let qc = if structured {
+            QcCapability::Present {
+                lifting_size: 384,
+                backend,
+            }
+        } else {
+            QcCapability::Absent
+        };
+        let expected = decide_batch_route(
+            &decode,
+            DecoderAlgorithm::NormalizedMinSum(0.75),
+            LaneCapability::Present(backend),
+            qc,
+            frames.min(LANES),
+            edges,
+            NonZeroUsize::new(workers).unwrap(),
+        );
+        qc_calls += usize::from(matches!(expected, BatchRoute::Qc(_)));
         assert_eq!(report["route"], fresh::route_report(expected), "{report}");
         if structured {
             // The child also held each decoded call to the single-frame
@@ -338,7 +346,8 @@ fn the_installed_envelope_takes_the_qc_route_on_its_cases_and_keeps_every_other_
             assert_eq!(report["executed"], report["route"], "{report}");
         }
     }
-    assert_eq!(qc_calls, 2 * decode.qc_route_cases().len());
+    // The open bounds put every structured call on the QC route.
+    assert_eq!(qc_calls, 2 * fresh::QC_CALLS.len());
 }
 
 #[test]

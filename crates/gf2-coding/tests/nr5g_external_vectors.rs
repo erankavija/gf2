@@ -15,7 +15,7 @@ use gf2_coding::ldpc::nr_5g::{
 use gf2_coding::ldpc::{BatchRoute, DecoderAlgorithm, LaneBackend, QuasiCyclicLdpc};
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome, IterativeSoftDecoder};
-use gf2_coding::tuning::DecodeSelectors;
+use gf2_coding::tuning::{DecodeSelectors, QcRouteBounds};
 use gf2_core::BitVec;
 use std::path::PathBuf;
 
@@ -340,7 +340,7 @@ fn wave_frames(rm: &Nr5gRateMatchedCode) -> usize {
 }
 
 /// Decodes noiseless `codewords` through [`Nr5gRateMatchedBatchDecoder`] on the
-/// lane route and on the single-frame route and expects `messages`.
+/// QC, lane and single-frame routes and expects `messages`.
 fn check_batch_decodes(
     rm: &Nr5gRateMatchedCode,
     codewords: &[BitVec],
@@ -352,10 +352,19 @@ fn check_batch_decodes(
 
     let routes = [
         (
-            DecodeSelectors::try_new(1, usize::MAX, 1, 1).unwrap(),
+            DecodeSelectors::CONSERVATIVE,
+            BatchRoute::Qc(LaneBackend::detected()),
+        ),
+        (
+            DecodeSelectors::try_new(1, usize::MAX, 1, 1)
+                .unwrap()
+                .with_qc_route(QcRouteBounds::CLOSED),
             BatchRoute::Lane(LaneBackend::detected()),
         ),
-        (DecodeSelectors::CONSERVATIVE, BatchRoute::SingleFrame),
+        (
+            DecodeSelectors::CONSERVATIVE.with_qc_route(QcRouteBounds::CLOSED),
+            BatchRoute::SingleFrame,
+        ),
     ];
     for (selectors, route) in routes {
         let mut decoder = batch_decoder(rm, selectors);

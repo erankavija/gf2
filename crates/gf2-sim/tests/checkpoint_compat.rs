@@ -12,7 +12,7 @@ use gf2_coding::ldpc::{
     BatchRoute, DecodedWord, DecoderAlgorithm, DecoderConfig, LaneBackend, LdpcBatchDecoder,
     QuasiCyclicLdpc,
 };
-use gf2_coding::test_support::ldpc_batch_routes;
+use gf2_coding::test_support::{ldpc_batch_route_of, ldpc_batch_routes};
 use gf2_coding::traits::BatchSoftDecoder;
 use gf2_coding::tuning::DecodeSelectors;
 use gf2_coding::{LdpcCode, Llr};
@@ -394,7 +394,8 @@ fn assert_batch_decode_resume(batch_size: impl Fn(usize) -> usize) {
             4,
             selectors.granules_per_task().get(),
         )
-        .unwrap();
+        .unwrap()
+        .with_qc_route(selectors.qc_route());
         let case = (selectors.clone(), backend, route);
         let decoder = batch_decoder_factory(batch_code(), &case)();
         let lanes = decoder.batch_granularity();
@@ -412,10 +413,11 @@ fn assert_batch_decode_resume(batch_size: impl Fn(usize) -> usize) {
                 selectors.lane_min_frames()
             );
             for frames in 1..=batch {
-                let expected = if frames < selectors.lane_min_frames() {
-                    BatchRoute::SingleFrame
-                } else {
-                    route
+                let expected = match ldpc_batch_route_of(&batch_code(), route) {
+                    BatchRoute::Lane(_) if frames < selectors.lane_min_frames() => {
+                        BatchRoute::SingleFrame
+                    }
+                    route => route,
                 };
                 assert_eq!(
                     decoder

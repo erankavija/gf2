@@ -5,8 +5,8 @@
 
 use super::route::detected_lanes;
 use super::{
-    decide_batch_route, BatchRoute, DecoderAlgorithm, DecoderConfig, EdgeLayout, LaneBackend,
-    LaneCapability, LdpcCode, LdpcDecoder, QcCapability, QcDecoder, QuasiCyclicLdpc,
+    decide_batch_route, BatchRoute, DecoderConfig, EdgeLayout, LaneBackend, LaneCapability,
+    LdpcCode, LdpcDecoder, QcCapability, QcDecoder,
 };
 use crate::llr::Llr;
 use crate::traits::{BatchSoftDecoder, DecodeOutcome};
@@ -38,10 +38,9 @@ pub enum DecodedWord {
 ///   min-sum lane kernels. A frame stops as the single-frame decoder stops
 ///   it, and the wave runs until each of its frames has stopped or the cap is
 ///   reached. The route names the [`LaneBackend`] whose kernels run.
-/// - [`BatchRoute::Qc`]: each frame decodes on an owned [`QcDecoder`]. Only a
-///   batch of at most [`LANES`] frames takes this route, under a
-///   [`QcRouteCase`](crate::tuning::QcRouteCase) naming the structure the code
-///   retains ([`LdpcCode::quasi_cyclic`]).
+/// - [`BatchRoute::Qc`]: each frame decodes on an owned [`QcDecoder`] over
+///   the structure the code retains ([`LdpcCode::quasi_cyclic`]), within the
+///   [`QcRouteBounds`](crate::tuning::QcRouteBounds) of the selectors.
 /// - [`BatchRoute::SingleFrame`]: each frame decodes on an owned
 ///   [`LdpcDecoder`]. [`DecoderAlgorithm::SumProduct`](super::DecoderAlgorithm::SumProduct)
 ///   takes this route for every wave.
@@ -66,8 +65,8 @@ pub enum DecodedWord {
 ///
 /// # Examples
 ///
-/// Decoding a batch through the trait, with selectors that open the lane
-/// route for every wave:
+/// Decoding a batch through the trait, with selectors under which the lane
+/// route claims a wave of at least four frames from the QC route:
 ///
 /// ```
 /// use gf2_coding::ldpc::{
@@ -76,7 +75,7 @@ pub enum DecodedWord {
 /// };
 /// use gf2_coding::llr::Llr;
 /// use gf2_coding::traits::{BatchSoftDecoder, BlockEncoder, DecodeOutcome};
-/// use gf2_coding::tuning::DecodeSelectors;
+/// use gf2_coding::tuning::{DecodeSelectors, QcRouteBounds};
 /// use gf2_core::BitVec;
 ///
 /// let base = vec![
@@ -100,7 +99,9 @@ pub enum DecodedWord {
 ///     })
 ///     .collect();
 ///
-/// let selectors = DecodeSelectors::try_new(1, usize::MAX, 1, 1).unwrap();
+/// let selectors = DecodeSelectors::try_new(1, usize::MAX, 1, 1)
+///     .unwrap()
+///     .with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4).unwrap());
 /// let decoder = LdpcBatchDecoder::with_selectors(
 ///     code,
 ///     DecoderConfig::default(),
@@ -109,6 +110,7 @@ pub enum DecodedWord {
 ///     selectors,
 /// );
 /// assert!(matches!(decoder.batch_route(frames.len()), BatchRoute::Lane(_)));
+/// assert!(matches!(decoder.batch_route(3), BatchRoute::Qc(_)));
 ///
 /// let mut decoder: Box<dyn BatchSoftDecoder> = Box::new(decoder);
 /// let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
@@ -126,9 +128,9 @@ pub struct LdpcBatchDecoder {
     selectors: DecodeSelectors,
     lane_backend: LaneBackend,
     lane_fns: LdpcLaneFns,
-    /// Present when the selectors name the structure the code retains and the
-    /// algorithm is normalized min-sum.
-    qc: Option<QcRoute>,
+    /// Present when the code retains QC structure, the algorithm is of the
+    /// min-sum family and the lifting size meets the QC route's bound.
+    qc: Option<QcDecoder>,
     last_wave_route: Option<BatchRoute>,
     /// Codeword position of each message bit; `None` when the decoded words
     /// are codewords.
@@ -145,29 +147,17 @@ pub struct LdpcBatchDecoder {
     hard: Vec<u8>,
 }
 
-/// The decoder of the QC route and the selected structure it decodes.
-struct QcRoute {
-    decoder: QcDecoder,
-    base_graph: u8,
-    lifting_size: usize,
-}
-
-impl QcRoute {
-    fn select(code: &LdpcCode, config: DecoderConfig, selectors: &DecodeSelectors) -> Option<Self> {
-        if !matches!(config.algorithm(), DecoderAlgorithm::NormalizedMinSum(_)) {
-            return None;
-        }
-        let retained = code.quasi_cyclic()?;
-        let case = selectors.qc_route_cases().iter().find(|case| {
-            case.lifting_size() == retained.expansion_factor()
-                && *retained == QuasiCyclicLdpc::nr_5g(case.base_graph(), case.lifting_size())
-        })?;
-        Some(Self {
-            decoder: QcDecoder::new(code, config)?,
-            base_graph: case.base_graph(),
-            lifting_size: case.lifting_size(),
-        })
+/// The decoder of the QC route when some wave can take it.
+fn select_qc(
+    code: &LdpcCode,
+    config: DecoderConfig,
+    selectors: &DecodeSelectors,
+) -> Option<QcDecoder> {
+    let retained = code.quasi_cyclic()?;
+    if retained.expansion_factor() < selectors.qc_route().min_lifting_size() {
+        return None;
     }
+    QcDecoder::new(code, config)
 }
 
 impl LdpcBatchDecoder {
@@ -197,10 +187,9 @@ impl LdpcBatchDecoder {
     /// Every frame decodes under `config` with the iteration cap
     /// `max_iterations`; a cap of zero behaves as in
     /// [`LdpcDecoder::decode_codeword_into`]. Construction allocates the
-    /// single-frame decoder and the lane workspace, compares the structure the
-    /// code retains with each selected QC structure of its lifting size and on
-    /// a match allocates a [`QcDecoder`], and, for [`DecodedWord::Message`],
-    /// resolves the code's systematic columns.
+    /// single-frame decoder and the lane workspace, a [`QcDecoder`] when a wave
+    /// can take the QC route, and, for [`DecodedWord::Message`], resolves the
+    /// code's systematic columns.
     ///
     /// # Panics
     ///
@@ -218,7 +207,7 @@ impl LdpcBatchDecoder {
             DecodedWord::Codeword => None,
             DecodedWord::Message => Some(code.systematic_cols()),
         };
-        let qc = QcRoute::select(&code, config, &selectors);
+        let qc = select_qc(&code, config, &selectors);
         let single = LdpcDecoder::with_config(code, config);
         let layout = single.edge_layout();
         let (n, edges) = (layout.n(), layout.edges());
@@ -252,12 +241,7 @@ impl LdpcBatchDecoder {
     pub fn with_portable_lanes(mut self) -> Self {
         self.lane_backend = LaneBackend::Portable;
         self.lane_fns = LdpcLaneFns::portable();
-        if let Some(qc) = self.qc.take() {
-            self.qc = Some(QcRoute {
-                decoder: qc.decoder.with_portable_kernel(),
-                ..qc
-            });
-        }
+        self.qc = self.qc.take().map(QcDecoder::with_portable_kernel);
         self
     }
 
@@ -276,9 +260,8 @@ impl LdpcBatchDecoder {
     /// The route of a wave of `frames` frames at one configured worker, without decoding.
     ///
     /// A batch of at most [`LANES`] frames is one wave and takes this route.
-    /// A longer batch stays off [`BatchRoute::Qc`]: it takes the value returned
-    /// for it in each full wave, and in a final wave of `r` frames the lane or
-    /// single-frame route of `r` frames.
+    /// A longer batch takes the value returned for [`LANES`] frames in each
+    /// full wave, and in a final wave of `r` frames the route of `r` frames.
     #[must_use]
     pub fn batch_route(&self, frames: usize) -> BatchRoute {
         self.batch_route_with_workers(frames, NonZeroUsize::MIN)
@@ -287,23 +270,17 @@ impl LdpcBatchDecoder {
     /// The wave route under configured concurrent decode `workers`.
     #[must_use]
     pub fn batch_route_with_workers(&self, frames: usize, workers: NonZeroUsize) -> BatchRoute {
-        self.wave_route(frames.min(LANES), frames, workers)
+        self.wave_route(frames.min(LANES), workers)
     }
 
-    /// The route of a wave of `wave_frames` frames in a batch of `batch_frames`.
-    fn wave_route(
-        &self,
-        wave_frames: usize,
-        batch_frames: usize,
-        workers: NonZeroUsize,
-    ) -> BatchRoute {
+    /// The route of a wave of `wave_frames` frames.
+    fn wave_route(&self, wave_frames: usize, workers: NonZeroUsize) -> BatchRoute {
         let qc = match &self.qc {
-            Some(qc) if batch_frames <= LANES => QcCapability::Present {
-                base_graph: qc.base_graph,
-                lifting_size: qc.lifting_size,
-                backend: qc.decoder.backend(),
+            Some(qc) => QcCapability::Present {
+                lifting_size: qc.lifting_size(),
+                backend: qc.backend(),
             },
-            _ => QcCapability::Absent,
+            None => QcCapability::Absent,
         };
         decide_batch_route(
             &self.selectors,
@@ -421,7 +398,7 @@ impl LdpcBatchDecoder {
             let posteriors = posteriors
                 .as_deref_mut()
                 .map(|all| &mut all[slots.start * n..slots.end * n]);
-            let route = self.wave_route(wave.len(), frames.len(), workers);
+            let route = self.wave_route(wave.len(), workers);
             self.last_wave_route = Some(route);
             match (route, rule) {
                 (BatchRoute::Lane(_), Some(rule)) => {
@@ -447,7 +424,7 @@ impl LdpcBatchDecoder {
     ) {
         let n = self.frame_len();
         let cap = self.max_iterations;
-        let mut qc = self.qc.as_mut().filter(|_| on_qc).map(|qc| &mut qc.decoder);
+        let mut qc = self.qc.as_mut().filter(|_| on_qc);
         for (slot, &llrs) in wave.iter().enumerate() {
             let word = &mut decoded[slot];
             let target = match self.message_cols {
@@ -634,6 +611,7 @@ mod tests {
     };
     use crate::traits::conformance::{batch_soft_decoder_contract, ConvergenceMix};
     use crate::traits::{BlockEncoder, DecoderResult, IterativeSoftDecoder};
+    use crate::tuning::QcRouteBounds;
     use rand::rngs::StdRng;
     use rand::SeedableRng;
 
@@ -663,13 +641,17 @@ mod tests {
 
     /// Selectors that give every wave the lane route.
     fn lane_selectors() -> DecodeSelectors {
-        DecodeSelectors::try_new(1, usize::MAX, 1, 1).unwrap()
+        DecodeSelectors::try_new(1, usize::MAX, 1, 1)
+            .unwrap()
+            .with_qc_route(QcRouteBounds::CLOSED)
     }
 
     /// Selectors that give a wave of fewer than four frames the single-frame
     /// route and the lane route otherwise.
     fn mixed_selectors() -> DecodeSelectors {
-        DecodeSelectors::try_new(4, usize::MAX, 1, 1).unwrap()
+        DecodeSelectors::try_new(4, usize::MAX, 1, 1)
+            .unwrap()
+            .with_qc_route(QcRouteBounds::CLOSED)
     }
 
     /// A decoder whose lane route runs `backend`, one of
@@ -836,8 +818,9 @@ mod tests {
             for algorithm in MIN_SUM_FAMILY {
                 let config = DecoderConfig::new(algorithm, true);
                 for max_workers in [1, 24] {
-                    let selectors =
-                        DecodeSelectors::try_new(4, usize::MAX, max_workers, 1).unwrap();
+                    let selectors = DecodeSelectors::try_new(4, usize::MAX, max_workers, 1)
+                        .unwrap()
+                        .with_qc_route(QcRouteBounds::CLOSED);
                     for workers in [1, 6, 12, 24] {
                         let workers = NonZeroUsize::new(workers).unwrap();
                         let decoder = batch_decoder_on(
@@ -951,10 +934,16 @@ mod tests {
             BatchRoute::Lane(LaneBackend::Portable)
         );
         assert_eq!(
-            decoder(DecodeSelectors::CONSERVATIVE)
+            decoder(DecodeSelectors::CONSERVATIVE.with_qc_route(QcRouteBounds::CLOSED))
                 .with_portable_lanes()
                 .batch_route(LANES),
             BatchRoute::SingleFrame
+        );
+        assert_eq!(
+            decoder(DecodeSelectors::CONSERVATIVE)
+                .with_portable_lanes()
+                .batch_route(LANES),
+            BatchRoute::Qc(LaneBackend::Portable)
         );
         #[cfg(not(feature = "simd"))]
         assert_eq!(LaneBackend::detected(), LaneBackend::Portable);
@@ -984,8 +973,13 @@ mod tests {
             assert_eq!(by_frames.batch_route(size), expected, "{size} frames");
         }
 
-        let at_bound = decoder(DecodeSelectors::try_new(1, edges, 1, 1).unwrap());
-        let below_bound = decoder(DecodeSelectors::try_new(1, edges - 1, 1, 1).unwrap());
+        let lanes_to = |max_edges| {
+            DecodeSelectors::try_new(1, max_edges, 1, 1)
+                .unwrap()
+                .with_qc_route(QcRouteBounds::CLOSED)
+        };
+        let at_bound = decoder(lanes_to(edges));
+        let below_bound = decoder(lanes_to(edges - 1));
         for size in 1..=FRAMES {
             assert_eq!(at_bound.batch_route(size), lane);
             assert_eq!(below_bound.batch_route(size), BatchRoute::SingleFrame);

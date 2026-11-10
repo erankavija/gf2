@@ -103,7 +103,9 @@ sign and magnitude rules skip. Each variable accumulates in its canonical
 order: a column block's lanes split into segments that share one order of
 parity checks. [`ldpc_qc_contract`](../../crates/gf2-coding/tests/ldpc_qc_contract.rs)
 compares posterior bits, words and outcomes with the canonical decoder on both
-paths over 5G NR base graphs, every DVB-T2 code (`@/citation/Etsi2015`) and
+paths over both 5G NR base graphs at lifting sizes below eight, with a
+remainder modulo eight, at multiples of eight and at the largest, every DVB-T2
+code (`@/citation/Etsi2015`) and
 hand-built codes with masked entries, blocks of weight two and permuted orders,
 including zero caps, reuse, special values and both stopping modes.
 
@@ -263,8 +265,8 @@ portable backend. The same assertions run on the QC route of each backend over
 fallback of a host without the kernel.
 [`tuning_profile_committed`](../../crates/gf2-coding/tests/tuning_profile_committed.rs)
 installs the committed coding envelope in a fresh process and asserts that NR
-BG1 Z=384 decodes on the QC route of each backend exactly at the envelope's
-`qc_route_cases`, with each frame's word and outcome equal to `LdpcDecoder`'s.
+BG1 Z=384 decodes on the route its `qc_route` bounds give each call, on each
+backend, with each frame's word and outcome equal to `LdpcDecoder`'s.
 
 [`dvb_t2_concat_batch_decoder`](../../crates/gf2-coding/tests/dvb_t2_concat_batch_decoder.rs)
 runs the shared batch contract on `DvbT2ConcatBatchDecoder`, whose LDPC inner

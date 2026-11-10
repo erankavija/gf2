@@ -1,8 +1,10 @@
 //! The same posterior, word and outcome contract runs on each QC backend.
 use gf2_coding::ldpc::{
-    DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QcCirculant, QcDecoder, QuasiCyclicLdpc,
+    DecoderAlgorithm, DecoderConfig, LaneBackend, LdpcCode, LdpcDecoder, QcCirculant, QcDecoder,
+    QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
+use gf2_coding::test_support::ldpc_lane_backends;
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 use rand::{rngs::StdRng, Rng, SeedableRng};
@@ -37,6 +39,14 @@ fn retains_the_qc_relation_across_clones_and_reports_absence() {
     let unstructured = LdpcCode::from_edges(qc.expanded_rows(), qc.expanded_cols(), &qc.to_edges());
     assert!(unstructured.quasi_cyclic().is_none());
     assert!(QcDecoder::new(&unstructured, DecoderConfig::default()).is_none());
+    let detached = code.clone().without_quasi_cyclic();
+    assert!(detached.quasi_cyclic().is_none());
+    for row in 0..code.m() {
+        assert!(code
+            .parity_check_matrix()
+            .row_iter(row)
+            .eq(detached.parity_check_matrix().row_iter(row)));
+    }
     assert!(QcDecoder::new(
         &code,
         DecoderConfig::new(DecoderAlgorithm::SumProduct, true)
@@ -140,12 +150,13 @@ fn assert_contract(code: &LdpcCode) {
     ] {
         for stopping in [false, true] {
             let config = DecoderConfig::new(algorithm, stopping);
-            for portable in [true, false] {
+            for backend in ldpc_lane_backends() {
                 let mut canonical = LdpcDecoder::with_config(code.clone(), config);
                 let mut candidate = QcDecoder::new(code, config).unwrap();
-                if portable {
+                if backend == LaneBackend::Portable {
                     candidate = candidate.with_portable_kernel();
                 }
+                assert_eq!(candidate.backend(), backend);
                 let mut want_word = BitVec::new();
                 let mut got_word = BitVec::ones(code.n() + 1);
                 for cap in [0, 1, 5, 0, 2] {
@@ -154,7 +165,7 @@ fn assert_contract(code: &LdpcCode) {
                         let got = candidate.decode_codeword_into(frame, cap, &mut got_word);
                         assert_eq!(
                             got, want,
-                            "{algorithm:?}, stopping {stopping}, portable {portable}, cap {cap}"
+                            "{algorithm:?}, stopping {stopping}, {backend:?}, cap {cap}"
                         );
                         assert_eq!(got_word, want_word);
                         assert_eq!(candidate.last_iterations(), got.iterations);
@@ -164,7 +175,7 @@ fn assert_contract(code: &LdpcCode) {
                             .zip(canonical.posterior_llrs())
                             .enumerate()
                         {
-                            assert_eq!(got.value().to_bits(), want.value().to_bits(), "position {i}, {algorithm:?}, stopping {stopping}, portable {portable}, cap {cap}");
+                            assert_eq!(got.value().to_bits(), want.value().to_bits(), "position {i}, {algorithm:?}, stopping {stopping}, {backend:?}, cap {cap}");
                         }
                     }
                 }
@@ -190,13 +201,36 @@ fn empty_graphs_and_isolated_variables_follow_canonical() {
     }
 }
 
-#[test]
-fn nr_base_graphs_follow_canonical() {
+fn assert_nr_contract(lifting_sizes: &[usize]) {
     for graph in [1, 2] {
-        assert_contract(&LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(
-            graph, 8,
-        )));
+        for &z in lifting_sizes {
+            let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(graph, z));
+            assert_eq!(code.quasi_cyclic().unwrap().expansion_factor(), z);
+            assert_contract(&code);
+        }
     }
+}
+
+/// Lifting sizes the AVX2 kernel decodes in its scalar tail alone.
+#[test]
+fn nr_base_graphs_below_one_vector_follow_canonical() {
+    assert_nr_contract(&[2, 3, 5, 7]);
+}
+
+/// Lifting sizes the AVX2 kernel splits into vector groups and a scalar tail.
+#[test]
+fn nr_base_graphs_with_a_remainder_modulo_eight_follow_canonical() {
+    assert_nr_contract(&[9, 13, 15, 52]);
+}
+
+#[test]
+fn nr_base_graphs_at_a_multiple_of_eight_follow_canonical() {
+    assert_nr_contract(&[8, 64]);
+}
+
+#[test]
+fn nr_base_graphs_at_the_largest_lifting_size_follow_canonical() {
+    assert_nr_contract(&[384]);
 }
 
 // Exposes sequential QC calls to the common frame-order and reuse contract.
@@ -248,12 +282,12 @@ fn qc_calls_satisfy_the_shared_frame_contract() {
         DecoderAlgorithm::OffsetMinSum(0.5),
     ] {
         for stopping in [true, false] {
-            for portable in [true, false] {
+            for backend in ldpc_lane_backends() {
                 for cap in [0, 4] {
                     let config = DecoderConfig::new(algorithm, stopping);
                     let mut single = LdpcDecoder::with_config(code.clone(), config);
                     let mut decoder = QcDecoder::new(&code, config).unwrap();
-                    if portable {
+                    if backend == LaneBackend::Portable {
                         decoder = decoder.with_portable_kernel();
                     }
                     let mut batch = QcFrames {
@@ -276,14 +310,14 @@ fn qc_calls_satisfy_the_shared_frame_contract() {
 #[test]
 fn zero_cap_copies_the_current_frame_after_a_nonzero_decode() {
     let code = LdpcCode::from_quasi_cyclic(&small_qc(9));
-    for portable in [true, false] {
+    for backend in ldpc_lane_backends() {
         for stopping in [true, false] {
             let mut decoder = QcDecoder::new(
                 &code,
                 DecoderConfig::new(DecoderAlgorithm::MinSum, stopping),
             )
             .unwrap();
-            if portable {
+            if backend == LaneBackend::Portable {
                 decoder = decoder.with_portable_kernel();
             }
             let mut word = BitVec::new();

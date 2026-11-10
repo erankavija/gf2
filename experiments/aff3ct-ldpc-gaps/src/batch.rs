@@ -10,7 +10,7 @@ pub use gf2_coding::ldpc::{BatchRoute, LaneBackend};
 use gf2_coding::ldpc::{DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode};
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
-use gf2_coding::tuning::{DecodeSelectors, QcRouteCase};
+use gf2_coding::tuning::{DecodeSelectors, QcRouteBounds};
 use gf2_core::BitVec;
 use gf2_kernels_simd::ldpc_lanes::LANES;
 
@@ -30,27 +30,22 @@ pub const STAGE_PROBES: usize = 9;
 /// Worker counts in the batch arm's benchmark grid.
 const ROUTE_WORKERS: [usize; 4] = [1, 6, 12, 24];
 
-/// The selectors an arm on `route` decodes under: the conservative family,
-/// which closes the lane route; a family that opens it to every wave size and
-/// edge count, through the benchmark grid's maximum of 24 workers; or a family
-/// that selects the QC route for NR BG1 Z=384 at every batch size up to
-/// [`LANES`] on that grid.
+/// The selectors an arm on `route` decodes under: the conservative lane
+/// bounds with the QC route closed, which give every wave the single-frame
+/// route; lane bounds open to every wave size and edge count through the
+/// benchmark grid's maximum of 24 workers, with the QC route closed; or the
+/// conservative family, whose open QC bounds give every wave of a code with
+/// retained QC structure the QC route.
 #[must_use]
 pub fn route_selectors(route: BatchRoute) -> DecodeSelectors {
     match route {
-        BatchRoute::SingleFrame => DecodeSelectors::CONSERVATIVE,
-        BatchRoute::Lane(_) => {
-            DecodeSelectors::try_new(1, usize::MAX, 24, 1).expect("a positive group count")
+        BatchRoute::SingleFrame => {
+            DecodeSelectors::CONSERVATIVE.with_qc_route(QcRouteBounds::CLOSED)
         }
-        BatchRoute::Qc(_) => {
-            let mut cases = Vec::new();
-            for workers in ROUTE_WORKERS {
-                for frames in 1..=LANES {
-                    cases.push(QcRouteCase::try_new(1, 384, workers, frames).expect("in domain"));
-                }
-            }
-            DecodeSelectors::CONSERVATIVE.with_qc_route_cases(cases)
-        }
+        BatchRoute::Lane(_) => DecodeSelectors::try_new(1, usize::MAX, 24, 1)
+            .expect("a positive group count")
+            .with_qc_route(QcRouteBounds::CLOSED),
+        BatchRoute::Qc(_) => DecodeSelectors::CONSERVATIVE,
     }
 }
 
@@ -374,8 +369,7 @@ impl ArmPolicy for BatchRoute {
         let final_wave_frames = if batch > LANES { batch % LANES } else { 0 };
         for worker_count in ROUTE_WORKERS {
             let workers = NonZeroUsize::new(worker_count).expect("positive benchmark worker count");
-            // Passing the total batch preserves production's route context for
-            // every full wave, including QC suppression on batches over LANES.
+            // The route of the total batch is the route of each full wave.
             let observed = decoder.batch_route_with_workers(batch, workers);
             if batch > 0 && observed != route {
                 return Err(format!(
@@ -384,13 +378,11 @@ impl ArmPolicy for BatchRoute {
                 ));
             }
             if final_wave_frames > 0 {
-                // The public query cannot pair a partial wave size with its
-                // original batch context. Accept only when its production
-                // route query independently confirms the declared route.
+                // A final partial wave takes the route of its own size.
                 let partial = decoder.batch_route_with_workers(final_wave_frames, workers);
                 if partial != route {
                     return Err(format!(
-                        "cannot confirm {route:?} for the final partial wave of {final_wave_frames} frames in a {batch}-frame batch with {worker_count} workers: the production route query returns {partial:?} without whole-batch context"
+                        "the final partial wave of {final_wave_frames} frames in a {batch}-frame batch takes {partial:?} with {worker_count} workers; the arm declares {route:?}"
                     ));
                 }
             }
@@ -690,10 +682,10 @@ mod tests {
     }
 
     #[test]
-    fn forced_qc_uses_whole_batch_context_for_attached_nr_bg1_z384() {
+    fn forced_qc_holds_every_wave_of_attached_nr_bg1_z384() {
         let code = attached_nr_bg1_z384();
         let route = BatchRoute::Qc(LaneBackend::Portable);
-        for batch in [1, LANES] {
+        for batch in [1, LANES, 2 * LANES + 3] {
             let worker = BatchWorker::new(&code, config(0.75, true), CAP, batch, route)
                 .expect("frozen QC route");
             for worker_count in ROUTE_WORKERS {
@@ -707,10 +699,12 @@ mod tests {
             }
         }
 
-        let refused = BatchWorker::new(&code, config(0.75, true), CAP, 16, route)
+        let qc = QuasiCyclicLdpc::nr_5g(1, 384);
+        let unattached =
+            LdpcCode::from_edges(qc.expanded_rows(), qc.expanded_cols(), &qc.to_edges());
+        let refused = BatchWorker::new(&unattached, config(0.75, true), CAP, 1, route)
             .err()
-            .expect("the whole batch disables QC");
-        assert!(refused.contains("whole-batch"), "{refused}");
+            .expect("a code without QC structure takes no QC wave");
         assert!(refused.contains("SingleFrame"), "{refused}");
     }
 

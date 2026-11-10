@@ -125,7 +125,9 @@ fn codes() -> Result<&'static [BuiltCode], String> {
         CODES
             .iter()
             .map(|spec| {
-                let code = (spec.build)();
+                // The lane selectors divide the lane and single-frame routes;
+                // a code with retained QC structure takes the QC route.
+                let code = (spec.build)().without_quasi_cyclic();
                 let layout = LdpcDecoder::with_config(code.clone(), decoder_config());
                 let layout = layout.edge_layout();
                 BuiltCode {

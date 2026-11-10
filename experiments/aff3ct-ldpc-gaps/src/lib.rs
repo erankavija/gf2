@@ -7,6 +7,7 @@ pub mod batch;
 pub mod bundle;
 pub mod driver;
 pub mod pool;
+pub mod route_sweep;
 pub mod tuned;
 pub mod workload;
 

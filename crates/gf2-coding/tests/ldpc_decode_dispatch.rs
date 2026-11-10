@@ -10,7 +10,7 @@ use gf2_coding::llr::Llr;
 use gf2_coding::test_support::{ldpc_batch_code, ldpc_lane_backends, LDPC_BATCH_CAP};
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
 use gf2_coding::tuning::{
-    self, DecodeSelectors, QcRouteCase, GRANULES_PER_TASK, LANE_MAX_EDGES, LANE_MIN_FRAMES,
+    self, DecodeSelectors, QcRouteBounds, GRANULES_PER_TASK, LANE_MAX_EDGES, LANE_MIN_FRAMES,
 };
 use gf2_coding::CodeRate;
 use gf2_core::tuning::SectionResolution;
@@ -57,7 +57,7 @@ fn decoder(
 }
 
 #[test]
-fn without_installation_every_batch_size_takes_the_single_frame_route() {
+fn without_installation_qc_codes_take_the_qc_route_and_others_the_single_frame_route() {
     for code in codes() {
         for algorithm in ALGORITHMS {
             let decoder = LdpcBatchDecoder::new(
@@ -67,10 +67,17 @@ fn without_installation_every_batch_size_takes_the_single_frame_route() {
                 DecodedWord::Codeword,
             );
             assert_eq!(decoder.selectors(), &DecodeSelectors::CONSERVATIVE);
+            let expected = if code.quasi_cyclic().is_some()
+                && !matches!(algorithm, DecoderAlgorithm::SumProduct)
+            {
+                BatchRoute::Qc(LaneBackend::detected())
+            } else {
+                BatchRoute::SingleFrame
+            };
             for frames in batch_sizes() {
                 assert_eq!(
                     decoder.batch_route(frames),
-                    BatchRoute::SingleFrame,
+                    expected,
                     "{algorithm:?}, {frames} frames"
                 );
             }
@@ -90,7 +97,11 @@ fn without_the_lane_capability_the_lane_route_names_the_portable_backend() {
     } else {
         LaneBackend::Portable
     };
-    let open = || DecodeSelectors::try_new(0, usize::MAX, 1, 1).unwrap();
+    let open = || {
+        DecodeSelectors::try_new(0, usize::MAX, 1, 1)
+            .unwrap()
+            .with_qc_route(QcRouteBounds::CLOSED)
+    };
     for code in codes() {
         for algorithm in &ALGORITHMS[..3] {
             let decoder = decoder(&code, *algorithm, open());
@@ -128,8 +139,9 @@ fn every_route_threshold_is_a_decode_selector() {
         let by_edges =
             [LANE_MAX_EDGES, edges - 1, edges, edges + 1].map(|lane_max_edges| (0, lane_max_edges));
         for (lane_min_frames, lane_max_edges) in by_frames.chain(by_edges) {
-            let selectors =
-                DecodeSelectors::try_new(lane_min_frames, lane_max_edges, 1, 1).unwrap();
+            let selectors = DecodeSelectors::try_new(lane_min_frames, lane_max_edges, 1, 1)
+                .unwrap()
+                .with_qc_route(QcRouteBounds::CLOSED);
             for algorithm in ALGORITHMS {
                 let decoder = decoder(&code, algorithm, selectors.clone());
                 for frames in batch_sizes() {
@@ -152,97 +164,155 @@ fn every_route_threshold_is_a_decode_selector() {
     }
 }
 
-/// The selection of `qc-go-rule` on NR BG1 Z=384 with lanes open up to one
-/// worker from two frames.
-fn qc_selectors() -> DecodeSelectors {
-    let case = |workers, frames| QcRouteCase::try_new(1, 384, workers, frames).unwrap();
-    DecodeSelectors::try_new(2, usize::MAX, 1, 1)
-        .unwrap()
-        .with_qc_route_cases(vec![case(1, 1), case(12, 8)])
+const MIN_SUM: [DecoderAlgorithm; 3] = [ALGORITHMS[0], ALGORITHMS[1], ALGORITHMS[2]];
+
+const WORKERS: [usize; 4] = [1, 6, 12, 24];
+
+/// Lanes open from two frames up to one worker, as in a calibrated profile.
+fn lane_selectors() -> DecodeSelectors {
+    DecodeSelectors::try_new(2, usize::MAX, 1, 1).unwrap()
 }
 
-fn nr_bg1_z384() -> LdpcCode {
-    LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(1, 384))
+/// Codes with retained QC structure: both 5G NR base graphs at lifting sizes
+/// below one AVX2 vector, with a remainder modulo eight, and the largest, and
+/// DVB-T2 short and normal codes.
+fn qc_codes() -> Vec<LdpcCode> {
+    let codes: Vec<LdpcCode> = [(1, 384), (2, 384), (1, 13), (2, 6)]
+        .into_iter()
+        .map(|(graph, z)| LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(graph, z)))
+        .chain([
+            ldpc_batch_code(),
+            LdpcCode::dvb_t2_short(CodeRate::Rate1_2),
+            LdpcCode::dvb_t2_normal(CodeRate::Rate1_2),
+        ])
+        .collect();
+    assert!(codes.iter().all(|code| code.quasi_cyclic().is_some()));
+    codes
 }
 
 fn workers(count: usize) -> NonZeroUsize {
     NonZeroUsize::new(count).unwrap()
 }
 
-#[test]
-fn the_decoder_selects_the_qc_route_on_the_selected_structure_and_cases_only() {
-    let code = nr_bg1_z384();
-    let nms = DecoderAlgorithm::NormalizedMinSum(0.75);
-    let selected = decoder(&code, nms, qc_selectors());
-    let qc = BatchRoute::Qc(LaneBackend::detected());
-    let lane = BatchRoute::Lane(LaneBackend::detected());
-    assert_eq!(selected.batch_route(1), qc);
-    assert_eq!(selected.batch_route_with_workers(LANES, workers(12)), qc);
-    assert_eq!(selected.batch_route(LANES), lane);
-    assert_eq!(
-        selected.batch_route_with_workers(1, workers(12)),
-        BatchRoute::SingleFrame
-    );
-    // A longer batch is no case of the selection, whatever its wave sizes.
-    assert_eq!(selected.batch_route(LANES + 1), lane);
-    assert_eq!(
-        selected.batch_route_with_workers(2 * LANES, workers(12)),
-        BatchRoute::SingleFrame
-    );
-    assert_eq!(
-        selected.with_portable_lanes().batch_route(1),
-        BatchRoute::Qc(LaneBackend::Portable)
-    );
-
-    for algorithm in [
-        DecoderAlgorithm::MinSum,
-        DecoderAlgorithm::OffsetMinSum(0.5),
-        DecoderAlgorithm::SumProduct,
-    ] {
-        let other = decoder(&code, algorithm, qc_selectors());
-        assert_eq!(
-            other.batch_route(1),
-            BatchRoute::SingleFrame,
-            "{algorithm:?}"
-        );
-        assert_eq!(
-            other.batch_route_with_workers(LANES, workers(12)),
-            BatchRoute::SingleFrame,
-            "{algorithm:?}"
-        );
-    }
-
-    let qc_description = QuasiCyclicLdpc::nr_5g(1, 384);
-    let unstructured = LdpcCode::from_edges(
-        qc_description.expanded_rows(),
-        qc_description.expanded_cols(),
-        &qc_description.to_edges(),
-    );
-    let closed = [
-        decoder(&unstructured, nms, qc_selectors()),
-        decoder(&code, nms, DecodeSelectors::CONSERVATIVE),
-        decoder(
-            &LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(1, 352)),
-            nms,
-            qc_selectors(),
-        ),
-    ];
-    for decoder in closed {
-        assert_eq!(decoder.batch_route(1), BatchRoute::SingleFrame);
-        assert_eq!(
-            decoder.batch_route_with_workers(LANES, workers(12)),
-            BatchRoute::SingleFrame
-        );
-    }
+/// A decoder of `code` under `selectors` with the QC route closed.
+fn without_qc(
+    code: &LdpcCode,
+    algorithm: DecoderAlgorithm,
+    selectors: &DecodeSelectors,
+) -> LdpcBatchDecoder {
+    decoder(
+        code,
+        algorithm,
+        selectors.clone().with_qc_route(QcRouteBounds::CLOSED),
+    )
 }
 
 #[test]
-fn a_longer_batch_runs_no_wave_on_the_qc_route() {
+fn every_min_sum_wave_of_a_qc_code_takes_the_qc_route_by_default() {
+    let qc = BatchRoute::Qc(LaneBackend::detected());
+    for code in qc_codes() {
+        for algorithm in MIN_SUM {
+            let decoder = decoder(&code, algorithm, lane_selectors());
+            for count in WORKERS {
+                for frames in batch_sizes() {
+                    assert_eq!(
+                        decoder.batch_route_with_workers(frames, workers(count)),
+                        qc,
+                        "{algorithm:?}, {count} workers, {frames} frames"
+                    );
+                }
+            }
+            assert_eq!(
+                decoder.with_portable_lanes().batch_route(1),
+                BatchRoute::Qc(LaneBackend::Portable)
+            );
+        }
+        let sum_product = decoder(&code, DecoderAlgorithm::SumProduct, lane_selectors());
+        for frames in batch_sizes() {
+            assert_eq!(sum_product.batch_route(frames), BatchRoute::SingleFrame);
+        }
+    }
+
+    let description = QuasiCyclicLdpc::nr_5g(1, 384);
+    let unstructured = LdpcCode::from_edges(
+        description.expanded_rows(),
+        description.expanded_cols(),
+        &description.to_edges(),
+    );
+    for algorithm in MIN_SUM {
+        let open = decoder(&unstructured, algorithm, lane_selectors());
+        let closed = without_qc(&unstructured, algorithm, &lane_selectors());
+        for frames in batch_sizes() {
+            assert_eq!(open.batch_route(frames), closed.batch_route(frames));
+        }
+    }
+}
+
+/// Each QC bound is set on either side of a code's lifting size, a worker
+/// count or a wave size, and the region beyond it takes the route without QC.
+#[test]
+fn each_qc_bound_moves_its_region_to_the_route_without_qc() {
+    let qc = BatchRoute::Qc(LaneBackend::detected());
+    for code in qc_codes() {
+        let z = code.quasi_cyclic().unwrap().expansion_factor();
+        let cases = [
+            (
+                QcRouteBounds::try_new(z, usize::MAX, usize::MAX).unwrap(),
+                "at Z",
+            ),
+            (
+                QcRouteBounds::try_new(z + 1, usize::MAX, usize::MAX).unwrap(),
+                "above Z",
+            ),
+            (
+                QcRouteBounds::try_new(0, 6, usize::MAX).unwrap(),
+                "six workers",
+            ),
+            (
+                QcRouteBounds::try_new(0, usize::MAX, 4).unwrap(),
+                "lanes from four",
+            ),
+        ];
+        for (bounds, name) in cases {
+            for algorithm in MIN_SUM {
+                let selectors = lane_selectors().with_qc_route(bounds);
+                let decoder = decoder(&code, algorithm, selectors.clone());
+                let reference = without_qc(&code, algorithm, &selectors);
+                for count in WORKERS {
+                    for frames in batch_sizes() {
+                        let wave = frames.min(LANES);
+                        let lane_eligible = count == 1 && wave >= 2;
+                        let on_qc = z >= bounds.min_lifting_size()
+                            && count <= bounds.max_workers().get()
+                            && !(lane_eligible && wave >= bounds.lane_claim_min_frames());
+                        let expected = if on_qc {
+                            qc
+                        } else {
+                            reference.batch_route_with_workers(frames, workers(count))
+                        };
+                        assert_eq!(
+                            decoder.batch_route_with_workers(frames, workers(count)),
+                            expected,
+                            "Z={z}, {name}, {algorithm:?}, {count} workers, {frames} frames"
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn nr_bg1_z384() -> LdpcCode {
+    LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(1, 384))
+}
+
+#[test]
+fn every_wave_of_a_longer_batch_takes_the_qc_route() {
     let frame = vec![Llr::new(2.0); nr_bg1_z384().n()];
     let mut decoder = decoder(
         &nr_bg1_z384(),
         DecoderAlgorithm::NormalizedMinSum(0.75),
-        qc_selectors(),
+        lane_selectors().with_qc_route(QcRouteBounds::try_new(0, usize::MAX, 4).unwrap()),
     );
     let mut decode = |frames: usize| {
         let views = vec![frame.as_slice(); frames];
@@ -253,17 +323,26 @@ fn a_longer_batch_runs_no_wave_on_the_qc_route() {
         );
         decoder.last_wave_route()
     };
-    assert_eq!(decode(1), Some(BatchRoute::Qc(LaneBackend::detected())));
-    assert_eq!(decode(LANES + 1), Some(BatchRoute::SingleFrame));
+    let qc = Some(BatchRoute::Qc(LaneBackend::detected()));
+    assert_eq!(decode(1), qc);
+    assert_eq!(
+        decode(LANES),
+        Some(BatchRoute::Lane(LaneBackend::detected()))
+    );
+    assert_eq!(decode(LANES + 1), qc);
+    assert_eq!(decode(LANES + 3), qc);
+    assert_eq!(
+        decode(LANES + 4),
+        Some(BatchRoute::Lane(LaneBackend::detected()))
+    );
 }
 
-/// Each decode call on the selected cases equals the single-frame decoder at
-/// the frozen structure, on both message and codeword words.
+/// QC waves at one and twelve workers, and the final wave of a longer batch,
+/// equal the single-frame decoder under every min-sum rule.
 #[test]
-fn the_selected_cases_decode_as_the_single_frame_decoder() {
+fn qc_waves_decode_as_the_single_frame_decoder() {
     let code = nr_bg1_z384();
-    let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
-    let frames: Vec<Vec<Llr>> = (0..LANES)
+    let frames: Vec<Vec<Llr>> = (0..LANES + 1)
         .map(|seed| {
             (0..code.n())
                 .map(|i| Llr::new(if (i + seed) % 97 == 0 { -1.0 } else { 2.0 }))
@@ -271,32 +350,38 @@ fn the_selected_cases_decode_as_the_single_frame_decoder() {
         })
         .collect();
     let views: Vec<&[Llr]> = frames.iter().map(Vec::as_slice).collect();
-    let mut single = LdpcDecoder::with_config(code.clone(), config);
-    for backend in ldpc_lane_backends() {
-        for (count, frames) in [(1, 1), (12, LANES)] {
-            let mut decoder = LdpcBatchDecoder::with_selectors(
-                code.clone(),
-                config,
-                3,
-                DecodedWord::Codeword,
-                qc_selectors(),
-            );
-            if backend == LaneBackend::Portable {
-                decoder = decoder.with_portable_lanes();
-            }
-            let mut decoded = vec![BitVec::new(); frames];
-            let mut outcomes = vec![DecodeOutcome::default(); frames];
-            decoder.decode_batch_with_workers(
-                &views[..frames],
-                &mut decoded,
-                &mut outcomes,
-                workers(count),
-            );
-            assert_eq!(decoder.last_wave_route(), Some(BatchRoute::Qc(backend)));
-            for (f, view) in views[..frames].iter().enumerate() {
-                let expected = single.decode_to_codeword(view, 3);
-                assert_eq!(decoded[f], expected.decoded_bits, "frame {f}");
-                assert_eq!(outcomes[f], expected.outcome(), "frame {f}");
+    for algorithm in MIN_SUM {
+        let config = DecoderConfig::new(algorithm, true);
+        let mut single = LdpcDecoder::with_config(code.clone(), config);
+        for backend in ldpc_lane_backends() {
+            for (count, frames) in [(1, 1), (12, LANES), (12, LANES + 1)] {
+                let mut decoder = LdpcBatchDecoder::with_selectors(
+                    code.clone(),
+                    config,
+                    3,
+                    DecodedWord::Codeword,
+                    lane_selectors(),
+                );
+                if backend == LaneBackend::Portable {
+                    decoder = decoder.with_portable_lanes();
+                }
+                let mut decoded = vec![BitVec::new(); frames];
+                let mut outcomes = vec![DecodeOutcome::default(); frames];
+                decoder.decode_batch_with_workers(
+                    &views[..frames],
+                    &mut decoded,
+                    &mut outcomes,
+                    workers(count),
+                );
+                assert_eq!(decoder.last_wave_route(), Some(BatchRoute::Qc(backend)));
+                for (f, view) in views[..frames].iter().enumerate() {
+                    let expected = single.decode_to_codeword(view, 3);
+                    assert_eq!(
+                        decoded[f], expected.decoded_bits,
+                        "frame {f}, {algorithm:?}"
+                    );
+                    assert_eq!(outcomes[f], expected.outcome(), "frame {f}, {algorithm:?}");
+                }
             }
         }
     }

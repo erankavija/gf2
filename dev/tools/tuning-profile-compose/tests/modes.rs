@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use gf2_algebra::tuning::{AlgebraTuning, AlgebraTuningCodec};
 use gf2_coding::tuning::{
-    CodingSelectors, CodingTuning, CodingTuningCodec, DecodeSelectors, QcRouteCase,
+    CodingSelectors, CodingTuning, CodingTuningCodec, DecodeSelectors, QcRouteBounds,
 };
 use gf2_core::tuning::{
     AssemblyProvenance, CanonicalValue, CompiledProfileProvenance, CoreTuning, CoreTuningCodec,
@@ -24,7 +24,7 @@ const HARNESS: &str = "experiments/tuning-calibration/benches/coding.rs";
 const PRODUCER_SHA256: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
 /// Outputs of the `core-owner`, `algebra-owner` and two-owner `complete`
-/// modes, and of `coding-owner` with the QC route cases fixed on
+/// modes, and of `coding-owner` with the QC route bounds fixed on
 /// [`partial_producer_envelope`], for the arguments above: the stable external
 /// contract of those modes.
 const GOLDEN_CORE_OWNER: &str = include_str!("golden/core-owner.json");
@@ -32,8 +32,12 @@ const GOLDEN_ALGEBRA_OWNER: &str = include_str!("golden/algebra-owner.json");
 const GOLDEN_COMPLETE: &str = include_str!("golden/complete.json");
 const GOLDEN_CODING_OWNER_QC: &str = include_str!("golden/coding-owner-qc-route.json");
 
-/// The QC route cases of `qc-go-rule`, as the fixed-selector input states them.
-const QC_ROUTE_CASES: &str = r#"[{"base_graph":1,"frames":1,"lifting_size":384,"workers":1},{"base_graph":1,"frames":8,"lifting_size":384,"workers":12}]"#;
+/// QC route bounds as the fixed-selector input states them.
+const QC_ROUTE: &str = r#"{"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64}"#;
+
+fn qc_route() -> QcRouteBounds {
+    QcRouteBounds::try_new(64, 12, 4).unwrap()
+}
 
 struct Scratch(PathBuf);
 
@@ -301,14 +305,14 @@ fn compose_fixed(paths: [&Path; 2], selector: &str, value: &str) -> Output {
         .unwrap()
 }
 
-/// The coding section's wrapper in `envelope` with `decode.qc_route_cases`
+/// The coding section's wrapper in `envelope` with `decode.qc_route`
 /// removed, and the family removed when nothing else remains in it.
-fn wrapper_without_qc_cases(envelope: &str) -> serde_json::Value {
+fn wrapper_without_qc_route(envelope: &str) -> serde_json::Value {
     let document: serde_json::Value = serde_json::from_str(envelope).unwrap();
     let mut wrapper = document["sections"][CodingTuning::ID.as_str()].clone();
     let selectors = wrapper["selectors"].as_object_mut().unwrap();
     if let Some(decode) = selectors.get_mut("decode").and_then(|d| d.as_object_mut()) {
-        decode.remove("qc_route_cases");
+        decode.remove("qc_route");
         if decode.is_empty() {
             selectors.remove("decode");
         }
@@ -323,11 +327,7 @@ fn a_fixed_qc_route_selector_joins_the_calibrated_selectors_and_provenance_uncha
     let calibrated = written(&scratch, "calibrated.json", &producer);
     let owner = scratch.file("coding-owner.json");
 
-    let output = compose_fixed(
-        [&calibrated, &owner],
-        "decode.qc_route_cases",
-        QC_ROUTE_CASES,
-    );
+    let output = compose_fixed([&calibrated, &owner], "decode.qc_route", QC_ROUTE);
     assert!(
         output.status.success(),
         "{}",
@@ -351,26 +351,19 @@ fn a_fixed_qc_route_selector_joins_the_calibrated_selectors_and_provenance_uncha
 
     let projection = reopened.section::<CodingTuning>().unwrap().unwrap();
     assert_eq!(projection.measurement, &calibration());
-    let case = |workers, frames| QcRouteCase::try_new(1, 384, workers, frames).unwrap();
-    assert_eq!(
-        projection.section.decode().qc_route_cases(),
-        [case(1, 1), case(12, 8)]
-    );
-    assert_eq!(
-        projection.section,
-        &section.with_qc_route_cases(vec![case(1, 1), case(12, 8)])
-    );
+    assert_eq!(projection.section.decode().qc_route(), qc_route());
+    assert_eq!(projection.section, &section.with_qc_route(qc_route()));
     // Each other selector keeps its statement or omission, and the
     // measurement its bytes.
     assert_eq!(
-        wrapper_without_qc_cases(&text),
-        wrapper_without_qc_cases(&producer)
+        wrapper_without_qc_route(&text),
+        wrapper_without_qc_route(&producer)
     );
     let document: serde_json::Value = serde_json::from_str(&text).unwrap();
-    let cases: serde_json::Value = serde_json::from_str(QC_ROUTE_CASES).unwrap();
+    let bounds: serde_json::Value = serde_json::from_str(QC_ROUTE).unwrap();
     assert_eq!(
-        document["sections"][CodingTuning::ID.as_str()]["selectors"]["decode"]["qc_route_cases"],
-        cases
+        document["sections"][CodingTuning::ID.as_str()]["selectors"]["decode"]["qc_route"],
+        bounds
     );
 }
 
@@ -382,8 +375,9 @@ fn coding_owner_mode_refuses_a_fixed_selector_at_another_path() {
 
     for path in [
         "decode.lane_min_frames",
-        "encode.qc_route_cases",
-        "qc_route_cases",
+        "decode.qc_route_cases",
+        "encode.qc_route",
+        "qc_route",
     ] {
         let output = compose_fixed([&calibrated, &owner], path, "4");
         assert!(!output.status.success(), "{path}");
@@ -397,22 +391,21 @@ fn coding_owner_mode_refuses_a_fixed_selector_at_another_path() {
 }
 
 #[test]
-fn coding_owner_mode_refuses_an_invalid_qc_route_case() {
+fn coding_owner_mode_refuses_invalid_qc_route_bounds() {
     let scratch = Scratch::new();
     let calibrated = written(&scratch, "calibrated.json", &partial_producer_envelope().0);
     let owner = scratch.file("coding-owner.json");
 
     for value in [
-        r#"[{"base_graph":3,"frames":1,"lifting_size":384,"workers":1}]"#,
-        r#"[{"base_graph":1,"frames":1,"lifting_size":383,"workers":1}]"#,
-        r#"[{"base_graph":1,"frames":0,"lifting_size":384,"workers":1}]"#,
-        r#"[{"base_graph":1,"frames":1,"lifting_size":384,"workers":0}]"#,
-        r#"[{"base_graph":1,"frames":1,"lifting_size":384}]"#,
-        r#"[{"base_graph":1,"frames":1,"lifting_size":384,"workers":1,"extra":1}]"#,
-        r#"{"base_graph":1,"frames":1,"lifting_size":384,"workers":1}"#,
-        r#"[{"base_graph":1,"frames":1,"lifting_size":384,"workers":1}"#,
+        r#"{"lane_claim_min_frames":4,"max_workers":0,"min_lifting_size":64}"#,
+        r#"{"lane_claim_min_frames":4,"max_workers":12}"#,
+        r#"{"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64,"extra":1}"#,
+        r#"{"lane_claim_min_frames":-1,"max_workers":12,"min_lifting_size":64}"#,
+        r#"[{"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64}]"#,
+        r#"{"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64"#,
+        "null",
     ] {
-        let output = compose_fixed([&calibrated, &owner], "decode.qc_route_cases", value);
+        let output = compose_fixed([&calibrated, &owner], "decode.qc_route", value);
         assert!(!output.status.success(), "{value}");
     }
     assert_eq!(fs::read_dir(&scratch.0).unwrap().count(), 1);

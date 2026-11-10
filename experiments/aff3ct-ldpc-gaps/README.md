@@ -61,14 +61,25 @@ python3 experiments/aff3ct-ldpc-gaps/make-family.py \
 input-root and build references require materialization before dispatch. The NR
 pilot retains its QC-prototype comparisons as configuration; this harness
 refuses to dispatch that prototype. The tuned arm, `gf2-batch-tuned`, embeds
-the committed coding envelope, whose selectors include the QC route cases of
-`qc-go-rule`. The candidate arm, `gf2-batch-qc-candidate`, which the
-`55c3e433-integrated-adoption` family confirmed, embeds
+the committed coding envelope. The candidate arm, `gf2-batch-qc-candidate`,
+embeds
 [tuning-profiles/qc-route-candidate.json](tuning-profiles/qc-route-candidate.json),
 the same selectors under an inherited measurement. Both arms attach NR BG1
 Z=384 structure after an exact parity-check comparison outside timing, refuse
-a cell where a worker decodes off the route `qc-go-rule` selects, and state
-each worker's executed route in `selected_path` and their diagnostics.
+a cell where a worker decodes off the route `decide_batch_route` gives it
+under the installed selectors, and state each worker's executed route in
+`selected_path` and their diagnostics.
+
+`qc-route-sweep.sh` is the benchmark-window queue line of @/issue/c62356d2.
+It builds `qc-route-sweep` and runs it under
+`dev/scripts/ccx1-bench-flock.sh --full-host`, writing its execution log to
+`target/aff3ct-ldpc-gaps/qc-route-sweep/`. For each code, worker count and
+frames per call of `SweepConfig::issue_grid` in
+[src/route_sweep.rs](src/route_sweep.rs), the QC, lane and single-frame routes
+decode the same frames in rotating order, and each completed cell records
+every repetition's time and each route's median time ratio to the QC route in
+the same repetition. A rerun resumes after the last completed cell and refuses
+a log of another run identity or configuration.
 
 For a runnable plan, omit `--configuration` and supply one `--build` argument
 per build record, including records in other worktrees. Generation checks the

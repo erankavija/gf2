@@ -51,8 +51,8 @@
       },
       "rustflags": "-C target-cpu=native",
       "tuning_profile": {
-        "id": "gf2-3ee00fcf-20261104t064432z-4012544",
-        "sha256": "a049644567a2a4d872d0a62ec3035b5748907be250e49032f2cea1da2febfa12"
+        "id": "gf2-c62356d2-20261109t233411z-3067230",
+        "sha256": "7e795c6c9a6244fcd6e24e5c5ba95e113bcc0847d7affa1382ed1a6c5e8b1187"
       }
     },
     "gf2-batch-tuned-nr-bg1-z384": {
@@ -65,8 +65,8 @@
       },
       "rustflags": "-C target-cpu=native",
       "tuning_profile": {
-        "id": "gf2-3ee00fcf-20261104t064432z-4012544",
-        "sha256": "a049644567a2a4d872d0a62ec3035b5748907be250e49032f2cea1da2febfa12"
+        "id": "gf2-c62356d2-20261109t233411z-3067230",
+        "sha256": "7e795c6c9a6244fcd6e24e5c5ba95e113bcc0847d7affa1382ed1a6c5e8b1187"
       }
     }
   },

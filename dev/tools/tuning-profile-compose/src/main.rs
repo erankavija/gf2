@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use gf2_algebra::tuning::{AlgebraTuning, AlgebraTuningCodec};
-use gf2_coding::tuning::{CodingTuning, CodingTuningCodec, QcRouteCase};
+use gf2_coding::tuning::{CodingTuning, CodingTuningCodec, QcRouteBounds};
 use gf2_core::tuning::{
     AssemblyProvenance, CanonicalValue, CompiledProfileProvenance, CoreTuning, CoreTuningCodec,
     GitRevision, MeasurementProvenance, PreparedEnvelope, ProfileId, ProfileRegistry,
@@ -23,35 +23,34 @@ const TOOL_PATH: &str = "dev/tools/tuning-profile-compose";
 const USAGE: &str = "usage: tuning-profile-compose \
     (core-owner OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
      algebra-owner OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
-     coding-owner CALIBRATED_OWNER [--fixed-selector decode.qc_route_cases CASES_JSON] OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
+     coding-owner CALIBRATED_OWNER [--fixed-selector decode.qc_route BOUNDS_JSON] OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256 | \
      complete CORE_OWNER ALGEBRA_OWNER [CODING_OWNER] OUTPUT PROFILE_ID ASSEMBLED_AT SOURCE_REVISION SOURCE_DIRTY TOOL_SHA256)";
 
 /// The one selector path a coding owner accepts as a fixed input.
-const QC_ROUTE_CASES: &str = "decode.qc_route_cases";
+const QC_ROUTE: &str = "decode.qc_route";
 
 /// A selector value the caller fixes in a coding owner beside the calibrated
-/// selectors. Only the QC route cases qualify: `qc-go-rule` fixes their
-/// predicate with no measured threshold, so they carry no calibration.
+/// selectors. Only the QC route bounds qualify: the calibration harness
+/// measures none of them.
 #[derive(Debug, PartialEq, Eq)]
-struct FixedSelector(Vec<QcRouteCase>);
+struct FixedSelector(QcRouteBounds);
 
 impl FixedSelector {
     /// Reads `value`, the JSON of the selector at `path`, through the coding
     /// owner codec.
     fn parse(path: &str, value: &str) -> Result<Self, Box<dyn Error>> {
-        if path != QC_ROUTE_CASES {
-            return Err(format!("{path} is no fixed selector; only {QC_ROUTE_CASES} is").into());
+        if path != QC_ROUTE {
+            return Err(format!("{path} is no fixed selector; only {QC_ROUTE} is").into());
         }
         let value: serde_json::Value = serde_json::from_str(value)?;
-        let body = CanonicalValue::serialize(
-            &serde_json::json!({ "decode": { "qc_route_cases": value } }),
-        )?;
+        let body =
+            CanonicalValue::serialize(&serde_json::json!({ "decode": { "qc_route": value } }))?;
         let section = CodingTuningCodec::decode_body(body)?;
-        Ok(Self(section.decode().qc_route_cases().to_vec()))
+        Ok(Self(section.decode().qc_route()))
     }
 
     fn apply(&self, section: CodingTuning) -> CodingTuning {
-        section.with_qc_route_cases(self.0.clone())
+        section.with_qc_route(self.0)
     }
 }
 
@@ -460,7 +459,7 @@ fn verify_coding_owner(
             .get_mut("decode")
             .and_then(serde_json::Value::as_object_mut)
         {
-            decode.remove("qc_route_cases");
+            decode.remove("qc_route");
             if decode.is_empty() {
                 selectors.remove("decode");
             }
@@ -469,7 +468,7 @@ fn verify_coding_owner(
     };
     if without_fixed(&canonical_calibrated)? != without_fixed(text)? {
         return Err(format!(
-            "canonical wrapper of {} changed beyond {QC_ROUTE_CASES}",
+            "canonical wrapper of {} changed beyond {QC_ROUTE}",
             CodingTuning::ID.as_str()
         )
         .into());
@@ -951,8 +950,8 @@ mod tests {
             &[
                 "calibrated.json",
                 "--fixed-selector",
-                QC_ROUTE_CASES,
-                r#"[{"base_graph":1,"frames":8,"lifting_size":384,"workers":12}]"#,
+                QC_ROUTE,
+                r#"{"lane_claim_min_frames":4,"max_workers":12,"min_lifting_size":64}"#,
                 "coding.json",
             ],
         ))
@@ -960,24 +959,24 @@ mod tests {
         assert!(matches!(
             fixed,
             Command::CodingOwner {
-                fixed: Some(FixedSelector(cases)),
+                fixed: Some(FixedSelector(bounds)),
                 output_path,
                 ..
-            } if cases == [QcRouteCase::try_new(1, 384, 12, 8).unwrap()]
+            } if bounds == QcRouteBounds::try_new(64, 12, 4).unwrap()
                 && output_path == Path::new("coding.json")
         ));
         for paths in [
             &[
                 "calibrated.json",
                 "--fixed-selector",
-                QC_ROUTE_CASES,
+                QC_ROUTE,
                 "coding.json",
             ][..],
             &[
                 "calibrated.json",
                 "--fixed",
-                QC_ROUTE_CASES,
-                "[]",
+                QC_ROUTE,
+                "{}",
                 "coding.json",
             ],
         ] {

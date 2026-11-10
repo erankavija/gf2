@@ -26,7 +26,7 @@ use crate::traits::block::{
     SymbolSequence,
 };
 use crate::transform::{CoordinateMap, Extended, Punctured, Shortened, ShortenedDerivation};
-use crate::tuning::DecodeSelectors;
+use crate::tuning::{DecodeSelectors, QcRouteBounds};
 use crate::CodeRate;
 use gf2_core::field::extension::{BinaryPrimeExt, FieldExtension, FieldIdentity, TrivialExt};
 use gf2_core::field::matrix::FieldMatrix;
@@ -153,26 +153,47 @@ pub fn ldpc_lane_backends() -> Vec<LaneBackend> {
 
 /// The decoder setups an LDPC batch suite runs, each with the route it gives
 /// a full wave under a min-sum rule: per backend of [`ldpc_lane_backends`],
-/// selectors that give every wave the lane route and selectors that give it
-/// to a wave of at least four frames, then the conservative selectors, which
-/// give every wave the single-frame route.
+/// the open QC bounds, which give every wave of [`ldpc_batch_code`] the QC
+/// route, and, with the QC route closed, selectors that give every wave the
+/// lane route and selectors that give it to a wave of at least four frames;
+/// then the conservative lane selectors with the QC route closed, which give
+/// every wave the single-frame route.
 ///
 /// # Panics
 ///
 /// As [`ldpc_lane_backends`].
 pub fn ldpc_batch_routes() -> Vec<(DecodeSelectors, LaneBackend, BatchRoute)> {
-    let lane_from = |frames| DecodeSelectors::try_new(frames, usize::MAX, 1, 1).unwrap();
+    let lane_from = |frames| {
+        DecodeSelectors::try_new(frames, usize::MAX, 1, 1)
+            .unwrap()
+            .with_qc_route(QcRouteBounds::CLOSED)
+    };
     let mut routes = Vec::new();
     for backend in ldpc_lane_backends() {
+        routes.push((
+            DecodeSelectors::CONSERVATIVE,
+            backend,
+            BatchRoute::Qc(backend),
+        ));
         routes.push((lane_from(1), backend, BatchRoute::Lane(backend)));
         routes.push((lane_from(4), backend, BatchRoute::Lane(backend)));
     }
     routes.push((
-        DecodeSelectors::CONSERVATIVE,
+        DecodeSelectors::CONSERVATIVE.with_qc_route(QcRouteBounds::CLOSED),
         LaneBackend::Portable,
         BatchRoute::SingleFrame,
     ));
     routes
+}
+
+/// The route a full wave of `code` takes under a min-sum rule on the setup of
+/// [`ldpc_batch_routes`] listed with `route`: the QC setup gives a code
+/// without retained QC structure the single-frame route.
+pub fn ldpc_batch_route_of(code: &LdpcCode, route: BatchRoute) -> BatchRoute {
+    match route {
+        BatchRoute::Qc(_) if code.quasi_cyclic().is_none() => BatchRoute::SingleFrame,
+        route => route,
+    }
 }
 
 /// The iteration cap of the LDPC batch suite, under which

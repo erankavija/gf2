@@ -99,6 +99,14 @@ impl LdpcCode {
         self.qc.as_deref()
     }
 
+    /// Drops the retained QC structure; the parity-check matrix is unchanged,
+    /// and the batch decoder routes the code as one without the structure.
+    #[must_use]
+    pub fn without_quasi_cyclic(mut self) -> Self {
+        self.qc = None;
+        self
+    }
+
     /// Retains `qc` when its expansion under its row and column orders is
     /// exactly this code's parity-check matrix, and returns whether it does;
     /// a mismatch leaves the code unchanged. Takes O(B + E log E) time for B
