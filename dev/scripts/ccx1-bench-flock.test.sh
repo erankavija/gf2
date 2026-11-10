@@ -14,6 +14,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Both wrappers apply their lock discipline only inside a benchmark window.
+# Every lock below is a file under $TMP, so the host mutex is never touched.
+export GF2_BENCH_WINDOW=1
+
 # --- 1. Command composition, against stubbed flock, taskset and nice ---------
 #
 # The stubs print what they are asked to do instead of doing it, so this
@@ -51,6 +55,13 @@ expected_full_host=$(printf '%s\n' "flock -x $lock.turnstile" "flock -x $lock" \
 
 test "$default" = "$expected_default"
 test "$full_host" = "$expected_full_host"
+
+# GF2_CCX1_CPUS replaces the pinned CPU list and nothing else.
+pinned=$(
+  PATH="$TMP/bin:$PATH" GF2_CCX1_LOCK="$TMP/lock" GF2_CCX1_CPUS=0-3 \
+    "$ROOT/dev/scripts/ccx1-bench-flock.sh" probe arg
+)
+test "$pinned" = "${expected_default/taskset -c 6-11/taskset -c 0-3}"
 
 # The turnstile path is derived from the mutex path, so overriding the mutex in
 # one place does not leave two runs sharing a stale turnstile.

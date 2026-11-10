@@ -36,6 +36,10 @@ dev/scripts/ccx1-bench-flock.sh env CARGO_CI_NO_LOCK=1 \
 ```
 
 `CARGO_CI_NO_LOCK=1` lets the benchmark wrapper own the host mutex for the run.
+The wrapper pins the command to the `taskset -c` CPU list in `GF2_CCX1_CPUS`,
+which defaults to `6-11`, the CCX1 cores of the reference host. On another
+host, set it in the queue command to one core complex of that host, for example
+`GF2_CCX1_CPUS=0-5 dev/scripts/ccx1-bench-flock.sh ...`.
 The output records the execution identity, fixture seeds, backends, matrix
 counts, and elapsed times. The source revision is a pointer for rebuilding.
 Compare pooled rates for each size by dividing each backend's total matrix
