@@ -1,7 +1,7 @@
 //! Batch-encoding kernels for binary BCH codes: one dispatch bundle carries two
 //! independent reductions of $x^r m(x)$ modulo the generator $g$. The
 //! carry-less-multiply fold reduces one frame 64 message coefficients at a time
-//! ([`BchFoldBlockFn`]), and the bit-sliced reduction advances
+//! ([`BchFoldBlocksFn`]), and the bit-sliced reduction advances
 //! [`BITSLICE_LANES`] frames per step.
 //!
 //! # Bit-sliced register
@@ -84,10 +84,10 @@ pub const BITSLICE_LANES: usize = 64;
 /// full group and writes the same bits a full one would.
 pub type BchBitsliceReduceFn = fn(&mut [u64], &[u64], &[u64]);
 
-/// Carry-less-multiply fold of one 64-degree message block into one frame's
-/// packed remainder.
+/// Carry-less-multiply fold of a run of 64-degree message blocks into one
+/// frame's packed remainder.
 ///
-/// The arguments are `(register, low, redundancy, barrett, block)`:
+/// The arguments are `(register, low, redundancy, barrett, blocks)`:
 ///
 /// - `register` holds the running remainder $R$ packed little-endian in
 ///   `redundancy.div_ceil(64)` words, clear above degree $r - 1$. The caller
@@ -98,16 +98,23 @@ pub type BchBitsliceReduceFn = fn(&mut [u64], &[u64], &[u64]);
 /// - `redundancy` is $r$, the generator's degree.
 /// - `barrett` is [`fold_barrett_constant`] of the same generator, the low 64
 ///   coefficients of $\lfloor x^{r+64} / g \rfloor$.
-/// - `block` carries 64 message coefficients, bit $j$ holding the coefficient
-///   of the block's degree $j$. A block shorter than 64 degrees is zero above
-///   its last, which is exact rather than approximate: the recurrence
-///   multiplies by $x^{64}$ per block whatever the block holds, so a
-///   zero-padded top block contributes nothing while the register is still
-///   zero.
+/// - `blocks` are consecutive blocks of the frame, the highest degrees first
+///   and 64 degrees apart, each carrying 64 message coefficients, bit $j$
+///   holding the coefficient of the block's degree $j$. A block shorter than
+///   64 degrees is zero above its last, which is exact rather than
+///   approximate: the recurrence multiplies by $x^{64}$ per block whatever
+///   the block holds, so a zero-padded top block contributes nothing while
+///   the register is still zero.
 ///
-/// The caller runs the blocks of one frame from the highest degrees down, 64
-/// degrees apart, and reads the remainder out of `register`.
-pub type BchFoldBlockFn = fn(&mut [u64], &[u64], usize, u64, u64);
+/// The caller passes a frame's blocks in one call or in consecutive runs and
+/// reads the remainder out of `register`. A run keeps the register in
+/// machine registers for the register widths [`FOLD_UNROLLED_WORDS`] bounds.
+pub type BchFoldBlocksFn = fn(&mut [u64], &[u64], usize, u64, &[u64]);
+
+/// Register words up to which a fold run keeps the remainder in machine
+/// registers, unrolled by width; a wider remainder folds one block at a time
+/// through memory. Four words cover every generator of degree up to 256.
+pub const FOLD_UNROLLED_WORDS: usize = 4;
 
 /// Bundle of dispatched BCH batch-encoding kernels.
 #[derive(Copy, Clone, Debug)]
@@ -118,8 +125,9 @@ pub struct BchEncodeFns {
     /// Advances the bit-sliced shift register over one block of message
     /// degrees.
     pub bitslice_reduce: BchBitsliceReduceFn,
-    /// Folds one 64-degree message block into one frame's packed remainder.
-    pub fold_block: BchFoldBlockFn,
+    /// Folds a run of 64-degree message blocks into one frame's packed
+    /// remainder.
+    pub fold_blocks: BchFoldBlocksFn,
     /// Human-readable tag of the chosen bundle, `"avx2-pclmul"` or
     /// `"scalar"`.
     pub name: &'static str,
@@ -320,7 +328,7 @@ pub fn scalar() -> BchEncodeFns {
     BchEncodeFns {
         transpose_lane_block: crate::transpose::transpose_64x64_scalar,
         bitslice_reduce: bitslice_reduce_scalar,
-        fold_block: fold_block_scalar,
+        fold_blocks: fold_blocks_scalar,
         name: "scalar",
     }
 }
@@ -342,7 +350,7 @@ fn detect_x86() -> Option<BchEncodeFns> {
     Some(BchEncodeFns {
         transpose_lane_block: transpose.transpose_64x64,
         bitslice_reduce: bitslice_reduce_avx2_safe,
-        fold_block: fold_block_pclmul_safe,
+        fold_blocks: fold_blocks_pclmul_safe,
         name: "avx2-pclmul",
     })
 }
@@ -357,20 +365,20 @@ fn bitslice_reduce_avx2_safe(register: &mut [u64], masks: &[u64], slices: &[u64]
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn fold_block_pclmul_safe(
+fn fold_blocks_pclmul_safe(
     register: &mut [u64],
     low: &[u64],
     redundancy: usize,
     barrett: u64,
-    block: u64,
+    blocks: &[u64],
 ) {
     // SAFETY: `detect_x86` publishes this pointer only when
     // `is_x86_feature_detected!("pclmulqdq")` and
     // `is_x86_feature_detected!("sse4.1")` both hold, which together are the
-    // whole safety condition of `x86::bch_encode::fold_block_pclmul`; the
+    // whole safety condition of `x86::bch_encode::fold_blocks_pclmul`; the
     // kernel decides the buffer geometry itself.
     unsafe {
-        crate::x86::bch_encode::fold_block_pclmul(register, low, redundancy, barrett, block);
+        crate::x86::bch_encode::fold_blocks_pclmul(register, low, redundancy, barrett, blocks);
     }
 }
 
@@ -401,7 +409,8 @@ fn packed_tail_mask(redundancy: usize) -> u64 {
     }
 }
 
-/// The fold step of [`BchFoldBlockFn`], over the carry-less multiply `mul`.
+/// The fold step of [`BchFoldBlocksFn`] for one block, over the carry-less
+/// multiply `mul`.
 ///
 /// Both arms of the bundle are this function: the accelerated one supplies
 /// PCLMULQDQ and the portable one [`crate::clmul_u64_scalar`], so the
@@ -469,9 +478,94 @@ pub(crate) fn fold_block_over<M>(
     register[words - 1] &= packed_tail_mask(redundancy);
 }
 
-/// Portable carry-less-multiply fold of one 64-degree message block.
+/// [`BchFoldBlocksFn`] over the carry-less multiply `mul`: the run unrolled by
+/// register width up to [`FOLD_UNROLLED_WORDS`], one [`fold_block_over`] step
+/// per block beyond it.
+#[inline(always)]
+pub(crate) fn fold_blocks_over<M>(
+    mul: M,
+    register: &mut [u64],
+    low: &[u64],
+    redundancy: usize,
+    barrett: u64,
+    blocks: &[u64],
+) where
+    M: Fn(u64, u64) -> u128,
+{
+    match redundancy.div_ceil(64) {
+        1 => fold_blocks_words::<M, 1>(mul, register, low, redundancy, barrett, blocks),
+        2 => fold_blocks_words::<M, 2>(mul, register, low, redundancy, barrett, blocks),
+        3 => fold_blocks_words::<M, 3>(mul, register, low, redundancy, barrett, blocks),
+        4 => fold_blocks_words::<M, 4>(mul, register, low, redundancy, barrett, blocks),
+        _ => {
+            for &block in blocks {
+                fold_block_over(&mul, register, low, redundancy, barrett, block);
+            }
+        }
+    }
+}
+
+/// [`fold_block_over`] over a run of blocks for a remainder of `W` words,
+/// held in a local array across the run.
+#[inline(always)]
+fn fold_blocks_words<M, const W: usize>(
+    mul: M,
+    register: &mut [u64],
+    low: &[u64],
+    redundancy: usize,
+    barrett: u64,
+    blocks: &[u64],
+) where
+    M: Fn(u64, u64) -> u128,
+{
+    assert!(
+        redundancy > 0,
+        "a fold needs a generator of positive degree"
+    );
+    assert_eq!(
+        (register.len(), low.len()),
+        (W, W),
+        "a fold runs over {W} packed words at redundancy {redundancy}"
+    );
+    let low: [u64; W] = low.try_into().expect("checked above");
+    let mut reg: [u64; W] = (&*register).try_into().expect("checked above");
+    let tail = packed_tail_mask(redundancy);
+    // r lies in (64 (W - 1), 64 W], so the 64 coefficients leaving the
+    // register, from r - 64 up, sit in its top two words: constant indices
+    // keep the array in machine registers.
+    let shift = redundancy % 64;
+    for &block in blocks {
+        let leaving = if shift == 0 {
+            reg[W - 1]
+        } else if W == 1 {
+            reg[0] << (64 - shift)
+        } else {
+            (reg[W.saturating_sub(2)] >> shift) | (reg[W - 1] << (64 - shift))
+        };
+        let quotient_input = leaving ^ block;
+        let quotient = quotient_input ^ ((mul(quotient_input, barrett) >> 64) as u64);
+        let products: [u128; W] = core::array::from_fn(|index| mul(quotient, low[index]));
+        // R x^64 + q g_low, built whole rather than shifted in place: an
+        // in-place shift compiles to an overlapping copy whose reload misses
+        // store forwarding once per block.
+        let previous = reg;
+        reg = core::array::from_fn(|index| {
+            let shifted = if index == 0 { 0 } else { previous[index - 1] };
+            let carry = if index == 0 {
+                0
+            } else {
+                (products[index - 1] >> 64) as u64
+            };
+            shifted ^ products[index] as u64 ^ carry
+        });
+        reg[W - 1] &= tail;
+    }
+    register.copy_from_slice(&reg);
+}
+
+/// Portable carry-less-multiply fold of a run of 64-degree message blocks.
 ///
-/// This is the [`BchFoldBlockFn`] contract with no processor feature
+/// This is the [`BchFoldBlocksFn`] contract with no processor feature
 /// requirement, over [`crate::clmul_u64_scalar`], and the kernel the
 /// accelerated one is checked against.
 ///
@@ -484,26 +578,25 @@ pub(crate) fn fold_block_over<M>(
 ///
 /// $1 + \lceil r/64 \rceil$ carry-less multiplies, each
 /// $O(\mathrm{popcount})$ of its multiplier here, plus
-/// $O(\lceil r/64 \rceil)$ word operations, for 64 message coefficients of
-/// one frame.
-pub fn fold_block_scalar(
+/// $O(\lceil r/64 \rceil)$ word operations, per block.
+pub fn fold_blocks_scalar(
     register: &mut [u64],
     low: &[u64],
     redundancy: usize,
     barrett: u64,
-    block: u64,
+    blocks: &[u64],
 ) {
-    fold_block_over(
+    fold_blocks_over(
         crate::clmul_scalar::clmul_u64_scalar,
         register,
         low,
         redundancy,
         barrett,
-        block,
+        blocks,
     );
 }
 
-/// The Barrett constant [`BchFoldBlockFn`] reduces through: the low 64
+/// The Barrett constant [`BchFoldBlocksFn`] reduces through: the low 64
 /// coefficients of $\mu = \lfloor x^{r+64} / g \rfloor$.
 ///
 /// $\mu$ has degree exactly 64, so its leading coefficient is one and is
@@ -877,24 +970,28 @@ mod tests {
     }
 
     /// Drives `fns`'s fold over one frame: 64-degree blocks from the highest
-    /// degrees down, the top one zero-padded.
+    /// degrees down, the top one zero-padded, in runs of `run` blocks.
     fn fold_parity(
         fns: &BchEncodeFns,
         message: &[u64],
         dimension: usize,
         low: &[u64],
         redundancy: usize,
+        run: usize,
     ) -> Vec<bool> {
         let words = redundancy.div_ceil(64);
         let mut scratch = vec![0u64; words];
         let barrett = fold_barrett_constant(low, redundancy, &mut scratch);
         let mut register = vec![0u64; words];
+        let mut blocks = Vec::new();
         let mut degree = dimension;
         while degree > 0 {
             let count = ((degree - 1) % 64) + 1;
             degree -= count;
-            let block = packed_window(message, degree) & mask_below(count);
-            (fns.fold_block)(&mut register, low, redundancy, barrett, block);
+            blocks.push(packed_window(message, degree) & mask_below(count));
+        }
+        for chunk in blocks.chunks(run) {
+            (fns.fold_blocks)(&mut register, low, redundancy, barrett, chunk);
         }
         (0..redundancy).map(|index| bit(&register, index)).collect()
     }
@@ -913,12 +1010,13 @@ mod tests {
             for &redundancy in REDUNDANCIES {
                 let low = seeded.bits(redundancy);
                 for &batch in BATCHES {
-                    for _ in 0..batch {
+                    for frame in 0..batch {
                         let message = seeded.bits(dimension);
+                        let run = 1 + frame % 3;
                         assert_eq!(
-                            fold_parity(fns, &message, dimension, &low, redundancy),
+                            fold_parity(fns, &message, dimension, &low, redundancy, run),
                             naive_parity(&message, dimension, &low, redundancy),
-                            "{} diverged at k={dimension} r={redundancy} B={batch}",
+                            "{} diverged at k={dimension} r={redundancy} B={batch} run={run}",
                             fns.name
                         );
                     }
@@ -942,23 +1040,24 @@ mod tests {
     fn the_detected_fold_matches_the_scalar_fold_word_for_word() {
         let fns = crate::contract::require_detected("bch_encode::detect()", detect());
         let mut seeded = Seeded(0x2b69_68d3_0000_0005);
-        for &redundancy in REDUNDANCIES {
+        // 300 is past the unrolled widths, the one-block-at-a-time arm.
+        for &redundancy in REDUNDANCIES.iter().chain(&[255, 256, 257, 300]) {
             let words = redundancy.div_ceil(64);
             let low = seeded.bits(redundancy);
             let mut scratch = vec![0u64; words];
             let barrett = fold_barrett_constant(&low, redundancy, &mut scratch);
             let mut expected = vec![0u64; words];
             let mut produced = vec![0u64; words];
-            for _ in 0..16 {
-                let block = seeded.next();
-                fold_block_scalar(&mut expected, &low, redundancy, barrett, block);
-                (fns.fold_block)(&mut produced, &low, redundancy, barrett, block);
-                assert_eq!(
-                    produced, expected,
-                    "{} diverged at r={redundancy}",
-                    fns.name
-                );
+            let blocks: Vec<u64> = (0..16).map(|_| seeded.next()).collect();
+            for &block in &blocks {
+                fold_blocks_scalar(&mut expected, &low, redundancy, barrett, &[block]);
             }
+            (fns.fold_blocks)(&mut produced, &low, redundancy, barrett, &blocks);
+            assert_eq!(
+                produced, expected,
+                "{} diverged at r={redundancy}",
+                fns.name
+            );
         }
     }
 
@@ -1015,7 +1114,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "positive degree")]
     fn a_fold_without_a_generator_is_rejected() {
-        fold_block_scalar(&mut [], &[], 0, 0, 1);
+        fold_blocks_scalar(&mut [], &[], 0, 0, &[1]);
     }
 
     #[test]

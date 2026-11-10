@@ -268,7 +268,7 @@ impl BitVec {
             len_bits.div_ceil(64),
             source.len()
         );
-        self.write_run(offset, len_bits, |run| packed_window(source, run));
+        self.write_run(offset, len_bits, source, 0);
     }
 
     /// Overwrites bits `offset..offset + len_bits` with bits
@@ -294,17 +294,15 @@ impl BitVec {
                 .is_some_and(|end| end <= source.len_bits),
             "source bit range out of bounds"
         );
-        let words = source.words();
-        self.write_run(offset, len_bits, |run| {
-            packed_window(words, source_offset + run)
-        });
+        self.write_run(offset, len_bits, source.words(), source_offset);
     }
 
-    /// Writes at `offset` the `len_bits`-bit run whose 64 bits from run
-    /// position `run` up are `window(run)`.
+    /// Writes at `offset` the `len_bits` bits of `source` from bit
+    /// `source_offset` up: a masked head word, whole destination words read
+    /// at one fixed shift, and a masked tail word.
     #[inline]
-    fn write_run(&mut self, offset: usize, len_bits: usize, window: impl Fn(usize) -> u64) {
-        let end = offset
+    fn write_run(&mut self, offset: usize, len_bits: usize, source: &[u64], source_offset: usize) {
+        offset
             .checked_add(len_bits)
             .filter(|&end| end <= self.len_bits)
             .expect("bit range out of bounds");
@@ -312,27 +310,41 @@ impl BitVec {
             return;
         }
         let data = self.words_mut();
-        let first = offset / 64;
-        if offset.is_multiple_of(64) {
-            let whole = len_bits / 64;
-            for (w, target) in data[first..first + whole].iter_mut().enumerate() {
-                *target = window(w * 64);
-            }
-            let rest = len_bits % 64;
-            if rest != 0 {
-                let mask = (1u64 << rest) - 1;
-                let target = &mut data[first + whole];
-                *target = (*target & !mask) | (window(whole * 64) & mask);
-            }
-            return;
+        let mut done = 0;
+        let lead = offset % 64;
+        if lead != 0 {
+            let count = (64 - lead).min(len_bits);
+            let mask = (u64::MAX >> (64 - count)) << lead;
+            let target = &mut data[offset / 64];
+            *target = (*target & !mask) | ((packed_window(source, source_offset) << lead) & mask);
+            done = count;
         }
 
-        let last = (end - 1) / 64;
-        for (word, target) in data.iter_mut().enumerate().take(last + 1).skip(first) {
-            let low = (word * 64).max(offset);
-            let count = ((word + 1) * 64).min(end) - low;
-            let mask = (u64::MAX >> (64 - count)) << (low % 64);
-            *target = (*target & !mask) | ((window(low - offset) << (low % 64)) & mask);
+        let first = (offset + done) / 64;
+        let whole = (len_bits - done) / 64;
+        let start = source_offset + done;
+        let (word, shift) = (start / 64, start % 64);
+        let body = &mut data[first..first + whole];
+        if shift == 0 {
+            body.copy_from_slice(&source[word..word + whole]);
+        } else {
+            // Every body word but possibly the last has its high part in the
+            // next source word; past the source that part is zero padding.
+            let paired = whole.min(source.len().saturating_sub(word + 1));
+            for (target, pair) in body[..paired].iter_mut().zip(source[word..].windows(2)) {
+                *target = (pair[0] >> shift) | (pair[1] << (64 - shift));
+            }
+            for (index, target) in body.iter_mut().enumerate().skip(paired) {
+                *target = source[word + index] >> shift;
+            }
+        }
+        done += whole * 64;
+
+        let rest = len_bits - done;
+        if rest != 0 {
+            let mask = (1u64 << rest) - 1;
+            let target = &mut data[(offset + done) / 64];
+            *target = (*target & !mask) | (packed_window(source, source_offset + done) & mask);
         }
     }
 

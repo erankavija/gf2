@@ -1587,6 +1587,11 @@ fn packed_build_lanes(redundancy: usize, low: &[u64], lanes: &mut Vec<u64>) {
     bch_encode::bitslice_masks(low, parts.masks);
 }
 
+/// Message blocks [`packed_fold_reduce`] hands the fold kernel per call, a
+/// stack run long enough that the kernel's per-call register load and store
+/// are a small share of the blocks it folds.
+const FOLD_RUN_BLOCKS: usize = 16;
+
 /// Words [`EncodeFamily::ClmulFold`] keeps in
 /// [`EncodeRegisters::fold`] ahead of its [`prepared_for`] stamp: the one
 /// Barrett constant its step reduces through.
@@ -1637,7 +1642,7 @@ fn packed_build_fold(redundancy: usize, low: &[u64], register: &mut [u64], fold:
 /// leaving the remainder in `register`.
 ///
 /// One step folds the next block of message coefficients into the remainder
-/// through [`gf2_kernels_simd::bch_encode::BchFoldBlockFn`], which multiplies
+/// through [`gf2_kernels_simd::bch_encode::BchFoldBlocksFn`], which multiplies
 /// the remainder by $x^{64}$ and Barrett-reduces the sum. The blocks run from
 /// the highest degrees down, exactly 64 degrees apart, and the top one is
 /// shorter than 64 degrees whenever the dimension is not a multiple of 64;
@@ -1654,19 +1659,40 @@ fn packed_fold_reduce(
     let fns = encode_kernels();
     let coefficients = message.words();
     register.fill(0);
-    let mut degree = plan.dimension();
-    // While the remainder is zero a zero block leaves it zero, so the
-    // leading zero coefficients of a shortened message cost one read each.
-    let mut started = false;
+    // A zero remainder stays zero through zero blocks, so the fold starts at
+    // the block holding the highest nonzero coefficient; a shortened
+    // message's removed coordinates are all above it.
+    let highest = match plan.layout() {
+        SystematicLayout::MessageParityAscending => message.find_last_set(),
+        SystematicLayout::MessageParityDescending => message
+            .find_first_set()
+            .map(|user| plan.dimension() - 1 - user),
+    };
+    let Some(highest) = highest else {
+        return;
+    };
+    // Blocks start at the dimension's top partial block and run 64 degrees
+    // apart; the first one folded is the one holding `highest`.
+    let dimension = plan.dimension();
+    let top = ((dimension - 1) % 64) + 1;
+    let mut degree = if highest >= dimension - top {
+        dimension
+    } else {
+        dimension - top - 64 * ((dimension - top - 1 - highest) / 64)
+    };
+    let mut run = [0u64; FOLD_RUN_BLOCKS];
+    let mut filled = 0;
     while degree > 0 {
         let count = ((degree - 1) % 64) + 1;
         degree -= count;
-        let block = packed_message_window(plan, coefficients, degree, count);
-        started |= block != 0;
-        if started {
-            (fns.fold_block)(register, low, redundancy, barrett, block);
+        run[filled] = packed_message_window(plan, coefficients, degree, count);
+        filled += 1;
+        if filled == FOLD_RUN_BLOCKS {
+            (fns.fold_blocks)(register, low, redundancy, barrett, &run);
+            filled = 0;
         }
     }
+    (fns.fold_blocks)(register, low, redundancy, barrett, &run[..filled]);
 }
 
 /// The kernel bundle this process encodes with.
