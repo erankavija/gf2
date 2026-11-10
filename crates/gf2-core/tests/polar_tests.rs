@@ -329,8 +329,8 @@ fn test_polar_transform_matrix_equivalence_n4() {
 }
 
 /// Bit-by-bit butterfly `(a, b) -> (a, a ^ b)` over the first `n` bits; the
-/// reference for the word-level path that `polar_transform_into` takes at
-/// strides of 64 and above.
+/// reference for the word-level paths `polar_transform_into` takes for
+/// `n >= 64`.
 fn polar_transform_bitwise_reference(bv: &mut BitVec, n: usize) {
     let mut stride = 1;
     while stride < n {

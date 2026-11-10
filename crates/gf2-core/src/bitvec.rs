@@ -1025,12 +1025,19 @@ impl BitVec {
     ///
     /// # Complexity
     ///
-    /// O(n log n) where n is the transform size.
+    /// O(n log n) where n is the transform size: for `n >= 64` the stages
+    /// of stride below 64 run as six masked shifts per word and the others
+    /// as word-slice XORs, O((n / 64) log n) word operations; smaller
+    /// transforms run bit by bit.
     pub fn polar_transform_into(&mut self, n: usize) {
         assert!(n.is_power_of_two(), "n must be a power of 2");
         assert!(n <= self.len_bits, "n exceeds BitVec length");
 
         if n <= 1 {
+            return;
+        }
+        if n >= 64 {
+            polar_transform_words(&mut self.words_mut()[..n / 64]);
             return;
         }
 
@@ -1090,6 +1097,42 @@ impl BitVec {
 
         // The polar transform is an involution.
         self.polar_transform_into(n);
+    }
+}
+
+/// The polar butterfly `(a, b) -> (a, a XOR b)` at every stride over whole
+/// words, `words.len()` a power of two: bits `i` and `i + stride` share a
+/// word for strides below 64 and lie in words `stride / 64` apart above.
+fn polar_transform_words(words: &mut [u64]) {
+    // The low half of every pair at strides 1, 2, 4, 8, 16 and 32.
+    const LOW_HALVES: [(u32, u64); 6] = [
+        (1, 0x5555_5555_5555_5555),
+        (2, 0x3333_3333_3333_3333),
+        (4, 0x0f0f_0f0f_0f0f_0f0f),
+        (8, 0x00ff_00ff_00ff_00ff),
+        (16, 0x0000_ffff_0000_ffff),
+        (32, 0x0000_0000_ffff_ffff),
+    ];
+    for word in words.iter_mut() {
+        for (shift, low) in LOW_HALVES {
+            *word ^= (*word & low) << shift;
+        }
+    }
+    // Below this many words a plain loop beats the dispatched XOR kernel.
+    const KERNEL_WORDS: usize = 8;
+    let mut stride = 1;
+    while stride < words.len() {
+        for pair in words.chunks_exact_mut(2 * stride) {
+            let (low, high) = pair.split_at_mut(stride);
+            if stride >= KERNEL_WORDS {
+                crate::kernels::ops::xor_inplace(high, low);
+            } else {
+                for (high, low) in high.iter_mut().zip(low.iter()) {
+                    *high ^= *low;
+                }
+            }
+        }
+        stride *= 2;
     }
 }
 
