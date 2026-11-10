@@ -31,11 +31,10 @@ pub fn operands(words: usize, seed: u64) -> (Vec<u64>, Vec<u64>) {
     (a, b)
 }
 
-/// gf2's product into a zeroed destination through the production long
-/// product, [`gf2_core::gf2m::wide::clmul_slice`], which accumulates.
+/// gf2's product through the production long product,
+/// [`gf2_core::gf2m::wide::clmul_slice_overwrite`].
 pub fn gf2_product(a: &[u64], b: &[u64], out: &mut [u64]) {
-    out.fill(0);
-    gf2_core::gf2m::wide::clmul_slice(a, b, out);
+    gf2_core::gf2m::wide::clmul_slice_overwrite(a, b, out);
 }
 
 /// Median products per second of `product` over [`SAMPLES`] samples of at

@@ -15,7 +15,9 @@ use super::barrett::BarrettReducerWide;
 use super::wide_config::Gf2mWideConfig;
 
 mod split;
-pub use split::{clmul_slice, clmul_slice_with, ClmulSplit};
+pub use split::{
+    clmul_slice, clmul_slice_overwrite, clmul_slice_overwrite_with, clmul_slice_with, ClmulSplit,
+};
 
 /// A fixed-width element of `GF(2^M)` stored as `N` little-endian `u64` words.
 ///

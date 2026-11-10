@@ -67,13 +67,37 @@ pub fn clmul_slice(a: &[u64], b: &[u64], out: &mut [u64]) {
 ///
 /// As [`clmul_slice`].
 pub fn clmul_slice_with(a: &[u64], b: &[u64], out: &mut [u64], split: ClmulSplit) {
+    check_lengths(a, b, out);
+    clmul_into(a, b, out, split, ProductWrite::Accumulate);
+}
+
+/// Replaces the `2n` words of `out` with the carry-less product of two
+/// `n`-word operands, as [`clmul_slice`] computes it without reading `out`.
+///
+/// # Panics
+///
+/// As [`clmul_slice`].
+pub fn clmul_slice_overwrite(a: &[u64], b: &[u64], out: &mut [u64]) {
+    clmul_slice_overwrite_with(a, b, out, ClmulSplit::structural());
+}
+
+/// [`clmul_slice_overwrite`] under the caller's `split`.
+///
+/// # Panics
+///
+/// As [`clmul_slice`].
+pub fn clmul_slice_overwrite_with(a: &[u64], b: &[u64], out: &mut [u64], split: ClmulSplit) {
+    check_lengths(a, b, out);
+    clmul_into(a, b, out, split, ProductWrite::Overwrite);
+}
+
+fn check_lengths(a: &[u64], b: &[u64], out: &[u64]) {
     assert_eq!(a.len(), b.len(), "clmul_slice: operand lengths differ");
     assert_eq!(
         out.len(),
         2 * a.len(),
         "clmul_slice: product length must be twice the operand length"
     );
-    clmul_into(a, b, out, split, ProductWrite::Accumulate);
 }
 
 /// The split product written to `out` as `write` says; lengths as
@@ -160,15 +184,25 @@ fn karatsuba(
         karatsuba(a0, b0, low, rest, basecase, kernels);
         karatsuba(a1, b1, high, rest, basecase, kernels);
     }
-    sum_a.copy_from_slice(a0);
-    sum_b.copy_from_slice(b0);
-    xor(&mut sum_a[..l], a1);
-    xor(&mut sum_b[..l], b1);
+    for i in 0..h {
+        let (x, y) = if i < l { (a1[i], b1[i]) } else { (0, 0) };
+        sum_a[i] = a0[i] ^ x;
+        sum_b[i] = b0[i] ^ y;
+    }
     karatsuba(sum_a, sum_b, middle, rest, basecase, kernels);
-    xor(middle, &out[..2 * h]);
-    xor(&mut middle[..2 * l], &out[2 * h..]);
-    // 3h <= 2n for every n >= 2.
-    xor(&mut out[h..3 * h], middle);
+    // With out = [L0 L1 H0 H1] in h-word quarters (H1 holds 2l - h words,
+    // 3h <= 2n for n >= 2) and middle = [M0 M1], adding P1 + P0 + P2 at word h
+    // gives L1 += L0 + H0 + M0 and H0 += L1 + H1 + M1, sharing L1 + H0.
+    let (low, high) = out.split_at_mut(2 * h);
+    let (l0, l1) = low.split_at_mut(h);
+    let (h0, h1) = high.split_at_mut(h);
+    let (m0, m1) = middle.split_at(h);
+    for i in 0..h {
+        let shared = l1[i] ^ h0[i];
+        let top = h1.get(i).copied().unwrap_or(0);
+        l1[i] = shared ^ l0[i] ^ m0[i];
+        h0[i] = shared ^ top ^ m1[i];
+    }
 }
 
 fn xor(destination: &mut [u64], source: &[u64]) {
@@ -189,8 +223,6 @@ struct Kernels {
     #[cfg(not(feature = "simd"))]
     k4: Option<()>,
     #[cfg(not(feature = "simd"))]
-    k8: Option<()>,
-    #[cfg(not(feature = "simd"))]
     k9: Option<()>,
 }
 
@@ -206,6 +238,7 @@ impl Kernels {
         }
         Self {
             k4: None,
+            #[cfg(feature = "simd")]
             k8: None,
             k9: None,
         }
@@ -218,33 +251,31 @@ impl Kernels {
         #[cfg(feature = "simd")]
         {
             let m = a.len();
-            if let (Some(fns), true) = (self.k4, m <= 4) {
-                let (mut x, mut y, mut z) = ([0u64; 4], [0u64; 4], [0u64; 8]);
-                x[..m].copy_from_slice(a);
-                y[..m].copy_from_slice(b);
-                record_clmul_wide_lane(fns.name);
-                (fns.clmul)(&x, &y, &mut z);
-                out.copy_from_slice(&z[..2 * m]);
-                return;
+            // An exact width runs on the caller's words; a narrower operand
+            // is zero-padded to the kernel's width.
+            macro_rules! basecase {
+                ($fns:expr, $width:literal) => {
+                    if let (Some(fns), true) = ($fns, m <= $width) {
+                        record_clmul_wide_lane(fns.name);
+                        if let (Ok(x), Ok(y), Ok(z)) =
+                            (a.try_into(), b.try_into(), (&mut *out).try_into())
+                        {
+                            (fns.clmul)(x, y, z);
+                        } else {
+                            let (mut x, mut y) = ([0u64; $width], [0u64; $width]);
+                            let mut z = [0u64; 2 * $width];
+                            x[..m].copy_from_slice(a);
+                            y[..m].copy_from_slice(b);
+                            (fns.clmul)(&x, &y, &mut z);
+                            out.copy_from_slice(&z[..2 * m]);
+                        }
+                        return;
+                    }
+                };
             }
-            if let (Some(fns), true) = (self.k8, m <= 8) {
-                let (mut x, mut y, mut z) = ([0u64; 8], [0u64; 8], [0u64; 16]);
-                x[..m].copy_from_slice(a);
-                y[..m].copy_from_slice(b);
-                record_clmul_wide_lane(fns.name);
-                (fns.clmul)(&x, &y, &mut z);
-                out.copy_from_slice(&z[..2 * m]);
-                return;
-            }
-            if let (Some(fns), true) = (self.k9, m <= 9) {
-                let (mut x, mut y, mut z) = ([0u64; 9], [0u64; 9], [0u64; 18]);
-                x[..m].copy_from_slice(a);
-                y[..m].copy_from_slice(b);
-                record_clmul_wide_lane(fns.name);
-                (fns.clmul)(&x, &y, &mut z);
-                out.copy_from_slice(&z[..2 * m]);
-                return;
-            }
+            basecase!(self.k4, 4);
+            basecase!(self.k8, 8);
+            basecase!(self.k9, 9);
         }
         record_clmul_wide_lane(PORTABLE_LANE);
         out.fill(0);
