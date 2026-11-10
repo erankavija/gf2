@@ -37,7 +37,7 @@
 # before the window opens; run-window.test.sh drives it with a fake load.
 set -uo pipefail
 
-LOAD_MAX="${GF2_WINDOW_LOAD_MAX:-1.0}"
+LOAD_MAX="${GF2_WINDOW_LOAD_MAX:-4.0}"
 LOAD_WAIT_MAX_S="${GF2_WINDOW_LOAD_WAIT_MAX_S:-1800}"
 LOAD_POLL_S="${GF2_WINDOW_LOAD_POLL_S:-30}"
 LOADAVG="${GF2_WINDOW_LOADAVG:-/proc/loadavg}"
