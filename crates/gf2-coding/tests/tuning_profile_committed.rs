@@ -330,6 +330,44 @@ fn the_committed_envelope_leaves_the_qc_route_to_its_structural_bounds() {
     }
 }
 
+/// Under the committed envelope every DVB-T2 code takes the QC route under
+/// each min-sum rule at every worker count and wave size: its lifting size
+/// of 360 exceeds the structural lane-claim ceiling of either QC backend.
+#[test]
+fn the_committed_envelope_routes_every_dvb_t2_code_on_the_qc_route() {
+    let (selectors, _) = measured_decode();
+    for backend in [LaneBackend::Portable, LaneBackend::detected()] {
+        assert!(QcRouteBounds::structural(backend).lane_claim_max_lifting_size() < 360);
+    }
+    let rules = [
+        DecoderAlgorithm::MinSum,
+        DecoderAlgorithm::NormalizedMinSum(0.75),
+        DecoderAlgorithm::OffsetMinSum(0.5),
+    ];
+    for (frame, rate, code) in test_support::ldpc_dvb_t2_codes() {
+        for algorithm in rules {
+            let decoder = LdpcBatchDecoder::with_selectors(
+                code.clone(),
+                DecoderConfig::new(algorithm, true),
+                1,
+                DecodedWord::Codeword,
+                selectors.clone(),
+            );
+            for frames in [1, LANES - 1, LANES, LANES + 1, 2 * LANES] {
+                for workers in [1, 2, 6, 12, 24] {
+                    let route = decoder
+                        .batch_route_with_workers(frames, NonZeroUsize::new(workers).unwrap());
+                    assert_eq!(
+                        route,
+                        BatchRoute::Qc(LaneBackend::detected()),
+                        "{frame:?} {rate:?}, {algorithm:?}, {frames} frames, {workers} workers"
+                    );
+                }
+            }
+        }
+    }
+}
+
 /// The installed envelope routes each of [`fresh::QC_CALLS`] on NR BG1
 /// Z=384, with its structure attached and without it, on the detected
 /// backend and on the portable fallback, as
