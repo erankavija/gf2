@@ -4,9 +4,7 @@
 //! `crate::x86::fp_small_panel`, operating on canonical bytes (each element in
 //! `[0, p)`). [`detect`] returns `None` without AVX2.
 
-/// Cache-blocking factor along the k-axis, chosen to fit L1d. The u32
-/// accumulator bound `k ≤ 2³² / (p − 1)²` (`68 719` at `p = 251`) is not
-/// binding.
+/// Cache-blocking factor along the k-axis, chosen to fit L1d.
 pub const KC: usize = 256;
 
 /// Whole-GEMM panelized integer kernel signature for `Fp<P>` with
@@ -18,7 +16,9 @@ pub const KC: usize = 256;
 /// row-major transpose of B (length `n · k`, so row `j` holds
 /// column `j` of B).
 ///
-/// `p` is an odd prime in `[3, 251]`.
+/// `p` is an odd prime in `[3, 251]`. Every `k` is supported: the u32
+/// accumulators are reduced mod `p` between `k` chunks before they can
+/// overflow.
 ///
 /// # Panics
 ///
@@ -131,6 +131,24 @@ mod tests {
                 let bt: Vec<u8> = (0..(n * k) as u32)
                     .map(|i| ((i * 23 + 5) % p as u32) as u8)
                     .collect();
+                let mut got = vec![0u8; m * n];
+                (fns.batch_gemm_fn)(&a, &bt, m, k, n, p, &mut got);
+                let expected = scalar_gemm(&a, &bt, m, k, n, p);
+                assert_eq!(got, expected, "p={p} m={m} k={k} n={n}");
+            }
+        }
+    }
+
+    #[test]
+    fn safe_wrapper_matches_scalar_past_u32_accumulator_bound() {
+        // All-`(p − 1)` operands maximise every lane: `k · (p − 1)²` first
+        // exceeds `u32::MAX` at `k = 68 720` for `p = 251`.
+        let fns = crate::contract::require_detected("fp_small_panel::detect()", detect());
+        let (m, n) = (5usize, 25usize);
+        for &p in &[127u8, 251] {
+            for &k in &[68_719usize, 68_720, 137_441] {
+                let a = vec![p - 1; m * k];
+                let bt = vec![p - 1; n * k];
                 let mut got = vec![0u8; m * n];
                 (fns.batch_gemm_fn)(&a, &bt, m, k, n, p, &mut got);
                 let expected = scalar_gemm(&a, &bt, m, k, n, p);

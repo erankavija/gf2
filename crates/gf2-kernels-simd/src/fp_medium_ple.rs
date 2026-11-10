@@ -32,8 +32,8 @@ pub const PANEL_SCRATCH_COLS: usize = 256;
 /// # Panics
 ///
 /// Panics unless `window.len() == m * win`, `inv_table.len() >= p as usize`
-/// and every lane of `window` is canonical (`< p`). Panics if `win` exceeds
-/// the kernel's scratch row or a row swap reaches outside `row_perm`.
+/// and every lane of `window` is canonical (`< p`). Panics if `win - 1`
+/// exceeds [`PANEL_SCRATCH_COLS`] or a row swap reaches outside `row_perm`.
 pub type MediumPrimePlePanelBaseFn = fn(
     window: &mut [u16],
     m: usize,
@@ -132,11 +132,13 @@ fn ple_panel_base_safe(
         win,
         p,
         inv_table.len(),
+        PANEL_SCRATCH_COLS,
     );
     // SAFETY: `detect_x86` only published this pointer when AVX2 is
-    // available at runtime. The assertion above gives the window shape and
-    // keeps every pivot inside `inv_table`; the kernel reaches `row_perm`
-    // and its scratch row through bounds-checked accesses.
+    // available at runtime. The assertion above gives the window shape,
+    // keeps every pivot inside `inv_table` and every pivot-row tail inside
+    // the scratch row; the kernel reaches `row_perm` through bounds-checked
+    // accesses.
     unsafe {
         crate::x86::fp_medium_ple::ple_panel_base_canonical_u16(
             window,

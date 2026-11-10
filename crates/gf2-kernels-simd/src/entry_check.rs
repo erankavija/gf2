@@ -18,8 +18,9 @@ pub(crate) fn assert_spmm_columns(kernel: &str, a_cols: &[usize], b_len: usize, 
 }
 
 /// Panics unless `window` is `m * win` cells, without overflow, each below
-/// `p`, and `inv_table` has an entry per residue. The kernel keeps every cell
-/// below `p`, so each pivot then indexes inside `inv_table`.
+/// `p`, `inv_table` has an entry per residue, and the `win - 1` columns right
+/// of a pivot fit the kernel's `scratch_cols`-column scratch row. The kernel
+/// keeps every cell below `p`, so each pivot then indexes inside `inv_table`.
 #[inline]
 pub(crate) fn assert_ple_panel<T: Copy + Ord + Into<usize>>(
     kernel: &str,
@@ -28,7 +29,12 @@ pub(crate) fn assert_ple_panel<T: Copy + Ord + Into<usize>>(
     win: usize,
     p: T,
     inv_table_len: usize,
+    scratch_cols: usize,
 ) {
+    assert!(
+        win <= scratch_cols + 1,
+        "{kernel}: win - 1 exceeds PANEL_SCRATCH_COLS"
+    );
     let Some(cells) = m.checked_mul(win) else {
         panic!("{kernel}: m * win overflows usize");
     };

@@ -685,7 +685,7 @@ unsafe fn round_ps_to_epi32(v: __m256) -> __m256i {
 /// aliasing condition applies.
 #[inline]
 #[target_feature(enable = "avx2")]
-unsafe fn pack_i32x8_to_u8(reduced: __m256i) -> [u8; 8] {
+pub(crate) unsafe fn pack_i32x8_to_u8(reduced: __m256i) -> [u8; 8] {
     // Step 1: pack 8 i32 → 16 u16 with duplication across 128-bit halves.
     let packed16 = _mm256_packus_epi32(reduced, reduced);
     // Step 2: 64-bit lane permute (3,1,2,0) → low 128 holds
