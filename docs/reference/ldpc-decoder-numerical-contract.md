@@ -241,21 +241,30 @@ frame for frame, and frame error rate is its quality measure. Its kernel,
 has a portable and an AVX2 backend, selected as for the QC kernels; both write
 the same bit patterns, so every rule below holds on either.
 
-- **Channel quantization.** With `LayeredConfig` scale $s$ and channel limit
-  $C \le 127$, channel LLR $L$ becomes $q = \operatorname{clamp}(\operatorname{round}(s L), -C, C)$,
-  rounding half away from zero. NaN quantizes to 0 and $\pm\infty$ to $\pm C$.
-  A punctured or truncated position's zero LLR quantizes to 0, and a filler at
-  `FILLER_LLR` saturates to $C$ for every scale at least $C$ / `FILLER_LLR`.
-- **Input scale.** The arithmetic is not scale-invariant: LLRs multiplied by
-  $r$ decode as the original LLRs would at scale $r s$, so frame error rate
-  depends on the input convention. `LayeredConfig::nr_5g` and
-  `LayeredConfig::dvb_t2` assume natural-log LLRs, $2y/\sigma^2$ for BPSK
-  over AWGN, under which
-  [`ldpc_layered_fer`](../../crates/gf2-coding/tests/ldpc_layered_fer.rs)
-  chose them. The input bundles of the AFF3CT comparison carry $y/\sigma^2$,
-  half that scale, and decode at an effective scale $s/2$. A caller whose
-  LLRs are $r$ times natural-log keeps the chosen resolution with scale
-  $s/r$.
+- **Channel quantization.** With channel limit $C \le 127$ and the frame's
+  quantizer scale $s_f$, channel LLR $L$ becomes
+  $q = \operatorname{clamp}(\operatorname{round}(s_f L), -C, C)$, rounding
+  half away from zero. NaN quantizes to 0 and $\pm\infty$ to $\pm C$. A
+  punctured or truncated position's zero LLR quantizes to 0, and a filler at
+  `FILLER_LLR` saturates to $C$ whenever $s_f \ge C$ / `FILLER_LLR`.
+- **Frame scale.** The arithmetic is not scale-invariant: LLRs multiplied by
+  $r$ decode as the original LLRs would at scale $r s_f$. `LayeredConfig`
+  holds a scale $s$ chosen for natural-log LLRs ($2y/\sigma^2$ for BPSK over
+  AWGN, as gf2's demappers produce) and an LLR scale $r$, 1 unless
+  `with_llr_scale` states that the inputs are $r$ times natural-log, as the
+  $y/\sigma^2$ input bundles of the AFF3CT comparison are with $r = 1/2$.
+  The base scale is $b = s/r$. Under `with_fixed_scale`, $s_f = b$.
+  Otherwise a cap guard applies: with $m$ the mean magnitude of the frame's
+  finite nonzero LLRs,
+  $s_f = \max(\min(b, C/(2m)), \min(b, C / \texttt{FILLER\_LLR}))$, and
+  $s_f = b$ when no LLR is finite and nonzero. $m$ is the `f32` sum of those
+  magnitudes, accumulated into 16 partial sums by index modulo 16 and then
+  added in partial-sum order, divided by their count, so $s_f$ is one
+  function of the frame on every backend and worker count. The guard keeps
+  the channel limit at least twice the mean magnitude: at the waterfall of
+  high-rate codes the mean approaches or exceeds the cap $C/b$, and a fixed
+  scale saturates a large share of the inputs. The multiple 2 is an observation from the DVB-T2 rate 3/4 to 5/6
+  waterfalls, not a derived value; the floor keeps fillers saturated.
 - **State.** Each variable holds an `i8` belief $A_v$, initially $q_v$; each
   edge holds an `i8` check-to-variable message $\lambda_e$, initially 0.
 - **Layers.** A layer is a set of checks sharing no variable, updated at
@@ -299,7 +308,9 @@ hand-built code with rows of degree zero, one and two, at caps zero to 25 and
 under reuse; it also asserts quantization, termination and rate-matched
 decoding, and decodes noiseless and noisy random codewords of every DVB-T2
 code and of every NR lifting size off the 32-lane grid, with and without
-early termination, under the recommended settings. The unit tests of the kernel hold both backends to the update
+early termination, under the recommended settings. It holds the frame scale
+to its definition and decodes seeded high-rate DVB-T2 frames that the fixed
+scale loses. The unit tests of the kernel hold both backends to the update
 definition at saturation boundaries.
 [`ldpc_layered_fer`](../../crates/gf2-coding/tests/ldpc_layered_fer.rs)
 compares the Eb/N0 at frame error rate $10^{-3}$, counted on the first $k$

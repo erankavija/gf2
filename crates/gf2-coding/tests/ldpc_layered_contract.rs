@@ -241,7 +241,8 @@ fn cap_zero_reports_the_quantized_channel_and_its_syndrome() {
                 let (posterior, word, iterations, converged, passed, last) =
                     observe(&mut decoder, llrs, 0);
                 let config = decoder.config();
-                let expected: Vec<i8> = llrs.iter().map(|&l| config.quantize(l)).collect();
+                let scale = config.frame_scale(llrs);
+                let expected: Vec<i8> = llrs.iter().map(|&l| config.quantize(l, scale)).collect();
                 assert_eq!(posterior, expected);
                 for (i, &value) in expected.iter().enumerate() {
                     assert_eq!(word.get(i), value < 0);
@@ -258,7 +259,7 @@ fn cap_zero_reports_the_quantized_channel_and_its_syndrome() {
 fn quantization_rounds_saturates_and_maps_rate_matching_values() {
     // Scale 4, channel limit 31.
     let config = LayeredConfig::dvb_t2();
-    let q = |x: f32| config.quantize(Llr::new(x));
+    let q = |x: f32| config.quantize(Llr::new(x), config.channel_scale());
     assert_eq!((q(0.0), q(-0.0), q(f32::NAN)), (0, 0, 0));
     assert_eq!((q(0.125), q(-0.125), q(0.124), q(-0.375)), (1, -1, 0, -2));
     assert_eq!((q(f32::INFINITY), q(f32::NEG_INFINITY)), (31, -31));
@@ -270,9 +271,136 @@ fn quantization_rounds_saturates_and_maps_rate_matching_values() {
         for half in -400..=400 {
             let level = 0.5 * half as f32;
             for scaled in [level.next_down(), level, level.next_up()] {
-                let llr = scaled / config.channel_scale();
-                let expected = (llr * config.channel_scale()).round().clamp(-limit, limit);
-                assert_eq!(config.quantize(Llr::new(llr)), expected as i8, "{llr}");
+                let scale = config.channel_scale();
+                let llr = scaled / scale;
+                let expected = (llr * scale).round().clamp(-limit, limit);
+                assert_eq!(
+                    config.quantize(Llr::new(llr), scale),
+                    expected as i8,
+                    "{llr}"
+                );
+            }
+        }
+    }
+}
+
+/// The mean magnitude of the finite nonzero values, summed in the order the
+/// contract fixes: 16 accumulators by index modulo 16, then in order.
+fn reference_mean(llrs: &[Llr]) -> f32 {
+    let mut sums = [0.0f32; 16];
+    let mut count = 0usize;
+    for (i, llr) in llrs.iter().enumerate() {
+        let magnitude = llr.value().abs();
+        if magnitude.is_finite() && magnitude > 0.0 {
+            sums[i % 16] += magnitude;
+            count += 1;
+        }
+    }
+    sums.iter().fold(0.0, |total, &sum| total + sum) / count.max(1) as f32
+}
+
+#[test]
+fn the_frame_scale_follows_the_llr_scale_and_the_cap_guard() {
+    let mut rng = StdRng::seed_from_u64(0x5ca1e);
+    let specials = [0.0, -0.0, f32::NAN, f32::INFINITY, FILLER_LLR];
+    for config in configs() {
+        let fixed = config.with_fixed_scale();
+        let halved = config.with_llr_scale(0.5);
+        assert_eq!(halved.channel_scale(), config.channel_scale());
+        for magnitude in [0.0f32, 0.01, 1.0, 3.0, 8.0, 50.0, 1e6] {
+            for len in [0, 1, 15, 16, 17, 1000] {
+                let llrs: Vec<Llr> = (0..len)
+                    .map(|i| {
+                        let value = if i % 7 == 3 {
+                            specials[rng.gen_range(0..specials.len())]
+                        } else {
+                            magnitude * rng.gen_range(0.5..1.5)
+                        };
+                        Llr::new(if rng.gen::<bool>() { -value } else { value })
+                    })
+                    .collect();
+                let mean = reference_mean(&llrs);
+                let limit = f32::from(config.channel_limit());
+                let guarded = |base: f32| {
+                    if mean > 0.0 {
+                        base.min(limit / (2.0 * mean))
+                            .max(base.min(limit / FILLER_LLR))
+                    } else {
+                        base
+                    }
+                };
+                let natural = config.channel_scale();
+                let context = format!("{config:?} {magnitude} {len}");
+                assert_eq!(config.frame_scale(&llrs), guarded(natural), "{context}");
+                assert_eq!(fixed.frame_scale(&llrs), natural, "{context}");
+                assert_eq!(
+                    halved.frame_scale(&llrs),
+                    guarded(2.0 * natural),
+                    "{context}"
+                );
+            }
+        }
+    }
+}
+
+/// A random codeword and its BPSK AWGN natural-log LLRs at `ebn0` dB, drawn
+/// from `seed`.
+fn awgn_frame(encoder: &LdpcEncoder, n: usize, ebn0: f64, seed: u64) -> (BitVec, Vec<Llr>) {
+    let mut rng = StdRng::seed_from_u64(seed);
+    let codeword = encoder.encode(&BitVec::random(encoder.k(), &mut rng));
+    let rate = encoder.k() as f64 / n as f64;
+    let channel = AwgnChannel::from_variance(1.0 / (2.0 * rate * 10f64.powf(ebn0 / 10.0)));
+    let gain = 2.0 / channel.variance();
+    let llrs = (0..n)
+        .map(|i| {
+            let symbol = if codeword.get(i) { -1.0 } else { 1.0 };
+            Llr::new((gain * channel.transmit(symbol, &mut rng)) as f32)
+        })
+        .collect();
+    (codeword, llrs)
+}
+
+/// At the waterfall of high-rate DVB-T2 codes the mean channel magnitude
+/// exceeds the scale-4 channel cap of 7.75; these frames, found by search
+/// at the stated points, fail at the fixed natural-log scale and decode
+/// under the cap guard.
+#[test]
+fn the_cap_guard_decodes_high_rate_dvb_t2_frames_the_fixed_scale_loses() {
+    use CodeRate::*;
+    let points: [(bool, CodeRate, f64, &[u64]); 4] = [
+        (false, Rate5_6, 3.5, &[1569, 1842]),
+        (true, Rate5_6, 3.6, &[1169, 2321]),
+        (true, Rate4_5, 3.4, &[535]),
+        (true, Rate3_4, 3.0, &[5354]),
+    ];
+    for (normal, rate, ebn0, seeds) in points {
+        let code = if normal {
+            LdpcCode::dvb_t2_normal(rate)
+        } else {
+            LdpcCode::dvb_t2_short(rate)
+        };
+        let encoder = LdpcEncoder::new(code.clone());
+        let case = Case {
+            name: format!("dvb-t2 normal {normal} {rate:?}"),
+            code: code.clone(),
+            layers: None,
+            sigma: 0.0,
+        };
+        for &seed in seeds {
+            let (codeword, llrs) = awgn_frame(&encoder, code.n(), ebn0, seed);
+            for (config, decodes) in [
+                (LayeredConfig::dvb_t2(), true),
+                (LayeredConfig::dvb_t2().with_fixed_scale(), false),
+            ] {
+                for mut decoder in backends(&case, config) {
+                    let (_, word, ..) = observe(&mut decoder, &llrs, 25);
+                    assert_eq!(
+                        word == codeword,
+                        decodes,
+                        "{} seed {seed} {config:?}",
+                        case.name
+                    );
+                }
             }
         }
     }

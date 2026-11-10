@@ -2,12 +2,18 @@
 //! no variable, updated at once with one SIMD lane per check; the rules are
 //! in `docs/reference/ldpc-decoder-numerical-contract.md`.
 
+use super::nr_5g::FILLER_LLR;
 use super::{DecodeOutcome, LaneBackend, LdpcCode};
 use crate::llr::Llr;
 use gf2_core::BitVec;
 pub use gf2_kernels_simd::ldpc_layered::LayeredRule;
 use gf2_kernels_simd::ldpc_layered::{LayerKernel, LayerParams, LAYER_LANES, LAYER_SATURATION};
 use gf2_kernels_simd::ldpc_signs::{pack_signs_portable, PackSignsFn};
+
+/// The cap guard keeps the channel limit at this multiple of a frame's mean
+/// channel magnitude. The value is an observation from the frame error rates
+/// of DVB-T2 rates 3/4 to 5/6 at their waterfalls, not a derived quantity.
+const GUARD_MEAN_MULTIPLE: f32 = 2.0;
 
 /// Quantization and update rules of a [`LayeredDecoder`].
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -16,11 +22,16 @@ pub struct LayeredConfig {
     channel_scale: f32,
     channel_limit: u8,
     early_termination: bool,
+    llr_scale: f32,
+    cap_guard: bool,
 }
 
 impl LayeredConfig {
-    /// A channel LLR `x` quantizes to `round(x * channel_scale)` bounded by
-    /// ±`channel_limit`; check messages are bounded by ±`message_limit`.
+    /// A channel LLR `x` quantizes to `round(x * s)` bounded by
+    /// ±`channel_limit`, where the frame scale `s` of
+    /// [`Self::frame_scale`] is `channel_scale` for natural-log LLRs, lowered
+    /// by the cap guard on frames of large mean magnitude; check messages are
+    /// bounded by ±`message_limit`.
     ///
     /// # Panics
     ///
@@ -48,6 +59,33 @@ impl LayeredConfig {
             channel_scale,
             channel_limit,
             early_termination,
+            llr_scale: 1.0,
+            cap_guard: true,
+        }
+    }
+
+    /// States that the input LLRs are `llr_scale` times natural-log, as
+    /// `y/σ²` inputs over BPSK AWGN are with `llr_scale` 0.5; the base frame
+    /// scale becomes `channel_scale / llr_scale`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `llr_scale` is not finite and positive.
+    #[must_use]
+    pub fn with_llr_scale(self, llr_scale: f32) -> Self {
+        assert!(
+            llr_scale.is_finite() && llr_scale > 0.0,
+            "LLR scale must be finite and positive"
+        );
+        Self { llr_scale, ..self }
+    }
+
+    /// Turns the cap guard off: every frame quantizes at the base scale.
+    #[must_use]
+    pub fn with_fixed_scale(self) -> Self {
+        Self {
+            cap_guard: false,
+            ..self
         }
     }
 
@@ -64,10 +102,9 @@ impl LayeredConfig {
     /// error floor. The message limit exceeds the channel limit so that one
     /// check can overrule the channel on a degree-2 parity bit.
     ///
-    /// The setting assumes natural-log channel LLRs, `2y/σ²` for BPSK over
-    /// AWGN; LLRs at `r` times that scale decode as at scale `4r`, so a
-    /// caller with another convention passes scale `4/r` to
-    /// [`Self::new`].
+    /// The scale is chosen for natural-log channel LLRs, `2y/σ²` for BPSK
+    /// over AWGN, which gf2's demappers produce; [`Self::with_llr_scale`]
+    /// states another convention.
     #[must_use]
     pub fn nr_5g() -> Self {
         Self::new(LayeredRule::Normalized { eighths: 6 }, 4.0, 23, 24, true)
@@ -76,7 +113,9 @@ impl LayeredConfig {
     /// The DVB-T2 setting: normalized min-sum at 7/8, scale 4, channel
     /// limit 31, message limit 40, early termination, for natural-log channel
     /// LLRs as in [`Self::nr_5g`]. DVB-T2 columns have degree at most 13,
-    /// which leaves this message limit stable.
+    /// which leaves this message limit stable. At the waterfalls of rates 3/4
+    /// to 5/6 the mean channel magnitude nears the cap of 7.75 this scale
+    /// gives, where the cap guard of [`Self::frame_scale`] lowers the scale.
     #[must_use]
     pub fn dvb_t2() -> Self {
         Self::new(LayeredRule::Normalized { eighths: 7 }, 4.0, 31, 40, true)
@@ -88,10 +127,73 @@ impl LayeredConfig {
         self.params.rule()
     }
 
-    /// Quanta per unit of channel LLR.
+    /// Quanta per unit of natural-log channel LLR.
     #[must_use]
     pub fn channel_scale(&self) -> f32 {
         self.channel_scale
+    }
+
+    /// The input LLRs' scale relative to natural-log, 1 by default.
+    #[must_use]
+    pub fn llr_scale(&self) -> f32 {
+        self.llr_scale
+    }
+
+    /// Whether the cap guard of [`Self::frame_scale`] applies.
+    #[must_use]
+    pub fn cap_guard(&self) -> bool {
+        self.cap_guard
+    }
+
+    /// The quantizer scale of a frame. The base scale is
+    /// `b = channel_scale / llr_scale`; without the cap guard the result is
+    /// `b`. With it, `m` is the mean magnitude of the frame's finite nonzero
+    /// LLRs, and the result is `max(min(b, C / (2m)), min(b, C / FILLER_LLR))`
+    /// for channel limit `C`, or `b` when no LLR counts: the channel limit
+    /// stays at least twice the mean magnitude, and fillers stay saturated.
+    /// `m` is the `f32` sum of the magnitudes over 16 partial sums by index
+    /// modulo 16, added in partial-sum order, divided by their count, so the
+    /// scale is one function of the frame. Takes O(`llrs.len()`) time.
+    #[must_use]
+    pub fn frame_scale(&self, llrs: &[Llr]) -> f32 {
+        let base = self.channel_scale / self.llr_scale;
+        if !self.cap_guard {
+            return base;
+        }
+        // Per-lane sums and counts over fixed 16-value blocks vectorize; the
+        // tail is padded with zeros, which do not count.
+        fn add(sums: &mut [f32; 16], counts: &mut [u32; 16], block: &[Llr; 16]) {
+            for lane in 0..16 {
+                // A magnitude counts when its bits lie in 1..=f32::MAX: finite
+                // and nonzero. Masking in integers keeps the loop branch-free;
+                // adding zero leaves a sum of magnitudes unchanged.
+                let bits = block[lane].value().to_bits() & 0x7fff_ffff;
+                let counted = bits.wrapping_sub(1) < f32::MAX.to_bits();
+                sums[lane] += f32::from_bits(bits & 0u32.wrapping_sub(u32::from(counted)));
+                counts[lane] += u32::from(counted);
+            }
+        }
+        let mut sums = [0.0f32; 16];
+        let mut counts = [0u32; 16];
+        let mut blocks = llrs.chunks_exact(16);
+        for block in &mut blocks {
+            add(
+                &mut sums,
+                &mut counts,
+                block.try_into().expect("a block of 16"),
+            );
+        }
+        let mut tail = [Llr::zero(); 16];
+        tail[..blocks.remainder().len()].copy_from_slice(blocks.remainder());
+        add(&mut sums, &mut counts, &tail);
+        let count: usize = counts.iter().map(|&c| c as usize).sum();
+        if count == 0 {
+            return base;
+        }
+        let mean = sums.iter().fold(0.0, |total, &sum| total + sum) / count as f32;
+        let limit = f32::from(self.channel_limit);
+        base.min(limit / (GUARD_MEAN_MULTIPLE * mean))
+            .max(base.min(limit / FILLER_LLR))
     }
 
     /// The magnitude bound of a quantized channel LLR.
@@ -113,17 +215,18 @@ impl LayeredConfig {
         self.early_termination
     }
 
-    /// Quantizes one channel LLR, rounding half away from zero; NaN maps to
-    /// zero and infinities to the channel limit.
+    /// Quantizes one channel LLR at `scale`, normally the frame's
+    /// [`Self::frame_scale`], rounding half away from zero; NaN maps to zero
+    /// and infinities to the channel limit.
     #[must_use]
-    pub fn quantize(&self, llr: Llr) -> i8 {
+    pub fn quantize(&self, llr: Llr, scale: f32) -> i8 {
         // Adding 1.5 * 2^23 rounds a magnitude below 2^22 to an integer in
         // the low mantissa bits, ties to even; the exact remainder finds the
         // ties to round up. This vectorizes where `f32::round` (a libm call
         // on baseline x86-64) and saturating casts do not. Clamping before
         // rounding is exact because the limit is an integer.
         const MAGIC: f32 = 12_582_912.0;
-        let scaled = llr.value() * self.channel_scale;
+        let scaled = llr.value() * scale;
         let magnitude = if scaled.is_nan() {
             0.0
         } else {
@@ -571,8 +674,9 @@ impl LayeredDecoder {
             Some(_) => &mut self.output,
             None => &mut self.posterior,
         };
+        let scale = self.config.frame_scale(llrs);
         for (slot, &llr) in quantized.iter_mut().zip(llrs) {
-            *slot = self.config.quantize(llr);
+            *slot = self.config.quantize(llr, scale);
         }
         if let Some(strides) = &self.strides {
             for run in strides {
