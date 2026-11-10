@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
-# Regenerates per-symbol asm artefacts for SIMD review.
-#
-# Convention (PPC-spiral I3): each
-#   crates/gf2-kernels-simd/src/x86/<module>.rs
-# carries a sibling
-#   crates/gf2-kernels-simd/src/x86/asm/<module>.asm.txt
-# regenerated after every spiral-step edit so reviewers can confirm the
-# expected mnemonics (vpxor, vpclmulqdq, vpternlogq, ...) actually landed.
+# Writes a per-symbol release disassembly of a SIMD kernel for review, so the
+# expected mnemonics (vpxor, vpclmulqdq, vpternlogq, ...) can be confirmed.
+# The listing is a review aid written to an untracked path such as target/;
+# listings are not committed.
 #
 # Usage:
 #   ./dev/scripts/regen-asm.sh <crate> <symbol> <output-path> [extra-symbol ...]

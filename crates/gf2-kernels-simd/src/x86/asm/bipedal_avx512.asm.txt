@@ -1,9 +1,0 @@
-; gf2-core PPC-spiral asm artefact
-; ---------------------------------------------------------
-; crate         : gf2-kernels-simd
-; primary       : gf2_kernels_simd::x86::bipedal_avx512::run_add_batch_avx512
-; extra symbols : gf2_kernels_simd::x86::bipedal_avx512::run_sub_batch_avx512 gf2_kernels_simd::x86::bipedal_avx512::run_mul_batch_avx512 gf2_kernels_simd::x86::bipedal_avx512::run_neg_batch_avx512
-; output        : crates/gf2-kernels-simd/src/x86/asm/bipedal_avx512.asm.txt
-; ---------------------------------------------------------
-; No listing: `x86/bipedal_avx512.rs` compiles only under
-; `cfg(target_feature = "avx512f")` and its entry points panic unconditionally.

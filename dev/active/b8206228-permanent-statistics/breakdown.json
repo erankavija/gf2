@@ -918,7 +918,6 @@
           "touches": [
             "crates/gf2-algebra/src/permanent/mod.rs",
             "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
-            "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
             "crates/gf2-algebra/tests/permanent_vectors.rs"
           ]
         }
