@@ -445,6 +445,8 @@ fn rule_of<const RULE: u8>(parameter: f32) -> LaneMinSumRule {
 ///
 /// # Safety
 /// [`fused_row`]'s contract with `edges.len() == DEGREE`.
+// One call per row; kept out of line so each degree reads as its own symbol.
+#[inline(never)]
 #[target_feature(enable = "avx2")]
 unsafe fn fused_groups<const RULE: u8, const DEGREE: usize>(
     parameter: f32,
@@ -455,28 +457,34 @@ unsafe fn fused_groups<const RULE: u8, const DEGREE: usize>(
 ) {
     let parameter = _mm256_set1_ps(parameter);
     let edges: &[QcBlock; DEGREE] = edges.try_into().expect("DEGREE edges");
+    // Lane i of edge e reads belief offset + i + shift before its wrap lane
+    // z - shift and offset + i + shift - z from it on, so each edge's index
+    // is a start plus the lane, the start changing once at the wrap.
+    let mut starts: [isize; DEGREE] =
+        core::array::from_fn(|edge| (edges[edge].offset + edges[edge].shift) as isize);
+    let mut wraps: [(usize, usize); DEGREE] =
+        core::array::from_fn(|edge| (z - edges[edge].shift, edge));
+    wraps.sort_unstable();
+    let mut next = 0;
     for lane in (0..z / 8 * 8).step_by(8) {
+        while next < DEGREE && wraps[next].0 <= lane {
+            starts[wraps[next].1] -= z as isize;
+            next += 1;
+        }
         // SAFETY: lane + 8 <= z. Each block's beliefs are offset..offset + z
-        // within the slice; rotated_block reads at most offset + z - 1. Each
-        // edge's messages edge * z + lane..+8 lie within degree * z.
+        // within the slice; a group no wrap lane splits reads start + lane..+8
+        // within its block, and rotated_block reads at most offset + z - 1.
+        // Each edge's messages edge * z + lane..+8 lie within degree * z.
         unsafe {
-            let firsts: [usize; DEGREE] = core::array::from_fn(|edge| {
-                let first = lane + edges[edge].shift;
-                if first >= z {
-                    first - z
-                } else {
-                    first
-                }
-            });
             let at = messages.as_mut_ptr().add(lane);
             let message = |edge: usize| _mm256_loadu_ps(at.add(edge * z));
             let store = |edge: usize, out| _mm256_storeu_ps(at.add(edge * z), out);
-            // A group whose eight lanes wrap in no block loads every block
+            // A group no edge's wrap lane splits loads every block
             // contiguously. Each branch checks its own differences, so they
             // stay in registers.
-            if firsts.iter().all(|&first| first + 8 <= z) {
+            if next == DEGREE || lane + 8 <= wraps[next].0 {
                 let differences: [__m256; DEGREE] = core::array::from_fn(|edge| {
-                    let block = beliefs.as_ptr().add(edges[edge].offset + firsts[edge]);
+                    let block = beliefs.as_ptr().offset(starts[edge] + lane as isize);
                     _mm256_sub_ps(_mm256_loadu_ps(block), message(edge))
                 });
                 check_lanes::<RULE>(parameter, DEGREE, |edge| differences[edge], store);
