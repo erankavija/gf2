@@ -233,8 +233,9 @@ fn family_names_round_trip_through_the_registry() {
     assert_eq!(EncodeFamily::from_name("no-such-family"), None);
 }
 
-/// The selected family under this process's profile, which installs none, is
-/// the reference. `bch_encode_dispatch_installed.rs` runs the same comparison
+/// This process installs no profile, so the default selectors choose the
+/// family the host's kernel bundle prefers. `bch_encode_dispatch_installed.rs`
+/// runs the same comparison
 /// in a child process whose installed profile selects the table family, so
 /// both arms of the seam are witnessed across worker counts.
 #[test]

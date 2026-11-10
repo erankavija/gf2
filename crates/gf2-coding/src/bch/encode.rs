@@ -1861,7 +1861,7 @@ where
     /// systematic coordinates the layout declares. Every coordinate of
     /// `codeword` is written.
     ///
-    /// The recurrence runs over the calling thread's scratch registers, so
+    /// The encode runs over the calling thread's scratch registers, so
     /// the call allocates nothing once that thread has encoded in this code's
     /// word type.
     ///
@@ -1877,9 +1877,11 @@ where
     ///
     /// # Complexity
     ///
-    /// The reference recurrence: $O(k r)$ base-field multiply-adds
-    /// field-generic, $O(k \lceil r/64 \rceil)$ word operations plus
-    /// $O(n / 64)$ word writes packed, each plus the $O(r)$ register reset.
+    /// That of the family [`selected_encode_family`](Self::selected_encode_family)
+    /// reports for a batch of one, plus the $O(r)$ register reset and, when
+    /// the thread's scratch was last prepared for another code, that family's
+    /// preparation. [`encode_systematic_with`](Self::encode_systematic_with)
+    /// pays neither.
     pub fn encode_systematic_into(
         &self,
         message: &S,
@@ -1952,8 +1954,10 @@ where
     /// `workspace`.
     ///
     /// The codeword is the one
-    /// [`encode_systematic_into`](Self::encode_systematic_into) writes; this
-    /// path differs only in owning no buffers of its own.
+    /// [`encode_systematic_into`](Self::encode_systematic_into) writes, under
+    /// the same family, [`selected_encode_family`](Self::selected_encode_family)
+    /// for a batch of one; this path differs only in owning no buffers of its
+    /// own, and the workspace arrives prepared for that family.
     ///
     /// # Errors
     ///
@@ -1967,9 +1971,9 @@ where
     /// # Complexity
     ///
     /// That of [`encode_systematic_into`](Self::encode_systematic_into),
-    /// without its $O(r)$ register reset, plus $O(r)$ mixing steps to decide
-    /// the workspace fingerprint. A batch pays that check once for the whole
-    /// batch.
+    /// without its $O(r)$ register reset and family preparation, plus $O(r)$
+    /// mixing steps to decide the workspace fingerprint. A batch pays that
+    /// check once for the whole batch.
     pub fn encode_systematic_with(
         &self,
         message: &S,
@@ -1981,7 +1985,8 @@ where
         let plan = self.systematic_plan(layout);
         plan.validate_lengths(message.len(), codeword.len())?;
         validate_symbol_field(&plan, message)?;
-        S::encode_systematic_with(&plan, message, &mut workspace.registers, codeword)?;
+        let family = select_family::<X::Base, S>(&plan, 1);
+        S::encode_systematic_family(family, &plan, message, &mut workspace.registers, codeword)?;
         Ok(())
     }
 
@@ -4098,6 +4103,39 @@ mod tests {
         assert!(matches!(
             error,
             CodeError::BufferLengthMismatch { actual: 0, .. }
+        ));
+    }
+
+    #[test]
+    fn a_workspace_single_encode_runs_the_family_a_batch_of_one_selects() {
+        // The redundancy admits every family, so a batch of one selects one
+        // that reads prepared state. Stripping that state from the workspace
+        // makes the selected family reject it, which only the reference
+        // recurrence would not.
+        let code = binary_narrow_sense(8, 0b100011101, 9);
+        let layout = SystematicLayout::default();
+        let family = code.selected_encode_family(layout, 1);
+        assert_ne!(family, EncodeFamily::REFERENCE);
+
+        let message = seeded_bits(code.k(), 5);
+        let mut workspace = code.encode_workspace();
+        let mut codeword = BitVec::zeros(code.n());
+        code.encode_systematic_with(&message, layout, &mut workspace, &mut codeword)
+            .expect("a prepared workspace encodes");
+        assert_eq!(
+            codeword,
+            code.encode_systematic(&message, layout).unwrap(),
+            "the workspace path writes the codeword the scratch path writes"
+        );
+
+        workspace.registers.tables.clear();
+        workspace.registers.fold.clear();
+        let error = code
+            .encode_systematic_with(&message, layout, &mut workspace, &mut codeword)
+            .expect_err("the selected family reads state the stripped workspace lacks");
+        assert!(matches!(
+            error,
+            BchError::Code(CodeError::BufferLengthMismatch { actual: 0, .. })
         ));
     }
 
