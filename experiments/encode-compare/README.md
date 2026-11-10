@@ -1,0 +1,20 @@
+# Encoder comparisons
+
+Throughput of gf2's encoders against the reference implementations on
+identical seeded messages (@/issue/be6d6f45, @/issue/040bc2b8). `compare.sh nr`
+times NR rate-matched LDPC encoding at redundancy version 0, one bit per
+symbol, against srsRAN (`@/citation/Srsran2026`) with the encoder its "auto"
+factory selects and AFF3CT 4.7.0 (`@/citation/Cassagne2019`)
+`Encoder_LDPC_QC_fast` with `Puncturer_5G` at int8 and int32 bits.
+
+Each arm takes its library's native input format, converted before timing.
+An arm is timed only after it reproduces gf2's codewords for every message of
+the cell; AFF3CT derives its own base graph and lifting size, and a cell where
+those differ from gf2's is reported and skipped. A row is the median of the
+repetitions [`src/lib.rs`](src/lib.rs) states, every worker running its own
+encoder over the shared messages.
+
+The comparison binary is the [`external/`](external/) crate, outside the
+workspace: its build compiles srsRAN's LDPC translation units and links
+AFF3CT's static library from the trees `GF2_SRSRAN_ROOT` and `GF2_AFF3CT_ROOT`
+name, all `-O3 -march=native`; gf2 builds with `-C target-cpu=native`.
