@@ -54,14 +54,15 @@ pub struct SweepConfig {
 
 impl SweepConfig {
     /// The grid of the issue: both 5G NR base graphs at a lifting size below
-    /// one AVX2 vector, a medium one with a remainder modulo eight, and the
+    /// one AVX2 vector, the multiples of eight through 48 that place the
+    /// crossover between it and 52, 52 with a remainder modulo eight, and the
     /// largest; the DVB-T2 short and normal rate-1/2 codes; 1, 6, 12 and 24
     /// workers; 1 and 8 frames per call.
     #[must_use]
     pub fn issue_grid() -> Self {
         let mut codes = Vec::new();
         for graph in [1, 2] {
-            for z in [6, 52, 384] {
+            for z in [6, 8, 16, 24, 32, 40, 48, 52, 384] {
                 codes.push(format!("nr-bg{graph}-z{z}"));
             }
         }
