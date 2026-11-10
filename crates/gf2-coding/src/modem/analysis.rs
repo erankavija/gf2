@@ -306,15 +306,15 @@ fn gaussian_mi_approximation_bits(mean_abs_llr: f64) -> f64 {
     if !(mean_abs_llr.is_finite()) || mean_abs_llr <= 0.0 {
         return 0.0;
     }
-    // Closed-form J-function fit `I = J(sigma)` cited from
-    // `@/citation/TenBrink2001`, with sigma^2 = 2 * mean(L | bit=0) for
-    // consistent Gaussian LLRs; `mean_abs_llr` stands in for
-    // mu = mean(L | 0).
+    // Closed-form fit `J(sigma) = (1 - 2^(-H1 sigma^(2 H2)))^H3` of the
+    // J-function of `@/citation/TenBrink2001`, from `@/citation/Brannstrom2005`.
+    // sigma^2 = 2 * mean(L | bit=0) for
+    // consistent Gaussian LLRs; `mean_abs_llr` stands in for mu = mean(L | 0).
     let sigma = (2.0 * mean_abs_llr).sqrt();
     const H1: f64 = 0.3073;
     const H2: f64 = 0.8935;
     const H3: f64 = 1.1064;
-    let mi = 1.0 - (-H1 * sigma.powf(2.0 * H2)).exp().powf(H3);
+    let mi = (1.0 - (-H1 * sigma.powf(2.0 * H2)).exp2()).powf(H3);
     mi.clamp(0.0, 1.0)
 }
 
@@ -988,6 +988,75 @@ mod tests {
         assert!(small < mid);
         assert!(mid < big);
         assert!(big <= 1.0);
+    }
+
+    /// `J(sigma) = 1 - E[log2(1 + exp(-L))]` for `L ~ N(sigma^2 / 2, sigma^2)`,
+    /// by composite Simpson quadrature over twelve standard deviations.
+    fn j_by_quadrature(sigma: f64) -> f64 {
+        let mu = sigma * sigma / 2.0;
+        let (lo, hi, steps) = (mu - 12.0 * sigma, mu + 12.0 * sigma, 4000usize);
+        let h = (hi - lo) / steps as f64;
+        let integrand = |x: f64| {
+            let density = (-(x - mu).powi(2) / (2.0 * sigma * sigma)).exp()
+                / (2.0 * std::f64::consts::PI * sigma * sigma).sqrt();
+            let log2_term = ((-x).max(0.0) + (-x.abs()).exp().ln_1p()) / std::f64::consts::LN_2;
+            density * log2_term
+        };
+        let weighted: f64 = (0..=steps)
+            .map(|i| {
+                let weight = match i {
+                    0 => 1.0,
+                    _ if i == steps => 1.0,
+                    _ if i % 2 == 1 => 4.0,
+                    _ => 2.0,
+                };
+                weight * integrand(lo + i as f64 * h)
+            })
+            .sum();
+        1.0 - weighted * h / 3.0
+    }
+
+    /// The fit's mean-|LLR| argument for a consistent Gaussian of spread `sigma`.
+    fn mean_abs_for(sigma: f64) -> f64 {
+        sigma * sigma / 2.0
+    }
+
+    #[test]
+    fn gaussian_mi_tracks_the_defining_integral_within_the_fit_error() {
+        // Brännström et al. 2005 fit J to the integral; its deviation stays
+        // below 1e-3 over the sigma range an EXIT analysis visits.
+        for step in 1..=40 {
+            let sigma = 0.25 * f64::from(step);
+            let fit = gaussian_mi_approximation_bits(mean_abs_for(sigma));
+            let exact = j_by_quadrature(sigma);
+            assert!(
+                (fit - exact).abs() < 1e-3,
+                "sigma {sigma}: fit {fit}, integral {exact}"
+            );
+        }
+    }
+
+    #[test]
+    fn gaussian_mi_is_inverted_by_the_published_inverse_fit() {
+        const H1: f64 = 0.3073;
+        const H2: f64 = 0.8935;
+        const H3: f64 = 1.1064;
+        let inverse = |mi: f64| (-(1.0 - mi.powf(1.0 / H3)).log2() / H1).powf(1.0 / (2.0 * H2));
+        for step in 1..=19 {
+            let mi = 0.05 * f64::from(step);
+            let sigma = inverse(mi);
+            let round_trip = gaussian_mi_approximation_bits(mean_abs_for(sigma));
+            assert!(
+                (round_trip - mi).abs() < 1e-12,
+                "J(J^-1({mi})) = {round_trip}"
+            );
+        }
+    }
+
+    #[test]
+    fn gaussian_mi_saturates_towards_one() {
+        let mi = gaussian_mi_approximation_bits(mean_abs_for(16.0));
+        assert!(mi > 1.0 - 1e-9 && mi <= 1.0, "J(16) = {mi}");
     }
 
     #[test]
