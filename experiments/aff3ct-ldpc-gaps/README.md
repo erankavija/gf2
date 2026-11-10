@@ -58,9 +58,10 @@ an exact parity-check comparison. Both executables share the argument parsing,
 pinned call loop and JSON line of `src/fast.rs`.
 [quick-compare.sh](quick-compare.sh) builds both, runs every gf2 route and
 AFF3CT configuration whose wave divides the batch over both bundles and a fixed
-worker and batch grid inside a benchmark window, and writes one table of frames
-per second, information throughput, frame errors and the best-gf2 to
-best-AFF3CT ratio under `target/`; its header names the environment it reads.
+worker and batch grid inside a benchmark window, and writes a table per code of
+frames per second, information throughput, frame errors and the best-gf2 to
+best-AFF3CT ratio, overall and over flooding decoders only, under `target/`; its
+header names the environment it reads.
 [profile-routes.sh](profile-routes.sh) records user-space perf profiles of
 gf2's QC and layered routes in `gf2-fast-bench` inside a benchmark window and
 writes each profile's top self-time symbols under `target/`.
