@@ -61,6 +61,9 @@ AFF3CT configuration whose wave divides the batch over both bundles and a fixed
 worker and batch grid inside a benchmark window, and writes one table of frames
 per second, information throughput, frame errors and the best-gf2 to
 best-AFF3CT ratio under `target/`; its header names the environment it reads.
+[profile-routes.sh](profile-routes.sh) records user-space perf profiles of
+gf2's QC and layered routes in `gf2-fast-bench` inside a benchmark window and
+writes each profile's top self-time symbols under `target/`.
 
 Generate portable configuration from a declaration:
 

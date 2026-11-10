@@ -29,6 +29,11 @@ use std::num::NonZeroUsize;
 use std::sync::Mutex;
 use std::time::Instant;
 
+/// Largest batch whose frame views [`BatchWorker`] keeps on the stack; it
+/// covers every batch of the benchmark grids, so their timed calls do not
+/// allocate.
+pub const STACK_FRAMES: usize = 4 * LANES;
+
 /// Untimed repetitions of the conversion-stage probe.
 pub const STAGE_PROBES: usize = 9;
 
@@ -147,8 +152,8 @@ impl BatchWorker {
     ///
     /// The decoder receives the whole batch in one call, so it selects the
     /// route of the batch as a direct production call does. The frame views
-    /// of a batch of at most [`LANES`] frames live on the stack, and a call
-    /// on such a batch allocates nothing after the first.
+    /// of a batch of at most [`STACK_FRAMES`] frames live on the stack, and a
+    /// call on such a batch allocates nothing after the first.
     ///
     /// # Panics
     ///
@@ -196,9 +201,9 @@ impl BatchWorker {
             *slot = Llr::new(*value);
         }
         lap(Stage::Pack);
-        let mut stack: [&[Llr]; LANES] = [&[]; LANES];
+        let mut stack: [&[Llr]; STACK_FRAMES] = [&[]; STACK_FRAMES];
         let heap: Vec<&[Llr]>;
-        let views: &[&[Llr]] = if batch <= LANES {
+        let views: &[&[Llr]] = if batch <= STACK_FRAMES {
             for (view, frame) in stack.iter_mut().zip(self.packed.chunks_exact(n)) {
                 *view = frame;
             }

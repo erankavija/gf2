@@ -19,3 +19,5 @@ sha2 = "0.10"
 
 [dev-dependencies]
 gf2-coding = { path = "../../crates/gf2-coding", features = ["test-support"] }
+# Per-thread counting allocator of the timed-call allocation test.
+thread-allocations.workspace = true
