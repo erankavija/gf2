@@ -96,7 +96,7 @@ impl LayerParams {
     }
 }
 
-type LayerFn = fn(LayerParams, &mut [i8], &mut [i8], usize, usize);
+type LayerFn = fn(LayerParams, &mut [i8], &mut [i8], usize, usize, usize) -> bool;
 
 /// A safe layer kernel, with a portable implementation on every target.
 #[derive(Clone, Copy)]
@@ -128,11 +128,17 @@ impl LayerKernel {
     /// messages. Takes O(degree * stride) time without allocation; every
     /// input value, `-128` included, is accepted.
     ///
+    /// Returns whether the layer is settled: over its first `width` lanes,
+    /// every check's entry a-posteriori values have even negative parity and
+    /// no edge's value changes sign, a negative value being one below zero.
+    /// A sweep of settled layers leaves every decision unchanged and every
+    /// check satisfied.
+    ///
     /// # Panics
     ///
     /// Panics before writing unless `stride` is a multiple of
-    /// [`LAYER_LANES`] and both lengths equal `degree * stride`, or when that
-    /// product overflows `usize`.
+    /// [`LAYER_LANES`], `width <= stride` and both lengths equal
+    /// `degree * stride`, or when that product overflows `usize`.
     pub fn update_layer(
         &self,
         params: LayerParams,
@@ -140,12 +146,14 @@ impl LayerKernel {
         messages: &mut [i8],
         degree: usize,
         stride: usize,
-    ) {
+        width: usize,
+    ) -> bool {
         assert_eq!(stride % LAYER_LANES, 0, "layer stride must fill vectors");
+        assert!(width <= stride, "layer width exceeds its stride");
         let length = degree.checked_mul(stride).expect("layer size overflow");
         assert_eq!(apps.len(), length, "layer a-posteriori length");
         assert_eq!(messages.len(), length, "layer message length");
-        (self.layer_fn)(params, apps, messages, degree, stride);
+        (self.layer_fn)(params, apps, messages, degree, stride, width)
     }
 }
 
@@ -160,33 +168,30 @@ pub fn detect() -> Option<LayerKernel> {
     None
 }
 
-fn update_layer_scalar(
+pub(crate) fn update_layer_scalar(
     params: LayerParams,
     apps: &mut [i8],
     messages: &mut [i8],
     degree: usize,
     stride: usize,
-) {
-    update_lanes_scalar(params, apps, messages, degree, stride, 0);
-}
-
-pub(crate) fn update_lanes_scalar(
-    params: LayerParams,
-    apps: &mut [i8],
-    messages: &mut [i8],
-    degree: usize,
-    stride: usize,
-    start: usize,
-) {
-    for lane in start..stride {
+    width: usize,
+) -> bool {
+    let mut settled = true;
+    for lane in 0..stride {
         let mut min1 = 127u8;
         let mut min2 = 127u8;
         let mut arg1 = usize::MAX;
         let mut negative_parity = false;
+        let mut entry_parity = false;
+        let mut changed = false;
         for edge in 0..degree {
             let at = edge * stride + lane;
-            let value = params.extrinsic(apps[at], messages[at]);
+            let entry = apps[at];
+            entry_parity ^= entry < 0;
+            let value = params.extrinsic(entry, messages[at]);
             apps[at] = value;
+            // The old message is spent; its slot keeps the entry value.
+            messages[at] = entry;
             negative_parity ^= value < 0;
             let magnitude = value.unsigned_abs();
             if magnitude < min1 {
@@ -211,10 +216,16 @@ pub(crate) fn update_lanes_scalar(
             } else {
                 magnitude
             };
+            let app = value + message;
+            changed |= (app < 0) != (messages[at] < 0);
             messages[at] = message;
-            apps[at] = value + message;
+            apps[at] = app;
+        }
+        if lane < width {
+            settled &= !entry_parity && !changed;
         }
     }
+    settled
 }
 
 #[cfg(test)]
@@ -229,15 +240,18 @@ mod tests {
     }
 
     /// The definition: each message is the scaled minimum over the other
-    /// edges, signed by the product of their signs.
+    /// edges, signed by the product of their signs; a lane is settled when
+    /// its entry values have even negative parity and keep their signs.
     fn reference(
         params: LayerParams,
         apps: &mut [i8],
         messages: &mut [i8],
         degree: usize,
         stride: usize,
-    ) {
+    ) -> Vec<bool> {
+        let mut settled = vec![true; stride];
         for lane in 0..stride {
+            let entry: Vec<i8> = (0..degree).map(|e| apps[e * stride + lane]).collect();
             let v: Vec<i8> = (0..degree)
                 .map(|e| {
                     let limit = 127 - i16::from(params.message_limit());
@@ -246,28 +260,41 @@ mod tests {
                     v.clamp(-limit, limit) as i8
                 })
                 .collect();
+            // Minimum magnitude and negative count over the other edges, from
+            // prefix and suffix reductions.
+            let magnitude = |e: usize| v[e].unsigned_abs();
+            let mut before = vec![(127u8, 0usize); degree + 1];
+            let mut after = vec![(127u8, 0usize); degree + 1];
             for e in 0..degree {
-                let others = (0..degree).filter(|&o| o != e);
+                before[e + 1] = (
+                    before[e].0.min(magnitude(e)),
+                    before[e].1 + usize::from(v[e] < 0),
+                );
+                let r = degree - 1 - e;
+                after[r] = (
+                    after[r + 1].0.min(magnitude(r)),
+                    after[r + 1].1 + usize::from(v[r] < 0),
+                );
+            }
+            for e in 0..degree {
+                let others_min = before[e].0.min(after[e + 1].0);
+                let negative = (before[e].1 + after[e + 1].1) % 2 == 1;
                 let magnitude = if degree == 1 {
                     0
                 } else {
-                    params.scale(
-                        others
-                            .clone()
-                            .map(|o| v[o].unsigned_abs())
-                            .min()
-                            .unwrap()
-                            .min(127),
-                    )
+                    params.scale(others_min)
                 } as i8;
-                let negative = others.filter(|&o| v[o] < 0).count() % 2 == 1;
                 let message = if negative { -magnitude } else { magnitude };
                 messages[e * stride + lane] = message;
                 let app = i16::from(v[e]) + i16::from(message);
                 assert!(app.abs() <= 127);
                 apps[e * stride + lane] = app as i8;
             }
+            let odd = entry.iter().filter(|&&a| a < 0).count() % 2 == 1;
+            let flipped = (0..degree).any(|e| (entry[e] < 0) != (apps[e * stride + lane] < 0));
+            settled[lane] = !(odd || flipped);
         }
+        settled
     }
 
     fn rules() -> Vec<LayerParams> {
@@ -281,12 +308,19 @@ mod tests {
         ]
     }
 
+    /// Values of kind `kind`: uniform bytes, boundary values, small and
+    /// medium values, and (kind 4) strong positive beliefs with small
+    /// messages, whose lanes usually settle, with one rare negative belief.
     fn draw(state: &mut u64, kind: u64) -> i8 {
-        match kind % 4 {
+        match kind % 5 {
             0 => (lcg(state) & 0xff) as u8 as i8,
             1 => [-128, -127, -126, -1, 0, 1, 126, 127][(lcg(state) % 8) as usize],
             2 => ((lcg(state) % 9) as i8) - 4,
-            _ => ((lcg(state) % 63) as i8) - 31,
+            3 => ((lcg(state) % 63) as i8) - 31,
+            _ => match lcg(state) % 500 {
+                0 => -100,
+                r => 90 + (r % 30) as i8,
+            },
         }
     }
 
@@ -299,26 +333,41 @@ mod tests {
     #[test]
     fn every_backend_equals_the_definition() {
         let mut state = 0x9e37_79b9_7f4a_7c15;
+        let mut settles = [0usize; 2];
         for kernel in kernels() {
             for params in rules() {
-                for degree in [0, 1, 2, 3, 7, 19, 255, 256, 300] {
-                    for stride in [32, 64, 96] {
-                        for kind in 0..4 {
+                for degree in [0, 1, 2, 3, 7, 19, 255, 256, 257] {
+                    for stride in [32, 96] {
+                        for (kind, message_kind) in [(0, 1), (1, 2), (2, 3), (3, 0), (4, 2)] {
                             let length = degree * stride;
                             let apps: Vec<i8> =
                                 (0..length).map(|_| draw(&mut state, kind)).collect();
-                            let messages: Vec<i8> =
-                                (0..length).map(|_| draw(&mut state, kind + 1)).collect();
+                            let messages: Vec<i8> = (0..length)
+                                .map(|_| draw(&mut state, message_kind))
+                                .collect();
                             let (mut ra, mut rm) = (apps.clone(), messages.clone());
-                            reference(params, &mut ra, &mut rm, degree, stride);
-                            let (mut ka, mut km) = (apps, messages);
-                            kernel.update_layer(params, &mut ka, &mut km, degree, stride);
-                            assert_eq!((ka, km), (ra, rm), "{params:?} d={degree} s={stride}");
+                            let lanes = reference(params, &mut ra, &mut rm, degree, stride);
+                            for width in [stride, stride - 1, 1, 0] {
+                                let expected = lanes[..width].iter().all(|&s| s);
+                                let (mut ka, mut km) = (apps.clone(), messages.clone());
+                                let settled = kernel
+                                    .update_layer(params, &mut ka, &mut km, degree, stride, width);
+                                assert_eq!(
+                                    (&ka, &km, settled),
+                                    (&ra, &rm, expected),
+                                    "{params:?} d={degree} s={stride} w={width}"
+                                );
+                                settles[usize::from(expected)] += 1;
+                            }
                         }
                     }
                 }
             }
         }
+        assert!(
+            settles[0] > 0 && settles[1] > 0,
+            "both settled outcomes occur"
+        );
     }
 
     #[test]
@@ -339,6 +388,7 @@ mod tests {
             &mut [0; 33],
             1,
             33,
+            33,
         );
     }
 
@@ -350,6 +400,7 @@ mod tests {
             &mut [0; 64],
             &mut [0; 32],
             2,
+            32,
             32,
         );
     }

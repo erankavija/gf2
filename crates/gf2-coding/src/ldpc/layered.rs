@@ -91,7 +91,8 @@ impl LayeredConfig {
         self.params.message_limit()
     }
 
-    /// Whether decoding stops at the first iteration whose syndrome passes.
+    /// Whether decoding stops after the first settled iteration, as
+    /// [`LayeredDecoder::decode_codeword_into`] states.
     #[must_use]
     pub fn early_termination(&self) -> bool {
         self.early_termination
@@ -206,6 +207,8 @@ struct Run {
 #[derive(Debug, Clone)]
 struct Layer {
     degree: usize,
+    /// Checks of the layer, the first `width` of its `stride` lanes.
+    width: usize,
     stride: usize,
     messages: usize,
     runs: std::ops::Range<usize>,
@@ -310,6 +313,7 @@ impl Schedule {
         }
         self.layers.push(Layer {
             degree,
+            width: lanes.len(),
             stride,
             messages: self.message_len,
             runs: runs_start..self.runs.len(),
@@ -338,6 +342,8 @@ pub struct LayeredDecoder {
     /// Beliefs in code variable order, when the orders differ.
     output: Vec<i8>,
     messages: Vec<i8>,
+    /// Packed decisions of the last decode.
+    words: Vec<u64>,
     buffer: Vec<i8>,
     hard: Vec<u8>,
     parity: Vec<u8>,
@@ -417,6 +423,7 @@ impl LayeredDecoder {
             },
             variables,
             messages: vec![0; schedule.message_len],
+            words: Vec::with_capacity(schedule.n.div_ceil(64)),
             buffer: vec![0; schedule.buffer_len],
             hard: vec![0; schedule.n],
             parity: vec![0; schedule.max_stride],
@@ -468,7 +475,9 @@ impl LayeredDecoder {
     /// Decodes a mother-code frame, overwriting `codeword` with all n hard bits.
     ///
     /// One iteration updates every layer in order; each layer reads the
-    /// beliefs its predecessors wrote. Each iteration takes O(E) time. Reuses
+    /// beliefs its predecessors wrote. Early termination stops after the
+    /// first iteration in which no decision changed and every check was
+    /// satisfied at its update. Each iteration takes O(E) time. Reuses
     /// all workspace; only `codeword` may grow.
     ///
     /// # Panics
@@ -481,48 +490,63 @@ impl LayeredDecoder {
         codeword: &mut BitVec,
     ) -> DecodeOutcome {
         assert_eq!(llrs.len(), self.schedule.n, "LLR length must equal n");
-        match &self.variables {
-            Some(variables) => {
-                for (slot, &v) in self.posterior.iter_mut().zip(variables) {
-                    *slot = self.config.quantize(llrs[v as usize]);
-                }
-            }
-            None => {
-                for (slot, &llr) in self.posterior.iter_mut().zip(llrs) {
-                    *slot = self.config.quantize(llr);
-                }
+        // Quantize in code order, which vectorizes, then permute bytes.
+        let quantized = match &self.variables {
+            Some(_) => &mut self.output,
+            None => &mut self.posterior,
+        };
+        for (slot, &llr) in quantized.iter_mut().zip(llrs) {
+            *slot = self.config.quantize(llr);
+        }
+        if let Some(variables) = &self.variables {
+            for (slot, &v) in self.posterior.iter_mut().zip(variables) {
+                *slot = self.output[v as usize];
             }
         }
         self.messages.fill(0);
 
         let mut iterations = 0;
+        let mut settled = false;
         for iteration in 0..max_iterations {
             iterations = iteration + 1;
+            settled = true;
             for index in 0..self.schedule.layers.len() {
-                self.update_layer(index);
+                settled &= self.update_layer(index);
             }
-            if self.config.early_termination && self.syndrome_passes() {
+            // A settled sweep changed no decision and found every check of
+            // degree two or more satisfied, so the syndrome passes exactly
+            // when the single-variable checks do.
+            settled &= self
+                .schedule
+                .singletons
+                .iter()
+                .all(|&v| self.posterior[v as usize] >= 0);
+            if self.config.early_termination && settled {
                 break;
             }
         }
         self.last_iterations = iterations;
-        let syndrome_check_passed = self.syndrome_passes();
+        let syndrome_check_passed = settled || self.syndrome_passes();
         codeword.clear();
-        match &self.variables {
+        let beliefs = match &self.variables {
             Some(variables) => {
                 for (&v, &value) in variables.iter().zip(&self.posterior) {
                     self.output[v as usize] = value;
                 }
-                for &value in &self.output {
-                    codeword.push_bit(value < 0);
-                }
+                &self.output
             }
-            None => {
-                for &bit in &self.hard {
-                    codeword.push_bit(bit != 0);
-                }
-            }
-        }
+            None => &self.posterior,
+        };
+        // Sign bits, 64 decisions per word.
+        self.words.clear();
+        self.words.extend(beliefs.chunks(64).map(|chunk| {
+            chunk
+                .iter()
+                .enumerate()
+                .fold(0u64, |word, (i, &value)| word | (u64::from(value < 0) << i))
+        }));
+        codeword.resize(beliefs.len(), false);
+        codeword.write_bits(0, &self.words, beliefs.len());
         DecodeOutcome {
             iterations,
             converged: syndrome_check_passed,
@@ -531,7 +555,8 @@ impl LayeredDecoder {
         }
     }
 
-    fn update_layer(&mut self, index: usize) {
+    /// Updates one layer and returns whether it is settled.
+    fn update_layer(&mut self, index: usize) -> bool {
         let layer = &self.schedule.layers[index];
         let length = layer.degree * layer.stride;
         let buffer = &mut self.buffer[..length];
@@ -545,17 +570,19 @@ impl LayeredDecoder {
             buffer[offset as usize] = LAYER_SATURATION;
             messages[offset as usize] = 0;
         }
-        self.kernel.update_layer(
+        let settled = self.kernel.update_layer(
             self.config.params,
             buffer,
             messages,
             layer.degree,
             layer.stride,
+            layer.width,
         );
         for run in runs {
             let (offset, var, len) = (run.offset as usize, run.var as usize, run.len as usize);
             self.posterior[var..var + len].copy_from_slice(&buffer[offset..offset + len]);
         }
+        settled
     }
 
     fn syndrome_passes(&mut self) -> bool {
