@@ -172,6 +172,13 @@ fn karatsuba(
         kernels.product(a, b, out);
         return;
     }
+    // Most nodes of a power-of-two product sit right above its 8-word
+    // leaves; they run on fixed-size arrays.
+    #[cfg(feature = "simd")]
+    if let (16, true, Some(fns)) = (n, basecase >= 8, kernels.k8) {
+        karatsuba_16(fns, a, b, out);
+        return;
+    }
     let h = n.div_ceil(2);
     let l = n - h;
     let (a0, a1) = a.split_at(h);
@@ -212,6 +219,35 @@ fn karatsuba(
     }
     for (word, value) in h0[..top].iter_mut().zip(h1.iter()) {
         *word ^= value;
+    }
+}
+
+/// [`karatsuba`] of 16-word operands over three exact 8-word kernel calls.
+#[cfg(feature = "simd")]
+fn karatsuba_16(
+    fns: &gf2_kernels_simd::gf2m_wide::ClmulWide512Fns,
+    a: &[u64],
+    b: &[u64],
+    out: &mut [u64],
+) {
+    let half = |words: &[u64], at: usize| -> [u64; 8] {
+        words[at..at + 8].try_into().expect("16-word operands")
+    };
+    let (a0, a1, b0, b1) = (half(a, 0), half(a, 8), half(b, 0), half(b, 8));
+    let (low, high) = out.split_at_mut(16);
+    let low: &mut [u64; 16] = low.try_into().expect("a 32-word product");
+    let high: &mut [u64; 16] = high.try_into().expect("a 32-word product");
+    record_clmul_wide_lane(fns.name);
+    (fns.clmul)(&a0, &b0, low);
+    (fns.clmul)(&a1, &b1, high);
+    let sum_a: [u64; 8] = std::array::from_fn(|i| a0[i] ^ a1[i]);
+    let sum_b: [u64; 8] = std::array::from_fn(|i| b0[i] ^ b1[i]);
+    let mut middle = [0u64; 16];
+    (fns.clmul)(&sum_a, &sum_b, &mut middle);
+    for i in 0..8 {
+        let shared = low[8 + i] ^ high[i];
+        low[8 + i] = shared ^ low[i] ^ middle[i];
+        high[i] = shared ^ high[8 + i] ^ middle[8 + i];
     }
 }
 
