@@ -163,8 +163,9 @@ impl EncodingCache {
         cache_write.clear();
     }
 
-    /// Saves each entry to the directory `path` (created if missing) as
-    /// `n{codeword_length}_k{message_length}_h{hash}.gf2`.
+    /// Saves each entry to the directory `path` (created if missing) as the
+    /// parity part `n{codeword_length}_k{message_length}_h{hash}.gf2` and its
+    /// column selection in a `.cols` file of the same stem.
     ///
     /// # Errors
     ///
@@ -178,20 +179,24 @@ impl EncodingCache {
             let filename = format!("n{}_k{}_h{:x}", key.n, key.k, key.matrix_hash);
             let filepath = path.join(&filename);
 
-            // Only the parity part is saved; loading assumes systematic bits
-            // in [0..k) and parity in [k..n).
             let parity_path = filepath.with_extension("gf2");
             matrices
                 .parity_part()
                 .save_to_file(&parity_path)
                 .map_err(CacheIoError::Gf2IoError)?;
+            std::fs::write(
+                filepath.with_extension("cols"),
+                format_columns(matrices.systematic_cols(), matrices.parity_cols()),
+            )
+            .map_err(CacheIoError::IoError)?;
         }
 
         Ok(())
     }
 
-    /// Loads every `n{n}_k{k}_h{hash}.gf2` file in the directory `path`; other
-    /// files are skipped.
+    /// Loads every `n{n}_k{k}_h{hash}.gf2` file in the directory `path` with
+    /// its `.cols` column selection. Other files and a `.gf2` file without a
+    /// `.cols` file are skipped, so [`Self::get_or_compute`] rebuilds that entry.
     ///
     /// # Errors
     ///
@@ -219,12 +224,20 @@ impl EncodingCache {
 
             if let Some(filename) = filepath.file_stem().and_then(|s| s.to_str()) {
                 if let Some((n, k, hash)) = parse_cache_filename(filename) {
+                    let columns = match std::fs::read_to_string(filepath.with_extension("cols")) {
+                        Ok(text) => text,
+                        Err(error) if error.kind() == io::ErrorKind::NotFound => continue,
+                        Err(error) => return Err(CacheIoError::IoError(error)),
+                    };
+                    let (systematic_cols, parity_cols) =
+                        parse_columns(&columns, n, k).ok_or_else(|| {
+                            CacheIoError::IoError(io::Error::new(
+                                io::ErrorKind::InvalidData,
+                                format!("invalid column selection for {filename}"),
+                            ))
+                        })?;
                     let parity_matrix =
                         BitMatrix::load_from_file(&filepath).map_err(CacheIoError::Gf2IoError)?;
-
-                    // Assumes systematic columns 0..k and parity columns k..n.
-                    let systematic_cols: Vec<usize> = (0..k).collect();
-                    let parity_cols: Vec<usize> = (k..n).collect();
 
                     let matrices = Arc::new(RuEncodingMatrices::from_components(
                         k,
@@ -294,6 +307,40 @@ fn compute_matrix_hash(h: &SpBitMatrixDual) -> u64 {
     }
 
     hasher.finish()
+}
+
+/// The systematic columns on the first line and the parity columns on the
+/// second, space-separated.
+fn format_columns(systematic: &[usize], parity: &[usize]) -> String {
+    let line = |columns: &[usize]| {
+        columns
+            .iter()
+            .map(usize::to_string)
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    format!("{}\n{}\n", line(systematic), line(parity))
+}
+
+/// Parses [`format_columns`] output; `None` unless it lists `k` systematic and
+/// `n - k` parity columns that together cover `0..n` once.
+fn parse_columns(text: &str, n: usize, k: usize) -> Option<(Vec<usize>, Vec<usize>)> {
+    let mut lines = text.lines();
+    let mut column_line = || -> Option<Vec<usize>> {
+        lines
+            .next()?
+            .split_whitespace()
+            .map(|word| word.parse().ok())
+            .collect()
+    };
+    let (systematic, parity) = (column_line()?, column_line()?);
+    let mut seen = vec![false; n];
+    for &column in systematic.iter().chain(&parity) {
+        if column >= n || std::mem::replace(&mut seen[column], true) {
+            return None;
+        }
+    }
+    (systematic.len() == k && parity.len() == n - k).then_some((systematic, parity))
 }
 
 /// Parses `n{n}_k{k}_h{hash}` with the hash in hexadecimal.

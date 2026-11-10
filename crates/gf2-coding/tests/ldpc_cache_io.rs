@@ -40,13 +40,13 @@ fn test_cache_save_to_directory() {
 
     cache.save_to_directory(temp_dir.path()).unwrap();
 
-    let files: Vec<_> = std::fs::read_dir(temp_dir.path())
+    let mut files: Vec<_> = std::fs::read_dir(temp_dir.path())
         .unwrap()
-        .map(|e| e.unwrap().file_name())
+        .map(|e| e.unwrap().path().extension().unwrap().to_owned())
         .collect();
+    files.sort();
 
-    assert_eq!(files.len(), 1, "Should create one file");
-    assert!(files[0].to_str().unwrap().ends_with(".gf2"));
+    assert_eq!(files, ["cols", "gf2"], "one parity file and its columns");
 }
 
 #[test]
@@ -245,4 +245,80 @@ fn test_empty_directory_loads_empty_cache() {
 fn test_nonexistent_directory_error() {
     let result = EncodingCache::from_directory(Path::new("/nonexistent/path"));
     assert!(result.is_err(), "Should error on nonexistent directory");
+}
+
+/// Codes whose systematic reduction selects message columns other than
+/// `0..k`: a hand-built code with an all-zero last column, which no pivot can
+/// take, and small 5G NR lifts.
+fn codes_with_permuted_columns() -> Vec<(String, gf2_core::sparse::SpBitMatrixDual)> {
+    let hand_built = gf2_core::sparse::SpBitMatrixDual::from_coo(
+        2,
+        5,
+        &[(0, 0), (0, 2), (1, 1), (1, 2), (1, 3)],
+    );
+    let mut codes = vec![("hand-built".to_owned(), hand_built)];
+    for (base_graph, z) in [(1, 2), (2, 2), (2, 3)] {
+        let code =
+            LdpcCode::from_quasi_cyclic(&gf2_coding::ldpc::QuasiCyclicLdpc::nr_5g(base_graph, z));
+        codes.push((
+            format!("NR BG{base_graph} Z={z}"),
+            code.parity_check_matrix().clone(),
+        ));
+    }
+    codes
+}
+
+#[test]
+fn reloaded_entries_encode_like_the_uncached_matrices() {
+    let mut permuted = 0;
+    for (name, h) in codes_with_permuted_columns() {
+        let temp_dir = scratch("gf2-ldpc-cache-io");
+        let key = CacheKey::from_params(h.cols(), h.cols() - h.rows(), &h);
+        let cache = EncodingCache::new();
+        let uncached = cache.get_or_compute(key.clone(), &h).expect("preprocess");
+        permuted +=
+            usize::from(uncached.systematic_cols() != (0..uncached.k()).collect::<Vec<_>>());
+        cache.save_to_directory(temp_dir.path()).unwrap();
+        let reloaded = EncodingCache::from_directory(temp_dir.path())
+            .unwrap()
+            .get(&key)
+            .expect("entry must round-trip");
+        for seed in 0..8u64 {
+            let mut message = gf2_core::BitVec::zeros(uncached.k());
+            for bit in 0..uncached.k() {
+                let mixed = (seed + 1).wrapping_mul(0x9E37_79B9_7F4A_7C15) >> (bit % 61);
+                message.set(bit, mixed & 1 == 1);
+            }
+            assert_eq!(
+                reloaded.encode(&message),
+                uncached.encode(&message),
+                "{name}: reloaded encoder differs, seed {seed}"
+            );
+        }
+    }
+    assert!(
+        permuted > 0,
+        "no code exercised message columns outside 0..k"
+    );
+}
+
+#[test]
+fn an_entry_without_its_column_selection_is_not_loaded() {
+    let temp_dir = scratch("gf2-ldpc-cache-io");
+    let (_, h) = codes_with_permuted_columns().remove(0);
+    let key = CacheKey::from_params(h.cols(), h.cols() - h.rows(), &h);
+    let cache = EncodingCache::new();
+    cache.get_or_compute(key.clone(), &h).expect("preprocess");
+    cache.save_to_directory(temp_dir.path()).unwrap();
+    for entry in std::fs::read_dir(temp_dir.path()).unwrap() {
+        let path = entry.unwrap().path();
+        if path.extension().and_then(|e| e.to_str()) != Some("gf2") {
+            std::fs::remove_file(path).unwrap();
+        }
+    }
+    let reloaded = EncodingCache::from_directory(temp_dir.path()).unwrap();
+    assert!(
+        reloaded.get(&key).is_none(),
+        "an entry loaded under assumed columns"
+    );
 }
