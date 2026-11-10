@@ -70,6 +70,17 @@ a cell where a worker decodes off the route `decide_batch_route` gives it
 under the installed selectors, and state each worker's executed route in
 `selected_path` and their diagnostics.
 
+`qc-route-sweep.sh` is the benchmark-window queue line of @/issue/c62356d2.
+It builds `qc-route-sweep` and runs it under
+`dev/scripts/ccx1-bench-flock.sh --full-host`, writing its execution log to
+`target/aff3ct-ldpc-gaps/qc-route-sweep/`. For each code, worker count and
+frames per call of `SweepConfig::issue_grid` in
+[src/route_sweep.rs](src/route_sweep.rs), the QC, lane and single-frame routes
+decode the same frames in rotating order, and each completed cell records
+every repetition's time and each route's median time ratio to the QC route in
+the same repetition. A rerun resumes after the last completed cell and refuses
+a log of another run identity or configuration.
+
 For a runnable plan, omit `--configuration` and supply one `--build` argument
 per build record, including records in other worktrees. Generation checks the
 input manifest identities, prepared-quality files and executable pins. A
