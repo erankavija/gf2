@@ -32,7 +32,8 @@ fn benchmark_bit_reversal(c: &mut Criterion) {
 fn benchmark_polar_transform(c: &mut Criterion) {
     let mut group = c.benchmark_group("polar_transform");
 
-    for n in [64, 256, 1024, 4096, 16384].iter() {
+    // 2^10, 2^16 and 2^20 are the sizes @/issue/07a1813a records.
+    for n in [64, 256, 1024, 4096, 16384, 1 << 16, 1 << 20].iter() {
         group.throughput(Throughput::Elements(*n as u64));
 
         let mut bv = BitVec::zeros(*n);
