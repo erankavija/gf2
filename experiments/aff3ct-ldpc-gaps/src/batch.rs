@@ -8,7 +8,8 @@ use crate::driver::{report_iterations, run_cell, CellRun, IterationSource};
 use gf2_coding::ldpc::DecoderAlgorithm;
 pub use gf2_coding::ldpc::{BatchRoute, LaneBackend};
 use gf2_coding::ldpc::{
-    DecodedWord, DecoderConfig, LdpcBatchDecoder, LdpcCode, QcDecoder, QuasiCyclicLdpc,
+    DecodedWord, DecoderConfig, LayeredConfig, LayeredDecoder, LdpcBatchDecoder, LdpcCode,
+    QcDecoder, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
@@ -321,6 +322,49 @@ pub fn qc_worker(
         decoder
     };
     Ok(FrameWorker::new(decoder, code, cap, batch))
+}
+
+impl FrameDecoder for LayeredDecoder {
+    fn decode_frame(&mut self, llrs: &[Llr], cap: usize, codeword: &mut BitVec) -> DecodeOutcome {
+        self.decode_codeword_into(llrs, cap, codeword)
+    }
+}
+
+/// Iteration cap of the layered route.
+pub const LAYERED_ITERATION_CAP: usize = 25;
+
+/// A [`FrameWorker`] on [`LayeredDecoder`] with the corpus code's layered
+/// configuration and [`LAYERED_ITERATION_CAP`], on the portable kernel when
+/// `portable` is set.
+///
+/// # Errors
+///
+/// Returns an error for a corpus without a layered configuration or when the
+/// decoder refuses the code.
+pub fn layered_worker(
+    code: &LdpcCode,
+    corpus: &str,
+    batch: usize,
+    portable: bool,
+) -> Result<FrameWorker<LayeredDecoder>, String> {
+    let config = match corpus {
+        "dvb-t2-r12" => LayeredConfig::dvb_t2(),
+        "nr-bg1-r12" => LayeredConfig::nr_5g(),
+        other => return Err(format!("no layered configuration for {other}")),
+    };
+    let decoder =
+        LayeredDecoder::new(code, config).ok_or("the layered decoder refuses the code")?;
+    let decoder = if portable {
+        decoder.with_portable_kernel()
+    } else {
+        decoder
+    };
+    Ok(FrameWorker::new(
+        decoder,
+        code,
+        LAYERED_ITERATION_CAP,
+        batch,
+    ))
 }
 
 /// The block description of the comparison code a case names: DVB-T2 R1/2
@@ -720,7 +764,8 @@ pub fn run_with_policy(arm_name: &str, policy: impl ArmPolicy) -> Result<(), Str
 #[cfg(test)]
 mod tests {
     use super::{
-        corpus_structure, probe_stages, qc_worker, BatchWorker, NonZeroUsize, LANES, ROUTE_WORKERS,
+        corpus_structure, layered_worker, probe_stages, qc_worker, BatchWorker, NonZeroUsize,
+        LANES, ROUTE_WORKERS,
     };
     use crate::reference::{config, Gf2Worker};
     use gf2_coding::ldpc::{BatchRoute, LaneBackend, LdpcCode, LdpcEncoder, QuasiCyclicLdpc};
@@ -823,6 +868,17 @@ mod tests {
         }
         let plain = LdpcCode::from_edges(3, 6, &[(0, 0), (1, 1), (2, 2)]);
         assert!(qc_worker(&plain, decoder_config, CAP, 1, true).is_err());
+    }
+
+    #[test]
+    fn the_layered_worker_decodes_a_clean_corpus_frame() {
+        let code = attached_nr_bg1_z384();
+        for portable in [true, false] {
+            let mut worker = layered_worker(&code, "nr-bg1-r12", 2, portable).expect("layered");
+            worker.decode_batch(&vec![4.0; 2 * code.n()]);
+            assert!(worker.decisions.iter().all(|&bit| bit == 0));
+        }
+        assert!(layered_worker(&code, "other", 1, true).is_err());
     }
 
     #[test]

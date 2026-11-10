@@ -49,9 +49,11 @@ precision, and the worker, batch and call counts, decodes the whole bundle
 untimed for frame errors, and prints one JSON line with the median call time.
 The shim compiles as C++17, which AFF3CT's SIMD update rules require.
 `gf2-fast-bench` takes the same arguments for a gf2 route: `single`, `lanes`,
-`qc` (`QcDecoder` one frame at a time) or `default` (`LdpcBatchDecoder` as
-shipped), with SIMD `none` or `avx2` (`none` for `single`, `auto` for
-`default`) and precision `f32`. It attaches the corpus block description after
+`qc` (`QcDecoder` one frame at a time), `default` (`LdpcBatchDecoder` as
+shipped) or `layered` (`LayeredDecoder` in i8 under the corpus code's
+`LayeredConfig`, cap 25), with SIMD `none` or `avx2` (`none` for `single`,
+`auto` for `default`) and input precision `f32`; its JSON line adds the
+iteration cap. It attaches the corpus block description after
 an exact parity-check comparison. Both executables share the argument parsing,
 pinned call loop and JSON line of `src/fast.rs`.
 [quick-compare.sh](quick-compare.sh) builds both, runs every gf2 route and

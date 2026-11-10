@@ -129,9 +129,11 @@ impl FastCell {
     /// Prints the cell's JSON line. `frame_errors` counts the frames of the
     /// untimed quality pass over `quality_frames` frames that decode with an
     /// information-bit error.
+    #[allow(clippy::too_many_arguments)]
     pub fn report(
         &self,
         decoder: &str,
+        iteration_cap: usize,
         k: usize,
         median_call_ns: u64,
         quality_frames: usize,
@@ -142,6 +144,7 @@ impl FastCell {
             "{}",
             serde_json::json!({
                 "decoder": decoder,
+                "iteration_cap": iteration_cap,
                 "kind": self.kind,
                 "simd": self.simd,
                 "precision": self.precision,

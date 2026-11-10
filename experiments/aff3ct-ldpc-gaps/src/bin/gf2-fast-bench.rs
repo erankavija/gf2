@@ -2,13 +2,13 @@
 //!
 //! `gf2-fast-bench BUNDLE CODE KIND SIMD PRECISION WORKERS BATCH CALLS` prints
 //! one JSON line through [`aff3ct_ldpc_gaps::fast`]. `KIND` and `SIMD` name a
-//! [`Route`]; `PRECISION` is `f32`. The code retains its corpus block
+//! [`Route`]; `PRECISION` is `f32`, the precision of the input LLRs. The code retains its corpus block
 //! description after an exact parity-check comparison. The quality pass
 //! decodes the bundle's whole batches untimed.
 
 use aff3ct_ldpc_gaps::batch::{
-    config, qc_worker, structured_corpus_code, ArmPolicy, BatchRoute, BatchWorker, FrameDecoder,
-    FrameWorker, LaneBackend,
+    config, layered_worker, qc_worker, structured_corpus_code, ArmPolicy, BatchRoute, BatchWorker,
+    FrameDecoder, FrameWorker, LaneBackend, LAYERED_ITERATION_CAP,
 };
 use aff3ct_ldpc_gaps::fast::{self, FastCell, ITERATION_CAP, NORMALIZATION};
 use gf2_coding::ldpc::{DecodedWord, LdpcBatchDecoder, LdpcCode};
@@ -26,6 +26,9 @@ enum Route {
     Qc(LaneBackend),
     /// `default auto`: `LdpcBatchDecoder` of default construction.
     Default,
+    /// `layered none|avx2`: `LayeredDecoder` in i8 with the corpus code's
+    /// layered configuration, one frame at a time.
+    Layered(LaneBackend),
 }
 
 impl Route {
@@ -40,13 +43,21 @@ impl Route {
             ("lanes", _) => Ok(Self::Lanes(backend()?)),
             ("qc", _) => Ok(Self::Qc(backend()?)),
             ("default", "auto") => Ok(Self::Default),
+            ("layered", _) => Ok(Self::Layered(backend()?)),
             _ => Err(format!("no gf2 route {kind} with SIMD {simd}")),
         }
     }
 
-    fn build(self, code: &LdpcCode, batch: usize) -> Result<Box<dyn Worker>, String> {
+    fn iteration_cap(self) -> usize {
+        match self {
+            Self::Layered(_) => LAYERED_ITERATION_CAP,
+            _ => ITERATION_CAP as usize,
+        }
+    }
+
+    fn build(self, code: &LdpcCode, corpus: &str, batch: usize) -> Result<Box<dyn Worker>, String> {
         let decoder_config = config(NORMALIZATION, true);
-        let cap = ITERATION_CAP as usize;
+        let cap = self.iteration_cap();
         let batch_worker = |decoder| -> Result<Box<dyn Worker>, String> {
             Ok(Box::new(BatchWorker::from_decoder(code, batch, decoder)?))
         };
@@ -83,6 +94,16 @@ impl Route {
                 cap,
                 DecodedWord::Codeword,
             )),
+            Self::Layered(backend) => {
+                let worker = layered_worker(code, corpus, batch, backend == LaneBackend::Portable)?;
+                let running = worker.decoder().backend();
+                if running != backend {
+                    return Err(format!(
+                        "the layered decoder runs {running:?}, not {backend:?}"
+                    ));
+                }
+                Ok(Box::new(worker))
+            }
         }
     }
 }
@@ -123,7 +144,7 @@ fn run(args: &[String]) -> Result<(), String> {
     let workers = NonZeroUsize::new(cell.workers).expect("a positive worker count");
 
     let quality_frames = workload.manifest.frames / cell.batch * cell.batch;
-    let mut quality = route.build(&code, cell.batch)?;
+    let mut quality = route.build(&code, &cell.code, cell.batch)?;
     let mut decisions = Vec::with_capacity(quality_frames * k);
     for first in (0..quality_frames).step_by(cell.batch) {
         quality.decode(workload.frames(first, cell.batch), workers);
@@ -134,11 +155,18 @@ fn run(args: &[String]) -> Result<(), String> {
 
     let llrs = workload.frames(0, cell.batch);
     let median_call_ns = cell.median_call_ns(
-        |_| route.build(&code, cell.batch),
+        |_| route.build(&code, &cell.code, cell.batch),
         |worker| worker.decode(llrs, workers),
     )?;
     let decoder = format!("gf2-{}-{}", cell.kind, cell.simd);
-    cell.report(&decoder, k, median_call_ns, quality_frames, frame_errors);
+    cell.report(
+        &decoder,
+        route.iteration_cap(),
+        k,
+        median_call_ns,
+        quality_frames,
+        frame_errors,
+    );
     Ok(())
 }
 

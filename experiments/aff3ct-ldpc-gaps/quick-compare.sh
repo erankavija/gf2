@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # gf2 decoder routes against AFF3CT NMS configurations on identical recorded
-# bundles: NMS 0.75, cap 50, syndrome stopping, worker i pinned to CPU i.
+# bundles, worker i pinned to CPU i: flooding NMS 0.75 with cap 50, and gf2's
+# layered i8 route under its corpus configuration with cap 25, all with
+# syndrome stopping. FER counts information-window frame errors.
 #
 # Environment: GF2_AFF3CT_ROOT names the staged AFF3CT tree (as for the AFF3CT
 # arm) and GF2_LDPC_BUNDLES the directory holding the bundle directories named
@@ -54,7 +56,10 @@ codes = json.load(open(sys.argv[1]))["codes"]
 print(codes[sys.argv[2]]["bundle"])' "$here/arms.json" "$1"
 }
 
-gf2_routes=("single none" "lanes none" "lanes avx2" "qc none" "qc avx2" "default auto")
+gf2_routes=(
+    "single none" "lanes none" "lanes avx2" "qc none" "qc avx2" "default auto"
+    "layered none" "layered avx2"
+)
 aff3ct_configs=(
     "flooding none f32" "layered none f32"
     "flooding INTER f32" "layered INTER f32" "layered-onms INTER f32"
@@ -108,13 +113,13 @@ print(f"host {sys.argv[2]}; FER = frames with an information-bit error over the 
 print("ratio = best gf2 frames/s / best AFF3CT frames/s")
 for (code, workers, batch), runs in cells.items():
     print(f"\n{code}  workers {workers}  batch {batch}")
-    print(f"  {'side':7} {'decoder':44} {'FER':>9} {'frames/s':>10} {'info Mb/s':>10}")
+    print(f"  {'side':7} {'decoder':44} {'cap':>4} {'FER':>9} {'frames/s':>10} {'info Mb/s':>10}")
     best = {}
     for side, run in runs:
         fps = run["frames_per_second"]
         best[side] = max(best.get(side, 0.0), fps)
         errors = f"{run['frame_errors']}/{run['quality_frames']}"
-        print(f"  {side:7} {run['decoder'][:44]:44} {errors:>9} {fps:10.1f} {run['info_mbps']:10.2f}")
+        print(f"  {side:7} {run['decoder'][:44]:44} {run['iteration_cap']:>4} {errors:>9} {fps:10.1f} {run['info_mbps']:10.2f}")
     if "gf2" in best and "aff3ct" in best:
         print(f"  ratio {best['gf2'] / best['aff3ct']:.3f}")
 for row in failed:

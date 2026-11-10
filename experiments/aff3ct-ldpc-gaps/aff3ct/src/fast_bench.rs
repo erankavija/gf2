@@ -41,7 +41,14 @@ fn run(args: &[String]) -> Result<(), String> {
         },
         |worker| worker.decode_batch(llrs),
     )?;
-    cell.report(&name, k, median_call_ns, quality_frames, frame_errors);
+    cell.report(
+        &name,
+        ITERATION_CAP as usize,
+        k,
+        median_call_ns,
+        quality_frames,
+        frame_errors,
+    );
     Ok(())
 }
 
