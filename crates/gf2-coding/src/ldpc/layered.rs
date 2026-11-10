@@ -102,12 +102,26 @@ impl LayeredConfig {
     /// zero and infinities to the channel limit.
     #[must_use]
     pub fn quantize(&self, llr: Llr) -> i8 {
-        let limit = f32::from(self.channel_limit);
-        let value = (llr.value() * self.channel_scale)
-            .round()
-            .clamp(-limit, limit);
-        // NaN stays NaN through clamp, and the saturating cast maps it to 0.
-        value as i8
+        // Adding 1.5 * 2^23 rounds a magnitude below 2^22 to an integer in
+        // the low mantissa bits, ties to even; the exact remainder finds the
+        // ties to round up. This vectorizes where `f32::round` (a libm call
+        // on baseline x86-64) and saturating casts do not. Clamping before
+        // rounding is exact because the limit is an integer.
+        const MAGIC: f32 = 12_582_912.0;
+        let scaled = llr.value() * self.channel_scale;
+        let magnitude = if scaled.is_nan() {
+            0.0
+        } else {
+            scaled.abs().min(f32::from(self.channel_limit))
+        };
+        let shifted = magnitude + MAGIC;
+        let tie = u32::from(magnitude - (shifted - MAGIC) == 0.5);
+        let level = (shifted.to_bits() - MAGIC.to_bits() + tie) as i8;
+        if scaled.is_sign_negative() {
+            -level
+        } else {
+            level
+        }
     }
 }
 
@@ -339,6 +353,8 @@ pub struct LayeredDecoder {
     posterior: Vec<i8>,
     /// The code variable of each schedule variable, when they differ.
     variables: Option<Vec<u32>>,
+    /// The length of the prefix on which the two orders agree.
+    fixed: usize,
     /// Beliefs in code variable order, when the orders differ.
     output: Vec<i8>,
     messages: Vec<i8>,
@@ -421,6 +437,13 @@ impl LayeredDecoder {
             } else {
                 Vec::new()
             },
+            fixed: variables.as_ref().map_or(schedule.n, |order| {
+                order
+                    .iter()
+                    .enumerate()
+                    .take_while(|&(c, &v)| c == v as usize)
+                    .count()
+            }),
             variables,
             messages: vec![0; schedule.message_len],
             words: Vec::with_capacity(schedule.n.div_ceil(64)),
@@ -499,7 +522,9 @@ impl LayeredDecoder {
             *slot = self.config.quantize(llr);
         }
         if let Some(variables) = &self.variables {
-            for (slot, &v) in self.posterior.iter_mut().zip(variables) {
+            let fixed = self.fixed;
+            self.posterior[..fixed].copy_from_slice(&self.output[..fixed]);
+            for (slot, &v) in self.posterior[fixed..].iter_mut().zip(&variables[fixed..]) {
                 *slot = self.output[v as usize];
             }
         }
@@ -530,7 +555,9 @@ impl LayeredDecoder {
         codeword.clear();
         let beliefs = match &self.variables {
             Some(variables) => {
-                for (&v, &value) in variables.iter().zip(&self.posterior) {
+                let fixed = self.fixed;
+                self.output[..fixed].copy_from_slice(&self.posterior[..fixed]);
+                for (&v, &value) in variables[fixed..].iter().zip(&self.posterior[fixed..]) {
                     self.output[v as usize] = value;
                 }
                 &self.output
@@ -541,9 +568,19 @@ impl LayeredDecoder {
         self.words.clear();
         self.words.extend(beliefs.chunks(64).map(|chunk| {
             chunk
-                .iter()
+                .chunks(8)
                 .enumerate()
-                .fold(0u64, |word, (i, &value)| word | (u64::from(value < 0) << i))
+                .fold(0u64, |word, (byte, eight)| {
+                    let mut lanes = [0u8; 8];
+                    for (lane, &value) in lanes.iter_mut().zip(eight) {
+                        *lane = value as u8;
+                    }
+                    // Sign bits to bit positions 56..64 of the product, lane i
+                    // to bit 56 + i.
+                    let signs = (u64::from_le_bytes(lanes) >> 7) & 0x0101_0101_0101_0101;
+                    let packed = signs.wrapping_mul(0x0102_0408_1020_4080) >> 56;
+                    word | (packed << (8 * byte))
+                })
         }));
         codeword.resize(beliefs.len(), false);
         codeword.write_bits(0, &self.words, beliefs.len());
