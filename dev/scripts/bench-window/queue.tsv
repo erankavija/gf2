@@ -5,3 +5,5 @@
 de311215	.agents/worktrees/agent-de311215	15	./scripts/cargo-budget.sh cargo bench -p gf2-coding --bench ldpc_dvb_t2_qc --no-run && CARGO_CI_NO_LOCK=1 GF2_BENCH=1 ./dev/scripts/ccx1-bench-flock.sh --full-host cargo bench -p gf2-coding --bench ldpc_dvb_t2_qc
 # c62356d2 QC route sweep; est_minutes is an estimate, not a measurement
 c62356d2	.agents/worktrees/jit-c62356d2	45	bash experiments/aff3ct-ldpc-gaps/qc-route-sweep.sh
+# c62356d2 QC hot path: the same sweep on jit-c62356d2-hot; compare its QC times per cell with the jit-c62356d2 line above
+c62356d2	.agents/worktrees/jit-c62356d2-hot	45	bash experiments/aff3ct-ldpc-gaps/qc-route-sweep.sh

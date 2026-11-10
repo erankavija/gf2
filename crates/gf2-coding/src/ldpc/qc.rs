@@ -5,7 +5,7 @@
 use super::{DecodeOutcome, DecoderConfig, LaneBackend, LdpcCode, MinSumRule, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use gf2_core::BitVec;
-use gf2_kernels_simd::ldpc_qc::QcCheckFn;
+use gf2_kernels_simd::ldpc_qc::QcKernels;
 use std::ops::Range;
 
 /// One circulant of the block description.
@@ -25,22 +25,23 @@ struct Segment {
 /// The block structure of a quasi-cyclic code, in both traversal orders.
 ///
 /// `check_edges` is ordered by row block, so a row block owns one contiguous
-/// run; `var_edges` holds indices into it grouped by column block. A masked
-/// (edge, check lane) pair carries a +∞ variable-to-check message, which the
-/// check rule skips as it skips an absent edge.
+/// run, and `masked` by edge, so it owns `masked[masked_offsets[r]..]` up to
+/// the next offset. A masked (edge, check lane) pair carries a +∞
+/// variable-to-check message, which the check rule skips as it skips an
+/// absent edge.
 struct QcLayout {
     z: usize,
     row_blocks: usize,
     col_blocks: usize,
     check_edges: Vec<BaseEdge>,
     check_offsets: Vec<usize>,
-    var_edges: Vec<usize>,
-    var_offsets: Vec<usize>,
     segments: Vec<Segment>,
     segment_offsets: Vec<usize>,
     seg_edges: Vec<usize>,
     /// (edge, check lane) pairs without an entry, ascending.
     masked: Vec<(usize, usize)>,
+    masked_offsets: Vec<usize>,
+    max_row_degree: usize,
     /// Variable of each lifted column and lifted column of each variable;
     /// `None` is the identity.
     col_order: Option<(Vec<usize>, Vec<usize>)>,
@@ -152,18 +153,28 @@ impl QcLayout {
             (order.to_vec(), inverse)
         });
 
+        let masked_offsets = check_offsets
+            .iter()
+            .map(|&edge| masked.partition_point(|&(index, _)| index < edge))
+            .collect();
+        let max_row_degree = check_offsets
+            .windows(2)
+            .map(|pair| pair[1] - pair[0])
+            .max()
+            .unwrap_or(0);
+
         Some(Self {
             z,
             row_blocks,
             col_blocks,
             check_edges,
             check_offsets,
-            var_edges,
-            var_offsets,
             segments,
             segment_offsets,
             seg_edges,
             masked,
+            masked_offsets,
+            max_row_degree,
             col_order,
         })
     }
@@ -180,27 +191,38 @@ impl QcLayout {
         self.check_edges.len()
     }
 
-    fn mask_messages(&self, var_to_check: &mut [f32]) {
-        for &(edge, lane) in &self.masked {
-            var_to_check[edge * self.z + lane] = f32::INFINITY;
-        }
+    fn row_edges(&self, row_block: usize) -> Range<usize> {
+        self.check_offsets[row_block]..self.check_offsets[row_block + 1]
+    }
+
+    fn row_masked(&self, row_block: usize) -> &[(usize, usize)] {
+        &self.masked[self.masked_offsets[row_block]..self.masked_offsets[row_block + 1]]
     }
 }
 
 /// Flooding min-sum decoder vectorized across one frame's lifted positions.
+///
+/// The workspace holds one belief per lifted column and one check-to-variable
+/// message per lifted edge. A check row reads the variable-to-check messages
+/// `belief - message` of the previous iteration into a row scratch, so the
+/// messages are updated in place, and the variable step then rebuilds every
+/// belief from the channel value and the new messages.
 pub struct QcDecoder {
     layout: QcLayout,
     rule: MinSumRule,
     config: DecoderConfig,
     /// Channel values and beliefs by lifted column.
     channel: Vec<f32>,
-    belief: Vec<Llr>,
+    belief: Vec<f32>,
     check_to_var: Vec<f32>,
-    var_to_check: Vec<f32>,
+    /// Variable-to-check messages of one row block.
+    row_scratch: Vec<f32>,
     /// Terminal beliefs by variable.
     posterior: Vec<Llr>,
-    hard_bits: Vec<bool>,
-    kernel: QcCheckFn,
+    /// Hard decisions by lifted column and the parities of one row block.
+    hard_bits: Vec<u8>,
+    parity: Vec<u8>,
+    kernel: QcKernels,
     backend: LaneBackend,
     last_iterations: usize,
 }
@@ -219,17 +241,18 @@ impl QcDecoder {
         let rule = config.algorithm().min_sum_rule()?;
         let layout = QcLayout::new(code.quasi_cyclic()?)?;
         let messages = layout.base_edges() * layout.z();
-        let (kernel, backend) = (QcCheckFn::portable(), LaneBackend::Portable);
+        let (kernel, backend) = (QcKernels::portable(), LaneBackend::Portable);
         #[cfg(feature = "simd")]
         let (kernel, backend) = gf2_kernels_simd::ldpc_qc::detect()
             .map_or((kernel, backend), |fns| (fns, LaneBackend::Avx2));
         Some(Self {
             channel: vec![0.0; layout.n()],
-            belief: vec![Llr::zero(); layout.n()],
+            belief: vec![0.0; layout.n()],
             check_to_var: vec![0.0; messages],
-            var_to_check: vec![0.0; messages],
+            row_scratch: vec![0.0; layout.max_row_degree * layout.z()],
             posterior: vec![Llr::zero(); layout.n()],
-            hard_bits: vec![false; layout.n()],
+            hard_bits: vec![0; layout.n()],
+            parity: vec![0; layout.z()],
             kernel,
             backend,
             layout,
@@ -242,7 +265,7 @@ impl QcDecoder {
     /// Selects the portable kernel on every host.
     #[must_use]
     pub fn with_portable_kernel(mut self) -> Self {
-        self.kernel = QcCheckFn::portable();
+        self.kernel = QcKernels::portable();
         self.backend = LaneBackend::Portable;
         self
     }
@@ -272,6 +295,19 @@ impl QcDecoder {
         &self.posterior
     }
 
+    /// Bytes of the decoding workspace: channel values, beliefs, messages,
+    /// row scratch, posteriors and hard decisions, without the layout.
+    #[must_use]
+    pub fn workspace_bytes(&self) -> usize {
+        std::mem::size_of_val(self.channel.as_slice())
+            + std::mem::size_of_val(self.belief.as_slice())
+            + std::mem::size_of_val(self.check_to_var.as_slice())
+            + std::mem::size_of_val(self.row_scratch.as_slice())
+            + std::mem::size_of_val(self.posterior.as_slice())
+            + std::mem::size_of_val(self.hard_bits.as_slice())
+            + std::mem::size_of_val(self.parity.as_slice())
+    }
+
     /// Decodes a mother-code frame, overwriting `codeword` with all n hard bits.
     ///
     /// Follows `docs/reference/ldpc-decoder-numerical-contract.md`, including
@@ -293,57 +329,47 @@ impl QcDecoder {
                 for (slot, &llr) in self.channel.iter_mut().zip(llrs) {
                     *slot = llr.value();
                 }
-                if max_iterations == 0 {
-                    self.belief.copy_from_slice(llrs);
-                }
             }
             Some((order, _)) => {
                 for (slot, &variable) in self.channel.iter_mut().zip(order) {
                     *slot = llrs[variable].value();
                 }
-                if max_iterations == 0 {
-                    for (slot, &variable) in self.belief.iter_mut().zip(order) {
-                        *slot = llrs[variable];
-                    }
-                }
             }
         }
-
-        let z = self.layout.z;
+        // With zero messages the first check row reads `channel - 0.0`, the
+        // channel value of every lane.
+        self.belief.copy_from_slice(&self.channel);
         self.check_to_var.fill(0.0);
-        for (index, edge) in self.layout.check_edges.iter().enumerate() {
-            let base = edge.col_block * z;
-            for i in 0..z {
-                self.var_to_check[index * z + i] = self.channel[base + (i + edge.shift) % z];
-            }
-        }
-        self.layout.mask_messages(&mut self.var_to_check);
 
         let mut iterations = 0;
+        let mut passed = None;
         for iteration in 0..max_iterations {
             iterations = iteration + 1;
             self.check_update();
             self.variable_update();
             if self.config.early_termination() && self.syndrome_passes() {
+                passed = Some(true);
                 break;
             }
         }
         self.last_iterations = iterations;
-        let syndrome_check_passed = self.syndrome_passes();
+        let syndrome_check_passed = passed.unwrap_or_else(|| self.syndrome_passes());
         codeword.clear();
         match &self.layout.col_order {
             None => {
-                self.posterior.copy_from_slice(&self.belief);
+                for (slot, &belief) in self.posterior.iter_mut().zip(&self.belief) {
+                    *slot = Llr::new(belief);
+                }
                 for &bit in &self.hard_bits {
-                    codeword.push_bit(bit);
+                    codeword.push_bit(bit != 0);
                 }
             }
             Some((_, inverse)) => {
                 for (slot, &column) in self.posterior.iter_mut().zip(inverse) {
-                    *slot = self.belief[column];
+                    *slot = Llr::new(self.belief[column]);
                 }
                 for &column in inverse {
-                    codeword.push_bit(self.hard_bits[column]);
+                    codeword.push_bit(self.hard_bits[column] != 0);
                 }
             }
         }
@@ -358,101 +384,92 @@ impl QcDecoder {
     fn check_update(&mut self) {
         let z = self.layout.z;
         for row_block in 0..self.layout.row_blocks {
-            let start = self.layout.check_offsets[row_block];
-            let end = self.layout.check_offsets[row_block + 1];
-            let degree = end - start;
+            let edges = self.layout.row_edges(row_block);
+            let degree = edges.len();
             if degree == 0 {
                 continue;
             }
-            let inputs = &self.var_to_check[start * z..end * z];
-            let outputs = &mut self.check_to_var[start * z..end * z];
-            self.kernel
-                .check_block(self.rule.into(), inputs, outputs, degree, z);
+            let scratch = &mut self.row_scratch[..degree * z];
+            for ((edge, out), messages) in self.layout.check_edges[edges.clone()]
+                .iter()
+                .zip(scratch.chunks_exact_mut(z))
+                .zip(self.check_to_var[edges.start * z..edges.end * z].chunks_exact(z))
+            {
+                let block = &self.belief[edge.col_block * z..(edge.col_block + 1) * z];
+                self.kernel
+                    .rotated_difference(block, edge.shift, messages, out);
+            }
+            for &(edge, lane) in self.layout.row_masked(row_block) {
+                scratch[(edge - edges.start) * z + lane] = f32::INFINITY;
+            }
+            self.kernel.check_block(
+                self.rule.into(),
+                scratch,
+                &mut self.check_to_var[edges.start * z..edges.end * z],
+                degree,
+                z,
+            );
         }
     }
 
     fn variable_update(&mut self) {
         let z = self.layout.z;
         for col_block in 0..self.layout.col_blocks {
-            let block_start = col_block * z;
-            let belief = &mut self.belief[block_start..block_start + z];
-            for (slot, &channel) in belief
-                .iter_mut()
-                .zip(&self.channel[block_start..block_start + z])
-            {
-                *slot = Llr::new(channel);
-            }
-
+            let lanes = col_block * z..(col_block + 1) * z;
+            let belief = &mut self.belief[lanes.clone()];
+            belief.copy_from_slice(&self.channel[lanes]);
             let segments =
                 self.layout.segment_offsets[col_block]..self.layout.segment_offsets[col_block + 1];
             for segment in &self.layout.segments[segments] {
-                let (start, end) = (segment.lanes.start, segment.lanes.end);
                 for &index in &self.layout.seg_edges[segment.edges.clone()] {
-                    let shift = self.layout.check_edges[index].shift;
-                    let incoming = &self.check_to_var[index * z..(index + 1) * z];
-                    // Lifted position j of the variable block reads lifted
-                    // position (j - shift) mod Z of the check block: lanes
-                    // below the shift wrap.
-                    let split = shift.clamp(start, end);
-                    if start < split {
-                        for (slot, &value) in belief[start..split]
-                            .iter_mut()
-                            .zip(&incoming[start + z - shift..split + z - shift])
-                        {
-                            *slot = Llr::new(slot.value() + value);
-                        }
-                    }
-                    if split < end {
-                        for (slot, &value) in belief[split..end]
-                            .iter_mut()
-                            .zip(&incoming[split - shift..end - shift])
-                        {
-                            *slot = Llr::new(slot.value() + value);
-                        }
-                    }
-                }
-            }
-
-            let run = self.layout.var_offsets[col_block]..self.layout.var_offsets[col_block + 1];
-            for &index in &self.layout.var_edges[run] {
-                let shift = self.layout.check_edges[index].shift;
-                let outgoing = &mut self.var_to_check[index * z..(index + 1) * z];
-                let incoming = &self.check_to_var[index * z..(index + 1) * z];
-                let split = z - shift;
-                for i in 0..split {
-                    outgoing[i] = belief[i + shift].value() - incoming[i];
-                }
-                for i in split..z {
-                    outgoing[i] = belief[i + shift - z].value() - incoming[i];
+                    self.kernel.add_rotated(
+                        belief,
+                        segment.lanes.clone(),
+                        &self.check_to_var[index * z..(index + 1) * z],
+                        self.layout.check_edges[index].shift,
+                    );
                 }
             }
         }
-        self.layout.mask_messages(&mut self.var_to_check);
     }
 
+    /// Whether every lifted check of the current hard decisions has even
+    /// parity, testing one row block at a time.
     fn syndrome_passes(&mut self) -> bool {
-        for (bit, &belief) in self.hard_bits.iter_mut().zip(self.belief.iter()) {
-            *bit = belief.hard_decision();
+        for (bit, &belief) in self.hard_bits.iter_mut().zip(&self.belief) {
+            *bit = u8::from(Llr::new(belief).hard_decision());
         }
         let z = self.layout.z;
-        let masked = &self.layout.masked;
         for row_block in 0..self.layout.row_blocks {
-            let start = self.layout.check_offsets[row_block];
-            let end = self.layout.check_offsets[row_block + 1];
-            let row_masked = &masked[masked.partition_point(|&(edge, _)| edge < start)
-                ..masked.partition_point(|&(edge, _)| edge < end)];
-            for i in 0..z {
-                let mut parity = false;
-                for (offset, edge) in self.layout.check_edges[start..end].iter().enumerate() {
-                    if row_masked.is_empty() || !row_masked.contains(&(start + offset, i)) {
-                        parity ^= self.hard_bits[edge.col_block * z + (i + edge.shift) % z];
-                    }
-                }
-                if parity {
-                    return false;
-                }
+            self.parity.fill(0);
+            let edges = self.layout.row_edges(row_block);
+            for edge in &self.layout.check_edges[edges.clone()] {
+                // Lifted check i reads lifted column (i + shift) mod Z.
+                let block = &self.hard_bits[edge.col_block * z..(edge.col_block + 1) * z];
+                xor_rotated(&mut self.parity, block, edge.shift);
+            }
+            for &(index, lane) in self.layout.row_masked(row_block) {
+                let edge = self.layout.check_edges[index];
+                self.parity[lane] ^= self.hard_bits[edge.col_block * z + (lane + edge.shift) % z];
+            }
+            if self.parity.iter().any(|&parity| parity != 0) {
+                return false;
             }
         }
         true
+    }
+}
+
+/// `parity[i] ^= block[(i + shift) mod z]` for every lane `i`. Kept out of
+/// line so that its slices stay distinct arguments, which lets the loops
+/// vectorize; inlined, both buffers are reached through the decoder.
+#[inline(never)]
+fn xor_rotated(parity: &mut [u8], block: &[u8], shift: usize) {
+    let (head, tail) = parity.split_at_mut(block.len() - shift);
+    for (parity, &bit) in head.iter_mut().zip(&block[shift..]) {
+        *parity ^= bit;
+    }
+    for (parity, &bit) in tail.iter_mut().zip(&block[..shift]) {
+        *parity ^= bit;
     }
 }
