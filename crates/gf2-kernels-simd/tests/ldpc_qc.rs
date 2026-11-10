@@ -1,5 +1,5 @@
 use gf2_kernels_simd::ldpc_lanes::{lane_check_step_portable, F32x8, LaneMinSumRule};
-use gf2_kernels_simd::ldpc_qc::{detect, QcKernels, QcTerm};
+use gf2_kernels_simd::ldpc_qc::{detect, QcBlock, QcKernels, QcTerm};
 
 fn backends() -> Vec<QcKernels> {
     let mut kernels = vec![QcKernels::portable()];
@@ -266,5 +266,107 @@ fn rotations_panic_before_writing_outside_their_domain() {
             assert!(result.is_err(), "{lanes:?} {term:?}");
         }
         assert!(beliefs.iter().all(|&value| value == 123.0));
+    }
+}
+
+/// The fused row update equals the rotated differences followed by the
+/// check kernel on the same backend, bit for bit, over every degree up to
+/// past the register-resident cap, lifting sizes with and without a tail,
+/// and shifts whose groups wrap.
+#[test]
+fn every_backend_fuses_rotated_differences_into_the_check() {
+    let special = [
+        0.0,
+        -0.0,
+        f32::NAN,
+        f32::INFINITY,
+        f32::NEG_INFINITY,
+        f32::MAX,
+        -f32::MAX,
+        f32::from_bits(1),
+        -2.0,
+        2.0,
+        -0.5,
+        3.25,
+        -7.0,
+    ];
+    for kernel in backends() {
+        for z in [1, 7, 8, 9, 16, 17, 23, 64, 65] {
+            for degree in 0..=20 {
+                for rule in [
+                    LaneMinSumRule::Plain,
+                    LaneMinSumRule::Normalized(0.75),
+                    LaneMinSumRule::Offset(0.5),
+                ] {
+                    let columns = degree + 2;
+                    let beliefs: Vec<f32> = (0..columns * z)
+                        .map(|i| special[(i * 7 + 3) % special.len()])
+                        .collect();
+                    let edges: Vec<QcBlock> = (0..degree)
+                        .map(|edge| QcBlock {
+                            offset: ((edge * 5 + 1) % columns) * z,
+                            shift: (edge * 11 + degree) % z,
+                        })
+                        .collect();
+                    let messages: Vec<f32> = (0..degree * z)
+                        .map(|i| special[(i * 5 + 1) % special.len()])
+                        .collect();
+
+                    let mut differences = vec![0.0; degree * z];
+                    for (edge, term) in edges.iter().enumerate() {
+                        kernel.rotated_difference(
+                            &beliefs[term.offset..term.offset + z],
+                            term.shift,
+                            &messages[edge * z..(edge + 1) * z],
+                            &mut differences[edge * z..(edge + 1) * z],
+                        );
+                    }
+                    let mut want = vec![0.0; degree * z];
+                    kernel.check_block(rule, &differences, &mut want, degree, z);
+
+                    let mut got = messages.clone();
+                    let mut scratch = vec![123.0; degree * z];
+                    kernel.check_row_rotated(rule, &beliefs, &edges, &mut got, &mut scratch, z);
+                    for (i, (got, want)) in got.iter().zip(&want).enumerate() {
+                        assert_eq!(
+                            got.to_bits(),
+                            want.to_bits(),
+                            "{rule:?}, z {z}, degree {degree}, edge {}, lane {}",
+                            i / z,
+                            i % z
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn fused_rows_panic_before_writing_outside_their_domain() {
+    let term = |offset, shift| QcBlock { offset, shift };
+    for kernel in backends() {
+        for (edges, messages, scratch, z) in [
+            (vec![term(0, 8), term(8, 0)], 16, 16, 8),
+            (vec![term(0, 0), term(9, 0)], 16, 16, 8),
+            (vec![term(0, 0), term(8, 0)], 15, 16, 8),
+            (vec![term(0, 0), term(8, 0)], 16, 15, 8),
+        ] {
+            let beliefs = vec![1.0; 16];
+            let mut messages = vec![123.0; messages];
+            let mut scratch = vec![0.0; scratch];
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                kernel.check_row_rotated(
+                    LaneMinSumRule::Plain,
+                    &beliefs,
+                    &edges,
+                    &mut messages,
+                    &mut scratch,
+                    z,
+                );
+            }));
+            assert!(result.is_err(), "{edges:?}, {} messages", messages.len());
+            assert!(messages.iter().all(|&value| value == 123.0));
+        }
     }
 }

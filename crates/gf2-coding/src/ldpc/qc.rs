@@ -6,7 +6,7 @@ use super::decisions::{pack_bytes, pack_eight};
 use super::{DecodeOutcome, DecoderConfig, LaneBackend, LdpcCode, MinSumRule, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use gf2_core::BitVec;
-use gf2_kernels_simd::ldpc_qc::{QcKernels, QcTerm};
+use gf2_kernels_simd::ldpc_qc::{QcBlock, QcKernels, QcTerm};
 use std::ops::Range;
 
 /// One circulant of the block description.
@@ -35,6 +35,8 @@ struct QcLayout {
     row_blocks: usize,
     col_blocks: usize,
     check_edges: Vec<BaseEdge>,
+    /// Each edge of `check_edges` as the beliefs its check update reads.
+    check_blocks: Vec<QcBlock>,
     check_offsets: Vec<usize>,
     segments: Vec<Segment>,
     segment_offsets: Vec<usize>,
@@ -165,6 +167,13 @@ impl QcLayout {
                 shift: check_edges[index].shift,
             })
             .collect();
+        let check_blocks = check_edges
+            .iter()
+            .map(|edge| QcBlock {
+                offset: edge.col_block * z,
+                shift: edge.shift,
+            })
+            .collect();
         let max_row_degree = check_offsets
             .windows(2)
             .map(|pair| pair[1] - pair[0])
@@ -176,6 +185,7 @@ impl QcLayout {
             row_blocks,
             col_blocks,
             check_edges,
+            check_blocks,
             check_offsets,
             segments,
             segment_offsets,
@@ -412,6 +422,18 @@ impl QcDecoder {
             if degree == 0 {
                 continue;
             }
+            let masked = self.layout.row_masked(row_block);
+            if masked.is_empty() {
+                self.kernel.check_row_rotated(
+                    self.rule.into(),
+                    &self.belief,
+                    &self.layout.check_blocks[edges.clone()],
+                    &mut self.check_to_var[edges.start * z..edges.end * z],
+                    &mut self.row_scratch,
+                    z,
+                );
+                continue;
+            }
             let scratch = &mut self.row_scratch[..degree * z];
             for ((edge, out), messages) in self.layout.check_edges[edges.clone()]
                 .iter()
@@ -422,7 +444,7 @@ impl QcDecoder {
                 self.kernel
                     .rotated_difference(block, edge.shift, messages, out);
             }
-            for &(edge, lane) in self.layout.row_masked(row_block) {
+            for &(edge, lane) in masked {
                 scratch[(edge - edges.start) * z + lane] = f32::INFINITY;
             }
             self.kernel.check_block(

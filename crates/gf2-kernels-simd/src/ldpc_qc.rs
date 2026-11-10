@@ -9,6 +9,7 @@ use std::ops::Range;
 type CheckBlockFn = fn(LaneMinSumRule, &[f32], &mut [f32], usize, usize);
 type RotatedDifferenceFn = fn(&[f32], usize, &[f32], &mut [f32]);
 type AccumulateRotatedFn = fn(&mut [f32], Range<usize>, &[f32], &[f32], &[QcTerm]);
+type CheckRowRotatedFn = fn(LaneMinSumRule, &[f32], &[QcBlock], &mut [f32], &mut [f32], usize);
 
 /// Safe QC kernels, with a portable implementation on every target.
 #[derive(Clone, Copy)]
@@ -16,6 +17,7 @@ pub struct QcKernels {
     pub(crate) check_block_fn: CheckBlockFn,
     pub(crate) rotated_difference_fn: RotatedDifferenceFn,
     pub(crate) accumulate_rotated_fn: AccumulateRotatedFn,
+    pub(crate) check_row_rotated_fn: CheckRowRotatedFn,
 }
 
 /// One circulant's check-to-variable messages in a variable accumulation:
@@ -25,6 +27,16 @@ pub struct QcTerm {
     /// Index of the circulant's first message in the message plane.
     pub offset: usize,
     /// Lane `j` reads message `(j - shift) mod z`.
+    pub shift: usize,
+}
+
+/// One circulant's column block in a check update: `z` beliefs from `offset`,
+/// rotated by `shift`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct QcBlock {
+    /// Index of the column block's first belief.
+    pub offset: usize,
+    /// Lifted check `i` reads belief `(i + shift) mod z`.
     pub shift: usize,
 }
 
@@ -38,6 +50,7 @@ impl QcKernels {
             },
             rotated_difference_fn: rotated_difference_runs,
             accumulate_rotated_fn: accumulate_rotated_runs,
+            check_row_rotated_fn: check_row_rotated_portable,
         }
     }
 
@@ -132,6 +145,53 @@ impl QcKernels {
         }
         (self.accumulate_rotated_fn)(beliefs, lanes, channel, messages, terms);
     }
+
+    /// Updates one base row's check-to-variable messages in place from the
+    /// beliefs: the result of [`Self::rotated_difference`] of each edge's
+    /// column block `beliefs[edge.offset..edge.offset + z]`, rotated by
+    /// `edge.shift`, minus its messages `messages[e * z..(e + 1) * z]`,
+    /// followed by [`Self::check_block`] over the `edges.len()` edges, bit
+    /// for bit. `scratch` is workspace whose contents are unspecified
+    /// afterwards. Takes O(degree * z) time without allocation.
+    ///
+    /// # Panics
+    ///
+    /// Panics before writing unless `z > 0`, every edge has `shift < z` and
+    /// `offset + z <= beliefs.len()`, `messages` holds `degree * z` values
+    /// and `scratch` at least as many.
+    pub fn check_row_rotated(
+        &self,
+        rule: LaneMinSumRule,
+        beliefs: &[f32],
+        edges: &[QcBlock],
+        messages: &mut [f32],
+        scratch: &mut [f32],
+        z: usize,
+    ) {
+        assert!(z > 0, "QC lifting size zero");
+        for edge in edges {
+            assert!(
+                edge.shift < z,
+                "QC shift {} outside lifting size {z}",
+                edge.shift
+            );
+            assert!(
+                edge.offset
+                    .checked_add(z)
+                    .is_some_and(|end| end <= beliefs.len()),
+                "QC column block from {} outside {} beliefs",
+                edge.offset,
+                beliefs.len()
+            );
+        }
+        let length = edges
+            .len()
+            .checked_mul(z)
+            .expect("QC message count overflow");
+        assert_eq!(messages.len(), length, "QC message length");
+        assert!(scratch.len() >= length, "QC scratch length");
+        (self.check_row_rotated_fn)(rule, beliefs, edges, messages, scratch, z);
+    }
 }
 
 /// AVX2 kernels when supported by the host; `None` on other targets or hosts.
@@ -143,6 +203,33 @@ pub fn detect() -> Option<QcKernels> {
     }
     #[allow(unreachable_code)]
     None
+}
+
+/// [`QcKernels::check_row_rotated`] through the scratch: the rotated
+/// differences, then the check kernel.
+fn check_row_rotated_portable(
+    rule: LaneMinSumRule,
+    beliefs: &[f32],
+    edges: &[QcBlock],
+    messages: &mut [f32],
+    scratch: &mut [f32],
+    z: usize,
+) {
+    let degree = edges.len();
+    let scratch = &mut scratch[..degree * z];
+    for ((edge, out), messages) in edges
+        .iter()
+        .zip(scratch.chunks_exact_mut(z))
+        .zip(messages.chunks_exact(z))
+    {
+        rotated_difference_runs(
+            &beliefs[edge.offset..edge.offset + z],
+            edge.shift,
+            messages,
+            out,
+        );
+    }
+    check_block_scalar(rule, scratch, messages, degree, z, 0);
 }
 
 /// [`QcKernels::rotated_difference`] as two contiguous runs.
