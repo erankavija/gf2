@@ -6,7 +6,7 @@
 # directories named in arms.json; QUICK_COMPARE_CALLS sets the timed calls per
 # run (default 30). The script builds gf2-fast-bench with target-cpu=native and
 # debug line tables, then re-runs itself under
-# `dev/scripts/ccx1-bench-flock.sh --full-host`, which refuses outside a
+# `ccx1-bench-flock.sh --full-host`, which refuses outside a
 # benchmark window. Each profile writes perf.data, the fast-bench JSON line and
 # a `perf report` of the top self-time symbols under
 # target/aff3ct-ldpc-gaps/profile-routes/<UTC>/.
@@ -15,6 +15,7 @@ set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo=$(git -C "$here" rev-parse --show-toplevel)
 cd "$repo"
+flock="$repo/$(python3 "$repo/$(git -C "$repo" ls-files -- ':(glob)**/repository_files.py')" file ccx1-bench-flock.sh)"
 : "${GF2_LDPC_BUNDLES:?GF2_LDPC_BUNDLES must name the directory of bundle directories}"
 export GF2_LDPC_BUNDLES
 
@@ -26,7 +27,7 @@ if [[ "${1:-}" != --measure ]]; then
     export RUSTFLAGS="-C target-cpu=native -C force-frame-pointers=yes" CARGO_INCREMENTAL=0
     export CARGO_PROFILE_RELEASE_DEBUG=line-tables-only
     ./scripts/cargo-budget.sh cargo build --locked --release -p aff3ct-ldpc-gaps --bin gf2-fast-bench
-    CARGO_CI_NO_LOCK=1 exec ./dev/scripts/ccx1-bench-flock.sh --full-host \
+    CARGO_CI_NO_LOCK=1 exec "$flock" --full-host \
         bash "$here/profile-routes.sh" --measure
 fi
 

@@ -7,7 +7,7 @@
 # CLMUL_COMPARE_CPU names the one core the measurements run on (default 8).
 #
 # The script builds the comparison binary once per gf2x prefix with
-# target-cpu=native, then re-runs itself under `dev/scripts/ccx1-bench-flock.sh`,
+# target-cpu=native, then re-runs itself under `ccx1-bench-flock.sh`,
 # which refuses outside a benchmark window. The table goes to stdout and to
 # target/clmul-compare/<UTC>.md.
 set -euo pipefail
@@ -15,6 +15,7 @@ set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo=$(git -C "$here" rev-parse --show-toplevel)
 cd "$repo"
+flock="$repo/$(python3 "$repo/$(git -C "$repo" ls-files -- ':(glob)**/repository_files.py')" file ccx1-bench-flock.sh)"
 : "${GF2_GF2X_ROOT:?GF2_GF2X_ROOT must name the directory of gf2x prefixes}"
 export GF2_GF2X_ROOT
 cpu="${CLMUL_COMPARE_CPU:-8}"
@@ -31,7 +32,7 @@ if [[ "${1:-}" != --measure ]]; then
             CARGO_TARGET_DIR="$build/$(basename "$prefix")" \
             ./scripts/cargo-budget.sh cargo build --locked --release --manifest-path "$manifest"
     done
-    CARGO_CI_NO_LOCK=1 exec ./dev/scripts/ccx1-bench-flock.sh bash "$here/compare.sh" --measure
+    CARGO_CI_NO_LOCK=1 exec "$flock" bash "$here/compare.sh" --measure
 fi
 
 out="$repo/target/clmul-compare"
