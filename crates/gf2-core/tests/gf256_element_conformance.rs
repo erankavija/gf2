@@ -160,6 +160,52 @@ fn matrix_operations_match_the_wide_representation_and_the_byte_api() {
     matrix_operations_agree::<Poly11b>(&Gf2mField::new(8, 0x11b), 4);
 }
 
+/// Shapes with an empty dimension, each paired with an extent past one or both
+/// cache blocks of the product.
+const DEGENERATE_SHAPES: [(usize, usize, usize); 9] = [
+    (0, 257, 5),
+    (0, 3, 1025),
+    (0, 257, 1025),
+    (4, 0, 1025),
+    (0, 0, 1025),
+    (4, 257, 0),
+    (0, 257, 0),
+    (1025, 0, 0),
+    (5, 0, 3),
+];
+
+fn degenerate_products_are_zero<Cfg: Gf2mWideConfig<1>>() {
+    use gf2_core::field::FiniteField;
+    for (m, k, n) in DEGENERATE_SHAPES {
+        let a = FieldMatrix::new(m, k, Gf256::<Cfg>::new(0x37));
+        let b = FieldMatrix::new(k, n, Gf256::<Cfg>::new(0x91));
+        let product = gemm(&a, &b);
+        assert_eq!((product.rows(), product.cols()), (m, n), "{m}x{k}x{n}");
+        for i in 0..m {
+            for j in 0..n {
+                assert!(product.get(i, j).is_zero(), "{m}x{k}x{n} at {i},{j}");
+            }
+        }
+
+        // The whole-product hooks themselves, which the generic product
+        // guards against these shapes.
+        let a = vec![Gf256::<Cfg>::new(0x37); m * k];
+        let b = vec![Gf256::<Cfg>::new(0x91); k * n];
+        let mut out = vec![Gf256::<Cfg>::new(0xc3); m * n];
+        assert!(Gf256::try_simd_gemm_row_major(&a, &b, m, k, n, &mut out));
+        assert!(out.iter().all(Gf256::is_zero), "row-major {m}x{k}x{n}");
+        let mut out = vec![Gf256::<Cfg>::new(0xc3); m * n];
+        assert!(Gf256::try_simd_gemm_classical(&a, &b, m, k, n, &mut out));
+        assert!(out.iter().all(Gf256::is_zero), "classical {m}x{k}x{n}");
+    }
+}
+
+#[test]
+fn degenerate_products_are_the_empty_or_zero_matrix() {
+    degenerate_products_are_zero::<Poly11d>();
+    degenerate_products_are_zero::<Poly11b>();
+}
+
 #[test]
 fn the_wide_representation_round_trips() {
     for v in 0..=255u8 {

@@ -132,6 +132,10 @@ pub(crate) fn gemm_bytes(
     let GemmShape { m, k, n } = *shape;
     debug_assert_eq!((a.len(), b.len(), c.len()), (m * k, k * n, m * n));
     c.fill(0);
+    // An empty operand has no block to address past its first.
+    if m == 0 || k == 0 || n == 0 {
+        return;
+    }
     let kernel = crate::gf256_region().gemm_block;
     for depth_start in (0..k).step_by(GEMM_DEPTH_BLOCK) {
         let depth = GEMM_DEPTH_BLOCK.min(k - depth_start);

@@ -90,6 +90,34 @@ fn gemm_matches_element_arithmetic_across_block_edges() {
     }
 }
 
+/// Shapes with an empty dimension, each paired with an extent past one or both
+/// cache blocks of the product, so the blocked traversal steps over a block
+/// edge of an empty operand.
+const DEGENERATE_SHAPES: [(usize, usize, usize); 9] = [
+    (0, 257, 5),
+    (0, 3, 1025),
+    (0, 257, 1025),
+    (4, 0, 1025),
+    (0, 0, 1025),
+    (4, 257, 0),
+    (0, 257, 0),
+    (1025, 0, 0),
+    (5, 0, 3),
+];
+
+#[test]
+fn degenerate_products_write_the_empty_or_zero_matrix() {
+    for field in fields() {
+        for (m, k, n) in DEGENERATE_SHAPES {
+            let a = vec![0x37u8; m * k];
+            let b = vec![0x91u8; k * n];
+            let mut c = vec![0xc3u8; m * n];
+            field.gf256_gemm(m, k, n, &a, &b, &mut c);
+            assert!(c.iter().all(|&v| v == 0), "{m}x{k}x{n}");
+        }
+    }
+}
+
 #[test]
 #[should_panic(expected = "region lengths differ")]
 fn axpy_rejects_regions_of_different_lengths() {
