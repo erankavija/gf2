@@ -4,65 +4,135 @@
 
 mod common;
 
-use gf2_coding::ldpc::encoding::{CacheKey, EncodingCache};
-use gf2_coding::ldpc::LdpcCode;
+use gf2_coding::ldpc::encoding::{CacheKey, EncodingCache, RuEncodingMatrices};
+use gf2_coding::ldpc::{LdpcCode, QuasiCyclicLdpc};
+use gf2_coding::test_support::{ldpc_batch_code, ldpc_dvb_t2_codes};
 use gf2_coding::CodeRate;
+use gf2_core::sparse::SpBitMatrixDual;
 use gf2_core::test_scratch::scratch;
-use std::path::Path;
-use std::sync::Arc;
+use gf2_core::BitVec;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
+use std::collections::BTreeSet;
+use std::path::{Path, PathBuf};
 
-fn simple_ldpc_code() -> LdpcCode {
-    LdpcCode::dvb_t2_short(CodeRate::Rate1_2)
+/// Seeded random messages each round-trip test encodes.
+const MESSAGES: u64 = 8;
+
+/// Upper bound on the binary `BitMatrix` header and JSON metadata that precede
+/// the parity part's row words.
+const PARITY_HEADER_BOUND: usize = 1024;
+
+fn key_of(h: &SpBitMatrixDual) -> CacheKey {
+    CacheKey::from_params(h.cols(), h.cols() - h.rows(), h)
 }
 
-fn key_of(code: &LdpcCode) -> CacheKey {
-    CacheKey::from_params(code.n(), code.k(), code.parity_check_matrix())
-}
-
-fn populate(
-    cache: &EncodingCache,
-    code: &LdpcCode,
-) -> Arc<gf2_coding::ldpc::encoding::RuEncodingMatrices> {
-    cache
-        .get_or_compute(key_of(code), code.parity_check_matrix())
-        .expect("RREF preprocessing failed")
-}
-
-#[test]
-#[ignore = "slow: DVB-T2 Short RREF preprocessing (~2-3 s)"]
-fn test_cache_save_to_directory() {
-    let temp_dir = scratch("gf2-ldpc-cache-io");
-    let cache = EncodingCache::new();
-
-    let code = simple_ldpc_code();
-    populate(&cache, &code);
-    assert_eq!(cache.stats().entries, 1, "Cache should hold one entry");
-
-    cache.save_to_directory(temp_dir.path()).unwrap();
-
-    let mut files: Vec<_> = std::fs::read_dir(temp_dir.path())
-        .unwrap()
-        .map(|e| e.unwrap().path().extension().unwrap().to_owned())
+/// Asserts that `dir` holds exactly the [`CacheKey::entry_files`] of `keys`,
+/// with each parity file sized by its k × (n − k) row words and each column
+/// file by its n decimal column indices.
+fn assert_entry_files(dir: &Path, cache: &EncodingCache, keys: &[CacheKey]) {
+    let expected: BTreeSet<PathBuf> = keys
+        .iter()
+        .flat_map(|key| {
+            let files = key.entry_files(dir);
+            [files.parity, files.columns]
+        })
         .collect();
-    files.sort();
+    let written: BTreeSet<PathBuf> = std::fs::read_dir(dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect();
+    assert_eq!(written, expected, "cache directory layout");
 
-    assert_eq!(files, ["cols", "gf2"], "one parity file and its columns");
+    let len = |path: &Path| std::fs::metadata(path).unwrap().len() as usize;
+    for key in keys {
+        let matrices = cache.get(key).expect("saved entry");
+        let files = key.entry_files(dir);
+        let parity = matrices.parity_part();
+        let words = parity.rows() * parity.cols().div_ceil(64) * 8;
+        let parity_len = len(&files.parity);
+        assert!(
+            (words..=words + PARITY_HEADER_BOUND).contains(&parity_len),
+            "{}: {parity_len} bytes for {words} bytes of row words",
+            files.parity.display()
+        );
+        let n = matrices.n();
+        let digits = (n - 1).to_string().len();
+        let columns_len = len(&files.columns);
+        assert!(
+            (2 * n..=n * (digits + 1)).contains(&columns_len),
+            "{}: {columns_len} bytes for {n} column indices",
+            files.columns.display()
+        );
+    }
+}
+
+/// Saves `h`'s entry, checks the directory layout, reloads it, and asserts
+/// that the reloaded entry encodes [`MESSAGES`] seeded random messages like a
+/// fresh build. Returns whether the reduction selects message columns other
+/// than `0..k`.
+fn assert_reload_encodes_like_a_fresh_build(name: &str, h: &SpBitMatrixDual) -> bool {
+    let temp_dir = scratch("gf2-ldpc-cache-io");
+    let key = key_of(h);
+    let cache = EncodingCache::new();
+    cache.get_or_compute(key.clone(), h).expect("preprocess");
+    cache.save_to_directory(temp_dir.path()).unwrap();
+    assert_entry_files(temp_dir.path(), &cache, std::slice::from_ref(&key));
+
+    let reloaded = EncodingCache::from_directory(temp_dir.path())
+        .unwrap()
+        .get(&key)
+        .expect("entry must round-trip");
+    let fresh = RuEncodingMatrices::preprocess(h).expect("preprocess");
+    for seed in 0..MESSAGES {
+        let message = BitVec::random(fresh.k(), &mut StdRng::seed_from_u64(seed));
+        assert_eq!(
+            reloaded.encode(&message),
+            fresh.encode(&message),
+            "{name}: reloaded encoder differs, seed {seed}"
+        );
+    }
+    fresh.systematic_cols() != (0..fresh.k()).collect::<Vec<_>>()
+}
+
+/// A hand-built code with an all-zero last column, which no pivot can take.
+fn hand_built_code() -> SpBitMatrixDual {
+    SpBitMatrixDual::from_coo(2, 5, &[(0, 0), (0, 2), (1, 1), (1, 2), (1, 3)])
 }
 
 #[test]
-#[ignore = "slow: DVB-T2 Short RREF preprocessing (~2-3 s)"]
-fn test_cache_load_from_directory() {
-    let temp_dir = scratch("gf2-ldpc-cache-io");
+fn test_reload_encoding_hand_built_code() {
+    assert!(
+        assert_reload_encodes_like_a_fresh_build("hand-built", &hand_built_code()),
+        "the hand-built code selects message columns outside 0..k"
+    );
+}
 
-    let cache1 = EncodingCache::new();
-    let code = simple_ldpc_code();
-    populate(&cache1, &code);
-    cache1.save_to_directory(temp_dir.path()).unwrap();
+#[test]
+fn test_reload_encoding_quasi_cyclic_code() {
+    assert_reload_encodes_like_a_fresh_build(
+        "quasi-cyclic (96, 48)",
+        ldpc_batch_code().parity_check_matrix(),
+    );
+}
 
-    let cache2 = EncodingCache::from_directory(temp_dir.path()).unwrap();
+#[test]
+fn test_reload_encoding_nr_5g_codes() {
+    for (base_graph, z) in [(1, 2), (2, 2), (2, 3)] {
+        let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(base_graph, z));
+        assert_reload_encodes_like_a_fresh_build(
+            &format!("NR BG{base_graph} Z={z}"),
+            code.parity_check_matrix(),
+        );
+    }
+}
 
-    let loaded = cache2.get(&key_of(&code)).expect("entry must round-trip");
-    assert_eq!(loaded.k(), 7200);
+/// The DVB-T2 short frame at the highest rate, the family member with the
+/// fewest parity checks and so the cheapest row reduction.
+#[test]
+fn test_reload_encoding_dvb_t2_code() {
+    let code = LdpcCode::dvb_t2_short(CodeRate::Rate5_6);
+    assert_reload_encodes_like_a_fresh_build("DVB-T2 short 5/6", code.parity_check_matrix());
 }
 
 #[test]
@@ -76,8 +146,9 @@ fn test_cache_load_is_fast() {
     let temp_dir = scratch("gf2-ldpc-cache-io");
 
     let cache1 = EncodingCache::new();
-    let code = simple_ldpc_code();
-    populate(&cache1, &code);
+    let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
+    let h = code.parity_check_matrix();
+    cache1.get_or_compute(key_of(h), h).expect("preprocess");
     cache1.save_to_directory(temp_dir.path()).unwrap();
 
     let start = std::time::Instant::now();
@@ -85,7 +156,7 @@ fn test_cache_load_is_fast() {
     let load_time = start.elapsed();
 
     let start = std::time::Instant::now();
-    let matrices = cache2.get(&key_of(&code));
+    let matrices = cache2.get(&key_of(h));
     let lookup_time = start.elapsed();
     assert!(matrices.is_some(), "entry must be present after load");
 
@@ -97,41 +168,30 @@ fn test_cache_load_is_fast() {
 }
 
 #[test]
-#[ignore = "bench: RREF preprocessing of all 12 DVB-T2 configs (~13 min); run on a quiesced host"]
+#[ignore = "bench: RREF preprocessing of every DVB-T2 code (~13 min); run on a quiesced host"]
 fn test_precompute_and_save_dvb_t2() {
     skip_unless_bench!(
         "test_precompute_and_save_dvb_t2",
-        "RREF-preprocesses all 12 DVB-T2 configs (~13 min, ~800 MB peak)"
+        "RREF-preprocesses every DVB-T2 code (~13 min, ~800 MB peak)"
     );
 
     let temp_dir = scratch("gf2-ldpc-cache-io");
 
     EncodingCache::precompute_and_save_dvb_t2(temp_dir.path()).unwrap();
 
-    let files: Vec<_> = std::fs::read_dir(temp_dir.path())
-        .unwrap()
-        .map(|e| e.unwrap())
+    let cache = EncodingCache::from_directory(temp_dir.path()).unwrap();
+    let keys: Vec<_> = ldpc_dvb_t2_codes()
+        .map(|(_, _, code)| key_of(code.parity_check_matrix()))
         .collect();
-
-    assert_eq!(files.len(), 12, "Should create 12 files for DVB-T2 configs");
-
-    for entry in files {
-        let metadata = entry.metadata().unwrap();
-        let size_kb = metadata.len() / 1024;
-        assert!(
-            size_kb > 100 && size_kb < 5000,
-            "File size should be 100KB-5MB, got {}KB",
-            size_kb
-        );
-    }
+    assert_entry_files(temp_dir.path(), &cache, &keys);
 }
 
 #[test]
-#[ignore = "bench: RREF preprocessing of all 12 DVB-T2 configs (~13 min); run on a quiesced host"]
+#[ignore = "bench: RREF preprocessing of every DVB-T2 code (~13 min); run on a quiesced host"]
 fn test_load_dvb_t2_cache() {
     skip_unless_bench!(
         "test_load_dvb_t2_cache",
-        "RREF-preprocesses all 12 DVB-T2 configs (~13 min, ~800 MB peak)"
+        "RREF-preprocesses every DVB-T2 code (~13 min, ~800 MB peak)"
     );
 
     let temp_dir = scratch("gf2-ldpc-cache-io");
@@ -140,92 +200,15 @@ fn test_load_dvb_t2_cache() {
 
     let cache = EncodingCache::from_directory(temp_dir.path()).unwrap();
 
-    let configs = [
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Short,
-            CodeRate::Rate1_2,
-        ),
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Short,
-            CodeRate::Rate3_5,
-        ),
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Short,
-            CodeRate::Rate2_3,
-        ),
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Short,
-            CodeRate::Rate3_4,
-        ),
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Short,
-            CodeRate::Rate4_5,
-        ),
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Short,
-            CodeRate::Rate5_6,
-        ),
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Normal,
-            CodeRate::Rate1_2,
-        ),
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Normal,
-            CodeRate::Rate3_5,
-        ),
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Normal,
-            CodeRate::Rate2_3,
-        ),
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Normal,
-            CodeRate::Rate3_4,
-        ),
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Normal,
-            CodeRate::Rate4_5,
-        ),
-        (
-            gf2_coding::ldpc::dvb_t2::FrameSize::Normal,
-            CodeRate::Rate5_6,
-        ),
-    ];
-
-    for (frame_size, rate) in &configs {
-        let code = match frame_size {
-            gf2_coding::ldpc::dvb_t2::FrameSize::Short => LdpcCode::dvb_t2_short(*rate),
-            gf2_coding::ldpc::dvb_t2::FrameSize::Normal => LdpcCode::dvb_t2_normal(*rate),
-        };
-
+    for (frame_size, rate, code) in ldpc_dvb_t2_codes() {
         let start = std::time::Instant::now();
-        let matrices = cache.get(&key_of(&code));
+        let matrices = cache.get(&key_of(code.parity_check_matrix()));
         let duration = start.elapsed();
 
         println!("{:?} {:?}: {:?}", frame_size, rate, duration);
         assert!(duration.as_micros() < 100, "Should be instant from cache");
-        assert!(matrices.expect("config must be cached").k() > 0);
+        assert_eq!(matrices.expect("config must be cached").k(), code.k());
     }
-}
-
-#[test]
-#[ignore = "slow: DVB-T2 Short RREF preprocessing (~2-3 s)"]
-fn test_cache_roundtrip_encoding() {
-    let temp_dir = scratch("gf2-ldpc-cache-io");
-
-    let cache1 = EncodingCache::new();
-    let code = simple_ldpc_code();
-    let matrices1 = populate(&cache1, &code);
-
-    let message = gf2_core::BitVec::zeros(matrices1.k());
-    let codeword1 = matrices1.encode(&message);
-
-    cache1.save_to_directory(temp_dir.path()).unwrap();
-
-    let cache2 = EncodingCache::from_directory(temp_dir.path()).unwrap();
-    let matrices2 = cache2.get(&key_of(&code)).expect("entry must round-trip");
-    let codeword2 = matrices2.encode(&message);
-
-    assert_eq!(codeword1, codeword2, "Encoding should survive save/load");
 }
 
 #[test]
@@ -247,75 +230,15 @@ fn test_nonexistent_directory_error() {
     assert!(result.is_err(), "Should error on nonexistent directory");
 }
 
-/// Codes whose systematic reduction selects message columns other than
-/// `0..k`: a hand-built code with an all-zero last column, which no pivot can
-/// take, and small 5G NR lifts.
-fn codes_with_permuted_columns() -> Vec<(String, gf2_core::sparse::SpBitMatrixDual)> {
-    let hand_built = gf2_core::sparse::SpBitMatrixDual::from_coo(
-        2,
-        5,
-        &[(0, 0), (0, 2), (1, 1), (1, 2), (1, 3)],
-    );
-    let mut codes = vec![("hand-built".to_owned(), hand_built)];
-    for (base_graph, z) in [(1, 2), (2, 2), (2, 3)] {
-        let code =
-            LdpcCode::from_quasi_cyclic(&gf2_coding::ldpc::QuasiCyclicLdpc::nr_5g(base_graph, z));
-        codes.push((
-            format!("NR BG{base_graph} Z={z}"),
-            code.parity_check_matrix().clone(),
-        ));
-    }
-    codes
-}
-
 #[test]
-fn reloaded_entries_encode_like_the_uncached_matrices() {
-    let mut permuted = 0;
-    for (name, h) in codes_with_permuted_columns() {
-        let temp_dir = scratch("gf2-ldpc-cache-io");
-        let key = CacheKey::from_params(h.cols(), h.cols() - h.rows(), &h);
-        let cache = EncodingCache::new();
-        let uncached = cache.get_or_compute(key.clone(), &h).expect("preprocess");
-        permuted +=
-            usize::from(uncached.systematic_cols() != (0..uncached.k()).collect::<Vec<_>>());
-        cache.save_to_directory(temp_dir.path()).unwrap();
-        let reloaded = EncodingCache::from_directory(temp_dir.path())
-            .unwrap()
-            .get(&key)
-            .expect("entry must round-trip");
-        for seed in 0..8u64 {
-            let mut message = gf2_core::BitVec::zeros(uncached.k());
-            for bit in 0..uncached.k() {
-                let mixed = (seed + 1).wrapping_mul(0x9E37_79B9_7F4A_7C15) >> (bit % 61);
-                message.set(bit, mixed & 1 == 1);
-            }
-            assert_eq!(
-                reloaded.encode(&message),
-                uncached.encode(&message),
-                "{name}: reloaded encoder differs, seed {seed}"
-            );
-        }
-    }
-    assert!(
-        permuted > 0,
-        "no code exercised message columns outside 0..k"
-    );
-}
-
-#[test]
-fn an_entry_without_its_column_selection_is_not_loaded() {
+fn test_entry_without_column_selection_is_not_loaded() {
     let temp_dir = scratch("gf2-ldpc-cache-io");
-    let (_, h) = codes_with_permuted_columns().remove(0);
-    let key = CacheKey::from_params(h.cols(), h.cols() - h.rows(), &h);
+    let h = hand_built_code();
+    let key = key_of(&h);
     let cache = EncodingCache::new();
     cache.get_or_compute(key.clone(), &h).expect("preprocess");
     cache.save_to_directory(temp_dir.path()).unwrap();
-    for entry in std::fs::read_dir(temp_dir.path()).unwrap() {
-        let path = entry.unwrap().path();
-        if path.extension().and_then(|e| e.to_str()) != Some("gf2") {
-            std::fs::remove_file(path).unwrap();
-        }
-    }
+    std::fs::remove_file(key.entry_files(temp_dir.path()).columns).unwrap();
     let reloaded = EncodingCache::from_directory(temp_dir.path()).unwrap();
     assert!(
         reloaded.get(&key).is_none(),
