@@ -5,7 +5,7 @@ use gf2_core::io::IoError;
 use gf2_core::{sparse::SpBitMatrixDual, BitMatrix};
 use std::collections::HashMap;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
 /// Errors that can occur during cache I/O operations.
@@ -49,6 +49,30 @@ impl CacheKey {
             matrix_hash: compute_matrix_hash(h),
         }
     }
+
+    /// The files of this key's entry in the cache directory `dir`, named
+    /// `n{codeword_length}_k{message_length}_h{hash}` with the extension of
+    /// each file kind.
+    pub fn entry_files(&self, dir: &Path) -> CacheEntryFiles {
+        let stem = dir.join(format!("n{}_k{}_h{:x}", self.n, self.k, self.matrix_hash));
+        CacheEntryFiles {
+            parity: stem.with_extension(PARITY_EXTENSION),
+            columns: stem.with_extension(COLUMNS_EXTENSION),
+        }
+    }
+}
+
+const PARITY_EXTENSION: &str = "gf2";
+const COLUMNS_EXTENSION: &str = "cols";
+
+/// The files one [`EncodingCache`] entry occupies in a cache directory.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CacheEntryFiles {
+    /// The k × (n − k) parity part, in the binary `BitMatrix` format.
+    pub parity: PathBuf,
+    /// The column selection: the k message columns on the first line and the
+    /// n − k parity columns on the second, as space-separated decimals.
+    pub columns: PathBuf,
 }
 
 /// Cache of preprocessed LDPC encoding matrices, keyed by [`CacheKey`].
@@ -164,8 +188,7 @@ impl EncodingCache {
     }
 
     /// Saves each entry to the directory `path` (created if missing) as the
-    /// parity part `n{codeword_length}_k{message_length}_h{hash}.gf2` and its
-    /// column selection in a `.cols` file of the same stem.
+    /// files [`CacheKey::entry_files`] names.
     ///
     /// # Errors
     ///
@@ -176,16 +199,13 @@ impl EncodingCache {
         let cache_read = self.cache.read().unwrap();
 
         for (key, matrices) in cache_read.iter() {
-            let filename = format!("n{}_k{}_h{:x}", key.n, key.k, key.matrix_hash);
-            let filepath = path.join(&filename);
-
-            let parity_path = filepath.with_extension("gf2");
+            let files = key.entry_files(path);
             matrices
                 .parity_part()
-                .save_to_file(&parity_path)
+                .save_to_file(&files.parity)
                 .map_err(CacheIoError::Gf2IoError)?;
             std::fs::write(
-                filepath.with_extension("cols"),
+                &files.columns,
                 format_columns(matrices.systematic_cols(), matrices.parity_cols()),
             )
             .map_err(CacheIoError::IoError)?;
@@ -194,9 +214,10 @@ impl EncodingCache {
         Ok(())
     }
 
-    /// Loads every `n{n}_k{k}_h{hash}.gf2` file in the directory `path` with
-    /// its `.cols` column selection. Other files and a `.gf2` file without a
-    /// `.cols` file are skipped, so [`Self::get_or_compute`] rebuilds that entry.
+    /// Loads every entry of the directory `path` whose
+    /// [`CacheKey::entry_files`] are both present. Other files and a parity
+    /// file without its column selection are skipped, so
+    /// [`Self::get_or_compute`] rebuilds that entry.
     ///
     /// # Errors
     ///
@@ -218,13 +239,19 @@ impl EncodingCache {
             let entry = entry.map_err(CacheIoError::IoError)?;
             let filepath = entry.path();
 
-            if filepath.extension().and_then(|s| s.to_str()) != Some("gf2") {
+            if filepath.extension().and_then(|s| s.to_str()) != Some(PARITY_EXTENSION) {
                 continue;
             }
 
             if let Some(filename) = filepath.file_stem().and_then(|s| s.to_str()) {
                 if let Some((n, k, hash)) = parse_cache_filename(filename) {
-                    let columns = match std::fs::read_to_string(filepath.with_extension("cols")) {
+                    let key = CacheKey {
+                        n,
+                        k,
+                        matrix_hash: hash,
+                    };
+                    let files = key.entry_files(path);
+                    let columns = match std::fs::read_to_string(&files.columns) {
                         Ok(text) => text,
                         Err(error) if error.kind() == io::ErrorKind::NotFound => continue,
                         Err(error) => return Err(CacheIoError::IoError(error)),
@@ -236,8 +263,8 @@ impl EncodingCache {
                                 format!("invalid column selection for {filename}"),
                             ))
                         })?;
-                    let parity_matrix =
-                        BitMatrix::load_from_file(&filepath).map_err(CacheIoError::Gf2IoError)?;
+                    let parity_matrix = BitMatrix::load_from_file(&files.parity)
+                        .map_err(CacheIoError::Gf2IoError)?;
 
                     let matrices = Arc::new(RuEncodingMatrices::from_components(
                         k,
@@ -246,12 +273,6 @@ impl EncodingCache {
                         systematic_cols,
                         parity_cols,
                     ));
-
-                    let key = CacheKey {
-                        n,
-                        k,
-                        matrix_hash: hash,
-                    };
 
                     let mut cache_write = cache.cache.write().unwrap();
                     cache_write.insert(key, matrices);
