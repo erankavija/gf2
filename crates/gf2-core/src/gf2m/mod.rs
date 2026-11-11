@@ -16,6 +16,7 @@ pub mod uint_ext;
 pub mod wide;
 pub mod wide_config;
 
+pub use byte_table::Gf256GemmBlocking;
 #[cfg(any(test, feature = "test-support"))]
 pub use byte_table::{
     force_scalar_gf256_table, gf256_table_builds, last_gf256_table_lane, GF256_SCALAR_LANE,

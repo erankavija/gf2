@@ -13,10 +13,14 @@ use core::arch::x86_64::*;
 /// Rows of `c` a block step holds in registers across the inner dimension.
 const ROWS: usize = 4;
 
+/// Columns of one block step: one 256-bit vector of bytes.
+const STRIP: usize = 32;
+
 pub(crate) fn detect() -> Option<Gf256RegionFns> {
     std::arch::is_x86_feature_detected!("avx2").then_some(Gf256RegionFns {
         mul_add: mul_add_avx2,
         gemm_block: gemm_block_avx2,
+        gemm_strip: STRIP,
         name: "avx2-pshufb",
     })
 }
@@ -103,7 +107,7 @@ unsafe fn mul_add_avx2_unchecked(table: &SplitTable, x: &[u8], y: &mut [u8]) {
 /// block with `c` and `c_stride`.
 #[target_feature(enable = "avx2")]
 unsafe fn gemm_block_avx2_unchecked(block: &GemmBlock<'_>, c: &mut [u8], c_stride: usize) {
-    let vector_width = block.width / 32 * 32;
+    let vector_width = block.width / STRIP * STRIP;
     let mut row = 0;
     while row < block.rows {
         let count = (block.rows - row).min(ROWS);
@@ -161,6 +165,6 @@ unsafe fn rows_avx2<const R: usize>(
                 _mm256_storeu_si256(cp.add(at).cast(), _mm256_xor_si256(old, *sum));
             }
         }
-        column += 32;
+        column += STRIP;
     }
 }

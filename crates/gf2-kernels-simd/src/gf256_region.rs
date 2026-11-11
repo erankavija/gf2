@@ -72,6 +72,9 @@ pub struct Gf256RegionFns {
     pub mul_add: MulAddFn,
     /// Matrix-product block.
     pub gemm_block: GemmBlockFn,
+    /// Columns one step of `gemm_block` carries across the inner dimension
+    /// of a block.
+    pub gemm_strip: usize,
     /// The backend, for diagnostics.
     pub name: &'static str,
 }
@@ -82,6 +85,7 @@ pub const fn portable() -> Gf256RegionFns {
     Gf256RegionFns {
         mul_add: mul_add_portable,
         gemm_block: gemm_block_portable,
+        gemm_strip: 1,
         name: "portable",
     }
 }

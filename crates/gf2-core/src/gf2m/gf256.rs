@@ -1,7 +1,7 @@
 //! One-byte GF(2^8) elements with the modulus fixed at compile time, so that
 //! `FieldVec` and `FieldMatrix` over GF(2^8) hold one byte per element.
 
-use super::byte_table::{gemm_bytes, split_tables, GemmShape, Gf256SplitTables};
+use super::byte_table::{gemm_bytes, split_tables, GemmShape, Gf256GemmBlocking, Gf256SplitTables};
 use super::gf256_bytes::{as_bytes, as_bytes_mut};
 use super::{Gf2mWide, Gf2mWideConfig};
 use core::fmt;
@@ -277,6 +277,7 @@ impl<Cfg: Gf2mWideConfig<1>> crate::field::FiniteField for Gf256<Cfg> {
         gemm_bytes(
             Self::tables(),
             &GemmShape { m, k, n },
+            Gf256GemmBlocking::structural(),
             as_bytes(a),
             as_bytes(b),
             as_bytes_mut(out),
@@ -305,6 +306,7 @@ impl<Cfg: Gf2mWideConfig<1>> crate::field::FiniteField for Gf256<Cfg> {
         gemm_bytes(
             Self::tables(),
             &GemmShape { m, k, n },
+            Gf256GemmBlocking::structural(),
             as_bytes(a),
             &b,
             as_bytes_mut(out),
