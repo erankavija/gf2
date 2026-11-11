@@ -56,6 +56,13 @@ pub fn encode_workspace_shape<W>(workspace: &BchEncodeWorkspace<W>) -> Vec<(usiz
     encode_register_shape(workspace.registers())
 }
 
+/// The accumulator count and the run length in message blocks the
+/// carry-less-multiply fold of `workspace` was prepared with, or `None`
+/// before the fold is prepared.
+pub fn encode_fold_run(workspace: &BchEncodeWorkspace<u64>) -> Option<(usize, usize)> {
+    crate::bch::encode::fold_run_shape(workspace.registers())
+}
+
 /// [`encode_register_shape`] for the scratch registers the calling thread
 /// holds for the register word type `W`, or `None` before this thread has
 /// encoded in that word type.
