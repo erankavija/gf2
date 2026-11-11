@@ -76,10 +76,10 @@ and across repeated runs
 
 ```text
 es_n0_db,fer,ber,frames,errors,mean_iters,wall_seconds
-5.9,0.89,0.02823956780923994,100,89,49.97,<elapsed>
-6,0.248,0.002740561351217089,250,62,48.228,<elapsed>
-6.1,0.006666666666666667,0.000004450240105977811,300,2,41.026666666666664,<elapsed>
-6.2,0,0,300,0,35.3,<elapsed>
+5.9,0.56,0.007353142076502732,100,56,49.85,<elapsed>
+6,0.08666666666666667,0.0003727852293426064,300,26,46.806666666666665,<elapsed>
+6.1,0,0,300,0,39.736666666666665,<elapsed>
+6.2,0,0,300,0,34.81,<elapsed>
 ```
 
 `wall_seconds` is the host's sweep wall-clock time divided by the number of
@@ -92,24 +92,25 @@ determinism contract.
 A frame error is any information-bit error in the decoded BBFRAME; `fer` is
 `errors / frames`, `ber` counts bit errors over the same BBFRAME bits, and
 `mean_iters` is the mean belief-propagation iteration count. The 95%
-intervals below are `gf2_stats::intervals::clopper_pearson_interval(errors, frames, 0.95)`;
-the [run record](https://github.com/erankavija/gf2/blob/08e424e21a6b8d88e096aabc9e435fa486f839c4/dev/active/fa787f85-documentation-overhaul/cdba4e71-link-simulation-run.md)
-holds the raw outputs, toolchain and host:
+intervals below are `gf2_stats::intervals::clopper_pearson_interval(errors, frames, 0.95)`
+over the CSV above, recorded with the command above on host `fraktaali`
+(AMD Ryzen 9 5900X, rustc 1.97.0):
 
 | Es/N0 (dB) | Errors / frames | FER | 95% interval |
 |---|---|---|---|
-| 5.9 | 89 / 100 | 0.89 | [0.8117, 0.9438] |
-| 6.0 | 62 / 250 | 0.248 | [0.1957, 0.3063] |
-| 6.1 | 2 / 300 | 0.0067 | [0.0008, 0.0239] |
+| 5.9 | 56 / 100 | 0.56 | [0.4572, 0.6592] |
+| 6.0 | 26 / 300 | 0.0867 | [0.0574, 0.1244] |
+| 6.1 | 0 / 300 | 0 | [0.0000, 0.0122] |
 | 6.2 | 0 / 300 | 0 | [0.0000, 0.0122] |
 
-- At 5.9 dB nearly every frame runs the iteration cap and fails. The
-  waterfall lies between 5.9 and 6.1 dB, where the FER falls from 0.89 to
-  0.0067.
-- At 6.1 and 6.2 dB the frame budget ended the point. Their intervals bound
-  the FER rather than locate it; a larger `--max-frames` narrows them.
-- The interval treats `frames` as fixed. The 5.9 and 6.0 dB points stopped on
-  the error target, so their intervals are approximate.
+- At 5.9 dB the mean iteration count is 49.85 of the decoder's 50-iteration
+  cap and more than half the frames fail. The waterfall lies between 5.9 and
+  6.1 dB, where the FER falls from 0.56 to no observed error.
+- At 6.0, 6.1 and 6.2 dB the frame budget ended the point. The 6.0 dB
+  interval locates the FER within a factor of about two; the error-free
+  intervals bound it from above, and a larger `--max-frames` narrows them.
+- The interval treats `frames` as fixed. The 5.9 dB point stopped on the
+  error target, so its interval is approximate.
 
 ## Resume a sweep
 
