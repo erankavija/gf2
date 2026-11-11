@@ -86,6 +86,11 @@ fn main() {
         let c = rng.byte();
         let x = rng.bytes(len);
         let mut y = rng.bytes(len);
+        // Two equal updates cancel, so the digest is of one update of the
+        // drawn `y`, taken before the timed repetitions.
+        let mut once = y.clone();
+        field.gf256_axpy(c, &x, &mut once);
+        let digest = checksum(&once);
         let reps = axpy_reps(len);
         let seconds = best(|| {
             for _ in 0..reps {
@@ -93,25 +98,26 @@ fn main() {
             }
         });
         println!(
-            "axpy\t{len}\tgf2 Gf2mField::gf256_axpy\t{:.2} GB/s\t{:016x}",
+            "axpy\t{len}\tgf2 Gf2mField::gf256_axpy\t{:.2} GB/s\t{digest:016x}",
             (len * reps) as f64 / seconds / 1e9,
-            checksum(&y)
         );
 
         let mut rng = SplitMix(len as u64);
         let c = Element::new(rng.byte());
         let x = elements(&rng.bytes(len));
         let mut y = elements(&rng.bytes(len));
+        let mut once = y.clone();
+        once.axpy(&c, &x);
+        let once: Vec<u8> = once.iter().map(|e| e.value()).collect();
+        let digest = checksum(&once);
         let seconds = best(|| {
             for _ in 0..reps {
                 y.axpy(&c, black_box(&x));
             }
         });
-        let y: Vec<u8> = y.iter().map(|e| e.value()).collect();
         println!(
-            "axpy\t{len}\tgf2 FieldVec<Gf256>::axpy\t{:.2} GB/s\t{:016x}",
+            "axpy\t{len}\tgf2 FieldVec<Gf256>::axpy\t{:.2} GB/s\t{digest:016x}",
             (len * reps) as f64 / seconds / 1e9,
-            checksum(&y)
         );
     }
     for n in GEMM_SIZES {

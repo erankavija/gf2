@@ -72,6 +72,9 @@ pub struct Gf256RegionFns {
     pub mul_add: MulAddFn,
     /// Matrix-product block.
     pub gemm_block: GemmBlockFn,
+    /// Columns one step of `gemm_block` carries across the inner dimension
+    /// of a block.
+    pub gemm_strip: usize,
     /// The backend, for diagnostics.
     pub name: &'static str,
 }
@@ -82,6 +85,7 @@ pub const fn portable() -> Gf256RegionFns {
     Gf256RegionFns {
         mul_add: mul_add_portable,
         gemm_block: gemm_block_portable,
+        gemm_strip: 1,
         name: "portable",
     }
 }
@@ -263,6 +267,41 @@ mod tests {
                                 .collect();
                             assert_eq!(got, expected, "{} len {len} offset {offset}", fns.name);
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn every_backend_multiplies_regions_at_every_vector_phase() {
+        let mut state = 0x3c6e_f372;
+        let tables = tables(0x1d);
+        let table = &tables[0x8e];
+        for fns in backends() {
+            for len in [0usize, 1, 31, 32, 33, 63, 64, 65, 159, 160, 161, 300] {
+                for y_phase in 0..=32 {
+                    for x_phase in [0usize, 16, 31] {
+                        let x: Vec<u8> = (0..len + 64).map(|_| lcg(&mut state)).collect();
+                        let y: Vec<u8> = (0..len + 64).map(|_| lcg(&mut state)).collect();
+                        let mut got = y.clone();
+                        // The destination window starts at each byte of a
+                        // 32-byte vector, whatever the allocation's alignment.
+                        let y_at = (y_phase + 32 - got.as_ptr() as usize % 32) % 32;
+                        (fns.mul_add)(
+                            table,
+                            &x[x_phase..x_phase + len],
+                            &mut got[y_at..y_at + len],
+                        );
+                        let mut expected = y.clone();
+                        for i in 0..len {
+                            expected[y_at + i] ^= multiply(0x8e, x[x_phase + i], 0x1d);
+                        }
+                        assert_eq!(
+                            got, expected,
+                            "{} len {len} y phase {y_phase} x phase {x_phase}",
+                            fns.name
+                        );
                     }
                 }
             }

@@ -3,7 +3,8 @@
 //! vector boundaries, unaligned windows, every constant, both moduli, and
 //! products across the cache-block edges.
 
-use gf2_core::gf2m::Gf2mField;
+use gf2_core::gf2m::{Gf256GemmBlocking, Gf2mField};
+use std::num::NonZeroUsize;
 
 fn lcg(state: &mut u64) -> u8 {
     *state = state
@@ -86,6 +87,68 @@ fn gemm_matches_element_arithmetic_across_block_edges() {
                     assert_eq!(c[i * n + j], expected, "{m}x{k}x{n} at {i},{j}");
                 }
             }
+        }
+    }
+}
+
+#[test]
+fn gemm_gives_one_product_under_every_blocking() {
+    let mut state = 3;
+    let blocking = |depth, width| {
+        Gf256GemmBlocking::new(
+            NonZeroUsize::new(depth).unwrap(),
+            NonZeroUsize::new(width).unwrap(),
+        )
+    };
+    let structural = Gf256GemmBlocking::structural();
+    for field in fields() {
+        for (m, k, n) in [
+            (5, 33, 65),
+            (9, structural.depth() + 1, 70),
+            (3, 7, structural.width() + 1),
+        ] {
+            let a: Vec<u8> = (0..m * k).map(|_| lcg(&mut state)).collect();
+            let b: Vec<u8> = (0..k * n).map(|_| lcg(&mut state)).collect();
+            let mut expected = vec![0; m * n];
+            field.gf256_gemm(m, k, n, &a, &b, &mut expected);
+            for blocking in [
+                blocking(1, 1),
+                blocking(3, 33),
+                blocking(16, 32),
+                blocking(k, n),
+            ] {
+                let mut c = vec![0x5a; m * n];
+                field.gf256_gemm_with(m, k, n, &a, &b, &mut c, blocking);
+                assert_eq!(c, expected, "{m}x{k}x{n} under {blocking:?}");
+            }
+        }
+    }
+}
+
+/// Shapes with an empty dimension, each paired with an extent past one or both
+/// cache blocks of the product, so the blocked traversal steps over a block
+/// edge of an empty operand.
+const DEGENERATE_SHAPES: [(usize, usize, usize); 9] = [
+    (0, 257, 5),
+    (0, 3, 1025),
+    (0, 257, 1025),
+    (4, 0, 1025),
+    (0, 0, 1025),
+    (4, 257, 0),
+    (0, 257, 0),
+    (1025, 0, 0),
+    (5, 0, 3),
+];
+
+#[test]
+fn degenerate_products_write_the_empty_or_zero_matrix() {
+    for field in fields() {
+        for (m, k, n) in DEGENERATE_SHAPES {
+            let a = vec![0x37u8; m * k];
+            let b = vec![0x91u8; k * n];
+            let mut c = vec![0xc3u8; m * n];
+            field.gf256_gemm(m, k, n, &a, &b, &mut c);
+            assert!(c.iter().all(|&v| v == 0), "{m}x{k}x{n}");
         }
     }
 }

@@ -7,8 +7,9 @@ and `Gf2mField::gf256_gemm`, and the generic `FieldVec::axpy` and
 on one pinned core and the modulus 0x11D. Cells are region multiply-add at
 4 KiB, 64 KiB, 1 MiB and 16 MiB and square products at n = 64, 256 and 1024.
 Both arms draw their inputs from one splitmix64 stream seeded per cell, run
-the same repetitions, and print an FNV-1a checksum of their output; the
-script fails when the checksums of a cell differ. A cell's time is the best
+the same repetitions, and print an FNV-1a checksum of their output, for a
+region of one update of the drawn destination, since repeated equal updates
+cancel in pairs; the script fails when the checksums of a cell differ. A cell's time is the best
 of five batches after one untimed batch; a row reports the byte-region and
 generic routes, their ratio, and the fastest reference configuration.
 

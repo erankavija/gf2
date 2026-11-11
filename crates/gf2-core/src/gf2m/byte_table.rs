@@ -7,6 +7,7 @@
 //! multiply through them.
 
 use gf2_kernels_simd::gf256_region::{GemmBlock, SplitTable};
+use std::num::NonZeroUsize;
 use std::sync::OnceLock;
 
 /// The split table of every constant under one reduction polynomial.
@@ -15,12 +16,129 @@ pub(crate) type Gf256SplitTables = [SplitTable; 256];
 /// Registry slots: one per degree-8 reduction polynomial.
 const REGISTRY_SLOTS: usize = 256;
 
-/// Depth of one matrix-product block: the right operand's rows a block reads.
-const GEMM_DEPTH_BLOCK: usize = 256;
+/// Cache blocks of the GF(2^8) byte matrix product: each block reads
+/// `depth` rows of the right operand over `width` of its columns, for every
+/// row of the left operand.
+///
+/// [`Gf256GemmBlocking::structural`] sizes them from the host's caches and
+/// the dispatched kernel's strip; [`crate::gf2m::Gf2mField::gf256_gemm_with`]
+/// takes a caller's blocking instead. Every blocking gives the same product.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Gf256GemmBlocking {
+    depth: NonZeroUsize,
+    width: NonZeroUsize,
+}
 
-/// Width of one matrix-product block: with [`GEMM_DEPTH_BLOCK`] rows the
-/// block's right operand stays within a 512 KiB second-level cache.
-const GEMM_WIDTH_BLOCK: usize = 1024;
+impl Gf256GemmBlocking {
+    /// Blocks of `depth` inner indices by `width` columns.
+    #[must_use]
+    pub const fn new(depth: NonZeroUsize, width: NonZeroUsize) -> Self {
+        Self { depth, width }
+    }
+
+    /// The blocking for this host's per-core caches and the dispatched block
+    /// kernel.
+    ///
+    /// One kernel step reads a strip of the block's columns down all `depth`
+    /// rows, one cache line per row, and the next strip of the same lines
+    /// follows; so `depth` is half the first-level data cache in lines,
+    /// leaving the other half to the 8 KiB table set and the left operand's
+    /// rows. Every row group of the left operand reads the whole block, so
+    /// `width` holds the block to half the second-level cache, rounded down to
+    /// whole strips. On Linux the cache and line sizes are those of CPU 0's
+    /// sysfs cache description; elsewhere, or when it is unreadable, 32 KiB,
+    /// 256 KiB and 64-byte lines, the per-core sizes of Haswell, the first AVX2
+    /// x86-64 core.
+    /// With 32 KiB and 512 KiB caches, as on a Ryzen 9 5900X, the blocks
+    /// are 256 by 1024.
+    #[must_use]
+    pub fn structural() -> Self {
+        static STRUCTURAL: OnceLock<Gf256GemmBlocking> = OnceLock::new();
+        *STRUCTURAL.get_or_init(|| {
+            Self::for_caches(HostCaches::detect(), crate::gf256_region().gemm_strip)
+        })
+    }
+
+    /// The derivation [`Self::structural`] states, for `caches` and a kernel
+    /// strip of `strip` columns.
+    fn for_caches(caches: HostCaches, strip: usize) -> Self {
+        let strip = strip.max(1);
+        let depth = (caches.l1d / (2 * caches.line.max(1))).max(1);
+        let width = (caches.l2 / (2 * depth) / strip * strip).max(strip);
+        Self::new(
+            NonZeroUsize::new(depth).expect("a positive depth"),
+            NonZeroUsize::new(width).expect("a positive width"),
+        )
+    }
+
+    /// Returns the inner indices of one block.
+    #[must_use]
+    pub const fn depth(self) -> usize {
+        self.depth.get()
+    }
+
+    /// Returns the columns of one block.
+    #[must_use]
+    pub const fn width(self) -> usize {
+        self.width.get()
+    }
+}
+
+/// Per-core cache sizes in bytes.
+#[derive(Clone, Copy, Debug)]
+struct HostCaches {
+    l1d: usize,
+    l2: usize,
+    line: usize,
+}
+
+impl HostCaches {
+    const FALLBACK: Self = Self {
+        l1d: 32 << 10,
+        l2: 256 << 10,
+        line: 64,
+    };
+
+    /// CPU 0's first-level data and second-level caches, each field that
+    /// cannot be read taken from [`Self::FALLBACK`].
+    fn detect() -> Self {
+        let mut caches = Self::FALLBACK;
+        let Ok(entries) = std::fs::read_dir("/sys/devices/system/cpu/cpu0/cache") else {
+            return caches;
+        };
+        for entry in entries.flatten() {
+            let read = |name: &str| {
+                std::fs::read_to_string(entry.path().join(name))
+                    .map(|text| text.trim().to_owned())
+                    .ok()
+            };
+            let Some(size) = read("size").as_deref().and_then(parse_cache_size) else {
+                continue;
+            };
+            match (read("level").as_deref(), read("type").as_deref()) {
+                (Some("1"), Some("Data")) => {
+                    caches.l1d = size;
+                    if let Some(line) = read("coherency_line_size").and_then(|l| l.parse().ok()) {
+                        caches.line = line;
+                    }
+                }
+                (Some("2"), Some("Unified" | "Data")) => caches.l2 = size,
+                _ => {}
+            }
+        }
+        caches
+    }
+}
+
+/// Bytes of a sysfs cache size such as `32K` or `1M`.
+fn parse_cache_size(text: &str) -> Option<usize> {
+    let (digits, scale) = match text.as_bytes().last()? {
+        b'K' => (&text[..text.len() - 1], 1 << 10),
+        b'M' => (&text[..text.len() - 1], 1 << 20),
+        _ => (text, 1),
+    };
+    digits.parse::<usize>().ok()?.checked_mul(scale)
+}
 
 /// Builds the split tables for the reduction polynomial whose low eight bits
 /// are `reduction_low`.
@@ -118,13 +236,13 @@ pub(crate) struct GemmShape {
 /// `c = a · b` over bytes, `a` `m × k`, `b` `k × n` and `c` `m × n`, all
 /// row-major, overwriting `c`.
 ///
-/// The product runs in blocks of [`GEMM_DEPTH_BLOCK`] inner indices by
-/// [`GEMM_WIDTH_BLOCK`] columns, each through the dispatched block kernel,
-/// so a block of the right operand is read from cache by every row of the
-/// left one.
+/// The product runs in the blocks of `blocking`, each through the dispatched
+/// block kernel, so a block of the right operand is read from cache by every
+/// row of the left one.
 pub(crate) fn gemm_bytes(
     tables: &Gf256SplitTables,
     shape: &GemmShape,
+    blocking: Gf256GemmBlocking,
     a: &[u8],
     b: &[u8],
     c: &mut [u8],
@@ -132,11 +250,15 @@ pub(crate) fn gemm_bytes(
     let GemmShape { m, k, n } = *shape;
     debug_assert_eq!((a.len(), b.len(), c.len()), (m * k, k * n, m * n));
     c.fill(0);
+    // An empty operand has no block to address past its first.
+    if m == 0 || k == 0 || n == 0 {
+        return;
+    }
     let kernel = crate::gf256_region().gemm_block;
-    for depth_start in (0..k).step_by(GEMM_DEPTH_BLOCK) {
-        let depth = GEMM_DEPTH_BLOCK.min(k - depth_start);
-        for column in (0..n).step_by(GEMM_WIDTH_BLOCK) {
-            let width = GEMM_WIDTH_BLOCK.min(n - column);
+    for depth_start in (0..k).step_by(blocking.depth()) {
+        let depth = blocking.depth().min(k - depth_start);
+        for column in (0..n).step_by(blocking.width()) {
+            let width = blocking.width().min(n - column);
             let block = GemmBlock {
                 tables,
                 a: &a[depth_start..],
@@ -206,7 +328,14 @@ pub(crate) fn gemm_region<T>(
     }
 
     let mut products = vec![0u8; m * n];
-    gemm_bytes(tables, shape, &left, &right, &mut products);
+    gemm_bytes(
+        tables,
+        shape,
+        Gf256GemmBlocking::structural(),
+        &left,
+        &right,
+        &mut products,
+    );
 
     for (slot, &product) in out.iter_mut().zip(products.iter()) {
         store(slot, product);
@@ -469,27 +598,79 @@ mod tests {
             state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
             (state >> 24) as u8
         };
-        for (m, k, n) in [
-            (0, 3, 4),
-            (3, 0, 4),
-            (1, 1, 1),
-            (5, GEMM_DEPTH_BLOCK + 3, 7),
-            (6, 9, GEMM_WIDTH_BLOCK + 33),
-            (9, GEMM_DEPTH_BLOCK + 1, GEMM_WIDTH_BLOCK + 1),
+        let blocking = |depth, width| {
+            Gf256GemmBlocking::new(
+                NonZeroUsize::new(depth).unwrap(),
+                NonZeroUsize::new(width).unwrap(),
+            )
+        };
+        let structural = Gf256GemmBlocking::structural();
+        let (depth, width) = (structural.depth(), structural.width());
+        for (blocking, (m, k, n)) in [
+            (structural, (0, 3, 4)),
+            (structural, (3, 0, 4)),
+            (structural, (1, 1, 1)),
+            (structural, (5, depth + 3, 7)),
+            (structural, (6, 9, width + 33)),
+            (structural, (9, depth + 1, width + 1)),
+            (blocking(1, 1), (5, 7, 9)),
+            (blocking(3, 33), (6, 10, 100)),
+            (blocking(7, 32), (4, 15, 65)),
+            (blocking(64, 31), (9, 130, 95)),
         ] {
             let a: Vec<u8> = (0..m * k).map(|_| next()).collect();
             let b: Vec<u8> = (0..k * n).map(|_| next()).collect();
             let mut c = vec![0xa5u8; m * n];
-            gemm_bytes(split_tables(key), &GemmShape { m, k, n }, &a, &b, &mut c);
+            gemm_bytes(
+                split_tables(key),
+                &GemmShape { m, k, n },
+                blocking,
+                &a,
+                &b,
+                &mut c,
+            );
             for i in 0..m {
                 for j in 0..n {
                     let expected = (0..k).fold(0, |sum, p| {
                         sum ^ schoolbook_product(a[i * k + p], b[p * n + j], key)
                     });
-                    assert_eq!(c[i * n + j], expected, "{m}x{k}x{n} at {i},{j}");
+                    assert_eq!(
+                        c[i * n + j],
+                        expected,
+                        "{m}x{k}x{n} at {i},{j} under {blocking:?}"
+                    );
                 }
             }
         }
+    }
+
+    #[test]
+    fn the_structural_blocking_follows_the_caches_and_the_strip() {
+        let caches = |l1d: usize, l2: usize, line: usize| HostCaches { l1d, l2, line };
+        for (caches, strip, (depth, width)) in [
+            (caches(32 << 10, 512 << 10, 64), 32, (256, 1024)),
+            (caches(32 << 10, 256 << 10, 64), 32, (256, 512)),
+            (caches(48 << 10, 2 << 20, 64), 32, (384, 2720)),
+            (caches(48 << 10, 2 << 20, 64), 1, (384, 2730)),
+            (caches(64, 64, 64), 32, (1, 32)),
+            (caches(0, 0, 0), 0, (1, 1)),
+        ] {
+            let blocking = Gf256GemmBlocking::for_caches(caches, strip);
+            assert_eq!(
+                (blocking.depth(), blocking.width()),
+                (depth, width),
+                "{caches:?}, strip {strip}"
+            );
+        }
+    }
+
+    #[test]
+    fn sysfs_cache_sizes_parse_with_their_suffix() {
+        assert_eq!(parse_cache_size("32K"), Some(32 << 10));
+        assert_eq!(parse_cache_size("1M"), Some(1 << 20));
+        assert_eq!(parse_cache_size("512"), Some(512));
+        assert_eq!(parse_cache_size("K"), None);
+        assert_eq!(parse_cache_size(""), None);
     }
 
     #[test]

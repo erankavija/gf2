@@ -594,16 +594,44 @@ impl Gf2mField_ {
     /// `m × k`, `b` `k × n` and `c` `m × n`, all row-major, and `c` is
     /// overwritten.
     ///
-    /// The product runs in cache blocks through the dispatched byte kernel,
-    /// which holds four rows of `c` in registers across each block's inner
-    /// dimension. Takes O(`m · k · n`) time and allocates nothing after the
-    /// field's first byte-region call.
+    /// The product runs in the cache blocks of
+    /// [`Gf256GemmBlocking::structural`](crate::gf2m::Gf256GemmBlocking::structural)
+    /// through the dispatched byte kernel, which holds four rows of `c` in
+    /// registers across each block's inner dimension. Takes O(`m · k · n`)
+    /// time and allocates nothing after the field's first byte-region call.
     ///
     /// # Panics
     ///
     /// Panics unless the field has degree 8 and the slices hold `m · k`,
     /// `k · n` and `m · n` bytes.
     pub fn gf256_gemm(&self, m: usize, k: usize, n: usize, a: &[u8], b: &[u8], c: &mut [u8]) {
+        self.gf256_gemm_with(
+            m,
+            k,
+            n,
+            a,
+            b,
+            c,
+            crate::gf2m::Gf256GemmBlocking::structural(),
+        );
+    }
+
+    /// [`Self::gf256_gemm`] in the caller's cache blocks.
+    ///
+    /// # Panics
+    ///
+    /// As [`Self::gf256_gemm`].
+    #[allow(clippy::too_many_arguments)]
+    pub fn gf256_gemm_with(
+        &self,
+        m: usize,
+        k: usize,
+        n: usize,
+        a: &[u8],
+        b: &[u8],
+        c: &mut [u8],
+        blocking: crate::gf2m::Gf256GemmBlocking,
+    ) {
         let tables = self.gf256_split_tables();
         assert_eq!(a.len(), m * k, "gf256_gemm: a holds m * k bytes");
         assert_eq!(b.len(), k * n, "gf256_gemm: b holds k * n bytes");
@@ -611,6 +639,7 @@ impl Gf2mField_ {
         crate::gf2m::byte_table::gemm_bytes(
             tables,
             &crate::gf2m::byte_table::GemmShape { m, k, n },
+            blocking,
             a,
             b,
             c,
@@ -1094,9 +1123,9 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
         usize::MAX
     }
 
-    /// Routes a GF(2^8) fused multiply-add through the dispatched byte-region
-    /// kernel and the cached split tables, through reused thread-local byte
-    /// buffers.
+    /// Runs a GF(2^8) fused multiply-add in one pass over the elements,
+    /// looking each product up in the coefficient's 256 products, expanded
+    /// once from its cached split table; allocates nothing.
     ///
     /// `crate::gf2m::byte_table::gf256_table_dispatch` states the predicate
     /// that selects this lane; it declines when the operands do not all share
