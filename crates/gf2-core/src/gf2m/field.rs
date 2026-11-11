@@ -1123,9 +1123,9 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
         usize::MAX
     }
 
-    /// Routes a GF(2^8) fused multiply-add through the dispatched byte-region
-    /// kernel and the cached split tables, through reused thread-local byte
-    /// buffers.
+    /// Runs a GF(2^8) fused multiply-add in one pass over the elements,
+    /// looking each product up in the coefficient's 256 products, expanded
+    /// once from its cached split table; allocates nothing.
     ///
     /// `crate::gf2m::byte_table::gf256_table_dispatch` states the predicate
     /// that selects this lane; it declines when the operands do not all share
