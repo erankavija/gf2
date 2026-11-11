@@ -274,6 +274,41 @@ mod tests {
     }
 
     #[test]
+    fn every_backend_multiplies_regions_at_every_vector_phase() {
+        let mut state = 0x3c6e_f372;
+        let tables = tables(0x1d);
+        let table = &tables[0x8e];
+        for fns in backends() {
+            for len in [0usize, 1, 31, 32, 33, 63, 64, 65, 159, 160, 161, 300] {
+                for y_phase in 0..=32 {
+                    for x_phase in [0usize, 16, 31] {
+                        let x: Vec<u8> = (0..len + 64).map(|_| lcg(&mut state)).collect();
+                        let y: Vec<u8> = (0..len + 64).map(|_| lcg(&mut state)).collect();
+                        let mut got = y.clone();
+                        // The destination window starts at each byte of a
+                        // 32-byte vector, whatever the allocation's alignment.
+                        let y_at = (y_phase + 32 - got.as_ptr() as usize % 32) % 32;
+                        (fns.mul_add)(
+                            table,
+                            &x[x_phase..x_phase + len],
+                            &mut got[y_at..y_at + len],
+                        );
+                        let mut expected = y.clone();
+                        for i in 0..len {
+                            expected[y_at + i] ^= multiply(0x8e, x[x_phase + i], 0x1d);
+                        }
+                        assert_eq!(
+                            got, expected,
+                            "{} len {len} y phase {y_phase} x phase {x_phase}",
+                            fns.name
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn every_backend_multiplies_blocks_by_the_definition() {
         let mut state = 0xbb67_ae85;
         let tables = tables(0x1d);

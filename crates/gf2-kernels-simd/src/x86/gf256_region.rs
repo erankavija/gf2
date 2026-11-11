@@ -68,8 +68,12 @@ fn products(low: __m256i, high: __m256i, x: __m256i) -> __m256i {
 unsafe fn mul_add_avx2_unchecked(table: &SplitTable, x: &[u8], y: &mut [u8]) {
     let (low, high) = broadcast(table);
     let len = x.len();
+    // A 32-byte store that straddles a cache line costs about as much as the
+    // products, so a scalar head aligns the destination; unaligned loads of
+    // `x` cost little.
+    let mut at = y.as_ptr().align_offset(32).min(len);
+    mul_add_scalar(table, &x[..at], &mut y[..at]);
     let (xp, yp) = (x.as_ptr(), y.as_mut_ptr());
-    let mut at = 0;
     while at + 128 <= len {
         // SAFETY: at + 128 <= len for both slices; unaligned accesses are
         // permitted and the borrows keep the slices disjoint.
