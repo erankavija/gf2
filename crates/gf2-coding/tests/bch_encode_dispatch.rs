@@ -6,13 +6,17 @@
 
 use std::num::NonZeroUsize;
 
+use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, FrameSize};
 use gf2_coding::bch::encode::{max_parallel_batch_workers, EncodeFamily, SystematicLayout};
 use gf2_coding::bch::error::BchError;
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use gf2_coding::test_support;
+use gf2_coding::traits::block::{BlockCode, BlockEncoder};
+use gf2_coding::CodeRate;
 use gf2_core::field::extension::BinaryPrimeExt;
 use gf2_core::gf2m::Gf2mField;
 use gf2_core::BitVec;
+use gf2_kernels_simd::bch_encode::FOLD_UNROLLED_WORDS;
 
 /// Batch lengths either side of the lane width a bit-sliced family groups
 /// frames in, so a partial final group, an exact fill, and several whole
@@ -116,6 +120,16 @@ const WORD_BOUNDARY_ROWS: &[Row] = &[
         batches: &[1, 8],
     },
 ];
+
+/// A redundancy above `64 * FOLD_UNROLLED_WORDS`, where the fold family
+/// reduces one block at a time instead of in chunks of independent products.
+const BLOCK_FOLD_ROW: Row = Row {
+    name: "r280",
+    degree: 10,
+    modulus: 0b100_0000_1001,
+    designed_distance: 57,
+    batches: &[1, 65],
+};
 
 fn build(row: &Row) -> BinaryBchCode {
     let extension = BinaryPrimeExt::new(Gf2mField::new(row.degree, row.modulus))
@@ -360,6 +374,47 @@ fn registered_families_agree_across_lane_group_boundaries() {
     }
 }
 
+/// Runs `check` with every kernel-dispatched family held on the portable
+/// bundle, restoring the previous setting even when `check` panics.
+fn with_scalar_kernels(check: impl FnOnce() + std::panic::UnwindSafe) {
+    let restore = test_support::force_scalar_encode_kernels(true);
+    assert_eq!(
+        test_support::selected_encode_kernel(),
+        "scalar",
+        "forcing the fallback selects the portable kernels"
+    );
+    let outcome = std::panic::catch_unwind(check);
+    test_support::force_scalar_encode_kernels(restore);
+    if let Err(payload) = outcome {
+        std::panic::resume_unwind(payload);
+    }
+}
+
+/// Checks both kernel-dispatched families against the reference on `rows`
+/// at `batches`, on whichever kernel bundle is active.
+fn check_kernel_families_at<'a>(rows: impl IntoIterator<Item = &'a Row>, batches: &[usize]) {
+    for row in rows {
+        let code = build(row);
+        for &layout in LAYOUTS {
+            for &batch in batches {
+                let batch_messages = messages(&code, batch);
+                let reference =
+                    encode_under(&code, EncodeFamily::REFERENCE, &batch_messages, layout);
+                for family in [EncodeFamily::BitsliceInterleaved, EncodeFamily::ClmulFold] {
+                    assert!(code.encode_family_available(family, layout));
+                    assert_eq!(
+                        encode_under(&code, family, &batch_messages, layout),
+                        reference,
+                        "{} under {family} at batch {batch}, {layout:?}, {} kernels",
+                        row.name,
+                        test_support::selected_encode_kernel()
+                    );
+                }
+            }
+        }
+    }
+}
+
 /// The kernel-dispatched families run their accelerated kernels where the
 /// host detects them, so the fallback arm needs forcing to be reached at all.
 /// One switch covers the whole bundle, so this reaches the portable arm of
@@ -367,35 +422,80 @@ fn registered_families_agree_across_lane_group_boundaries() {
 /// checked on whatever host runs the suite.
 #[test]
 fn the_forced_scalar_kernels_write_the_reference_bytes() {
-    let restore = test_support::force_scalar_encode_kernels(true);
-    assert_eq!(
-        test_support::selected_encode_kernel(),
-        "scalar",
-        "forcing the fallback selects the portable kernels"
+    with_scalar_kernels(|| {
+        check_kernel_families_at(ROWS[1..3].iter().chain(WORD_BOUNDARY_ROWS), &[1, 64, 257]);
+    });
+}
+
+/// The DVB-T2 mother rows carry three- and four-word remainders, the widest
+/// the chunk fold unrolls, and the block-fold row one beyond them, so the
+/// portable arm of every fold variant the seam prepares is reached.
+#[test]
+fn the_forced_scalar_kernels_write_the_reference_bytes_on_wide_generators() {
+    let block_fold = build(&BLOCK_FOLD_ROW);
+    let redundancy = block_fold.n() - block_fold.k();
+    assert!(
+        redundancy.div_ceil(64) > FOLD_UNROLLED_WORDS,
+        "{} must reduce in single blocks, r = {redundancy}",
+        BLOCK_FOLD_ROW.name
     );
-    let outcome = std::panic::catch_unwind(|| {
-        for row in ROWS[1..3].iter().chain(WORD_BOUNDARY_ROWS) {
+    let rows = [&ROWS[3], &ROWS[4], &BLOCK_FOLD_ROW];
+    check_kernel_families_at(rows, &[1, 65]);
+    with_scalar_kernels(|| check_kernel_families_at(rows, &[1, 65]));
+}
+
+/// The parallel entry points select their family from the profile, so the
+/// worker-count property is checked again with the selected family on the
+/// portable bundle, on a chunk-fold row and on the block-fold row.
+#[test]
+fn the_forced_scalar_kernels_are_bit_identical_across_worker_counts() {
+    with_scalar_kernels(|| {
+        for row in [&ROWS[2], &BLOCK_FOLD_ROW] {
             let code = build(row);
+            let batch_messages = messages(&code, 257);
             for &layout in LAYOUTS {
-                for &batch in &[1usize, 64, 257] {
-                    let batch_messages = messages(&code, batch);
-                    let reference =
-                        encode_under(&code, EncodeFamily::REFERENCE, &batch_messages, layout);
-                    for family in [EncodeFamily::BitsliceInterleaved, EncodeFamily::ClmulFold] {
-                        assert_eq!(
-                            encode_under(&code, family, &batch_messages, layout),
-                            reference,
-                            "{} under {family} at batch {batch}, {layout:?}, portable kernels",
-                            row.name
-                        );
-                    }
+                let reference =
+                    encode_under(&code, EncodeFamily::REFERENCE, &batch_messages, layout);
+                let ceiling = max_parallel_batch_workers().get().max(4) + 1;
+                for workers in 1..=ceiling {
+                    let workers = NonZeroUsize::new(workers).expect("a positive worker count");
+                    let codewords = code
+                        .encode_batch_parallel(&batch_messages, layout, workers)
+                        .expect("a validated batch encodes");
+                    assert_eq!(
+                        codewords, reference,
+                        "{} under {layout:?} changed with {workers} workers, portable kernels",
+                        row.name
+                    );
                 }
             }
         }
     });
-    test_support::force_scalar_encode_kernels(restore);
-    if let Err(payload) = outcome {
-        std::panic::resume_unwind(payload);
+}
+
+/// The shipped DVB-T2 encoder runs one message at a time through its
+/// mother's selected family, a path the batch entry points do not take.
+#[test]
+fn the_dvb_t2_encoder_writes_the_same_codewords_on_the_scalar_kernels() {
+    for frame in [FrameSize::Short, FrameSize::Normal] {
+        let code = dvb_t2_bch_code(frame, CodeRate::Rate1_2).expect("the rate-1/2 outer code");
+        let frame_messages: Vec<BitVec> = (0..4)
+            .map(|index| BitVec::random_seeded(code.k(), index + 1))
+            .collect();
+        let detected: Vec<BitVec> = frame_messages
+            .iter()
+            .map(|message| code.encode(message).expect("a message of length k"))
+            .collect();
+        with_scalar_kernels(|| {
+            let code = dvb_t2_bch_code(frame, CodeRate::Rate1_2).expect("the rate-1/2 outer code");
+            for (index, message) in frame_messages.iter().enumerate() {
+                assert_eq!(
+                    code.encode(message).expect("a message of length k"),
+                    detected[index],
+                    "{frame:?} frame message {index} differs on the portable kernels"
+                );
+            }
+        });
     }
 }
 
