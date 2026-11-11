@@ -3,7 +3,7 @@
     "id": "55c3e433-check-variants",
     "issue": "a72f2b3f",
     "purpose": "decoder-family",
-    "description": "Exploratory comparison of two isolated scalar check-row patches against unchanged production, each from its own pinned tree, on the forced single-frame route. The AList graphs, recorded LLRs, f32 flooding NMS factor 0.75, cap 50, syndrome stopping, timed prefix and steady-state decode boundary are those of 1362381c-ldpc-aff3ct-integration. Each worker owns its decoder before timing; conversion, dispatch and information-window extraction are included. Per-frame iterations are direct post-timing observations. At most one pilot campaign runs. The check-variants contract in dev/active/55c3e433-aff3ct-ldpc-gaps/plan.md governs exploratory nomination; this family adopts no production change."
+    "description": "Exploratory comparison of two isolated scalar check-row patches against unchanged production, each from its own pinned tree, on the forced single-frame route. The AList graphs, recorded LLRs, f32 flooding NMS factor 0.75, cap 50, syndrome stopping, timed prefix and steady-state decode boundary are those of 1362381c-ldpc-aff3ct-integration. Each worker owns its decoder before timing; conversion, dispatch and information-window extraction are included. Per-frame iterations are direct post-timing observations. At most one pilot campaign runs. The check-variants contract in experiments/aff3ct-ldpc-gaps/contracts.md governs exploratory nomination; this family adopts no production change."
   },
   "frozen_utc": "2026-11-01T15:21:11Z",
   "effect": {

@@ -105,8 +105,8 @@ per build record, including records in other worktrees. Generation checks the
 input manifest identities, prepared-quality files and executable pins. A
 confirmation declaration uses the same family format, adds a `confirmation`
 campaign, and retains the pilot's input contract and independently scoped
-ledger. The adoption and comparator contracts are in the epic's
-[plan](../../dev/active/55c3e433-aff3ct-ldpc-gaps/plan.md).
+ledger. The adoption and comparator contracts are in
+[contracts.md](contracts.md).
 
 `smoke-family.py PLAN BUILD_RECORD...` runs the materialized plan through the
 canonical staged untimed lifecycle. `run-family-campaign.py` uses the same
