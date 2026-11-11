@@ -154,13 +154,24 @@ fn frames(n: usize, sigma: f64, seed: u64) -> Vec<Vec<Llr>> {
     frames
 }
 
+fn host_has_avx2() -> bool {
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    {
+        std::arch::is_x86_feature_detected!("avx2")
+    }
+    #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+    {
+        false
+    }
+}
+
 /// Decoders on the backends of this build and host: the portable kernel, and
 /// the AVX2 kernel a `simd` build must select on an AVX2 host.
 fn backends(case: &Case, config: LayeredConfig) -> Vec<LayeredDecoder> {
     let default = case.decoder(config);
     let portable = case.decoder(config).with_portable_kernel();
     assert_eq!(portable.backend(), LaneBackend::Portable);
-    if cfg!(feature = "simd") && std::arch::is_x86_feature_detected!("avx2") {
+    if cfg!(feature = "simd") && host_has_avx2() {
         assert_eq!(default.backend(), LaneBackend::Avx2);
         vec![portable, default]
     } else {

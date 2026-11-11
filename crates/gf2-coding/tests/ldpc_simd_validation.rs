@@ -6,7 +6,7 @@ use gf2_coding::traits::IterativeSoftDecoder;
 
 #[test]
 fn test_simd_enabled() {
-    #[cfg(feature = "simd")]
+    #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
     {
         use std::arch::is_x86_feature_detected;
         if is_x86_feature_detected!("avx2") {

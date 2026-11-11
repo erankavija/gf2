@@ -6,7 +6,12 @@
 //! `GF2_LAYERED_FER_FRAMES` bounds the frames per point (default 200 000),
 //! `GF2_LAYERED_FER_ERRORS` the errors both decoders reach before a point
 //! stops early (default 100), and `GF2_LAYERED_FER_GRID`, a comma-separated
-//! list of Eb/N0 values in dB, replaces a test's grid.
+//! list of Eb/N0 values in dB, replaces a test's grid. A full curve takes
+//! hours, beyond the slow tier, so the curve tests run only under
+//! `GF2_BENCH=1`; the unit tests of the comparator run in the fast tier.
+
+mod common;
+
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::ldpc::{
     DecoderAlgorithm, DecoderConfig, LayeredConfig, LayeredDecoder, LdpcCode, LdpcDecoder,
@@ -109,22 +114,31 @@ fn point(
     )
 }
 
-/// The Eb/N0 where log FER first falls below the target, linear between
-/// grid points; the first grid point when the curve starts below it.
-fn crossing(curve: &[(f64, f64)]) -> Option<f64> {
-    if curve.first()?.1 < TARGET_FER {
-        return Some(curve[0].0);
-    }
+/// Bounds on the Eb/N0 where FER first falls below the target, from the first
+/// pair of adjacent grid points at and below it: the log-linear interpolation
+/// when both have errors, otherwise the pair itself. `None` unless grid points
+/// bracket the crossing on both sides.
+fn crossing(curve: &[(f64, f64)]) -> Option<(f64, f64)> {
     curve.windows(2).find_map(|pair| {
         let ((x0, f0), (x1, f1)) = (pair[0], pair[1]);
         (f0 >= TARGET_FER && f1 < TARGET_FER).then(|| {
             if f1 == 0.0 {
-                return x1;
+                return (x0, x1);
             }
             let (l0, l1, lt) = (f0.log10(), f1.log10(), TARGET_FER.log10());
-            x0 + (x1 - x0) * (l0 - lt) / (l0 - l1)
+            let x = x0 + (x1 - x0) * (l0 - lt) / (l0 - l1);
+            (x, x)
         })
     })
+}
+
+/// The largest loss in dB of layered against flooding that the curves admit.
+fn loss_bound(flooding: &[(f64, f64)], layered: &[(f64, f64)]) -> Result<f64, String> {
+    let (flooding_low, _) =
+        crossing(flooding).ok_or("grid points do not bracket the flooding crossing")?;
+    let (_, layered_high) =
+        crossing(layered).ok_or("grid points do not bracket the layered crossing")?;
+    Ok(layered_high - flooding_low)
 }
 
 fn compare(name: &str, code: &LdpcCode, layered: LayeredConfig, grid: &[f64]) {
@@ -152,19 +166,26 @@ fn compare(name: &str, code: &LdpcCode, layered: LayeredConfig, grid: &[f64]) {
             break;
         }
     }
-    let flooding = crossing(&flooding_curve).expect("flooding curve reaches the target");
-    let layered = crossing(&layered_curve).expect("layered curve reaches the target");
-    eprintln!("{name}: Eb/N0 at FER 1e-3, flooding {flooding:.3} dB, layered {layered:.3} dB");
+    let loss =
+        loss_bound(&flooding_curve, &layered_curve).unwrap_or_else(|e| panic!("{name}: {e}"));
+    eprintln!(
+        "{name}: Eb/N0 at FER 1e-3, flooding {:?} dB, layered {:?} dB",
+        crossing(&flooding_curve),
+        crossing(&layered_curve)
+    );
     assert!(
-        layered - flooding <= MARGIN_DB,
-        "{name}: layered loses {:.3} dB",
-        layered - flooding
+        loss <= MARGIN_DB,
+        "{name}: layered loses up to {loss:.3} dB"
     );
 }
 
 #[test]
 #[ignore = "sim: NR BG1 Z=384 mother code FER curves to 1e-3, flooding and layered"]
 fn nr_bg1_z384_layered_is_within_a_tenth_of_a_db_of_flooding() {
+    skip_unless_bench!(
+        "nr_bg1_z384_layered_is_within_a_tenth_of_a_db_of_flooding",
+        "FER curves to 1e-3 take hours"
+    );
     let code = LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(1, 384));
     let layered = LayeredConfig::nr_5g();
     let grid: Vec<f64> = (0..16).map(|i| 0.1 * f64::from(i)).collect();
@@ -174,8 +195,43 @@ fn nr_bg1_z384_layered_is_within_a_tenth_of_a_db_of_flooding() {
 #[test]
 #[ignore = "sim: DVB-T2 normal R1/2 FER curves to 1e-3, flooding and layered"]
 fn dvb_t2_normal_r12_layered_is_within_a_tenth_of_a_db_of_flooding() {
+    skip_unless_bench!(
+        "dvb_t2_normal_r12_layered_is_within_a_tenth_of_a_db_of_flooding",
+        "FER curves to 1e-3 take hours"
+    );
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
     let layered = LayeredConfig::dvb_t2();
     let grid: Vec<f64> = (0..21).map(|i| 0.8 + 0.1 * f64::from(i)).collect();
     compare("dvb-t2 normal 1/2", &code, layered, &grid);
+}
+
+#[test]
+fn an_unbracketed_crossing_fails_the_comparison() {
+    // Both decoders error-free at one high-SNR point.
+    let error_free = [(1.5, 0.0)];
+    assert_eq!(crossing(&error_free), None);
+    assert!(loss_bound(&error_free, &error_free).is_err());
+    // Below the target from the first point, and never reaching it.
+    let below = [(1.0, 1e-4), (1.1, 0.0)];
+    let above = [(1.0, 0.5), (1.1, 1e-2)];
+    assert_eq!(crossing(&below), None);
+    assert_eq!(crossing(&above), None);
+    let bracketed = [(0.9, 0.1), (1.0, 1e-2), (1.1, 1e-4)];
+    assert!(loss_bound(&below, &bracketed).is_err());
+    assert!(loss_bound(&bracketed, &above).is_err());
+}
+
+#[test]
+fn a_bracketed_crossing_interpolates_log_fer_or_bounds_by_the_pair() {
+    let (low, high) = crossing(&[(0.9, 0.1), (1.0, 1e-2), (1.1, 1e-4)]).unwrap();
+    assert_eq!(low, high);
+    assert!((low - 1.05).abs() < 1e-12);
+    let zero = [(0.9, 1e-2), (1.0, 0.0)];
+    assert_eq!(crossing(&zero), Some((0.9, 1.0)));
+    // A zero-error upper point bounds the loss by the full grid step.
+    let estimate = [(0.9, 1e-2), (1.0, 1e-4)];
+    let loss = loss_bound(&estimate, &zero).unwrap();
+    assert!((loss - 0.05).abs() < 1e-12);
+    let loss = loss_bound(&zero, &estimate).unwrap();
+    assert!((loss - 0.05).abs() < 1e-12);
 }
