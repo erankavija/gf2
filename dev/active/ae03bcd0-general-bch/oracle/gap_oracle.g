@@ -25,7 +25,8 @@
 ##
 ##  Run it as
 ##      gap -q -A -T -o <heap> \
-##          -c 'CORPUS:="<corpus.json>"; OUTPUT:="<output.json>";' gap_oracle.g
+##          -c 'CORPUS:="<corpus.json>"; OUTPUT:="<output.json>";
+##              PACKAGES:="<packages.json>";' gap_oracle.g
 ##
 ##  Field transport
 ##  ---------------
@@ -65,9 +66,10 @@
 ##  A version label does not name a build, so the fixture's `oracle` object
 ##  carries what the running kernel reports about itself -- the kernel and
 ##  build version, the build datetime, the architecture, the GMP version, the
-##  heap of this invocation -- and the installation path and version of the
-##  GUAVA and SONATA packages that actually loaded, taken from
-##  `GAPInfo.PackagesLoaded`. `run.sh` hashes the executable and those
+##  heap of this invocation -- and the version of the GUAVA and SONATA
+##  packages that actually loaded. Where those packages are installed is a
+##  fact of the host, so it goes to `PACKAGES` instead, taken from
+##  `GAPInfo.PackagesLoaded`; `run.sh` hashes the executable and those
 ##  installations into the receipt.
 ##
 ##  Bounded code-object attempts
@@ -672,12 +674,8 @@ Main := function()
         JsonQuote(GAPInfo.CommandLineOptions.o), ",\n"));
     Append(out, Concatenation("    \"guava_version\": ",
         JsonQuote(InstalledPackageVersion("guava")), ",\n"));
-    Append(out, Concatenation("    \"guava_path\": ",
-        JsonQuote(GAPInfo.PackagesLoaded.guava[1]), ",\n"));
     Append(out, Concatenation("    \"sonata_version\": ",
         JsonQuote(InstalledPackageVersion("sonata")), ",\n"));
-    Append(out, Concatenation("    \"sonata_path\": ",
-        JsonQuote(GAPInfo.PackagesLoaded.sonata[1]), ",\n"));
     Append(out, Concatenation("    \"entry_point\": ",
         JsonQuote("GUAVA BCHCode(n, b, delta, F)"), "\n  },\n"));
     Append(out, Concatenation("  \"seed\": ", JsonQuote(corpus.seed), ",\n"));
@@ -689,6 +687,10 @@ Main := function()
     od;
     Append(out, "  ]\n}\n");
     FileString(OUTPUT, out);
+    FileString(PACKAGES, Concatenation(
+        "{\n  \"guava\": ", JsonQuote(GAPInfo.PackagesLoaded.guava[1]),
+        ",\n  \"sonata\": ", JsonQuote(GAPInfo.PackagesLoaded.sonata[1]),
+        "\n}\n"));
 end;;
 
 Main();

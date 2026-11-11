@@ -9,9 +9,7 @@
     "gmp_version": "6.3.0",
     "heap": "4g",
     "guava_version": "3.21",
-    "guava_path": "gap-packages/guava-3.21/",
     "sonata_version": "2.9.8",
-    "sonata_path": "gap-packages/sonata-2.9.8/",
     "entry_point": "GUAVA BCHCode(n, b, delta, F)"
   },
   "seed": "0xAE03BCD0",

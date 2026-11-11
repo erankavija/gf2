@@ -687,18 +687,40 @@ const GAP_IDENTITY: &[&str] = &[
     "gmp_version",
     "heap",
     "guava_version",
-    "guava_path",
     "sonata_version",
-    "sonata_path",
 ];
+
+/// Asserts that `oracle` records every member of `identity` and nothing beyond
+/// it, its `system` and its `entry_point`, so no further host observation
+/// reaches a committed fixture.
+fn assert_identity(oracle: &Value, identity: &[&str]) {
+    for key in identity {
+        recorded(oracle, key);
+    }
+    let mut members: Vec<&str> = oracle
+        .as_object()
+        .expect("the oracle record is an object")
+        .keys()
+        .map(String::as_str)
+        .collect();
+    members.sort_unstable();
+    let mut expected: Vec<&str> = identity
+        .iter()
+        .copied()
+        .chain(["system", "entry_point"])
+        .collect();
+    expected.sort_unstable();
+    assert_eq!(
+        members, expected,
+        "the oracle record holds its identity members only"
+    );
+}
 
 #[test]
 fn the_oracle_fixtures_record_their_identities_and_self_checks() {
     let sage = fixture("sage.json");
     assert_eq!(sage["oracle"]["system"], "SageMath");
-    for key in SAGE_IDENTITY {
-        recorded(&sage["oracle"], key);
-    }
+    assert_identity(&sage["oracle"], SAGE_IDENTITY);
     assert!(
         recorded(&sage["oracle"], "version").contains("SageMath version"),
         "the SageMath fixture records the library banner it ran under"
@@ -715,9 +737,7 @@ fn the_oracle_fixtures_record_their_identities_and_self_checks() {
 
     let gap = fixture("gap.json");
     assert_eq!(gap["oracle"]["system"], "GAP with GUAVA");
-    for key in GAP_IDENTITY {
-        recorded(&gap["oracle"], key);
-    }
+    assert_identity(&gap["oracle"], GAP_IDENTITY);
     for row in gap["rows"].as_array().expect("rows") {
         let id = row["id"].as_str().expect("an identifier");
         assert!(

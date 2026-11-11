@@ -5,10 +5,12 @@
 # Stages, in order:
 #   1. build and run the corpus emitter, producing `corpus.json`;
 #   2. run the SageMath oracle over that corpus, producing `sage.json`;
-#   3. run the GAP/GUAVA oracle over that corpus, producing `gap.json`;
+#   3. run the GAP/GUAVA oracle over that corpus, producing `gap.json` and,
+#      under `target/oracle/`, the installation directory of each package
+#      that loaded, which is a fact of the host and stays out of the fixture;
 #   4. run the standards-vector case against the ETSI DVB-T2 verification
 #      streams, whose printed facts the receipt quotes;
-#   5. render `oracle-receipt.md` from what this run observed.
+#   5. render `target/oracle/oracle-receipt.md` from what this run observed.
 #
 # The standards-vector stage locates the streams through the suite's own
 # `test_vectors_path()` resolver, which reads `DVB_TEST_VECTORS_PATH`. On a
@@ -38,7 +40,10 @@ cd "$root"
 fixtures="crates/gf2-coding/tests/data/bch_oracle"
 sage_script="dev/active/ae03bcd0-general-bch/oracle/sage_oracle.py"
 gap_script="dev/active/ae03bcd0-general-bch/oracle/gap_oracle.g"
-receipt="target/oracle/oracle-receipt.md"
+script_rel="dev/active/ae03bcd0-general-bch/oracle/run.sh"
+out_dir="target/oracle"
+receipt="$out_dir/oracle-receipt.md"
+packages="$out_dir/gap-packages.json"
 
 corpus="$fixtures/corpus.json"
 sage_out="$fixtures/sage.json"
@@ -61,7 +66,7 @@ emitter="./target/release/examples/bch_oracle_messages"
 build_cmd="./scripts/cargo-budget.sh cargo build --release -p gf2-coding --features test-support --example bch_oracle_messages"
 emit_cmd="$emitter $corpus"
 sage_cmd="python3 $sage_script $corpus $sage_out"
-gap_cmd="gap -q -A -T -o $gap_heap -c 'CORPUS:=\"$corpus\"; OUTPUT:=\"$gap_out\";' $gap_script"
+gap_cmd="gap -q -A -T -o $gap_heap -c 'CORPUS:=\"$corpus\"; OUTPUT:=\"$gap_out\"; PACKAGES:=\"$packages\";' $gap_script"
 vectors_cmd="./scripts/cargo-budget.sh --test cargo nextest run -p gf2-coding \
 --features test-support --test bch_oracle_agreement --cargo-profile ci-test \
 --profile ci -E 'test($vectors_case)' --no-capture"
@@ -85,14 +90,14 @@ sage_seconds=$((SECONDS - sage_start))
 # so the oracle records the attempt instead. GAP then exits zero either way and
 # the fixture's presence is what says the run produced a result.
 echo "== GAP with GUAVA =="
-gap_log="target/bch-oracle-gap.log"
-mkdir -p target
-rm -f "$gap_out"
+gap_log="$out_dir/bch-oracle-gap.log"
+mkdir -p "$out_dir"
+rm -f "$gap_out" "$packages"
 gap_start=$SECONDS
 eval "$gap_cmd" 2>&1 | tee "$gap_log"
 gap_seconds=$((SECONDS - gap_start))
-if [ ! -f "$gap_out" ]; then
-  echo "the GAP oracle wrote no fixture; see $gap_log" >&2
+if [ ! -f "$gap_out" ] || [ ! -f "$packages" ]; then
+  echo "the GAP oracle wrote no fixture or no package record; see $gap_log" >&2
   exit 1
 fi
 
@@ -100,7 +105,7 @@ fi
 # cargo invocation in this repository. `--no-capture` is what puts the facts
 # the case prints into this run's log, and so into the receipt.
 echo "== standards vectors =="
-vectors_log="target/bch-oracle-vectors.log"
+vectors_log="$out_dir/bch-oracle-vectors.log"
 vectors_start=$SECONDS
 eval "$vectors_cmd" 2>&1 | tee "$vectors_log"
 vectors_seconds=$((SECONDS - vectors_start))
@@ -135,9 +140,12 @@ gap_arch="$(field "$gap_out" gap_architecture)"
 gmp_version="$(field "$gap_out" gmp_version)"
 gap_heap_observed="$(field "$gap_out" heap)"
 guava_version="$(field "$gap_out" guava_version)"
-guava_path="$(field "$gap_out" guava_path)"
+package_dir() {
+  python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])' "$packages" "$1"
+}
+guava_path="$(package_dir guava)"
 sonata_version="$(field "$gap_out" sonata_version)"
-sonata_path="$(field "$gap_out" sonata_path)"
+sonata_path="$(package_dir sonata)"
 gap_exe_real="$(readlink -f "$(command -v gap)")"
 
 cpu="$(awk -F': ' '/^model name/ {print $2; exit}' /proc/cpuinfo)"
@@ -147,7 +155,7 @@ rust_version="$(rustc --version)"
 {
   echo "# Receipt: external BCH oracle fixture generation"
   echo
-  echo "Written by [\`run.sh\`](run.sh) from the run it describes."
+  echo "Written by [\`run.sh\`](../../$script_rel) from the run it describes."
   echo "Every value below was observed during that run."
   echo
   echo "| Field | Value |"
@@ -189,9 +197,9 @@ rust_version="$(rustc --version)"
   echo "| Stage | Exact invocation | Wall clock (s) | Output |"
   echo "|---|---|---|---|"
   echo "| build | \`$build_cmd\` | $build_seconds | \`$emitter\` |"
-  echo "| corpus | \`$emit_cmd\` | $emit_seconds | [corpus.json](../../../$corpus) |"
-  echo "| SageMath | \`$sage_cmd\` | $sage_seconds | [sage.json](../../../$sage_out) |"
-  echo "| GAP with GUAVA | \`$gap_cmd\` | $gap_seconds | [gap.json](../../../$gap_out) |"
+  echo "| corpus | \`$emit_cmd\` | $emit_seconds | [corpus.json](../../$corpus) |"
+  echo "| SageMath | \`$sage_cmd\` | $sage_seconds | [sage.json](../../$sage_out) |"
+  echo "| GAP with GUAVA | \`$gap_cmd\` | $gap_seconds | [gap.json](../../$gap_out) |"
   echo
   echo "## GUAVA code-object attempts"
   echo
@@ -265,7 +273,7 @@ ATTEMPTS
     "crates/gf2-coding/examples/bch_oracle_messages.rs" \
     "crates/gf2-coding/src/test_support.rs" \
     "$sage_script" "$gap_script" \
-    "dev/active/ae03bcd0-general-bch/oracle/run.sh" \
+    "$script_rel" \
     "crates/gf2-coding/tests/bch_oracle_agreement.rs" \
     "crates/gf2-coding/tests/test_vectors/mod.rs" \
     "crates/gf2-coding/tests/test_vectors/config.rs" \
