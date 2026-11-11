@@ -562,7 +562,8 @@ impl QuasiCyclicLdpc {
 
     /// The base matrix of shift values, `-1` for a zero block, when the
     /// structure is one; `None` when a block holds several circulants, a
-    /// circulant is masked or an order is not the identity. Takes O(B) time
+    /// circulant is masked, a shift exceeds `i32::MAX` or an order is not the
+    /// identity. Takes O(B) time
     /// for B base-matrix entries.
     #[must_use]
     pub fn base_matrix(&self) -> Option<Vec<Vec<i32>>> {
@@ -575,7 +576,7 @@ impl QuasiCyclicLdpc {
             if *entry != -1 || !circulant.masked_rows.is_empty() {
                 return None;
             }
-            *entry = circulant.shift as i32;
+            *entry = i32::try_from(circulant.shift).ok()?;
         }
         Some(matrix)
     }
@@ -1622,6 +1623,21 @@ mod tests {
     fn first_k_columns_are_identity(code: &LdpcCode) -> bool {
         let g = GeneratorMatrixAccess::generator_matrix(code);
         (0..code.k()).all(|i| (0..code.k()).all(|j| g.get(i, j) == (i == j)))
+    }
+
+    #[test]
+    fn base_matrix_is_none_when_a_shift_exceeds_i32() {
+        let limit = i32::MAX as usize;
+        let at_limit =
+            QuasiCyclicLdpc::from_circulants(1, 1, limit + 2, vec![QcCirculant::new(0, 0, limit)]);
+        assert_eq!(at_limit.base_matrix(), Some(vec![vec![i32::MAX]]));
+        let above = QuasiCyclicLdpc::from_circulants(
+            1,
+            1,
+            limit + 2,
+            vec![QcCirculant::new(0, 0, limit + 1)],
+        );
+        assert_eq!(above.base_matrix(), None);
     }
 
     #[test]
