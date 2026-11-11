@@ -145,23 +145,35 @@ impl FastCell {
             Pinning::Unpinned => None,
         };
         let start = std::sync::Barrier::new(self.workers);
+        let timed = std::sync::Barrier::new(self.workers);
         let medians = std::thread::scope(|scope| {
             let handles: Vec<_> = (0..self.workers)
                 .map(|index| {
-                    let (init, call, start, cpus) = (&init, &call, &start, &cpus);
+                    let (init, call, start, timed, cpus) = (&init, &call, &start, &timed, &cpus);
                     scope.spawn(move || -> Result<u64, String> {
-                        // Every worker reaches the barrier, so one failure
-                        // cannot leave the others waiting.
+                        // Every worker reaches both barriers, so one failure
+                        // cannot leave the others waiting. The second one
+                        // starts the timed calls of all workers together, so
+                        // none is timed while another still warms up.
                         let worker = match cpus {
                             Some(cpus) => pin_current_thread(cpus[index]).map(drop),
                             None => Ok(()),
                         }
                         .and_then(|()| init(index));
                         start.wait();
-                        let mut worker = worker?;
-                        for _ in 0..WARM_CALLS {
-                            call(&mut worker);
-                        }
+                        let mut worker = match worker {
+                            Ok(mut worker) => {
+                                for _ in 0..WARM_CALLS {
+                                    call(&mut worker);
+                                }
+                                timed.wait();
+                                worker
+                            }
+                            Err(error) => {
+                                timed.wait();
+                                return Err(error);
+                            }
+                        };
                         let nanoseconds = (0..self.calls)
                             .map(|_| {
                                 let begin = Instant::now();
@@ -267,5 +279,32 @@ mod tests {
         );
         assert!(FastCell::parse(&args("cpu0")).is_err());
         assert!(FastCell::parse(&args("pinned")[..8]).is_err());
+    }
+
+    #[test]
+    fn no_call_is_timed_while_a_worker_still_warms_up() {
+        use super::WARM_CALLS;
+        use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+        let mut cell = FastCell::parse(&args("unpinned")).unwrap();
+        cell.workers = 3;
+        let warmed = AtomicUsize::new(0);
+        let early = AtomicBool::new(false);
+        cell.median_call_ns(
+            |index| Ok((index, 0usize)),
+            |(index, calls)| {
+                if *calls < WARM_CALLS {
+                    // Worker 0 warms up slowest.
+                    if *index == 0 {
+                        std::thread::sleep(std::time::Duration::from_millis(20));
+                    }
+                    warmed.fetch_add(1, Ordering::SeqCst);
+                } else if warmed.load(Ordering::SeqCst) < 3 * WARM_CALLS {
+                    early.store(true, Ordering::SeqCst);
+                }
+                *calls += 1;
+            },
+        )
+        .unwrap();
+        assert!(!early.load(Ordering::SeqCst));
     }
 }
