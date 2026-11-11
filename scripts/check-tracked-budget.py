@@ -2,7 +2,9 @@
 """Refuses copied inputs, raw single-host output and oversized files in git.
 
 Enforces `@/inv/committed-evidence-budget`. Limits and exceptions live in
-`tracked-budget.toml`; limits may only fall.
+`tracked-budget.toml`; limits may only fall. A JSON document the path rules
+admit under `record_documents` is also read, and refused when any member name
+matches `record_members`, the vocabulary of an execution record.
 
   check-tracked-budget.py                 check the tree at HEAD
   check-tracked-budget.py --staged        check the index and staged additions
@@ -12,6 +14,7 @@ Enforces `@/inv/committed-evidence-budget`. Limits and exceptions live in
 
 import argparse
 import fnmatch
+import json
 import os
 import re
 import subprocess
@@ -63,6 +66,43 @@ def path_faults(paths, config):
     ]
 
 
+def record_faults(paths, config, read):
+    """Admitted workflow documents that carry an execution record.
+
+    `read(path)` returns the document's text at the revision being checked.
+    """
+    documents = re.compile(config.get("record_documents", "(?!)"))
+    members = [re.compile(m) for m in config.get("record_members", [])]
+    faults = []
+    for path in paths:
+        if not documents.search(path) or path_faults([path], config) or excepted(path, config):
+            continue
+        try:
+            names = set(_member_names(json.loads(read(path))))
+        except json.JSONDecodeError:
+            faults.append(f"{path}: not JSON, so its members cannot be checked")
+            continue
+        found = sorted(n for n in names if any(m.fullmatch(n) for m in members))
+        if found:
+            faults.append(f"{path}: execution record members {', '.join(found)}")
+    return faults
+
+
+def _member_names(value):
+    if isinstance(value, dict):
+        for name, member in value.items():
+            yield name
+            yield from _member_names(member)
+    elif isinstance(value, list):
+        for member in value:
+            yield from _member_names(member)
+
+
+def reader(revision, cwd):
+    """Reads a path's blob at `revision`, or from the index when it is empty."""
+    return lambda path: git("show", f"{revision}:{path}", cwd=cwd)
+
+
 def size_faults(sizes, config):
     limit = config["max_file_bytes"]
     faults = []
@@ -72,9 +112,10 @@ def size_faults(sizes, config):
     return faults
 
 
-def tree_faults(sizes, config):
+def tree_faults(sizes, config, read):
     total = sum(sizes.values())
     faults = path_faults(sizes, config) + size_faults(sizes, config)
+    faults += record_faults(sizes, config, read)
     if total > config["max_tree_bytes"]:
         faults.append(f"tree: {total} bytes exceeds {config['max_tree_bytes']}")
     return faults
@@ -135,7 +176,7 @@ def check_staged(cwd):
     sizes = tree_sizes(git("write-tree", cwd=cwd).strip(), cwd)
     head = "HEAD" if has_head(cwd) else EMPTY_TREE
     return (
-        tree_faults(sizes, config)
+        tree_faults(sizes, config, reader("", cwd))
         + change_faults(head, "", config, "staged change", cwd)
         + ratchet_faults(config, cwd)
     )
@@ -173,6 +214,7 @@ def check_range(revisions, cwd):
         label = commit[:9]
         faults += [f"{label}: {f}" for f in path_faults(touched, config)]
         faults += [f"{label}: {f}" for f in size_faults(touched, config)]
+        faults += [f"{label}: {f}" for f in record_faults(touched, config, reader(commit, cwd))]
         faults += change_faults(parent, commit, config, label, cwd)
     return faults
 
@@ -190,7 +232,19 @@ def policy_faults(config):
         "dev/active/x/tool/Cargo.toml", "crates/a/tests/compile_fail/b.stderr",
     )
     faults = [f"admits {path}" for path in refused if not path_faults([path], config)]
-    return faults + [f"refuses {path}" for path in admitted if path_faults([path], config)]
+    faults += [f"refuses {path}" for path in admitted if path_faults([path], config)]
+    record = '{"waves": [{"ran_at": "t", "wall_seconds": 1, "binary_sha256": "a", "receipts": []}]}'
+    workflow = '{"started_at": "t", "completed_at": "t", "status": "done", "waves": []}'
+    if len(record_faults(["dev/active/x/progress.json"], config, lambda _: record)) != 1:
+        faults.append("admits an execution record in dev/active/x/progress.json")
+    if record_faults(["dev/research/x/progress.json"], config, lambda _: workflow):
+        faults.append("refuses workflow state in dev/research/x/progress.json")
+    return faults
+
+
+def head_faults(cwd):
+    config = read_config("HEAD", cwd)
+    return tree_faults(tree_sizes("HEAD", cwd), config, reader("HEAD", cwd)) + policy_faults(config)
 
 
 def self_test():
@@ -199,6 +253,8 @@ max_file_bytes = 1000
 max_commit_added_bytes = 2500
 max_tree_bytes = 10000
 forbidden_paths = ['(^|/)inputs/', '\\.log$', '(^|/)receipt\\.json$', '(^|/)(execution|journal)[^/]*\\.jsonl$', '^dev/(bench_results|benchmarks|simulation_results|archive)/']
+record_documents = '^dev/(active|research)/.*\\.json$'
+record_members = ['ran_at', '(\\w+_)?sha256', 'wall_seconds']
 [[exception]]
 path = "experiments/*/tests/fixtures/*"
 reason = "test fixture"
@@ -223,7 +279,8 @@ reason = "fixture"
         write("old.bin", 900)
         write("big.lock", 4000)
         run("commit", "-qm", "base", "--no-verify")
-        assert_faults(tree_faults(tree_sizes("HEAD", repo), read_config("HEAD", repo)), [], "tree")
+        at_head = lambda: tree_faults(tree_sizes("HEAD", repo), read_config("HEAD", repo), reader("HEAD", repo))
+        assert_faults(at_head(), [], "tree")
 
         cases = [
             ("large new file", lambda: write("new.bin", 1001), "new.bin"),
@@ -235,6 +292,9 @@ reason = "fixture"
             ("execution stream", lambda: write("a/execution.jsonl", 1), "forbidden path"),
             ("journal", lambda: write("a/journal.jsonl", 1), "forbidden path"),
             ("measurement directory", lambda: write("/".join(["dev", "benchmarks", "a.csv"]), 1), "forbidden path"),
+            ("run record", lambda: write("dev/active/x/progress.json", 0, '{"waves": [{"run": {"ran_at": "t"}}]}'), "execution record"),
+            ("run digest", lambda: write("dev/research/x/progress.json", 0, '{"binary_sha256": "ab"}'), "execution record"),
+            ("unreadable document", lambda: write("dev/active/x/progress.json", 0, "{"), "not JSON"),
             ("commit size", lambda: [write(f"f{i}", 900) for i in range(3)], "adds"),
             ("tree size", lambda: write("big.lock", 9000), "tree:"),
             ("raised limit", lambda: write(CONFIG, 0, config.replace("10000", "20000")), "rises"),
@@ -247,6 +307,9 @@ reason = "fixture"
         write("big.lock", 4100)
         assert_faults(check_staged(repo), [], "small append to an excepted large file")
         run("reset", "-q", "--hard", "HEAD")
+        write("dev/active/x/progress.json", 0, '{"started_at": "t", "completed_at": "t", "status": "done", "notes": "ran_at"}')
+        assert_faults(check_staged(repo), [], "workflow state")
+        run("reset", "-q", "--hard", "HEAD")
         write("/".join(["experiments", "demo", "tests", "fixtures", "execution.jsonl"]), 1)
         write("/".join(["experiments", "demo", "tests", "fixtures", "receipt.json"]), 1)
         write("old.bin", 899)
@@ -256,6 +319,14 @@ reason = "fixture"
         run("commit", "-qm", "bad", "--no-verify")
         assert_faults(check_range("HEAD~1..HEAD", repo), ["forbidden path"], "range")
         assert_faults(check_range("HEAD~2..HEAD~1", repo), [], "clean range")
+        write("dev/active/x/progress.json", 0, '{"wall_seconds": 3}')
+        run("commit", "-qm", "record", "--no-verify")
+        assert_faults(check_range("HEAD~1..HEAD", repo), ["execution record"], "range record")
+        run("rm", "-q", "dev/active/x/progress.json", "a/inputs/c.rs")
+        run("commit", "-qm", "drop record", "--no-verify")
+        assert_faults(at_head(), [], "tree after the record left")
+        run("reset", "-q", "--hard", "HEAD~1")
+        assert_faults(at_head(), ["execution record"], "tree record")
     print("check-tracked-budget: self-test passed")
     return 0
 
@@ -283,8 +354,7 @@ def main():
     elif args.revisions:
         faults = check_range(args.revisions, cwd)
     else:
-        config = read_config("HEAD", cwd)
-        faults = tree_faults(tree_sizes("HEAD", cwd), config) + policy_faults(config)
+        faults = head_faults(cwd)
     for fault in faults:
         print(f"check-tracked-budget: {fault}", file=sys.stderr)
     if faults:
