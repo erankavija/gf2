@@ -35,8 +35,12 @@ detect in every build. The `avx2` and `avx512` features of `gf2-kernels-simd`
 gate no code. To pin scalar code on a SIMD-capable host, build `gf2-core` with
 `default-features = false` and no dependency enabling `gf2-core/simd` (for
 `gf2-coding`, `default-features = false` as well), construct the demapper with
-`FastGrayQamDemapper::new_with_scalar_kernel`, and keep the conservative BCH
-encode section.
+`FastGrayQamDemapper::new_with_scalar_kernel`, and for BCH encoding either
+name a portable family per call with `BchCode::encode_batch_family_into`
+(`EncodeFamily::TableRemainder` or `EncodeFamily::REFERENCE`) or install a
+coding tuning section whose `bitslice_interleaved_min_batch` and
+`clmul_fold_min_batch` are `usize::MAX`. The default section selects those two
+families, which run the detected BCH encode kernels.
 
 `RUSTFLAGS="-C target-cpu=native"` lets the compiler use the build host's
 extensions in code outside the dispatched kernels and produces a binary that
