@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <isa-l/erasure_code.h>
 #include <m4rie/m4rie.h>
@@ -52,10 +53,17 @@ static void axpy(size_t len) {
   for (size_t i = 0; i < len; i++) y[i] = next_byte();
   size_t reps = (((size_t)1 << 28) / len) ? ((size_t)1 << 28) / len : 1;
   gf_vect_mul_init(c, tables);
+  /* Two equal updates cancel, so the digest is of one update of the drawn y,
+   * taken before the timed repetitions. */
+  uint8_t *once = malloc(len);
+  memcpy(once, y, len);
+  gf_vect_mad((int)len, 1, 0, tables, x, once);
+  uint64_t digest = checksum(once, len);
   double seconds;
   BEST(seconds, for (size_t r = 0; r < reps; r++) gf_vect_mad((int)len, 1, 0, tables, x, y));
   printf("axpy\t%zu\tisa-l gf_vect_mad\t%.2f GB/s\t%016llx\n", len,
-         (double)len * reps / seconds / 1e9, (unsigned long long)checksum(y, len));
+         (double)len * reps / seconds / 1e9, (unsigned long long)digest);
+  free(once);
   free(x);
   free(y);
 }
