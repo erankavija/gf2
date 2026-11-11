@@ -72,45 +72,59 @@ counts ([`parallel_determinism.rs`](../../crates/gf2-sim/tests/parallel_determin
 and across repeated runs
 ([`campaign_byte_identity.rs`](../../experiments/dvb-t2-awgn/tests/campaign_byte_identity.rs)).
 
-`curve_1_2_16qam.csv` under `dvb_r12_16qam` holds one row per point:
+`curve_1_2_16qam.csv` under `dvb_r12_16qam` holds one row per point under
+the header
 
 ```text
 es_n0_db,fer,ber,frames,errors,mean_iters,wall_seconds
-5.9,0.56,0.007353142076502732,100,56,49.85,<elapsed>
-6,0.08666666666666667,0.0003727852293426064,300,26,46.806666666666665,<elapsed>
-6.1,0,0,300,0,39.736666666666665,<elapsed>
-6.2,0,0,300,0,34.81,<elapsed>
 ```
 
+`frames` is the number of simulated frames and `errors` the number of frame
+errors, a frame error being any information-bit error in the decoded
+BBFRAME. `fer` is `errors / frames`, `ber` counts bit errors over the same
+BBFRAME bits, and `mean_iters` is the mean belief-propagation iteration count.
 `wall_seconds` is the host's sweep wall-clock time divided by the number of
 points, an unbenchmarked observation; performance claims follow
-`@/inv/benchmark-backed-performance`. `ber` and `wall_seconds` lie outside the
-determinism contract.
+`@/inv/benchmark-backed-performance`. The determinism contract covers
+`es_n0_db`, `fer`, `frames`, `errors` and `mean_iters`; `ber` and
+`wall_seconds` lie outside it.
 
 ## Interpret the result
 
-A frame error is any information-bit error in the decoded BBFRAME; `fer` is
-`errors / frames`, `ber` counts bit errors over the same BBFRAME bits, and
-`mean_iters` is the mean belief-propagation iteration count. The 95%
-intervals below are `gf2_stats::intervals::clopper_pearson_interval(errors, frames, 0.95)`
-over the CSV above, recorded with the command above on host `fraktaali`
-(AMD Ryzen 9 5900X, rustc 1.97.0):
+A 95% Clopper-Pearson interval for each point's FER follows from its `errors`
+and `frames` columns. This program prints one interval per CSV row read from
+standard input:
 
-| Es/N0 (dB) | Errors / frames | FER | 95% interval |
-|---|---|---|---|
-| 5.9 | 56 / 100 | 0.56 | [0.4572, 0.6592] |
-| 6.0 | 26 / 300 | 0.0867 | [0.0574, 0.1244] |
-| 6.1 | 0 / 300 | 0 | [0.0000, 0.0122] |
-| 6.2 | 0 / 300 | 0 | [0.0000, 0.0122] |
+```rust
+use std::io::BufRead;
 
-- At 5.9 dB the mean iteration count is 49.85 of the decoder's 50-iteration
-  cap and more than half the frames fail. The waterfall lies between 5.9 and
-  6.1 dB, where the FER falls from 0.56 to no observed error.
-- At 6.0, 6.1 and 6.2 dB the frame budget ended the point. The 6.0 dB
-  interval locates the FER within a factor of about two; the error-free
-  intervals bound it from above, and a larger `--max-frames` narrows them.
-- The interval treats `frames` as fixed. The 5.9 dB point stopped on the
-  error target, so its interval is approximate.
+use gf2_stats::intervals::clopper_pearson_interval;
+
+fn main() {
+    for line in std::io::stdin().lock().lines().skip(1) {
+        let line = line.unwrap();
+        let col: Vec<&str> = line.split(',').collect();
+        let (frames, errors): (u64, u64) = (col[3].parse().unwrap(), col[4].parse().unwrap());
+        let (lo, hi) = clopper_pearson_interval(errors, frames, 0.95);
+        println!("{} dB: FER {} in [{lo:.4}, {hi:.4}]", col[0], col[1]);
+    }
+}
+```
+
+Read the run's curve against its stopping rule:
+
+- A point whose `mean_iters` approaches the decoder's iteration cap
+  (`DvbT2Concat::max_ldpc_iterations`) is above the waterfall: most frames
+  fail to converge. The waterfall lies between that point and the first point
+  with few or no errors, and `mean_iters` falls across it.
+- A point with `errors` at or above `--target-errors` stopped on the error
+  target. Its stopping depended on the outcomes, so the interval, which treats
+  `frames` as fixed, is approximate.
+- A point with `frames` equal to `--max-frames` and fewer errors stopped on
+  the frame budget. With few or no errors its interval bounds the FER from
+  above rather than locating it; a larger `--max-frames` narrows it.
+- If every point lies on one side of the waterfall, shift `--esn0-range`
+  towards the other side.
 
 ## Resume a sweep
 
