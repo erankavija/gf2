@@ -33,8 +33,8 @@ pub const GRANULES_PER_TASK: NonZeroUsize = NonZeroUsize::MIN;
 
 /// Validated selectors for batch-encoding family dispatch.
 ///
-/// Every field is a lower bound a plan or batch must clear before the family
-/// it names is selected: the first two before
+/// The four profile fields are lower bounds a plan or batch must clear before
+/// the family each names is selected: the first two before
 /// [`EncodeFamily::TableRemainder`](crate::bch::encode::EncodeFamily::TableRemainder),
 /// then one each for
 /// [`EncodeFamily::BitsliceInterleaved`](crate::bch::encode::EncodeFamily::BitsliceInterleaved)
@@ -42,12 +42,17 @@ pub const GRANULES_PER_TASK: NonZeroUsize = NonZeroUsize::MIN;
 /// [`EncodeFamily::ClmulFold`](crate::bch::encode::EncodeFamily::ClmulFold).
 /// They compose with, and never override, the representation availability the
 /// kernels report, so no selector value can select a family that cannot run.
+/// `clmul_fold_run_blocks` is a caller's override of the fold's run length,
+/// never part of a profile; without one the fold takes
+/// [`clmul_fold_run_blocks`](crate::bch::encode::clmul_fold_run_blocks) of the
+/// code's dimension.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EncodeSelectors {
     table_remainder_min_redundancy: usize,
     table_remainder_min_batch: usize,
     bitslice_interleaved_min_batch: usize,
     clmul_fold_min_batch: usize,
+    clmul_fold_run_blocks: Option<NonZeroUsize>,
 }
 
 impl EncodeSelectors {
@@ -70,7 +75,22 @@ impl EncodeSelectors {
             table_remainder_min_batch,
             bitslice_interleaved_min_batch,
             clmul_fold_min_batch,
+            clmul_fold_run_blocks: None,
         })
+    }
+
+    /// Sets the message blocks [`EncodeFamily::ClmulFold`] stages per fold
+    /// kernel call in place of the structural
+    /// [`clmul_fold_run_blocks`](crate::bch::encode::clmul_fold_run_blocks),
+    /// for equivalence tests, benchmarks and hosts whose balance differs. A
+    /// chunk fold rounds it up to a whole number of chunks; the codewords are
+    /// the same at every run length.
+    ///
+    /// [`EncodeFamily::ClmulFold`]: crate::bch::encode::EncodeFamily::ClmulFold
+    #[must_use]
+    pub const fn with_clmul_fold_run_blocks(mut self, blocks: NonZeroUsize) -> Self {
+        self.clmul_fold_run_blocks = Some(blocks);
+        self
     }
 
     /// Returns the minimum redundancy $r$ at which the table family is selected.
@@ -97,6 +117,14 @@ impl EncodeSelectors {
     #[must_use]
     pub const fn clmul_fold_min_batch(&self) -> usize {
         self.clmul_fold_min_batch
+    }
+
+    /// Returns the caller's fold run length in message blocks, `None` for the
+    /// structural
+    /// [`clmul_fold_run_blocks`](crate::bch::encode::clmul_fold_run_blocks).
+    #[must_use]
+    pub const fn clmul_fold_run_blocks(&self) -> Option<NonZeroUsize> {
+        self.clmul_fold_run_blocks
     }
 }
 
@@ -230,6 +258,7 @@ impl CodingSelectors {
             table_remainder_min_batch: TABLE_REMAINDER_MIN_BATCH,
             bitslice_interleaved_min_batch: BITSLICE_INTERLEAVED_MIN_BATCH,
             clmul_fold_min_batch: CLMUL_FOLD_MIN_BATCH,
+            clmul_fold_run_blocks: None,
         },
         decode: DecodeSelectors::CONSERVATIVE,
     };

@@ -8,7 +8,9 @@ use std::io::Write;
 use std::num::NonZeroUsize;
 use std::process::{Command, Stdio};
 
-use gf2_coding::bch::encode::{EncodeFamily, SystematicLayout, TABLE_REMAINDER_BLOCK_BITS};
+use gf2_coding::bch::encode::{
+    clmul_fold_run_blocks, EncodeFamily, SystematicLayout, TABLE_REMAINDER_BLOCK_BITS,
+};
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use gf2_coding::test_support;
 use gf2_coding::tuning::{self, CodingSelectors, CodingTuning, DecodeSelectors, EncodeSelectors};
@@ -48,6 +50,11 @@ const BATCH: usize = 16;
 /// worker count.
 const LANE_GROUP_BATCH: usize = 257;
 
+/// The fold run length [`FreshProcessCase::ClmulFoldRunOverride`] installs:
+/// a multiple of no accumulator count the fold derives, and above the
+/// structural run of [`corpus_row_b3`].
+pub const FOLD_RUN_BLOCKS: usize = 9;
+
 /// The decode family the decode cases install, as `lane_min_frames`,
 /// `lane_max_edges` and `granules_per_task`; every value differs from its
 /// conservative one.
@@ -80,6 +87,9 @@ pub enum FreshProcessCase {
     /// through the owner codec's canonical JSON.
     #[cfg(feature = "tuning-profile")]
     ClmulFoldEncoded,
+    /// A compiled envelope admitting the carry-less-multiply fold family with
+    /// [`FOLD_RUN_BLOCKS`] as its run length.
+    ClmulFoldRunOverride,
     /// A compiled envelope carrying a decode family beside selectors
     /// admitting the table family.
     DecodeFamilyCompiled,
@@ -117,6 +127,7 @@ impl FreshProcessCase {
             Self::ClmulFoldAllocation => "clmul-fold-allocation",
             #[cfg(feature = "tuning-profile")]
             Self::ClmulFoldEncoded => "clmul-fold-encoded",
+            Self::ClmulFoldRunOverride => "clmul-fold-run-override",
             Self::DecodeFamilyCompiled => "decode-family-compiled",
             #[cfg(feature = "tuning-profile")]
             Self::DecodeFamilyEncoded => "decode-family-encoded",
@@ -152,6 +163,7 @@ impl FreshProcessCase {
             Some("clmul-fold-allocation") => Ok(Self::ClmulFoldAllocation),
             #[cfg(feature = "tuning-profile")]
             Some("clmul-fold-encoded") => Ok(Self::ClmulFoldEncoded),
+            Some("clmul-fold-run-override") => Ok(Self::ClmulFoldRunOverride),
             Some("decode-family-compiled") => Ok(Self::DecodeFamilyCompiled),
             #[cfg(feature = "tuning-profile")]
             Some("decode-family-encoded") => Ok(Self::DecodeFamilyEncoded),
@@ -392,6 +404,7 @@ pub fn execute_child(case: FreshProcessCase) -> serde_json::Value {
         FreshProcessCase::ClmulFoldEncoded => {
             execute_install_child(encoded_envelope(selectors_admitting_the_clmul_family()))
         }
+        FreshProcessCase::ClmulFoldRunOverride => execute_fold_run_child(),
         FreshProcessCase::DecodeFamilyCompiled => {
             execute_install_child(compiled_envelope(selectors_carrying_a_decode_family()))
         }
@@ -476,6 +489,28 @@ fn execute_conservative_child() -> serde_json::Value {
         "agrees_with_reference": agrees,
         "decode": decode_report(active.section.decode()),
         "resolution": "frozen-before-install",
+    })
+}
+
+/// Installs selectors admitting the fold family with [`FOLD_RUN_BLOCKS`] and
+/// reports the run a workspace is prepared with beside the structural one.
+fn execute_fold_run_child() -> serde_json::Value {
+    let mut selectors = selectors_admitting_the_clmul_family();
+    selectors.encode = selectors
+        .encode
+        .with_clmul_fold_run_blocks(NonZeroUsize::new(FOLD_RUN_BLOCKS).unwrap());
+    gf2_core::tuning::install(compiled_envelope(selectors)).unwrap();
+    let code = corpus_row_b3();
+    let (selected, agrees) = encode_and_compare(&code);
+    let (accumulators, run) = test_support::encode_fold_run(&code.encode_workspace())
+        .expect("a workspace prepares the fold family");
+    serde_json::json!({
+        "family": selected.name(),
+        "agrees_with_reference": agrees,
+        "accumulators": accumulators,
+        "run_blocks": run,
+        "structural_run_blocks": clmul_fold_run_blocks(code.k()).get(),
+        "resolution": "installed",
     })
 }
 

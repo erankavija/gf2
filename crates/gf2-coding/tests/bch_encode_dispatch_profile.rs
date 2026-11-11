@@ -195,6 +195,22 @@ fn a_null_family_or_selector_is_rejected() {
 /// QC route bounds are a caller's parameter of the route, never a profile
 /// selector, so a body stating them is refused.
 #[test]
+fn a_body_stating_a_fold_run_length_is_rejected() {
+    for text in [
+        r#"{"encode": {"clmul_fold_run_blocks": 64}}"#,
+        r#"{"encode": {"clmul_fold_run_blocks": null}}"#,
+    ] {
+        assert!(
+            matches!(
+                CodingTuningCodec::decode_body(body(text)),
+                Err(SectionError::InvalidBody(_))
+            ),
+            "{text}"
+        );
+    }
+}
+
+#[test]
 fn a_body_stating_qc_route_bounds_is_rejected() {
     for text in [
         r#"{"decode": {"qc_route": {"lane_claim_max_lifting_size": 24, "lane_claim_min_frames": 8, "max_workers": 12, "min_lifting_size": 0}}}"#,
