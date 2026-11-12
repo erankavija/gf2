@@ -110,4 +110,5 @@ pub fn messages(k: usize, count: usize, seed: u64) -> Vec<gf2_core::BitVec> {
 }
 
 pub mod bch;
+pub mod cutover;
 pub mod nr;
