@@ -1030,7 +1030,7 @@
       "id": "stale-invariant-quote-in-issue-descriptions",
       "issue": "86185f88",
       "severity": "low",
-      "summary": "Nine JIT issue descriptions quote claims-trace-to-artifacts' superseded field list ('seeds, git revision, hardware, toolchain'). Four are still backlog and will be worked in waves 10-13 with stale criteria text: 1d0b3ec4, 90a61cd4, ed494117, b05c908b, b5d45bcd. Editing an issue description is a scope change, so not done unilaterally."
+      "summary": "Nine JIT issue descriptions quote benchmark-backed-performance' superseded field list ('seeds, git revision, hardware, toolchain'). Four are still backlog and will be worked in waves 10-13 with stale criteria text: 1d0b3ec4, 90a61cd4, ed494117, b05c908b, b5d45bcd. Editing an issue description is a scope change, so not done unilaterally."
     },
     {
       "issue": "8ec10dde",

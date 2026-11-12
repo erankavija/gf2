@@ -1,5 +1,5 @@
 #!/bin/bash
-# Quick thread scaling test (runs in ~5 minutes)
+# Quick thread scaling test
 #
 # Tests thread scaling with 1, 2, 4, 8, and all available threads
 # Usage: ./benchmark_quick.sh

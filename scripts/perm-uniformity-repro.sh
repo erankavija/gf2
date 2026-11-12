@@ -12,7 +12,7 @@
 #
 # Requirements:
 #   - Rust toolchain (1.95+) with cargo
-#   - ~3-4 min wall-clock on Ryzen 9 5900X (12 cores) for the full sweep
+#   - The full sweep should run on a quiesced host.
 #
 # Build invocation note (D5):
 #   This crate is excluded from the root workspace (it is a standalone research
@@ -47,7 +47,7 @@ echo "  building with --manifest-path (not -p; crate is workspace-excluded)..."
 
 cargo build --manifest-path "$MANIFEST" --release
 
-echo "  running sweep (this may take 3-4 min)..."
+echo "  running sweep..."
 
 mkdir -p "$OUT_DIR"
 OUTPUT_DIR="$OUT_DIR" \

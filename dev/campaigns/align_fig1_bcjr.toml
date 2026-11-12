@@ -1,6 +1,6 @@
 # Alignment test for Fig 1: (1024, 441) dRM product code with BCJR SISO
 # Uses trellis-based BCJR decoder instead of SOGRAND for component SISO.
-# Target: BLER <= 0.15 at 1.0 dB (paper: 0.072, within 2x target).
+# Target: BLER <= 0.15 at 1.0 dB, with the paper's curve as the reference.
 
 [campaign]
 name = "align_fig1_bcjr"

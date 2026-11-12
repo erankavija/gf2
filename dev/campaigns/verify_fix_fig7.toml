@@ -1,5 +1,5 @@
 # Verify SOGRAND + damping fix for GLDPC at 1.5-3.0 dB
-# GLDPC check nodes need few queries — paper shows ~60 avg queries.
+# GLDPC check nodes need few queries according to the paper.
 # max_queries=5000 gives ample budget for check-node SOGRAND while keeping
 # per-frame time manageable.
 

@@ -13,15 +13,15 @@ fn main() {
             "all" => generate_all(output_dir),
             _ => {
                 eprintln!("Usage: {} [short|all]", args[0]);
-                eprintln!("  short: Generate 6 Short frames only (~10 seconds)");
-                eprintln!("  all:   Generate all 12 frames (~5-10 minutes)");
+                eprintln!("  short: Generate 6 Short frames only");
+                eprintln!("  all:   Generate all 12 frames");
                 std::process::exit(1);
             }
         }
     } else {
         eprintln!("Usage: {} [short|all]", args[0]);
-        eprintln!("  short: Generate 6 Short frames only (~10 seconds)");
-        eprintln!("  all:   Generate all 12 frames (~5-10 minutes)");
+        eprintln!("  short: Generate 6 Short frames only");
+        eprintln!("  all:   Generate all 12 frames");
         std::process::exit(1);
     }
 }
@@ -94,7 +94,7 @@ fn generate_all(output_dir: &Path) {
         }
     };
 
-    println!("This will take ~5-10 minutes with SIMD (was 2-5 hours before!).\n");
+    println!("Generating the cache with SIMD.\n");
 
     let start = std::time::Instant::now();
 

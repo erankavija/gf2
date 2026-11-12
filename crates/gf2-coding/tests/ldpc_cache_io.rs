@@ -168,11 +168,11 @@ fn test_cache_load_is_fast() {
 }
 
 #[test]
-#[ignore = "bench: RREF preprocessing of every DVB-T2 code (~13 min); run on a quiesced host"]
+#[ignore = "bench: RREF preprocessing of every DVB-T2 code; run on a quiesced host"]
 fn test_precompute_and_save_dvb_t2() {
     skip_unless_bench!(
         "test_precompute_and_save_dvb_t2",
-        "RREF-preprocesses every DVB-T2 code (~13 min, ~800 MB peak)"
+        "RREF-preprocesses every DVB-T2 code"
     );
 
     let temp_dir = scratch("gf2-ldpc-cache-io");
@@ -187,11 +187,11 @@ fn test_precompute_and_save_dvb_t2() {
 }
 
 #[test]
-#[ignore = "bench: RREF preprocessing of every DVB-T2 code (~13 min); run on a quiesced host"]
+#[ignore = "bench: RREF preprocessing of every DVB-T2 code; run on a quiesced host"]
 fn test_load_dvb_t2_cache() {
     skip_unless_bench!(
         "test_load_dvb_t2_cache",
-        "RREF-preprocesses every DVB-T2 code (~13 min, ~800 MB peak)"
+        "RREF-preprocesses every DVB-T2 code"
     );
 
     let temp_dir = scratch("gf2-ldpc-cache-io");

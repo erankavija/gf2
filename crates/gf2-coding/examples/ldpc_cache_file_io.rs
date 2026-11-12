@@ -29,7 +29,7 @@ fn main() {
 #[allow(dead_code)]
 fn generate_cache(cache_dir: &Path) {
     println!("=== Generating LDPC Cache Files ===\n");
-    println!("This is a one-time operation that takes ~30-60 seconds.");
+    println!("This is a one-time operation that may take a while.");
     println!("Cache directory: {}\n", cache_dir.display());
 
     let start = Instant::now();

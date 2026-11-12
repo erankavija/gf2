@@ -15,9 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     # The heavy legs run serialized (see the `slow-serial` test group in
     # .config/nextest.toml), so wall-clock is dominated by them running back to
-    # back rather than by the widest parallel batch: ~76 min of tests plus ~16
-    # min of build on run 29187854558. The ceiling leaves room for a slow runner
-    # and for the two 900 s legs running to completion rather than being killed.
+    # back rather than by the widest parallel batch. The ceiling leaves room
+    # for a slow runner and for the two 900 s legs to run to completion.
     timeout-minutes: 150
     permissions:
       contents: read
@@ -60,11 +59,11 @@ jobs:
   kani-heavy:
     name: Kani Verification (heavy GF(256) harnesses)
     runs-on: ubuntu-latest
-    # The three GF(256) table harnesses each take ~6-7 min of CBMC solving and
-    # are too memory-heavy to run alongside the rest on the blocking CI runner
+    # The three GF(256) table harnesses are too memory-heavy to run alongside
+    # the rest on the blocking CI runner
     # (.github/workflows/ci.yml runs everything else). Verify them here nightly,
-    # sequentially, so peak memory stays at one harness. ~20 min nominal; ceiling
-    # has wide margin for slow runners (CBMC times vary ~2.5x by runner).
+    # sequentially, so peak memory stays at one harness. The ceiling has wide
+    # margin for slow runners.
     timeout-minutes: 90
     permissions:
       contents: read

@@ -1,6 +1,5 @@
-# Combined GLDPC fix test: damping + larger list + 1M queries at 2.0 dB
-# Previous damped result: BLER=0.227 (list=4, 100K queries)
-# Target: paper's 0.130
+# Combined GLDPC test: damping, a larger list, and more queries at 2.0 dB
+# Compare the combined configuration with the paper's reported result.
 
 [campaign]
 name = "test_gldpc_combined"
