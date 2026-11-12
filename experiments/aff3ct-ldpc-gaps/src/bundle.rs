@@ -167,7 +167,7 @@ pub fn read_codewords(dir: &Path, frames: usize, n: usize) -> io::Result<Vec<u8>
 /// O(T + E + N + M) auxiliary space.
 ///
 /// Uses the padded, one-indexed row and column sections emitted by
-/// `gf2-sim::export_alist`; both sections must describe the same graph.
+/// the `export_alist` binary; both sections must describe the same graph.
 ///
 /// # Errors
 ///
