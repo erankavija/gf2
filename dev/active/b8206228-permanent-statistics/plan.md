@@ -74,8 +74,8 @@ outside it, since a checksum file covering documents that quote it could never b
 closed. Records and summaries carry permanent and determinant quantities side by
 side, and each cell's recorded terminal state. The manifest schema enumerates
 seeds, stream purposes, grid with per-cell $N$, shard identities, per-cell
-backend, git revision, toolchain, accelerator runtime, and hardware, satisfying
-`@/inv/claims-trace-to-artifacts`, which no existing in-tree convention does.
+backend, git revision, toolchain, accelerator runtime, and hardware, as
+`@/inv/campaign-evidence` requires.
 Source identity and integrity are defined separately, since they are a rule about
 the emitting build rather than a shape on disk.
 
