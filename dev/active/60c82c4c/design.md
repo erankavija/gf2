@@ -19,14 +19,11 @@ The comparator side ran one round of the external arm of
 profiles `perf record -e cycles:u -F 999`. The night-window table of
 @/issue/fd9d5416 supersedes the rates.
 
-| Row B2, batch 4096 | ns per message | Mb/s |
-| --- | --- | --- |
-| bchlib, `CONFIG_BCH_CONST_PARAMS` ($m = 7$, $t = 10$) | 19.1 | 3356 |
-| gf2 `encode_batch` (selects `clmul-fold`) | 82.5 | 776 |
-| gf2 `encode_batch_family_into`, `clmul-fold`, workspace | 64.5 | 993 |
-| gf2 same, `table-remainder` | 52.6 | 1217 |
-| gf2 same, `bitslice-interleaved` | 44.3 | 1446 |
-| lean single-block Barrett loop (driver prototype, see below) | 4.7 | 13542 |
+At batch 4096 bchlib with `CONFIG_BCH_CONST_PARAMS` ($m = 7$, $t = 10$)
+takes 19.1 ns per message (3356 Mb/s) and gf2's `encode_batch`, which selects
+`clmul-fold`, 82.5 ns (776 Mb/s). Over one workspace, `clmul-fold` takes
+64.5 ns, `table-remainder` 52.6 ns and `bitslice-interleaved` 44.3 ns. The
+driver's lean single-block Barrett loop (see below) takes 4.7 ns.
 
 gf2's cost per message is flat in $k$: row B1 ($k = 5$) costs 83 ns per
 message on the same path. The time is overhead around a reduction that is two
@@ -36,15 +33,13 @@ carry-less multiplies.
 
 `encode_batch_family_into`, `clmul-fold`, B2, batch 4096: 295 cycles and
 1120 instructions per message (IPC 3.8, so instruction- and stall-bound rather
-than memory-bound). Shares of `cycles:u`:
-
-| Symbol | Share | Cause |
-| --- | --- | --- |
-| `packed_fold_reduce` | 27 % | chunk-fold scaffolding for a one-block message, see 3 |
-| `BitVec::write_run` | 25 % | store-forwarding stall in `BitVec::words_mut`, see 2 |
-| `validate_batch` + `malloc`/`free`/`Arc<FieldIdRepr>::drop_slow` | 21 % | one `FieldId` allocation per message, see 1 |
-| `fold_chunks_pclmul` + `fold_blocks_pclmul_safe` | 12 % | the reduction itself |
-| `packed_place_codeword`, family dispatch | 8 % | placement and per-message calls |
+than memory-bound). The causes, with their share of `cycles:u`, are
+numbered below:
+`packed_fold_reduce` 27 % (cause 3), `BitVec::write_run` 25 % (cause 2),
+`validate_batch` with the `malloc`, `free` and `Arc<FieldIdRepr>::drop_slow`
+it triggers 21 % (cause 1), the reduction kernels `fold_chunks_pclmul` and
+`fold_blocks_pclmul_safe` 12 %, and `packed_place_codeword` with the family
+dispatch 8 %.
 
 The allocating `encode_batch` adds 17 ns per message: one heap `BitVec` per
 codeword from `vec![S::zeroed(..); len]`, freed when the caller drops it.
