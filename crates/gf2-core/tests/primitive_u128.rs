@@ -30,7 +30,10 @@ fn standard_u128_entries_primitivity() {
             !is_primitive_u128(polynomial)
         })
         .collect();
-    assert_eq!(nonprimitive, [84, 88, 100, 108, 110, 112, 124]);
+    assert!(
+        nonprimitive.is_empty(),
+        "non-primitive degrees: {nonprimitive:?}"
+    );
 }
 
 #[test]

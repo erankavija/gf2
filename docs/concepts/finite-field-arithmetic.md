@@ -209,8 +209,9 @@ the covered degrees, each entry's source and the test that verifies it:
 - `standard(m)` entries are primitive; its degree-32 entry is the Conway
   polynomial.
 - `standard_u128(m)` extends the catalogue into `u128` degrees. Every entry
-  is irreducible; its Rustdoc states the per-degree primitivity guarantee
-  checked by `standard_u128_entries_primitivity`.
+  is primitive, checked by `standard_u128_entries_primitivity`; its Rustdoc
+  states the rule that selects an entry where the cited source lists a
+  non-primitive one.
 - `verify(m, poly)` returns `Matches`, `Conflict` or `Unknown` against
   `standard(m)`, and `trinomials(m)` lists the catalogued trinomials.
 
