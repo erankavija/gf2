@@ -22,7 +22,7 @@
 - Closed today: `07a1813a`, `069e3c33`, `de311215`, `040bc2b8`, `8a8a3bc9`, `befccab3`, `c9cb0dd2`, `1ce7e8a5`, `cbd1eb28`, `4f21da96`, `1aea3958`.
 - Every GF(2^8) cell is at 1.0 or above after an alignment fix in the AVX2 axpy kernel (`c9cb0dd2`).
 - `fd9d5416` falsified its aspirational REQ-03 on an indication. The gaps are milestone gaps under D-2 and are filed as `60c82c4c` (bchlib, B2), `5e71e993` (AFF3CT, B1) and `92ec2e2b` (M4RI and AFF3CT, W2).
-- `4f21da96` removed `scripts/cargo-budget.sh`; `AGENTS.md` states the current commands.
+- `4f21da96` removed the cargo budget wrapper script; `AGENTS.md` states the current commands.
 - Owner decisions of the day outside the charter:
   - Nothing reaches the remote without the owner's confirmation.
   - A lead may arm a short benchmark window once its queue is merged, the host is quiet and every lead's workers are idle. Long lines run at night.
@@ -30,7 +30,7 @@
   - `07a1813a` REQ-01 and `259acf37` REQ-05 were reworded; the reasons are in the issues.
   - `fd9d5416` REQ-02 is read literally: the long pre-cutover cells are measured, not projected.
   - `daef2dc3` got one class-wide rework round. A further code-review failure stops the work and returns to the owner.
-  - The untracked leftovers `dev/benchmarks`, `dev/simulation_results` and the `1a379447` directory under `dev/active` were deleted from the main checkout, and the ignored `dev/studies` leftovers were approved for deletion.
+  - Untracked and ignored measurement leftovers in the main checkout were deleted: the old benchmark, simulation-result and study directories under `dev/`, and the directory of the done epic `1a379447`.
 
 ## What to do next
 
