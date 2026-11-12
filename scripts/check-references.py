@@ -55,10 +55,14 @@ EXCEPTIONS = "scripts/reference-exceptions.toml"
 MAX_TEXT_BYTES = 4 * 1024 * 1024
 HOST_LOCAL = re.compile(
     r"(?<![\w.-])/home/[a-z_][\w-]*/|/Users/[A-Za-z]\w*/|/run/user/\d|/tmp/claude-"
-    r"|(?<![\w.-])/(?:mnt|root|data|scratch)/\w"
+    r"|(?<![\w.-])/(?:mnt|root|data|scratch|var/tmp)/\w"
     # The toolchain's own directories exist wherever the toolchain does.
     r"|(?<![\w.])(?:~|\$HOME|\$\{HOME\})/(?!\.cargo\b|\.rustup\b|\.elan\b)[\w.]"
 )
+# A file under /tmp that prose cites is host-local evidence unless the same line
+# is the command that writes it there.
+TEMP_PATH = re.compile(r"(?<![\w.-])/tmp/([\w.+=-]+(?:/[\w.+=-]+)*)")
+TEMP_WRITER = re.compile(r">|\s-o\s|--(?:output|out|receipt|checkpoint|log)\b|\btee\b|\bmktemp\b")
 ROOTS = r"(?:\.agents|\.cargo|\.config|\.github|\.jit|benchmarks|contrib|crates|dev|docs|experiments|packages|proofs|scripts)"
 REPOSITORY_PATH = re.compile(rf"(?<![\w./+~}}-])/?({ROOTS}/[\w.+=-]+(?:/[\w.+=-]+)*)")
 RELATIVE_PATH = re.compile(r"(?<![\w./+-])((?:\.\./)+[\w.+=-]+(?:/[\w.+=-]+)*)")
@@ -208,6 +212,10 @@ def faults_in(
             ]
         before = line
         if HOST_LOCAL.search(line):
+            faults.append(f"{path}:{number}: host-local path")
+        elif prose and not TEMP_WRITER.search(line) and any(
+            EVIDENCE_NAME.search(m.group(1)) for m in TEMP_PATH.finditer(line)
+        ):
             faults.append(f"{path}:{number}: host-local path")
         for match in REPOSITORY_PATH.finditer(line):
             end = match.end()
@@ -557,6 +565,10 @@ def self_test() -> None:
         (root / "docs").mkdir()
         (root / "docs/good.md").write_text("[a](bad-link.md) docs/good.md\n")
         (root / "docs/host.md").write_text("see /home/alice/x\n")
+        (root / "docs/temp.md").write_text(
+            "results in /tmp/bench/run.csv\nscratch at /var/tmp/alice/run.json\n"
+            "python3 x.py > /tmp/out.csv\nrun --receipt /tmp/osd/receipt.json\nclone into /tmp/charon\n"
+        )
         (root / "docs/gone.md").write_text("see dev/gone/file.json\n")
         (root / "docs/relative.md").write_text("see ../missing/file.txt and ../docs/good.md\n")
         (root / "docs/inline.md").write_text("see `gone/file.json` and `docs/good.md`\n")
@@ -669,7 +681,9 @@ def self_test() -> None:
         git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", "b", "--no-verify")
         faults = check(root)
     assert any("bad-link.md" in f for f in faults), faults
-    assert sum("host-local" in f for f in faults) == 3, faults
+    assert sum("host-local" in f for f in faults) == 5, faults
+    assert {f for f in faults if f.startswith("docs/temp.md")} == {
+        "docs/temp.md:1: host-local path", "docs/temp.md:2: host-local path"}, faults
     assert sum("tilde.md" in f for f in faults) == 1, faults
     assert [f for f in faults if "dot-root.md" in f] == ["docs/dot-root.md:1: .jit/absent.toml"], faults
     assert not any(f.startswith("docs/listed-") for f in faults), faults
