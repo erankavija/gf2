@@ -1,6 +1,6 @@
 # issue	worktree	est_minutes	command
 # 67194d70 new pre-draw validation; est_minutes is an estimate from the September run over the same anchors
-67194d70	.agents/worktrees/agent-67194d70	20	bash experiments/permanent-statistics/validation-window.sh
+# disabled until 3478cb98 and the validation digest land (gf2-79, 2026-11-12): 67194d70	.agents/worktrees/agent-67194d70	20	bash experiments/permanent-statistics/validation-window.sh
 # de311215 gf2 routes against AFF3CT NMS configurations on the recorded DVB-T2 and NR bundles; inputs and the AFF3CT tree are host-local under $GF2_EXT_ROOT; est_minutes is an estimate
 de311215	.agents/worktrees/agent-de311215	60	GF2_AFF3CT_ROOT="$GF2_EXT_ROOT/c077a88b/aff3ct" GF2_LDPC_BUNDLES="$GF2_EXT_ROOT/c077a88b/inputs" bash experiments/aff3ct-ldpc-gaps/quick-compare.sh
 # de311215 perf profiles of the gf2 QC and layered routes at w1-b1, w1-b16 and w12-b16; est_minutes is an estimate
@@ -13,3 +13,7 @@ be6d6f45	.agents/worktrees/jit-be6d6f45-run	5	GF2_SRSRAN_ROOT="$GF2_EXT_ROOT/c07
 befccab3	.agents/worktrees/jit-befccab3-run	5	GF2_GF2X_ROOT="$GF2_EXT_ROOT/c7113c5a" bash experiments/clmul-compare/compare.sh
 # c9cb0dd2 gf2 GF(2^8) region axpy (4 KiB to 16 MiB) and square products (n = 64, 256, 1024) against ISA-L gf_vect_mad and M4RIE (fastest of mzed_mul, Newton-John, bitsliced Karatsuba) on core 8; the library prefix is host-local under $GF2_EXT_ROOT; est_minutes is an estimate: two release builds and under a minute of cells
 c9cb0dd2	.agents/worktrees/jit-c9cb0dd2-run	5	GF256_BASELINE_PREFIX="$GF2_EXT_ROOT/6c6b09b1/prefix" GF256_BASELINE_CORE=8 bash experiments/gf256-baselines/run.sh
+# fd9d5416 BCH cutover: pre-cutover 74871c6b and HEAD against bchlib, AFF3CT and M4RI on workloads W1 and W2 in 3 interleaved rounds, every pre-cutover cell timed (2000 s call budget); est_minutes is an estimate from a 3-round indication plus the projected long cells
+fd9d5416	.agents/worktrees/agent-fd9d5416	180	CUTOVER_CALL_BUDGET_S=2000 CUTOVER_ROUNDS=3 GF2_SRSRAN_ROOT="$GF2_EXT_ROOT/c077a88b/srsran" GF2_AFF3CT_ROOT="$GF2_EXT_ROOT/c077a88b/aff3ct" GF2_BCHLIB_ROOT="$GF2_EXT_ROOT/040bc2b8/bchlib" GF2_M4RI_ROOT="$GF2_EXT_ROOT/6c6b09b1/prefix" bash experiments/encode-compare/cutover.sh
+# 259acf37 REQ-05 DVB-T2 normal R1/2 FER curves to 1e-3, flooding cap 50 and layered cap 25, on 1.0 to 2.0 dB (both crossings bracketed); libtest, since the slow nextest profile kills a test at 600 s; est_minutes is an estimate
+259acf37	.agents/worktrees/jit-259acf37-run	180	flock="$(python3 "$(git ls-files -- ':(glob)**/repository_files.py')" file ccx1-bench-flock.sh)" && GF2_BENCH=1 GF2_LAYERED_FER_GRID=1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0 CARGO_CI_NO_LOCK=1 "./$flock" --full-host ./scripts/cargo-budget.sh --test cargo test --release -p gf2-coding --test ldpc_layered_fer -- --ignored --exact dvb_t2_normal_r12_layered_is_within_a_tenth_of_a_db_of_flooding --nocapture
