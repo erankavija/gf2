@@ -15,7 +15,7 @@ REPO=${REPO_ROOT}
 BIN=$REPO/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas
 MANIFEST=$REPO/target/permanent-campaign/manifest-v1.txt
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
-OUT=$REPO/dev/studies/6c7fcb38/profiled-$STAMP
+OUT=$REPO/target/permanent-campaign/profiled-$STAMP
 FLOCK=$REPO/dev/scripts/ccx1-bench-flock.sh
 ROCPROF=/opt/rocm/bin/rocprofv3
 mkdir -p "$OUT"
@@ -144,19 +144,14 @@ rm -f "$V2PMC"
 
 echo "overall_fail: $fail" | tee -a "$LOG"
 
-# Packaging: per-dispatch counter and trace CSVs are too large to commit.
-# Compress them, move them to the local (uncommitted) retention directory
-# under target/, and aggregate the counters into the committed
-# counters-aggregate.csv via the aggregation script committed beside the
-# artifact. Only aggregates, rocprofv3's own kernel_stats, workload CSVs,
-# run.log, and provenance are committed.
+# Packaging: the run writes under target/, outside the tracked tree.
+# Per-dispatch counter and trace CSVs are compressed into a separate raw
+# retention directory beside the run directory.
 if [ "$fail" -eq 0 ]; then
   RAW=$REPO/target/permanent-campaign/profiled-raw-$STAMP
   mkdir -p "$RAW"
   ( cd "$OUT" && find . \( -name '*_counter_collection.csv' -o -name '*_kernel_trace.csv' \) -exec zstd -q -19 -T0 --rm {} + \
     && find . -name '*.zst' | while read -r f; do mkdir -p "$RAW/$(dirname "$f")"; mv "$f" "$RAW/$f"; done )
-  cp "$REPO/dev/studies/6c7fcb38/profiled-20260815T181923Z/aggregate-counters.py" "$OUT/" 2>/dev/null || true
-  python3 "$OUT/aggregate-counters.py" "$RAW" | tee -a "$LOG"
   echo "raw_retention: $RAW" | tee -a "$LOG"
 fi
 echo "$OUT"

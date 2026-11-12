@@ -12,7 +12,7 @@ validation and automatic field selection share. It is the producer of the
 implement against it.
 
 Facts about the current tree are cited rather than restated; the exhaustive
-inventory is in [investigation.md](investigation.md), claims 5–8 and
+inventory is in the planning investigation of `@/issue/2aa2279e`, claims 5–8 and
 "Primitive verification".
 
 ## Problem statement

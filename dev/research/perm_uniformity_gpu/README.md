@@ -57,12 +57,12 @@ loses completed cells.
 
 ## Outputs
 
-- CSV: `results-2026-05-17-gpu.csv` (exact
-  `8e4e19a0` schema; does **not** overwrite the committed CPU
-  `results-2026-05-15.csv`).
+Outputs go to `OUTPUT_DIR`, by default `target/benchmarks/perm_uniformity`:
+
+- CSV: `results-2026-05-17-gpu.csv`, in the `8e4e19a0` schema.
 - Plot: `tvd_vs_n_gpu.png`.
-- Writeup: `r4_gpu_uniformity_resample.md`.
-- Repro: `scripts/perm-uniformity-gpu-repro.sh`.
+
+Repro: `scripts/perm-uniformity-gpu-repro.sh`.
 
 ## Smoke tests
 

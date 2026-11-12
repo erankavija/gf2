@@ -6,7 +6,7 @@ This document fixes the `bchspec-model` and `block-code-traits` contracts from
 the [epic plan](plan.md). It consumes the approved
 [`field-extension-api`](extension-design.md) without introducing another field,
 extension, identity, or conversion abstraction. The exhaustive evidence and
-consumer paths remain in the [investigation](investigation.md); this document
+consumer paths were recorded in the planning investigation of `@/issue/2aa2279e`; this document
 classifies those paths by family instead of copying their volatile inventory.
 
 ## Problem statement
@@ -18,7 +18,7 @@ primitive narrow-sense codes. `BchCode::from_generator` accepts the same
 dependent values beside a supplied generator. Both surfaces can therefore
 represent inconsistent mathematics, and their validation uses panics. The
 concrete facts and source anchors are recorded in
-[investigation claim 1](investigation.md#claim-classification-numbered-verdicts).
+its claim 1.
 
 The shared coding interfaces also encode binary storage into their meaning.
 `BlockEncoder` accepts and returns `BitVec`, `GeneratorMatrixAccess` returns
@@ -27,7 +27,7 @@ methods. That surface cannot express a code over an arbitrary finite field,
 cannot select another symbol representation, and gives generic algorithms no
 common parity-check contract. BCH additionally places an unconditional matrix
 cache behind a mutex even though matrix access itself does not require caching
-([investigation claims 3 and 4](investigation.md#claim-classification-numbered-verdicts)).
+(its claims 3 and 4).
 
 The design establishes these single sources of truth:
 
@@ -916,7 +916,7 @@ a date or a release guess, and the module does not acquire unrelated helpers.
 ## Consumer-family mapping
 
 The tables cover every family grouping in the investigation's
-[`BchCode`, trait, matrix-I/O, and GF(2^m) primitive inventories](investigation.md#consumer-inventory).
+`BchCode`, trait, matrix-I/O, and GF(2^m) primitive inventories.
 Individual paths remain cited there as the single source of truth
 (`@/inv/single-source-prose`). “Canonical” means the family migrates inside
 epic `ae03bcd0`; “boundary” means its bit-only coding interface stays inside
@@ -1038,10 +1038,10 @@ construction and encoding use disjoint modules.
 | `cutover-bins-examples` | `crates/gf2-coding/src/bin/sim_runner.rs`, `crates/gf2-coding/src/bin/check_encoding.rs`, `crates/gf2-coding/examples/dvb_t2_bch_demo.rs`, `crates/gf2-coding/examples/block_code_intro.rs` |
 | `cutover-test-suite` | `crates/gf2-coding/tests/bch_tests.rs`, `crates/gf2-coding/tests/dvb_t2_bch_verification.rs`, `crates/gf2-coding/tests/ebch_128_64_reference.rs`, `crates/gf2-coding/tests/backend_integration.rs`, `crates/gf2-coding/tests/grand_phase1_smoke.rs`, `crates/gf2-coding/tests/bch_primitive_verification.rs` |
 | `cutover-benches` | `crates/gf2-coding/benches/bch_parallel.rs`, `crates/gf2-coding/benches/batch_operations.rs` |
-| `cutover-sim` | `ebch_osd_awgn_campaign.rs`, `gpu_bch_syndrome_throughput.rs`, `ebch_osd_campaign_cli.rs`, `crates/gf2-sim/tests/gpu_byte_identity.rs`, `osd_campaign_protocol.rs` |
+| `cutover-sim` | `ebch_osd_awgn_campaign.rs`, the GPU BCH syndrome throughput bench, `ebch_osd_campaign_cli.rs`, `crates/gf2-sim/tests/gpu_byte_identity.rs`, `osd_campaign_protocol.rs` |
 | `cutover-hip-tests` | `crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs`, `crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs` |
-| `cutover-removal` | `crates/gf2-coding/src/bch/core.rs`, `extended.rs`, and final `crates/gf2-coding/src/bch/mod.rs` cleanup after every consumer group |
-| `legacy-reference-sweep` | `crates/gf2-coding/README.md`, `SYSTEMATIC_ENCODING_CONVENTION.md`, `PARALLELIZATION.md`, `PRIMITIVE_POLYNOMIALS.md` |
+| `cutover-removal` | `crates/gf2-coding/src/bch/core.rs`, the extended-code module, and final `crates/gf2-coding/src/bch/mod.rs` cleanup after every consumer group |
+| `legacy-reference-sweep` | `crates/gf2-coding/README.md` and the crate's systematic-encoding, parallelization and primitive-polynomial notes |
 
 The direct migration groups are file-disjoint and may run in parallel after
 their graph prerequisites, with one ordered exception: `@/issue/97410c80`

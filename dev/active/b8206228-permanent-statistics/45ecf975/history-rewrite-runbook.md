@@ -41,15 +41,9 @@ The force-push waits for the owner's confirmation in `@/issue/45ecf975`.
 10. Verify a fresh clone's size, then ask GitHub Support to purge unreachable
     objects if old commits stay reachable by ID.
 
-## Rehearsal on 2026-11-02
+## Rehearsal
 
-| Measure | Before | After |
-|---|---:|---:|
-| Pack | 221 MiB | 63 MiB |
-| Refs rewritten | 522 | 522 |
-| Commits on `main` | 9,185 | 9,185 |
-| Pinned document commits mapped | | 334, none unmapped |
-| `jit validate` after mapping | | passes |
-| Compressed commit map | | 468 KB |
-
-Full `./scripts/cargo-ci.sh` passes on the rewritten checkout on a quiet host.
+A rehearsal runs steps 1 to 6 on a scratch mirror and reports pack size, refs
+rewritten, commits on `main`, pinned document commits mapped, the
+`jit validate` result and the compressed map size to the owner through the
+issue.

@@ -11,7 +11,7 @@ forbidden_paths = [
   '(^|/)outcomes?[^/]*\.(json|md|txt|csv|tsv|yaml|yml|toml)$',
   '\.(out|stdout|stderr)(\.[^/]*)?$',
   '(^|/)(stdout|stderr|output|timeline|scope)[^/]*\.txt$',
-  '^dev/(active|research)/(?!.*(\.(md|py|rs|sh|h|g|toml|lock)|/progress\.json|/[^/]*breakdown\.json)$)',
+  '^dev/(active|research)/(?!.*(\.(md|py|rs|sh|h|hip|g|toml|lock)|/progress\.json|/[^/]*breakdown\.json)$)',
   '^dev/studies/',
   '^experiments/[^/]+/results/',
   '(^|/)(execution|journal)[^/]*\.(log|jsonl|txt|csv|tsv)$',
@@ -34,6 +34,23 @@ record_members = [
   '(\w+_)?receipts?',
   'exit_(status|code)(_\w+)?',
   '(peak|max)_rss(_\w+)?',
+]
+
+# A Markdown document under `markdown_documents` is prose: a design, a plan, a
+# handoff. It is a receipt when its first heading or front matter `title`
+# matches `receipt_title`, or when a `name: value` line records a
+# `record_members` member with a literal value (a digest, a number or a
+# timestamp). It holds a result table when a header cell names one of
+# `measurement_columns` and most body cells under it are numeric. The columns
+# name what a run measures: elapsed time, processor time, rate, compiler
+# resource allocation, cycle counts and memory peaks. Sizes and counts that
+# design arithmetic derives, such as bytes per lane or code lines, are left out.
+markdown_documents = '^dev/(active|research)/.*\.md$'
+receipt_title = '\breceipts?\b'
+measurement_columns = [
+  'time', 'times', 'wall(_\w+)?', 'wall[- ]clock', 'cpu(_\w+)?', 'runtime', 'elapsed', 'duration', 'latency',
+  'ns', 'us', 'µs', 'ms', 'seconds', 'throughput(_\w+)?', '[GMK]i?B/s', '[GM]elem/s', '[GM]?ops/s', 'Gops',
+  'speedup', 'cycles', 'VGPRs?', 'SGPRs?', 'spills?', 'scratch', 'LDS', 'occupancy', 'rss', 'peak memory',
 ]
 [[exception]]
 path = "dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/*"

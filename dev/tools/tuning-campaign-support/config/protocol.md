@@ -20,12 +20,8 @@ Version 1 has two sibling files because it was pinned under two digests:
 `addendum-v1-initial.schema.json` is the text the very first pilot and
 confirmation receipts pinned, and `addendum-v1.schema.json` is the text every
 later version-1 receipt pinned after a wording-only edit to the
-`frozen.description` annotation; amendment-v2.md records
-the edit. `schema-versions.json` records which digest
-each version's schema file and its pinning receipts carry. The tooling lives
-in the `tuning-campaign-support` workspace crate
-(`dev/tools/tuning-campaign-support`); design.md records why that
-crate is the canonical home.
+`frozen.description` annotation. The tooling lives in the
+`tuning-campaign-support` workspace crate (`dev/tools/tuning-campaign-support`).
 
 ## Identity and versioning
 

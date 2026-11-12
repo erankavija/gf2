@@ -2275,9 +2275,7 @@
     "test_boundary": "receipt review against the predeclared protocol",
     "worker_sized_reason": "One measurement-and-receipt campaign over finished benches",
     "footprint": {
-     "creates": [
-      "ae03bcd0-bch-encode-receipts.md"
-     ]
+     "creates": []
     }
    },
    "landing_group": "performance"

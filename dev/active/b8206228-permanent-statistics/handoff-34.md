@@ -1,7 +1,6 @@
 # Handoff: Remove artifacts and unresolvable references (daef2dc3), session 37
 
 **Date:** 2026-11-12
-**Prior handoffs:** [handoff-33.md](handoff-33.md) and its predecessors.
 
 ## Current state
 
@@ -31,9 +30,8 @@ it; `@/issue/45ecf975` waits on those, `@/issue/1aea3958` and
    `dev/research/permanent_wave_gpu/scripts/compile_arch_evidence.sh` writes the
    receipt and log into the source directory. The budget admits Markdown there
    without inspecting it.
-2. **Medium, REQ-04.** Base-name citations of deleted files, such as
-   `f5_wave_resource_usage.log` in that README, pass the reference check, which
-   needs a slash in an inline path. The receipt also names an execution log
+2. **Medium, REQ-04.** Base-name citations of deleted files in that README
+   pass the reference check, which needs a slash in an inline path. The receipt also names an execution log
    that no longer exists.
 
 ## Next

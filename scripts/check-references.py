@@ -6,7 +6,16 @@ paths under the repository's top-level directories, relative and inline paths,
 links, Cargo path dependencies and Rust includes. A JSON, TOML or YAML file is
 also parsed: a string under a path-named member (`DATA_PATH_MEMBER`) shaped
 like a relative path must resolve from the repository root or the file's
-directory, be ignored by git, or be a template. Reasoned exceptions live in
+directory, be ignored by git, or be a template.
+
+A file name of an evidence kind (`EVIDENCE_NAME`: a log, a captured stream or
+a receipt), bare or with directories, in prose, in an issue description of an
+open issue, or in any data string, must name a tracked file by its path
+suffix or be written at run time: a name under `target/` passes when git
+ignores it, a bare name passes when its line or the line before names a
+`target/` location, the statement that the run writes the file there, and any
+name passes whose base name tracked code (`WRITER_SUFFIXES`) spells as the end
+of a string literal, the program that writes it. Reasoned exceptions live in
 `reference-exceptions.toml` beside this script.
 """
 
@@ -47,6 +56,11 @@ DATA_PATH_MEMBER = re.compile(
 DATA_PATH_VALUE = re.compile(r"(?:\.{1,2}/)*[\w.+=-]+(?:/[\w.+=-]+)*/?")
 YAML_MEMBER = re.compile(r"""^\s*(?:-\s+)?([\w.-]+)\s*:\s*(?:(["']?)([^"'\s#]*)\2)\s*(?:#.*)?$""")
 YAML_ITEM = re.compile(r"""^\s*-\s+(["']?)([^"'\s#]+)\1\s*(?:#.*)?$""")
+FILE_TOKEN = re.compile(r"(?<![\w./+~$}}@:-])((?:[\w.+=-]+/)*[\w+=-][\w.+=-]*\.[A-Za-z]\w*)(?![\w/+=-])")
+EVIDENCE_NAME = re.compile(r"\.(?:log|out|err|stdout|stderr|jsonl)$|receipt", re.IGNORECASE)
+TARGET_DIR = re.compile(r"(?<![\w.-])target/")
+WRITER_SUFFIXES = (".rs", ".py", ".sh", ".c", ".cpp", ".h", ".hip")
+LITERAL_NAME = re.compile(r"""["'/]([\w+=-][\w.+=-]*\.[A-Za-z]\w*)["']""")
 DEVICE = re.compile(r"dev/(?:null|zero|shm|stdin|stdout|stderr|fd|tty|kfd|dri|urandom|random|cpu|mem)\b")
 
 
@@ -70,16 +84,48 @@ def resolvable_set(tracked: list[str]) -> set[str]:
     return known
 
 
-def faults_in(path: str, text: str, known: set[str], base: str | None = None) -> list[str]:
+def evidence_faults(line: str, before: str, known: set[str], written: frozenset[str]) -> list[str]:
+    """Evidence-kind file names on `line` that name no tracked file.
+
+    `written` holds the base names tracked code writes. A name under `target/`
+    is returned for the caller's ignore check. A bare name is excused when
+    `line` or `before` names a `target/` location.
+    """
+    names = []
+    for token in FILE_TOKEN.findall(line):
+        name = token.removeprefix("./")
+        if not EVIDENCE_NAME.search(Path(name).name) or _suffix_known(name, known):
+            continue
+        if Path(name).name in written:
+            continue
+        if "/" not in name and (TARGET_DIR.search(line) or TARGET_DIR.search(before)):
+            continue
+        names.append(name)
+    return names
+
+
+def faults_in(
+    path: str,
+    text: str,
+    known: set[str],
+    base: str | None = None,
+    evidence: bool = True,
+    written: frozenset[str] = frozenset(),
+) -> list[str]:
     """`base` is the directory relative references resolve against.
 
     Passing it marks `text` as Markdown prose whatever the file's suffix.
+    `evidence` false skips `evidence_faults`.
     """
     faults = []
     markdown = base is not None or path.endswith(".md")
     prose = markdown or not path.endswith(CODE_SUFFIXES)
     base = str(Path(path).parent) if base is None else base
+    before = ""
     for number, line in enumerate(text.splitlines(), 1):
+        if prose and evidence:
+            faults += [f"{path}:{number}: {name}" for name in evidence_faults(line, before, known, written)]
+        before = line
         if HOST_LOCAL.search(line):
             faults.append(f"{path}:{number}: host-local path")
         for match in REPOSITORY_PATH.finditer(line):
@@ -120,7 +166,13 @@ def faults_in(path: str, text: str, known: set[str], base: str | None = None) ->
     return faults
 
 
-def data_faults(path: str, text: str, known: set[str], is_ignored=lambda target: False) -> list[str]:
+def data_faults(
+    path: str,
+    text: str,
+    known: set[str],
+    is_ignored=lambda target: False,
+    written: frozenset[str] = frozenset(),
+) -> list[str]:
     """Path-named members of a structured data file that resolve nowhere.
 
     Its reader may resolve a value from the repository root or from the file's
@@ -136,6 +188,9 @@ def data_faults(path: str, text: str, known: set[str], is_ignored=lambda target:
     lines = text.splitlines()
     faults = []
     for number, member, value in members:
+        for name in evidence_faults(value, "", known, written):
+            line = number or next((i for i, text in enumerate(lines, 1) if name in text), 0)
+            faults.append(f"{path}:{line}: {name}")
         if not DATA_PATH_MEMBER.search(member) or "/" not in value:
             continue
         if not DATA_PATH_VALUE.fullmatch(value) or TEMPLATE.search(value):
@@ -175,11 +230,14 @@ def _data_members(path: str, text: str):
             yield None, name, value
 
 
-def issue_faults(path: str, text: str, known: set[str]) -> list[str]:
+def issue_faults(path: str, text: str, known: set[str], written: frozenset[str] = frozenset()) -> list[str]:
     """An issue's references resolve from the repository root; its links must exist."""
     issue = json.loads(text)
     prose = "\n".join(filter(None, [issue.get("description"), issue.get("context") if isinstance(issue.get("context"), str) else None]))
-    faults = faults_in(path, prose, known, base="")
+    # A closed issue's description is history; it may name evidence the
+    # repository no longer holds.
+    open_issue = issue.get("state") in OPEN_STATES
+    faults = faults_in(path, prose, known, base="", evidence=open_issue, written=written)
     faults += [
         f"{path}:0: {document['path']}"
         for document in issue.get("documents", [])
@@ -230,16 +288,24 @@ def ignored(root: Path, target: str) -> bool:
     )
 
 
-def scan(path: str, text: str, known: set[str], is_ignored=lambda target: False) -> list[str]:
+def scan(
+    path: str,
+    text: str,
+    known: set[str],
+    is_ignored=lambda target: False,
+    written: frozenset[str] = frozenset(),
+) -> list[str]:
     # Archive evidence records where archived documents moved from, so its
     # source paths are history and need not resolve.
     if path.startswith(".jit/archive-evidence/"):
         return []
     if fnmatch.fnmatch(path, ".jit/issues/*.json"):
-        return issue_faults(path, text, known)
-    faults = faults_in(path, text, known)
+        return issue_faults(path, text, known, written)
+    faults = faults_in(path, text, known, written=written)
     if path.endswith(DATA_SUFFIXES):
-        faults += [fault for fault in data_faults(path, text, known, is_ignored) if fault not in faults]
+        faults += [
+            fault for fault in data_faults(path, text, known, is_ignored, written) if fault not in faults
+        ]
     return faults
 
 
@@ -250,7 +316,7 @@ def check(root: Path) -> list[str]:
     exceptions = (
         tomllib.loads(config.read_text())["exception"] if config.exists() else []
     )
-    faults = []
+    texts = {}
     for path in tracked:
         file = root / path
         if file.is_symlink() or not file.is_file():
@@ -258,13 +324,22 @@ def check(root: Path) -> list[str]:
         if file.stat().st_size > MAX_TEXT_BYTES:
             continue
         try:
-            text = file.read_text()
+            texts[path] = file.read_text()
         except UnicodeDecodeError:
             continue
+    written = frozenset(
+        name
+        for path, text in texts.items()
+        if path.endswith(WRITER_SUFFIXES)
+        for name in LITERAL_NAME.findall(text)
+    )
+    faults = []
+    for path, text in texts.items():
+        # A bare name has no location, so git's ignore rules do not excuse it.
         faults += [
-            fault for fault in scan(path, text, known, lambda target: ignored(root, target))
+            fault for fault in scan(path, text, known, lambda target: ignored(root, target), written)
             if not excepted(root, fault, exceptions)
-            and not ignored(root, fault.rsplit(": ", 1)[1])
+            and not ("/" in (target := fault.rsplit(": ", 1)[1]) and ignored(root, target))
         ]
     return faults
 
@@ -312,6 +387,25 @@ def self_test() -> None:
             "steps:\n  - path: missing/cache\n    other: missing/value\n  - path: target/cache\npaths:\n  - 'crates/**'\n  - absent/listed-yaml\n"
         )
         (root / "docs/ignored.md").write_text("see dev/ignored/file\n")
+        (root / "logs").mkdir()
+        (root / "logs/kept.log").write_text("")
+        (root / "docs/evidence.md").write_text(
+            "stderr is `f5_wave_resource_usage.log`\n"
+            "raw_log: hip/architecture_compile_evidence-v1.log\n"
+            "the probe left gap.out and run.stdout behind\n"
+            "see make-receipt.py and receipt-inventory.md\n"
+            "kept: `kept.log` and logs/kept.log\n"
+            "writes `target/run/out.log` and target/gone.log\n"
+            "The run writes its receipt under `target/oracle/`:\n"
+            "`oracle-receipt.md`, beside `oracle.log`.\n"
+            "the tool writes `written.log`; see `{run}/x.log` and $OUT/y.log\n"
+        )
+        (root / "src/writer.py").write_text('open(out / "written.log", "w")\n')
+        (root / "data/evidence.json").write_text(json.dumps({"inputs": ["notes/kept-receipt.md", "gone-receipt.md"]}))
+        (root / ".jit/issues/b.json").write_text(json.dumps({"state": "ready", "description": "see `open-gap.out`"}))
+        (root / ".jit/issues/c.json").write_text(json.dumps({"state": "done", "description": "see `done-gap.out`"}))
+        (root / "notes").mkdir()
+        (root / "notes/kept-receipt.md").write_text("")
         git(root, "add", ".")
         faults = check(root)
     assert any("bad-link.md" in f for f in faults), faults
@@ -343,7 +437,21 @@ def self_test() -> None:
         "data/workflow.yml:7: absent/listed-yaml",
     ):
         assert expected in data, (expected, data)
-    assert len(data) == 6, data
+    assert len(data) == 7, data
+    evidence = [f.split(":", 1)[1] for f in faults if f.startswith("docs/evidence.md:")]
+    assert evidence == [
+        "1: f5_wave_resource_usage.log",
+        "2: hip/architecture_compile_evidence-v1.log",
+        "3: gap.out",
+        "3: run.stdout",
+        "4: make-receipt.py",
+        "4: receipt-inventory.md",
+    ], evidence
+    assert "data/evidence.json:1: gone-receipt.md" in faults, faults
+    assert not any("kept-receipt" in f for f in faults), faults
+    assert any(f.startswith(".jit/issues/b.json") and "open-gap.out" in f for f in faults), faults
+    assert not any(f.startswith(".jit/issues/c.json") for f in faults), faults
+    assert not any("src/writer.py" in f for f in faults), faults
 
 
 def main() -> int:

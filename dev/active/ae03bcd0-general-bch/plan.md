@@ -7,7 +7,7 @@
 
 | Criterion | Approach | Evidence / open gap |
 |---|---|---|
-| REQ-01 | One approved extension design, then a gf2-core trait with validation certificates, plus exact-order and minimal-polynomial-over-subfield operations on it | [Investigation](investigation.md) claims 5, 7 |
+| REQ-01 | One approved extension design, then a gf2-core trait with validation certificates, plus exact-order and minimal-polynomial-over-subfield operations on it | Investigation claims 5, 7 |
 | REQ-02 | Runtime quotient extension defines the pair's semantics; compile-time form proves observable equivalence; deterministic Conway/search selection extends the existing registry | Investigation claims 6, 8 |
 | REQ-03 | `BchSpec` variants carry only independent inputs; one construct path derives closure, generator, $k$, bound, radius; convenience constructors delegate | Investigation claim 1; [brief](plans/planning-brief.md) API shape |
 | REQ-04 | Validation set plus the layered `error-surface` contract: core-owned IO errors, coding-general code/transform errors, BCH errors composing them | Investigation claim 1 |
@@ -32,7 +32,7 @@ One gf2-core abstraction for "E extends B": embedding, checked membership and
 restriction, relative degree, relative Frobenius, order relationships, reusable
 validation certificates. Producer: the `ext-design` document (via
 `produces_contracts`); `extension-trait` implements it. Grounding:
-[investigation](investigation.md) claim 5.
+investigation claim 5.
 
 ### `field-identity` [implementation-produced] — algebraic field identity
 
@@ -427,11 +427,11 @@ The manifest's `source_refs` resolve in this declared universe:
 - `REQ-01`…`REQ-16` — the epic contract's success criteria (issue `ae03bcd0`).
 - `D-01`…`D-13` — the rows of the Material risks and owner decisions table
   above.
-- `INV-*` — sections of [investigation.md](investigation.md):
+- `INV-*` — sections of the planning investigation of `@/issue/2aa2279e`:
   `INV-CLAIMS` = "Claim classification", `INV-CONSUMERS` = "Consumer
   inventory", `INV-PRIORART` = "Prior art", `INV-PRIMITIVES` = "Primitive
   verification", `INV-ARCH` = "Architecture fit", `INV-UNKNOWNS` = "Open
-  unknowns". Exhaustive consumer and file inventories live there.
+  unknowns".
 - `BRIEF-*` — sections of the
   [planning brief](plans/planning-brief.md):
   `BRIEF-API` = "API shape", `BRIEF-DISPATCH` = "Encoding architecture",

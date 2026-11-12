@@ -65,7 +65,7 @@ mechanical halt; `--on-unavailable fallback=batch_parallel` explicitly selects
 a supporting CPU implementation. Each shard records its executed backend.
 
 Schema 3 stores a compact `manifest.json`, one synced `execution.jsonl`, one
-one `qQ-nNN.jsonl` under `shards` per cell, and a recoverable `checkpoint.json`. The
+`q<q>-n<nn>.jsonl` under `shards` per cell, and a recoverable `checkpoint.json`. The
 manifest contains no shard inventory. `permanent_dataset finalize DIR`
 requires terminal cells and publishes `summary.csv`, `runs.json`, and
 `checksums.sha256`; `permanent_dataset verify DIR` checks these projections

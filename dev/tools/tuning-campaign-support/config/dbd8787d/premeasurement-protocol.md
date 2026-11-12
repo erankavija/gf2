@@ -5,9 +5,9 @@ Issue `dbd8787d` supplies the success criteria.
 This declaration amends the executed extent protocol
 [`a83583e0/premeasurement-protocol.md`](../a83583e0/premeasurement-protocol.md)
 (cited below as *a835*) by reference. Every rule of a835 holds unless a
-section here replaces it. The seam fields, their ranges and read sites come
-from `design.md` §4; the selector
-convention from `design.md`.
+section here replaces it. The seam fields, their ranges and read sites, and
+the selector convention, come from the selector design of the tuning-profile
+work.
 
 ## 1. Scope
 
@@ -57,7 +57,7 @@ per level, as production does.
 | Scalar base | public `FieldMatrix::ple` on `A = L*U` | none | PLE base route `(t, ScalarBase/BlockRecursive)`; no panel dispatch; carrier lane `None` |
 
 All three fields run over `Fp<2^31 - 1>`, the carrier of their defaults'
-recorded sweeps (`design.md` §4.4). Its whole-GEMM kernel accepts
+recorded sweeps. Its whole-GEMM kernel accepts
 every non-degenerate shape, so each classical GEMM leaf takes one
 capability-selected route; `gemm` reads no runtime GEMM selector, and the GEMM
 companions are read back to state the context explicitly. The Winograd

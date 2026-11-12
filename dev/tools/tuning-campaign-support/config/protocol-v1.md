@@ -9,8 +9,7 @@ finding codes the tool emits. Family and cell settings that the contract leaves
 to families are declared in addenda conforming to
 `addendum.schema.json`; the shared numeric settings are
 frozen here. The tooling lives in the `tuning-campaign-support` workspace crate
-(`dev/tools/tuning-campaign-support`); design.md records why that
-crate is the canonical home.
+(`dev/tools/tuning-campaign-support`).
 
 ## Identity and versioning
 
