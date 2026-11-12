@@ -129,14 +129,17 @@ impl Plan {
     }
 
     /// An upper bound on the scratch words [`karatsuba`] uses for `n`-word
-    /// operands: a node takes `4h <= 4n` words, a part that halves from
-    /// there takes a geometric `8h`, and an aligned remainder is at most
-    /// `n/2` words, so `12n` covers every node.
+    /// operands. A node splitting at `h` takes `4h` words and hands the rest
+    /// to its children, which run one at a time. A halving chain from `n`
+    /// takes `4 Σ ⌈n / 2^k⌉ < 4(n + log2 n) <= 8n`. An aligned point
+    /// `h` is `leaf · 2^j`, whose part halves exactly within `4h`, beside a
+    /// remainder within `8(n - h)` by induction, so the node takes at most
+    /// `max(8h, 8n - 4h) <= 8n`.
     fn scratch_words(&self, n: usize) -> usize {
         if n <= self.basecase {
             0
         } else {
-            12 * n
+            8 * n
         }
     }
 }
@@ -153,8 +156,9 @@ impl Plan {
 ///
 /// # Complexity
 ///
-/// `O(n^log2(3))` basecase products and `O(n log n)` word XORs, with scratch
-/// of about `8n` words held per thread across calls.
+/// `O(n^log2(3))` basecase products and word XORs, with at most `10n` words
+/// of scratch (`8n` for [`clmul_slice_overwrite`]) held per thread across
+/// calls.
 pub fn clmul_slice(a: &[u64], b: &[u64], out: &mut [u64]) {
     clmul_slice_with(a, b, out, ClmulSplit::structural());
 }
@@ -455,6 +459,54 @@ impl Kernels {
                 let product = crate::gf2m::barrett::clmul(x, y);
                 out[i + j] ^= product as u64;
                 out[i + j + 1] ^= (product >> 64) as u64;
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Runs every split on exactly [`Plan::scratch_words`] words, so a
+    /// recursion that needs more panics on its `split_at_mut`.
+    #[test]
+    fn karatsuba_fits_the_scratch_bound() {
+        let kernels = Kernels::detect();
+        let reference = Plan {
+            basecase: 1,
+            leaf: 1,
+            kernels,
+        };
+        for (basecase, leaf) in [
+            (1, 1),
+            (1, 8),
+            (2, 1),
+            (3, 2),
+            (4, 4),
+            (9, 8),
+            (9, 1),
+            (5, 64),
+        ] {
+            let plan = Plan {
+                basecase,
+                leaf,
+                kernels,
+            };
+            // Each `leaf · 2^j + 1` is an aligned split's widest point.
+            let lengths = (1..=160).chain((0..7).map(|j| (leaf << j) + 1));
+            for n in lengths {
+                let a: Vec<u64> = (0..n as u64)
+                    .map(|i| i.wrapping_mul(0x9E37_79B9_7F4A_7C15))
+                    .collect();
+                let b: Vec<u64> = a.iter().map(|x| x.rotate_left(17) ^ 0xA5A5).collect();
+                let mut scratch = vec![0; plan.scratch_words(n)];
+                let mut got = vec![0; 2 * n];
+                karatsuba(&a, &b, &mut got, &mut scratch, &plan, false);
+                let mut want = vec![0; 2 * n];
+                let mut wide = vec![0; reference.scratch_words(n)];
+                karatsuba(&a, &b, &mut want, &mut wide, &reference, false);
+                assert_eq!(got, want, "basecase {basecase}, leaf {leaf}, n {n}");
             }
         }
     }
