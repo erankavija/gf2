@@ -1,10 +1,12 @@
 //! Algorithm-level compute backends over GF(2) matrices: [`ComputeBackend`],
-//! implemented by [`CpuBackend`] on the word primitives of [`crate::kernels`].
+//! implemented by [`CpuBackend`] on the word primitives of [`crate::kernels`],
+//! and the index-ordered parallel batch dispatch [`for_each_partition`].
 
 pub mod backend;
 pub mod cpu;
 #[cfg(feature = "parallel")]
 pub mod field;
+pub mod partition;
 
 /// Value of `soa_batch.parallel_chunk_len()` in
 /// [`crate::tuning::CoreTuning::CONSERVATIVE`]: extension elements per rayon
@@ -24,3 +26,4 @@ mod batch_tests;
 
 pub use backend::ComputeBackend;
 pub use cpu::CpuBackend;
+pub use partition::{for_each_partition, partition_offset};
