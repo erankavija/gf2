@@ -210,6 +210,24 @@ mod tests {
     use super::*;
 
     #[test]
+    #[should_panic(expected = "constraint_length")]
+    fn encoder_rejects_constraint_length_32() {
+        ConvolutionalEncoder::new(32, vec![1]);
+    }
+
+    #[test]
+    #[should_panic(expected = "constraint_length")]
+    fn encoder_rejects_zero_constraint_length() {
+        ConvolutionalEncoder::new(0, vec![1]);
+    }
+
+    #[test]
+    fn encoder_accepts_constraint_length_31() {
+        let mut encoder = ConvolutionalEncoder::new(31, vec![1, 0x4000_0001]);
+        assert_eq!(encoder.encode_bit(true), vec![true, true]);
+    }
+
+    #[test]
     fn test_convolutional_encoder_creation() {
         let encoder = ConvolutionalEncoder::new(3, vec![0b111, 0b101]);
         assert_eq!(encoder.constraint_length(), 3);

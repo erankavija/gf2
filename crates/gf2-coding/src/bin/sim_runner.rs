@@ -612,6 +612,14 @@ where
 #[cfg(feature = "parallel")]
 type ProductDecodeFn = Box<dyn FnMut(&[gf2_coding::llr::Llr]) -> gf2_coding::traits::DecoderResult>;
 
+/// RNG seed of frame `frame_idx` at SNR point `point_idx`.
+#[cfg(feature = "parallel")]
+fn frame_seed(base_seed: u64, point_idx: usize, frame_idx: usize) -> u64 {
+    base_seed
+        .wrapping_add(point_idx as u64 * 1_000_000)
+        .wrapping_add(frame_idx as u64)
+}
+
 /// Frame-parallel product-code simulation: SNR points run sequentially and the
 /// frames of each point are spread over rayon workers, one decoder per worker.
 /// Shared atomic counters stop a point once `min_errors` frame errors are
@@ -664,8 +672,6 @@ where
         let total_queries = AtomicUsize::new(0);
         let stop_flag = AtomicBool::new(false);
 
-        let point_seed = base_seed.wrapping_add(point_idx as u64 * 1_000_000);
-
         let decoder_comp = decoder_component.clone();
         let cp_cfg = cp_config.clone();
         let turbo_cfg_inner = turbo_config.clone();
@@ -690,7 +696,7 @@ where
                         return;
                     }
 
-                    let mut rng = StdRng::seed_from_u64(point_seed + frame_idx as u64);
+                    let mut rng = StdRng::seed_from_u64(frame_seed(base_seed, point_idx, frame_idx));
                     let message = BitVec::random(k, &mut rng);
                     let codeword = product.encode(&message);
                     let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
@@ -1344,5 +1350,64 @@ taps = 4
             .filter(|c| filter.contains(&c.name))
             .collect();
         assert!(selected.is_empty());
+    }
+
+    #[cfg(feature = "parallel")]
+    #[test]
+    fn frame_seeds_are_distinct_across_points_beyond_one_million_frames() {
+        let base = 42;
+        assert_ne!(frame_seed(base, 0, 1_000_000), frame_seed(base, 1, 0));
+        assert_ne!(frame_seed(base, 0, 1_500_000), frame_seed(base, 1, 500_000));
+    }
+
+    #[cfg(feature = "parallel")]
+    fn frame_parallel_points(threads: usize) -> Vec<gf2_coding::simulation::SimulationResult> {
+        let turbo_cfg: TurboConfig = toml::from_str(
+            "max_iterations = 4\nalpha = 0.5\nlist_size = 4\nmax_queries = 1000",
+        )
+        .unwrap();
+        let config = SimulationConfig {
+            eb_n0_range_db: vec![0.0, 1.0],
+            min_errors: 5,
+            max_frames: 4000,
+            max_decoder_iterations: 4,
+            rng_seed: Some(7),
+            output_path: None,
+            checkpoint_dir: None,
+            tracing_log_path: None,
+            heartbeat_every_frames: None,
+        };
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build()
+            .unwrap();
+        pool.install(|| {
+            run_product_frame_parallel(
+                ProductCode::new(ExtendedBchComponent::ebch_16_11()),
+                ExtendedBchComponent::ebch_16_11(),
+                &turbo_cfg,
+                &BpskAwgnChannel,
+                &config,
+            )
+            .points
+        })
+    }
+
+    #[cfg(feature = "parallel")]
+    #[test]
+    fn frame_parallel_results_are_identical_across_worker_counts() {
+        let reference = frame_parallel_points(1);
+        assert!(reference.iter().all(|p| p.num_frame_errors >= 5));
+        for threads in [2, 4, 8] {
+            let points = frame_parallel_points(threads);
+            for (a, b) in reference.iter().zip(&points) {
+                assert_eq!(
+                    (a.num_frames, a.num_frame_errors, a.num_bit_errors),
+                    (b.num_frames, b.num_frame_errors, b.num_bit_errors),
+                    "{threads} workers at {} dB",
+                    a.eb_n0_db
+                );
+            }
+        }
     }
 }

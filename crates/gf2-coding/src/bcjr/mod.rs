@@ -228,6 +228,12 @@ mod tests {
     use crate::traits::BlockEncoder;
     use gf2_core::BitVec;
 
+    #[test]
+    #[should_panic(expected = "fewer columns than rows")]
+    fn new_rejects_more_rows_than_columns() {
+        BcjrDecoder::new(&BitMatrix::zeros(3, 2));
+    }
+
     fn hamming74_h() -> BitMatrix {
         gf2_core::bitmatrix![
             1, 1, 0, 1, 1, 0, 0;

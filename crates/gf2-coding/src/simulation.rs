@@ -4184,6 +4184,43 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "parallel")]
+    #[test]
+    fn test_run_coded_iterative_parallel_identical_across_worker_counts() {
+        let encoder = MockEncoder;
+        let channel = BpskAwgnChannel;
+        let mut config = SimulationConfig::quick_test();
+        config.eb_n0_range_db = vec![0.0, 1.0, 2.0, 3.0];
+        config.min_errors = 5;
+        config.max_frames = 200;
+        config.rng_seed = Some(42);
+
+        let run = |threads: usize| {
+            rayon::ThreadPoolBuilder::new()
+                .num_threads(threads)
+                .build()
+                .unwrap()
+                .install(|| {
+                    SimulationRunner::run_coded_iterative_parallel(
+                        &encoder,
+                        || MockIterativeDecoder { last_iterations: 0 },
+                        &channel,
+                        &config,
+                    )
+                })
+        };
+        let key = |r: &SimulationResults| {
+            r.points
+                .iter()
+                .map(|p| (p.num_frames, p.num_frame_errors, p.num_bit_errors))
+                .collect::<Vec<_>>()
+        };
+        let reference = key(&run(1));
+        for threads in [2, 4] {
+            assert_eq!(reference, key(&run(threads)), "{threads} workers");
+        }
+    }
+
     #[cfg(feature = "sim-observability")]
     mod observability_tests {
         use super::*;
@@ -4906,6 +4943,51 @@ mod tests {
                     "Parallel checkpoint resume: num_frame_errors must match at SNR point {i}"
                 );
             }
+        }
+
+        #[test]
+        fn test_parallel_checkpoint_resume_appends_no_progress_entries() {
+            let tmpdir = tempfile::tempdir().unwrap();
+            let csv_path = tmpdir.path().join("results.csv");
+            let jsonl_path = tmpdir.path().join("results.progress.jsonl");
+
+            let encoder = MockEncoder;
+            let channel = DeterministicChannel {
+                flip_positions: vec![0, 1],
+            };
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![4.0, 8.0];
+            config.min_errors = 3;
+            config.max_frames = 20;
+            config.rng_seed = Some(42);
+            config.output_path = Some(csv_path);
+            config.checkpoint_dir = Some(tmpdir.path().join("ckpts"));
+
+            let run = || {
+                SimulationRunner::run_coded_iterative_parallel(
+                    &encoder,
+                    || MockIterativeDecoder { last_iterations: 0 },
+                    &channel,
+                    &config,
+                )
+            };
+            let first = run();
+            let completions = |path: &Path| {
+                std::fs::read_to_string(path)
+                    .unwrap()
+                    .lines()
+                    .filter(|l| l.contains("\"type\":\"point_complete\""))
+                    .count()
+            };
+            assert_eq!(completions(&jsonl_path), 2);
+
+            let resumed = run();
+            assert_eq!(
+                completions(&jsonl_path),
+                2,
+                "checkpoint-resumed points must not be logged again"
+            );
+            assert_eq!(first.points.len(), resumed.points.len());
         }
     }
 }

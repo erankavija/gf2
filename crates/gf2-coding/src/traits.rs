@@ -2619,6 +2619,26 @@ mod block_conformance_tests {
     fn _linear_block_code_satisfies_the_static_bounds(code: &LinearBlockCode) {
         _assert_canonical_capabilities_are_statically_bound(code);
     }
+
+    #[test]
+    #[should_panic(expected = "k <= n")]
+    fn redundancy_panics_when_k_exceeds_n() {
+        struct Broken;
+        impl BlockCode for Broken {
+            type Symbol = Fp<2>;
+            type Symbols = BitVec;
+            fn symbol_zero(&self) -> Self::Symbol {
+                Fp::<2>::new(0)
+            }
+            fn k(&self) -> usize {
+                5
+            }
+            fn n(&self) -> usize {
+                3
+            }
+        }
+        Broken.redundancy();
+    }
 }
 
 #[cfg(test)]

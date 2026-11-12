@@ -177,6 +177,18 @@ mod tests {
     use crate::traits::BlockEncoder;
 
     #[test]
+    #[should_panic(expected = "n must be at most 64")]
+    fn new_rejects_codeword_length_above_one_word() {
+        CrcCode::new(65, 49, (1u64 << 16) | 0x1021);
+    }
+
+    #[test]
+    fn new_accepts_codeword_length_of_one_word() {
+        let code = CrcCode::new(64, 48, (1u64 << 16) | 0x1021);
+        assert_eq!((code.n(), code.k()), (64, 48));
+    }
+
+    #[test]
     fn test_crc_25_15_parameters() {
         let code = CrcCode::crc_25_15();
         assert_eq!(code.n(), 25);
