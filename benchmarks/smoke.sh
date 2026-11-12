@@ -5,7 +5,7 @@
 #
 # Behaviour:
 #   * Engages each harness's `--smoke` mode first so the per-operation
-#     algebraic-equality oracles (issue 5dea7457; protocol § 6) run at
+#     algebraic-equality oracles (issue 5dea7457; the comparable-semantics requirement of issue 1d6043e8) run at
 #     n=16 before any timing pass. A failed oracle exits 1 immediately.
 #   * Forces warmup=0, iters=1 so the harness produces one CSV row per
 #     (field, op, size, regime) cell as cheaply as possible.
@@ -89,11 +89,11 @@ if [[ "${RUNTIME}" == "docker" ]]; then
 fi
 
 # === linbox begin ===
-# Per SOTA reference acceptance protocol § 6 *Correctness-oracle harness*,
+# Per the comparable-semantics requirement *Correctness-oracle harness*,
 # invoke linbox_bench --smoke to assert the n=16 per-op equality
 # contract (charpoly Cayley-Hamilton, minpoly annihilation, solve
 # A·x ≡ b) for every (op, field) cell the LinBox harness covers.
-# A non-zero exit here is a hard semantics-mismatch failure per § 9.
+# A non-zero exit here is a hard semantics-mismatch failure under the acceptance workflow.
 if [[ "${GF2_SKIP_LINBOX_SMOKE:-0}" -eq 0 ]]; then
     echo "[smoke.sh] running linbox_bench --smoke inside ${IMAGE_TAG}" >&2
     "${RUNTIME}" run --rm \
@@ -143,7 +143,7 @@ echo "[smoke.sh] running flint_bench --smoke inside ${IMAGE_TAG}" >&2
     bash -c "set -e; cd /work/reference && make flint_bench >/dev/null && ./flint_bench --seed ${SEED} --smoke" \
     >> "${TARGET_CSV}"
 
-# Cross-equality oracle (per protocol §6). Emits no CSV rows; exits
+# Cross-equality oracle (per the comparable-semantics requirement). Emits no CSV rows; exits
 # non-zero on any (op, field) mismatch at n=16.
 echo "[smoke.sh] running ntl_flint_smoke equality oracle" >&2
 "${RUNTIME}" run --rm \
@@ -156,7 +156,7 @@ echo "[smoke.sh] running ntl_flint_smoke equality oracle" >&2
 
 # === b13799ac GF(2^32) NTL bitwise-equality smoke begin ===
 # Direct gf2-core ↔ NTL byte-equality oracle for `mat_GF2E::mul` over
-# GF(2^32) at n=16 (issue b13799ac R2). Implements the protocol § 6
+# GF(2^32) at n=16 (issue b13799ac R2). Implements the comparable-semantics requirement
 # correctness contract via the ground-truth file mechanism jit:96fde7c7
 # established for the sparse smoke:
 #
@@ -166,7 +166,7 @@ echo "[smoke.sh] running ntl_flint_smoke equality oracle" >&2
 #   2. The C++ smoke loads the file and asserts byte-equality between
 #      NTL output and gf2-core ground-truth.
 #
-# This is the protocol § 6 candidate-vs-gf2-core direct contract; no
+# This is the comparable-semantics requirement candidate-vs-gf2-core direct contract; no
 # scalar intermediary. The R1 transitive form (NTL ↔ scalar +
 # gf2-core ↔ scalar) was rejected by code-review for not satisfying the
 # literal text. Skipped silently when the image was built without NTL.
@@ -205,7 +205,7 @@ fi
 
 # === 47698404 + 96fde7c7 sparse cross-equality oracle begin ===
 # Cross-equality oracle for sparse cells at n=16 (issues 47698404,
-# 96fde7c7; protocol § 6). Compares fflas-ffpack `fspmv` / `fspmm` and
+# 96fde7c7; the comparable-semantics requirement). Compares fflas-ffpack `fspmv` / `fspmm` and
 # LinBox `apply` / `GaussDomain::NoReordering` to the gf2-core
 # ground-truth output recorded in
 # `benchmarks/expected/sparse_smoke_n16.bin` for every (op, field) cell

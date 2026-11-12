@@ -8,11 +8,16 @@ labels and the axis ylabel (to determine if the metric is BLER, BER, etc.).
 
 Output: one CSV per figure with columns:
     eb_n0_db, value, metric, decoder, code_params, style_info
+
+Usage: SRC_DIR=<directory of the paper's .tex sources> parse_pgfplots.py
+The CSVs go to `target/reference_data/` of the repository, or to `OUT_DIR`
+when it is set.
 """
 
 import re
 import csv
 import os
+import subprocess
 import sys
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -393,10 +398,17 @@ FIGURE_MAP = {
 }
 
 
+def default_out_dir() -> Path:
+    root = subprocess.run(
+        ['git', '-C', str(Path(__file__).resolve().parent), 'rev-parse', '--show-toplevel'],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    return Path(root) / 'target' / 'reference_data'
+
+
 def main():
     src_dir = Path(os.environ['SRC_DIR'])
-    out_dir = Path(os.environ.get('OUT_DIR',
-                   str(Path(__file__).resolve().parents[1])))
+    out_dir = Path(os.environ['OUT_DIR']) if 'OUT_DIR' in os.environ else default_out_dir()
     out_dir.mkdir(parents=True, exist_ok=True)
 
     tex_files = sorted(src_dir.glob('*.tex'))

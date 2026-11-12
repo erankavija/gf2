@@ -4367,7 +4367,7 @@ mod tests {
                 .is_err()
         );
         assert!(validate_campaign_stage(
-            Path::new("/home/example/gf2-dbd8787d-20261001t000000z-1"),
+            Path::new("/srv/example/gf2-dbd8787d-20261001t000000z-1"),
             "gf2-dbd8787d-20261001t000000z-1",
             &declaration
         )

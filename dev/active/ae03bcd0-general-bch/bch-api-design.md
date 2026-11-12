@@ -1041,7 +1041,7 @@ construction and encoding use disjoint modules.
 | `cutover-sim` | `ebch_osd_awgn_campaign.rs`, the GPU BCH syndrome throughput bench, `ebch_osd_campaign_cli.rs`, `crates/gf2-sim/tests/gpu_byte_identity.rs`, `osd_campaign_protocol.rs` |
 | `cutover-hip-tests` | `crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs`, `crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs` |
 | `cutover-removal` | `crates/gf2-coding/src/bch/core.rs`, the extended-code module, and final `crates/gf2-coding/src/bch/mod.rs` cleanup after every consumer group |
-| `legacy-reference-sweep` | `crates/gf2-coding/README.md` and the crate's systematic-encoding, parallelization and primitive-polynomial notes |
+| `legacy-reference-sweep` | `crates/gf2-coding/README.md` |
 
 The direct migration groups are file-disjoint and may run in parallel after
 their graph prerequisites, with one ordered exception: `@/issue/97410c80`

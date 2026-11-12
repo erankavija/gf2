@@ -67,7 +67,7 @@ fflas_sparse_bench: fflas_sparse_bench.cpp
 linbox_sparse_bench: linbox_sparse_bench.cpp
 	@$(CXX) $(CXXSTD) $(OPT) -fopenmp $(LINBOX_CFLAGS) $(FFLAS_CFLAGS) $< $(LINBOX_LIBS) $(FFLAS_LIBS) -lopenblas -o $@
 
-# Cross-equality oracle for sparse cells at n=16 (jit:47698404, protocol § 6).
+# Cross-equality oracle for sparse cells at n=16 (jit:47698404; the comparable-semantics requirement of issue 1d6043e8).
 # Links LinBox in addition to fflas-ffpack so the smoke chain has two
 # independent witnesses for the cells the design names: jit:0f708b36
 # added `linbox_oracle_spmv` (GF(2) spmv cross-check); jit:0d6ca3b6 added
@@ -98,7 +98,7 @@ ntl_bench: ntl_bench.cpp gf2pow32_constants.h
 flint_bench: flint_bench.c
 	@$(CC) $(CSTD) $(OPT) $(FLINT_CFLAGS) $< $(FLINT_LIBS) -o $@
 
-# Cross-equality oracle exercising the protocol §6 contracts at n=16
+# Cross-equality oracle exercising the comparable-semantics requirement contracts at n=16
 # for every cell that BOTH NTL and FLINT cover, plus FLINT-only invariants
 # for pluq/echelon/minpoly. Linked against both libraries.
 ntl_flint_smoke: ntl_flint_smoke.cpp

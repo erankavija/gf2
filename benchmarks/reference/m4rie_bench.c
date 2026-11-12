@@ -162,7 +162,7 @@ static void bench_matmul(const gf2e* ff, int m_field, rci_t n,
 
 /* ──────────────── smoke equality contract ───────────────────────────
  *
- * Per protocol § 6: every claimed cell at n=16 must match a canonical
+ * Per the comparable-semantics requirement (issue 1d6043e8): every claimed cell at n=16 must match a canonical
  * reference computed bit-identically. We pin n=16, regime=uniform,
  * operation=matmul; for each m we:
  *
@@ -329,7 +329,7 @@ int main(int argc, char** argv) {
      *   * matmul at n in {64, 256, 1024} × {uniform, deficient}
      *
      * Echelon cells were removed in the R2 rework (jit:507b0036) —
-     * the protocol § 6 contract for echelon (bitwise canonical RREF
+     * the comparable-semantics requirement contract for echelon (bitwise canonical RREF
      * equality) requires an independent RREF reference that this
      * harness does not yet supply. See the file-header *Scope note*.
      *

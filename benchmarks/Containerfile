@@ -125,7 +125,7 @@ RUN curl -fsSL -o /tmp/m4ri.tar.gz \
 # needed for our finite-field-only scope.
 #
 # `--disable-openmp` mirrors the existing fflas posture and ensures the
-# single-thread requirement of the SOTA acceptance protocol § 5 is met
+# single-thread requirement of the same-hardware requirement (issue 1d6043e8) is met
 # without runtime ENV overrides. `--disable-static` matches sibling pins.
 # ---------------------------------------------------------------------------
 ARG LINBOX_VERSION=1.7.1

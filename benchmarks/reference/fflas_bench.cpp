@@ -575,7 +575,7 @@ static void bench_minpoly(const Field& F,
     FFLAS::fflas_delete(A);
 }
 
-// Smoke equality oracle for minpoly (issue 5dea7457): per protocol § 6
+// Smoke equality oracle for minpoly (issue 5dea7457): per the comparable-semantics requirement (issue 1d6043e8)
 // the per-operation contract is: minpoly is monic and is a divisor of
 // charpoly. We compute both polynomials on the same fixed-seeded n=16
 // input, verify monicity (leading coefficient == 1), and verify that
@@ -795,7 +795,7 @@ int main(int argc, char** argv) {
                  smoke ? 1 : 0);
 
     // Smoke-mode equality oracle for new operations (issue 5dea7457).
-    // Per protocol § 6 the per-operation correctness contract is enforced
+    // Per the comparable-semantics requirement the per-operation correctness contract is enforced
     // at n=16 against a fixed seeded input. For minpoly: monic + divides
     // charpoly. We exit non-zero on any failure so smoke.sh fails fast.
     if (smoke) {

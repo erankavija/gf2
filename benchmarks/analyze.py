@@ -311,9 +311,9 @@ def reference_lib_for(field_value: str, operation: Optional[str] = None) -> str:
         # Per jit:a3412e15 § 4: GF(p) routes to fflas-ffpack `fspmm`
         # (canonical). GF(2^m) cells fall back to gf2-core's
         # SparseFieldMatrix::matmat (no comparable external path —
-        # GivaroExtension is `semantics-mismatch` per protocol § 9). GF(2)
+        # GivaroExtension is `semantics-mismatch` per the acceptance workflow of issue 1d6043e8). GF(2)
         # routes to LinBox `applyLeft × Modular<int64_t>(2)` per the
-        # design doc's hard-reference designation; gf2-core's
+        # hard-reference designation of jit:a3412e15; gf2-core's
         # SpBitMatrix::matmat (jit:521390db) is the candidate, LinBox is
         # canonical (note throughput-unit normalisation: gf2-core
         # measures bit ops in u64 packed words; LinBox measures

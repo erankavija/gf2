@@ -1798,10 +1798,7 @@
     "worker_sized_reason": "A prose sweep over a named file set",
     "footprint": {
      "touches": [
-      "crates/gf2-coding/README.md",
-      "SYSTEMATIC_ENCODING_CONVENTION.md",
-      "PARALLELIZATION.md",
-      "PRIMITIVE_POLYNOMIALS.md"
+      "crates/gf2-coding/README.md"
      ]
     }
    },
