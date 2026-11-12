@@ -86,6 +86,28 @@ reason = "curves transcribed or digitized from published figures: external confo
 path = "experiments/permanent-statistics/data/scheinerman2024-*.csv"
 reason = "published target values of Scheinerman 2024: external conformance data; owner ruling 2026-11-12"
 
+# Dated session records state the tree and the values of their date and stay
+# unedited; owner ruling 2026-11-12.
+[[exception]]
+path = "dev/active/*/handoff*.md"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/sessions/*"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/session-*-prompts/*"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/dispatch-*.md"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/rework-*.md"
+reason = "dated session record; owner ruling 2026-11-12"
+
 [[exception]]
 path = "experiments/permanent-statistics/tests/fixtures/analysis/*/execution.jsonl"
 reason = "synthetic dataset member the schema-3 verifier requires; carries placeholder identity and seeded counts"
