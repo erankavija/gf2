@@ -159,7 +159,18 @@ fn validation_exit_codes_adopt_terminal_anchors() {
             .output()
             .unwrap()
     };
-    assert_eq!(run(&["--max-anchors", "1"]).status.code(), Some(10));
+    let bounded = run(&["--max-anchors", "1"]);
+    assert_eq!(bounded.status.code(), Some(10));
+    let executable = experiments_common::Sha256Digest::of_file(Path::new(env!(
+        "CARGO_BIN_EXE_permanent_validation"
+    )))
+    .unwrap();
+    assert!(
+        String::from_utf8(bounded.stdout)
+            .unwrap()
+            .starts_with(&format!("sha256 {executable} ")),
+        "a validation run prints its executable digest first"
+    );
     assert_eq!(run(&[]).status.code(), Some(0));
     assert_eq!(run(&["--workers", "0"]).status.code(), Some(2));
 }
