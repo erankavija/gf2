@@ -412,7 +412,7 @@ impl<V: UintExt> Gf2mField_<V> {
     }
 
     /// Raw multiplication without tables (used during table generation).
-    fn mul_raw(a: V, b: V, m: usize, primitive_poly: V) -> V {
+    pub(crate) fn mul_raw(a: V, b: V, m: usize, primitive_poly: V) -> V {
         if a.is_zero() || b.is_zero() {
             return V::ZERO;
         }
@@ -450,6 +450,7 @@ impl Gf2mField_ {
     ///
     /// Uses the irreducibility test of `@/citation/Rabin1980`, then checks
     /// x^((2^m-1)/q) ≠ 1 for each prime factor q of 2^m - 1.
+    /// [`crate::primitive_polys::is_primitive_u128`] covers degrees up to 127.
     ///
     /// # Complexity
     ///

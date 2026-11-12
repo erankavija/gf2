@@ -194,6 +194,9 @@ carries the DVB-T2 BCH field polynomials of `@/citation/Etsi2015`.
 - `Gf2mField::verify_primitive` tests irreducibility (Rabin's criterion)
   and then checks $x^{(2^m - 1)/q} \ne 1$ for each prime factor $q$ of
   $2^m - 1$.
+- `primitive_polys::is_primitive_u128` decides primitivity directly from the
+  polynomial's bits for degrees through 127, using complete order
+  factorizations checked by deterministic primality tests.
 - `Gf2mField::new_verified` compares the polynomial with the database entry
   for $m$ and warns on stderr when they differ.
 
@@ -207,9 +210,9 @@ the covered degrees, each entry's source and the test that verifies it:
 
 - `standard(m)` entries are primitive; its degree-32 entry is the Conway
   polynomial.
-- `standard_u128(m)` extends the catalogue into `u128` degrees with entries
-  verified irreducible only. A caller that needs primitivity there verifies
-  it independently.
+- `standard_u128(m)` extends the catalogue into `u128` degrees. Every entry
+  is irreducible; its Rustdoc states the per-degree primitivity guarantee
+  checked by `standard_u128_entries_primitivity`.
 - `verify(m, poly)` returns `Matches`, `Conflict` or `Unknown` against
   `standard(m)`, and `trinomials(m)` lists the catalogued trinomials.
 

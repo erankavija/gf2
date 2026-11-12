@@ -6,6 +6,10 @@
 //! [`PrimitivePolynomialDatabase::standard_u128`] states the guarantee per
 //! degree.
 
+mod primitivity;
+
+pub use primitivity::is_primitive_u128;
+
 use crate::field::extension::FieldId;
 use crate::field::modulus_select::{ModulusRegistry, RegistryEntry, RegistryProvenance};
 
@@ -133,9 +137,11 @@ impl PrimitivePolynomialDatabase {
     ///
     /// - For `m <= 63` the polynomial is **primitive**, checked by
     ///   `test_all_database_entries_are_primitive` in `gf2m/field.rs`.
-    /// - For `m = 64..=127` the polynomial is verified only **irreducible
-    ///   over GF(2)**, by `test_standard_u128_entries_are_irreducible`.
-    ///   Callers that need a primitive polynomial verify it independently.
+    /// - For `m = 64..=127` every entry is **irreducible over GF(2)**
+    ///   (`test_standard_u128_entries_are_irreducible`). All are also
+    ///   **primitive except degrees 84, 88, 100, 108, 110, 112 and 124**, whose
+    ///   entries are irreducible but non-primitive, as checked by
+    ///   `standard_u128_entries_primitivity` using [`is_primitive_u128`].
     pub fn standard_u128(m: usize) -> Option<u128> {
         if m <= 63 {
             return Self::standard(m).map(|p| p as u128);
@@ -219,6 +225,9 @@ impl PrimitivePolynomialDatabase {
 
     /// Verifies a `u128` polynomial against the extended database (`m` up to 127).
     ///
+    /// This compares entries; [`is_primitive_u128`] decides mathematical
+    /// primitivity independently of the database.
+    ///
     /// See [`Self::verify`] for the `u64` variant.
     pub fn verify_u128(m: usize, poly: u128) -> VerificationResult {
         match Self::standard_u128(m) {
@@ -231,97 +240,17 @@ impl PrimitivePolynomialDatabase {
     /// Prose form of the `m = 64..=127` guarantee of [`Self::standard_u128`].
     pub const fn standard_u128_irreducibility_note() -> &'static str {
         "PrimitivePolynomialDatabase::standard_u128 entries for m = 64..=127 \
-         are verified irreducible over GF(2) but are NOT independently \
-         verified primitive. Seroussi's table is a table of irreducible \
-         (not necessarily primitive) polynomials. Callers requiring a \
-         primitive polynomial (e.g. maximum-length LFSR, full-cycle PRNG) \
-         must verify the multiplicative order independently."
+         are verified irreducible over GF(2). Primitivity depends on the \
+         degree; see standard_u128's per-degree guarantee, or use \
+         primitive_polys::is_primitive_u128 to check a polynomial."
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::primitivity::is_irreducible_u128;
     use super::*;
     use crate::gf2m::Gf2mField;
-
-    fn mul_mod_u128(a: u128, b: u128, m: u32, p: u128) -> u128 {
-        assert!((1..=127).contains(&m));
-        let mask = (1u128 << m) - 1;
-        let mut acc: u128 = 0;
-        let mut tmp = a & mask;
-        for i in 0..m {
-            if (b >> i) & 1 != 0 {
-                acc ^= tmp;
-            }
-            let will_overflow = (tmp >> (m - 1)) & 1 != 0;
-            tmp <<= 1;
-            if will_overflow {
-                tmp ^= p;
-            }
-            tmp &= mask;
-        }
-        acc & mask
-    }
-
-    fn gcd_poly_u128(mut a: u128, mut b: u128) -> u128 {
-        loop {
-            if b == 0 {
-                return a;
-            }
-            if a == 0 {
-                return b;
-            }
-            let da = 127 - a.leading_zeros();
-            let db = 127 - b.leading_zeros();
-            if da < db {
-                std::mem::swap(&mut a, &mut b);
-                continue;
-            }
-            a ^= b << (da - db);
-        }
-    }
-
-    /// Rabin's test: `x^(2^m) ≡ x (mod p)` and, for each prime `q | m`,
-    /// `gcd(p, x^(2^(m/q)) - x) = 1`.
-    fn is_irreducible_u128(p: u128, m: u32) -> bool {
-        let mut cur: u128 = 2;
-        for _ in 0..m {
-            cur = mul_mod_u128(cur, cur, m, p);
-        }
-        if cur != 2 {
-            return false;
-        }
-        let mut n = m;
-        let mut q = 2u32;
-        let mut primes_of_m: Vec<u32> = Vec::new();
-        while q * q <= n {
-            if n.is_multiple_of(q) {
-                primes_of_m.push(q);
-                while n.is_multiple_of(q) {
-                    n /= q;
-                }
-            }
-            q += 1;
-        }
-        if n > 1 {
-            primes_of_m.push(n);
-        }
-        for q in primes_of_m {
-            let exp = m / q;
-            let mut cur: u128 = 2;
-            for _ in 0..exp {
-                cur = mul_mod_u128(cur, cur, m, p);
-            }
-            let diff = cur ^ 2;
-            if diff == 0 {
-                return false;
-            }
-            if gcd_poly_u128(p, diff) != 1 {
-                return false;
-            }
-        }
-        true
-    }
 
     #[test]
     fn test_irreducible_helper_self_check_small_cases() {
