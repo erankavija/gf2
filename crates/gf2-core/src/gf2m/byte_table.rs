@@ -18,22 +18,26 @@ const REGISTRY_SLOTS: usize = 256;
 
 /// Cache blocks of the GF(2^8) byte matrix product: each block reads
 /// `depth` rows of the right operand over `width` of its columns, for every
-/// row of the left operand.
+/// row of the left operand, and a right operand given transposed is restored
+/// to row order in square tiles of `tile` bytes a side.
 ///
 /// [`Gf256GemmBlocking::structural`] sizes them from the host's caches and
 /// the dispatched kernel's strip; [`crate::gf2m::Gf2mField::gf256_gemm_with`]
-/// takes a caller's blocking instead. Every blocking gives the same product.
+/// and [`crate::gf2m::Gf2mField::gf256_gemm_transposed_with`] take a
+/// caller's blocking instead. Every blocking gives the same product.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Gf256GemmBlocking {
     depth: NonZeroUsize,
     width: NonZeroUsize,
+    tile: NonZeroUsize,
 }
 
 impl Gf256GemmBlocking {
-    /// Blocks of `depth` inner indices by `width` columns.
+    /// Blocks of `depth` inner indices by `width` columns, and transpose
+    /// tiles of `tile` by `tile` bytes.
     #[must_use]
-    pub const fn new(depth: NonZeroUsize, width: NonZeroUsize) -> Self {
-        Self { depth, width }
+    pub const fn new(depth: NonZeroUsize, width: NonZeroUsize, tile: NonZeroUsize) -> Self {
+        Self { depth, width, tile }
     }
 
     /// The blocking for this host's per-core caches and the dispatched block
@@ -45,12 +49,15 @@ impl Gf256GemmBlocking {
     /// leaving the other half to the 8 KiB table set and the left operand's
     /// rows. Every row group of the left operand reads the whole block, so
     /// `width` holds the block to half the second-level cache, rounded down to
-    /// whole strips. On Linux the cache and line sizes are those of CPU 0's
+    /// whole strips. A transpose tile reads a cache line from each of `tile`
+    /// source rows and writes one to each of `tile` destination rows, so
+    /// `tile` is one line, shrunk until both sides' lines fit in half the
+    /// first-level data cache. On Linux the cache and line sizes are those of CPU 0's
     /// sysfs cache description; elsewhere, or when it is unreadable, 32 KiB,
     /// 256 KiB and 64-byte lines, the per-core sizes of Haswell, the first AVX2
     /// x86-64 core.
-    /// With 32 KiB and 512 KiB caches, as on a Ryzen 9 5900X, the blocks
-    /// are 256 by 1024.
+    /// With 32 KiB and 512 KiB caches and 64-byte lines, as on a Ryzen 9
+    /// 5900X, the blocks are 256 by 1024 and the tiles 64 bytes a side.
     #[must_use]
     pub fn structural() -> Self {
         static STRUCTURAL: OnceLock<Gf256GemmBlocking> = OnceLock::new();
@@ -65,9 +72,12 @@ impl Gf256GemmBlocking {
         let strip = strip.max(1);
         let depth = (caches.l1d / (2 * caches.line.max(1))).max(1);
         let width = (caches.l2 / (2 * depth) / strip * strip).max(strip);
+        let line = caches.line.max(1);
+        let tile = line.min(caches.l1d / (4 * line)).max(1);
         Self::new(
             NonZeroUsize::new(depth).expect("a positive depth"),
             NonZeroUsize::new(width).expect("a positive width"),
+            NonZeroUsize::new(tile).expect("a positive tile"),
         )
     }
 
@@ -81,6 +91,12 @@ impl Gf256GemmBlocking {
     #[must_use]
     pub const fn width(self) -> usize {
         self.width.get()
+    }
+
+    /// Returns the side of one transpose tile in bytes.
+    #[must_use]
+    pub const fn tile(self) -> usize {
+        self.tile.get()
     }
 }
 
@@ -274,6 +290,20 @@ pub(crate) fn gemm_bytes(
     }
 }
 
+/// [`gemm_bytes`] with the right operand given transposed, `n × k`
+/// row-major, which [`untranspose`] restores in `blocking`'s tiles.
+pub(crate) fn gemm_transposed_bytes(
+    tables: &Gf256SplitTables,
+    shape: &GemmShape,
+    blocking: Gf256GemmBlocking,
+    a: &[u8],
+    b_t: &[u8],
+    c: &mut [u8],
+) {
+    let b = untranspose(b_t, shape.k, shape.n, blocking.tile(), |byte| *byte);
+    gemm_bytes(tables, shape, blocking, a, &b, c);
+}
+
 /// Writes the product of `a` and the operand `b_t` holds transposed into
 /// `out`, through [`gemm_bytes`].
 ///
@@ -296,12 +326,14 @@ pub(crate) fn gemm_bytes(
 ///
 /// `O(mkn)` table lookups over three byte buffers totalling `mk + kn + mn`
 /// bytes.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn gemm_region<T>(
     a: &[T],
     b_t: &[T],
     shape: &GemmShape,
     out: &mut [T],
     tables: &Gf256SplitTables,
+    blocking: Gf256GemmBlocking,
     byte_of: impl Fn(&T) -> u8,
     store: impl Fn(&mut T, u8),
 ) {
@@ -314,32 +346,38 @@ pub(crate) fn gemm_region<T>(
     }
 
     let left: Vec<u8> = a.iter().map(&byte_of).collect();
-    // A transpose in square tiles keeps both sides of each tile in cache.
-    const TILE: usize = 64;
+    let right = untranspose(b_t, k, n, blocking.tile(), byte_of);
+    let mut products = vec![0u8; m * n];
+    gemm_bytes(tables, shape, blocking, &left, &right, &mut products);
+
+    for (slot, &product) in out.iter_mut().zip(products.iter()) {
+        store(slot, product);
+    }
+}
+
+/// The `k × n` row-major bytes of the operand `b_t` holds in `n × k`
+/// row-major order, moved in square tiles of `tile` a side so both sides of
+/// a tile stay in cache.
+pub(crate) fn untranspose<T>(
+    b_t: &[T],
+    k: usize,
+    n: usize,
+    tile: usize,
+    byte_of: impl Fn(&T) -> u8,
+) -> Vec<u8> {
+    debug_assert_eq!(b_t.len(), n * k);
+    let tile = tile.max(1);
     let mut right = vec![0u8; k * n];
-    for j0 in (0..n).step_by(TILE) {
-        for p0 in (0..k).step_by(TILE) {
-            for j in j0..(j0 + TILE).min(n) {
-                for p in p0..(p0 + TILE).min(k) {
+    for j0 in (0..n).step_by(tile) {
+        for p0 in (0..k).step_by(tile) {
+            for j in j0..(j0 + tile).min(n) {
+                for p in p0..(p0 + tile).min(k) {
                     right[p * n + j] = byte_of(&b_t[j * k + p]);
                 }
             }
         }
     }
-
-    let mut products = vec![0u8; m * n];
-    gemm_bytes(
-        tables,
-        shape,
-        Gf256GemmBlocking::structural(),
-        &left,
-        &right,
-        &mut products,
-    );
-
-    for (slot, &product) in out.iter_mut().zip(products.iter()) {
-        store(slot, product);
-    }
+    right
 }
 
 /// Name the GF(2^8) table dispatch reports when it runs the byte-region
@@ -602,6 +640,7 @@ mod tests {
             Gf256GemmBlocking::new(
                 NonZeroUsize::new(depth).unwrap(),
                 NonZeroUsize::new(width).unwrap(),
+                NonZeroUsize::new(1).unwrap(),
             )
         };
         let structural = Gf256GemmBlocking::structural();
@@ -647,20 +686,43 @@ mod tests {
     #[test]
     fn the_structural_blocking_follows_the_caches_and_the_strip() {
         let caches = |l1d: usize, l2: usize, line: usize| HostCaches { l1d, l2, line };
-        for (caches, strip, (depth, width)) in [
-            (caches(32 << 10, 512 << 10, 64), 32, (256, 1024)),
-            (caches(32 << 10, 256 << 10, 64), 32, (256, 512)),
-            (caches(48 << 10, 2 << 20, 64), 32, (384, 2720)),
-            (caches(48 << 10, 2 << 20, 64), 1, (384, 2730)),
-            (caches(64, 64, 64), 32, (1, 32)),
-            (caches(0, 0, 0), 0, (1, 1)),
+        for (caches, strip, (depth, width, tile)) in [
+            (caches(32 << 10, 512 << 10, 64), 32, (256, 1024, 64)),
+            (caches(32 << 10, 256 << 10, 64), 32, (256, 512, 64)),
+            (caches(48 << 10, 2 << 20, 64), 32, (384, 2720, 64)),
+            (caches(48 << 10, 2 << 20, 64), 1, (384, 2730, 64)),
+            (caches(16 << 10, 256 << 10, 128), 32, (64, 2048, 32)),
+            (caches(64, 64, 64), 32, (1, 32, 1)),
+            (caches(0, 0, 0), 0, (1, 1, 1)),
         ] {
             let blocking = Gf256GemmBlocking::for_caches(caches, strip);
             assert_eq!(
-                (blocking.depth(), blocking.width()),
-                (depth, width),
+                (blocking.depth(), blocking.width(), blocking.tile()),
+                (depth, width, tile),
                 "{caches:?}, strip {strip}"
             );
+        }
+    }
+
+    #[test]
+    fn the_untranspose_is_the_same_at_every_tile() {
+        for (k, n) in [
+            (0usize, 5usize),
+            (5, 0),
+            (1, 1),
+            (7, 13),
+            (64, 65),
+            (130, 67),
+        ] {
+            let b_t: Vec<u8> = (0..n * k).map(|i| (i * 31 + 7) as u8).collect();
+            let expected: Vec<u8> = (0..k * n).map(|i| b_t[(i % n) * k + i / n]).collect();
+            for tile in [1usize, 2, 3, 7, 63, 64, 65, 200] {
+                assert_eq!(
+                    untranspose(&b_t, k, n, tile, |byte| *byte),
+                    expected,
+                    "{k}x{n} at tile {tile}"
+                );
+            }
         }
     }
 

@@ -776,6 +776,7 @@ impl<const N: usize, Cfg: Gf2mWideConfig<N>> crate::field::FiniteField for Gf2mW
                 &crate::gf2m::byte_table::GemmShape { m, k, n },
                 out,
                 table,
+                crate::gf2m::Gf256GemmBlocking::structural(),
                 |source| source.words[0] as u8,
                 |destination, product| destination.words[0] = u64::from(product),
             );
