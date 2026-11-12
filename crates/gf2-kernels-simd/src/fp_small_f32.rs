@@ -5,8 +5,6 @@
 //! scalar `% p`, `batch_gemm_route_a_fn` with a 32-bit-lane AVX2 Barrett
 //! reduction.
 
-#![allow(clippy::missing_safety_doc)]
-
 /// Whole-gemm fast path for canonical-residue `Fp<P>` operands with
 /// `P <= 251`, dispatched on AVX2 + FMA3 hosts.
 ///

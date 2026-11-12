@@ -1,4 +1,3 @@
-#![allow(clippy::missing_safety_doc)]
 //! SIMD kernels for the gf2 workspace, among them logical bit operations, GF(p)
 //! and GF(2^m) arithmetic, BCH encoding, LLR and modem arithmetic, and packed
 //! F_3/F_5/F_7 bipedal operations. Unsafe and architecture-specific code is

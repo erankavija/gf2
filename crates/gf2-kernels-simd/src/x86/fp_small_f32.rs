@@ -9,7 +9,6 @@
 //! available at runtime; `crate::fp_small_f32::detect` returns the safe
 //! dispatched table.
 
-#![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
 
 use core::arch::x86_64::*;

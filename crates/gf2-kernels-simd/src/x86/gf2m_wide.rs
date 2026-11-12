@@ -6,8 +6,6 @@
 //! helper: partial product `a[i] · b[j]` contributes its low/high halves to
 //! `out[i + j]` / `out[i + j + 1]`.
 
-#![allow(clippy::missing_safety_doc)]
-
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]

@@ -10,7 +10,6 @@
 //! available at runtime; `crate::fp_medium_f64::detect` returns the safe
 //! dispatched table.
 
-#![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
 
 use crate::fp_medium_f64::K_CHUNK_CAP_MAX;

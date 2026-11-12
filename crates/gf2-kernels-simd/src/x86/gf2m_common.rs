@@ -8,8 +8,6 @@
 //! enable = "pclmulqdq", enable = "sse4.1")]` context, whose feature scope the
 //! inlined intrinsics inherit.
 
-#![allow(clippy::missing_safety_doc)]
-
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]

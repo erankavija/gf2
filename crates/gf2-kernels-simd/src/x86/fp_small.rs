@@ -9,8 +9,6 @@
 //! All public functions are `unsafe`: callers must ensure AVX2 is available
 //! at runtime. `crate::fp_small::detect` returns the safe dispatched table.
 
-#![allow(clippy::missing_safety_doc)]
-
 use core::arch::asm;
 use core::arch::x86_64::*;
 

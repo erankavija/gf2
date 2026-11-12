@@ -8,8 +8,6 @@
 //! All public functions are `unsafe`: callers must ensure AVX2 is available at
 //! runtime; `crate::fp_medium::detect` returns the safe dispatched table.
 
-#![allow(clippy::missing_safety_doc)]
-
 use core::arch::x86_64::*;
 
 /// Lane-wise modular multiplication for 16 u16 values per 256-bit vector.
