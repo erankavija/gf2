@@ -835,7 +835,7 @@ mod harness {
         // PLOT_ONLY: regenerate the figure from the persisted SSOT CSV without
         // re-running any cell. Required because resumed cells are merged into
         // the CSV out-of-band and re-running the full grid to refresh the plot
-        // is hardware-infeasible (F_5 n=20 alone is ~4 h). Reuses write_plot
+        // is impractical on this hardware. Reuses write_plot
         // (no duplicate plotting logic) and never calls write_csv, so the
         // committed two-commit provenance header is left untouched.
         if std::env::var("PLOT_ONLY").is_ok() {

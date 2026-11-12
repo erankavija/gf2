@@ -41,11 +41,9 @@ five-criterion checklist in the acceptance workflow against M4RIE's `20250128` u
   for matmul).
 * The harness emits the standard 10-column CSV schema (criterion #4) and
   merges through `analyze.py --smoke` (criterion #5).
-* M4RIE is **performance-relevant**: on the Ryzen 9 5900X host the
-  promotion decision ran on, `mzed_mul` over GF(2^16) at n=1024 was about
-  three orders of magnitude faster than gf2-core's `fgemm` at the same
-  shape. The *Performance-relevance note* below gives the sweep that
-  reproduces the comparison.
+* M4RIE is **performance-relevant** on the comparison of `mzed_mul` over
+  GF(2^16) at n=1024 against gf2-core's `fgemm` at the same shape. The
+  *Performance-relevance note* below gives the sweep that reproduces it.
 * **Scope:** matmul only. Echelon was removed in the R2 rework; see the
   *Target-matrix designation* and *Scope-history note* for the acceptance
   criterion 3 rationale.
@@ -238,9 +236,8 @@ single-threaded, mean of the timed iterations) gives `wall_ns` and
 `throughput_ops` per cell. Its rows are not directly comparable to a
 `gf2-core` sweep that uses the `fgemm` op-name and only n=64 for GF(2^m);
 the decision compares matmul GF(2^16) at n=1024 against gf2-core's
-`FieldMatrix<Gf2mField>::gemm` at the same shape, where M4RIE ran roughly
-**three orders of magnitude** faster on the decision host. M4RIE is
-therefore performance-relevant.
+`FieldMatrix<Gf2mField>::gemm` at the same shape, and that comparison is
+what makes M4RIE performance-relevant.
 
 The full side-by-side rendering will populate when `gf2-core` adds a
 `matmul`-named GF(2^m) row at the same sizes; the `analyze.py`
