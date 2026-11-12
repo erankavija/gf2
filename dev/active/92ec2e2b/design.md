@@ -65,34 +65,50 @@ Two causes:
 ## Proposed change
 
 1. **Fill in the declared layout** (gf2-coding, `bch/matrix.rs`).
-   `MatrixFill::fill_generator` takes the `SystematicPlan` (dimension,
-   redundancy, layout) in place of the bare dimension. The `BitMatrix` arm runs
-   the existing recurrence $P_{i+1} = x P_i \bmod g$, $P_0 = x^r \bmod g$, in a
-   scratch register of $\lceil r/64 \rceil$ words, and writes row $\sigma(i)$
-   directly: the identity bit at the message coordinate the layout assigns to
-   degree $r + i$, and the parity through the parity-placement step the
-   encoder uses (`packed_place_codeword`'s parity half, factored into one
-   shared function so the generator and the codewords cannot diverge, under
-   @/inv/convention-convergence). Each row costs $O(\lceil r/64 \rceil)$ word
-   operations; the matrix zeroing is the only $O(kn/64)$ term. The
-   `FieldMatrix` arm keeps the fill-then-permute route, inside its own
-   implementation, so `LayoutView::generator_matrix_into` makes one call for
-   every representation and `permute_matrix` stays only where symbols are not
-   bit-packed. The parity-check fill gets the same plan argument so the trait
-   keeps one shape; its `BitMatrix` arm can follow in the same change.
+   `MatrixFill::fill_generator` and `MatrixFill::fill_parity_check` take the
+   `SystematicPlan` (dimension, redundancy, layout) in place of the bare
+   dimension, and `LayoutView::generator_matrix_into` and
+   `LayoutView::parity_check_matrix_into` each make one fill call with the
+   view's plan. `permute_matrix` leaves both `LayoutView` methods.
+   - `BitMatrix` generator arm: the existing recurrence
+     $P_{i+1} = x P_i \bmod g$, $P_0 = x^r \bmod g$, runs in a scratch
+     register of $\lceil r/64 \rceil$ words and writes row $\sigma(i)$
+     directly: the identity bit at the message coordinate the layout assigns to
+     degree $r + i$, and the parity through the parity-placement step the
+     encoder uses (`packed_place_codeword`'s parity half, factored into one
+     shared function so the generator and the codewords cannot diverge, under
+     @/inv/convention-convergence). Each row costs $O(\lceil r/64 \rceil)$
+     word operations; zeroing the matrix is the only $O(kn/64)$ term.
+   - `BitMatrix` parity-check arm: $H = [\,-P^{\mathsf T} \mid I_r\,]$ in the
+     plan's layout. The same recurrence writes the placed parity rows into a
+     $k \times r$ scratch `BitMatrix`, `BitMatrix::transpose` (gf2-core's
+     block transpose) turns it into the $r \times k$ block, and each of its rows
+     is copied word-wise into $H$ at the layout's message columns, with the
+     identity at the layout's parity columns. This replaces today's per-cell
+     column recurrence, $O(kr)$ `get`/`set` calls, with
+     $O(k \lceil r/64 \rceil)$ word operations plus the transpose.
+   - The provided bodies, which serve `FieldMatrix` and any opt-in matrix type
+     such as the trait's `RowMajor` rustdoc example, write the ascending fill
+     and then apply the layout correspondence with `permute_matrix`, which
+     moves into `bch/matrix.rs` as the provided bodies' helper. `FieldMatrix`
+     overrides that step with row swaps (`FieldMatrix::swap_rows`) and
+     in-place reversal of the two contiguous column blocks of each row slice,
+     the shape every `SystematicLayout` variant's correspondence has.
 2. **Restriction without the mother** (gf2-coding, `traits.rs` and
-   `transform/mod.rs`). `GeneratorMatrixAccess` gains
+   `transform/mod.rs`). `GeneratorMatrixAccess` gains the provided method
    `systematic_restriction_into(&self, kept_rows: &[usize], kept_columns: &[usize], out)`,
    whose default body is today's materialize-and-copy, so every existing
-   mother keeps its behavior; `Shortened`'s `SystematicRestriction` arm calls
-   it. `LayoutView` over a `BchCode` overrides it when the removed coordinates
-   are message coordinates of the highest degrees and every parity coordinate
-   is kept, which is the shortening of a polynomial code: the result is then
-   exactly change 1's fill for the plan with dimension $k' = |\text{kept rows}|$
-   and length $n' = k' + r$ in the mother's layout. DVB-T2 removes the leading
-   $K_{\text{mother}} - K_{\text{bch}}$ message coordinates of the descending
-   layout, the highest degrees, so both DVB-T2 rows take the override. Other
-   restrictions fall to the default.
+   implementor keeps its behavior; `Shortened`'s `SystematicRestriction` arm
+   calls it. The `BchCode` and `LayoutView` implementations of the trait
+   override it when the removed coordinates are message coordinates of the
+   highest degrees and every parity coordinate is kept, which is the
+   shortening of a polynomial code: the result is then change 1's fill for the
+   plan with dimension $k' = |\text{kept rows}|$ and length $n' = k' + r$ in
+   the code's layout. The override is the trait method and calls the
+   `MatrixFill` fill, so there is no type-specific route beside the trait.
+   DVB-T2 removes the leading $K_{\text{mother}} - K_{\text{bch}}$ message
+   coordinates of the descending layout, the highest degrees, so both DVB-T2
+   rows take the override. Other restrictions fall to the default.
 3. **Word-level copy in the default restriction.** The default body copies
    row runs with `BitMatrix` word operations where the kept columns form
    contiguous runs, instead of a `get`/`set` per cell. This is the residual
@@ -103,6 +119,57 @@ shortening's shape picks the override (@/inv/structural-performance-defaults);
 a caller of `generator_matrix` passes nothing new (@/inv/ergonomic-defaults).
 All three changes are safe Rust in gf2-coding; no kernel is involved, so the
 scalar path is the only path and no fallback is needed.
+
+## Implementor sweep
+
+`rg 'impl.*\b(MatrixFill|GeneratorMatrixAccess|ParityCheckMatrixAccess)\b.* for' crates experiments`
+at `540483f2b` lists every implementor the change touches; `experiments/`
+has none. The change edits each one as follows, and sweeps the rustdoc that
+states the old behavior.
+
+`MatrixFill` (signature change, every implementor edited):
+
+- `BitMatrix`, `FieldMatrix` (`crates/gf2-coding/src/bch/matrix.rs`): new
+  arms as in change 1.
+- `RowMajor<F>` in the trait's rustdoc example and `RowMajorMatrix<F>` in the
+  `bch/matrix.rs` tests: empty opt-ins that take the provided bodies; the
+  example's code is unchanged and its prose states the plan argument.
+
+`GeneratorMatrixAccess` (provided method; implementors compile unchanged):
+
+- Override: `BchCode<X, S, M>` and `LayoutView<X, S, M>`
+  (`bch/matrix.rs`).
+- Forward to the wrapped code, so a wrapped BCH mother keeps the override:
+  `CachedMatrices<C>` (`bch/matrix.rs`), the `CountingCode<C>` test wrapper
+  (`bch/matrix.rs`).
+- Default body, no edit: `DrmCode` (`drm.rs`), `QcGldpcCode` (`gldpc/mod.rs`),
+  `LinearBlockCode` (`linear.rs`), `CrcCode` (`crc.rs`), `LdpcCode`
+  (`ldpc/core.rs`), `Extended<C>`, `Shortened<C>`, `Punctured<C>` and the
+  `DenseTestCode<F>` test code (`transform/mod.rs`), `RankDerivedMother<C>`
+  (`test_support.rs`, which exists to force the rank-derived path),
+  `RepetitionCode<F>` and `MockLinearCode` (`traits.rs` tests) and the
+  `FixtureCode` test code (`osd/generator.rs`). The blanket
+  `compat::binary_v1::GeneratorMatrixAccess` impl in `traits.rs` reaches only
+  `generator_matrix` and needs no edit.
+
+`ParityCheckMatrixAccess` (no trait change; the `LayoutView` and `BchCode`
+methods change through `MatrixFill::fill_parity_check`): the other
+implementors, `LinearBlockCode`, `Extended<C>`, `Shortened<C>`,
+`CachedMatrices<C>`, `CountingCode<C>`, `RankDerivedMother<C>` and
+`RepetitionCode<F>`, are unchanged. `Shortened`'s parity-check
+`SystematicRestriction` arm materializes the mother's parity check the way
+its generator arm does today; REQ-01 and REQ-02 name only the generator, so
+that arm is outside this change and needs its own issue.
+
+Rustdoc to rewrite in the same change: the `MatrixFill` trait page and both
+fill methods (signature, the plan's layout, complexity per arm);
+`LayoutView::generator_matrix_into` and `LayoutView::parity_check_matrix_into`
+(complexity no longer includes an in-place permutation);
+`GeneratorMatrixAccess` (the new method, its default and its contract on
+`kept_rows` and `kept_columns`); `Shortened::generator_matrix_into` (the
+`SystematicRestriction` complexity, which today states the mother's
+materialization); `dvb_t2_bch_code` (whose prose says the shortened code
+materializes no generator).
 
 ## Conformance tests (REQ-01)
 
@@ -121,8 +188,11 @@ scalar path is the only path and no fallback is needed.
 - The DVB-T2 rows stay above `FAST_TIER_MATRIX_CELLS`; a slow-tier test
   (`#[ignore = "slow: ..."]`) checks T2S and T2N row by row against the
   shortened code's encoder on the unit messages, which change 2 makes cheap.
-- `parity_check_matrix` keeps its existing oracle comparison under the new
-  plan argument.
+- `parity_check_matrix` keeps its existing oracle comparison
+  (`test_support::bch_parity_check_matrix_by_encoding`), and the per-layout
+  `LayoutView` loop gains it too, so the new `BitMatrix` parity arm is pinned
+  in both layouts, including codes whose $r$ and $k$ sit at 63, 64 and 65,
+  the transpose's block boundaries.
 
 ## Expected gain (estimate)
 
@@ -141,15 +211,3 @@ $k' \times n'$ matrix (6.3 MB for T2S, 130 MB for T2N), dominated by first-touch
 page faults, plus $k'$ register steps of three words. Both comparators
 allocate the same output. B1 is the row with the least margin, since the
 $5 \times 15$ matrix's allocation is most of its cost.
-
-## Open questions for the lead
-
-1. **Trait shape.** Change 1 changes `MatrixFill::fill_generator`'s signature
-   and change 2 adds a provided method to `GeneratorMatrixAccess`, a public
-   trait. Recommendation: accept both; the alternative (a `BitMatrix`
-   specialization inside `LayoutView`) is a bypass of the trait under
-   @/inv/convention-convergence.
-2. **Parity check in scope.** `LayoutView::parity_check_matrix_into` has the
-   same per-cell permutation. REQ-01 names only the generator; recommendation:
-   carry the parity-check `BitMatrix` arm in the same change, since the
-   trait signature changes anyway, or file it as its own issue.
