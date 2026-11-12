@@ -55,8 +55,8 @@ scripts' docstrings state why each pass exists. Charon compiles with `--cfg veri
 | File in `proofs/Gf2Core/`, `proofs/Gf2Algebra/` | Owner |
 |---|---|
 | `Types.lean`, `Funs.lean`, `*_Template.lean`, `TypesExternal.lean` | Regenerated on every run |
-| `Gf2Algebra/FunsExternal.lean` | Copied from its template on every run |
-| `Gf2Core/FunsExternal.lean` | Hand-maintained; created from the template when the file is missing |
+| `proofs/Gf2Algebra/FunsExternal.lean` | Copied from its template on every run |
+| `proofs/Gf2Core/FunsExternal.lean` | Hand-maintained; created from the template when the file is missing |
 | `Proofs/*.lean` | Hand-written |
 
 CI reruns the pipeline and fails when `proofs/Gf2Core/Proofs/` or
@@ -101,6 +101,6 @@ CI reruns the pipeline and fails when `proofs/Gf2Core/Proofs/` or
 5. A standard-library call that Aeneas cannot translate appears as an `axiom`
    in `FunsExternal.lean`, and the proof trusts it. To prove through the call,
    replace the axiom with a definition in `proofs/Gf2Core/FunsExternal.lean`;
-   `Gf2Algebra/FunsExternal.lean` is regenerated and keeps its axioms.
+   `proofs/Gf2Algebra/FunsExternal.lean` is regenerated and keeps its axioms.
 6. Run `./scripts/lake-build-strict.sh` and commit the proof with the
    regenerated files.

@@ -117,3 +117,7 @@ reason = "dated session record; owner ruling 2026-11-12"
 [[exception]]
 path = "dev/active/*/rework-*.md"
 reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/*.json"
+reason = "provenance records name the retrieved upstream files by their sha256"

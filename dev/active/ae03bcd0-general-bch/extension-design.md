@@ -947,23 +947,23 @@ place is assigned below to a task that already owns the file.
 Placement rules that keep the waves disjoint:
 
 - All `FieldIdentity` implementations for existing carriers live *inside*
-  `field/extension.rs`. Both the trait and the types are local to the crate,
-  so no `impl` block needs to sit in `gfp/mod.rs`, `gf2m/field.rs`,
-  `gf2m/wide.rs`, `gfpn/quadratic.rs`, or `gfpn/cubic.rs`. This keeps
+  `crates/gf2-core/src/field/extension.rs`. Both the trait and the types are local to the crate,
+  so no `impl` block needs to sit in `crates/gf2-core/src/gfp/mod.rs`, `crates/gf2-core/src/gf2m/field.rs`,
+  `crates/gf2-core/src/gf2m/wide.rs`, `crates/gf2-core/src/gfpn/quadratic.rs`, or `crates/gf2-core/src/gfpn/cubic.rs`. This keeps
   `extension-trait`'s footprint exactly as recorded and leaves those files
   free for unrelated work.
 - `extension.rs` accumulates four tasks in one dependency chain
   (`extension-trait` → `exact-order` → `minpoly-subfield` →
   `cyclotomic-closure`), so it is written serially, never concurrently. It
-  ends up comparable in size to `field/poly.rs` and `field/charpoly.rs`,
+  ends up comparable in size to `crates/gf2-core/src/field/poly.rs` and `crates/gf2-core/src/field/charpoly.rs`,
   which is the crate's norm.
 - `irreducibility-validation` runs concurrently with the `exact-order` chain
-  and writes only `field/irreducibility.rs`, so no edit collides. Its only
+  and writes only `crates/gf2-core/src/field/irreducibility.rs`, so no edit collides. Its only
   dependency on the chain's file is a call to the already-public
   `ExtensionCertificate::from_parts`.
 - Per-operation property tests live in `#[cfg(test)] mod tests` inside the
   file that owns the operation. Only the shared extension *laws* go to
-  `field/axiom_tests.rs`, and only `extension-trait` writes them, so the
+  `crates/gf2-core/src/field/axiom_tests.rs`, and only `extension-trait` writes them, so the
   shared harness has exactly one writer.
 
 ## Worked examples
@@ -1136,7 +1136,7 @@ should not be discovered during implementation.
 `FieldId` per call. Identity is not on any arithmetic hot path, so the
 foundation does not cache. If profiling later shows it matters, the cache
 belongs in `FieldParams_` (`gf2m/field.rs:169`) as a `OnceLock<FieldId>`,
-which is a footprint change to `gf2m/field.rs` and therefore a separate,
+which is a footprint change to `crates/gf2-core/src/gf2m/field.rs` and therefore a separate,
 tracked decision rather than something an implementer adds silently.
 
 **R-07 — `Basis` has one variant.** `Basis::Polynomial` is the only basis the
