@@ -257,7 +257,7 @@ Documentation, campaign, data, presentation, and development references:
 `dev/reference_data/osd_ebch_128_64_fossorier1994.csv`,
 `dev/reference_data/osd_ebch_128_64_fossorier1994.md`,
 `dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/README.md`,
-`extract.py`, and `yue2022_fig1_receipt.json` in that directory,
+`extract.py`, and `yue2022_fig1_digitization.json` in that directory,
 and every file under
 `osd-ebch-128-64/`.
 

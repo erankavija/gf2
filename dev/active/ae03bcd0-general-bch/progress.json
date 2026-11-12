@@ -369,7 +369,7 @@
           "title": "Optimize the reference generator-matrix materialization",
           "classification": "implementation",
           "difficulty": "hard",
-          "status": "done (session 9): rework 1 merged 8754afc8 (contract amendment, both-representation witnesses, receipt at load 1.16); code-review R4 after the receipt link; receipt doc-linked"
+          "status": "done (session 9): rework 1 merged 8754afc8 (contract amendment, both-representation witnesses, receipt measured under load); code-review R4 after the receipt link; receipt doc-linked"
         },
         {
           "key": "lean-quotient-reduction",
@@ -586,7 +586,7 @@
     {
       "issue": "3f7edef1",
       "trigger": "B4 GUAVA retry (owner decision 'retry idle, then amend')",
-      "resolution": "retry on the idle host at -o 50g / 52G scope exhausted its memory scope and failed; the amend branch is being executed by the part-2 worker (session 9)"
+      "resolution": "retry on the idle host with a larger memory allocation exhausted its memory scope and failed; the amend branch is being executed by the part-2 worker (session 9)"
     },
     {
       "issue": "3f7edef1",
@@ -755,7 +755,7 @@
     },
     {
       "source": "0c21cb1e worker (session 11)",
-      "finding": "gpu_bch_syndrome_throughput now measures the DVB-T2 normal mother (n=65535) syndrome evaluation, not the shortened 32400 frame; CPU arms time correct_in_place on error-free words; smoke 24-thread pool slower than 1 thread (15 vs 53.6 fps), uninvestigated",
+      "finding": "gpu_bch_syndrome_throughput now measures the DVB-T2 normal mother (n=65535) syndrome evaluation, not the shortened 32400 frame; CPU arms time correct_in_place on error-free words; smoke multi-thread pool slower than the single-thread pool, uninvestigated",
       "disposition": "documented in the bin; any 9012f8a0 re-receipt states the workload"
     },
     {
@@ -770,7 +770,7 @@
     },
     {
       "source": "d1b4f85e worker (session 11)",
-      "finding": "Shortened::generator_matrix_into copies bit by bit (~2 s/iter T2S, ~1 min/iter T2N)",
+      "finding": "Shortened::generator_matrix_into copies bit by bit and is slow for both T2S and T2N",
       "disposition": "follow-up candidate beside a33fda32; fd9d5416 reports it"
     }
   ],
@@ -827,10 +827,10 @@
     "R-36 (session 7): 2b6968d3 code-review R1 F1 read the issue text literally (kernels through the existing carry-less-multiply primitives; one combined predicate covering AVX2 plus carry-less multiply). The bit-sliced family the survey assigned needs AVX2 alone, so the rework ADDS a second packed family `clmul-fold` (64 message bits per step; Barrett quotient by one carry-less multiply with mu = floor(x^(r+64)/g), then ceil(r/64) multiplies by g's words) behind one combined bundle predicate `avx2 && pclmulqdq && sse4.1`, with a scalar-clmul twin, rather than amending the issue description (invariant 4) or dropping the survey's family. The survey contract \u00a77 gains a `clmul-fold` row when the rework lands.",
     "R-35b (session 7): d7749931 (lean-closure) pulled into wave 10 on the same grounds as R-35 once 32f53280 reached done: footprint proofs/Gf2Core/Proofs/CyclotomicClosure.lean + one import line + gf2-core extension.rs tests, disjoint from every running worker.",
     "R-37 (session 8): bd0edfa2 code-review R1 F1 (bench measures the DVB-T2 W2 rows at mother length, contract \u00a7 9's 177bdc85 amendment covers only differential evidence). The canonical model has no shortened presentation before cutover-dvbt2 (97410c80) and Shortened<C> materializes a dense generator by RREF at construction, so the 7032\u00d77200 and 32208\u00d732400 cells are unworkable for genmatrix-perf today. Resolution through the contract's own rule (\u00a7 9: a consumer that finds a cell unworkable amends the document as a dated subsection naming the issue): the rework adds a dated bd0edfa2 amendment declaring the T2 rows measured at mother length for genmatrix-perf's REQ-02 improvement evidence only, with the perf-receipts (fd9d5416) and external-comparison cells unchanged. Same root cause failing again \u2192 escalate (MAX_SAME_FINDING_REPEATS).",
-    "R-38 (session 8): 444c06bc cargo-ci failure root-caused to t2s_mother_row_matches_the_oracle_generator running close to the 8 s fast-tier kill in isolation on an idle host (test-tier-budgets); the rework replaces it with a sampled-row fast-tier witness and keeps the full T2S/T2N mother comparison in the ignored slow tier. The five gf2-algebra timeouts in the same run are pre-existing load artifacts, not attributable.",
+    "R-38 (session 8): 444c06bc cargo-ci failure root-caused to t2s_mother_row_matches_the_oracle_generator running close to its fast-tier kill in isolation on an idle host (test-tier-budgets); the rework replaces it with a sampled-row fast-tier witness and keeps the full T2S/T2N mother comparison in the ignored slow tier. The gf2-algebra timeouts in the same run are pre-existing load artifacts, not attributable.",
     "R-39 (session 8, owner-approved): Shortened<C> gains a systematic fast path (task 203ee826): when the mother reports is_systematic() and every removed coordinate lies in 0..k, no dense generator/nullspace/RREF; encode delegates to the mother with zeros at removed positions; matrices are the mother's kept rows/columns. General rank path unchanged. 97410c80 waits on it.",
     "R-40 (session 9): the remaining codex weekly quota (resets Mon 2026-09-07 17:56 EEST) is reserved for AI gate runs; every worker this session is native (hard -> Opus, easy -> Sonnet) despite the invoker's Luna-for-easy-tasks preference. Revisit after the reset.",
-    "R-41 (session 9): 88ca7d2f's first measurement (11:44:59-11:52:32Z) opened at 1-minute load 7.96 and closed at 1.93 while other workers ran; @/invariant/benchmark-backed-performance requires an uncontended host, so the lead re-ran the worker's committed run.sh at 74871c6b on the idle host (load 0.2) and commits its outputs on the worker branch; run-1 outputs kept in the session scratchpad only.",
+    "R-41 (session 9): 88ca7d2f's first measurement (11:44:59-11:52:32Z) opened under load and later saw lower load while other workers ran; @/invariant/benchmark-backed-performance requires an uncontended host, so the lead re-ran the worker's committed run.sh at 74871c6b on the idle host and commits its outputs on the worker branch; run-1 outputs kept in the session scratchpad only.",
     "R-42 (session 9): lead-direct doc fix on the 2b6968d3 branch (b2ea0cb6): the survey findings \u00a7 6.2 said the auto-vectorization mechanism 'is an open question for avx2-batch-kernels'; it now points at the kernel rustdoc's Generated code section, which answers it.",
     "R-43 (session 9): the O-3 proof sketch (64fd3afd's linked design doc) went stale when d7749931's anchor test landed ('must add', 'New test required', extension.rs citations shifted by 51 lines); fixed lead-direct in the sketch for O-2 and O-3 alike (7a380646, 3c744093), link refreshed. Standing rule for b1bd75ca/94597a51: the lean worker updates the sketch's own obligation section (anchor rows, 'must add' paragraph, R-03) and remaps citations shifted by its test insertion in the same submission; bake into their dispatch prompts.",
     "R-44 (session 9): 88ca7d2f code-review R1 F1 (runner copied every bch_* Criterion artifact on disk) closed lead-direct on main (6b8577fb): the runner enumerates the twelve receipt IDs, reads each from target/criterion/<id>/new, empties samples/ first, and fails on a missing or mislabelled artifact. The measurement is unchanged, so the committed receipt at 74871c6b stays valid under @/invariant/campaign-evidence.",
@@ -907,7 +907,7 @@
     "Host config: symlink dvb_test_vectors -> dvb_test_vectors created 2026-09-02 14:50 EEST so tests/test_vectors/mod.rs's default path resolves the ETSI VV001-CR35 streams on this host (gate runs then need no DVB_TEST_VECTORS_PATH). Remove the symlink to restore the previous host state."
   ],
   "session_notes_s9": [
-    "Session 9 (2026-09-02 18:45 EEST): session 8 died at the Claude session limit at 15:08 EEST with all five workers mid-flight (no final reports). State reconstructed from progress.json, handoff-5, worker transcripts and their CI logs: 2b6968d3 rework complete on branch (2506c42b, worker cargo-ci green 5657 passed); bd0edfa2/444c06bc rework complete (01d3dfab, worker cargo-ci green 5649 passed); 3f7edef1 part-2 draft uncommitted -> lead-preserved d6f03947; 88ca7d2f receipt rendered but uncommitted, measured at load 7.96 -> re-measured on the idle host with the committed runner; d7749931 merged, gates pending.",
+    "Session 9 (2026-09-02 18:45 EEST): session 8 died at the Claude session limit at 15:08 EEST with all five workers mid-flight (no final reports). State reconstructed from progress.json, handoff-5, worker transcripts and their CI logs: 2b6968d3 rework complete on branch (2506c42b, worker cargo-ci green); bd0edfa2/444c06bc rework complete (01d3dfab, worker cargo-ci green); 3f7edef1 part-2 draft uncommitted -> lead-preserved d6f03947; 88ca7d2f receipt rendered but uncommitted, measured under load -> re-measured on the idle host with the committed runner; d7749931 merged, gates pending.",
     "Session 9 end (2026-09-02 17:30Z, owner asked for the handoff): wave 10 closed except 3f7edef1 (B4 escalation pending; rework-2 branch 115ce492 unmerged, unreviewed by the lead); b1bd75ca merged with lake-build passed and code-review/doc-review running detached (chain d log in the session scratchpad; its .jit records land uncommitted on main when it finishes); wave 11 ready to dispatch. Prompts copied into ."
   ],
   "session_notes_s10": [
