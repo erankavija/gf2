@@ -37,7 +37,7 @@
 - The traps of handoff-2 to handoff-4 stay in force.
 - `jit doc add` scans the document for assets by default and copied 22 dead external receipt URLs into each issue. Pass `--skip-scan`.
 - The cargo-ci gate times out at 900 s on a cold main build after a merge. Run `./scripts/cargo-ci.sh` in the main checkout first.
-- `.agents/skills/jit-execution-lead/scripts/land.sh` does not exist. Merge with `git merge --no-ff` and a conforming `chore(jit:<id>): merge ...` subject.
+- The execution-lead skill's scripts include no landing script. Merge with `git merge --no-ff` and a conforming `chore(jit:<id>): merge ...` subject.
 - Count subject lengths before committing on main: two subjects this session came out at 72 characters. One was rewritten before its merge; one was amended at HEAD.
 - `cd` into a worktree in a Bash call moves the session's working directory. Use `git -C` and absolute paths.
 - gf2-69 lands `daef2dc3` tonight (gated by 01:15). After it, `scripts/check-tracked-budget.py` refuses result tables and run records, and `progress.json` files hold no measured values (owner ruling C2).
