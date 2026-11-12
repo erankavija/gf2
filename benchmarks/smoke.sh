@@ -10,7 +10,8 @@
 #   * Forces warmup=0, iters=1 so the harness produces one CSV row per
 #     (field, op, size, regime) cell as cheaply as possible.
 #   * Builds the image (or reuses if already built).
-#   * Writes the CSV under benchmarks/results/smoke-<timestamp>.csv so
+#   * Writes the CSV under <out>/results/smoke-<timestamp>.csv (default
+#     target/reference-benchmarks, override with GF2_BENCH_OUT) so
 #     it does not get confused with a real timing run.
 #   * Returns non-zero if any podman / build / run / smoke step fails —
 #     useful for `./benchmarks/smoke.sh && echo OK` in a pre-PR script.
@@ -64,7 +65,9 @@ done
 
 # Locate the CSV run.sh just wrote (smoke-<TS>.csv plus a
 # smoke-latest.csv symlink). The symlink path is the canonical handle.
-LATEST_CSV="${HERE}/results/smoke-latest.csv"
+REPO_ROOT="$(git -C "${HERE}" rev-parse --show-toplevel 2>/dev/null || dirname "${HERE}")"
+OUT_DIR="${GF2_BENCH_OUT:-${REPO_ROOT}/target/reference-benchmarks}"
+LATEST_CSV="${OUT_DIR}/results/smoke-latest.csv"
 if [[ ! -L "${LATEST_CSV}" && ! -f "${LATEST_CSV}" ]]; then
     echo "[smoke.sh] expected smoke-latest.csv missing; aborting" >&2
     exit 1

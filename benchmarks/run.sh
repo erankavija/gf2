@@ -2,9 +2,9 @@
 # benchmarks/run.sh — drive the reference reproducibility run.
 #
 # Builds the pinned container (rootless podman by default; Docker
-# tolerated), captures host hardware metadata into benchmarks/host.txt,
+# tolerated), captures host hardware metadata into <out>/host.txt,
 # launches the reference harnesses, and writes a single CSV file at
-# benchmarks/results/<timestamp>.csv with the schema documented in
+# <out>/results/<timestamp>.csv with the schema documented in
 # benchmarks/README.md.
 #
 # Usage:
@@ -21,19 +21,22 @@
 # Environment overrides:
 #   GF2_RUNTIME=podman|docker             # default: podman
 #   GF2_BENCH_TAG=gf2-bench:ref           # built image tag
+#   GF2_BENCH_OUT=<dir>                   # output directory
+#                                         # (default: <repo>/target/reference-benchmarks)
 #   GF2_BENCH_WARMUP=3
 #   GF2_BENCH_ITERS=5
 #
-# This script writes into benchmarks/host.txt, benchmarks/results/, and
-# (after a successful build) stamps the image.lock [image].local_id slot
-# with the new build's content-addressable id; nothing leaves the
-# working tree.
+# All output lands in <out> (outside the tracked tree): host.txt,
+# results/ (CSVs and latest links) and image-id.txt, the per-host
+# content-addressable id of the built image.
 
 set -euo pipefail
 
 # ---- locate ourselves ---------------------------------------------------
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RESULTS_DIR="${HERE}/results"
+REPO_ROOT="$(git -C "${HERE}" rev-parse --show-toplevel 2>/dev/null || dirname "${HERE}")"
+OUT_DIR="${GF2_BENCH_OUT:-${REPO_ROOT}/target/reference-benchmarks}"
+RESULTS_DIR="${OUT_DIR}/results"
 mkdir -p "${RESULTS_DIR}"
 
 # ---- argument parsing ---------------------------------------------------
@@ -60,7 +63,7 @@ while [[ $# -gt 0 ]]; do
         --iters)           ITERS="$2"; shift 2 ;;
         --smoke-equality)  RUN_SMOKE_EQUALITY=1; shift ;;
         -h|--help)
-            sed -n '2,32p' "${BASH_SOURCE[0]}"
+            sed -n '2,34p' "${BASH_SOURCE[0]}"
             exit 0
             ;;
         *)
@@ -95,9 +98,9 @@ if ! command -v "${RUNTIME}" >/dev/null 2>&1; then
 fi
 
 # ---- capture host info --------------------------------------------------
-HOST_TXT="${HERE}/host.txt"
+HOST_TXT="${OUT_DIR}/host.txt"
 {
-    echo "# benchmarks/host.txt — captured by run.sh"
+    echo "# host.txt — captured by run.sh"
     echo "# generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     echo "# runtime: ${RUNTIME}"
     echo "# image:   ${IMAGE_TAG}"
@@ -239,30 +242,22 @@ else
     echo "[run.sh] --skip-build set; reusing ${IMAGE_TAG}" >&2
 fi
 
-# Capture the local image id and stamp it into image.lock so the next
-# review cycle has a concrete digest to compare against.
+# Record the local image id (per-host under -march=native) in the output
+# directory so a later run on the same host can compare against it.
 LOCAL_ID="$("${RUNTIME}" image inspect "${IMAGE_TAG}" \
                 --format '{{.Id}}' 2>/dev/null || true)"
 if [[ -n "${LOCAL_ID}" ]]; then
-    echo "[run.sh] local image id: ${LOCAL_ID}" >&2
-    # Stamp image.lock's [image].local_id so subsequent invocations on
-    # the same host can detect environment drift. The file is committed
-    # with a "TODO_FILL_AFTER_FIRST_BUILD" placeholder; this in-place
-    # rewrite replaces it with the concrete sha256.
-    if [[ -f "${HERE}/image.lock" ]]; then
-        # Ensure local_id starts with sha256: prefix (podman returns it
-        # bare on some versions).
-        case "${LOCAL_ID}" in
-            sha256:*) LOCAL_ID_TAGGED="${LOCAL_ID}" ;;
-            *)        LOCAL_ID_TAGGED="sha256:${LOCAL_ID}" ;;
-        esac
-        # Use a tmpfile so a partial write cannot corrupt image.lock.
-        TMP_LOCK="$(mktemp)"
-        sed -E "s|^(local_id\\s*=\\s*\")[^\"]*\"|\\1${LOCAL_ID_TAGGED}\"|" \
-            "${HERE}/image.lock" > "${TMP_LOCK}"
-        mv "${TMP_LOCK}" "${HERE}/image.lock"
-        echo "[run.sh] stamped image.lock local_id = ${LOCAL_ID_TAGGED}" >&2
+    case "${LOCAL_ID}" in
+        sha256:*) ;;
+        *)        LOCAL_ID="sha256:${LOCAL_ID}" ;;
+    esac
+    ID_FILE="${OUT_DIR}/image-id.txt"
+    if [[ "${SKIP_BUILD}" -eq 1 && -f "${ID_FILE}" \
+          && "$(cat "${ID_FILE}")" != "${LOCAL_ID}" ]]; then
+        echo "[run.sh] warning: ${IMAGE_TAG} id differs from recorded $(cat "${ID_FILE}")" >&2
     fi
+    echo "${LOCAL_ID}" > "${ID_FILE}"
+    echo "[run.sh] local image id: ${LOCAL_ID} (recorded in ${ID_FILE})" >&2
 fi
 
 # ---- run the harnesses --------------------------------------------------
