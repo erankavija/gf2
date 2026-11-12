@@ -22,7 +22,7 @@
         {
           "short_id": "259acf37",
           "title": "Layered quantized SIMD LDPC decoder",
-          "status": "waits on owner: REQ-05 simulation run",
+          "status": "REQ-05 reworded; night window FER curve then code-review",
           "branch": "worktree-agent-259acf37"
         },
         {
@@ -40,7 +40,7 @@
         {
           "short_id": "fd9d5416",
           "title": "BCH cutover: non-regression and external comparison",
-          "status": "code merged; waits on owner budget decision and a window",
+          "status": "code merged; night window 2026-11-13 then gates",
           "branch": "jit-fd9d5416-cutover"
         },
         {
@@ -67,23 +67,29 @@
           "short_id": "cbd1eb28",
           "title": "Decode user-layout words with the canonical binary BCH decoder",
           "status": "done"
+        },
+        {
+          "short_id": "ebfaff31",
+          "title": "Keep measured performance values out of permanent documentation",
+          "status": "merged; doc-review failed with five findings; rework next"
         }
       ]
     }
   ],
   "created_during_execution": [
     "9d1c580c",
-    "a6039c72"
+    "a6039c72",
+    "60c82c4c",
+    "5e71e993",
+    "92ec2e2b",
+    "ebfaff31"
   ],
-  "escalations": [
-    "259acf37 REQ-05 simulation run and one-sided reading",
-    "fd9d5416 REQ-02 per-call budget; REQ-03 gap issues timing",
-    "docs/reference/performance-evidence.md under committed-evidence-budget"
-  ],
+  "escalations": [],
   "rework_counts": {
     "040bc2b8": 1,
     "8a8a3bc9": 1,
-    "c9cb0dd2": 1
+    "c9cb0dd2": 1,
+    "ebfaff31": 1
   },
   "surfaced_pitfalls": [
     "The window runner waits for a quiet host only before its first job; a single-core job queued after a multi-worker job starts in that job's load tail. Order single-core lines first or add a per-job quiet wait.",
