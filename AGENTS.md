@@ -15,17 +15,20 @@ results. Optimization never relaxes mathematical or standards conformance.
 
 - The Rust MSRV is 1.95. Use that toolchain for compatibility-sensitive work.
 - Run the repository CI contract with `./scripts/cargo-ci.sh`.
+- Workspace commands take their features from `./scripts/cargo-features.sh`,
+  as the CI contract does: `--all-features` where ROCm `hipcc` exists, a set
+  without the `hip` features elsewhere.
 - Build all ordinary workspace crates with
-  `cargo build --workspace --all-features`.
+  `cargo build --workspace $(./scripts/cargo-features.sh)`.
 - Run the fast test tier with
-  `cargo nextest run --workspace --all-features --cargo-profile ci-test --profile ci`.
+  `cargo nextest run --workspace $(./scripts/cargo-features.sh) --cargo-profile ci-test --profile ci`.
 - For focused work, keep the `ci-test` profile and select a package or test
   expression, for example
   `cargo nextest run -p gf2-core --cargo-profile ci-test --profile ci`.
 - Build benchmarks under `--release`; `ci-test` drops LTO.
 - Check formatting with `cargo fmt --all -- --check` and lint with
-  `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
-- Build API documentation with `cargo doc --workspace --all-features --no-deps`.
+  `cargo clippy --workspace --all-targets $(./scripts/cargo-features.sh) --features tuning-profile -- -D warnings`.
+- Build API documentation with `cargo doc --workspace $(./scripts/cargo-features.sh) --no-deps`.
 - Run Lean regeneration with `./scripts/verify-lean.sh`; build committed proof
   sources with `(cd proofs && lake build)`.
 - Build the ROCm-only crate explicitly with
@@ -78,7 +81,7 @@ The ordinary fast tier has a default fifteen-second per-test kill (sixty under
 `BUSY_HOST_OVERRIDE=1`) and a sixty-second suite budget. Tests expected to exceed it use a descriptive `#[ignore = "slow: ..."]`
 or `#[ignore = "sim: ..."]`; normal agent work never opts into ignored tests.
 The slow tier uses
-`cargo nextest run --workspace --all-features --release --profile slow --run-ignored ignored-only`
+`cargo nextest run --workspace $(./scripts/cargo-features.sh) --release --profile slow --run-ignored ignored-only`
 and has a 600-second budget. Tests too heavy for that tier must self-gate on
 required host data or benchmark mode, or use the configured `slow-serial` group.
 Do not widen a wall-clock assertion to accommodate a busy runner.

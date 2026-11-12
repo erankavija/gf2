@@ -213,12 +213,9 @@ summarize_fail() {
   esac
 }
 
-# Determine feature flags: include 'hip' only when hipcc is available.
-if command -v hipcc &>/dev/null || [ -x /opt/rocm/bin/hipcc ]; then
-  FEAT_FLAGS="--all-features"
-else
-  FEAT_FLAGS="--features simd,parallel,visualization"
-fi
+# The host's workspace feature selection: `hip` only where hipcc exists.
+CARGO_FEATURES="$(dirname "$0")/cargo-features.sh"
+FEAT_FLAGS=$("$CARGO_FEATURES")
 
 # Run all steps in order; continue through failures to report all of them.
 run_step check  cargo check --workspace $FEAT_FLAGS
@@ -297,11 +294,7 @@ run_step doctest cargo test --doc --workspace --release $DOC_FEAT_FLAGS
 # Documents every gf2-coding item the workspace feature selection above leaves
 # out. The `hip` feature compiles only where hipcc exists, so hosts without it
 # document the remaining features.
-if command -v hipcc &>/dev/null || [ -x /opt/rocm/bin/hipcc ]; then
-  CODING_DOC_FEAT_FLAGS="--all-features"
-else
-  CODING_DOC_FEAT_FLAGS="--features simd,parallel,visualization,bench-csv,sim-observability,tuning-profile,test-support"
-fi
+CODING_DOC_FEAT_FLAGS=$("$CARGO_FEATURES" simd,parallel,visualization,bench-csv,sim-observability,tuning-profile,test-support)
 run_step doc-coding env RUSTDOCFLAGS="-D warnings" cargo doc -p gf2-coding --release --no-deps $CODING_DOC_FEAT_FLAGS
 
 # The gf2_tuning_baked cfg is not a Cargo feature, so --all-features never
