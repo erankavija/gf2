@@ -45,8 +45,7 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
 ### LDPC decoding against AFF3CT
 
 - **Issues:** @/issue/07ca8585 (check-node update and decode cells),
-  @/issue/55c3e433 (adopted routes), @/issue/1358d6ab (integrated tree),
-  @/issue/de311215 (QC route).
+  @/issue/1358d6ab (integrated tree), @/issue/de311215 (QC route).
 - **Reference:** AFF3CT v4.7.0 (`@/citation/Cassagne2019`) normalized min-sum
   decoders, built as in [Reference builds](#reference-builds). The fastest
   configuration is the best over scalar f32 flooding and horizontal-layered, and
