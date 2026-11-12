@@ -9,11 +9,11 @@
 - Children: 37 done, 10 in progress, 42 ready, 69 rejected.
 - Landed on main with all gates passed and closed: `ad978596`, `d1e5db10`, `75a71fab`, `8178ef79`.
 - In progress, each on branch `worktree-agent-<id>` in `.agents/worktrees/agent-<id>`, rebased on main during the night:
-  - Gated branches, held by the steward's landing rule until the steward releases them: `32a8bc0e` (rework 1 done, re-gate due), `e29fd776` (rework 1 done, re-gate due), `9ff05f12` (done, gates due), `1b7228b9` (owner decision recorded, worker finishing; lands after `f21b25ac`).
+  - Gated branches, held by the steward's landing rule until the steward releases them: `32a8bc0e` (rework 1 done, re-gate due), `e29fd776` (rework 1 done, re-gate due), `9ff05f12` (done, gates due), `1b7228b9` (`46a2feeef`, partial: final-design suite result and the four-concurrent-run evidence still to re-run; lands after `f21b25ac`, whose `profile.ci` gpu-serial override must merge into the `profile.default` one, which `scripts/check-gpu-lock-filter.py` on the branch enforces).
   - Code-review failed, rework 1 due: `22bb2dcd` (4 findings), `697b9178` (2 findings), `d73ac633` (3 findings; brief written).
-  - `f21b25ac`: cargo-ci passed; code-review fails only on REQ-04 (upstream report, owner action) and REQ-05 (idle-host runs, after the window), which the steward ruled stay open.
+  - `f21b25ac`: cargo-ci passed; code-review fails only on REQ-04 (upstream report, owner action) and REQ-05 (idle-host runs, after the window). Steward ruling: hold; re-gate after the REQ-05 runs; nothing lands against a failing review.
   - `5a3abee1`: committed (`b3f54754f`), tests and gates not run.
-  - `51f299d2`: worker finishing its no-ROCm checks; gates not run.
+  - `51f299d2`: done by the worker (`e2bcb3d84`, `scripts/cargo-features.sh`), checks with and without ROCm passed; gates not run.
 - Filed this session: `8178ef79` (done), `f2c15867`, `1b7228b9`, `903dc74c`, `2e6e3557`.
 - Nothing pushed.
 
@@ -29,9 +29,9 @@
 
 ## Next
 
-1. After the window, re-run gates in this order: `5a3abee1`, `51f299d2`, then the gated branches `32a8bc0e`, `e29fd776`, `9ff05f12` (land them only when the steward releases them).
+1. Wait for the steward's release after the window. First work: the three reworks of step 2. Then re-run gates in this order: `5a3abee1`, `51f299d2`, then the gated branches `32a8bc0e`, `e29fd776`, `9ff05f12` (land them only when the steward releases them).
 2. Dispatch rework 1 for `d73ac633` (brief at the lead's scratchpad is lost with the session; rebuild it from the failed code-review findings), `22bb2dcd` and `697b9178` from their failed code-review findings.
-3. `f21b25ac`: run REQ-05 on an idle host before the leads start, record the runs, and ask the steward whether the code lands with code-review failing only on REQ-04/REQ-05. Then land `1b7228b9` after it; its rebase must move `f21b25ac`'s new `[[profile.ci.overrides]]` gpu-serial entry into the `profile.default` override.
+3. `f21b25ac`: run REQ-05 on an idle host before the leads start, record the runs, and re-gate. Then land `1b7228b9` after it; its rebase must move `f21b25ac`'s new `[[profile.ci.overrides]]` gpu-serial entry into the `profile.default` override.
 4. Next wave from the ready set; held until steward release: `0afbd34a` (bench-window scripts), `2e6e3557` (CI), `903dc74c` (Kani toolchain).
 5. `697b9178` does not close on its three unverified Kani harnesses; `903dc74c` covers running them.
 
@@ -47,7 +47,6 @@
 
 ## Open questions for the invoker
 
-- `f21b25ac`: land the code with code-review failing only on the two criteria ruled open (REQ-04, REQ-05), or hold it until both close? Recommendation: hold until REQ-05 runs on an idle host, since its gate can then fail on REQ-04 alone.
 - `standard_u128_irreducibility_note` now states primitivity, so its name no longer fits; rename with a cutover in a new issue, or keep. Recommendation: rename.
 
 ## References
