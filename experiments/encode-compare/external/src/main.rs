@@ -6,6 +6,8 @@
 //! worker. Before timing, every arm must reproduce gf2's codewords for all
 //! the cell's messages; an arm that does not, or whose library derives
 //! another base graph or lifting size, is reported and not timed.
+//! `encode-compare cutover round <n>` runs one round of the external arms of
+//! the BCH cutover comparison, [`cutover`].
 
 use encode_compare::bch::{BchCell, Gf2BchArm, BCH_CELLS};
 use encode_compare::nr::{Gf2NrArm, NrCell, NR_CELLS};
@@ -15,6 +17,8 @@ use gf2_coding::traits::BlockEncoder;
 use gf2_core::BitVec;
 use std::ffi::{c_char, c_void, CString};
 use std::sync::Arc;
+
+mod cutover;
 
 /// Declares the entry points of one bchlib build of `cpp/bchlib.c` and
 /// names them as a [`BchlibBuild`].
@@ -65,9 +69,20 @@ bchlib_build!(
     gf2_bchlib_m16t12_encode
 );
 
+bchlib_build!(
+    BCHLIB_M7T10,
+    "bchlib const m=7 t=10",
+    Some((7, 10)),
+    gf2_bchlib_m7t10_new,
+    gf2_bchlib_m7t10_free,
+    gf2_bchlib_m7t10_ecc_bits,
+    gf2_bchlib_m7t10_encode
+);
+
 /// Every bchlib build `build.rs` compiles: the runtime-parameter one and the
 /// `CONFIG_BCH_CONST_PARAMS` ones, which accept only their own (m, t).
-const BCHLIB_BUILDS: [BchlibBuild; 3] = [BCHLIB_RUNTIME, BCHLIB_M14T12, BCHLIB_M16T12];
+const BCHLIB_BUILDS: [BchlibBuild; 4] =
+    [BCHLIB_RUNTIME, BCHLIB_M14T12, BCHLIB_M16T12, BCHLIB_M7T10];
 
 /// The entry points of one bchlib build.
 #[derive(Clone, Copy)]
@@ -576,8 +591,9 @@ fn main() {
     match std::env::args().nth(1).as_deref() {
         Some("nr") => nr(),
         Some("bch") => bch(),
+        Some("cutover") => cutover::main(),
         _ => {
-            eprintln!("usage: encode-compare nr|bch");
+            eprintln!("usage: encode-compare nr|bch|cutover round <n>");
             std::process::exit(2);
         }
     }

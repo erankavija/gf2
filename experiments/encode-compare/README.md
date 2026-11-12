@@ -25,3 +25,25 @@ workspace: its build compiles srsRAN's LDPC translation units and links
 AFF3CT's static library and compiles bchlib from the trees `GF2_SRSRAN_ROOT`,
 `GF2_AFF3CT_ROOT` and `GF2_BCHLIB_ROOT` name, all `-O3 -march=native`; gf2
 builds with `-C target-cpu=native`.
+
+[`cutover.sh`](cutover.sh) times the BCH cutover (@/issue/fd9d5416): gf2 at
+the pre-cutover revision and at HEAD, and the external baselines, on the
+epic's two workloads, W1 batch encoding at batch 1, 16, 256 and 4096 and W2
+generator-matrix materialization, over the five rows of
+[`src/cutover/harness.rs`](src/cutover/harness.rs). Each revision is extracted
+with `git archive` under `target/` and builds the `bch_cutover` example of
+`gf2-coding` from [`cutover/main.rs`](cutover/main.rs), the harness and its
+adapter: [`cutover/pre.rs`](cutover/pre.rs) over the legacy
+`BchEncoder::encode_batch` and `BchCode::generator_matrix`, and
+[`src/cutover/current.rs`](src/cutover/current.rs) over `BchCode::encode_batch`,
+the shipped DVB-T2 encoder and `generator_matrix`. Both write the descending
+`[message | parity]` layout, the legacy encoder's only one. The external arms
+are bchlib (runtime and const-parameter builds) and AFF3CT `Encoder_BCH` and
+`Encoder_BCH_inter` at int8 and int32 on W1, and M4RI (`mzd_echelonize_m4ri`
+and `mzd_echelonize_pluq` of the cyclic generator matrix, `GF2_M4RI_ROOT`
+naming its install prefix) and AFF3CT's basis-vector encoding on W2; the table
+reports each library's fastest configuration per cell. Every configuration's
+output digest must equal the current revision's. Rounds of all arms
+interleave, and a row gives the median and range over rounds; a configuration
+whose projected call exceeds `CUTOVER_CALL_BUDGET_S` is reported as a
+projection and not run.
