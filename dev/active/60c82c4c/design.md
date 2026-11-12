@@ -88,9 +88,10 @@ Six changes, none altering any codeword.
 1. **Hoist the field-identity check** (gf2-coding, `encode.rs`).
    `validate_batch` decides `F::field_id_hint().is_some()` once per batch and
    skips the per-message `validate_symbol_field` when the type carries the
-   identity. Separately, `FieldId::prime` allocating per call is a gf2-core
-   defect; it is filed as its own issue (see open questions) rather than
-   widened into this change.
+   identity. `FieldId::prime` allocating an `Arc` per call is the gf2-core
+   defect behind this cost; @/issue/c6b20bec removes it at its source, after
+   which the per-message check costs no allocation on any path and the hoist
+   saves only a branch per message.
 2. **Guarded index invalidation** (gf2-core, `bitvec.rs`). `words_mut` clears
    the rank/select slot only when it holds an index:
    `let slot = ..get_mut()..; if slot.is_some() { *slot = None; }`. This takes
@@ -142,6 +143,66 @@ same `BchFoldFramesFn` over the portable multiply, selected where `detect()`
 returns `None` and under `force_scalar_encode_kernels`. Changes 1 to 4 and 6
 are safe Rust outside the kernel crate.
 
+## Harness step (planned)
+
+After the night window of @/issue/fd9d5416, the current arm of the cutover
+harness gains `BchCode::encode_batch_into` over one workspace and preallocated
+codewords as a second configuration in
+`experiments/encode-compare/src/cutover/current.rs`, beside
+`BchCode::encode_batch`. `experiments/encode-compare/cutover/summarize.py`
+today reduces an arm to its fastest configuration and takes the first current
+configuration as the ratio reference; it then reports each current
+configuration as its own row with its own ratio and verdict, and the
+pre-cutover comparison stays against `encode_batch`. The issue owner decides
+which row REQ-02 reads. Both routes below are designed so that either row can
+be the one.
+
+## Route (a): `encode_batch_into`
+
+Changes 1 to 6 take this route to its ceiling; the estimate is in the table
+below.
+
+## Route (b): the allocating `encode_batch`
+
+Changes 1 to 6 and @/issue/c6b20bec apply to this route unchanged. What they
+leave is the codeword storage: `encode_batch` builds
+`vec![S::zeroed(n, ..); len]`, one heap buffer per codeword cloned into an
+88-byte `BitVec`, and the caller frees each. An indication on the same host,
+cores and commit as above (driver building and dropping the batch's storage
+alone, $n = 127$) costs that storage 8.6 ns per codeword at batch 16 and
+16.7 to 17.4 ns at batch 256 and 4096; one contiguous allocation of the same
+words costs 2.3 ns per codeword at batch 16 and 0.12 ns at batch 4096. The
+$n = 15$ costs are within 1 ns of these.
+
+Two ways to remove the per-codeword allocation, one per return type:
+
+- **(b1) Existing return type `Vec<BitVec>`, inline storage.** Each `BitVec`
+  owns its words, so no allocation can be shared across a `Vec<BitVec>`, and a
+  pool or arena would need `BitVec`'s `Drop` to return buffers to it, a
+  process-wide behavior every `BitVec` would pay. What removes the allocation
+  inside the type is inline storage for short vectors: gf2-core's `BitVec`
+  keeps up to two words in the struct and allocates above that. B1
+  ($n = 15$) and B2 ($n = 127$) then allocate nothing per codeword; the batch
+  pays one `Vec<BitVec>` allocation. Every `words`/`words_mut` call gains a
+  representation branch, and `BitVec` is the workspace's most used type, so
+  this is a gf2-core design change with its own conformance and performance
+  evidence across all `BitVec` users.
+- **(b2) Documented new return type, one allocation.**
+  `BchCode::encode_batch_matrix(&self, messages: &[S], layout) -> Result<M, CodeError>`
+  returns the batch as the code's matrix type `M` (`BitMatrix` for the packed
+  binary code), codeword $i$ in row $i$, in one zeroed allocation. `M` is
+  already a type parameter of `BchCode` and already the generator's type, so
+  no new type is introduced; for `BitMatrix` the placement of change 6 writes
+  `row_words_mut(i)` directly. The rustdoc states that row $i$ is the
+  codeword `encode_batch` returns at position $i$, and the REQ-01 suite
+  checks exactly that.
+
+Recommendation: (b2). It reaches the `_into` ceiling within the 0.1 to 2.3 ns
+measured above, stays inside gf2-coding and the existing type parameters, and
+leaves (b1) to a gf2-core issue judged on all `BitVec` users. If the owner's
+row must be `encode_batch` itself, (b1) is the route and needs that issue
+first.
+
 ## Conformance tests (REQ-01)
 
 All extend the shared suite in `crates/gf2-coding/tests/bch_encode_dispatch.rs`
@@ -164,6 +225,9 @@ rather than adding a parallel one (@/inv/shared-test-contracts).
   allocates nothing (guards change 1's removal of the per-message `Arc`).
 - gf2-core: a `BitVec` test that a rank query after `write_bits` still sees
   the written bits (the index invalidation of change 2 stays correct).
+- Route (b2): for every corpus row, layout and the batch lengths above, row
+  $i$ of `encode_batch_matrix` equals codeword $i$ of `encode_batch`, on both
+  kernel bundles.
 
 ## Expected gain (estimate)
 
@@ -172,33 +236,29 @@ equal to `encode_batch` on all 4096 messages) with one bit reversal, two
 PCLMULQDQ and one reversal of the parity per message, in 4.7 ns; it writes a
 plain word array, not `BitVec`s. That bounds the arithmetic.
 
-| Path after the change | Estimate, ns per message | vs bchlib 19.1 ns |
+| Path after the change | Estimate, ns per message | vs bchlib (21.0 ns at batch 16, 19.1 at 4096) |
 | --- | --- | --- |
-| `encode_batch_into` with workspace, batch $\ge 16$ | 8 to 12 | 1.6 to 2.4 |
-| `encode_batch_into`, batch 1 (one clock read in the harness included) | 45 to 55 against bchlib's 48 | 0.9 to 1.1 |
-| `encode_batch` (allocating), batch $\ge 16$ | 25 to 30 | 0.65 to 0.75 |
+| (a) `encode_batch_into`, batch $\ge 16$ | 8 to 12 | 1.6 to 2.6 |
+| (a) `encode_batch_into`, batch 1 (one clock read in the harness included) | 45 to 55 against bchlib's 48 | 0.9 to 1.1 |
+| (b) `encode_batch` after changes 1 to 6 and @/issue/c6b20bec, batch 16 | 17 to 21 | 1.0 to 1.2 |
+| (b) same, batch 256 and 4096 | 25 to 29 | 0.65 to 0.75 |
+| (b1) `encode_batch` with inline `BitVec` storage, batch $\ge 16$ | 9 to 14 | 1.4 to 2.3 |
+| (b2) `encode_batch_matrix`, batch $\ge 16$ | 8 to 14 | 1.4 to 2.6 |
+| (b), (b1), (b2), batch 1 | 55 to 70 against bchlib's 48 | 0.7 to 0.9 |
 
 Reasoning: the prototype's 4.7 ns plus a `BitVec` read and one word-array
-write per message at L1 latency, plus amortized group dispatch. The
-allocating entry point keeps its measured 17 ns of `malloc`/`free` per
-codeword, so it cannot reach 1.0 on B2 under this design; the batch-1 cell
-rests on change 3 and on the harness's per-call clock read, which every arm
-pays.
+write per message at L1 latency, plus amortized group dispatch, gives route
+(a). Route (b) adds the measured storage cost per codeword (8.6 ns at batch
+16, 17 ns above), which @/issue/c6b20bec does not touch since change 1
+already takes the `FieldId` allocation out of the batch loop. (b1) replaces it
+with the initialization of an 88-byte struct, (b2) with the contiguous
+allocation's 0.1 to 2.3 ns. At batch 1 every allocating route pays at least
+one allocation and free beside the harness's clock read, so it stays below
+bchlib; the batch-1 cell of the `_into` route rests on change 3.
 
-## Open questions for the lead
+## Open question for the lead
 
-1. **Which gf2 entry point the cutover adapter times.** bchlib and AFF3CT
-   write into preallocated buffers; gf2's adapter times the allocating
-   `encode_batch`. Under @/inv/performance-deliverable the matched
-   configuration is `encode_batch_into` with a workspace and preallocated
-   codewords. Recommendation: add it to `current.rs` as a second configuration
-   (the summary already takes an arm's fastest), keep `encode_batch` beside it.
-   Without that, REQ-02 is out of reach on B2 (estimate above).
-2. **`FieldId::prime` allocation.** File a gf2-core issue to make prime-field
-   identities allocation-free (a static per prime or an inline repr), since
-   every type-level identity query pays it; change 1 only removes it from the
-   batch loop.
-3. **Batch 1.** If the window table shows bchlib ahead at batch 1 after this
+1. **Batch 1.** If the window table shows bchlib ahead at batch 1 after this
    change, the remaining per-call costs are `select_family` (profile
    resolution) and the `reset_family` stamp comparison; resolving both once
    per workspace is the next step and needs a decision on whether a workspace
