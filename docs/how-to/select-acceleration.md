@@ -45,8 +45,9 @@ families, which run the detected BCH encode kernels.
 `RUSTFLAGS="-C target-cpu=native"` lets the compiler use the build host's
 extensions in code outside the dispatched kernels and produces a binary that
 requires those extensions. For LLR de-rate-matching, a native build and a
-baseline `x86-64` build measure the same
-([evidence](../reference/performance-evidence.md#nr-llr-derate)).
+baseline `x86-64` build are compared in
+[the NR de-rate-matching entry](../reference/performance-evidence.md#nr-llr-derate);
+@/issue/eda07788 records the result.
 
 ### Check what the host binds
 
