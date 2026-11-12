@@ -27,13 +27,14 @@ it; `@/issue/45ecf975` waits on those, `@/issue/1aea3958` and
 
 1. **High, REQ-02 and REQ-05.** `dev/research/permanent_wave_gpu` holds a run
    receipt (`architecture_compile_evidence-v1.md`) and compiler-resource result
-   tables in its README. Its `scripts/compile_arch_evidence.sh` writes the
+   tables in its README.
+   `dev/research/permanent_wave_gpu/scripts/compile_arch_evidence.sh` writes the
    receipt and log into the source directory. The budget admits Markdown there
    without inspecting it.
 2. **Medium, REQ-04.** Base-name citations of deleted files, such as
    `f5_wave_resource_usage.log` in that README, pass the reference check, which
-   needs a slash in an inline path. The receipt also names a missing
-   `hip/architecture_compile_evidence-v1.log`.
+   needs a slash in an inline path. The receipt also names an execution log
+   that no longer exists.
 
 ## Next
 
