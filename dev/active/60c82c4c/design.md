@@ -143,26 +143,35 @@ same `BchFoldFramesFn` over the portable multiply, selected where `detect()`
 returns `None` and under `force_scalar_encode_kernels`. Changes 1 to 4 and 6
 are safe Rust outside the kernel crate.
 
-## Harness step (planned)
+## Target and harness step (planned)
+
+Charter decision D-7 (`dev/research/2caf738d-charter.md`) fixes the counted
+cell: it times the gf2 entry point whose output contract equals the
+reference's. bchlib and AFF3CT write into caller-provided buffers, so REQ-02
+reads `BchCode::encode_batch_into` with a reused workspace and preallocated
+codewords. The allocating `encode_batch` is reported beside it as its own row
+and carries no 1.0 requirement; D-4 of the same charter still asks that the
+allocating default be fast, which route (b) covers.
 
 After the night window of @/issue/fd9d5416, the current arm of the cutover
-harness gains `BchCode::encode_batch_into` over one workspace and preallocated
-codewords as a second configuration in
-`experiments/encode-compare/src/cutover/current.rs`, beside
-`BchCode::encode_batch`. `experiments/encode-compare/cutover/summarize.py`
+harness gains `encode_batch_into` as a second configuration in
+`experiments/encode-compare/src/cutover/current.rs`, beside `encode_batch`.
+The two configuration labels cite D-7: the `_into` row as the D-7 cell, the
+allocating row as reported beside it. `experiments/encode-compare/cutover/summarize.py`
 today reduces an arm to its fastest configuration and takes the first current
 configuration as the ratio reference; it then reports each current
 configuration as its own row with its own ratio and verdict, and the
-pre-cutover comparison stays against `encode_batch`. The issue owner decides
-which row REQ-02 reads. Both routes below are designed so that either row can
-be the one.
+pre-cutover comparison stays against `encode_batch`.
 
-## Route (a): `encode_batch_into`
+## Route (a), the target: `encode_batch_into`
 
-Changes 1 to 6 take this route to its ceiling; the estimate is in the table
+Changes 1 to 6 take the D-7 cell to its ceiling; the estimate is in the table
 below.
 
-## Route (b): the allocating `encode_batch`
+## Route (b), secondary: the allocating `encode_batch`
+
+Under D-4 the allocating default gets the cheap fixes as well, measured as
+the row beside the D-7 cell.
 
 Changes 1 to 6 and @/issue/c6b20bec apply to this route unchanged. What they
 leave is the codeword storage: `encode_batch` builds
@@ -197,11 +206,15 @@ Two ways to remove the per-codeword allocation, one per return type:
   codeword `encode_batch` returns at position $i$, and the REQ-01 suite
   checks exactly that.
 
-Recommendation: (b2). It reaches the `_into` ceiling within the 0.1 to 2.3 ns
-measured above, stays inside gf2-coding and the existing type parameters, and
-leaves (b1) to a gf2-core issue judged on all `BitVec` users. If the owner's
-row must be `encode_batch` itself, (b1) is the route and needs that issue
-first.
+Recommendation: (b1). D-4 asks for the fix on `encode_batch` itself, and (b1)
+gives it without changing that method's contract or the library's batch
+convention (`&[BitVec]` in, `Vec<BitVec>` out, which the LDPC `encode_batch`
+shares), so every producer of short `BitVec`s gains it. It is a gf2-core
+change and needs its own issue with evidence across `BitVec` users. (b2) is
+the fallback if that evidence rejects inline storage: as the companion method
+above it leaves `encode_batch` itself unchanged, and moved into
+`encode_batch`'s return type it would have to land at the batch convention's
+source, every `encode_batch`, under @/inv/convention-convergence.
 
 ## Conformance tests (REQ-01)
 
@@ -238,8 +251,8 @@ plain word array, not `BitVec`s. That bounds the arithmetic.
 
 | Path after the change | Estimate, ns per message | vs bchlib (21.0 ns at batch 16, 19.1 at 4096) |
 | --- | --- | --- |
-| (a) `encode_batch_into`, batch $\ge 16$ | 8 to 12 | 1.6 to 2.6 |
-| (a) `encode_batch_into`, batch 1 (one clock read in the harness included) | 45 to 55 against bchlib's 48 | 0.9 to 1.1 |
+| (a) `encode_batch_into`, batch $\ge 16$, D-7 cell | 8 to 12 | 1.6 to 2.6 |
+| (a) `encode_batch_into`, batch 1, D-7 cell (one clock read in the harness included) | 45 to 55 against bchlib's 48 | 0.9 to 1.1 |
 | (b) `encode_batch` after changes 1 to 6 and @/issue/c6b20bec, batch 16 | 17 to 21 | 1.0 to 1.2 |
 | (b) same, batch 256 and 4096 | 25 to 29 | 0.65 to 0.75 |
 | (b1) `encode_batch` with inline `BitVec` storage, batch $\ge 16$ | 9 to 14 | 1.4 to 2.3 |
@@ -254,7 +267,8 @@ already takes the `FieldId` allocation out of the batch loop. (b1) replaces it
 with the initialization of an 88-byte struct, (b2) with the contiguous
 allocation's 0.1 to 2.3 ns. At batch 1 every allocating route pays at least
 one allocation and free beside the harness's clock read, so it stays below
-bchlib; the batch-1 cell of the `_into` route rests on change 3.
+bchlib, which D-7 does not require of that row; the batch-1 D-7 cell rests
+on change 3.
 
 ## Open question for the lead
 
