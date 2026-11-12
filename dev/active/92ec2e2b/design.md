@@ -20,16 +20,13 @@ side is one round of the external arm of
 `CUTOVER_CELLS=W2/B1,W2/B2,W2/B3,W2/T2S`; T2N was not run (call budget). The
 night-window table of @/issue/fd9d5416 supersedes the times.
 
-| Row, $\mu$s per call | B1 | B2 | B3 | T2S |
-| --- | --- | --- | --- | --- |
-| M4RI `mzd_echelonize_m4ri` | 0.278 | 6.31 | 34.6 | 36 184 |
-| AFF3CT `Encoder_BCH_inter`, fastest bit type | 0.160 | 11.5 | 66.4 | 163 068 |
-| gf2, adapter call (descending layout) | 0.566 | 63.0 | 439 | 2 052 432 |
-| gf2, `BchCode::generator_matrix` (ascending layout) | 0.072 | 0.481 | 1.49 | |
-
-gf2's ascending-layout materialization already beats both comparators by 7
-to 25 times on B2 and B3; the declared-layout and shortened paths are what
-lose.
+The faster comparator per row is AFF3CT `Encoder_BCH_inter` on B1
+(0.160 $\mu$s per call) and M4RI `mzd_echelonize_m4ri` on B2, B3 and T2S
+(6.31 $\mu$s, 34.6 $\mu$s, 36.2 ms). gf2's adapter call takes 0.566 $\mu$s,
+63.0 $\mu$s, 439 $\mu$s and 2.05 s on those rows, while
+`BchCode::generator_matrix` in the ascending layout takes 0.072 $\mu$s,
+0.481 $\mu$s and 1.49 $\mu$s on B1 to B3, 13 to 23 times faster than M4RI on
+B2 and B3: the declared-layout and shortened paths are what lose.
 
 ## Profile
 
