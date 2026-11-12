@@ -179,7 +179,7 @@ static void bench_solve(const char* field_label, long n, uint64_t seed,
 
     // Column-vector solve(d, A, x, b) ⇒ A*x = b. The other overload
     // is x*A = b (row-vector); we use the column form to match the
-    // protocol §6 `solve` contract (and FLINT's nmod_mat_solve).
+    // acceptance criterion 3 (issue 1d6043e8) `solve` contract (and FLINT's nmod_mat_solve).
     for (int i = 0; i < warmup; ++i) solve(d, A, x, b);
 
     uint64_t total_ns = 0;
@@ -333,7 +333,7 @@ static void bench_mul_gf2pow32(long n, uint64_t seed,
 
     if (early_exit) warn_early_exit("matmul", "GF(2^32)", n, "uniform", total_ns);
     // CSV uses `matmul` to align with the m4rie matmul rows already in
-    // the protocol § 7 allowed-values list. analyze.py aliases matmul
+    // the acceptance criterion 4 allowed-values list. analyze.py aliases matmul
     // to fgemm for cross-merge.
     emit_csv("matmul", "GF(2^32)", n, n, n, "uniform", seed, mean_ns, tput);
 }

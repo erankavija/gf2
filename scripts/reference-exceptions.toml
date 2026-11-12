@@ -1,4 +1,5 @@
 # Exceptions for scripts/check-references.py. Each entry needs a reason.
+# `path` is a glob or a list of globs.
 
 [[exception]]
 path = ".jit/events.jsonl"
@@ -6,8 +7,29 @@ reason = "append-only tracker log records paths as they were"
 
 [[exception]]
 path = ".jit/issues/*"
+history = "closed"
+reason = "a closed issue's prose is history: it may name evidence and invariants the tree no longer holds"
+
+[[exception]]
+path = ".jit/issues/*"
 planned = ["crates/", "experiments/", "docs/", "scripts/", "benchmarks/", "proofs/"]
 reason = "open issues name files they plan to create"
+
+[[exception]]
+path = ".jit/archive-evidence/*"
+reason = "archive records of completed containers state the paths their documents moved from and to"
+
+[[exception]]
+path = ".jit/references.toml"
+reason = "citations name files inside the cited upstream sources"
+
+[[exception]]
+path = "dev/reference_data/osd_ebch_128_64_fossorier1994.md"
+reason = "provenance record names the retrieved upstream file"
+
+[[exception]]
+path = "dev/active/ae03bcd0-general-bch/oracle-provenance.md"
+reason = "names the package metadata file of the GAP installations the oracle loads"
 
 [[exception]]
 path = "contrib/gates/tests/*"
@@ -26,16 +48,28 @@ path = "packages/*"
 reason = "installable rule packs name paths of the projects that adopt them"
 
 [[exception]]
-path = "dev/active/b8206228-permanent-statistics/45ecf975/*"
-reason = "history rewrite runbook names the paths it strips; remove when 45ecf975 closes"
+path = [
+  "dev/active/b8206228-permanent-statistics/45ecf975/history-rewrite-runbook.md",
+  "dev/active/b8206228-permanent-statistics/45ecf975/rewrite_paths.py",
+]
+reason = "history rewrite runbook and its path filter name the paths and backups the rewrite handles; remove when 45ecf975 closes"
 
 [[exception]]
 path = "crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md"
 reason = "cites files of the upstream Sionna repository"
 
 [[exception]]
-path = ".agents/skills/*"
-reason = "skill text gives illustrative paths of the projects that use it"
+path = [
+  ".agents/skills/jit-execution-lead/references/architect-agent-prompt.md",
+  ".agents/skills/jit-execution-lead/references/explorer-agent-prompt.md",
+  ".agents/skills/jit-manage/SKILL.md",
+  ".agents/skills/jit-migrate/SKILL.md",
+  ".agents/skills/jit-parallel/SKILL.md",
+  ".agents/skills/jit-parallel/references/worktree-mode.md",
+  ".agents/skills/jit-planning-lead/references/researcher-prompt.md",
+  ".agents/skills/jit-project-lead/references/standards-*.md",
+]
+reason = "skill text gives illustrative paths: documents a worker writes, files of other projects, and jit's control plane under .git"
 
 [[exception]]
 path = "scripts/tracked-budget.toml"
@@ -51,15 +85,19 @@ reason = "Lake writes it; `subDir` names a directory inside the upstream reposit
 
 [[exception]]
 path = "dev/tools/tuning-campaign-support/config/a83583e0/producing-build-inputs.json"
-reason = "recorded input list of finished campaign a83583e0; names the files its run built from"
+reason = "input list of finished campaign a83583e0; the campaign validator reads it under the digest the run recorded, so it keeps the files the run built from"
 
 [[exception]]
 path = "dev/tools/tuning-campaign-support/config/dbd8787d/producing-build-inputs.json"
-reason = "recorded input list of finished campaign dbd8787d; names the files its run built from"
+reason = "input list of finished campaign dbd8787d; the campaign validator reads it under the digest the run recorded, so it keeps the files the run built from"
 
 # Dated session records state the tree at their date; owner ruling 2026-11-12.
 # The entries name the session-record forms under dev/active: handoffs, session
 # notes, per-session prompt directories, and dispatch and rework prompts.
+[[exception]]
+path = "dev/active/b8206228-permanent-statistics/45ecf975/c4-report.md"
+reason = "dated implementation handoff; owner ruling 2026-11-12"
+
 [[exception]]
 path = "dev/active/*/handoff*.md"
 reason = "dated session record; owner ruling 2026-11-12"

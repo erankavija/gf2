@@ -24,7 +24,7 @@ model; perfect receiver CSI. No code is changed by this document.
 | Fan-in concat / split-half know four canonical batch types, rebuilding `SymbolBatch` from `i`, `q` only | `executor/topology.rs:751-779, 786-818` |
 | Presets materialise only `Channel::Awgn` and couple demapper `noise_var` via `es_n0_db_to_n0` | `presets/nr_5g.rs:302-366`, `presets/dvb_t2.rs:192` |
 | Tests pinning `SymbolBatch` shape/edges: `preset_vs_graph` finds the channel as the unique `SymbolBatch -> SymbolBatch` stage and drives a fixed batch into the `SymbolBatch -> LlrBatch` demapper | `tests/preset_vs_graph.rs:117-123, 313-366` |
-| Other `SymbolBatch` constructors/consumers | `tests/{checkpoint_compat,channels_determinism,channels_smoke,gpu_byte_identity,gpu_demap_byte_identity,type_mismatch,dag_topology,dvb_t2_chain_via_graph,dvb_t2_stage_roundtrip}.rs`, `src/bin/{checkpoint_sweep,gpu_awgn_throughput,gpu_demap_throughput}.rs`, `examples/dvb_t2_graph_api.rs` |
+| Other `SymbolBatch` constructors/consumers | `tests/{checkpoint_compat,channels_determinism,channels_smoke,gpu_byte_identity,gpu_demap_byte_identity,type_mismatch,dag_topology,dvb_t2_chain_via_graph,dvb_t2_stage_roundtrip}.rs`, `src/bin/checkpoint_sweep.rs`, `examples/dvb_t2_graph_api.rs` |
 | No struct-literal construction of `SymbolBatch` exists; all sites use `SymbolBatch::new` | `rg 'SymbolBatch \{'` |
 | A parallel fading model exists in the coding layer (`RicianChannel`, f64 `Complex`, `generate_frame_gains`) | `crates/gf2-coding/src/fading.rs:46, 272, 413` |
 

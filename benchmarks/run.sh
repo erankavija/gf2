@@ -321,7 +321,7 @@ if [[ "${RUN_SMOKE_EQUALITY}" -eq 1 ]]; then
             bash -c "${COMPILE_CMD} && /work/reference/m4ri_bench --seed ${SEED} --smoke"
     fi
     # Cross-library bitwise-equality oracles (issue c3e79272). Each runs
-    # protocol §6 polynomial-coefficient equality between two refs that
+    # acceptance criterion 3 (issue 1d6043e8) polynomial-coefficient equality between two refs that
     # both support the same (op, field, n) cell at n=16:
     #   * ntl_flint_smoke         — NTL ↔ FLINT for fgemm/inv/solve/charpoly
     #     (FLINT-only invariants for pluq/echelon/minpoly).
@@ -345,7 +345,7 @@ if [[ "${RUN_SMOKE_EQUALITY}" -eq 1 ]]; then
     # example `gf2pow32_smoke_emit_expected` writes the gf2-core matmul
     # output bytes; `ntl_gf2pow32_smoke` loads them and compares against
     # NTL's `mat_GF2E` output. Direct `reference ↔ gf2-core` per the
-    # protocol § 6 criterion-3 contract.
+    # acceptance criterion 3 contract.
     if [[ "${RUN_NTL}" -eq 1 ]]; then
         echo "[run.sh] regenerating gf2pow32_smoke_n16.bin (gf2-core ground-truth)" >&2
         (cd "$(dirname "${HERE}")" && \

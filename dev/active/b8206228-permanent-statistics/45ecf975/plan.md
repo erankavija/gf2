@@ -13,7 +13,7 @@ Owner decisions from the interview:
 | Code home | `experiments/<name>/` at repo root. `dev/` is for developer documentation. |
 | Shared mechanics | `experiments/common` |
 | Other experiment code | All in this effort |
-| `gf2-stats` | Keep `binomial`, `intervals`, `weighted`. Delete `accumulator.rs` and the zero-floor wrapper. Move `sampler.rs`. |
+| `gf2-stats` | Keep `binomial`, `intervals`, `weighted`. Delete the `accumulator` module and the zero-floor wrapper. Move `sampler.rs`. |
 | Tracking | Tasks under epic `b8206228` |
 | Snapshots | Stop and purge right away |
 | Purge depth | Inputs plus raw logs and perf data |
@@ -29,11 +29,11 @@ Default is delete. Code moves only if an epic criterion or a live consumer needs
 
 Receipts, summaries, CSV and TSV result tables, execution logs and execution journals leave the tree too: under `@/inv/committed-evidence-budget` the repository keeps the harness and its configuration, and a run writes its records outside the tracked tree.
 
-Exempt until landed or closed: `dev/active/55c3e433-aff3ct-ldpc-gaps`, `02b8137c`, `.agents/`, and `bench-window/` (the armed timer runs `run-window.sh`).
+Exempt until landed or closed: the `55c3e433` AFF3CT LDPC gaps directory, `02b8137c`, `.agents/`, and `bench-window/` (the armed timer runs `run-window.sh`).
 
 **A2. Remove the rule and its tooling.**
 - Replace the "receipt carries every input" paragraph in `AGENTS.md`: receipts hold results, configuration and digests, and the source revision is the rebuild pointer.
-- Delete `check-receipt-input-snapshots.py`, `receipt-input-omissions.json` and their `scripts/cargo-ci.sh` steps.
+- Delete the receipt-input snapshot check, its omission list and their `scripts/cargo-ci.sh` steps.
 - Stop snapshot writing in `dev/tools/tuning-campaign-support/src/receipt.rs`, `src/bin/benchmark-ab-runner.rs`, `src/bin/tuning-extent-campaign-driver.rs`. Update `dev/scripts/validate-tuning-extent-campaign.py`.
 - Remove `inputs/` entries from `contrib/gates/docs-mechanical-baseline.md`. This resolves the open docs-mechanical question.
 - Fix or delete every CI step and test that read purged files. A check that only re-verifies purged bytes is deleted.
@@ -66,7 +66,7 @@ Create as tasks under `b8206228`, labelled `epic:permanent-statistics`, each wit
 |---|---|---|
 | C1 Home | `experiments/` as workspace members. `experiments/common` with identity types, provenance observation, atomic publish, each with two real consumers. File a tracked convergence issue with `tuning-campaign-support`'s copies (`@/inv/convention-convergence`). Update `AGENTS.md`, `dev/index.md`. | Claude Opus |
 | C2 `gf2-stats` | As decided. Local draw helper for `gf2-algebra` tests. | Luna |
-| C3 Rare event | Move sampler and `runner.rs` to `experiments/permanent-statistics` on `gf2-sim::checkpoint` and one log. Delete `artifact.rs`, `artifact/*`. Amend `3f664839`-derived issue text where it names the artifact system. | Sol |
+| C3 Rare event | Move sampler and `runner.rs` to `experiments/permanent-statistics` on `gf2-sim::checkpoint` and one log. Delete the `permanent_rare_event::artifact` module. Amend `3f664839`-derived issue text where it names the artifact system. | Sol |
 | C4 Campaign | Rebuild small in the same crate. Keep exact-anchor checks, sampling, scheduling with HIP, statistics, resume, dataset schema, closed-set identity. Delete continuation and frozen decoders, git-dependent acceptance, emission approval, `root_fs`, hard-coded paths, `FROZEN_*`, experiment paper types as compiled enums (move to data). `build.rs` version stamp moves with it. | Claude Opus designs, Sol implements |
 | C5 Re-freeze | New protocol, campaign id and preregistration under `experiments/permanent-statistics/`. Drop "identical source revision" and "clean closure" clauses that conflict with the invariant. Retire the unused draft dataset. Reject `02b8137c` and `02ed3c51` as superseded. New validation task. Rewire arms onto it and `scripts/permanent_zero_fraction_analysis.py`, `.config/nextest.toml`. | Claude Opus |
 | C6 Validation | Queue line for the overnight window. Campaign draws still need the owner's separate go. | Lead |

@@ -850,7 +850,7 @@ static int linbox_oracle_sparse_dense(const Field& F,
 
 // Internal-consistency oracle for `sparse_matmul × {GF(p), GF(2)}`
 // (jit:96fde7c7 R1 expansion). gf2-core sparse-sparse matmul has
-// `no-independent-oracle` per protocol § 9 (no external library
+// `no-independent-oracle` per the acceptance workflow (issue 1d6043e8) (no external library
 // exposes a directly comparable sparse · sparse product), so the
 // "candidate" here is the **dense round-trip**:
 // `A.to_dense() · B.to_dense()` via fflas-ffpack `fgemm` over the
@@ -950,7 +950,7 @@ static int oracle_sparse_matmul(const Field& F, const char* field_label,
 // same primitive polynomial gf2-core uses (see `Gf2mField` constants
 // at the top of this file). Two independent GF(2^m) matmul
 // implementations agreeing on every byte gives the regression signal
-// protocol § 6 calls for.
+// acceptance criterion 3 calls for.
 static int oracle_sparse_matmul_gf2m(const Gf2mField& F,
                                      const char* field_label,
                                      uint64_t seed,
@@ -1178,7 +1178,7 @@ static int oracle_sparse_elim(const Field& F, const char* field_label, uint64_t 
     // line 813, `LigneA[k] = Vzer;`). Only `rank` and `det` are
     // exported as cross-checkable invariants; the matrix-content output
     // is not useful as an RREF witness. Rank-equality across the two
-    // independent libraries is the protocol § 6 invariant we enforce
+    // independent libraries is the acceptance criterion 3 invariant we enforce
     // here.
     using LBMatrix = LinBox::SparseMatrix<Field>;
     LBMatrix A_linbox(F, n, n);
@@ -1412,7 +1412,7 @@ int main(int argc, char** argv) {
 
     // sparse_matmul × {GF(p), GF(2), GF(2^m)} — internal-consistency
     // oracle (jit:96fde7c7 R1 expansion). Sparse·sparse has
-    // `no-independent-oracle` per protocol § 9, so the candidate is
+    // `no-independent-oracle` per the acceptance workflow, so the candidate is
     // the dense round-trip via fflas `fgemm` (GF(p) + GF(2)) or a
     // self-contained scalar GF(2^m) matmul. Both must agree with the
     // gf2-core sparse-matmul output.
@@ -1452,10 +1452,10 @@ int main(int argc, char** argv) {
                                     gf2_bench_derive_seed(master_seed ^ 0x77ULL, "smoke-spmatmul", 0, 0, 0), et);
 
     // sparse×dense × GF(p) — fspmm cross-equality oracle for the four
-    // GF(p) primes the design doc promotes fflas-ffpack as canonical
+    // GF(p) primes jit:a3412e15 promotes fflas-ffpack as canonical
     // for, plus GF(2) (jit:521390db). The oracle_sparse_dense template
     // calls fflas-ffpack's `fspmm` against the gf2-core
-    // `SparseFieldMatrix::matmat` ground-truth, satisfying protocol § 6
+    // `SparseFieldMatrix::matmat` ground-truth, satisfying acceptance criterion 3
     // *Comparable semantics* with the gf2-core integration that 96fde7c7
     // landed.
     {
@@ -1503,8 +1503,8 @@ int main(int argc, char** argv) {
                                    gf2_bench_derive_seed(master_seed ^ 0x77ULL, "smoke-spmm", 0, 0, 0), et);
 
     // LinBox-side sparse×dense smoke oracle (jit:47698404 R9). Closes
-    // the protocol § criterion-3 candidate-specific smoke contract for
-    // the LinBox-canonical `sparse×dense × GF(2)` cell (design doc § 4)
+    // the acceptance criterion 3 candidate-specific smoke contract for
+    // the LinBox-canonical `sparse×dense × GF(2)` cell (issue 47698404)
     // and provides a redundant second witness for the four GF(p) cells
     // where LinBox is the secondary cross-check. Reuses the same
     // ground-truth `sparse_dense,GF(*)` tag as `oracle_sparse_dense` so

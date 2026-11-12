@@ -343,7 +343,7 @@ int main(int argc, char** argv) {
 
     if (smoke) {
         // Smoke is a no-op for now — the cross-equality oracle lives in
-        // sparse_smoke.cpp (per § 6 of the protocol). We still return 0
+        // sparse_smoke.cpp (acceptance criterion 3, issue 1d6043e8). We still return 0
         // so smoke.sh doesn't fail.
         std::fprintf(stderr, "[fflas_sparse_bench] smoke OK (no-op; see sparse_smoke)\n");
         return 0;

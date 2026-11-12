@@ -425,7 +425,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* Force single-thread to satisfy protocol §5 single-thread requirement. */
+    /* Force single-thread to satisfy the single-thread requirement of acceptance criterion 2 (issue 1d6043e8). */
     flint_set_num_threads(1);
 
     fprintf(stderr,

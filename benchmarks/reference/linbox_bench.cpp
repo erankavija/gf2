@@ -7,8 +7,7 @@
 //
 //   lib,operation,field,m,k,n,rank_regime,seed,wall_ns,throughput_ops
 //
-// Operations covered (per protocol § 8 — dense, exact-linear-algebra
-// scope; sparse / spmv are out of scope for this story):
+// Operations covered (dense exact linear algebra; sparse / spmv are out of scope for this story):
 //
 //   * charpoly  — uniform regime, n in {64, 256}.
 //   * minpoly   — uniform regime, n in {64, 256}.
@@ -317,7 +316,7 @@ static void bench_solve(const Field& F,
     // pivots. Forcing consistency makes the wall-clock measurement
     // path-equivalent (both libraries exercise the same elimination
     // cost) and side-steps the algorithm-defined particular-solution
-    // ambiguity called out in the SOTA acceptance protocol § 6.
+    // ambiguity called out in acceptance criterion 3 (issue 1d6043e8).
     {
         typename Field::Element_ptr X0 = FFLAS::fflas_new(F, n);
         fill_uniform_buf(F, X0, n, seed ^ 0xC0DEBABEDEADBEEFULL);
@@ -377,7 +376,7 @@ static void bench_solve(const Field& F,
 
 // ----- correctness oracles for --smoke -----------------------------------
 //
-// The protocol § 6 requires the candidate's harness to assert per-op
+// Acceptance criterion 3 requires the candidate's harness to assert per-op
 // equality contracts at n=16 against a deterministic input. Rather than
 // linking gf2-core into a C++ harness (which would require a
 // gf2-core-side C ABI and is out of scope for this task), the LinBox
@@ -675,7 +674,7 @@ template <typename Field>
 static int smoke_field(const Field& F,
                        const char* field_label,
                        uint64_t master_seed) {
-    // n = 16 per protocol § 6 *Correctness-oracle harness*.
+    // n = 16 per acceptance criterion 3 *Correctness-oracle harness*.
     constexpr size_t n = 16;
     int rc = 0;
     rc |= smoke_charpoly(F, field_label, n,
@@ -686,7 +685,7 @@ static int smoke_field(const Field& F,
     // regime_idx values (0 = uniform, 1 = deficient) match the
     // derive_seed contract used by bench_solve in run_field below so
     // the smoke and timing seeds for the same (field, n=16, regime)
-    // tuple are identical (cf. SOTA acceptance protocol § 6).
+    // tuple are identical (cf. acceptance criterion 3).
     rc |= smoke_solve(F, field_label, n, "uniform",
                       derive_seed(master_seed, "solve", 4, 0, 0));
     rc |= smoke_solve(F, field_label, n, "deficient",

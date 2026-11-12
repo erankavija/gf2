@@ -140,8 +140,8 @@ int check_field(long p, const char* label) {
     // therefore verify A·x ≡ b for both libraries' solutions
     // independently rather than requiring x_ntl == x_flint
     // (which would force the implementations to agree on internal
-    // pivot ordering and is not part of the protocol §6 contract).
-    // The `solve` row in protocol §6 explicitly notes "equality is
+    // pivot ordering and is not part of the acceptance criterion 3 (issue 1d6043e8) contract).
+    // The `solve` row in acceptance criterion 3 explicitly notes "equality is
     // on the **specific** particular solution by basis convention".
     // For a square non-singular system the basis convention is
     // immaterial: the unique solution agrees regardless. We verify
@@ -175,8 +175,8 @@ int check_field(long p, const char* label) {
             try {
                 // Column-vector convention: solve(d, A, x, b) computes
                 // x with A*x = b. The other overload (d, x, A, b) does
-                // the row-vector x*A = b which is NOT what the protocol
-                // §6 contract describes. See NTL doc/mat_lzz_p.txt.
+                // the row-vector x*A = b which is NOT what the acceptance
+                // criterion 3 contract describes. See NTL doc/mat_lzz_p.txt.
                 solve(d_ntl, A_n, x_n, b_n);
                 ntl_ok = (rep(d_ntl) != 0);
             } catch (...) { ntl_ok = false; }
