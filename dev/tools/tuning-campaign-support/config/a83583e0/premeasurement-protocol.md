@@ -852,7 +852,7 @@ Repository destinations are derived from that one ID:
 |---|---|
 | Core-owner envelope | `crates/gf2-core/data/tuning-profiles/<run-id>.json` |
 | Algebra-owner envelope | `crates/gf2-algebra/data/tuning-profiles/<run-id>.json` |
-| Complete envelope | `dev/reference_data/tuning-profiles/<run-id>.json` |
+| Complete envelope | `target/benchmarks/tuning_profiles/<run-id>-complete.json` |
 | Receipt | `target/benchmarks/tuning_profiles/<run-id>.md` |
 | Repository-relative checksum manifest | `target/benchmarks/tuning_profiles/<run-id>.sha256` |
 | Declared small build/provenance/composition/validation/reopen records | `target/benchmarks/tuning_profiles/<run-id>-session/` |

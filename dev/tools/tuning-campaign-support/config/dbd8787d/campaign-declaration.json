@@ -18,10 +18,6 @@
       "envelope": {
         "path": "crates/gf2-algebra/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json",
         "sha256": "cc845bc8b139b786365c7fd56f0d043af131f04421a6c81bed84d6c21175fdbe"
-      },
-      "complete": {
-        "path": "dev/reference_data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json",
-        "sha256": "ca4f2772655170475eaacfc1bf271674db177126a60d43855cf39343638a37e4"
       }
     }
   ],
