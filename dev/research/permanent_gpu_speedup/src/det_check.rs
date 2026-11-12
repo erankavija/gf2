@@ -1,12 +1,8 @@
 // S1g (jit:9480f8a6): determinism check — GPU vs CPU SIMD at n=36, M=1.
 //
 // Verifies that `permanent_batch_bipedal3` and `permanent_bipedal3` (SIMD path)
-// return the same Fp<3> value for the same seeded matrix at n=36.
-//
-// The CPU permanent (permanent_bipedal3) is launched in a background thread
-// while the GPU kernel runs, so the wall-clock is max(GPU_time, CPU_time)
-// rather than their sum. Measured at n=36: GPU ≈ 7200 s, in-thread CPU SIMD
-// ≈ 915 s (913.5 s observed). Wall-clock ≈ 7200 s (GPU-bound).
+// return the same Fp<3> value for the same seeded matrix at n=36. The CPU
+// permanent runs in a background thread while the GPU kernel runs.
 //
 // Build and run (requires ROCm + gfx1030):
 //   cargo build --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml \
@@ -15,8 +11,6 @@
 //       --release --features hip --bin det_check
 //
 // Expected output: "PASS: GPU == SIMD == Fp<3>(v)" where v is the computed permanent.
-// Expected wall-clock: ~7200 s (~2 h) at n=36 (GPU-bound; CPU SIMD ≈ 915 s
-// overlapped via thread, so it does not extend the wall-clock).
 
 #[cfg(not(feature = "hip"))]
 fn main() {
@@ -55,12 +49,8 @@ fn main() {
     let mat_for_cpu = mat.clone();
 
     // Launch CPU SIMD computation in a background thread so it overlaps with
-    // the GPU kernel. The GPU kernel takes ~7200 s; the in-thread CPU SIMD
-    // takes ≈ 915 s (913.5 s observed). Using a thread cuts the wall-clock to
-    // max(GPU, CPU) ≈ 7200 s rather than GPU + CPU ≈ 8115 s.
-    println!(
-        "  Starting CPU SIMD thread (permanent_bipedal3, ≈ 915 s observed) and GPU concurrently..."
-    );
+    // the GPU kernel and both results are available for comparison.
+    println!("  Starting CPU SIMD thread and GPU concurrently...");
     let t_wall = Instant::now();
 
     let cpu_handle = std::thread::spawn(move || {
@@ -72,7 +62,7 @@ fn main() {
 
     // GPU batch path (M=1). Blocks on hipDeviceSynchronize — the CPU thread
     // runs concurrently during this call.
-    println!("  Running GPU path (permanent_batch_bipedal3, M=1, expected ~7200 s)...");
+    println!("  Running GPU path (permanent_batch_bipedal3, M=1)...");
     let t_gpu = Instant::now();
     let gpu_results = permanent_batch_bipedal3(std::slice::from_ref(&mat));
     let gpu_s = t_gpu.elapsed().as_secs_f64();

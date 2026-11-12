@@ -102,8 +102,7 @@ mod harness {
     //
     // The gfx1030 driver raises a `GPU Hang` HW exception when a single
     // `permanent_batch_bipedal{5,7}` launch runs too long (a TDR-style
-    // watchdog on sustained F_5/F_7 byte/LUT kernels at large n; the Bipedal3
-    // F_3 kernel did not trip it, even on a 2300 s single launch at n=32).
+    // watchdog on sustained F_5/F_7 byte/LUT kernels at large n).
     //
     // The fix is to bound the *per-launch* device time, independent of the
     // cell's total N: split the N matrices into sub-batches whose single
@@ -156,24 +155,13 @@ mod harness {
     /// gfx1030 watchdog.  `sub_batch * 2^n <= work_budget`, clamped to
     /// `[min, max]` and never larger than the cell's `n_samples`.
     fn gpu_sub_batch(q: u64, n: usize, n_samples: usize) -> usize {
-        // gfx1030 calibration (per-launch wall, F_5 vs F_7):
-        //   F_5 n=20: 64->6.3s, 512->10.2s, 1024->16.0s  (~0.010 s/mat)
-        //   F_5 n=24: 512->190s                            (~0.36 s/mat)
-        //   F_7 n=20: 1907->28s                            (~0.015 s/mat)
-        //   F_7 n=24: 119->155s                            (~1.30 s/mat)
-        // The F_7 LUT kernel is markedly slower per matrix than the F_5
-        // byte kernel and the F_3 packed kernel, so the work budget is
-        // q-aware: a lower budget for q=7 keeps its launches under the
-        // ~190-200 s gfx1030 GPU-Hang boundary with comfortable margin
-        // (target per-launch wall ~= 20-30 s).  The budget is the *only*
-        // watchdog knob; N is NEVER reduced below the noise-floor
-        // requirement to dodge the watchdog.
+        // The field-specific kernels have different per-matrix work, so the
+        // work budget is q-aware. The budget is the only watchdog knob; N is
+        // never reduced below the noise-floor requirement to dodge it.
         //
-        //   q=3 : 4.0e9  (Bipedal3 packed kernel tolerated a single
-        //                 2300 s launch at n=32 without hanging; keep the
-        //                 large headline cells un-fragmented)
-        //   q=5 : 1.3e9  (n=20 ~2000 mat ~20s; n=24 ~77 mat ~28s)
-        //   q=7 : 3.5e8  (n=20 ~334 mat ~?; n=24 ~20 mat ~26s)
+        //   q=3 : 4.0e9
+        //   q=5 : 1.3e9
+        //   q=7 : 3.5e8
         //
         // Overridable via PUG_GPU_WORK_BUDGET (applies to all q).
         let default_budget = match q {
@@ -233,18 +221,8 @@ mod harness {
 
         // -- F_3 ------------------------------------------------------------
         // High-N schedule (criterion-8 [aspirational] N knob, refined against
-        // GPU-measured data per user direction 2026-05-18): N pushed as far
-        // as gfx1030 wall-clock feasibly allows to drive the Monte-Carlo TVD
-        // floor sqrt(2/(2*pi*N)) as low as possible. Measured wall-clock per
-        // cell (gfx1030, watchdog-bounded sub-batch):
-        //   n=10: N=8M   floor 0.000199   ~1663 s
-        //   n=12: N=8M   floor 0.000199   ~1680 s
-        //   n=16: N=4M   floor 0.000282   ~921 s
-        //   n=20: N=2M   floor 0.000399   ~1025 s
-        // n=6,8 kept at N=500k (~102 s each). Conclusive result: even at
-        // N=8M the q=3 TVD_perm for n>=10 is itself AT/BELOW this floor
-        // (true TVD_perm ~1e-4) -- the convergence is below the Monte-Carlo
-        // resolution limit, not merely the old noise floor (see writeup §9).
+        // High-N sample counts are selected from the Monte-Carlo TVD floor
+        // sqrt(2/(2*pi*N)) and the resolution requirement.
         for &(n, n_samples) in &[
             (6usize, 500_000usize),
             (8, 500_000),
@@ -255,16 +233,13 @@ mod harness {
         ] {
             cells.push(CellSpec { q: 3, n, n_samples });
         }
-        // The 8e4e19a0 noise-excluded headline cells. These N values are the
-        // ones that produced the committed artifact
-        // `results-2026-05-17-gpu.csv` -- a full sweep from HEAD reproduces it.
+        // Declared extension cells with sample counts chosen from their
+        // Monte-Carlo noise-floor requirements.
         //   n=24: N=800k  high-N (user direction 2026-05-18); floor 0.000631
         //   n=28: N=8k    kept at original N; floor 0.006308
         //   n=32: N=2k    kept at original N; floor 0.012616
-        // The high-N re-run was driven to n=24 then STOPPED: high-N n=28/32
-        // are GPU-wall-clock infeasible with the watchdog-bounded sub-batch
-        // (q3n28 at N=80k measured ~45 h for that single cell), so n=28/32
-        // retain their original-N rows. See writeup §8/§9.
+        // The n=28 and n=32 cells retain smaller sample counts because the
+        // Gray-code work per matrix grows exponentially with n.
         for &(n, n_samples) in &[(24usize, 800_000usize), (28, 8_000), (32, 2_000)] {
             cells.push(CellSpec { q: 3, n, n_samples });
         }
@@ -275,21 +250,18 @@ mod harness {
         // TVD noise floor sqrt((q-1)/(2*pi*N)) = sqrt(4/(2*pi*N)) must stay
         // comfortably below TVD_det/2 ~ 0.02:
         //   N=200k -> floor 0.00178   (n=8,12)
-        //   N=40k  -> floor 0.00399   (n=16, already DONE genuine PASS)
+        //   N=40k  -> floor 0.00399   (n=16)
         //   N=20k  -> floor 0.00564   (n=20,24,28)  -- 0.00564 << 0.02
         // The watchdog is NOT defeated by shrinking N (that would raise the
         // floor and risk a fake/under-resolved PASS); it is defeated by the
         // bounded-duration sub-batch kernels + cooldown (see GPU_SUB_BATCH).
-        // N=20k keeps the q=5 floor at 0.00564 (margin > 3x below TVD_det/2)
+        // N=20k keeps the q=5 floor at 0.00564 below TVD_det/2
         // while the chunked launches keep each kernel short enough to dodge
         // the TDR.
         // q=5 n=24: N=8000 -> floor sqrt(4/(2*pi*8000))=0.00892, the exact
         // 8e4e19a0 q=5-large-n standard ("<< 0.02"; >2x below TVD_det/2).
-        // q=5 n=28: at the noise-floor-required N the 2^28 Gray walk makes
-        // a single watchdog-safe sub-batch take so long that the cell needs
-        // ~50+ h on gfx1030 even fully chunked -- it is hardware-infeasible
-        // at the required N (NOT under-sampled to fake a PASS); reported
-        // honestly with measured per-launch evidence in the writeup/handoff.
+        // q=5 n=28: the noise-floor-required sample count combined with the
+        // 2^28 Gray walk exceeds the intended workload for this harness.
         for &(n, n_samples) in &[
             (8usize, 200_000usize),
             (12, 200_000),
@@ -310,13 +282,9 @@ mod harness {
         //   N=300k -> floor 0.00178   (n=8,12)
         //   N=40k  -> floor 0.00489   (n=16,20)
         //   N=20k  -> floor 0.00691   (n=24)  -- 0.00691 < 0.01 (margin OK)
-        // q=7 n=24: the F_7 LUT kernel is ~5x slower per matrix than F_5,
-        // and TVD_det(q=7) ~ 0.02 demands a LOWER floor (<< 0.01), so the
-        // required N (>= 20000 for floor 0.0069) at the watchdog-safe F_7
-        // sub-batch (~20 matrices/launch, ~26 s each on gfx1030) needs
-        // ~7+ h -- hardware-infeasible at the required N (NOT under-sampled);
-        // reported honestly with measured per-launch evidence.  F_7
-        // n=8,12,16,20 are feasible and run here.
+        // The q=7 n=24 extension is omitted because its noise-floor-required
+        // sample count combined with the 2^24 Gray walk exceeds the intended
+        // workload for this harness.
         for &(n, n_samples) in &[
             (8usize, 300_000usize),
             (12, 300_000),

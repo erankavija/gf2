@@ -291,7 +291,7 @@ mod baseline {
     /// Bit-serial reduction of a 256-bit value modulo a u128 modulus.
     ///
     /// Deliberately slow: this represents an *unoptimized* 2-limb reduction.
-    /// A real 2-limb Montgomery REDC would be ~5-10x faster than this.
+    /// A Montgomery REDC uses a different reduction strategy.
     pub fn rem_256_by_u128(limbs: [u64; 4], m: u128) -> u128 {
         assert!(m > 0);
         let mut r: u128 = 0;

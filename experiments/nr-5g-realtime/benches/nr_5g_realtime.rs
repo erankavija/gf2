@@ -4,8 +4,9 @@
 //! transport-block throughput, `(blocks × k) / wall seconds` with only the LDPC
 //! decode timed, and the highest-throughput cell with BLER ≤ 1e-2 is selected.
 //! The `NR5G_*` environment variables read in `run` override the operating
-//! point, sample sizes and decoder settings. Without the `hip` feature or a
-//! usable GPU the bench prints a notice and exits 0.
+//! point, sample sizes and decoder settings. Supply `NR5G_ATTESTED_MBPS` as
+//! the comparison baseline. Without the `hip` feature or a usable GPU the
+//! bench prints a notice and exits 0.
 
 fn main() {
     #[cfg(not(feature = "hip"))]
@@ -54,6 +55,13 @@ mod hip_bench {
             .unwrap_or(default)
     }
 
+    fn required_env_f64(key: &str) -> f64 {
+        std::env::var(key)
+            .unwrap_or_else(|_| panic!("set {key} to the comparison throughput in Mbps"))
+            .parse()
+            .unwrap_or_else(|_| panic!("{key} must be a valid number"))
+    }
+
     fn env_usize(key: &str, default: usize) -> usize {
         std::env::var(key)
             .ok()
@@ -75,6 +83,8 @@ mod hip_bench {
         }
 
         let es_n0_db = env_f64("NR5G_ESN0_DB", -1.4);
+        let attested_mbps = required_env_f64("NR5G_ATTESTED_MBPS");
+        assert!(attested_mbps.is_finite() && attested_mbps > 0.0);
         let bler_blocks = env_usize("NR5G_BLER_BLOCKS", 3000);
         let thrput_reps = env_usize("NR5G_THRPUT_REPS", 5);
         let sigma = sigma_for_es_n0_db(es_n0_db);
@@ -84,10 +94,7 @@ mod hip_bench {
         println!("# decoder: NormalizedMinSum(0.75), syndrome early termination");
         println!("# channel: BPSK-AWGN, per-bit Es/N0 = {es_n0_db} dB (sigma = {sigma:.5})");
         println!("# BLER blocks/cell = {bler_blocks}, throughput reps = {thrput_reps}");
-        println!(
-            "# target: attested flat-kernel reference 17.45 Mbps at BLER <= 1e-2 \
-             (AMENDED 2026-06-12b from the original >= 200 Mbps; study 43fb19e2)"
-        );
+        println!("# target: caller-supplied throughput baseline at BLER <= 1e-2");
         println!();
 
         let build_start = Instant::now();
@@ -164,17 +171,15 @@ mod hip_bench {
                 }
                 println!();
                 println!("# selected-cell throughput mean ± σ = {mean:.2} ± {sd:.2} Mbps");
-                const ATTESTED_MBPS: f64 = 17.45;
-                if mean >= ATTESTED_MBPS * 0.9 {
+                if mean >= attested_mbps * 0.9 {
                     println!(
                         "# VERDICT: PASS — within/above the attested flat-kernel band \
-                         ({mean:.2} Mbps vs attested {ATTESTED_MBPS:.2} Mbps; amended \
-                         criterion 2026-06-12b)"
+                         ({mean:.2} Mbps vs caller-supplied {attested_mbps:.2} Mbps)"
                     );
                 } else {
                     println!(
                         "# VERDICT: REGRESSION ({mean:.2} Mbps < 90% of the attested \
-                         {ATTESTED_MBPS:.2} Mbps) — investigate before attesting."
+                         {attested_mbps:.2} Mbps) — investigate before attesting."
                     );
                 }
             }

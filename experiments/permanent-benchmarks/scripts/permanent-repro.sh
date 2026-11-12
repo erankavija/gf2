@@ -15,7 +15,7 @@
 #           dated s3_cross_cpu CSV deterministically.
 #   S5  — GPU-vs-CPU SIMD crossover at M=256 (research harness
 #           dev/research/permanent_gpu_crossover; GPU-only, skipped on non-ROCm)
-#   S1g — GPU 50x speedup vs reference (research harness
+#   S1g — GPU speedup measurement vs reference (research harness
 #           dev/research/permanent_gpu_speedup; GPU-only, skipped on non-ROCm)
 #   Figures — T27 plot script scripts/plot_permanent_benchmarks.py (all mode)
 #   provenance.json — (re)written with current commit + hardware fingerprint
@@ -34,7 +34,7 @@
 #   - ROCm / hipcc for GPU steps S5 and S1g (auto-skipped if absent or
 #     GF2_PERMANENT_REPRO_SKIP_GPU=1 is set)
 #
-# Approximate wall-clock (Ryzen 9 5900X, AVX2, GPU gfx1030):
+# Approximate wall-clock estimates (Ryzen 9 5900X, AVX2, GPU gfx1030):
 #   Step 1 (workspace build):               ~1-3 min
 #   Step 2 (criterion bench, n=24/28):      ~4 min  (x2 for ref + bipedal3)
 #   Step 3a (S2 parallel scaling):          ~15 min (n=28/32/36 x 5 threads)
@@ -335,7 +335,7 @@ header = [
     "#   singleword SIMD path zero-pads to a 4-element AVX2 lane (documented in bipedal3.rs",
     "#   module comment). The timing difference confirms that two distinct code paths are",
     "#   executed (correctness checked via bit-identical assertions). At large n (n in",
-    "#   {24,28,32,36} from S1), the AVX2 path is 6.9x-10.6x faster than the reference.",
+    "#   {24,28,32,36} from S1), rows record the AVX2/reference comparison.",
     "# avx2_dispatch_correctness: verified by test_simd_vs_scalar_n8 / n16 / n24 in",
     "#   crates/gf2-algebra/src/permanent/bipedal3.rs",
     "n,impl,mean_us,std_us,samples,ratio_vs_avx2,hardware_fingerprint",
@@ -367,7 +367,7 @@ if [[ "${skip_gpu}" == "1" ]]; then
     echo "      cargo build --manifest-path dev/research/permanent_gpu_crossover/Cargo.toml --release --features hip"
     echo "      cargo run   --manifest-path dev/research/permanent_gpu_crossover/Cargo.toml --release --features hip"
 else
-    echo "=== step 4a: S5 — GPU vs CPU crossover at M=256 (n=24/28; ~1 hr) ==="
+    echo "=== step 4a: S5 — GPU vs CPU crossover at M=256 (n=24/28) ==="
     echo "    cargo build --manifest-path dev/research/permanent_gpu_crossover/Cargo.toml --release --features hip"
     cargo build \
         --manifest-path dev/research/permanent_gpu_crossover/Cargo.toml \
@@ -379,19 +379,19 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Step 4b: S1g — GPU 50x speedup vs reference (ROCm only)
+# Step 4b: S1g — GPU speedup comparison (ROCm only)
 # ---------------------------------------------------------------------------
 
 echo ""
 if [[ "${skip_gpu}" == "1" ]]; then
-    echo "=== step 4b: S1g — GPU 50x speedup — SKIPPED (no ROCm / GF2_PERMANENT_REPRO_SKIP_GPU=1) ==="
+    echo "=== step 4b: S1g — GPU comparison — SKIPPED (no ROCm / GF2_PERMANENT_REPRO_SKIP_GPU=1) ==="
     echo "    To run: ensure ROCm + hipcc are present and unset GF2_PERMANENT_REPRO_SKIP_GPU."
     echo "    Command:"
     echo "      cargo build --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml --release --features hip"
     echo "      cargo run   --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml --release --features hip"
-    echo "    Wall-clock: n=24/28/32 ~3 reps each; n=36 ~1 rep (~7200 s). Budget ~2+ hr."
+    echo "    Run the command on a ROCm host with enough time for the full sweep."
 else
-    echo "=== step 4b: S1g — GPU 50x speedup vs reference (n=24/28/32/36; ~2+ hr) ==="
+    echo "=== step 4b: S1g — GPU comparison (n=24/28/32/36) ==="
     echo "    cargo build --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml --release --features hip"
     cargo build \
         --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml \

@@ -11,7 +11,7 @@
 //! performs per Tanner edge, per node, per iteration. The arithmetic is printed
 //! in a form the doc quotes directly.
 //!
-//! Run:  cargo run --release --bin roofline_bytes
+//! Run: `GF2_ROOFLINE_MBPS=<throughput-Mbps> cargo run --release --bin roofline_bytes`
 
 use gf2_coding::ldpc::QuasiCyclicLdpc;
 
@@ -133,14 +133,18 @@ fn main() {
 
     // ----- Roofline against the RX 6950 XT (gfx1030) envelope -----
     //
-    // Measured anchor: 17.45 Mbps decoded transport-block throughput at
-    // batch=128, ~20 iters, k=8448 bits/block (receipt).
-    let measured_mbps = 17.45_f64;
+    // Supply the current decoded transport-block throughput from the benchmark
+    // harness that produced it; the probe stores no copied measurement.
+    let measured_mbps = std::env::var("GF2_ROOFLINE_MBPS")
+        .expect("set GF2_ROOFLINE_MBPS to the measured throughput in Mbps")
+        .parse::<f64>()
+        .expect("GF2_ROOFLINE_MBPS must be a number");
+    assert!(measured_mbps.is_finite() && measured_mbps > 0.0);
     let k_bits = TARGET_K as f64;
     let blocks_per_s = measured_mbps * 1e6 / k_bits;
     let iters = 20.0_f64; // operating-point iteration cap (BLER<=1e-2 cell)
 
-    // Bytes moved per second at the measured rate (f32+byte traffic; the
+    // Bytes moved per second at the supplied rate (f32+byte traffic; the
     // cacheable index arrays are counted separately and added as a band).
     let bytes_per_block_decode = f32_only_per_iter_per_frame as f64 * iters;
     let achieved_bw_lo = blocks_per_s * bytes_per_block_decode; // indices fully cached
@@ -150,8 +154,8 @@ fn main() {
     // RX 6950 XT peak VRAM bandwidth ~576 GB/s (256-bit GDDR6 @ ~18 Gbps).
     let peak_vram_bw = 576e9_f64;
 
-    println!("## Roofline vs RX 6950 XT (gfx1030) — anchored on measured 17.45 Mbps");
-    println!("decoded blocks/s @ 17.45 Mbps      = {blocks_per_s:.1}");
+    println!("## Roofline vs RX 6950 XT (gfx1030)");
+    println!("decoded blocks/s @ {measured_mbps} Mbps = {blocks_per_s:.1}");
     println!("iters at operating point           = {iters}");
     println!(
         "achieved VRAM BW (indices cached)  = {:.1} GB/s",
