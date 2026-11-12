@@ -342,6 +342,8 @@ def policy_faults(config):
         "dev/active/x/campaign.toml",
         "dev/active/x/execution.log", "experiments/a/results/table.md", "dev/research/x/table.csv",
         "dev/studies/x/findings.md", "dev/archive/x/plan.md", "dev/bench_results/x.md",
+        "dev/tools/x/trial-ledger.jsonl", "experiments/a/runs/r/shards/q3.jsonl", "experiments/a/runs.json",
+        "experiments/a/summary.csv", "experiments/a/run.journal.jsonl",
     )
     admitted = (
         "crates/a/src/lib.rs", "dev/active/x/handoff.md", "dev/active/x/progress.json",
@@ -362,8 +364,11 @@ def policy_faults(config):
     pin = '{"envelope": {"path": "crates/a/data/p.json", "sha256": "ab"}}'
     if record_faults(["dev/tools/x/config/declaration.json"], config, lambda _: pin):
         faults.append("refuses a configuration pin in dev/tools/x/config/declaration.json")
-    if not table_faults(["dev/tools/x/curve.csv"], config, lambda _: "snr,frames,errors,BER\n"):
-        faults.append("admits a result table in dev/tools/x/curve.csv")
+    for where in ("dev/tools/x/curve.csv", "docs/curve.csv"):
+        if not table_faults([where], config, lambda _: "snr,frames,errors,BER\n"):
+            faults.append(f"admits a result table in {where}")
+    if not record_faults(["scripts/profile.json"], config, lambda _: measured):
+        faults.append("admits a measurement record in scripts/profile.json")
     receipts = {
         "receipt title": "# Device arithmetic receipt\n\nIt passed.\n",
         "record line": "# Compile evidence\n\nmeasured_at: 2026-08-10T12:00:00Z\n",
@@ -372,7 +377,7 @@ def policy_faults(config):
     receipts["results title"] = "# Decoder results\n"
     receipts["scientific table"] = "| SNR | BER |\n|---|---|\n| 1 | 1.2e-5 |\n| 2 | 3.4e-6 |\n"
     for kind, text in receipts.items():
-        for where in ("dev/research/x/README.md", "crates/a/README.md"):
+        for where in ("dev/research/x/README.md", "crates/a/README.md", "docs/a.md", "README.md"):
             if not markdown_faults([where], config, lambda _, t=text: t):
                 faults.append(f"admits a {kind} in {where}")
     digest = "# Compile evidence\n\nraw_log_sha256: db51eadb86102cc72339714a25684ff2a0f169ad\n"
@@ -398,15 +403,15 @@ def self_test():
 max_file_bytes = 1000
 max_commit_added_bytes = 2500
 max_tree_bytes = 10000
-forbidden_paths = ['(^|/)inputs/', '\\.log$', '(^|/)receipt\\.json$', '(^|/)(execution|journal)[^/]*\\.jsonl$', '^dev/(bench_results|benchmarks|simulation_results|archive)/', '^dev/active/(?!(.*/)?Cargo\\.toml$).*\\.toml$']
-record_documents = '^(crates|dev|experiments)/.*\\.json$'
+forbidden_paths = ['(^|/)inputs/', '\\.log$', '(^|/)receipt\\.json$', '(^|/)(execution|journal)[^/]*\\.jsonl$', '^dev/(bench_results|benchmarks|simulation_results|archive)/', '^dev/active/(?!(.*/)?Cargo\\.toml$).*\\.toml$', '\\.jsonl$', '(^|/)runs\\.json$', '(^|/)summary\\.(csv|tsv)$']
+record_documents = '.*\\.json$'
 record_members = ['ran_at', 'wall_seconds', 'measured_at']
 workflow_documents = '^dev/(active|research)/'
 workflow_record_members = ['(\\w+_)?sha256']
-markdown_documents = '^(crates|dev|experiments)/.*\\.md$'
+markdown_documents = '.*\\.md$'
 receipt_title = '\\b(receipts?|results)\\b'
 measurement_columns = ['wall(_\\w+)?', 'VGPRs?', 'GB/s', 'BER', 'frames']
-table_documents = '^(crates|dev|experiments)/.*\\.(csv|tsv)$'
+table_documents = '.*\\.(csv|tsv)$'
 
 [[exception]]
 path = "experiments/*/tests/fixtures/*"
@@ -456,6 +461,14 @@ reason = "fixture"
             ("crate record", lambda: write("crates/a/data/profile.json", 0, '{"sections": {"a": {"measured_at": "t"}}}'), "execution record"),
             ("csv table", lambda: write("crates/a/data/curve.csv", 0, "snr,frames,errors\n1,100,3\n"), "result table columns frames"),
             ("tsv table", lambda: write("dev/tools/x/t.tsv", 0, "cell\twall_ns\na\t3\n"), "result table columns wall_ns"),
+            ("ledger", lambda: write("dev/tools/x/trial-ledger.jsonl", 1), "forbidden path"),
+            ("run shard", lambda: write("experiments/a/runs/r1/shards/q3.jsonl", 1), "forbidden path"),
+            ("run journal", lambda: write("experiments/a/run.journal.jsonl", 1), "forbidden path"),
+            ("run index", lambda: write("experiments/a/runs.json", 0, "{}"), "forbidden path"),
+            ("pooled summary", lambda: write("experiments/a/summary.csv", 0, "q,n\n3,2\n"), "forbidden path"),
+            ("record outside the roots", lambda: write("scripts/a.json", 0, '{"wall_seconds": 1}'), "execution record"),
+            ("receipt outside the roots", lambda: write("docs/a.md", 0, "| Cell | GB/s |\n|---|---:|\n| a | 1.3 |\n"), "result table"),
+            ("table outside the roots", lambda: write("table.tsv", 0, "cell\twall_ns\na\t3\n"), "result table columns"),
             ("frozen run configuration", lambda: write("dev/active/x/campaign.toml", 0, "seed = 1\n"), "forbidden path"),
             ("commit size", lambda: [write(f"f{i}", 900) for i in range(3)], "adds"),
             ("tree size", lambda: write("big.lock", 9000), "tree:"),
