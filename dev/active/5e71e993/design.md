@@ -14,14 +14,12 @@ with `-C target-cpu=native`; the comparator side is one round of the external
 arm of `experiments/encode-compare/cutover.sh` with `CUTOVER_CELLS=W1/B1`. The
 night-window table of @/issue/fd9d5416 supersedes the rates.
 
-| Row B1, ns per message | batch 1 | 16 | 256 | 4096 |
-| --- | --- | --- | --- | --- |
-| AFF3CT fastest (`Encoder_BCH` int8 at 1, `Encoder_BCH_inter` int32 above) | 55 | 13.9 | 13.3 | 12.4 |
-| gf2 `encode_batch` (selects `clmul-fold`) | 145 | 83 | 84 | 83 |
-| gf2 `encode_batch_family_into`, `clmul-fold`, workspace | 126 | | | 66 |
-| gf2 same, `bitslice-interleaved` | | | | 41 |
-| gf2 same, `poly-remainder-scalar` | 101 | | | 61 |
-| lean single-block Barrett loop (driver prototype) | | 6.1 | 4.6 | 4.5 |
+AFF3CT's fastest configuration (`Encoder_BCH` int8 at batch 1,
+`Encoder_BCH_inter` int32 above) takes 55, 13.9, 13.3 and 12.4 ns per message
+at batch 1, 16, 256 and 4096. gf2's `encode_batch` takes 145 ns at batch 1 and
+83 ns above. Over a workspace at batch 4096, `clmul-fold` takes 66 ns,
+`bitslice-interleaved` 41 ns and `poly-remainder-scalar` 61 ns. The driver's
+lean single-block Barrett loop takes 4.5 ns per message at batch 4096.
 
 The batch-1 cells include one clock read per call in both harnesses
 (`clock_gettime` was 13 % of the gf2 batch-1 profile).
