@@ -4,6 +4,8 @@
 //! `--crash-during-fsync` rewrite the SNR-0 checkpoint forever so that a parent
 //! test can SIGKILL the process mid-write.
 
+#![deny(unsafe_code)]
+
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
 use std::process::ExitCode;

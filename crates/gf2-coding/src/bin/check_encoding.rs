@@ -1,3 +1,5 @@
+#![deny(unsafe_code)]
+
 use gf2_coding::ldpc::encoding::EncodingCache;
 use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 use gf2_coding::traits::BlockEncoder;

@@ -1,5 +1,7 @@
 //! Validate LDPC cache with error correction tests
 
+#![deny(unsafe_code)]
+
 use gf2_coding::ldpc::encoding::EncodingCache;
 use gf2_coding::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder};
 use gf2_coding::llr::Llr;

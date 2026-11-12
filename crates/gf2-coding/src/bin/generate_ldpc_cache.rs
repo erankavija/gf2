@@ -1,5 +1,7 @@
 //! Generate DVB-T2 LDPC cache files
 
+#![deny(unsafe_code)]
+
 use gf2_coding::ldpc::encoding::EncodingCache;
 use std::path::Path;
 
