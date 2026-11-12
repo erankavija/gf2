@@ -66,14 +66,28 @@ fn products(low: __m256i, high: __m256i, x: __m256i) -> __m256i {
 /// The host must support AVX2 and `x.len() == y.len()`.
 #[target_feature(enable = "avx2")]
 unsafe fn mul_add_avx2_unchecked(table: &SplitTable, x: &[u8], y: &mut [u8]) {
-    let (low, high) = broadcast(table);
     let len = x.len();
-    // A 32-byte store that straddles a cache line costs about as much as the
-    // products, so a scalar head aligns the destination; unaligned loads of
-    // `x` cost little.
-    let mut at = y.as_ptr().align_offset(32).min(len);
-    mul_add_scalar(table, &x[..at], &mut y[..at]);
+    if len < STRIP {
+        mul_add_scalar(table, x, y);
+        return;
+    }
+    let (low, high) = broadcast(table);
     let (xp, yp) = (x.as_ptr(), y.as_mut_ptr());
+    let head = y.as_ptr().align_offset(STRIP);
+    let tail = (len - head) % STRIP;
+    // Capture overlapping edge vectors before any update: XORing an overlap
+    // twice would cancel its product. The saved results restore it once.
+    // SAFETY: len >= STRIP bounds both edge vectors; x and y are disjoint.
+    let (first, last) = unsafe {
+        let edge = |at| {
+            _mm256_xor_si256(
+                _mm256_loadu_si256(yp.add(at).cast()),
+                products(low, high, _mm256_loadu_si256(xp.add(at).cast())),
+            )
+        };
+        (edge(0), edge(len - STRIP))
+    };
+    let mut at = head;
     while at + 128 <= len {
         // SAFETY: at + 128 <= len for both slices; unaligned accesses are
         // permitted and the borrows keep the slices disjoint.
@@ -103,7 +117,16 @@ unsafe fn mul_add_avx2_unchecked(table: &SplitTable, x: &[u8], y: &mut [u8]) {
         }
         at += 32;
     }
-    mul_add_scalar(table, &x[at..], &mut y[at..]);
+    // SAFETY: the edge vectors are in bounds and hold the products with the
+    // original destination, including any overlap with the main loop.
+    unsafe {
+        if head != 0 {
+            _mm256_storeu_si256(yp.cast(), first);
+        }
+        if tail != 0 {
+            _mm256_storeu_si256(yp.add(len - STRIP).cast(), last);
+        }
+    }
 }
 
 /// # Safety

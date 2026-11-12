@@ -597,8 +597,10 @@ impl Gf2mField_ {
     /// The product runs in the cache blocks of
     /// [`Gf256GemmBlocking::structural`](crate::gf2m::Gf256GemmBlocking::structural)
     /// through the dispatched byte kernel, which holds four rows of `c` in
-    /// registers across each block's inner dimension. Takes O(`m · k · n`)
-    /// time and allocates nothing after the field's first byte-region call.
+    /// registers across each block's inner dimension. Whole-strip rows in
+    /// whole-strip blocks use an aligned copy of `b` when needed, taking
+    /// O(`k · n`) scratch bytes. Takes O(`m · k · n`) time; already aligned
+    /// operands need no scratch allocation.
     ///
     /// # Panics
     ///

@@ -61,6 +61,33 @@ fn axpy_matches_element_arithmetic_for_every_constant() {
 }
 
 #[test]
+fn axpy_preserves_guards_at_every_destination_vector_phase() {
+    let mut state = 8;
+    for field in fields() {
+        let products: Vec<u8> = (0..=255).map(|x| product(&field, 0x8e, x)).collect();
+        for len in (0..=65).chain([127, 128, 129, 4095, 4096, 4097]) {
+            for phase in 0..32 {
+                for x_offset in [0, 1, 31] {
+                    let x: Vec<u8> = (0..len + 32).map(|_| lcg(&mut state)).collect();
+                    let mut got: Vec<u8> = (0..len + 64).map(|_| lcg(&mut state)).collect();
+                    let y_offset = (phase + 32 - got.as_ptr() as usize % 32) % 32;
+                    let mut expected = got.clone();
+                    for i in 0..len {
+                        expected[y_offset + i] ^= products[usize::from(x[x_offset + i])];
+                    }
+                    field.gf256_axpy(
+                        0x8e,
+                        &x[x_offset..x_offset + len],
+                        &mut got[y_offset..y_offset + len],
+                    );
+                    assert_eq!(got, expected, "len {len}, phase {phase}, x {x_offset}");
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn gemm_matches_element_arithmetic_across_block_edges() {
     let mut state = 2;
     for field in fields() {
@@ -85,6 +112,49 @@ fn gemm_matches_element_arithmetic_across_block_edges() {
                         sum ^ product(&field, a[i * k + p], b[p * n + j])
                     });
                     assert_eq!(c[i * n + j], expected, "{m}x{k}x{n} at {i},{j}");
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn gemm_matches_scalar_with_every_right_operand_vector_phase() {
+    let mut state = 9;
+    let odd_blocks = Gf256GemmBlocking::new(
+        NonZeroUsize::new(7).unwrap(),
+        NonZeroUsize::new(33).unwrap(),
+        NonZeroUsize::new(11).unwrap(),
+    );
+    for field in fields() {
+        for n in [32, 33, 63, 64, 65, 1024, 1025] {
+            let (m, k) = (5, 17);
+            let a: Vec<u8> = (0..m * k).map(|_| lcg(&mut state)).collect();
+            let b: Vec<u8> = (0..k * n).map(|_| lcg(&mut state)).collect();
+            let expected: Vec<u8> = (0..m * n)
+                .map(|at| {
+                    (0..k).fold(0, |sum, p| {
+                        sum ^ product(&field, a[(at / n) * k + p], b[p * n + at % n])
+                    })
+                })
+                .collect();
+            for phase in 0..32 {
+                let mut storage = vec![0; k * n + 64];
+                let offset = (phase + 32 - storage.as_ptr() as usize % 32) % 32;
+                storage[offset..offset + b.len()].copy_from_slice(&b);
+                for blocking in [Gf256GemmBlocking::structural(), odd_blocks] {
+                    let mut c = vec![0x5a; m * n + 2];
+                    field.gf256_gemm_with(
+                        m,
+                        k,
+                        n,
+                        &a,
+                        &storage[offset..offset + b.len()],
+                        &mut c[1..1 + m * n],
+                        blocking,
+                    );
+                    assert_eq!(&c[1..1 + m * n], &expected, "n {n}, phase {phase}");
+                    assert_eq!((c[0], c[1 + m * n]), (0x5a, 0x5a));
                 }
             }
         }
