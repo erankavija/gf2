@@ -728,8 +728,9 @@ theorem readout_run (g : (ZMod 2)[X]) (hρ : 0 < g.natDegree) {low : ℕ → Bit
 
 /-- The coordinate contract of `packed_place_codeword` (`crates/gf2-coding/src/bch/encode.rs`)
 after `packed_serial_reduce`: the message bits at user coordinates `0` to `k - 1`, and register
-bit `internal_at u` at user coordinate `u ≥ k`. The function places packed runs; the unit test
-`the_assembly_places_the_bits_the_bit_serial_reference_writes` holds them to this map. -/
+bit `internal_at u` at user coordinate `u ≥ k`. The function places packed runs; that they equal
+this map rests on the unit test `bch::encode::tests::the_assembly_places_the_bits_the_bit_serial_reference_writes`
+in `gf2-coding`, not on a Lean proof. -/
 def encodeUser (g : (ZMod 2)[X]) (low : ℕ → BitVec 64) (L : Layout) (n : ℕ) (msg : ℕ → Bool)
     (u : ℕ) : Bool :=
   if u < n - g.natDegree then msg u
