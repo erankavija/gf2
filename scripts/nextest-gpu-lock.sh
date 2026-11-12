@@ -1,35 +1,23 @@
 #!/usr/bin/env bash
-# nextest wrapper script: a test in one of the named groups holds the
-# host-wide GPU lock while it runs.
+# nextest wrapper script: the test holds the host-wide GPU lock while it runs.
+# `.config/nextest.toml` applies it to the `gpu-serial` tests.
 #
-#   scripts/nextest-gpu-lock.sh <group>... -- <command> [args...]
+#   scripts/nextest-gpu-lock.sh <command> [args...]
 #
-# A test whose NEXTEST_TEST_GROUP is a named group takes an exclusive flock on
-# GF2_GPU_LOCK (default /tmp/gf2-gpu.lock; $TMPDIR differs between sessions)
-# and execs the command, whose inherited descriptor holds the lock until it and
-# its children exit. Concurrent HIP processes oversubscribe the device runlist
-# and the driver then faults a queue (@/issue/f21b25ac).
+# Takes an exclusive flock on GF2_GPU_LOCK (default /tmp/gf2-gpu.lock; $TMPDIR
+# differs between sessions) and execs the command, whose inherited descriptor
+# holds the lock until it and its children exit. Concurrent HIP processes
+# oversubscribe the device runlist and the driver then faults a queue
+# (@/issue/f21b25ac).
 #
 # Waiting counts toward the test's budget. On expiry nextest sends SIGTERM to
 # the process group, and a test still waiting fails naming the lock.
 set -euo pipefail
 
-groups=()
-while (($#)) && [[ "$1" != -- ]]; do
-  groups+=("$1")
-  shift
-done
-if (($# < 2)); then
-  echo "usage: $0 <group>... -- <command> [args...]" >&2
+if (($# < 1)); then
+  echo "usage: $0 <command> [args...]" >&2
   exit 2
 fi
-shift
-
-locked=
-for g in "${groups[@]}"; do
-  [[ "${NEXTEST_TEST_GROUP:-}" == "$g" ]] && locked=1
-done
-[[ -n "$locked" ]] || exec "$@"
 
 LOCK_FILE="${GF2_GPU_LOCK:-/tmp/gf2-gpu.lock}"
 exec {LOCK_FD}>>"$LOCK_FILE" || {
