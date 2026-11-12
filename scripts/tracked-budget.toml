@@ -76,8 +76,12 @@ path = "dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/*"
 reason = "digitization of published figures, not a measurement of this code"
 
 [[exception]]
-path = "experiments/*/tests/fixtures/*"
-reason = "behavioral test fixtures"
+path = "experiments/permanent-statistics/tests/fixtures/analysis/*/execution.jsonl"
+reason = "synthetic dataset member the schema-3 verifier requires; carries placeholder identity and seeded counts"
+
+[[exception]]
+path = "experiments/permanent-statistics/tests/fixtures/analysis/*/runs.json"
+reason = "synthetic dataset member the schema-3 verifier requires; carries placeholder identity"
 
 [[exception]]
 path = ".jit/events.jsonl"
