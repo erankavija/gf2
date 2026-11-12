@@ -44,3 +44,7 @@ reason = "names the locations it forbids"
 [[exception]]
 path = "dev/tools/tuning-campaign-support/tests/protocol_contracts.rs"
 reason = "creates the named path in a temporary repository"
+
+[[exception]]
+path = "proofs/lake-manifest.json"
+reason = "Lake writes it; `subDir` names a directory inside the upstream repository at `url`"

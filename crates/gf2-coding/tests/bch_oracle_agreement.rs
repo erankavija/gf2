@@ -667,15 +667,11 @@ fn recorded<'a>(record: &'a Value, key: &str) -> &'a str {
     value
 }
 
-/// Members through which each oracle states the exact build it ran as. The
-/// values are the run's own observations and live in the receipt; the suite
-/// asserts that every one of them reached the fixture.
-const SAGE_IDENTITY: &[&str] = &[
-    "version",
-    "library_version",
-    "interpreter",
-    "interpreter_executable",
-];
+/// Members through which each oracle states the exact build it ran as; the
+/// suite asserts that every one of them reached the fixture. What a run
+/// observes of its host, such as where an executable is installed or what an
+/// attempt cost, stays in the run's untracked record beside its receipt.
+const SAGE_IDENTITY: &[&str] = &["version", "library_version", "interpreter"];
 
 /// [`SAGE_IDENTITY`] for GAP with GUAVA.
 const GAP_IDENTITY: &[&str] = &[
@@ -687,18 +683,105 @@ const GAP_IDENTITY: &[&str] = &[
     "gmp_version",
     "heap",
     "guava_version",
-    "guava_path",
     "sonata_version",
-    "sonata_path",
 ];
+
+/// The members of every row of `sage.json`.
+const SAGE_ROW: &[&str] = &[
+    "id",
+    "construction",
+    "base_modulus",
+    "base_modulus_matches_gf2",
+    "splitting_field_modulus",
+    "splitting_field_modulus_comparable",
+    "splitting_field_matches_gf2",
+    "transport",
+    "transport_checks",
+    "splitting_field_generator_image",
+    "alpha_index",
+    "k",
+    "defining_set",
+    "generator",
+    "native_encoder",
+    "systematic_rule",
+    "codewords_native",
+    "codewords_systematic",
+];
+
+/// The members of every row of `gap.json`.
+const GAP_ROW: &[&str] = &[
+    "id",
+    "base_presentation",
+    "base_generator_image",
+    "splitting_presentation",
+    "splitting_generator_image",
+    "alpha_index",
+    "alpha_gf2_index",
+    "guava_default_root_index",
+    "guava_root_gf2_index",
+    "alpha_matches_guava_default",
+    "k",
+    "defining_set",
+    "generator",
+    "generator_divides_x_n_minus_one",
+    "defining_set_root_checked",
+    "bchcode_built",
+    "bchcode_attempt_heap",
+    "bchcode_generator",
+    "bchcode_generator_matches",
+    "bchcode_k",
+    "bchcode_defining_set",
+    "bchcode_codewords_native",
+    "bchcode_codewords_systematic",
+    "native_encoder",
+    "native_encoder_cross_checked",
+    "systematic_rule",
+    "codewords_native",
+    "codewords_systematic",
+];
+
+/// Asserts that `record` holds exactly the members `expected` names, so no
+/// host observation or measurement reaches a committed fixture unnoticed.
+fn assert_members(record: &Value, expected: &[&str], what: &str) {
+    let mut members: Vec<&str> = record
+        .as_object()
+        .unwrap_or_else(|| panic!("{what} is an object"))
+        .keys()
+        .map(String::as_str)
+        .collect();
+    members.sort_unstable();
+    let mut expected = expected.to_vec();
+    expected.sort_unstable();
+    assert_eq!(
+        members, expected,
+        "{what} holds exactly its declared members"
+    );
+}
+
+/// Asserts that an oracle fixture holds its identity, its seed and rows of
+/// the declared shape, and nothing else.
+fn assert_fixture_shape(fixture: &Value, identity: &[&str], row: &[&str]) {
+    assert_members(fixture, &["oracle", "seed", "rows"], "the fixture");
+    for key in identity {
+        recorded(&fixture["oracle"], key);
+    }
+    let oracle: Vec<&str> = identity
+        .iter()
+        .copied()
+        .chain(["system", "entry_point"])
+        .collect();
+    assert_members(&fixture["oracle"], &oracle, "the oracle record");
+    for record in fixture["rows"].as_array().expect("rows") {
+        let id = record["id"].as_str().expect("an identifier");
+        assert_members(record, row, &format!("row {id}"));
+    }
+}
 
 #[test]
 fn the_oracle_fixtures_record_their_identities_and_self_checks() {
     let sage = fixture("sage.json");
     assert_eq!(sage["oracle"]["system"], "SageMath");
-    for key in SAGE_IDENTITY {
-        recorded(&sage["oracle"], key);
-    }
+    assert_fixture_shape(&sage, SAGE_IDENTITY, SAGE_ROW);
     assert!(
         recorded(&sage["oracle"], "version").contains("SageMath version"),
         "the SageMath fixture records the library banner it ran under"
@@ -715,9 +798,7 @@ fn the_oracle_fixtures_record_their_identities_and_self_checks() {
 
     let gap = fixture("gap.json");
     assert_eq!(gap["oracle"]["system"], "GAP with GUAVA");
-    for key in GAP_IDENTITY {
-        recorded(&gap["oracle"], key);
-    }
+    assert_fixture_shape(&gap, GAP_IDENTITY, GAP_ROW);
     for row in gap["rows"].as_array().expect("rows") {
         let id = row["id"].as_str().expect("an identifier");
         assert!(
@@ -729,20 +810,10 @@ fn the_oracle_fixtures_record_their_identities_and_self_checks() {
             "GUAVA checked the defining set against the derived generator on row {id}"
         );
 
-        // The two marks are samples of one process-wide high-water mark, the first
-        // taken after the `BCHCode` attempt and the second after the row's
-        // `GeneratorPolCode` attempt, so the second covers both and neither
-        // can fall below the other.
-        recorded(row, "bchcode_attempt_heap");
-        let bchcode_peak = number(row, "bchcode_attempt_peak_rss_kib");
-        let row_peak = number(row, "row_attempts_peak_rss_kib");
-        assert!(
-            bchcode_peak > 0,
-            "row {id} records the mark its `BCHCode` attempt is bounded by"
-        );
-        assert!(
-            row_peak >= bchcode_peak,
-            "row {id} samples one monotone mark, so the second sample is at least the first"
+        assert_eq!(
+            recorded(row, "bchcode_attempt_heap"),
+            recorded(&gap["oracle"], "heap"),
+            "row {id} attempts its code object under the run's heap"
         );
 
         // GUAVA's `BCHCode` builds on `PrimitiveUnityRoot`. Its generator
@@ -779,7 +850,7 @@ const GUAVA_POLYNOMIAL_ENCODER: &str = "GUAVA cyclic-code encoding map c(x) = m(
 
 /// A row whose `BCHCode` attempt exceeded the run's heap carries GUAVA's own
 /// generator derivation and its cyclic-code polynomial encoding map, together
-/// with what the attempt observed. The rows that take this shape are exactly
+/// with the heap the attempt ran under. The rows that take this shape are exactly
 /// [`ROWS_WITHOUT_A_GUAVA_CODE_OBJECT`].
 #[test]
 fn a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt() {
@@ -807,21 +878,9 @@ fn a_row_without_a_guava_code_object_records_the_derivation_and_the_attempt() {
         assert!(!native.is_empty(), "row {id} carries codewords");
         assert_eq!(strings(row, "codewords_systematic").len(), native.len());
 
-        // What the bounded attempt itself observed, so the absence of a code
-        // object is a measurement rather than an assertion.
+        // The bound the attempt failed under, so the absence of a code object
+        // is an observation at a stated heap.
         recorded(row, "bchcode_attempt_heap");
-        assert!(
-            number(row, "bchcode_attempt_cpu_ms") > 0,
-            "row {id} records an attempt that actually ran"
-        );
-        assert!(
-            number(row, "bchcode_attempt_peak_rss_kib") > 0,
-            "row {id} records the mark its `BCHCode` attempt is bounded by"
-        );
-        assert!(
-            number(row, "row_attempts_peak_rss_kib") > 0,
-            "row {id} records the mark both of its attempts are bounded by"
-        );
     }
     assert_eq!(
         without, ROWS_WITHOUT_A_GUAVA_CODE_OBJECT,

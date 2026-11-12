@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """Refuses host-local paths and repository paths that do not resolve.
 
-Enforces `@/inv/resolvable-references` over tracked text. Reasoned exceptions
-live in `reference-exceptions.toml` beside this script.
+Enforces `@/inv/resolvable-references` over tracked text. Text is searched for
+paths under the repository's top-level directories, relative and inline paths,
+links, Cargo path dependencies and Rust includes. A JSON, TOML or YAML file is
+also parsed: a string under a path-named member (`DATA_PATH_MEMBER`) shaped
+like a relative path must resolve from the repository root or the file's
+directory, be ignored by git, or be a template. Reasoned exceptions live in
+`reference-exceptions.toml` beside this script.
 """
 
 from __future__ import annotations
@@ -34,11 +39,20 @@ CARGO_PATH = re.compile(r"""\bpath\s*=\s*"([^"]+)\"""")
 RUST_INCLUDE = re.compile(r"""include(?:_str|_bytes)?!\(\s*"([^"]+)"\s*\)""")
 DOT_PATH = re.compile(r"(?<![\w./+-])\./([\w.+=-]+(?:/[\w.+=-]+)+)")
 TEMPLATE = re.compile(r"[<>{}*$]")
+DATA_SUFFIXES = (".json", ".toml", ".yaml", ".yml")
+DATA_PATH_MEMBER = re.compile(
+    r"(?i:(?:^|[_-])(?:path|dir|directory|directories|file|root|location)s?)$"
+    r"|[a-z](?:Path|Dir|Directory|Directories|File|Root|Location)s?$"
+)
+DATA_PATH_VALUE = re.compile(r"(?:\.{1,2}/)*[\w.+=-]+(?:/[\w.+=-]+)*/?")
+YAML_MEMBER = re.compile(r"""^\s*(?:-\s+)?([\w.-]+)\s*:\s*(?:(["']?)([^"'\s#]*)\2)\s*(?:#.*)?$""")
+YAML_ITEM = re.compile(r"""^\s*-\s+(["']?)([^"'\s#]+)\1\s*(?:#.*)?$""")
 DEVICE = re.compile(r"dev/(?:null|zero|shm|stdin|stdout|stderr|fd|tty|kfd|dri|urandom|random|cpu|mem)\b")
 
 
 OPEN_STATES = {"backlog", "ready", "in_progress"}
-# Code resolves `../` from its working directory at run time, so only prose is read.
+# Code resolves `../` from its working directory at run time, so the text search
+# reads it in prose only; `data_faults` reads it in path-named data members.
 CODE_SUFFIXES = (".rs", ".py", ".sh", ".toml", ".c", ".cpp", ".h", ".lean", ".json", ".jsonl", ".yml")
 
 
@@ -106,6 +120,61 @@ def faults_in(path: str, text: str, known: set[str], base: str | None = None) ->
     return faults
 
 
+def data_faults(path: str, text: str, known: set[str], is_ignored=lambda target: False) -> list[str]:
+    """Path-named members of a structured data file that resolve nowhere.
+
+    Its reader may resolve a value from the repository root or from the file's
+    directory, so either reading resolves it, and so does a reading git
+    ignores. The fault names the file-relative reading of a `../` value and
+    the root-relative reading of any other.
+    """
+    try:
+        members = list(_data_members(path, text))
+    except (ValueError, tomllib.TOMLDecodeError):
+        return [f"{path}:0: unparseable {Path(path).suffix[1:]}"]
+    base = str(Path(path).parent)
+    lines = text.splitlines()
+    faults = []
+    for number, member, value in members:
+        if not DATA_PATH_MEMBER.search(member) or "/" not in value:
+            continue
+        if not DATA_PATH_VALUE.fullmatch(value) or TEMPLATE.search(value):
+            continue
+        readings = ["/".join(_normal(value)), "/".join(_normal(f"{base}/{value}"))]
+        if value.startswith("../"):
+            readings.reverse()
+        if any(reading in known or is_ignored(reading) for reading in readings):
+            continue
+        if number is None:
+            number = next((i for i, line in enumerate(lines, 1) if value in line), 0)
+        faults.append(f"{path}:{number}: {readings[0]}")
+    return faults
+
+
+def _data_members(path: str, text: str):
+    """Yields `(line or None, member name, string value)` of a data file."""
+    if path.endswith((".yaml", ".yml")):
+        # Line-wise: a `name: value` member, or a list item under `name:`.
+        owner = None
+        for number, line in enumerate(text.splitlines(), 1):
+            if member := YAML_MEMBER.match(line):
+                owner = member.group(1) if not member.group(3) else None
+                yield number, member.group(1), member.group(3)
+            elif (item := YAML_ITEM.match(line)) and owner is not None:
+                yield number, owner, item.group(2)
+        return
+    document = json.loads(text) if path.endswith(".json") else tomllib.loads(text)
+    stack = [(None, document)]
+    while stack:
+        name, value = stack.pop()
+        if isinstance(value, dict):
+            stack.extend(reversed([(str(key), member) for key, member in value.items()]))
+        elif isinstance(value, list):
+            stack.extend(reversed([(name, member) for member in value]))
+        elif isinstance(value, str) and name is not None:
+            yield None, name, value
+
+
 def issue_faults(path: str, text: str, known: set[str]) -> list[str]:
     """An issue's references resolve from the repository root; its links must exist."""
     issue = json.loads(text)
@@ -161,14 +230,17 @@ def ignored(root: Path, target: str) -> bool:
     )
 
 
-def scan(path: str, text: str, known: set[str]) -> list[str]:
+def scan(path: str, text: str, known: set[str], is_ignored=lambda target: False) -> list[str]:
     # Archive evidence records where archived documents moved from, so its
     # source paths are history and need not resolve.
     if path.startswith(".jit/archive-evidence/"):
         return []
     if fnmatch.fnmatch(path, ".jit/issues/*.json"):
         return issue_faults(path, text, known)
-    return faults_in(path, text, known)
+    faults = faults_in(path, text, known)
+    if path.endswith(DATA_SUFFIXES):
+        faults += [fault for fault in data_faults(path, text, known, is_ignored) if fault not in faults]
+    return faults
 
 
 def check(root: Path) -> list[str]:
@@ -190,7 +262,7 @@ def check(root: Path) -> list[str]:
         except UnicodeDecodeError:
             continue
         faults += [
-            fault for fault in scan(path, text, known)
+            fault for fault in scan(path, text, known, lambda target: ignored(root, target))
             if not excepted(root, fault, exceptions)
             and not ignored(root, fault.rsplit(": ", 1)[1])
         ]
@@ -226,7 +298,19 @@ def self_test() -> None:
         (root / "docs/rooted.md").write_text("[a](/docs/absent.md) [b](/docs/good.md)\n")
         (root / "src").mkdir()
         (root / "src/lib.rs").write_text('const A: &str = include_str!("../docs/absent.txt");\n')
-        (root / ".gitignore").write_text("dev/ignored/\n")
+        (root / ".gitignore").write_text("dev/ignored/\ntarget/\n")
+        (root / "data").mkdir()
+        (root / "data/fixture.json").write_text(json.dumps({"oracle": {
+            "guava_path": "gap-packages/guava-3.21/", "output_dir": "target/oracle",
+            "source_file": "docs/good.md", "note": "gap-packages/absent", "log_path": "target/<run>/x",
+            "prompt_file": "./docs/good.md", "cacheDir": "absent/camel", "profile": "absent/feature",
+        }}, indent=2))
+        (root / "data/config.toml").write_text(
+            'files = ["../docs/good.md", "absent/listed.txt"]\n[run]\nresults-dir = "dev/gone-results"\n'
+        )
+        (root / "data/workflow.yml").write_text(
+            "steps:\n  - path: missing/cache\n    other: missing/value\n  - path: target/cache\npaths:\n  - 'crates/**'\n  - absent/listed-yaml\n"
+        )
         (root / "docs/ignored.md").write_text("see dev/ignored/file\n")
         git(root, "add", ".")
         faults = check(root)
@@ -249,6 +333,17 @@ def self_test() -> None:
     assert any("dev/gone/file.json" in f for f in faults), faults
     assert not any("ignored.md" in f for f in faults), faults
     assert not any(f.startswith(".jit/archive-evidence/") for f in faults), faults
+    data = [f for f in faults if f.startswith("data/")]
+    for expected in (
+        "data/fixture.json:3: gap-packages/guava-3.21",
+        "data/fixture.json:9: absent/camel",
+        "data/config.toml:1: absent/listed.txt",
+        "data/config.toml:3: dev/gone-results",
+        "data/workflow.yml:2: missing/cache",
+        "data/workflow.yml:7: absent/listed-yaml",
+    ):
+        assert expected in data, (expected, data)
+    assert len(data) == 6, data
 
 
 def main() -> int:

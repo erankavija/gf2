@@ -6,8 +6,8 @@ This document records how the predeclared BCH conformance corpus is checked
 against two external oracles, what each oracle was given, where its field
 presentation coincides with gf2's and where an explicit isomorphism carries the
 construction across, and which authoritative standards vectors the suite wires
-in. The run that produced the committed fixtures is recorded in
-`oracle-receipt.md`.
+in. Each run of the runner writes its receipt to
+`target/oracle/oracle-receipt.md`, outside the tracked tree.
 
 ## Sources of truth
 
@@ -26,7 +26,8 @@ in. The run that produced the committed fixtures is recorded in
 | Agreement suite | [`../../../crates/gf2-coding/tests/bch_oracle_agreement.rs`](../../../crates/gf2-coding/tests/bch_oracle_agreement.rs) |
 | Stream reader | [`../../../crates/gf2-coding/tests/test_vectors/mod.rs`](../../../crates/gf2-coding/tests/test_vectors/mod.rs) |
 | ETSI verification streams | host data under `VV001-CR35_CSP/TestPoint04` and `TestPoint05`, located by `DVB_TEST_VECTORS_PATH` |
-| Run receipt | `oracle-receipt.md` |
+| Run receipt | `target/oracle/oracle-receipt.md`, written by each run |
+| Host record of a run | `target/oracle/sage-host.json` and `target/oracle/gap-host.json`, written by each run |
 
 Every number below is read out of those fixtures or out of the receipt. The
 receipt carries the versions, the host, the revision the fixtures were
@@ -46,15 +47,19 @@ names can back.
 | SageMath [SageMath2026] | `codes.BCHCode` | `sage.json`, object `oracle` |
 | GAP [GapGroup2026] with GUAVA [Joyner2026] | `BCHCode(n, b, delta, F)` | `gap.json`, object `oracle` |
 
-A version label alone does not name a build, so each oracle records what it
-observes about itself and the runner turns that into an exact identity in the
-receipt's **Oracle identity** section: for SageMath the library version, the
-interpreter and its executable path, and the SHA-256 of that executable; for
-GAP the kernel and build version, the build datetime, the architecture, the
-GMP version, the heap the run used, the SHA-256 of the `gap` binary actually
-invoked, and the SHA-256 of the `PackageInfo.g` of the GUAVA and SONATA
-installations that loaded. `the_oracle_fixtures_record_their_identities_and_self_checks`
-asserts that every one of those members reached the fixture.
+A version label alone does not name a build, so each oracle records in its
+fixture what it observes about its own build: for SageMath the library
+version and the interpreter version; for GAP the kernel and build version, the
+build datetime, the architecture, the GMP version, the heap the run used, and
+the GUAVA and SONATA versions. Where the interpreter and the packages are
+installed is a fact of the host, so each oracle writes it to the run's host
+record instead. The runner combines both into the receipt's **Oracle
+identity** section, adding the SHA-256 of the SageMath interpreter executable,
+of the `gap` binary actually invoked, and of the `PackageInfo.g` of the GUAVA
+and SONATA installations that loaded.
+`the_oracle_fixtures_record_their_identities_and_self_checks` asserts that
+every identity member reached the fixture and that each fixture, its `oracle`
+object and its rows hold exactly their declared members.
 
 The SageMath launcher of the pinned release forwards no arguments to a script,
 so the oracle script is run under the interpreter that carries the SageMath
@@ -295,8 +300,10 @@ need more heap than the run has: at B4 that matrix is $65343 \times 65535$.
 The script therefore calls `BCHCode` on every row through `CALL_WITH_CATCH`
 under `-T`, where exceeding the heap `-o` sets returns to the caller instead of
 ending the run. Each row records the outcome as `bchcode_built` beside the heap
-the attempt ran under, its processor time, and two samples of the kernel's
-peak-resident-set mark for the whole process: `bchcode_attempt_peak_rss_kib`
+the attempt ran under. What the attempts cost is a measurement of the run, so
+the host record `target/oracle/gap-host.json` holds it per row: the
+`BCHCode` attempt's processor time and two samples of the kernel's
+peak-resident-set mark for the whole process, `bchcode_attempt_peak_rss_kib`
 taken once the `BCHCode` attempt returned, and `row_attempts_peak_rss_kib`
 taken once the `GeneratorPolCode` attempt after it returned, so the second
 covers both of the row's attempts. The mark is a monotone high-water mark, so
@@ -450,14 +457,14 @@ dev/active/ae03bcd0-general-bch/oracle/run.sh
 
 The runner builds the corpus emitter, runs both oracles over the corpus it
 writes, runs the standards-vector case against the streams
-`test_vectors_path()` resolves, and rewrites
-`oracle-receipt.md` from what the run observed.
-Re-running from the revision the receipt names rewrites `corpus.json` and
-`sage.json` byte for byte, and rewrites `gap.json` byte for byte apart from
-`bchcode_attempt_cpu_ms`, `bchcode_attempt_peak_rss_kib` and
-`row_attempts_peak_rss_kib`, which are what each bounded attempt cost on the
-run that wrote them. The receipt's timestamps, stage wall clocks, attempt table
-and standards-vector section move with the run for the same reason.
+`test_vectors_path()` resolves, and writes
+`target/oracle/oracle-receipt.md` from what the run observed.
+A fixture holds only what the corpus and the oracle builds determine, so
+re-running from the revision the receipt names, under the oracle builds the
+fixtures name, rewrites `corpus.json`, `sage.json` and `gap.json` byte for
+byte. What the run observed of its host, and so the receipt's timestamps,
+stage wall clocks, attempt table and standards-vector section, moves with the
+run.
 
 `ORACLE_GAP_HEAP` sets the heap every code-object attempt is bounded by. Its
 default is a heap an ordinary host can back, so the derived quantities are
