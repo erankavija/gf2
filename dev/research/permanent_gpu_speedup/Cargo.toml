@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.95"
 authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
 publish = false
-description = "S1g GPU 50x speedup measurement for permanent_bipedal3 (F_3) at n=36 — JIT issue 9480f8a6. Standalone non-workspace prototype."
+description = "S1g GPU speedup measurement harness for permanent_bipedal3 (F_3) — JIT issue 9480f8a6. Standalone non-workspace prototype."
 
 [[bin]]
 name = "permanent_gpu_speedup"

@@ -144,7 +144,5 @@ fn use_cache(cache_dir: &Path) {
     );
 
     println!("\n=== Summary ===");
-    println!("✓ File cache enables instant encoder creation (<1μs vs 2-3 seconds)");
-    println!("✓ 12,000× speedup for initialization");
-    println!("✓ All DVB-T2 configurations available instantly");
+    println!("Cache-backed encoder construction completed for the selected configuration.");
 }
