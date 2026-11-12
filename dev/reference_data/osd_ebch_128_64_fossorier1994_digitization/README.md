@@ -4,7 +4,7 @@ This directory makes the manual axis-calibrated reads behind
 [`../osd_ebch_128_64_fossorier1994.csv`](../osd_ebch_128_64_fossorier1994.csv)
 auditable. It covers every primary Figure 4.14 ordinate and every Figure 4.14
 cross-check attached to a printed-table row. The separate
-[`yue2022_fig1_receipt.json`](yue2022_fig1_receipt.json) pins the six manual
+[`yue2022_fig1_digitization.json`](yue2022_fig1_digitization.json) pins the six manual
 by-eye reads used for the qualitative Yue2022 cross-check.
 
 ## Reproduce
@@ -19,8 +19,8 @@ diff -u calibration.json /tmp/calibration.json
 
 curl -fL -o /tmp/2206.09572v2.pdf https://arxiv.org/pdf/2206.09572v2
 python3 extract.py --receipt yue2022 /tmp/2206.09572v2.pdf \
-  > /tmp/yue2022_fig1_receipt.json
-diff -u yue2022_fig1_receipt.json /tmp/yue2022_fig1_receipt.json
+  > /tmp/yue2022_fig1_digitization.json
+diff -u yue2022_fig1_digitization.json /tmp/yue2022_fig1_digitization.json
 ```
 
 The script requires `pdftoppm`. It aborts unless the PDF SHA-256 is
