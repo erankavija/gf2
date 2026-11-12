@@ -1,6 +1,6 @@
 # issue	worktree	est_minutes	command
 # 67194d70 new pre-draw validation; est_minutes is an estimate from the September run over the same anchors
-# disabled until 3478cb98 and the validation digest land (gf2-79, 2026-11-12): 67194d70	.agents/worktrees/agent-67194d70	20	bash experiments/permanent-statistics/validation-window.sh
+67194d70	.agents/worktrees/agent-67194d70	20	bash experiments/permanent-statistics/validation-window.sh
 # de311215 gf2 routes against AFF3CT NMS configurations on the recorded DVB-T2 and NR bundles; inputs and the AFF3CT tree are host-local under $GF2_EXT_ROOT; est_minutes is an estimate
 de311215	.agents/worktrees/agent-de311215	60	GF2_AFF3CT_ROOT="$GF2_EXT_ROOT/c077a88b/aff3ct" GF2_LDPC_BUNDLES="$GF2_EXT_ROOT/c077a88b/inputs" bash experiments/aff3ct-ldpc-gaps/quick-compare.sh
 # de311215 perf profiles of the gf2 QC and layered routes at w1-b1, w1-b16 and w12-b16; est_minutes is an estimate
