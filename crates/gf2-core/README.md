@@ -32,7 +32,7 @@ estimators are available from [`gf2-stats`](../gf2-stats/README.md).
 - Build and test commands: [`AGENTS.md`](../../AGENTS.md#supported-toolchain-and-commands).
 
 ```bash
-./scripts/cargo-budget.sh cargo doc -p gf2-core --no-deps
+cargo doc -p gf2-core --no-deps
 ```
 
 Rendered output: Rustdoc.

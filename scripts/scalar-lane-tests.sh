@@ -6,7 +6,7 @@ set -euo pipefail
 # packages link one `gf2-core`.
 #
 # Usage:
-#   scripts/cargo-budget.sh --test scripts/scalar-lane-tests.sh [nextest args...]
+#   scripts/scalar-lane-tests.sh [nextest args...]
 #
 # Before the run it prints, one `scalar lane:` line per workspace package of
 # the build, the feature list Cargo resolves with dev-dependencies included,

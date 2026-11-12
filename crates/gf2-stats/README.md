@@ -5,7 +5,7 @@ finite-field research. Its public modules are `binomial`, `intervals`, and
 `weighted`; `numerics` contains their shared numerical implementation.
 
 ```bash
-./scripts/cargo-budget.sh cargo doc -p gf2-stats --no-deps
+cargo doc -p gf2-stats --no-deps
 ```
 
 Rendered output: Rustdoc.

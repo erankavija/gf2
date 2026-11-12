@@ -71,7 +71,6 @@ lock=$(realpath "$lock")
 export GF2_CCX1_LOCK="$lock"
 export RUSTUP_TOOLCHAIN=1.95.0
 export RAYON_NUM_THREADS=4
-export CARGO_CI_NO_SCCACHE=1
 # A build takes its flags, wrapper, profile and target from this script alone.
 unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER \
   "${!CARGO_BUILD_@}" "${!CARGO_PROFILE_@}" "${!CARGO_TARGET_@}"
@@ -130,11 +129,11 @@ with path.open('x') as output:
 PY_SOURCE
   }
   observe_source before
-  ./scripts/cargo-budget.sh cargo +1.95.0 build --release -p tuning-campaign-support --bin tuning-extent-campaign-driver --message-format=json >"$stage/build/driver.jsonl" 2>>"$stage/build/build.log"
+  cargo +1.95.0 build --release -p tuning-campaign-support --bin tuning-extent-campaign-driver --message-format=json >"$stage/build/driver.jsonl" 2>>"$stage/build/build.log"
   for owner in $producers; do
-    ./scripts/cargo-budget.sh cargo +1.95.0 build --release -p tuning-calibration --bench "$owner" --features parallel,simd,tuning-profile,test-support --message-format=json >"$stage/build/$owner.jsonl" 2>>"$stage/build/build.log"
+    cargo +1.95.0 build --release -p tuning-calibration --bench "$owner" --features parallel,simd,tuning-profile,test-support --message-format=json >"$stage/build/$owner.jsonl" 2>>"$stage/build/build.log"
   done
-  ./scripts/cargo-budget.sh cargo +1.95.0 build --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml --message-format=json >"$stage/build/composer.jsonl" 2>>"$stage/build/build.log"
+  cargo +1.95.0 build --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml --message-format=json >"$stage/build/composer.jsonl" 2>>"$stage/build/build.log"
   observe_source after
   driver_executable=$(python3 - "$stage" $producers <<'PY_BUILD'
 import hashlib, json, os, pathlib, sys
@@ -166,7 +165,7 @@ fi
 # The wrapper is the sole full-host mutex. Its child performs no builds.
 trap ' : ' INT TERM
 set +e
-GF2_BENCH=1 CARGO_CI_NO_LOCK=1 "$repo/dev/scripts/ccx1-bench-flock.sh" --full-host "$stage/bin/driver" run-session "$stage" "$session"
+GF2_BENCH=1 "$repo/dev/scripts/ccx1-bench-flock.sh" --full-host "$stage/bin/driver" run-session "$stage" "$session"
 wrapper_exit=$?
 trap - INT TERM
 set -e

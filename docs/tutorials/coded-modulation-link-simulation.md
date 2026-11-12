@@ -55,7 +55,7 @@ library caller sets the same fields and calls `Pipeline::run_checkpointed`.
 ## Run the sweep
 
 ```bash
-./scripts/cargo-budget.sh cargo run --release -p dvb-t2-awgn --bin dvb_t2_awgn_campaign -- \
+cargo run --release -p dvb-t2-awgn --bin dvb_t2_awgn_campaign -- \
     --rate 1/2 --modulation 16qam --esn0-range 5.9:6.2:0.1 \
     --decoder sumproduct --demap exactlogmap \
     --target-errors 50 --max-frames 300 --heartbeat-frames 50 \

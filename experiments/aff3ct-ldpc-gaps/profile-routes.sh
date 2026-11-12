@@ -27,8 +27,8 @@ gf2_bin="$target/release/gf2-fast-bench"
 if [[ "${1:-}" != --measure ]]; then
     export RUSTFLAGS="-C target-cpu=native -C force-frame-pointers=yes" CARGO_INCREMENTAL=0
     export CARGO_PROFILE_RELEASE_DEBUG=line-tables-only
-    ./scripts/cargo-budget.sh cargo build --locked --release -p aff3ct-ldpc-gaps --bin gf2-fast-bench
-    CARGO_CI_NO_LOCK=1 exec "$flock" --full-host \
+    cargo build --locked --release -p aff3ct-ldpc-gaps --bin gf2-fast-bench
+    exec "$flock" --full-host \
         bash "$here/profile-routes.sh" --measure
 fi
 

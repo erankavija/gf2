@@ -26,7 +26,7 @@ SPEC.loader.exec_module(ANALYSIS)
 
 class PermanentZeroFractionAnalysisTests(unittest.TestCase):
     def run_analysis(self, dataset: Path) -> subprocess.CompletedProcess[str]:
-        environment = dict(os.environ, CARGO_NET_OFFLINE="true", CARGO_CI_NO_SCCACHE="1")
+        environment = dict(os.environ, CARGO_NET_OFFLINE="true")
         return subprocess.run([sys.executable, str(SCRIPT), str(dataset)], cwd=REPOSITORY,
                               text=True, capture_output=True, check=False, env=environment)
 

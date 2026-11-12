@@ -1,7 +1,8 @@
-//! Preregistered validation; status 10 means terminal anchors remain.
+//! Preregistered validation; status 10 means terminal anchors remain. A run
+//! prints its executable digest first, as every multi-window harness does.
 //! `--check PATH` only parses the configuration and reports it: no stream, device, or file.
 mod support;
-use experiments_common::{RepositoryRoot, RunRecord};
+use experiments_common::{write_executable_digests, RepositoryRoot, RunRecord};
 use permanent_statistics::{
     campaign::{
         validation::{run_validation, ValidationStatus},
@@ -72,6 +73,7 @@ fn main() -> ExitCode {
     };
     let run = (|| {
         let config = CampaignConfig::load(Path::new(&values["--config"]))?;
+        write_executable_digests(&mut std::io::stdout(), std::iter::empty::<&Path>())?;
         let root = RepositoryRoot::containing(&std::env::current_dir()?)?;
         let record = RunRecord::observe(
             &root,

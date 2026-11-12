@@ -49,6 +49,14 @@ reason = "creates the named path in a temporary repository"
 path = "proofs/lake-manifest.json"
 reason = "Lake writes it; `subDir` names a directory inside the upstream repository at `url`"
 
+[[exception]]
+path = "dev/tools/tuning-campaign-support/config/a83583e0/producing-build-inputs.json"
+reason = "recorded input list of finished campaign a83583e0; names the files its run built from"
+
+[[exception]]
+path = "dev/tools/tuning-campaign-support/config/dbd8787d/producing-build-inputs.json"
+reason = "recorded input list of finished campaign dbd8787d; names the files its run built from"
+
 # Dated session records state the tree at their date; owner ruling 2026-11-12.
 # The entries name the session-record forms under dev/active: handoffs, session
 # notes, per-session prompt directories, and dispatch and rework prompts.

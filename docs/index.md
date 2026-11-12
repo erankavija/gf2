@@ -17,7 +17,7 @@ Focused adoption tasks, placed per `@/inv/document-placement`.
 |---|---|
 | [Run and extend the Lean 4 proofs](how-to/formal-verification.md) | Build the proofs, regenerate the Charon/Aeneas extraction, and prove a property of an extracted function |
 | [Run a simulation campaign](how-to/run-simulation-campaigns.md) | Configure, run, stop and resume error-rate sweeps, and locate their output |
-| [Reproduce a performance claim](how-to/reproduce-performance-evidence.md) | Rebuild a claim's measured revision, rerun its receipt command and compare the raw data with the receipt |
+| [Reproduce a performance claim](how-to/reproduce-performance-evidence.md) | Build a comparison's harness, run it in the benchmark window and compare its raw data with the recorded result |
 | [Select SIMD, GPU and parallel execution](how-to/select-acceleration.md) | Enable, check and tune the SIMD, HIP and rayon paths for `gf2-core` and `gf2-coding` workloads |
 
 ## Concepts
@@ -37,7 +37,7 @@ Supported configurations, limits, evidence methods and stable contracts, placed 
 |---|---|
 | [Supported configurations](reference/supported-configurations.md) | Toolchain, platforms, CPU and GPU requirements, Cargo features, installation and limitations |
 | [Standards conformance](reference/standards-conformance.md) | Supported DVB-T2 and 5G NR (`@/citation/ThreeGpp2017`) code configurations, bit order and conformance evidence |
-| [Performance evidence](reference/performance-evidence.md) | Measurement methodology and commit-pinned evidence for each performance claim |
+| [Performance evidence](reference/performance-evidence.md) | Measurement methodology, harness, configuration and reproduction command for each performance comparison |
 | [LDPC decoder numerical contract](reference/ldpc-decoder-numerical-contract.md) | Floating-point rules of the flooding min-sum LDPC decoder and the clauses binding a multi-frame decoder |
 
 ## Crates

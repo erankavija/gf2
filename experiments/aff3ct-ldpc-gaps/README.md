@@ -131,3 +131,17 @@ interprets the gf2-time/AFF3CT-time ratios.
 
 The CI wrapper includes the gf2 package through the experiments workspace glob
 and runs the Python suite through its `aff3ct-ldpc-gaps-python` step.
+
+`ldpc_bler_sweep` runs an AWGN-BPSK BLER sweep of the gf2 LDPC batch decoder
+(normalized min-sum, early termination) on all-zero codewords and writes a CSV
+of BLER and frames per second per Es/N0 point; `export_alist` writes the
+parity-check matrix of the same `--code` (`dvb-t2-r12` or `nr-bg1-r12`) in
+AList form for AFF3CT. Both share `ComparisonCode` and draw noise from
+`gf2_sim::testutil::AwgnLlrSource`:
+
+```sh
+cargo run -p aff3ct-ldpc-gaps --release \
+    --bin ldpc_bler_sweep -- --code dvb-t2-r12 ...
+cargo run -p aff3ct-ldpc-gaps --release \
+    --bin export_alist -- --code dvb-t2-r12 --output dvb_t2_r12.alist
+```

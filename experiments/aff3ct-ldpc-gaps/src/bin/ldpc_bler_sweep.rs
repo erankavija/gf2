@@ -9,9 +9,9 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::time::Instant;
 
+use aff3ct_ldpc_gaps::bler_sweep;
+use aff3ct_ldpc_gaps::comparison_code::ComparisonCode;
 use gf2_coding::LdpcCode;
-use gf2_sim::bler_sweep;
-use gf2_sim::testutil::ComparisonCode;
 
 struct Cfg {
     code: ComparisonCode,

@@ -4485,32 +4485,47 @@ mod tests {
     #[test]
     fn producing_input_manifest_rejects_authority_and_path_mutations() {
         let root = repository_root().unwrap();
+        let recorded = |declaration: &CampaignDeclaration| -> ProducingInputs {
+            serde_json::from_slice(&fs::read(root.join(&declaration.producing_manifest)).unwrap())
+                .unwrap()
+        };
         for declaration in [extent_declaration(), seam_declaration()] {
-            let manifest: ProducingInputs = serde_json::from_slice(
-                &fs::read(root.join(&declaration.producing_manifest)).unwrap(),
-            )
-            .unwrap();
-            manifest.validate_at(&root).unwrap();
+            // A finished campaign's manifest may name a file absent from
+            // today's tree, so it is validated against a tree that holds
+            // exactly the files it lists.
+            let manifest = recorded(&declaration);
+            let tree = scratch("gf2-driver-producing-inputs");
+            for path in &manifest.build_inputs {
+                let file = tree.join(path);
+                fs::create_dir_all(file.parent().unwrap()).unwrap();
+                fs::write(file, b"").unwrap();
+            }
+            manifest.validate_at(&tree).unwrap();
             let mut changed = manifest.clone();
             changed.schema = "unknown".into();
-            assert!(changed.validate_at(&root).is_err());
+            assert!(changed.validate_at(&tree).is_err());
 
             let mut changed = manifest.clone();
             changed.behavior_sources.swap(0, 1);
-            assert!(changed.validate_at(&root).is_err());
+            assert!(changed.validate_at(&tree).is_err());
 
             let mut changed = manifest.clone();
             changed.lifecycle_sources.push("not/in/behavior.rs".into());
             changed.lifecycle_sources.sort();
-            assert!(changed.validate_at(&root).is_err());
+            assert!(changed.validate_at(&tree).is_err());
+
+            let mut changed = manifest.clone();
+            changed.build_inputs.push("absent/from/tree.rs".into());
+            changed.build_inputs.sort();
+            assert!(changed.validate_at(&tree).is_err());
 
             let mut changed = manifest;
             changed.build_inputs[0] = "crates/*/Cargo.toml".into();
             changed.build_inputs.sort();
-            assert!(changed.validate_at(&root).is_err());
+            assert!(changed.validate_at(&tree).is_err());
         }
         let seam = seam_declaration();
-        let manifest = ProducingInputs::read_at(&root, &seam.producing_manifest).unwrap();
+        let manifest = recorded(&seam);
         let lifecycle = ProducingInputs::hashes_at(&root, &manifest.lifecycle_sources).unwrap();
         assert!(seam.recorded_in(&lifecycle).is_ok());
     }

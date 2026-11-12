@@ -380,7 +380,6 @@ def _require_canonical_conformance(dataset: Path) -> None:
     try:
         result = subprocess.run(
             [
-                str(_repository_root() / "scripts/cargo-budget.sh"),
                 "cargo",
                 "+1.95.0",
                 "run",

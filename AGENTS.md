@@ -13,9 +13,6 @@ results. Optimization never relaxes mathematical or standards conformance.
 
 ## Supported toolchain and commands
 
-Prefix each cargo command below with `./scripts/cargo-budget.sh`, and test
-execution with `./scripts/cargo-budget.sh --test`.
-
 - The Rust MSRV is 1.95. Use that toolchain for compatibility-sensitive work.
 - Run the repository CI contract with `./scripts/cargo-ci.sh`.
 - Build all ordinary workspace crates with
@@ -38,17 +35,13 @@ execution with `./scripts/cargo-budget.sh --test`.
 Tests, examples, simulations, and benchmarks that do substantial work must use
 release mode.
 
-- Test execution goes through `./scripts/cargo-budget.sh --test`; a direct
-  `cargo nextest` is not a permitted path for a suite run.
 - The host is never locked during a working session. An indication is a short
   run on a few pinned cores, allowed at any time and labelled as an indication.
   A stated result is a queue line for the benchmark window (`GF2_BENCH_WINDOW=1`,
   exported by the window runner); outside it `dev/scripts/ccx1-bench-flock.sh`
-  refuses to run and `scripts/cargo-budget.sh` applies no budget or lock.
-- `./scripts/cargo-ci.sh` wraps its own steps; do not wrap it again.
-  `CARGO_CI_STEPS=<pcre>` runs matching steps only, no CI verdict; `^$` lists them.
-- A command run under `dev/scripts/ccx1-bench-flock.sh` must set
-  `CARGO_CI_NO_LOCK=1` for its own cargo work; the script's header states why.
+  refuses to run.
+- `CARGO_CI_STEPS=<pcre>` makes `./scripts/cargo-ci.sh` run matching steps
+  only, no CI verdict; `^$` lists them.
 - `RAYON_NUM_THREADS` in `.cargo/config.toml` pairs with `threads-required` in
   `.config/nextest.toml`; change one and change the other. A binary run directly
   from `target/` inherits neither.

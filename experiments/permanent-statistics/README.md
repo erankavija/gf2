@@ -12,7 +12,7 @@ and critical value from a JSON file. [config/small.json](config/small.json)
 is a small invocation example. From the repository root:
 
 ```sh
-CARGO_NET_OFFLINE=true CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-budget.sh cargo run \
+CARGO_NET_OFFLINE=true cargo run \
   --release -p permanent-statistics --bin permanent_rare_event -- \
   experiments/permanent-statistics/config/small.json /tmp/permanent-example 3
 ```
@@ -48,7 +48,7 @@ records permanent residue histograms with optional paired determinants.
 JSON configuration. Its cells and sample counts are test inputs.
 
 ```sh
-CARGO_NET_OFFLINE=true CARGO_CI_NO_SCCACHE=1 ./scripts/cargo-budget.sh cargo run \
+CARGO_NET_OFFLINE=true cargo run \
   --release -p permanent-statistics --bin permanent_campaign -- \
   --config experiments/permanent-statistics/config/small-campaign.json \
   --output /tmp/small-campaign --q 3 --n 2 --workers 4 --max-shards 1

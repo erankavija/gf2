@@ -20,14 +20,14 @@ permanent-zero-fraction campaigns over its permanents.
 - [Acceleration architecture](../../docs/concepts/acceleration-architecture.md):
   SIMD, HIP and rayon paths and their fallbacks.
 - [Performance evidence](../../docs/reference/performance-evidence.md#f3-permanent-batched-avx2):
-  the measured permanent kernel.
+  the harness and reproduction of the batched permanent kernel comparison.
 - [Cargo features](../../docs/reference/supported-configurations.md#cargo-features),
   defined in the `[features]` table of [`Cargo.toml`](Cargo.toml), and
   [installation](../../docs/reference/supported-configurations.md#installation).
 - Build and test commands: [`AGENTS.md`](../../AGENTS.md#supported-toolchain-and-commands).
 
 ```bash
-./scripts/cargo-budget.sh cargo doc -p gf2-algebra --no-deps
+cargo doc -p gf2-algebra --no-deps
 ```
 
 Rendered output: Rustdoc.

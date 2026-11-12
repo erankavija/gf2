@@ -158,11 +158,13 @@ read the receipt before drawing; the dependency of the campaign arms on the
 validation task enforces this gate.
 
 ```sh
-./scripts/cargo-budget.sh cargo run --release -p permanent-statistics --features hip \
-  --bin permanent_validation -- --config experiments/permanent-statistics/config/campaign.json \
-  --output target/simulation_results/permanent-zero-fraction-20261102-validation \
-  --workers W
+bash experiments/permanent-statistics/validation-window.sh
 ```
+
+The script builds the validator and runs it on every processor. Because the
+run is one-shot, its record goes outside every `target/` directory, under the
+main checkout's gitignored `.agents/campaign-evidence/67194d70/validation`;
+`GF2_VALIDATION_OUTPUT` overrides the location.
 
 `permanent_validation --check PATH` parses a configuration and reports it without
 opening a stream, a device, or a file.

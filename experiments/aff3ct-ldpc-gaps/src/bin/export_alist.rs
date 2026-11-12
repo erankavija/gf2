@@ -22,8 +22,8 @@
 use std::io::Write;
 use std::path::PathBuf;
 
+use aff3ct_ldpc_gaps::comparison_code::ComparisonCode;
 use gf2_core::sparse::SpBitMatrixDual;
-use gf2_sim::testutil::ComparisonCode;
 
 fn write_alist(h: &SpBitMatrixDual, path: &PathBuf) -> std::io::Result<()> {
     let mut f = std::io::BufWriter::new(std::fs::File::create(path)?);

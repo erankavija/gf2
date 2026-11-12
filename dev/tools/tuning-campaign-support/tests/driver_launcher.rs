@@ -44,9 +44,22 @@ fn install_launcher(target: &Path) {
 /// An empty git checkout below `root` in which the launcher runs.
 fn checkout(root: &Path) -> PathBuf {
     let repo = root.join("repo");
-    fs::create_dir_all(repo.join("scripts")).unwrap();
+    fs::create_dir_all(&repo).unwrap();
     git(&repo, &["init", "-q"]);
     repo
+}
+
+/// Installs a `cargo` below `root` that records its invocation in
+/// `$TEST_BUILD_CAPTURE` and fails, and returns a `PATH` that finds it first.
+fn forbid_builds(root: &Path) -> std::ffi::OsString {
+    let bin = root.join("bin");
+    fs::create_dir(&bin).unwrap();
+    executable(
+        &bin.join("cargo"),
+        "#!/bin/sh\necho forbidden-build > \"$TEST_BUILD_CAPTURE\"\nexit 91\n",
+    );
+    let inherited = std::env::var_os("PATH").unwrap();
+    std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited))).unwrap()
 }
 
 /// Copies the committed campaign declaration of `issue` into the stand-in
@@ -146,10 +159,7 @@ fn launcher_replays_preparation(complete_temporary: bool) {
     let repo = checkout(&root);
     declare(&repo, "a83583e0", "relocated/extent");
     declare(&repo, "a83583e0", "relocated/copy");
-    executable(
-        &repo.join("scripts/cargo-budget.sh"),
-        "#!/bin/sh\necho forbidden-build > \"$TEST_BUILD_CAPTURE\"\nexit 91\n",
-    );
+    let path = forbid_builds(&root);
     fs::create_dir(stage.join("bin")).unwrap();
     executable(
         &stage.join("bin/driver"),
@@ -169,6 +179,7 @@ fn launcher_replays_preparation(complete_temporary: bool) {
             env!("CARGO_BIN_EXE_tuning-extent-campaign-driver"),
         )
         .env("TEST_PREPARE_CAPTURE", &capture)
+        .env("PATH", &path)
         .env("TEST_BUILD_CAPTURE", &build_capture)
         .output()
         .unwrap();
@@ -205,10 +216,7 @@ fn launcher_requires_the_named_issue_declaration_before_creating_a_stage() {
     write_declaration(&repo, "first", STAND_IN_DECLARATION);
     write_declaration(&repo, "second", &format!("{STAND_IN_DECLARATION}\n"));
     let build_capture = root.join("build-called");
-    executable(
-        &repo.join("scripts/cargo-budget.sh"),
-        "#!/bin/sh\necho forbidden-build > \"$TEST_BUILD_CAPTURE\"\nexit 91\n",
-    );
+    let path = forbid_builds(&root);
     for argument in [
         "0badc0de",
         "gf2-0badc0de-19700101t000000z-1",
@@ -220,6 +228,7 @@ fn launcher_requires_the_named_issue_declaration_before_creating_a_stage() {
             .arg(argument)
             .current_dir(&repo)
             .env("GF2_CCX1_LOCK", root.join("host.lock"))
+            .env("PATH", &path)
             .env("TEST_BUILD_CAPTURE", &build_capture)
             .output()
             .unwrap();

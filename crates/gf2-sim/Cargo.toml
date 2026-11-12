@@ -43,29 +43,10 @@ gf2-sim = { path = ".", features = ["test-support"] }
 hip = ["dep:gf2-kernels-hip", "gf2-coding/hip"]
 
 # Exposes the canonical test/bench-only deterministic AWGN channel-LLR source
-# (`testutil::AwgnLlrSource`) to integration tests, benches, and comparison
-# tools. Off by default; auto-enabled for this crate's own tests and benches
+# (`testutil::AwgnLlrSource`) to integration tests, benches, and experiments.
+# Off by default; auto-enabled for this crate's own tests and benches
 # via the self-dev-dependency above. Mirrors `gf2-algebra`'s `test-support`.
 test-support = []
-
-# LDPC-only AWGN-BPSK BLER sweep for the external-library comparison harness
-# (issue 18e69a1a). Uses `testutil::AwgnLlrSource` and the shared
-# `testutil::ComparisonCode` selection, so it requires the `test-support`
-# feature explicitly:
-#   cargo run -p gf2-sim --release --features test-support \
-#       --bin ldpc_bler_sweep -- --code dvb-t2-r12 ...
-[[bin]]
-name = "ldpc_bler_sweep"
-required-features = ["test-support"]
-
-# AList H-matrix export for the same comparison harness (issue 18e69a1a).
-# Shares `testutil::ComparisonCode` with ldpc_bler_sweep (the SSOT code
-# selection), so it also requires `test-support`:
-#   cargo run -p gf2-sim --release --features test-support \
-#       --bin export_alist -- --code dvb-t2-r12 --output dvb_t2_r12.alist
-[[bin]]
-name = "export_alist"
-required-features = ["test-support"]
 
 # Researcher-onboarding GPU hybrid example (issue 110e45cc): the same DVB-T2
 # chain on the CPU+GPU path vs CPU-only, asserting the design-doc §11

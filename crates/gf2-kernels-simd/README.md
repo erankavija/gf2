@@ -37,7 +37,7 @@ and [installation](../../docs/reference/supported-configurations.md#installation
 ## Documentation
 
 ```bash
-./scripts/cargo-budget.sh cargo doc -p gf2-kernels-simd --no-deps
+cargo doc -p gf2-kernels-simd --no-deps
 ```
 
 Rendered output: Rustdoc.
