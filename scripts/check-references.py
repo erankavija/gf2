@@ -8,14 +8,22 @@ also parsed: a string under a path-named member (`DATA_PATH_MEMBER`) shaped
 like a relative path must resolve from the repository root or the file's
 directory, be ignored by git, or be a template.
 
-A file name of an evidence kind (`EVIDENCE_NAME`: a log, a captured stream or
-a receipt), bare or with directories, in prose, in an issue description of an
-open issue, or in any data string, must name a tracked file by its path
-suffix or be written at run time: a name under `target/` passes when git
-ignores it, a bare name passes when its line or the line before names a
-`target/` location, the statement that the run writes the file there, and any
-name passes whose base name tracked code (`WRITER_SUFFIXES`) spells as the end
-of a string literal, the program that writes it. Reasoned exceptions live in
+A file name of an evidence kind (`EVIDENCE_NAME`: a log, a captured stream,
+a receipt, or a table, patch or text dump of a kind the tree once held), bare
+or with directories, in prose, in an issue description of an open issue, or
+in any data string, must name a tracked file by its path suffix or be written
+at run time: a name under `target/` passes when git ignores it, a bare name
+passes when its line or the line before names a `target/` location, the
+statement that the run writes the file there, and any name passes whose base
+name tracked code (`WRITER_SUFFIXES`) spells as the end of a string literal,
+the program that writes it. In Markdown and issue prose the same holds for
+every backticked bare file name (`BARE_INLINE`), whatever its kind, and a
+bare name git's ignore rules match passes as run output.
+
+An invariant citation `@/inv/<id>` or `@/invariant/<id>` must name an
+invariant of `.jit/invariants.toml`. An exception entry with `planned`
+excuses only paths that never existed: a path some commit deleted is a
+removed path, not a planned one. Reasoned exceptions live in
 `reference-exceptions.toml` beside this script.
 """
 
@@ -57,7 +65,17 @@ DATA_PATH_VALUE = re.compile(r"(?:\.{1,2}/)*[\w.+=-]+(?:/[\w.+=-]+)*/?")
 YAML_MEMBER = re.compile(r"""^\s*(?:-\s+)?([\w.-]+)\s*:\s*(?:(["']?)([^"'\s#]*)\2)\s*(?:#.*)?$""")
 YAML_ITEM = re.compile(r"""^\s*-\s+(["']?)([^"'\s#]+)\1\s*(?:#.*)?$""")
 FILE_TOKEN = re.compile(r"(?<![\w./+~$}}@:-])((?:[\w.+=-]+/)*[\w+=-][\w.+=-]*\.[A-Za-z]\w*)(?![\w/+=-])")
-EVIDENCE_NAME = re.compile(r"\.(?:log|out|err|stdout|stderr|jsonl)$|receipt", re.IGNORECASE)
+EVIDENCE_NAME = re.compile(r"\.(?:log|out|err|stdout|stderr|jsonl|csv|patch)$|receipt", re.IGNORECASE)
+# Evidence kinds read only in backticks: prose names Markdown and text files
+# of other repositories and of the author's host freely.
+INLINE_EVIDENCE_NAME = re.compile(r"\.(?:md|txt)$", re.IGNORECASE)
+FILE_EXTENSIONS = (
+    "c|cfg|cpp|csv|css|dat|data|err|g|gp|gz|h|hip|html|ini|ipynb|js|json|jsonl|lean|lock|log|md"
+    "|npy|out|patch|pdf|png|py|rs|sage|sh|sql|stderr|stdout|svg|tar|tex|toml|tsv|txt|xml|yaml|yml|zst"
+)
+BARE_INLINE = re.compile(rf"`([\w+=-][\w.+=-]*\.(?:{FILE_EXTENSIONS}))`")
+INVARIANT = re.compile(r"@/(?:inv|invariant)/([\w-]+)")
+INVARIANTS = ".jit/invariants.toml"
 TARGET_DIR = re.compile(r"(?<![\w.-])target/")
 WRITER_SUFFIXES = (".rs", ".py", ".sh", ".c", ".cpp", ".h", ".hip")
 LITERAL_NAME = re.compile(r"""["'/]([\w+=-][\w.+=-]*\.[A-Za-z]\w*)["']""")
@@ -84,23 +102,38 @@ def resolvable_set(tracked: list[str]) -> set[str]:
     return known
 
 
-def evidence_faults(line: str, before: str, known: set[str], written: frozenset[str]) -> list[str]:
+def evidence_faults(
+    line: str, before: str, known: set[str], written: frozenset[str], markdown: bool = False
+) -> list[str]:
     """Evidence-kind file names on `line` that name no tracked file.
 
     `written` holds the base names tracked code writes. A name under `target/`
     is returned for the caller's ignore check. A bare name is excused when
-    `line` or `before` names a `target/` location.
+    `line` or `before` names a `target/` location. `markdown` adds every
+    backticked bare file name and the backticked-only evidence kinds.
     """
+    tokens = [(token, EVIDENCE_NAME) for token in FILE_TOKEN.findall(line)]
+    if markdown:
+        tokens += [(token, None) for token in BARE_INLINE.findall(line)]
+        tokens += [
+            (token, INLINE_EVIDENCE_NAME)
+            for token in INLINE_PATH.findall(line)
+            if ".." not in token
+        ]
     names = []
-    for token in FILE_TOKEN.findall(line):
+    for token, kind in tokens:
         name = token.removeprefix("./")
-        if not EVIDENCE_NAME.search(Path(name).name) or _suffix_known(name, known):
+        # `RELATIVE_PATH` resolves a `../` name against its file.
+        if ".." in name.split("/"):
             continue
-        if Path(name).name in written:
+        if kind is not None and not kind.search(Path(name).name):
+            continue
+        if _suffix_known(name, known) or Path(name).name in written:
             continue
         if "/" not in name and (TARGET_DIR.search(line) or TARGET_DIR.search(before)):
             continue
-        names.append(name)
+        if name not in names:
+            names.append(name)
     return names
 
 
@@ -111,11 +144,13 @@ def faults_in(
     base: str | None = None,
     evidence: bool = True,
     written: frozenset[str] = frozenset(),
+    invariants: frozenset[str] | None = None,
 ) -> list[str]:
     """`base` is the directory relative references resolve against.
 
     Passing it marks `text` as Markdown prose whatever the file's suffix.
-    `evidence` false skips `evidence_faults`.
+    `evidence` false skips `evidence_faults` and the invariant check.
+    `invariants` None skips the invariant check.
     """
     faults = []
     markdown = base is not None or path.endswith(".md")
@@ -124,7 +159,16 @@ def faults_in(
     before = ""
     for number, line in enumerate(text.splitlines(), 1):
         if prose and evidence:
-            faults += [f"{path}:{number}: {name}" for name in evidence_faults(line, before, known, written)]
+            faults += [
+                f"{path}:{number}: {name}"
+                for name in evidence_faults(line, before, known, written, markdown)
+            ]
+        if evidence and invariants is not None:
+            faults += [
+                f"{path}:{number}: @/inv/{name}"
+                for name in INVARIANT.findall(line)
+                if name not in invariants
+            ]
         before = line
         if HOST_LOCAL.search(line):
             faults.append(f"{path}:{number}: host-local path")
@@ -230,20 +274,32 @@ def _data_members(path: str, text: str):
             yield None, name, value
 
 
-def issue_faults(path: str, text: str, known: set[str], written: frozenset[str] = frozenset()) -> list[str]:
+def issue_faults(
+    path: str,
+    text: str,
+    known: set[str],
+    written: frozenset[str] = frozenset(),
+    invariants: frozenset[str] | None = None,
+) -> list[str]:
     """An issue's references resolve from the repository root; its links must exist."""
     issue = json.loads(text)
     prose = "\n".join(filter(None, [issue.get("description"), issue.get("context") if isinstance(issue.get("context"), str) else None]))
     # A closed issue's description is history; it may name evidence the
     # repository no longer holds.
     open_issue = issue.get("state") in OPEN_STATES
-    faults = faults_in(path, prose, known, base="", evidence=open_issue, written=written)
+    faults = faults_in(
+        path, prose, known, base="", evidence=open_issue, written=written, invariants=invariants
+    )
     faults += [
         f"{path}:0: {document['path']}"
         for document in issue.get("documents", [])
         if document["path"] not in known
     ]
     return faults
+
+
+def _evidence_kind(name: str) -> bool:
+    return bool(EVIDENCE_NAME.search(name) or INLINE_EVIDENCE_NAME.search(name))
 
 
 def _suffix_known(inline: str, known: set[str]) -> bool:
@@ -261,15 +317,40 @@ def _normal(target: str) -> list[str]:
     return parts or ["."]
 
 
-def excepted(root: Path, fault: str, exceptions: list[dict[str, str]]) -> bool:
-    """An entry exempts its files; with `planned`, only paths of files to come."""
+def excepted(
+    root: Path, fault: str, exceptions: list[dict[str, str]], removed: frozenset[str] = frozenset()
+) -> bool:
+    """An entry exempts its files; with `planned`, only paths of files to come.
+
+    `removed` holds every path a commit deleted and its directories; such a
+    path is not to come.
+    """
     path, target = fault.split(":", 1)[0], fault.rsplit(": ", 1)[1]
     for entry in exceptions:
         if fnmatch.fnmatch(path, entry["path"]):
             planned = entry.get("planned")
-            if planned is None or (target.startswith(tuple(planned)) and _open_issue(root, path)):
+            if planned is None:
+                return True
+            if (
+                target.startswith(tuple(planned))
+                and target.rstrip("/") not in removed
+                and _open_issue(root, path)
+            ):
                 return True
     return False
+
+
+def removed_paths(root: Path) -> frozenset[str]:
+    """Paths any commit of any ref deleted, with their directories."""
+    deleted = git(root, "log", "--all", "--diff-filter=D", "--name-only", "--format=").split("\n")
+    return frozenset(resolvable_set([path for path in deleted if path]))
+
+
+def invariant_ids(root: Path) -> frozenset[str] | None:
+    config = root / INVARIANTS
+    if not config.exists():
+        return None
+    return frozenset(entry["id"] for entry in tomllib.loads(config.read_text())["invariants"])
 
 
 def _open_issue(root: Path, path: str) -> bool:
@@ -294,14 +375,15 @@ def scan(
     known: set[str],
     is_ignored=lambda target: False,
     written: frozenset[str] = frozenset(),
+    invariants: frozenset[str] | None = None,
 ) -> list[str]:
     # Archive evidence records where archived documents moved from, so its
     # source paths are history and need not resolve.
     if path.startswith(".jit/archive-evidence/"):
         return []
     if fnmatch.fnmatch(path, ".jit/issues/*.json"):
-        return issue_faults(path, text, known, written)
-    faults = faults_in(path, text, known, written=written)
+        return issue_faults(path, text, known, written, invariants)
+    faults = faults_in(path, text, known, written=written, invariants=invariants)
     if path.endswith(DATA_SUFFIXES):
         faults += [
             fault for fault in data_faults(path, text, known, is_ignored, written) if fault not in faults
@@ -333,13 +415,21 @@ def check(root: Path) -> list[str]:
         if path.endswith(WRITER_SUFFIXES)
         for name in LITERAL_NAME.findall(text)
     )
+    invariants = invariant_ids(root)
+    removed = removed_paths(root)
     faults = []
     for path, text in texts.items():
-        # A bare name has no location, so git's ignore rules do not excuse it.
+        found = scan(path, text, known, lambda target: ignored(root, target), written, invariants)
+        # A bare evidence name has no location, so git's ignore rules do not
+        # excuse it; any other bare name git ignores is run output.
         faults += [
-            fault for fault in scan(path, text, known, lambda target: ignored(root, target), written)
-            if not excepted(root, fault, exceptions)
-            and not ("/" in (target := fault.rsplit(": ", 1)[1]) and ignored(root, target))
+            fault for fault in dict.fromkeys(found)
+            if not excepted(root, fault, exceptions, removed)
+            and not (
+                not (target := fault.rsplit(": ", 1)[1]).startswith("@/")
+                and ("/" in target or not _evidence_kind(target))
+                and ignored(root, target)
+            )
         ]
     return faults
 
@@ -406,7 +496,29 @@ def self_test() -> None:
         (root / ".jit/issues/c.json").write_text(json.dumps({"state": "done", "description": "see `done-gap.out`"}))
         (root / "notes").mkdir()
         (root / "notes/kept-receipt.md").write_text("")
+        (root / ".jit/invariants.toml").write_text('[[invariants]]\nid = "kept-rule"\n')
+        (root / "docs/invariants.md").write_text("`@/inv/kept-rule`, @/invariant/kept-rule, @/inv/gone-rule\n")
+        (root / ".jit/issues/d.json").write_text(json.dumps({"state": "ready", "description": "@/invariant/gone-open"}))
+        (root / ".jit/issues/e.json").write_text(json.dumps({"state": "done", "description": "@/inv/gone-closed"}))
+        (root / ".gitignore").write_text("dev/ignored/\ntarget/\n*.profraw\n")
+        (root / "docs/bare.md").write_text(
+            "`absent-name.rs`, `good.md`, `self.id`, `run.profraw` and `notes/absent-note.txt`\n"
+            "the probe left table.csv and fix.patch; plain absent-prose.md and absent.txt\n"
+        )
+        (root / "scripts").mkdir()
+        (root / "scripts/reference-exceptions.toml").write_text(
+            '[[exception]]\npath = ".jit/issues/p*"\nplanned = ["crates/"]\nreason = "plans"\n'
+        )
+        (root / "crates").mkdir()
+        (root / "crates/removed.rs").write_text("")
         git(root, "add", ".")
+        git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", "a", "--no-verify")
+        git(root, "rm", "-q", "crates/removed.rs")
+        (root / ".jit/issues/p.json").write_text(json.dumps({
+            "state": "ready", "description": "creates crates/planned.rs, restores crates/removed.rs",
+        }))
+        git(root, "add", ".")
+        git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", "b", "--no-verify")
         faults = check(root)
     assert any("bad-link.md" in f for f in faults), faults
     assert sum("host-local" in f for f in faults) == 3, faults
@@ -452,6 +564,13 @@ def self_test() -> None:
     assert any(f.startswith(".jit/issues/b.json") and "open-gap.out" in f for f in faults), faults
     assert not any(f.startswith(".jit/issues/c.json") for f in faults), faults
     assert not any("src/writer.py" in f for f in faults), faults
+    assert [f for f in faults if "invariants.md" in f] == ["docs/invariants.md:1: @/inv/gone-rule"], faults
+    assert ".jit/issues/d.json:1: @/inv/gone-open" in faults, faults
+    assert not any(f.startswith(".jit/issues/e.json") for f in faults), faults
+    bare = [f.split(": ", 1)[1] for f in faults if f.startswith("docs/bare.md:")]
+    assert bare == ["absent-name.rs", "notes/absent-note.txt", "table.csv", "fix.patch"], bare
+    assert ".jit/issues/p.json:1: crates/removed.rs" in faults, faults
+    assert not any("crates/planned.rs" in f for f in faults), faults
 
 
 def main() -> int:
