@@ -24,10 +24,14 @@ impl BcjrDecoder {
     ///
     /// # Panics
     ///
-    /// Panics if `h` has more than 20 rows.
+    /// Panics if `h` has more than 20 rows or fewer columns than rows.
     pub fn new(h: &BitMatrix) -> Self {
         let m = h.rows();
         let n = h.cols();
+        assert!(
+            n >= m,
+            "Parity-check matrix has fewer columns than rows ({n} < {m})"
+        );
         assert!(
             m <= 20,
             "Parity-check matrix has {} rows; BCJR trellis with 2^{} states is infeasible",

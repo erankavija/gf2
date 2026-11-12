@@ -23,8 +23,6 @@ use gf2_coding::simulation::{
 
 #[cfg(feature = "parallel")]
 use gf2_coding::simulation::SimulationResult;
-#[cfg(feature = "parallel")]
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 /// TOML channel parameters for one curve.
 #[derive(Debug, Deserialize)]
@@ -612,18 +610,42 @@ where
 #[cfg(feature = "parallel")]
 type ProductDecodeFn = Box<dyn FnMut(&[gf2_coding::llr::Llr]) -> gf2_coding::traits::DecoderResult>;
 
-/// RNG seed of frame `frame_idx` at SNR point `point_idx`.
+/// SplitMix64 finalizer.
+#[cfg(feature = "parallel")]
+fn splitmix64(x: u64) -> u64 {
+    let mut z = x.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+}
+
+/// RNG seed of frame `frame_idx` at SNR point `point_idx`: a hash of the three
+/// indices, so streams of different points do not overlap at any `max_frames`.
 #[cfg(feature = "parallel")]
 fn frame_seed(base_seed: u64, point_idx: usize, frame_idx: usize) -> u64 {
-    base_seed
-        .wrapping_add(point_idx as u64 * 1_000_000)
-        .wrapping_add(frame_idx as u64)
+    let point_seed = splitmix64(base_seed ^ (point_idx as u64).rotate_left(32));
+    splitmix64(point_seed ^ frame_idx as u64)
+}
+
+/// Frames per worker in one chunk of the frame-parallel runner; frames past
+/// the stopping frame of a chunk are discarded.
+#[cfg(feature = "parallel")]
+const FRAMES_PER_WORKER_CHUNK: usize = 16;
+
+/// Decoder statistics of one simulated frame.
+#[cfg(feature = "parallel")]
+struct FrameOutcome {
+    bit_errors: usize,
+    iterations: usize,
+    queries: usize,
 }
 
 /// Frame-parallel product-code simulation: SNR points run sequentially and the
-/// frames of each point are spread over rayon workers, one decoder per worker.
-/// Shared atomic counters stop a point once `min_errors` frame errors are
-/// collected.
+/// frames of each point are decoded in chunks over rayon workers, one decoder
+/// per worker. Each frame draws from its own seeded stream, and a chunk's
+/// outcomes are folded in frame order until `min_errors` frame errors are
+/// collected, so a point's counts do not depend on the worker count or
+/// scheduling.
 #[cfg(feature = "parallel")]
 fn run_product_frame_parallel<C, CH>(
     product: ProductCode<C>,
@@ -665,67 +687,66 @@ where
     for (point_idx, &eb_n0_db) in config.eb_n0_range_db.iter().enumerate() {
         let point_start = std::time::Instant::now();
 
-        let total_frames = AtomicUsize::new(0);
-        let total_frame_errors = AtomicUsize::new(0);
-        let total_bit_errors = AtomicUsize::new(0);
-        let total_iterations = AtomicUsize::new(0);
-        let total_queries = AtomicUsize::new(0);
-        let stop_flag = AtomicBool::new(false);
+        let mut frames = 0usize;
+        let mut frame_errors = 0usize;
+        let mut bit_errors = 0usize;
+        let mut iterations = 0usize;
+        let mut queries = 0usize;
 
         let decoder_comp = decoder_component.clone();
         let cp_cfg = cp_config.clone();
         let turbo_cfg_inner = turbo_config.clone();
+        let chunk_len = rayon::current_num_threads() * FRAMES_PER_WORKER_CHUNK;
 
-        (0..config.max_frames)
-            .into_par_iter()
-            .map_init(
-                move || -> ProductDecodeFn {
-                    if let Some(ref cp) = cp_cfg {
-                        let dec = ChasePyndiahDecoder::new(decoder_comp.clone(), cp.clone());
-                        Box::new(move |llrs| dec.decode(llrs).into())
-                    } else {
-                        let dec = TurboDecoder::new(
-                            decoder_comp.clone(),
-                            turbo_cfg_inner.clone().unwrap(),
-                        );
-                        Box::new(move |llrs| dec.decode(llrs).into())
-                    }
-                },
-                |decode_fn, frame_idx| {
-                    if stop_flag.load(Ordering::Relaxed) {
-                        return;
-                    }
-
-                    let mut rng = StdRng::seed_from_u64(frame_seed(base_seed, point_idx, frame_idx));
-                    let message = BitVec::random(k, &mut rng);
-                    let codeword = product.encode(&message);
-                    let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
-
-                    let result = decode_fn(&llrs);
-                    let bit_errs = count_bit_errors(&message, &result.decoded_bits);
-
-                    total_frames.fetch_add(1, Ordering::Relaxed);
-                    total_bit_errors.fetch_add(bit_errs, Ordering::Relaxed);
-                    total_iterations.fetch_add(result.iterations, Ordering::Relaxed);
-                    total_queries.fetch_add(
-                        result.queries.unwrap_or(result.iterations),
-                        Ordering::Relaxed,
-                    );
-                    if bit_errs > 0 {
-                        let fe = total_frame_errors.fetch_add(1, Ordering::Relaxed) + 1;
-                        if fe >= config.min_errors {
-                            stop_flag.store(true, Ordering::Relaxed);
+        let mut next_frame = 0usize;
+        'point: while next_frame < config.max_frames {
+            let chunk_end = config.max_frames.min(next_frame + chunk_len);
+            let outcomes: Vec<FrameOutcome> = (next_frame..chunk_end)
+                .into_par_iter()
+                .map_init(
+                    || -> ProductDecodeFn {
+                        if let Some(ref cp) = cp_cfg {
+                            let dec = ChasePyndiahDecoder::new(decoder_comp.clone(), cp.clone());
+                            Box::new(move |llrs| dec.decode(llrs).into())
+                        } else {
+                            let dec = TurboDecoder::new(
+                                decoder_comp.clone(),
+                                turbo_cfg_inner.clone().unwrap(),
+                            );
+                            Box::new(move |llrs| dec.decode(llrs).into())
                         }
+                    },
+                    |decode_fn, frame_idx| {
+                        let mut rng =
+                            StdRng::seed_from_u64(frame_seed(base_seed, point_idx, frame_idx));
+                        let message = BitVec::random(k, &mut rng);
+                        let codeword = product.encode(&message);
+                        let llrs =
+                            channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, &mut rng);
+                        let result = decode_fn(&llrs);
+                        FrameOutcome {
+                            bit_errors: count_bit_errors(&message, &result.decoded_bits),
+                            iterations: result.iterations,
+                            queries: result.queries.unwrap_or(result.iterations),
+                        }
+                    },
+                )
+                .collect();
+            for outcome in outcomes {
+                frames += 1;
+                bit_errors += outcome.bit_errors;
+                iterations += outcome.iterations;
+                queries += outcome.queries;
+                if outcome.bit_errors > 0 {
+                    frame_errors += 1;
+                    if frame_errors >= config.min_errors {
+                        break 'point;
                     }
-                },
-            )
-            .collect::<Vec<()>>();
+                }
+            }
+            next_frame = chunk_end;
+        }
 
-        let frames = total_frames.load(Ordering::Relaxed);
-        let frame_errors = total_frame_errors.load(Ordering::Relaxed);
-        let bit_errors = total_bit_errors.load(Ordering::Relaxed);
-        let iterations = total_iterations.load(Ordering::Relaxed);
-        let queries = total_queries.load(Ordering::Relaxed);
         let bits = frames * k;
 
         let ber = if bits > 0 {
@@ -1362,10 +1383,9 @@ taps = 4
 
     #[cfg(feature = "parallel")]
     fn frame_parallel_points(threads: usize) -> Vec<gf2_coding::simulation::SimulationResult> {
-        let turbo_cfg: TurboConfig = toml::from_str(
-            "max_iterations = 4\nalpha = 0.5\nlist_size = 4\nmax_queries = 1000",
-        )
-        .unwrap();
+        let turbo_cfg: TurboConfig =
+            toml::from_str("max_iterations = 4\nalpha = 0.5\nlist_size = 4\nmax_queries = 1000")
+                .unwrap();
         let config = SimulationConfig {
             eb_n0_range_db: vec![0.0, 1.0],
             min_errors: 5,

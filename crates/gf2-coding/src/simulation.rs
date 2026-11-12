@@ -424,7 +424,8 @@ pub struct SimulationConfig {
 
     /// RNG seed of the coded runners; the uncoded runners draw from the
     /// caller's RNG. When `None`, the sequential runners seed from
-    /// `rand::thread_rng()` and the parallel runner uses a fixed default.
+    /// `rand::thread_rng()` and the parallel runner uses the fixed seed
+    /// `0xDEAD_BEEF`.
     pub rng_seed: Option<u64>,
 
     /// Result file of the coded runners. A `.json` path is written once at
@@ -1822,6 +1823,20 @@ impl ParallelResultCollector {
         }
     }
 
+    /// Stores a point restored from a completed checkpoint. Its row and log entry
+    /// belong to the run that produced it, so no output is written.
+    #[cfg(feature = "sim-observability")]
+    fn record_resumed_point(&mut self, index: usize, result: SimulationResult) {
+        self.completed_points.push(CompletedPointInfo {
+            eb_n0_db: result.eb_n0_db,
+            duration: Duration::ZERO,
+            num_frames: result.num_frames,
+            bler: result.bler,
+        });
+        self.results[index] = Some(result);
+        self.completed_count += 1;
+    }
+
     /// Stores the result and performs the completion I/O; called under the collector's `Mutex`.
     fn record_completed_point(
         &mut self,
@@ -2659,7 +2674,7 @@ impl SimulationRunner {
                 .expect("ParallelResultCollector lock poisoned");
             for (idx, opt) in checkpoint_results.iter().enumerate() {
                 if let Some(ref result) = opt {
-                    coll.record_completed_point(idx, result.clone(), std::time::Duration::ZERO);
+                    coll.record_resumed_point(idx, result.clone());
                 }
             }
         }

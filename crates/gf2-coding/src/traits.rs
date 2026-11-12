@@ -334,7 +334,9 @@ pub mod block {
         ///
         /// Panics if an implementor violates the `k <= n` block-code law.
         fn redundancy(&self) -> usize {
-            self.n() - self.k()
+            let (n, k) = (self.n(), self.k());
+            assert!(k <= n, "block-code law k <= n violated: k = {k}, n = {n}");
+            n - k
         }
 
         /// Returns the mathematical identity of the symbol field.

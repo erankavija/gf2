@@ -15,7 +15,16 @@ pub struct ConvolutionalEncoder {
 impl ConvolutionalEncoder {
     /// Creates a rate-1/n encoder with one generator mask per output; bit 0 of a
     /// mask taps the newest input bit.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `constraint_length` is 0 or greater than 31, the range
+    /// [`ConvolutionalDecoder::new`] accepts.
     pub fn new(constraint_length: usize, generators: Vec<u32>) -> Self {
+        assert!(
+            (1..=31).contains(&constraint_length),
+            "constraint_length must be in 1..=31, got {constraint_length}"
+        );
         Self {
             constraint_length,
             generators,
@@ -81,7 +90,7 @@ impl ConvolutionalDecoder {
     ///
     /// # Panics
     ///
-    /// Panics if constraint_length is 0 or > 31.
+    /// Panics if `constraint_length` is 0 or greater than 31.
     pub fn new(constraint_length: usize, generators: Vec<u32>) -> Self {
         assert!(constraint_length > 0 && constraint_length <= 31);
 
