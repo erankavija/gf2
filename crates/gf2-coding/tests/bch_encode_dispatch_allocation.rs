@@ -1,8 +1,8 @@
 //! Guarded fresh-process witnesses that selecting a family beyond the
 //! reference reaches no allocator on the workspace batch path, first call
-//! included. The conservative profile keeps every code on the scalar
-//! reference, so these cases install profiles that select a family reading
-//! precomputed state.
+//! included. Each case installs a profile that selects the family it
+//! witnesses, so the check names that family whatever the default section
+//! selects.
 
 #[path = "support/fresh_tuning_process.rs"]
 mod fresh;

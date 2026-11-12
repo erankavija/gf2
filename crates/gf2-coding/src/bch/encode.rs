@@ -2106,7 +2106,9 @@ where
     /// sized and filled here and only overwritten afterwards, so the
     /// per-message path neither allocates nor pays the $O(r)$ reset the
     /// entry points that take no workspace pay per call. The workspace serves
-    /// every [`SystematicLayout`] of this code.
+    /// every [`SystematicLayout`] of this code. An installed fold override
+    /// whose run or accumulator count differs from the structural one resizes
+    /// the fold buffer once, on the first encode that applies it.
     ///
     /// # Complexity
     ///
