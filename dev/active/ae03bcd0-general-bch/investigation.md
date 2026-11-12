@@ -206,7 +206,7 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
 - The GF(p^n) planning session
   records the earlier motivation for general finite-field arithmetic while
   retaining binary-specific performance paths. The implemented `gfpn` result is
-  the narrower quadratic/cubic tower seen in `gfpn/mod.rs`, not arbitrary
+  the narrower quadratic/cubic tower seen in `crates/gf2-core/src/gfpn/mod.rs`, not arbitrary
   polynomial quotients.
 - The `70972f06` audit records that BCH’s
   `alpha_power.minimal_polynomial()` call remains a Gf2mElement operation. It
@@ -228,17 +228,17 @@ account for those references. Direct BCH implementation and test anchors are
 
 Direct code/tests/benches/examples and simulation consumers:
 
-`crates/gf2-coding/src/bch/core.rs`, `src/bch/mod.rs`,
-`src/bch/dvb_t2/mod.rs`, `src/bch/dvb_t2/generators.rs`,
-`src/bch/dvb_t2/params.rs`, `src/ldpc/dvb_t2/concat.rs`, `src/lib.rs`, `src/product/mod.rs`,
-`src/product/chase_pyndiah.rs`, `src/grand/orbgrand.rs`,
-`src/grand/sogrand.rs`, `src/fading.rs`, `src/gldpc/mod.rs`,
-`src/bcjr/mod.rs`, `src/bin/sim_runner.rs`,
-`benches/bch_parallel.rs`, `benches/batch_operations.rs`,
-`examples/dvb_t2_bch_demo.rs`, `tests/bch_tests.rs`,
-`tests/dvb_t2_bch_verification.rs`, `tests/ebch_128_64_reference.rs`,
-`tests/data/ebch_128_64_reference.json`, `tests/backend_integration.rs`,
-`tests/grand_phase1_smoke.rs`, `ebch_osd_awgn_campaign.rs`,
+`crates/gf2-coding/src/bch/core.rs`, `crates/gf2-coding/src/bch/mod.rs`,
+`crates/gf2-coding/src/bch/dvb_t2/mod.rs`, `crates/gf2-coding/src/bch/dvb_t2/generators.rs`,
+`crates/gf2-coding/src/bch/dvb_t2/params.rs`, `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs`, `crates/gf2-coding/src/lib.rs`, `crates/gf2-coding/src/product/mod.rs`,
+`crates/gf2-coding/src/product/chase_pyndiah.rs`, `crates/gf2-coding/src/grand/orbgrand.rs`,
+`crates/gf2-coding/src/grand/sogrand.rs`, `crates/gf2-coding/src/fading.rs`, `crates/gf2-coding/src/gldpc/mod.rs`,
+`crates/gf2-coding/src/bcjr/mod.rs`, `crates/gf2-coding/src/bin/sim_runner.rs`,
+`crates/gf2-coding/benches/bch_parallel.rs`, `crates/gf2-coding/benches/batch_operations.rs`,
+`crates/gf2-coding/examples/dvb_t2_bch_demo.rs`, `crates/gf2-coding/tests/bch_tests.rs`,
+`crates/gf2-coding/tests/dvb_t2_bch_verification.rs`, `crates/gf2-coding/tests/ebch_128_64_reference.rs`,
+`crates/gf2-coding/tests/data/ebch_128_64_reference.json`, `crates/gf2-coding/tests/backend_integration.rs`,
+`crates/gf2-coding/tests/grand_phase1_smoke.rs`, `ebch_osd_awgn_campaign.rs`,
 `ebch_osd_campaign_cli.rs`,
 `crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs`,
 `crates/gf2-sim/tests/gpu_byte_identity.rs`,
@@ -280,24 +280,24 @@ including `LinearBlockCode::parity_check` (`crates/gf2-coding/src/linear.rs:112-
 Exact source/test/bench/example consumers of `BlockEncoder` or
 `GeneratorMatrixAccess` are:
 
-`crates/gf2-coding/src/traits.rs`, `src/linear.rs`, `src/bch/core.rs`,
-`src/bch/mod.rs`, `src/bch/dvb_t2/mod.rs`,
-`src/bcjr/mod.rs`, `src/crc.rs`, `src/drm.rs`, `src/dvb_t2_bicm_harness.rs`,
-`src/gldpc/mod.rs`, `src/ldpc/core.rs`, `src/ldpc/dvb_t2/concat.rs`,
-`src/ldpc/encoding/cache.rs`, `src/ldpc/encoding/ira.rs`,
-`src/ldpc/nr_5g/mod.rs`, `src/osd/generator.rs`,
-`src/product/mod.rs`, `src/grand/orbgrand.rs`, `src/grand/sogrand.rs`,
-`src/simulation.rs`, `src/bin/check_encoding.rs`,
-`src/bin/sim_checkpoint_helper.rs`, `src/bin/sim_runner.rs`,
-`src/bin/validate_ldpc_cache.rs`, `benches/batch_operations.rs`,
-`benches/bch_parallel.rs`, `benches/ldpc_throughput.rs`,
-`benches/linear_codes.rs`, `benches/profile_ldpc_encode.rs`,
-`benches/quick_parallel.rs`, `benches/sparse_preprocessing.rs`,
-`examples/block_code_intro.rs`, `examples/dvb_t2_bch_demo.rs`,
-`examples/hamming_basic.rs`, `examples/ldpc_cache_file_io.rs`,
-`examples/ldpc_encoding_with_cache.rs`, `examples/ldpc_mother_check.rs`,
-`examples/visualize_large_matrices.rs`,
-and the corresponding coding tests in `tests/backend_integration.rs`,
+`crates/gf2-coding/src/traits.rs`, `crates/gf2-coding/src/linear.rs`, `crates/gf2-coding/src/bch/core.rs`,
+`crates/gf2-coding/src/bch/mod.rs`, `crates/gf2-coding/src/bch/dvb_t2/mod.rs`,
+`crates/gf2-coding/src/bcjr/mod.rs`, `crates/gf2-coding/src/crc.rs`, `crates/gf2-coding/src/drm.rs`, `crates/gf2-coding/src/dvb_t2_bicm_harness.rs`,
+`crates/gf2-coding/src/gldpc/mod.rs`, `crates/gf2-coding/src/ldpc/core.rs`, `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs`,
+`crates/gf2-coding/src/ldpc/encoding/cache.rs`, `crates/gf2-coding/src/ldpc/encoding/ira.rs`,
+`crates/gf2-coding/src/ldpc/nr_5g/mod.rs`, `crates/gf2-coding/src/osd/generator.rs`,
+`crates/gf2-coding/src/product/mod.rs`, `crates/gf2-coding/src/grand/orbgrand.rs`, `crates/gf2-coding/src/grand/sogrand.rs`,
+`crates/gf2-coding/src/simulation.rs`, `crates/gf2-coding/src/bin/check_encoding.rs`,
+`crates/gf2-coding/src/bin/sim_checkpoint_helper.rs`, `crates/gf2-coding/src/bin/sim_runner.rs`,
+`crates/gf2-coding/src/bin/validate_ldpc_cache.rs`, `crates/gf2-coding/benches/batch_operations.rs`,
+`crates/gf2-coding/benches/bch_parallel.rs`, `crates/gf2-coding/benches/ldpc_throughput.rs`,
+`crates/gf2-coding/benches/linear_codes.rs`, `crates/gf2-coding/benches/profile_ldpc_encode.rs`,
+`crates/gf2-coding/benches/quick_parallel.rs`, `crates/gf2-coding/benches/sparse_preprocessing.rs`,
+`crates/gf2-coding/examples/block_code_intro.rs`, `crates/gf2-coding/examples/dvb_t2_bch_demo.rs`,
+`crates/gf2-coding/examples/hamming_basic.rs`, `crates/gf2-coding/examples/ldpc_cache_file_io.rs`,
+`crates/gf2-coding/examples/ldpc_encoding_with_cache.rs`, `crates/gf2-coding/examples/ldpc_mother_check.rs`,
+`crates/gf2-coding/examples/visualize_large_matrices.rs`,
+and the corresponding coding tests in `crates/gf2-coding/tests/backend_integration.rs`,
 `bch_tests.rs`, `dvb_t2_bch_verification.rs`,
 `dvb_t2_ldpc_verification.rs`, `dvb_t2_ldpc_verification_suite.rs`,
 `ebch_128_64_reference.rs`, `grand_phase1_smoke.rs`,
@@ -311,14 +311,14 @@ HIP/SIMD direct trait references are limited to
 `crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs`; the SIMD kernel
 crate itself does not implement these coding traits. Simulation-facing matches
 are in `nr_5g_realtime.rs`,
-`src/stages/nr_5g.rs`, `src/gpu/ldpc_bp.rs`, and the GPU byte-identity tests.
+`crates/gf2-sim/src/stages/nr_5g.rs`, `crates/gf2-sim/src/gpu/ldpc_bp.rs`, and the GPU byte-identity tests.
 
 ### BitMatrix save/load and `.gf2` files
 
 Runtime/read-write consumers are:
 
 `crates/gf2-core/src/io/matrix.rs` (format implementation),
-`crates/gf2-core/src/io/bitvec.rs`, `src/io/sparse.rs` (adjacent IO modules),
+`crates/gf2-core/src/io/bitvec.rs`, `crates/gf2-core/src/io/sparse.rs` (adjacent IO modules),
 `crates/gf2-coding/src/ldpc/encoding/cache.rs:317-429` (writes parity
 matrices and reloads them), `crates/gf2-coding/tests/ldpc_cache_io.rs:38-79`,
 `crates/gf2-coding/tests/common/mod.rs:84-93` (cache location/gating),
