@@ -1,11 +1,13 @@
 //! Binary BCH hard-decision decoding and the DVB-T2 code-rate vocabulary.
 
+use crate::bch::encode::{SystematicLayout, SystematicPlan};
 use crate::bch::error::BchError;
 use crate::bch::spec::BinaryBchCode;
 use crate::error::CodeError;
 use gf2_core::field::extension::FieldExtension;
 use gf2_core::field::{FieldPoly, FiniteField, FiniteFieldExt};
 use gf2_core::gf2m::{Gf2mElement_, UintExt};
+use gf2_core::gfp::Fp;
 use gf2_core::BitVec;
 
 /// Code rates for DVB-T2 standard.
@@ -89,8 +91,12 @@ pub struct BchDecodeWorkspace<V: UintExt = u64> {
 /// The decoder borrows the constructed
 /// [`BinaryBchCode`](crate::bch::spec::BinaryBchCode) and reads its length,
 /// order-$n$ root, defining set, and witnessed distance bound; it derives
-/// nothing the construction already fixed. Coordinate $i$ of a received word
-/// is the coefficient of $x^i$, matching the construction model's convention.
+/// nothing the construction already fixed. Coordinate $i$ of a word passed to
+/// [`correct_in_place`](Self::correct_in_place) or [`decode`](Self::decode) is
+/// the coefficient of $x^i$, matching the construction model's convention;
+/// [`correct_systematic_in_place`](Self::correct_systematic_in_place) and
+/// [`decode_systematic`](Self::decode_systematic) take a word in a declared
+/// [`SystematicLayout`] instead.
 ///
 /// # Guarantee
 ///
@@ -204,13 +210,15 @@ impl BchDecodeReport {
         self.recovered.as_ref().map(|word| &word.codeword)
     }
 
-    /// Returns the information word `m` with `c = m * g`, or `None` when the
-    /// outcome is [`BchDecodeOutcome::Uncorrectable`].
+    /// Returns the recovered message, or `None` when the outcome is
+    /// [`BchDecodeOutcome::Uncorrectable`].
     ///
-    /// The construction model defines a codeword as the coefficient vector of
-    /// a multiple of the generator, so dividing by the generator is the
-    /// inverse of that encoding. A systematic user layout is a separate
-    /// coordinate map above this convention.
+    /// From [`BinaryBchDecoder::decode`] this is the information word `m`
+    /// with `c = m * g`: the construction model defines a codeword as the
+    /// coefficient vector of a multiple of the generator, so dividing by the
+    /// generator inverts that encoding. From
+    /// [`BinaryBchDecoder::decode_systematic`] it is the systematic message,
+    /// the first $k$ coordinates of the corrected word.
     pub fn message(&self) -> Option<&BitVec> {
         self.recovered.as_ref().map(|word| &word.message)
     }
@@ -365,12 +373,72 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
         workspace: &mut BchDecodeWorkspace<V>,
     ) -> Result<BchDecodeOutcome, BchError> {
         self.validate(received.len(), workspace)?;
+        Ok(self.correct_word(received, workspace))
+    }
 
-        self.evaluate_syndromes(received, &mut workspace.syndromes);
-        if workspace.syndromes.iter().all(|value| value.is_zero()) {
-            return Ok(BchDecodeOutcome::NoErrors);
-        }
-        Ok(self.correct_nonzero_syndrome(received, workspace))
+    /// Corrects `received`, a word in the user coordinates of `layout`, in
+    /// place and reports the outcome.
+    ///
+    /// This is [`correct_in_place`](Self::correct_in_place) for a word written
+    /// by [`encode_systematic`](crate::bch::BchCode::encode_systematic) under
+    /// the same `layout`: the decoder reads and flips the coordinates the
+    /// layout assigns to each degree, so the caller maps nothing and the
+    /// corrected word is in `layout` again. It performs no heap allocation and
+    /// carries the same outcome guarantees and errors.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::bch::dvb_t2::DVB_T2_LAYOUT;
+    /// use gf2_coding::bch::{BchDecodeOutcome, BinaryBchCode, BinaryBchDecoder, DesignedDistance};
+    /// use gf2_core::field::extension::BinaryPrimeExt;
+    /// use gf2_core::gf2m::Gf2mField;
+    /// use gf2_core::BitVec;
+    ///
+    /// // BCH(127, 64) with t = 10, transmitted in the DVB-T2 bit order.
+    /// let extension = BinaryPrimeExt::new(Gf2mField::new(7, 0b1000_0011).with_tables())?;
+    /// let code = BinaryBchCode::primitive_narrow_sense(extension, DesignedDistance::try_from(21)?)?;
+    /// let message = BitVec::random_seeded(code.k(), 7);
+    /// let codeword = code.encode_systematic(&message, DVB_T2_LAYOUT)?;
+    ///
+    /// let mut received = codeword.clone();
+    /// for position in [0, 63, 64, 126] {
+    ///     received.set(position, !received.get(position));
+    /// }
+    ///
+    /// let decoder = BinaryBchDecoder::new(&code);
+    /// let mut workspace = decoder.workspace();
+    /// let outcome = decoder.correct_systematic_in_place(&mut received, DVB_T2_LAYOUT, &mut workspace)?;
+    /// assert_eq!(outcome, BchDecodeOutcome::Corrected { count: 4 });
+    /// assert_eq!(received, codeword);
+    ///
+    /// // The diagnostic path reports the corrected coordinates in the same layout.
+    /// received.set(65, !received.get(65));
+    /// let report = decoder.decode_systematic(&received, DVB_T2_LAYOUT)?;
+    /// assert_eq!(report.error_positions(), &[65]);
+    /// assert_eq!(report.message(), Some(&message));
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Those of [`correct_in_place`](Self::correct_in_place).
+    ///
+    /// # Complexity
+    ///
+    /// That of [`correct_in_place`](Self::correct_in_place).
+    pub fn correct_systematic_in_place(
+        &self,
+        received: &mut BitVec,
+        layout: SystematicLayout,
+        workspace: &mut BchDecodeWorkspace<V>,
+    ) -> Result<BchDecodeOutcome, BchError> {
+        self.validate(received.len(), workspace)?;
+        let mut word = LayoutWord {
+            word: received,
+            plan: self.code.systematic_plan(layout),
+        };
+        Ok(self.correct_word(&mut word, workspace))
     }
 
     /// Decodes `received` and returns the full evidence.
@@ -392,28 +460,87 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
         let mut workspace = self.workspace();
         let mut corrected = received.clone();
         let outcome = self.correct_in_place(&mut corrected, &mut workspace)?;
+        let error_positions = workspace.positions.clone();
+        Ok(
+            self.report(outcome, corrected, error_positions, |codeword| {
+                self.extract_message(codeword)
+            }),
+        )
+    }
 
-        if outcome == BchDecodeOutcome::Uncorrectable {
-            return Ok(BchDecodeReport {
+    /// Decodes `received`, a word in the user coordinates of `layout`, and
+    /// returns the full evidence in those coordinates.
+    ///
+    /// This is [`decode`](Self::decode) for the word
+    /// [`correct_systematic_in_place`](Self::correct_systematic_in_place)
+    /// corrects: the report's codeword is in `layout`, its error positions
+    /// index `received`, and its [`message`](BchDecodeReport::message) is the
+    /// systematic message, the first $k$ coordinates of the corrected word.
+    ///
+    /// # Errors
+    ///
+    /// [`BchError::Decode`] when `received` is not `n` coordinates long.
+    ///
+    /// # Complexity
+    ///
+    /// That of [`correct_in_place`](Self::correct_in_place), plus $O(n)$ to
+    /// copy the word and $O(t \log t)$ to order the error positions.
+    pub fn decode_systematic(
+        &self,
+        received: &BitVec,
+        layout: SystematicLayout,
+    ) -> Result<BchDecodeReport, BchError> {
+        let mut workspace = self.workspace();
+        let mut corrected = received.clone();
+        let outcome = self.correct_systematic_in_place(&mut corrected, layout, &mut workspace)?;
+        let plan = self.code.systematic_plan(layout);
+        let mut error_positions: Vec<usize> = workspace
+            .positions
+            .iter()
+            .map(|&internal| plan.user_at(internal))
+            .collect();
+        error_positions.sort_unstable();
+        Ok(
+            self.report(outcome, corrected, error_positions, |codeword| {
+                let mut message = BitVec::zeros(self.code.k());
+                message.write_bits(0, codeword.words(), self.code.k());
+                message
+            }),
+        )
+    }
+
+    /// Assembles the report of a finished decode, keeping the corrected word
+    /// and its positions only where the outcome vouches for them.
+    fn report(
+        &self,
+        outcome: BchDecodeOutcome,
+        corrected: BitVec,
+        error_positions: Vec<usize>,
+        message: impl FnOnce(&BitVec) -> BitVec,
+    ) -> BchDecodeReport {
+        match outcome {
+            BchDecodeOutcome::Uncorrectable => BchDecodeReport {
                 outcome,
                 recovered: None,
                 error_positions: Vec::new(),
-            });
+            },
+            BchDecodeOutcome::NoErrors | BchDecodeOutcome::Corrected { .. } => {
+                let message = message(&corrected);
+                let error_positions = if outcome == BchDecodeOutcome::NoErrors {
+                    Vec::new()
+                } else {
+                    error_positions
+                };
+                BchDecodeReport {
+                    outcome,
+                    recovered: Some(RecoveredWord {
+                        codeword: corrected,
+                        message,
+                    }),
+                    error_positions,
+                }
+            }
         }
-
-        let message = self.extract_message(&corrected);
-        let error_positions = match outcome {
-            BchDecodeOutcome::Corrected { .. } => workspace.positions.clone(),
-            _ => Vec::new(),
-        };
-        Ok(BchDecodeReport {
-            outcome,
-            recovered: Some(RecoveredWord {
-                codeword: corrected,
-                message,
-            }),
-            error_positions,
-        })
     }
 
     /// Fingerprints this decoder's code: length, radius, and the exact
@@ -470,23 +597,38 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
         Ok(())
     }
 
-    fn correct_nonzero_syndrome(
+    /// Corrects a validated word, leaving a candidate's internal coordinates
+    /// in `workspace.positions`.
+    fn correct_word<W: InternalWord + ?Sized>(
         &self,
-        received: &mut BitVec,
+        received: &mut W,
+        workspace: &mut BchDecodeWorkspace<V>,
+    ) -> BchDecodeOutcome {
+        workspace.positions.clear();
+        self.evaluate_syndromes(received, &mut workspace.syndromes);
+        if workspace.syndromes.iter().all(|value| value.is_zero()) {
+            return BchDecodeOutcome::NoErrors;
+        }
+        self.correct_nonzero_syndrome(received, workspace)
+    }
+
+    fn correct_nonzero_syndrome<W: InternalWord + ?Sized>(
+        &self,
+        received: &mut W,
         workspace: &mut BchDecodeWorkspace<V>,
     ) -> BchDecodeOutcome {
         if !self.locate_candidate(workspace) {
             return BchDecodeOutcome::Uncorrectable;
         }
 
-        flip(received, &workspace.positions);
+        received.flip_internal(&workspace.positions);
         self.evaluate_syndromes(received, &mut workspace.syndromes);
         if workspace.syndromes.iter().all(|value| value.is_zero()) {
             BchDecodeOutcome::Corrected {
                 count: workspace.positions.len(),
             }
         } else {
-            flip(received, &workspace.positions);
+            received.flip_internal(&workspace.positions);
             BchDecodeOutcome::Uncorrectable
         }
     }
@@ -509,8 +651,8 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
     }
 
     /// Writes `word(β^e)` for every evaluation exponent into `out`.
-    fn evaluate_syndromes(&self, word: &BitVec, out: &mut [Gf2mElement_<V>]) {
-        let Some(top) = word.find_last_set() else {
+    fn evaluate_syndromes<W: InternalWord + ?Sized>(&self, word: &W, out: &mut [Gf2mElement_<V>]) {
+        let Some(top) = word.internal_top() else {
             for slot in out.iter_mut() {
                 *slot = self.zero.clone();
             }
@@ -521,7 +663,7 @@ impl<'code, V: UintExt> BinaryBchDecoder<'code, V> {
             let mut accumulator = self.zero.clone();
             for index in (0..=top).rev() {
                 accumulator = &accumulator * point;
-                if word.get(index) {
+                if word.internal_bit(index) {
                     accumulator = &accumulator + &self.one;
                 }
             }
@@ -1053,6 +1195,60 @@ impl<V: UintExt> BinaryBchDecoder<'_, V> {
 fn flip(word: &mut BitVec, positions: &[usize]) {
     for &position in positions {
         word.set(position, !word.get(position));
+    }
+}
+
+/// A received word read in internal coordinates, where coordinate $i$ is the
+/// coefficient of $x^i$.
+trait InternalWord {
+    /// An upper bound on the highest set internal coordinate, or `None` for
+    /// the zero word.
+    fn internal_top(&self) -> Option<usize>;
+
+    /// The coefficient of $x^i$ for `internal` $= i$ below the length.
+    fn internal_bit(&self, internal: usize) -> bool;
+
+    /// Flips the coefficients of the given internal coordinates.
+    fn flip_internal(&mut self, internal: &[usize]);
+}
+
+impl InternalWord for BitVec {
+    fn internal_top(&self) -> Option<usize> {
+        self.find_last_set()
+    }
+
+    fn internal_bit(&self, internal: usize) -> bool {
+        self.get(internal)
+    }
+
+    fn flip_internal(&mut self, internal: &[usize]) {
+        flip(self, internal);
+    }
+}
+
+/// A word in the user coordinates of `plan`'s layout, read through its
+/// coordinate map.
+struct LayoutWord<'w, 'p> {
+    word: &'w mut BitVec,
+    plan: SystematicPlan<'p, Fp<2>>,
+}
+
+impl InternalWord for LayoutWord<'_, '_> {
+    fn internal_top(&self) -> Option<usize> {
+        let first = self.word.find_first_set()?;
+        let last = self.word.find_last_set()?;
+        Some(self.plan.internal_upper_bound(first, last))
+    }
+
+    fn internal_bit(&self, internal: usize) -> bool {
+        self.word.get(self.plan.user_at(internal))
+    }
+
+    fn flip_internal(&mut self, internal: &[usize]) {
+        for &position in internal {
+            let user = self.plan.user_at(position);
+            self.word.set(user, !self.word.get(user));
+        }
     }
 }
 
