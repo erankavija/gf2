@@ -97,6 +97,18 @@
           "title": "Materialize BCH generators as fast as M4RI and AFF3CT",
           "status": "design 6f5b09e78 on worktree-agent-60c82c4c, unmerged until after the window; trait changes accepted by steward",
           "branch": "worktree-agent-60c82c4c"
+        },
+        {
+          "short_id": "c6b20bec",
+          "title": "Construct prime-field identities without allocating",
+          "status": "gates passed on branch worktree-agent-c6b20bec (78f2fd6bf); merge after the window; vendor Claude Sonnet (well-specified gf2-core change)",
+          "branch": "worktree-agent-c6b20bec"
+        },
+        {
+          "short_id": "2bca2b28",
+          "title": "Restrict a shortened code's parity check without the mother matrix",
+          "status": "blocked by design; depends on 92ec2e2b; regression test b7e55b767 on branch; vendor Codex gpt-6.1-sol high",
+          "branch": "worktree-agent-2bca2b28"
         }
       ]
     }
@@ -109,7 +121,8 @@
     "92ec2e2b",
     "ebfaff31",
     "c6b20bec",
-    "2bca2b28"
+    "2bca2b28",
+    "243d1160"
   ],
   "escalations": [],
   "rework_counts": {

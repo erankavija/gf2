@@ -14,8 +14,9 @@
 | `ebfaff31` | done | doc-review passed at `8f30ed4f0`; closed `19b7adbc9`. |
 | `a6039c72` | in progress | cargo-ci and code-review passed at `a6b8921f0` (merge of `c37094754`). REQ-01 causes are recorded in the issue. REQ-03 needs a window line for `experiments/gf256-baselines/run.sh` after tonight's window; then record the table and close. |
 | `60c82c4c`, `5e71e993`, `92ec2e2b` | backlog | Designs on branch `worktree-agent-60c82c4c` (worktree kept), unmerged: B2 `5f599c36d`, B1 `52ecb542d`, W2 `6f5b09e78`. Merge after the window, then `jit doc add` each `dev/active/<id>/design.md`. D-7 is cited in the B1 and B2 issue notes. |
-| `c6b20bec` | backlog, new | `FieldId::prime` allocates an `Arc` per call; child of d77176e5. |
-| `2bca2b28` | backlog, new | `Shortened` parity-check restriction materializes the mother matrix; child of d77176e5. |
+| `c6b20bec` | in progress | Prime identities stored inline (Claude Sonnet). cargo-ci and code-review passed on branch `worktree-agent-c6b20bec` at `78f2fd6bf`; gate records in `969a3d018` on the branch. Held off main because it changes B2 cycles: merge after the window, then close. |
+| `2bca2b28` | backlog | Blocked by design and now depends on `92ec2e2b`: the mother's generator does not determine its parity-check row order, so the change needs a provided column-selection method on `ParityCheckMatrixAccess` in the same form as 92ec2e2b's generator restriction method. Regression test `b7e55b767` on branch `worktree-agent-2bca2b28`, unmerged. |
+| `243d1160` | ready, new | (b1)/(b2) choice for the per-codeword allocation of `encode_batch`; goes through planning before code (steward). |
 | `fd9d5416`, `259acf37`, `de311215` | as handoff-4 | Record tonight's tables (handoff-4, "Tonight's window"). |
 
 ## What happened
@@ -28,7 +29,7 @@
 ## Next
 
 1. After the window: record the handoff-4 tables, then close `fd9d5416` and `ae03bcd0` and gate `259acf37`.
-2. Merge `worktree-agent-60c82c4c` and link its three designs.
+2. Merge `worktree-agent-60c82c4c` and link its three designs; merge `worktree-agent-c6b20bec` (gated) and close `c6b20bec`; merge `worktree-agent-2bca2b28` with 2bca2b28's implementation.
 3. Queue a `a6039c72` window line after the window has run; record the table and close.
 4. Get the steward's answer to the open question below, then break down the BCH gap issues for implementation.
 
@@ -38,12 +39,14 @@
 - `jit doc add` scans the document for assets by default and copied 22 dead external receipt URLs into each issue. Pass `--skip-scan`.
 - The cargo-ci gate times out at 900 s on a cold main build after a merge. Run `./scripts/cargo-ci.sh` in the main checkout first.
 - The execution-lead skill's scripts include no landing script. Merge with `git merge --no-ff` and a conforming `chore(jit:<id>): merge ...` subject.
+- Gates run from inside a worktree record on that branch (`Branch:` in `jit gate status`); commit the `.jit` change there.
 - Count subject lengths before committing on main: two subjects this session came out at 72 characters. One was rewritten before its merge; one was amended at HEAD.
 - `cd` into a worktree in a Bash call moves the session's working directory. Use `git -C` and absolute paths.
 - gf2-69 lands `daef2dc3` tonight (gated by 01:15). After it, `scripts/check-tracked-budget.py` refuses result tables and run records, and `progress.json` files hold no measured values (owner ruling C2).
 
 ## Open questions for the invoker
 
+- Steward ruling: (b1) versus (b2) is not decided today and is filed as `243d1160`. The text below is the question it carries.
 - How should the allocating `encode_batch` drop its per-codeword allocation (D-4)? Option (b1) stores short `BitVec`s inline in gf2-core and keeps the `Vec<BitVec>` batch convention shared with LDPC. Option (b2) adds a matrix-returning method, which every `encode_batch` would need under convention-convergence. The design recommends (b1), which changes gf2-core's most-used type.
 
 ## References
