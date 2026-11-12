@@ -913,6 +913,7 @@ pub fn test_field_identity_laws_with_cases<F: FieldIdentity>(
     check_prime_coordinate_rejections(&mut runner(cases), &strategy);
     check_convert_element_identity(&mut runner(cases), &strategy);
     check_field_id_encoding_round_trip(&mut runner(cases), &strategy);
+    check_field_id_representation_independent(&mut runner(cases), &strategy);
 }
 
 fn check_identity_agrees_with_field<F: FieldIdentity>(
@@ -1042,6 +1043,35 @@ fn check_field_id_encoding_round_trip<F: FieldIdentity>(
             Ok(())
         })
         .expect("field id encoding round trip");
+}
+
+fn hash_of(id: &FieldId) -> u64 {
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    id.hash(&mut hasher);
+    hasher.finish()
+}
+
+/// Equality, hashing and `Debug` of an identity depend on the field alone: a
+/// clone, a decoded copy, and for a prime field a fresh `FieldId::prime` agree.
+fn check_field_id_representation_independent<F: FieldIdentity>(
+    runner: &mut TestRunner,
+    strategy: &BoxedStrategy<F>,
+) {
+    runner
+        .run(strategy, |a| {
+            let id = a.field_id();
+            let mut copies = vec![id.clone(), FieldId::decode(&id.encode()).unwrap()];
+            if id.base().is_none() {
+                copies.push(FieldId::prime(id.characteristic()).unwrap());
+            }
+            for copy in copies {
+                prop_assert_eq!(&copy, &id);
+                prop_assert_eq!(hash_of(&copy), hash_of(&id));
+                prop_assert_eq!(format!("{copy:?}"), format!("{id:?}"));
+            }
+            Ok(())
+        })
+        .expect("field id representation independence");
 }
 
 /// Run the shared [`FieldExtension`] law suite for one extension witness.
