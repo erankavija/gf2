@@ -47,7 +47,7 @@ cargo test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release 
     --test fixtures_oracle
 ```
 
-The corpus uses the existing `MeasurementPurpose::Equivalence` stream domain;
+The corpus uses the existing `StreamPurpose::Validation` stream domain;
 it does not introduce another
 randomness-purpose registry.  It includes structural empty, singleton, Gray
 partition, add/subtract, partial-word, zero-product, and nonzero exponent-class
@@ -178,11 +178,9 @@ control, with no scratch or spills in either. Any performance conclusion is a
 separate measurement.
 
 The default `fixture-oracle` feature retains the corpus and oracle surface,
-which imports the harness's canonical sampler. When the harness imports this
-crate's registry, it disables that feature and enables its own default
-`prototype-registry` adapter instead. This mutually exclusive feature boundary
-avoids a Cargo dependency cycle while keeping `MeasurementPath::ALL` available
-in both directions as the sole candidate list.
+which imports the `permanent-statistics` campaign's canonical sampler. Without
+that feature the crate builds only its candidate registry, with
+`MeasurementPath::ALL` as the sole candidate list.
 
 ## F_7 wave permanent device evidence
 

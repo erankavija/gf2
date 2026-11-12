@@ -331,6 +331,9 @@ def issue_faults(
 ) -> list[str]:
     """An issue's references resolve from the repository root; its links must exist.
 
+    A link is a document entry's `path` and the `resolved_path` of each of its
+    non-external assets; git-ignored build output such as `target/doc` passes.
+
     `history` skips the evidence-name and invariant checks of its prose.
     """
     issue = json.loads(text)
@@ -342,6 +345,17 @@ def issue_faults(
         f"{path}:0: {document['path']}"
         for document in issue.get("documents", [])
         if document["path"] not in known
+    ]
+    # Every local link a document entry carries: its scanned assets, local,
+    # directory or missing; an external asset is a URL.
+    faults += [
+        f"{path}:0: {target}"
+        for document in issue.get("documents", [])
+        for asset in document.get("assets", [])
+        if asset.get("asset_type") != "external"
+        and (target := str(asset.get("resolved_path", "")).rstrip("/"))
+        and not TEMPLATE.search(target)
+        and target not in known
     ]
     return faults
 
@@ -583,7 +597,13 @@ def self_test() -> None:
         (root / ".jit/issues/a.json").write_text(json.dumps({
             "state": "done",
             "description": "first\ndev/gone/after-newline.md and [x](../issue-link.md) and `gone/issue.md`",
-            "documents": [{"path": "dev/gone-document.md"}],
+            "documents": [{"path": "dev/gone-document.md"}, {"path": "docs/a.md", "assets": [
+                {"asset_type": "local", "resolved_path": "docs/gone-asset.json"},
+                {"asset_type": "missing", "resolved_path": "dev/gone-missing.md"},
+                {"asset_type": "directory", "resolved_path": "docs/"},
+                {"asset_type": "local", "resolved_path": "dev/$template"},
+                {"asset_type": "external", "resolved_path": "https://example.invalid/x.pdf"},
+            ]}],
         }))
         (root / ".jit/archive-evidence/container").mkdir(parents=True)
         (root / ".jit/archive-evidence/container/c.json").write_text(json.dumps({
@@ -681,6 +701,7 @@ def self_test() -> None:
         git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", "b", "--no-verify")
         faults = check(root)
     assert any("bad-link.md" in f for f in faults), faults
+    assert not any(f.endswith((": docs", ": dev/$template", "x.pdf")) for f in faults), faults
     assert sum("host-local" in f for f in faults) == 5, faults
     assert {f for f in faults if f.startswith("docs/temp.md")} == {
         "docs/temp.md:1: host-local path", "docs/temp.md:2: host-local path"}, faults
@@ -689,7 +710,8 @@ def self_test() -> None:
     assert not any(f.startswith("docs/listed-") for f in faults), faults
     assert any("pkg/Cargo.toml" in f and "absent-crate" in f for f in faults), faults
     assert not any("pkg/Cargo.toml" in f and "docs" in f for f in faults), faults
-    for target in ("dev/gone/after-newline.md", "issue-link.md", "gone/issue.md", "dev/gone-document.md"):
+    for target in ("dev/gone/after-newline.md", "issue-link.md", "gone/issue.md", "dev/gone-document.md",
+                   "docs/gone-asset.json", "dev/gone-missing.md"):
         assert any(f.startswith(".jit/issues/a.json") and target in f for f in faults), (target, faults)
     assert any("missing/file.txt" in f for f in faults), faults
     assert any("scripts/absent.sh" in f for f in faults), faults
