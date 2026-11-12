@@ -181,7 +181,7 @@ The decoder decodes the mother code over all $n$ positions and has no notion
 of rate matching. Punctured, truncated and filler positions reach it as
 ordinary mother-code channel LLRs prepared by the rate-matching layer,
 `Nr5gRateMatchedCode::prepare_llrs` in
-[`nr_5g/mod.rs`](../../crates/gf2-coding/src/ldpc/nr_5g/mod.rs), for the
+[`crates/gf2-coding/src/ldpc/nr_5g/mod.rs`](../../crates/gf2-coding/src/ldpc/nr_5g/mod.rs), for the
 rate-matched codes of 3GPP TS 38.212 (`@/citation/ThreeGpp2017`):
 
 | Mother-code position | Channel LLR the decoder receives |
@@ -327,10 +327,10 @@ iteration count and flags of `LdpcDecoder` to a per-edge reference decoder for
 every algorithm and both early-termination settings.
 
 The unit test `test_zero_cap_results_depend_only_on_the_frame` in
-[`ldpc/core.rs`](../../crates/gf2-coding/src/ldpc/core.rs) asserts the result at
+[`crates/gf2-coding/src/ldpc/core.rs`](../../crates/gf2-coding/src/ldpc/core.rs) asserts the result at
 an iteration cap of zero against the frame's own channel LLRs and parity checks.
 
-The unit tests of [`ldpc/batch.rs`](../../crates/gf2-coding/src/ldpc/batch.rs)
+The unit tests of [`crates/gf2-coding/src/ldpc/batch.rs`](../../crates/gf2-coding/src/ldpc/batch.rs)
 assert the batch clauses for `LdpcBatchDecoder` on the lane route of each lane
 backend of the build and on the single-frame route:
 `frames_equal_the_single_frame_decoder_to_the_posterior_bit` holds each frame's
@@ -368,7 +368,7 @@ on each route and lane backend: a frame's BBFRAME, LDPC iteration count and flag
 single-frame codec's, for converging and non-converging frames.
 
 The unit tests of
-[`nr_5g/batch.rs`](../../crates/gf2-coding/src/ldpc/nr_5g/batch.rs) hold
+[`crates/gf2-coding/src/ldpc/nr_5g/batch.rs`](../../crates/gf2-coding/src/ldpc/nr_5g/batch.rs) hold
 `Nr5gRateMatchedBatchDecoder`, which prepares each rate-matched frame as above
 and decodes the batch through `LdpcBatchDecoder`, to
 `Nr5gRateMatchedDecoder::decode_iterative` frame by frame: the shared batch

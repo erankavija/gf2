@@ -7,8 +7,9 @@ links, Cargo path dependencies and Rust includes. A JSON, TOML or YAML file is
 also parsed: a string under a path-named member (`DATA_PATH_MEMBER`) shaped
 like a relative path must resolve from the repository root or the file's
 directory, be ignored by git, or be a template. A Markdown link or `../` path
-resolves from its own file, a `./` path from its own file or the root, and any
-other bare or inline file name by its path suffix. Host-local means a user's
+resolves from its own file, a `./` path from its own file or the root, an
+inline file name with directories from its own directory or one enclosing it,
+and a bare file name by its path suffix. Host-local means a user's
 home or a host mount; the toolchain's own home directories and device paths
 such as `/dev/null` are neither host-local nor repository paths.
 
@@ -20,15 +21,17 @@ string, must name a tracked file or be written at run time: a name under
 line before names a `target/` location, the statement that the run writes the
 file there, and a name passes that tracked code (`WRITER_SUFFIXES`) writes
 (`written_names`). In Markdown and issue prose the same holds for every
-backticked bare file name (`BARE_INLINE`), whatever its kind.
+backticked bare file name (`BARE_INLINE`), whatever its kind, and so it does
+in a JSON string under `dev/` or `experiments/` (`DATA_PROSE`), where a string
+that is one file name of a known kind counts as backticked.
 
 An invariant citation `@/inv/<id>` or `@/invariant/<id>` must name an
 invariant of `.jit/invariants.toml`.
 
 Every exception is an entry of `reference-exceptions.toml` beside this script,
 with its reason; `path` is a glob or a list of globs. An entry with `planned`
-excuses only paths that never existed: a path some commit deleted is a removed
-path, not a planned one. An entry with `history = "closed"` excuses nothing by
+excuses only paths that never existed: a path some commit deleted or moved
+away is a removed path, not a planned one. An entry with `history = "closed"` excuses nothing by
 itself; it lets a closed issue's prose name evidence and invariants the tree no
 longer holds. The code holds two limits of its own. A file over
 `MAX_TEXT_BYTES` (4 MiB) is not read, since no tracked text file approaches
@@ -83,6 +86,9 @@ FILE_EXTENSIONS = (
     "|npy|out|patch|pdf|png|py|rs|sage|sh|sql|stderr|stdout|svg|tar|tex|toml|tsv|txt|xml|yaml|yml|zst"
 )
 BARE_INLINE = re.compile(rf"`([\w+=-][\w.+=-]*\.(?:{FILE_EXTENSIONS}))`")
+# JSON strings under these roots carry prose and lists of file names.
+DATA_PROSE = re.compile(r"(?:dev|experiments)/.*\.json$")
+DATA_FILE_NAME = re.compile(rf"\.(?:{FILE_EXTENSIONS})$")
 INVARIANT = re.compile(r"@/(?:inv|invariant)/([\w-]+)")
 INVARIANTS = ".jit/invariants.toml"
 TARGET_DIR = re.compile(r"(?<![\w.-])target/")
@@ -129,6 +135,7 @@ def evidence_faults(
     written: frozenset[str],
     markdown: bool = False,
     base: str = "",
+    files: bool = False,
 ) -> list[str]:
     """Evidence-kind file names on `line` that name no tracked file.
 
@@ -136,10 +143,14 @@ def evidence_faults(
     `base` is the directory a `./` name resolves against. A name under `target/`
     is returned for the caller's ignore check. A bare name is excused when
     `line` or `before` names a `target/` location. `markdown` adds every
-    backticked bare file name and the backticked-only evidence kinds.
+    backticked bare file name and the backticked-only evidence kinds. `files`
+    reads `line` as a data string: the Markdown names, and the whole string
+    when it is one file name of a known kind (`DATA_FILE_NAME`).
     """
     tokens = [(token, EVIDENCE_NAME) for token in FILE_TOKEN.findall(line)]
-    if markdown:
+    if files and FILE_TOKEN.fullmatch(line.strip()):
+        tokens.append((line.strip(), DATA_FILE_NAME))
+    if markdown or files:
         tokens += [(token, None) for token in BARE_INLINE.findall(line)]
         tokens += [
             (token, INLINE_EVIDENCE_NAME)
@@ -258,8 +269,9 @@ def data_faults(
     base = str(Path(path).parent)
     lines = text.splitlines()
     faults = []
+    files = bool(DATA_PROSE.match(path))
     for number, member, value in members:
-        for name in evidence_faults(value, "", known, written, base=base):
+        for name in evidence_faults(value, "", known, written, base=base, files=files):
             line = number or next((i for i, text in enumerate(lines, 1) if name in text), 0)
             faults.append(f"{path}:{line}: {name}")
         if not DATA_PATH_MEMBER.search(member) or "/" not in value:
@@ -331,10 +343,22 @@ def _evidence_kind(name: str) -> bool:
 
 
 def _resolves(name: str, base: str, known: set[str]) -> bool:
-    """A `./` name resolves from `base` or the root; another by path suffix."""
+    """Whether a file name of prose resolves.
+
+    A `./` name resolves from `base` or the root. Another name with
+    directories resolves from `base` or a directory enclosing it, as a crate's
+    `src/lib.rs` or a skill's `references/x.md` does; a bare name resolves by
+    path suffix.
+    """
     if name.startswith("./"):
         name = name[2:]
         return name in known or "/".join(_normal(f"{base}/{name}")) in known
+    if "/" in name:
+        parts = _normal(base) if base else []
+        return any(
+            "/".join([*parts[:depth], *_normal(name)]) in known
+            for depth in range(len(parts), -1, -1)
+        )
     return name in known or any(path.endswith("/" + name) for path in known)
 
 
@@ -421,8 +445,8 @@ def _matches(path: str, entry: dict) -> bool:
 
 
 def removed_paths(root: Path) -> frozenset[str]:
-    """Paths any commit of any ref deleted, with their directories."""
-    deleted = git(root, "log", "--all", "--diff-filter=D", "--name-only", "--format=").split("\n")
+    """Paths any commit of any ref deleted or moved away, with their directories."""
+    deleted = git(root, "log", "--all", "--no-renames", "--diff-filter=D", "--name-only", "--format=").split("\n")
     return frozenset(resolvable_set([path for path in deleted if path]))
 
 
@@ -625,11 +649,21 @@ def self_test() -> None:
         )
         (root / "crates").mkdir()
         (root / "crates/removed.rs").write_text("")
+        (root / "crates/moved.rs").write_text("")
+        (root / "docs/sub/deep.md").write_text("`sub/local.md` from an enclosing directory\n")
+        (root / "notes/suffix.md").write_text("`sub/local.md` only by suffix\n")
+        (root / "dev").mkdir()
+        (root / "dev/plan.json").write_text(json.dumps({"touches": [
+            "absent_module.rs", "kept.sh", "a `gone.rs` mention", "prose about lib.rs here",
+        ]}))
+        (root / "data/plan.json").write_text(json.dumps({"touches": ["absent_outside.rs"]}))
         git(root, "add", ".")
         git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", "a", "--no-verify")
         git(root, "rm", "-q", "crates/removed.rs")
+        git(root, "mv", "crates/moved.rs", "crates/elsewhere.rs")
         (root / ".jit/issues/p.json").write_text(json.dumps({
-            "state": "ready", "description": "creates crates/planned.rs, restores crates/removed.rs",
+            "state": "ready",
+            "description": "creates crates/planned.rs, restores crates/removed.rs, edits crates/moved.rs",
         }))
         git(root, "add", ".")
         git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", "b", "--no-verify")
@@ -692,6 +726,13 @@ def self_test() -> None:
     assert bare == ["absent-name.rs", "notes/absent-note.txt", "table.csv", "fix.patch"], bare
     assert ".jit/issues/p.json:1: crates/removed.rs" in faults, faults
     assert not any("crates/planned.rs" in f for f in faults), faults
+    assert ".jit/issues/p.json:1: crates/moved.rs" in faults, faults
+    assert "notes/suffix.md:1: sub/local.md" in faults, faults
+    assert not any(f.startswith("docs/sub/deep.md") for f in faults), faults
+    assert [f for f in faults if f.startswith("dev/plan.json")] == [
+        "dev/plan.json:1: absent_module.rs", "dev/plan.json:1: gone.rs",
+    ], faults
+    assert not any("absent_outside.rs" in f for f in faults), faults
 
 
 def main() -> int:

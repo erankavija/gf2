@@ -15,6 +15,10 @@ forbidden_paths = [
   '^dev/studies/',
   '^experiments/[^/]+/results/',
   '(^|/)(execution|journal)[^/]*\.(log|jsonl|txt|csv|tsv)$',
+  # Execution streams, ledgers, run shards and pooled result records.
+  '\.jsonl$',
+  '(^|/)runs\.json$',
+  '(^|/)summary\.(csv|tsv)$',
   '^dev/(bench_results|benchmarks|simulation_results|archive)/',
   '\.asm\.txt$',
   # A TOML file under dev/active is a frozen run configuration unless it is
@@ -30,7 +34,7 @@ forbidden_paths = [
 # `workflow_documents`, where nothing pins a configuration, a member matching
 # `workflow_record_members` does too: which executable ran, its digest, or its
 # receipt. Elsewhere such a member is a configuration pin.
-record_documents = '^(benchmarks|crates|dev|experiments)/.*\.json$'
+record_documents = '.*\.json$'
 record_members = [
   '(ran|ended|fired|measured)_at',
   '(wall|cpu|run|elapsed)_(seconds|secs|ms|time)',
@@ -59,7 +63,7 @@ workflow_record_members = [
 # name what a run measures: elapsed time, processor time, rate, compiler
 # resource allocation, cycle counts and memory peaks. Sizes and counts that
 # design arithmetic derives, such as bytes per lane or code lines, are left out.
-markdown_documents = '^(benchmarks|crates|dev|experiments)/.*\.md$'
+markdown_documents = '.*\.md$'
 receipt_title = '\b(receipts?|run records?|results|measurements)\b'
 measurement_columns = [
   'time', 'times', 'wall(_\w+)?', 'wall[- ]clock', 'cpu(_\w+)?', 'runtime', 'elapsed', 'duration', 'latency',
@@ -70,7 +74,7 @@ measurement_columns = [
 
 # A CSV or TSV table under `table_documents` is a result table when a header
 # cell names one of `measurement_columns`.
-table_documents = '^(benchmarks|crates|dev|experiments)/.*\.(csv|tsv)$'
+table_documents = '.*\.(csv|tsv)$'
 # Published reference data of other authors is external conformance data under
 # `standards-vector-conformance`, not a measurement of this code; owner ruling
 # 2026-11-12.
@@ -115,6 +119,14 @@ reason = "synthetic dataset member the schema-3 verifier requires; carries place
 [[exception]]
 path = "experiments/permanent-statistics/tests/fixtures/analysis/*/runs.json"
 reason = "synthetic dataset member the schema-3 verifier requires; carries placeholder identity"
+
+[[exception]]
+path = "experiments/permanent-statistics/tests/fixtures/analysis/*/shards/*.jsonl"
+reason = "synthetic dataset member the schema-3 verifier requires; carries seeded counts"
+
+[[exception]]
+path = "experiments/permanent-statistics/tests/fixtures/analysis/*/summary.csv"
+reason = "synthetic dataset member the schema-3 verifier requires; pools the seeded shard counts"
 
 [[exception]]
 path = ".jit/events.jsonl"

@@ -113,7 +113,7 @@ Batch and region entry points dispatch separately:
   kernel saves.
 - `Gf2mWide` products all pass through one carry-less dispatch whose
   predicate is stated in the rustdoc of
-  [`gf2m/wide.rs`](../../crates/gf2-core/src/gf2m/wide.rs). Widths without
+  [`crates/gf2-core/src/gf2m/wide.rs`](../../crates/gf2-core/src/gf2m/wide.rs). Widths without
   their own kernel, and slices of any length through `clmul_slice`, split by
   Karatsuba down to the widest kernel the host has, or to single-word
   products on the portable lane. Each split halves the operand or cuts it at

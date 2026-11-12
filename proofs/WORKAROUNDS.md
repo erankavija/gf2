@@ -106,7 +106,7 @@ storage-domain product-sum override for generic `Fp<P>` is unaffected.
 `Gf2mField_<V>` holds `Arc<FieldParams>` and `Option<Vec<u16>>`, which keep
 `gf2m::field` opaque. The proof target for `mul_raw` (schoolbook GF(2^m)
 multiplication) is the monomorphized u64 free function `gf2m_mul_raw` in
-`gf2m/mul_raw.rs`.
+`crates/gf2-core/src/gf2m/mul_raw.rs`.
 
 **Key**: Charon's `--opaque gf2_core::gf2m` prevents exploring the module
 entirely, so `--include gf2_core::gf2m::mul_raw` within it has no effect.
@@ -163,7 +163,7 @@ auto-generated template (no hand-edits are needed: bipedal3 uses only `&&&`,
 The D2 sketch §1 states the V1 contract over `{add, sub, mul, div}`. The
 production code at `crates/gf2-algebra/src/packed/bipedal3.rs` exposes
 `{add, sub, mul, neg}` — the trait surface
-(`PackedField` in `packed/mod.rs`) has no `div` method, so there is no production
+(`PackedField` in `crates/gf2-algebra/src/packed/mod.rs`) has no `div` method, so there is no production
 function to verify against for `div`. Per the verification-work convention
 (sketch supersedes the JIT description, but production code supersedes both
 when the sketch names a function that does not exist), V1 proves `neg`

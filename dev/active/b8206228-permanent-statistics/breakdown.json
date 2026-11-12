@@ -160,7 +160,7 @@
         "footprint": {
           "creates": [
             "sampler.rs",
-            "golden_vectors.rs"
+            "sampler golden-vector tests"
           ],
           "touches": [
             "crates/gf2-stats/src/lib.rs",
@@ -187,7 +187,7 @@
     "depends_on": [
       "stats-sampler"
     ],
-    "description": "The campaign's working confidence interval: a Wilson score interval over a count out of $N$, validated against an independent computation of its own definition and well-formed at the campaign's largest sample size.\n\n## Background\n\nEvery published Monte Carlo estimate in this repository states its sample count and an interval. The only interval implemented in-tree today is a Wilson score interval in a research prototype (`stats.rs:38`); the production statistics crate has none. Wilson is the campaign's working interval at large counts, where it is accurate and short; the conservative small-count estimator is separate work behind this leaf on a dependency edge, in the same module.\n\n## Success Criteria\n\n- [hard] REQ-01: A Wilson score interval is returned for a count out of $N$ at a caller-supplied level, agreeing to within $10^{-12}$ with an independently computed reference on hand-checked cases including $Z = 0$ and $Z = N$.\n- [hard] REQ-02: The estimator returns a well-formed interval at the campaign's largest planned sample size, $N = 2 \\times 10^{7}$, with no overflow, no interval of negative width, and no bound outside $[0,1]$.\n- [hard] REQ-03: The entry point takes counts, not samples, so it is usable both online against a running accumulator and offline against a published dataset.\n\n## Notes\n\nScope is the Wilson estimator alone; the Clopper-Pearson estimator, the coverage demonstration, and the which-regime documentation follow in the dependent leaf.\n",
+    "description": "The campaign's working confidence interval: a Wilson score interval over a count out of $N$, validated against an independent computation of its own definition and well-formed at the campaign's largest sample size.\n\n## Background\n\nEvery published Monte Carlo estimate in this repository states its sample count and an interval. The only interval implemented in-tree today is a Wilson score interval in a research prototype; the production statistics crate has none. Wilson is the campaign's working interval at large counts, where it is accurate and short; the conservative small-count estimator is separate work behind this leaf on a dependency edge, in the same module.\n\n## Success Criteria\n\n- [hard] REQ-01: A Wilson score interval is returned for a count out of $N$ at a caller-supplied level, agreeing to within $10^{-12}$ with an independently computed reference on hand-checked cases including $Z = 0$ and $Z = N$.\n- [hard] REQ-02: The estimator returns a well-formed interval at the campaign's largest planned sample size, $N = 2 \\times 10^{7}$, with no overflow, no interval of negative width, and no bound outside $[0,1]$.\n- [hard] REQ-03: The entry point takes counts, not samples, so it is usable both online against a running accumulator and offline against a published dataset.\n\n## Notes\n\nScope is the Wilson estimator alone; the Clopper-Pearson estimator, the coverage demonstration, and the which-regime documentation follow in the dependent leaf.\n",
     "planning": {
       "outcome": "A Wilson score interval estimator checked against an independent computation of its own definition",
       "contract_refs": [],
@@ -282,7 +282,7 @@
         "worker_sized_reason": "Two exact tests with one result interface fits one focused cycle.",
         "footprint": {
           "creates": [
-            "exact_tests.rs"
+            "the exact-test module"
           ],
           "touches": [
             "crates/gf2-stats/src/lib.rs"
@@ -327,7 +327,7 @@
         "worker_sized_reason": "One accumulator type with its snapshot contract fits one focused cycle.",
         "footprint": {
           "creates": [
-            "accumulator.rs"
+            "the accumulator module"
           ],
           "touches": [
             "crates/gf2-stats/src/lib.rs"
@@ -557,8 +557,8 @@
         "worker_sized_reason": "One manifest-driven scheduler with its composite loop and deterministic emission, test-first over a known prototype shape, fits one focused cycle.",
         "footprint": {
           "creates": [
-            "schedule.rs",
-            "permanent_zero_fraction.rs"
+            "the campaign schedule module",
+            "the zero-fraction campaign driver"
           ],
           "touches": [
             "crates/gf2-sim/Cargo.toml",
@@ -607,11 +607,11 @@
         "worker_sized_reason": "Resume, determinism, and quarantine over an existing scheduler and a generic checkpoint mechanism fits one focused cycle.",
         "footprint": {
           "creates": [
-            "permanent_campaign_resume.rs"
+            "campaign resume tests"
           ],
           "touches": [
-            "schedule.rs",
-            "permanent_zero_fraction.rs"
+            "the campaign schedule module",
+            "the zero-fraction campaign driver"
           ]
         }
       }
@@ -653,10 +653,10 @@
         "worker_sized_reason": "One evaluation step wired into an existing loop fits one focused cycle.",
         "footprint": {
           "creates": [
-            "determinant.rs"
+            "the determinant evaluation step"
           ],
           "touches": [
-            "schedule.rs"
+            "the campaign schedule module"
           ]
         }
       }
@@ -695,7 +695,7 @@
         "worker_sized_reason": "One thread-pool evaluation loop over existing kernels with an input-order test fits one focused cycle.",
         "footprint": {
           "creates": [
-            "batch_parallel.rs"
+            "the parallel batch evaluation loop"
           ],
           "touches": [
             "mod.rs"
@@ -744,7 +744,7 @@
             "backend.rs"
           ],
           "touches": [
-            "schedule.rs"
+            "the campaign schedule module"
           ]
         }
       }
@@ -786,7 +786,7 @@
         "worker_sized_reason": "One accelerator execution path with its sizing and refusal tests fits one focused cycle.",
         "footprint": {
           "creates": [
-            "gpu_backend.rs"
+            "the GPU execution path"
           ],
           "touches": [
             "backend.rs",
@@ -828,7 +828,7 @@
         "worker_sized_reason": "One test suite over already-built execution paths fits one focused cycle.",
         "footprint": {
           "creates": [
-            "permanent_campaign_backends.rs"
+            "campaign backend tests"
           ]
         }
       }
@@ -872,7 +872,7 @@
         "worker_sized_reason": "One acceptance layer over existing exact tests fits one focused cycle.",
         "footprint": {
           "creates": [
-            "acceptance.rs"
+            "the acceptance layer"
           ],
           "touches": [
             "mod.rs"
@@ -913,7 +913,7 @@
         "worker_sized_reason": "One batched entry point over an existing arithmetic type fits one focused cycle.",
         "footprint": {
           "creates": [
-            "batched_bipedal3.rs"
+            "the batched bipedal3 entry point"
           ],
           "touches": [
             "crates/gf2-algebra/src/permanent/mod.rs",
@@ -969,7 +969,7 @@
   {
     "key": "avx2-narrative-sweep",
     "title": "Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection",
-    "description": "The prose outside the changed source files that the new $\\mathbb{F}_3$ permanent selection makes wrong: the scalar-versus-AVX2 example header, the benchmark group labels naming the SIMD path, and the crate-level status text.\n\n## Background\n\nChanging which kernel the public $\\mathbb{F}_3$ permanent entry point selects invalidates statements spread across the crate that no longer describe it. The scalar-versus-AVX2 example exists to demonstrate that AVX2 single-word is slower than scalar, and its header frames that as a curiosity rather than as the reason for the current selection. A benchmark group is labelled as the SIMD path in `benches/s1_n36_speedup.rs`, and after the selection changes that label names something the group no longer measures — a stale label inside a benchmark that feeds committed receipts is precisely the failure mode an earlier review cycle in this repository spent rounds correcting. The crate README and crate-level status prose describe the entry point's behaviour to readers who never open the dispatcher.\n\n`@/inv/single-source-prose` requires each of these to say one thing. They are gathered here rather than in the code change because they are a different file set with no code beside them to contradict, and because a benchmark label change wants to be reviewed against the benchmark's output rather than against the dispatcher.\n\n## Success Criteria\n\n- [hard] REQ-01: The scalar-versus-AVX2 example header describes the measured relationship as the basis of the current selection rather than as an unexplained anomaly, and the example still builds and runs.\n- [hard] REQ-02: Benchmark group labels in `s1_n36_speedup.rs` name the paths those groups actually measure after the selection change.\n- [hard] REQ-03: The crate README and crate-level status prose describing the $\\mathbb{F}_3$ permanent entry point agree with the selection now in place.\n- [hard] REQ-04: The module prose that described the AVX2 single-word kernel as a dispatch-coverage kernel awaiting a batched performance user is corrected wherever it survives outside the dispatcher's own files, including the generic Ryser module's framing and the accelerator module's naming of the processor equivalent.\n- [hard] REQ-05: A repository search for the superseded framing returns no live occurrence outside archived material, and the search performed is recorded so a reviewer can repeat it.\n\n## Notes\n\nArchived material under the development archive is history and is left as written; only live prose is swept.",
+    "description": "The prose outside the changed source files that the new $\\mathbb{F}_3$ permanent selection makes wrong: the scalar-versus-AVX2 example header, the benchmark group labels naming the SIMD path, and the crate-level status text.\n\n## Background\n\nChanging which kernel the public $\\mathbb{F}_3$ permanent entry point selects invalidates statements spread across the crate that no longer describe it. The scalar-versus-AVX2 example exists to demonstrate that AVX2 single-word is slower than scalar, and its header frames that as a curiosity rather than as the reason for the current selection. A benchmark group is labelled as the SIMD path in `experiments/permanent-benchmarks/benches/s1_n36_speedup.rs`, and after the selection changes that label names something the group no longer measures — a stale label inside a benchmark that feeds committed receipts is precisely the failure mode an earlier review cycle in this repository spent rounds correcting. The crate README and crate-level status prose describe the entry point's behaviour to readers who never open the dispatcher.\n\n`@/inv/single-source-prose` requires each of these to say one thing. They are gathered here rather than in the code change because they are a different file set with no code beside them to contradict, and because a benchmark label change wants to be reviewed against the benchmark's output rather than against the dispatcher.\n\n## Success Criteria\n\n- [hard] REQ-01: The scalar-versus-AVX2 example header describes the measured relationship as the basis of the current selection rather than as an unexplained anomaly, and the example still builds and runs.\n- [hard] REQ-02: Benchmark group labels in `s1_n36_speedup.rs` name the paths those groups actually measure after the selection change.\n- [hard] REQ-03: The crate README and crate-level status prose describing the $\\mathbb{F}_3$ permanent entry point agree with the selection now in place.\n- [hard] REQ-04: The module prose that described the AVX2 single-word kernel as a dispatch-coverage kernel awaiting a batched performance user is corrected wherever it survives outside the dispatcher's own files, including the generic Ryser module's framing and the accelerator module's naming of the processor equivalent.\n- [hard] REQ-05: A repository search for the superseded framing returns no live occurrence outside archived material, and the search performed is recorded so a reviewer can repeat it.\n\n## Notes\n\nArchived material under the development archive is history and is left as written; only live prose is swept.",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -1302,7 +1302,7 @@
         "worker_sized_reason": "One estimation sweep over an existing predicate fits one focused cycle.",
         "footprint": {
           "creates": [
-            "permanental_rank_rates.rs"
+            "the permanental-rank rate sweep"
           ],
           "touches": [
             "crates/gf2-algebra/Cargo.toml"
@@ -1549,7 +1549,7 @@
         "worker_sized_reason": "One pooling step with its completeness checks fits one focused cycle.",
         "footprint": {
           "creates": [
-            "finalize.rs",
+            "the finalization step",
             "permanent-zero-fraction/<campaign-id>/summary.csv",
             "permanent-zero-fraction/<campaign-id>/checksums.sha256"
           ],
@@ -1726,7 +1726,7 @@
         "worker_sized_reason": "One preregistered comparison over one finalized dataset fits one focused cycle.",
         "footprint": {
           "creates": [
-            "permanent_zero_fraction_model_fit.py",
+            "the model-fit script",
             "permanent-zero-fraction/<campaign-id>/model-fit.md"
           ]
         }
@@ -1812,7 +1812,7 @@
         "worker_sized_reason": "One design document over a settled predicate fits one focused cycle.",
         "footprint": {
           "creates": [
-            "rare-event-design.md"
+            "a rare-event design document"
           ]
         }
       }
@@ -1855,7 +1855,7 @@
         "worker_sized_reason": "One estimator with its coverage demonstration fits one focused cycle.",
         "footprint": {
           "creates": [
-            "rare_event.rs"
+            "the rare-event estimator"
           ],
           "touches": [
             "mod.rs"
