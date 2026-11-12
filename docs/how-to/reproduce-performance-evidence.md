@@ -4,6 +4,9 @@ The benchmark harness and its configuration define a performance comparison.
 Run the harness on the host being evaluated and keep its output below `target/`.
 The batched F₃ permanent harness compares scalar, direct AVX2, and batched AVX2
 kernels on deterministic fixtures; it requires an x86-64 CPU with AVX2.
+Every other harness, with its configuration and command, is listed in
+[Performance evidence](../reference/performance-evidence.md); the steps below
+show the sequence on this one.
 
 ## Build and check the harness
 

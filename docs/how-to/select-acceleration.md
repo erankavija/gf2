@@ -97,7 +97,7 @@ tuning::install(registry.from_json(&std::fs::read_to_string(profile_path)?)?)?;
 The `gf2-coding` section, `CodingTuning`, holds two selector families:
 `encode` for BCH batch encoding and `decode` for LDPC batch decoding
 ([Route LDPC batch decoding](#route-ldpc-batch-decoding)). With no section
-installed, single-message and batch BCH encoding take the cheapest family the
+installed, single-message and batch BCH encoding take the family the
 host's kernel bundle offers: the carry-less-multiply fold where
 `gf2_kernels_simd::bch_encode` detects PCLMULQDQ, the table remainder
 otherwise, each from the bounds where its step shape is whole (one 32-bit

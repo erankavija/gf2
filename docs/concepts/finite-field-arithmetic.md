@@ -108,9 +108,7 @@ Batch and region entry points dispatch separately:
   table lookup otherwise. Classical GEMM over a single-word representation
   (`u64`-backed `Gf2mElement` or `Gf2mWide<1, Cfg>`) copies its operands
   into bytes and runs the same blocked product; AXPY over those
-  representations makes one table-lookup pass over the elements, since
-  copying 8- or 16-byte elements into bytes and back costs more than the
-  kernel saves.
+  representations makes one table-lookup pass over the elements.
 - `Gf2mWide` products all pass through one carry-less dispatch whose
   predicate is stated in the rustdoc of
   [`crates/gf2-core/src/gf2m/wide.rs`](../../crates/gf2-core/src/gf2m/wide.rs). Widths without

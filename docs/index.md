@@ -17,7 +17,7 @@ Focused adoption tasks, placed per `@/inv/document-placement`.
 |---|---|
 | [Run and extend the Lean 4 proofs](how-to/formal-verification.md) | Build the proofs, regenerate the Charon/Aeneas extraction, and prove a property of an extracted function |
 | [Run a simulation campaign](how-to/run-simulation-campaigns.md) | Configure, run, stop and resume error-rate sweeps, and locate their output |
-| [Reproduce a performance claim](how-to/reproduce-performance-evidence.md) | Build a comparison's harness, run it in the benchmark window and compare its raw data with the recorded result |
+| [Reproduce a performance claim](how-to/reproduce-performance-evidence.md) | Build a comparison's harness, run it in the benchmark window and compute the comparison from its raw output |
 | [Select SIMD, GPU and parallel execution](how-to/select-acceleration.md) | Enable, check and tune the SIMD, HIP and rayon paths for `gf2-core` and `gf2-coding` workloads |
 
 ## Concepts

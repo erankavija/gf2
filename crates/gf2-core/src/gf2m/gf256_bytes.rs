@@ -3,8 +3,8 @@
 //!
 //! This module is the one exception to gf2-core's rule that only the kernel
 //! crates contain `unsafe`, by owner decision of 2026-11-10: the orphan rule
-//! keeps the field arithmetic of a one-byte element in gf2-core, and copying
-//! elements into bytes and back halved the generic API's throughput. It holds
+//! keeps the field arithmetic of a one-byte element in gf2-core, and the byte
+//! kernels take the element storage without a copy. It holds
 //! these two views and nothing else.
 #![allow(unsafe_code)]
 

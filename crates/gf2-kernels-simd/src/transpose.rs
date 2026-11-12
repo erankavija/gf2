@@ -18,7 +18,7 @@ pub type Transpose64x64Fn = fn(&[u64; 64], &mut [u64; 64]);
 /// One implementation of the 64×64 bit-block transpose contract.
 ///
 /// [`lane`] turns a variant into the callable kernel, and [`name`](Self::name)
-/// into the tag receipts and benchmark records report. [`detect`] publishes
+/// into the tag benchmark records carry. [`detect`] publishes
 /// the one [`PRODUCTION_PREFERENCE`] names first among those the host supports.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum TransposeLane {
@@ -46,7 +46,7 @@ impl TransposeLane {
         TransposeLane::Avx2Movemask,
     ];
 
-    /// The tag receipts, benchmark records and [`TransposeFns::name`] carry.
+    /// The tag that benchmark records and [`TransposeFns::name`] carry.
     #[must_use]
     pub const fn name(self) -> &'static str {
         match self {

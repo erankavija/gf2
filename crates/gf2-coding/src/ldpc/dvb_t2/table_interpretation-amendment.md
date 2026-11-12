@@ -11,7 +11,7 @@ Structure":
   $p_{m-1}$
 - "Each parity check involves exactly 2 parity bits (sparse)"
 
-Benchmark receipts pin the note by digest, so the note keeps its bytes and
+Benchmark records pin the note by digest, so the note keeps its bytes and
 this record carries the structure.
 
 ## Structure

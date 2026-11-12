@@ -16,7 +16,7 @@ pub enum ResidualShiftRoute {
 }
 
 impl ResidualShiftRoute {
-    /// The tag receipts and benchmark records carry.
+    /// The tag that benchmark records carry.
     #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
