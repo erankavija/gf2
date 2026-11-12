@@ -4,7 +4,7 @@ JIT issue `b293af5a`: GPU-accelerated high-N resample of the perm(A)-vs-det(A)
 uniformity experiment over GF(q) for q in {3, 5, 7}, on gfx1030.
 
 This stub **supersedes the noise-limited cells of `8e4e19a0`**: q=3 at
-n ∈ {24, 28, 32} (which `8e4e19a0` had to noise-exclude at N = 500/200/50)
+n ∈ {24, 28, 32} (which `8e4e19a0` had to noise-exclude)
 and the F_5 / F_7 sweeps (which `8e4e19a0` capped at n ≤ 14 for the
 single-word CPU permanent). The closed, signed-off `8e4e19a0` is *not*
 reopened; this is a follow-up that replaces its noise-excluded cells with

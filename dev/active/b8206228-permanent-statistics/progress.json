@@ -706,7 +706,7 @@
     },
     {
       "issue": "7a816262",
-      "reason": "The preregistered 12-process backend cohort has accelerator configurations without the required finite measurements, but the frozen selection rule does not define their eligibility: q3n26 had measured and signal-censored outcomes; q3n27 had measured and harness-censored outcomes; q5n21, q5n22, and q5n23 had harness-censored outcomes only.",
+      "reason": "The preregistered 12-process backend cohort has accelerator configurations without the required finite measurements, but the frozen selection rule does not define their eligibility: several accelerator cells had censored outcomes.",
       "status": "approved",
       "requested_at": "2026-08-29T10:50:02+03:00",
       "resolved_at": "2026-08-29T10:54:00+03:00",
@@ -861,7 +861,7 @@
       "id": "frozen-validation-phase-unexecuted",
       "surfaced_at": "2026-08-30",
       "issue": "02b8137c",
-      "finding": "The frozen protocol requires ten anchors, 1,024-matrix deterministic regeneration, 400,000 validation-purpose draws per anchor, a probability-ordering exact two-sided decision at 0.001, and no redraw. Issue 44534b2f instead commits a 4,096-draw Clopper-Pearson coverage test; the older study receipt has 400,000 draws only at n=3 for three fields. Neither is launch evidence for the complete frozen validation phase.",
+      "finding": "The frozen protocol requires ten anchors, 1,024-matrix deterministic regeneration, 400,000 validation-purpose draws per anchor, a probability-ordering exact two-sided decision at 0.001, and no redraw. Issue 44534b2f instead commits a 4,096-draw Clopper-Pearson coverage test. The older study covered only n=3. Neither is launch evidence for the complete frozen validation phase.",
       "disposition": "Created 02b8137c and wired ed494117, 1d0b3ec4, and 90a61cd4 behind it before any campaign draw. Do not launch from dry-schedule evidence alone."
     },
     {
@@ -991,7 +991,7 @@
     {
       "issue": "7a816262",
       "source": "session-17 premeasurement summary audit",
-      "finding": "A successful process exit does not imply a finite throughput measurement. Some candidate rows have scratch_outcome=censored and a NaN composite rate, including accelerator outcomes at q3n27, q5n21, q5n22, and q5n23. A q3n26 accelerator process was signal-censored.",
+      "finding": "A successful process exit does not imply a finite throughput measurement. Censored candidate rows carry no composite rate.",
       "disposition": "The committed summary labels all five affected configurations ranking_rule_required and makes no backend choice. The frozen protocol has no censor eligibility rule, so an owner decision is open."
     },
     {
