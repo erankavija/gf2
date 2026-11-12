@@ -10,31 +10,31 @@
         {
           "short_id": "c9cb0dd2",
           "title": "Match ISA-L and M4RIE on GF(2^8) region and matrix products",
-          "status": "dispatched",
+          "status": "rework 1 landed; code-review pending on the repo-root branch (F1)",
           "branch": "worktree-agent-c9cb0dd2"
         },
         {
           "short_id": "040bc2b8",
           "title": "Encode DVB-T2 BCH frames by word-wise remainder",
-          "status": "dispatched",
+          "status": "done",
           "branch": "worktree-agent-040bc2b8"
         },
         {
           "short_id": "259acf37",
           "title": "Layered quantized SIMD LDPC decoder",
-          "status": "reviewed PASS; landing",
+          "status": "code-review F1 (DVB-T2 flooding crossing) escalated to owner: needs an hours-long simulation",
           "branch": "worktree-agent-259acf37"
         },
         {
           "short_id": "069e3c33",
           "title": "Persist the message columns in the LDPC encoding directory cache",
-          "status": "dispatched",
+          "status": "done",
           "branch": "worktree-agent-069e3c33"
         },
         {
           "short_id": "8a8a3bc9",
           "title": "DVB-T2 BICM chain maps cells without the bit-to-cell demultiplexer",
-          "status": "dispatched",
+          "status": "done",
           "branch": "worktree-agent-8a8a3bc9"
         },
         {
@@ -46,17 +46,17 @@
         {
           "short_id": "befccab3",
           "title": "Match gf2x on long carry-less polynomial products",
-          "status": "code-review failed; rework dispatched or in hand"
+          "status": "code-review failed (F1 repo-root, F2 rustdoc); convention worker on jit-befccab3-review"
         },
         {
           "short_id": "de311215",
           "title": "Decode DVB-T2 LDPC frames on the QC route",
-          "status": "code-review failed; rework dispatched or in hand"
+          "status": "done"
         },
         {
           "short_id": "07a1813a",
           "title": "Add word-level fast path to polar_transform_into for stride>=64",
-          "status": "doc-review passed; code-review F1 answered by the REQ-01 amendment; rerun code-review and cargo-ci"
+          "status": "done"
         }
       ]
     }
@@ -65,9 +65,15 @@
     "9d1c580c"
   ],
   "escalations": [],
-  "rework_counts": {},
+  "rework_counts": {
+    "040bc2b8": 1,
+    "8a8a3bc9": 1,
+    "c9cb0dd2": 1
+  },
   "surfaced_pitfalls": [
-    "The window runner waits for a quiet host only before its first job; a single-core job queued after a multi-worker job starts in that job's load tail. Order single-core lines first or add a per-job quiet wait."
+    "The window runner waits for a quiet host only before its first job; a single-core job queued after a multi-worker job starts in that job's load tail. Order single-core lines first or add a per-job quiet wait.",
+    "docs/reference/performance-evidence.md commits measured ratios; whether it is a decision record under committed-evidence-budget needs an owner ruling.",
+    "Gate runs on the main checkout stall the other lead's merges; a fast-tier test timed out at 15 s under three concurrent worker builds. Run cargo-ci when worker builds are idle."
   ],
   "started_at": "2026-11-12T00:00:00Z",
   "decisions": [
