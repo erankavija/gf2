@@ -6,21 +6,16 @@ claim access to the article.
 
 ## Unpaywall query
 
-The raw response in
-[`unpaywall_10.1109_18.412683.json`](unpaywall_10.1109_18.412683.json)
-was retrieved on 2026-08-25 with:
+The Unpaywall record for the DOI, retrieved on 2026-08-25 with
 
 ```console
-curl -fL -o unpaywall_10.1109_18.412683.json \
-  'https://api.unpaywall.org/v2/10.1109/18.412683?email=vesa.kaskivuo@iki.fi'
+curl -fL 'https://api.unpaywall.org/v2/10.1109/18.412683?email=<contact-email>'
 ```
 
-The 1,051-byte response has SHA-256
-`0d434843622a46cadd19b8e82b3098756d719058bebbea064f510ce123ada7d1`.
-It reports `is_oa: false`, `oa_status: "closed"`,
-`has_repository_copy: false`, no best or first OA location, and empty
-`oa_locations` and `oa_locations_embargoed` arrays. These are the API's
-reported fields, not an inference that no copy can exist anywhere.
+reports `is_oa: false`, `oa_status: "closed"`, `has_repository_copy: false`,
+no best or first OA location, and empty `oa_locations` and
+`oa_locations_embargoed` arrays. These are the API's reported fields, not an
+inference that no copy can exist anywhere.
 
 ## ResearchGate lead
 

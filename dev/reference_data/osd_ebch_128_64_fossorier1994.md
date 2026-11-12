@@ -53,13 +53,10 @@ IEEE Trans. Inf. Theory 41(5):1379–1396, 1995, doi:`10.1109/18.412683` — is
 recorded as bibliographically related to the pinned dissertation but is not a
 source of any value in this dataset. **The page, figure, and series
 identifiers inside `Fossorier1995` are not verified.** The article is closed
-access, as recorded in the committed access evidence: the fresh 2026-08-25
-[Unpaywall response](/dev/reference_data/osd_ebch_128_64_fossorier1994_access_audit/unpaywall_10.1109_18.412683.json)
-reports `is_oa: false`, `oa_status: "closed"`,
-`has_repository_copy: false`, null best and first OA locations, and empty
-`oa_locations` and `oa_locations_embargoed` arrays. The
-[access-audit receipt](/dev/reference_data/osd_ebch_128_64_fossorier1994_access_audit/README.md)
-records the query, retrieval date, and response hash.
+access: its 2026-08-25 Unpaywall record reports `is_oa: false` and
+`oa_status: "closed"`. The
+[access audit](/dev/reference_data/osd_ebch_128_64_fossorier1994_access_audit/README.md)
+records the query and the reported fields.
 
 A ResearchGate lead advertising author-uploaded public full text is a
 title-collision false positive. Its download is the five-author 1999 IEICE
