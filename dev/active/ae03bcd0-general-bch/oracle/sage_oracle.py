@@ -6,7 +6,7 @@ row inside SageMath on *gf2's* field presentations and *gf2's* primitive n-th
 root of unity, and writes the generator polynomials, dimensions, defining sets
 and codewords SageMath derives.
 
-Run it as ``python3 sage_oracle.py <corpus.json> <output.json>`` with the
+Run it as ``python3 sage_oracle.py <corpus.json> <output.json> <host.json>`` with the
 SageMath library on the interpreter's path. The ``sage`` launcher of SageMath
 10.9 forwards no arguments to a script, so the interpreter is invoked directly
 and the SageMath version is read at run time from the library itself.
@@ -14,9 +14,10 @@ and the SageMath version is read at run time from the library itself.
 Oracle identity
 ---------------
 A version label does not name a build, so the fixture's ``oracle`` object
-carries ``sage.version.banner``, ``sage.version.version``, the interpreter's
-own version, and ``sys.executable``, the path of the interpreter that produced
-the fixture. ``run.sh`` hashes that executable into the receipt.
+carries ``sage.version.banner``, ``sage.version.version`` and the interpreter's
+own version. ``sys.executable``, the path of the interpreter that produced the
+fixture, is a fact of the host and goes to ``<host.json>`` instead; ``run.sh``
+hashes that executable into the receipt.
 
 Field transport
 ---------------
@@ -282,8 +283,8 @@ def build_row(row):
 
 
 def main():
-    if len(sys.argv) != 3:
-        raise SystemExit("usage: python3 sage_oracle.py <corpus.json> <output.json>")
+    if len(sys.argv) != 4:
+        raise SystemExit("usage: python3 sage_oracle.py <corpus.json> <output.json> <host.json>")
     corpus = json.load(open(sys.argv[1], encoding="utf-8"))
     fixture = {
         "oracle": {
@@ -291,7 +292,6 @@ def main():
             "version": sage.version.banner,
             "library_version": sage.version.version,
             "interpreter": sys.version.split()[0],
-            "interpreter_executable": sys.executable,
             "entry_point": "sage.coding.bch_code.BCHCode",
         },
         "seed": corpus["seed"],
@@ -299,6 +299,9 @@ def main():
     }
     with open(sys.argv[2], "w", encoding="utf-8") as handle:
         json.dump(fixture, handle, indent=2, sort_keys=False)
+        handle.write("\n")
+    with open(sys.argv[3], "w", encoding="utf-8") as handle:
+        json.dump({"interpreter_executable": sys.executable}, handle, indent=2)
         handle.write("\n")
 
 

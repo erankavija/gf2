@@ -4,10 +4,10 @@
 #
 # Stages, in order:
 #   1. build and run the corpus emitter, producing `corpus.json`;
-#   2. run the SageMath oracle over that corpus, producing `sage.json`;
-#   3. run the GAP/GUAVA oracle over that corpus, producing `gap.json` and,
-#      under `target/oracle/`, the installation directory of each package
-#      that loaded, which is a fact of the host and stays out of the fixture;
+#   2. run the SageMath oracle over that corpus, producing `sage.json` and
+#      `target/oracle/sage-host.json`;
+#   3. run the GAP/GUAVA oracle over that corpus, producing `gap.json` and
+#      `target/oracle/gap-host.json`;
 #   4. run the standards-vector case against the ETSI DVB-T2 verification
 #      streams, whose printed facts the receipt quotes;
 #   5. render `target/oracle/oracle-receipt.md` from what this run observed.
@@ -18,10 +18,12 @@
 # that the comparison did not run rather than a block count.
 #
 # Every figure in the receipt is read back from the artifacts this run wrote or
-# from the host at run time; nothing is hand-maintained. Re-running from the
-# recorded revision rewrites the corpus and the SageMath fixture byte for byte
-# and the GAP fixture byte for byte apart from what each bounded code-object
-# attempt observed of its own cost, which is a fact of the run.
+# from the host at run time; nothing is hand-maintained. A fixture holds only
+# what the corpus and the oracle builds determine. What a run observes of its
+# host -- the interpreter and package locations, and what each bounded
+# code-object attempt cost -- goes to the two `*-host.json` files beside the
+# receipt. Re-running from the recorded revision under the oracle builds the
+# fixtures name therefore rewrites all three fixtures byte for byte.
 #
 # `ORACLE_GAP_HEAP` sets the GAP heap the oracle runs under, and so the bound
 # every code-object attempt is made under; the receipt records the invocation
@@ -43,7 +45,8 @@ gap_script="dev/active/ae03bcd0-general-bch/oracle/gap_oracle.g"
 script_rel="dev/active/ae03bcd0-general-bch/oracle/run.sh"
 out_dir="target/oracle"
 receipt="$out_dir/oracle-receipt.md"
-packages="$out_dir/gap-packages.json"
+sage_host="$out_dir/sage-host.json"
+gap_host="$out_dir/gap-host.json"
 
 corpus="$fixtures/corpus.json"
 sage_out="$fixtures/sage.json"
@@ -65,8 +68,8 @@ fi
 emitter="./target/release/examples/bch_oracle_messages"
 build_cmd="./scripts/cargo-budget.sh cargo build --release -p gf2-coding --features test-support --example bch_oracle_messages"
 emit_cmd="$emitter $corpus"
-sage_cmd="python3 $sage_script $corpus $sage_out"
-gap_cmd="gap -q -A -T -o $gap_heap -c 'CORPUS:=\"$corpus\"; OUTPUT:=\"$gap_out\"; PACKAGES:=\"$packages\";' $gap_script"
+sage_cmd="python3 $sage_script $corpus $sage_out $sage_host"
+gap_cmd="gap -q -A -T -o $gap_heap -c 'CORPUS:=\"$corpus\"; OUTPUT:=\"$gap_out\"; HOST:=\"$gap_host\";' $gap_script"
 vectors_cmd="./scripts/cargo-budget.sh --test cargo nextest run -p gf2-coding \
 --features test-support --test bch_oracle_agreement --cargo-profile ci-test \
 --profile ci -E 'test($vectors_case)' --no-capture"
@@ -81,6 +84,7 @@ emit_start=$SECONDS
 eval "$emit_cmd"
 emit_seconds=$((SECONDS - emit_start))
 
+mkdir -p "$out_dir"
 echo "== SageMath =="
 sage_start=$SECONDS
 eval "$sage_cmd"
@@ -91,13 +95,12 @@ sage_seconds=$((SECONDS - sage_start))
 # the fixture's presence is what says the run produced a result.
 echo "== GAP with GUAVA =="
 gap_log="$out_dir/bch-oracle-gap.log"
-mkdir -p "$out_dir"
-rm -f "$gap_out" "$packages"
+rm -f "$gap_out" "$gap_host"
 gap_start=$SECONDS
 eval "$gap_cmd" 2>&1 | tee "$gap_log"
 gap_seconds=$((SECONDS - gap_start))
-if [ ! -f "$gap_out" ] || [ ! -f "$packages" ]; then
-  echo "the GAP oracle wrote no fixture or no package record; see $gap_log" >&2
+if [ ! -f "$gap_out" ] || [ ! -f "$gap_host" ]; then
+  echo "the GAP oracle wrote no fixture or no host record; see $gap_log" >&2
   exit 1
 fi
 
@@ -129,7 +132,7 @@ digest() {
 sage_version="$(field "$sage_out" version)"
 sage_library="$(field "$sage_out" library_version)"
 sage_interpreter="$(field "$sage_out" interpreter)"
-sage_exe="$(field "$sage_out" interpreter_executable)"
+sage_exe="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["interpreter_executable"])' "$sage_host")"
 sage_exe_real="$(readlink -f "$sage_exe")"
 
 gap_version="$(field "$gap_out" gap_version)"
@@ -141,7 +144,7 @@ gmp_version="$(field "$gap_out" gmp_version)"
 gap_heap_observed="$(field "$gap_out" heap)"
 guava_version="$(field "$gap_out" guava_version)"
 package_dir() {
-  python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])' "$packages" "$1"
+  python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["packages"][sys.argv[2]])' "$gap_host" "$1"
 }
 guava_path="$(package_dir guava)"
 sonata_version="$(field "$gap_out" sonata_version)"
@@ -213,20 +216,22 @@ rust_version="$(rustc --version)"
   echo "did not exceed it, and a rise from one row to the next says the later"
   echo "row's attempts cost at least that much."
   echo
-  python3 - "$gap_out" <<'ATTEMPTS'
+  python3 - "$gap_out" "$gap_host" <<'ATTEMPTS'
 import json, sys
 rows = json.load(open(sys.argv[1]))["rows"]
+costs = {cost["id"]: cost for cost in json.load(open(sys.argv[2]))["attempts"]}
 print("| Row | Code object built | `BCHCode` attempt CPU (s) "
       "| Mark after the `BCHCode` attempt (KiB) "
       "| Mark after both attempts (KiB) |")
 print("|---|---|---|---|---|")
 for row in rows:
+    cost = costs[row["id"]]
     print("| {} | {} | {:.1f} | {} | {} |".format(
         row["id"],
         "yes" if row["bchcode_built"] else "no",
-        row["bchcode_attempt_cpu_ms"] / 1000.0,
-        row["bchcode_attempt_peak_rss_kib"],
-        row["row_attempts_peak_rss_kib"],
+        cost["bchcode_attempt_cpu_ms"] / 1000.0,
+        cost["bchcode_attempt_peak_rss_kib"],
+        cost["row_attempts_peak_rss_kib"],
     ))
 ATTEMPTS
   echo

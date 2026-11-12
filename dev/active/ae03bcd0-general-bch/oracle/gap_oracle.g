@@ -26,7 +26,7 @@
 ##  Run it as
 ##      gap -q -A -T -o <heap> \
 ##          -c 'CORPUS:="<corpus.json>"; OUTPUT:="<output.json>";
-##              PACKAGES:="<packages.json>";' gap_oracle.g
+##              HOST:="<host.json>";' gap_oracle.g
 ##
 ##  Field transport
 ##  ---------------
@@ -68,7 +68,7 @@
 ##  build version, the build datetime, the architecture, the GMP version, the
 ##  heap of this invocation -- and the version of the GUAVA and SONATA
 ##  packages that actually loaded. Where those packages are installed is a
-##  fact of the host, so it goes to `PACKAGES` instead, taken from
+##  fact of the host, so it goes to `HOST` instead, taken from
 ##  `GAPInfo.PackagesLoaded`; `run.sh` hashes the executable and those
 ##  installations into the receipt.
 ##
@@ -80,8 +80,10 @@
 ##  therefore made through `CALL_WITH_CATCH` under `-T`: exceeding the heap
 ##  `-o` sets returns to the caller instead of ending the run. Whether a row
 ##  has a code object is thus an observation of this run, recorded per row as
-##  `bchcode_built` beside the heap the attempt ran under, its processor time,
-##  and the process's peak resident set size after it. `ORACLE_GAP_HEAP` in
+##  `bchcode_built` beside the heap the attempt ran under. What each attempt
+##  cost -- its processor time and the process's peak resident set size after
+##  it -- is a measurement of the run, so it goes to `HOST` beside the row's
+##  identifier, and `run.sh` tabulates it in the receipt. `ORACLE_GAP_HEAP` in
 ##  `run.sh` sets that heap and the receipt records the invocation.
 ##
 ##  Running the script without `-T` turns a heap exhaustion into a break loop
@@ -360,6 +362,11 @@ LeastRoot := function(poly, p, d)
 end;;
 
 #############################################################################
+##  What each row's bounded attempts cost, as JSON text in corpus order; `Main`
+##  writes it to `HOST`.
+ATTEMPT_COSTS := [];;
+
+#############################################################################
 ##  Rebuilds one corpus row and returns its oracle record as JSON text.
 
 BuildRow := function(row)
@@ -609,12 +616,6 @@ BuildRow := function(row)
         JsonBool(attempt[1]), ",\n"));
     Append(out, Concatenation("      \"bchcode_attempt_heap\": ",
         JsonQuote(GAPInfo.CommandLineOptions.o), ",\n"));
-    Append(out, Concatenation("      \"bchcode_attempt_cpu_ms\": ",
-        String(attemptCpu), ",\n"));
-    Append(out, Concatenation("      \"bchcode_attempt_peak_rss_kib\": ",
-        String(attemptPeak), ",\n"));
-    Append(out, Concatenation("      \"row_attempts_peak_rss_kib\": ",
-        String(rowPeak), ",\n"));
     if bchGenerator = fail then
         Append(out, "      \"bchcode_generator\": null,\n");
         Append(out, "      \"bchcode_generator_matches\": null,\n");
@@ -647,6 +648,11 @@ BuildRow := function(row)
     Append(out, Concatenation("      \"codewords_systematic\": ",
         JsonStrings(systematic), "\n"));
     Append(out, "    }");
+    Add(ATTEMPT_COSTS, Concatenation(
+        "    {\"id\": ", JsonQuote(row.id),
+        ", \"bchcode_attempt_cpu_ms\": ", String(attemptCpu),
+        ", \"bchcode_attempt_peak_rss_kib\": ", String(attemptPeak),
+        ", \"row_attempts_peak_rss_kib\": ", String(rowPeak), "}"));
     return out;
 end;;
 
@@ -687,10 +693,12 @@ Main := function()
     od;
     Append(out, "  ]\n}\n");
     FileString(OUTPUT, out);
-    FileString(PACKAGES, Concatenation(
-        "{\n  \"guava\": ", JsonQuote(GAPInfo.PackagesLoaded.guava[1]),
-        ",\n  \"sonata\": ", JsonQuote(GAPInfo.PackagesLoaded.sonata[1]),
-        "\n}\n"));
+    FileString(HOST, Concatenation(
+        "{\n  \"packages\": {\n    \"guava\": ",
+        JsonQuote(GAPInfo.PackagesLoaded.guava[1]),
+        ",\n    \"sonata\": ", JsonQuote(GAPInfo.PackagesLoaded.sonata[1]),
+        "\n  },\n  \"attempts\": [\n", JoinStringsWithSeparator(ATTEMPT_COSTS, ",\n"),
+        "\n  ]\n}\n"));
 end;;
 
 Main();
