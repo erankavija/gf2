@@ -206,7 +206,7 @@
           "short_id": "02b8137c",
           "title": "Execute frozen pre-draw validation anchors",
           "classification": "implementation",
-          "status": "in_progress: the owner-authorized two-segment continuation implementation merged at e0c3959a after independent rereview passed. It binds the exact 22-file producer-0 prefix, admits only the five missing anchors under one exact second producer, publishes the canonical schema-v2 receipt path, and preserves strict default producer mismatch and no-redraw behavior. Integrated cargo-ci passed 5,208 tests with zero failures. A clean pinned execution tree at fa8a9d9c passed cargo-ci with 5,210 tests and produced Rust 1.95 release+HIP validator d0d67480...; gf2-predraw-validation3.timer is active and waiting for 2026-09-01 02:00:30 EEST. No campaign-purpose draw is authorized."
+          "status": "in_progress: the owner-authorized two-segment continuation implementation merged at e0c3959a after independent rereview passed. It binds the exact 22-file producer-0 prefix, admits only the missing anchors under one exact second producer, publishes the canonical schema-v2 receipt path, and preserves strict default producer mismatch and no-redraw behavior. Integrated cargo-ci passed. A clean pinned execution tree at fa8a9d9c passed cargo-ci and produced Rust 1.95 release+HIP validator d0d67480...; gf2-predraw-validation3.timer is active and waiting for 2026-09-01 02:00:30 EEST. No campaign-purpose draw is authorized."
         },
         {
           "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
@@ -315,7 +315,7 @@
     {
       "short_id": "a2c0db52",
       "title": "Feasibility study table cells disagree with their own committed CSV",
-      "reason": "Found by the F_3 receipts (one cell) and this issue's recorded check (second cell); owner-approved scope amendment covered both plus the dependent receipts 11.1 correction.",
+      "reason": "Found in the F_3 receipts and again in this issue's recorded check; owner-approved scope amendment covered both plus the dependent receipts 11.1 correction.",
       "wave": "1 (interleaved)",
       "status": "done",
       "note": "Closed 2026-08-15: both cells fixed, recorded check committed, F_3 receipts 11.1 corrected; doc-review passed with persisted record at 71db423f."
@@ -334,7 +334,7 @@
       "reason": "Found by the F_5 receipts; rendering correction with recorded check.",
       "wave": "1 (interleaved)",
       "status": "done",
-      "note": "Closed 2026-08-15: R1 7a0af9ab daggered the two source cells; R2 0795a82a daggered every rendering incl. derived figures and widened the check document-wide; R3 c315fe2b (luna, rework count 2 = MAX, passed) verifies both stopping-rule minima: five-second half from the pinned harness source's loop-exit structure plus direct total_s>=5 proof, cap-path evidence total_s>=120 for reps<5 rows. total_s undercounts the stopping clock (12 conforming rows at 4.4-4.99 s), so a naive total_s>=5 test falsely flags conforming cells. doc-review passed R3 with persisted record at c315fe2b, 0 findings; lead six-tier review PASS."
+      "note": "Closed 2026-08-15: R1 7a0af9ab daggered the two source cells; R2 0795a82a daggered every rendering incl. derived figures and widened the check document-wide; R3 c315fe2b (luna, rework count 2 = MAX, passed) verifies both stopping-rule minima: five-second half from the pinned harness source's loop-exit structure plus direct total_s>=5 proof, cap-path evidence total_s>=120 for reps<5 rows. total_s undercounts the stopping clock (conforming rows near the stopping boundary), so a naive total_s>=5 test falsely flags conforming cells. doc-review passed R3 with persisted record at c315fe2b, 0 findings; lead six-tier review PASS."
     },
     {
       "short_id": "63d931a9",
@@ -367,7 +367,7 @@
     {
       "short_id": "ec22205e",
       "title": "Complete determinant marginal-cost coverage for campaign cells",
-      "reason": "The session-17 freeze audit proved that 7a816262 REQ-05 requires directly measured per-cell determinant marginal cost while the canonical receipt covers only 11 of the 63 enabled cells. The new leaf extends that receipt for the other 52 cells without treating interpolation as measurement.",
+      "reason": "The session-17 freeze audit proved that 7a816262 REQ-05 requires directly measured per-cell determinant marginal cost while the canonical receipt covers some of the 63 enabled cells. The new leaf extends that receipt for the remaining cells without treating interpolation as measurement.",
       "wave": 8,
       "status": "done"
     },
@@ -547,7 +547,7 @@
     },
     {
       "issue": "a2c0db52",
-      "reason": "The recorded check found a second feasibility-table cell (q=3, n=16, GPU M=256: published 30210, CSV 30209.4610) disagreeing with the committed artifact under the table's own integer-precision convention, contradicting the closed F_3 receipts' section 11.1 one-cell claim.",
+      "reason": "The recorded check found a feasibility-table cell (q=3, n=16, GPU M=256) whose published value disagreed with the CSV under the table's own integer-precision convention, contradicting the closed F_3 receipts' section 11.1 claim.",
       "status": "approved",
       "requested_at": "2026-08-15T09:05:00Z",
       "resolved_at": "2026-08-15T09:08:00Z",
@@ -623,7 +623,7 @@
       "status": "resolved",
       "requested_at": "2026-08-18T19:05:00+03:00",
       "resolved_at": "2026-08-18T19:06:00+03:00",
-      "decision": "Owner: lead fixes directly. The lead applied both fixes (if-guard in the snapshot body; supersession narrowed to grid-admission refusals identified by the harness log's admission message, with measurement failures final; plan MD restored to the no-replacement rule with the refusal carve-out; t2 extended with a measurement-failed receipt that must stay final) and re-verified 7/7 + 10/10 shell suites and shellcheck on the idle-GPU host that reproduced F1."
+      "decision": "Owner: lead fixes directly. The lead applied both fixes (if-guard in the snapshot body; supersession narrowed to grid-admission refusals identified by the harness log's admission message, with measurement failures final; plan MD restored to the no-replacement rule with the refusal carve-out; t2 extended with a measurement-failed receipt that must stay final) and re-verified the shell suites and shellcheck on the idle-GPU host that reproduced F1."
     },
     {
       "issue": "7a816262",
@@ -686,7 +686,7 @@
     },
     {
       "issue": "7a816262",
-      "reason": "Every gpu_hip premeasure position (359 terminal) carried scratch data_row_count_2: the frozen harness grid holds two gpu_hip specs per cell and the runner's --batch-size override precedes --only filtering, so each GPU process measures its cell twice while the collector required exactly one row.",
+      "reason": "Every gpu_hip premeasure position carried scratch data_row_count_2: the frozen harness grid holds two gpu_hip specs per cell and the runner's --batch-size override precedes --only filtering, so each GPU process measures its cell twice while the collector required exactly one row.",
       "status": "resolved",
       "requested_at": "2026-08-25T10:15:00Z",
       "resolution": "Owner 2026-08-25: (1) collector accepts dual-row gpu_hip scratch and selects the native-M grid slot (second data row) as the process measurement, first row preserved as unused replicate; (2) bounded lead-direct repair (main d7493bdc, pinned collector branch 8811d7b6, premeasure test t11); (3) re-arm tonight's bounded session, same root and run ID."
@@ -706,7 +706,7 @@
     },
     {
       "issue": "7a816262",
-      "reason": "The preregistered 12-process backend cohort has five accelerator configurations without 12 finite measurements, but the frozen selection rule does not define their eligibility: q3n26 has 11 measured plus one signal-censor; q3n27 has 5 measured plus 7 harness-censors; q5n21, q5n22, and q5n23 each have 0 measured plus 12 harness-censors.",
+      "reason": "The preregistered 12-process backend cohort has accelerator configurations without the required finite measurements, but the frozen selection rule does not define their eligibility: q3n26 had measured and signal-censored outcomes; q3n27 had measured and harness-censored outcomes; q5n21, q5n22, and q5n23 had harness-censored outcomes only.",
       "status": "approved",
       "requested_at": "2026-08-29T10:50:02+03:00",
       "resolved_at": "2026-08-29T10:54:00+03:00",
@@ -735,7 +735,7 @@
     },
     {
       "issue": "7a816262",
-      "reason": "Independent read-only audit returned VERDICT: FAIL after the freeze artifacts were committed. F1 (medium): the freeze record's validation section narrates the pre-commit worker tree as current state and commit 57c9633f falsified them; simulation_results is a permanent path so present-tense-prose (AGENTS.md:145) binds it; the :185-190 transcript no longer reproduces because observe_provenance overwrites git_revision with live HEAD. doc-review passed over this. F2 (medium): the freeze record is the sole record of REQ-04/05/07/08 construction but no committed artifact records its digest, so editing the per-cell level, K=63, the stream-index construction, or a determinant cost passes sha256sum -c, emission-check and verify_dataset unchanged; adding the freeze record to checksums.sha256 makes verify_dataset raise IntegrityFault::OutsideRawSet. Two LOW findings also recorded. Four LOW findings also recorded: F3 the freeze record sits outside the campaign README's closed layout table; F4 three phase-1 drafts remain linked asserting present-tense draft status with no supersession pointer (managed path, so present-tense-prose does not bind); F5 (pre-existing) README.md:253-254 claims an execution receipt quotes the sidecar SHA-256 while driver.rs:206 emits blake3 over a fresh re-serialization; F6 the protocol's required committed pre-draw execution receipt (protocol.md:3-6) is unallocated and unflagged.",
+      "reason": "Independent read-only audit returned VERDICT: FAIL after the freeze artifacts were committed. F1 (medium): the freeze record's validation section narrates the pre-commit worker tree as current state and commit 57c9633f falsified them; simulation_results is a permanent path so present-tense-prose (AGENTS.md:145) binds it; the :185-190 transcript no longer reproduces because observe_provenance overwrites git_revision with live HEAD. doc-review passed over this. F2 (medium): the freeze record is the sole record of REQ-04/05/07/08 construction but no committed artifact records its digest, so editing the per-cell level, K=63, the stream-index construction, or a determinant cost passes sha256sum -c, emission-check and verify_dataset unchanged; adding the freeze record to checksums.sha256 makes verify_dataset raise IntegrityFault::OutsideRawSet. Additional LOW findings were recorded. Other LOW findings were also recorded: F3 the freeze record sits outside the campaign README's closed layout table; F4 three phase-1 drafts remain linked asserting present-tense draft status with no supersession pointer (managed path, so present-tense-prose does not bind); F5 (pre-existing) README.md:253-254 claims an execution receipt quotes the sidecar SHA-256 while driver.rs:206 emits blake3 over a fresh re-serialization; F6 the protocol's required committed pre-draw execution receipt (protocol.md:3-6) is unallocated and unflagged.",
       "status": "approved",
       "requested_at": "2026-08-29T18:43:06+03:00",
       "lead_recommendation": "F1 is a bounded mechanical correction to the freeze record's validation section: rewrite the pre-commit narration as a post-commit record and re-transcribe the emission-check output that reproduces at HEAD. F2 needs an owner decision on where a non-raw frozen record's digest belongs, because checksums.sha256 structurally cannot hold it.",
@@ -788,12 +788,12 @@
     },
     {
       "issue": "02b8137c",
-      "reason": "The armed validation service ran and immutably published five passing terminals with producer binary 76c778f1..., then stopped when default serde_json parsing changed two q=5 probability floats by one ULP during post-publication self-verification. The bit-exact parser repair is merged and CI-clean, but the existing run-state truthfully binds the old producer while the remaining five anchors require the repaired producer. Reusing one producer identity for both segments, overwriting the journal, or redrawing a terminal would violate the immutable no-redraw and runtime-observed-provenance contracts.",
+      "reason": "The armed validation service ran and immutably published passing terminals with producer binary 76c778f1..., then stopped when default serde_json parsing changed q=5 probability floats during post-publication self-verification. The bit-exact parser repair is merged and CI-clean, but the existing run-state truthfully binds the old producer while the remaining anchors require the repaired producer. Reusing one producer identity for both segments, overwriting the journal, or redrawing a terminal would violate the immutable no-redraw and runtime-observed-provenance contracts.",
       "status": "approved",
       "requested_at": "2026-08-31T18:39:38+03:00",
       "options": [
-        "Authorize a versioned provenance-preserving continuation: retain the original run-state and five terminal digests, add an immutable migration/continuation record binding the exact old and repaired producer identities plus the boundary, run only the five missing anchors, and make the final receipt report both producer segments.",
-        "Authorize a newly preregistered validation cohort with a new journal root while preserving this failed attempt as falsification evidence; this changes the current no-redraw/cohort contract and repeats five already completed anchors.",
+        "Authorize a versioned provenance-preserving continuation: retain the original run-state and terminal digests, add an immutable migration/continuation record binding the exact old and repaired producer identities plus the boundary, run only the missing anchors, and make the final receipt report both producer segments.",
+        "Authorize a newly preregistered validation cohort with a new journal root while preserving this failed attempt as falsification evidence; this changes the current no-redraw/cohort contract and repeats already completed anchors.",
         "Stop execution and leave the validation issue, campaign arms, and epic blocked with the partial journal preserved."
       ],
       "lead_recommendation": "Authorize the versioned provenance-preserving continuation. It preserves every terminal, performs no redraw, leaves the preregistered scientific addresses and decisions unchanged, and makes the unavoidable producer transition explicit instead of disguising it.",
@@ -852,7 +852,7 @@
     "73317b2e_note": "Rework-2 is the execution-lead maximum. Rework-1 removed the public path-based sidecar mutator and completed coordinator-owned projection. Rework-2 closes the bounded interpretation and prose findings, exact-cell refreeze, and pre-gate canonical fixture/lint defects. Independent review and refreeze audit passed, followed by the complete raw cargo-ci contract on the clean branch.",
     "8ec10dde": 2,
     "02b8137c": 2,
-    "02b8137c_note": "Rework-1 fixed the reproduced q=5 one-ULP JSON publication drift with serde_json float_roundtrip and adoption/tamper regressions. Rework-2 closed the continuation review's four findings: canonical schema-v2 cutover, exact-SHA separation of historical evidence decoding from temporary execution admission, a fresh schema-v2 runtime-mismatch no-mutation regression, and on-disk rehash tests for both producer states and both terminal segments. Independent rereview passed and integrated cargo-ci passed 5,208 tests with zero failures. MAX is reached; any further readiness defect escalates.",
+    "02b8137c_note": "Rework-1 fixed the reproduced q=5 one-ULP JSON publication drift with serde_json float_roundtrip and adoption/tamper regressions. Rework-2 closed the continuation review's four findings: canonical schema-v2 cutover, exact-SHA separation of historical evidence decoding from temporary execution admission, a fresh schema-v2 runtime-mismatch no-mutation regression, and on-disk rehash tests for both producer states and both terminal segments. Independent rereview passed and integrated cargo-ci passed. MAX is reached; any further readiness defect escalates.",
     "daef2dc3": 5,
     "daef2dc3_note": "code-review failed at 46bdf2114, 0971a9ba6, c709110e5, ac89f1a07 and 87df671e5; stopped for the owner"
   },
@@ -868,14 +868,14 @@
       "id": "validation-json-float-roundtrip",
       "surfaced_at": "2026-08-31",
       "issue": "02b8137c",
-      "finding": "The validation publisher hardlinks immutable terminal bytes and then deserializes them for equality verification. With serde_json 1.0.151 default features, the q=5,n=1 terminal's log_p_value and p_value deserialize one ULP away from the in-memory values, so a valid terminal is rejected after publication. An exact Rust probe reproduced both bit shifts; this is not a racing writer or timer-permission failure.",
+      "finding": "The validation publisher hardlinks immutable terminal bytes and then deserializes them for equality verification. With serde_json 1.0.151 default features, the q=5,n=1 terminal's log_p_value and p_value deserialize differently from the in-memory values, so a valid terminal is rejected after publication. An exact Rust probe reproduced the bit-level discrepancy; this is not a racing writer or timer-permission failure.",
       "disposition": "Enabled serde_json float_roundtrip for gf2-sim, added bit-exact q=5 publication, committed-terminal adoption, and tamper-rejection regressions, and passed integrated cargo-ci at merge 2e760af7. The existing old-producer journal still requires an owner-approved provenance-preserving continuation before execution resumes."
     },
     "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
-    "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
+    "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
     "The 6602d181 documentation gate reported a low-severity pre-existing stale design-reference path in crates/gf2-sim/src/lib.rs; retain it for the epic-level stale-content sweep because it is outside the generic checkpoint leaf.",
     "A cold optimized rebuild after SIMD source changes can exceed the cargo-ci gate's fixed 300-second wrapper timeout even when the identical CI script is healthy. Run the identical script once to complete cold artefacts, then rerun the unchanged registered gate; never substitute the warm-up result for gate evidence.",
-    "The more common cause of that same 300-second signature is not a cold rebuild: scripts/cargo-ci.sh re-execs itself under a blocking host-wide flock (XDG_RUNTIME_DIR/gf2-cargo-ci.lock), so a gate run started while any other cargo-ci is in flight spends its entire wrapper budget queued and is recorded as status error with no output and no check lines. Distinguish the two by the run record: a lock wait produces an empty stdout at almost exactly 300000ms. Workers in separate worktrees share this lock, so drain the queue before evaluating the gate rather than warming artefacts.",
+    "The more common cause of that same 300-second signature is not a cold rebuild: scripts/cargo-ci.sh re-execs itself under a blocking host-wide flock (XDG_RUNTIME_DIR/gf2-cargo-ci.lock), so a gate run started while any other cargo-ci is in flight spends its entire wrapper budget queued and is recorded as status error with no output and no check lines. Distinguish the two by the run record: a lock wait produces an empty stdout at the wrapper timeout. Workers in separate worktrees share this lock, so drain the queue before evaluating the gate rather than warming artefacts.",
     "Run cargo-ci before code-review for code-bearing leaves: the reviewer treats pending executable evidence as a procedural failure even when the implementation diff is otherwise reviewable.",
     "The documentation gate will not tolerate a planned temporary live-prose contradiction across a dependency edge: the dispatcher leaf must repair blocking crate README, benchmark-label, and example-header fallout before the broader downstream narrative sweep can become eligible.",
     "breakdown.json in the epic's artefact directory copies the issue descriptions whose authoritative source is the .jit/ issue store, and reviewers read it as live prose: each entry's background paragraph states its pre-change condition, so it reads as false the moment that leaf lands. Five review rounds were burned on it. Every justification written for excluding it — frozen, historical, faithful to the store, snapshotted at a revision — became the next round's target, because each was a checkable claim the reviewer could and did falsify. Settled only when the owner recorded the exclusion as a decision in the issue description itself, explicitly not contingent on any property of the file. The lesson generalises: an exclusion defended by an assertion about the excluded thing invites verification of that assertion; an exclusion recorded as a decision does not. Do not edit the manifest and do not resynchronise it.",
@@ -897,7 +897,7 @@
     "RESOLVED 2026-08-14 (de5f7414): equivalence counts are now budgeted per (q,n) cell against the summed committed probe costs of that cell's measured CPU backends (240 s per-cell budget; only q=5,n=28 halves to 2). The general lesson stands: never derive a per-cell budget from one field's fastest backend; sum the participating backends' measured costs.",
     "The runner's smoke outputs land under each campaign study's smoke/ directory; a new smoke run supersedes the smoke evidence linked on closed 2ddf2f4b — git rm the superseded evidence and re-point the jit doc links in the same commit.",
     "The Ryser work-model projection is conservative (lands low) only on fixed-batch GPU chains; on probe-calibrated prototype chains it lands HIGH at large orders because batch size moves sharply between adjacent orders. Never treat a censored prototype cell's projection as a lower bound.",
-    "Harness defects surfaced by the F_3 receipts and filed under the tech-debt umbrella 86b9c719: 3ea21d74 (grid CSV emits unquoted note columns; 25 malformed rows per field-grid) and 79c5ace7 (host_submission_s carries two semantics across backend rows). Receipt tooling for F_5/F_7 must reuse the seed_root-anchored CSV split and the device-clock launch column, as the F_3 analysis does.",
+    "Harness defects surfaced by the F_3 receipts and filed under the tech-debt umbrella 86b9c719: 3ea21d74 (grid CSV emits unquoted note columns; malformed rows per field-grid) and 79c5ace7 (host_submission_s carries two semantics across backend rows). Receipt tooling for F_5/F_7 must reuse the seed_root-anchored CSV split and the device-clock launch column, as the F_3 analysis does.",
     "Lead and worker sharing one checkout share one git index: the lead's `git add <paths> && git commit` commits ANYTHING the worker has staged, burying the worker's change in the lead's commit (happened to the 047b62ed receipts alignment; repaired by splitting unpushed HEAD, commits 2a5cda47 + 62c061c7). Before any lead commit while a worker is active on the same checkout, run `git diff --cached --stat` and abort if staged paths are not the lead's own; better, never run lead commits while a same-checkout worker is mid-task.",
     {
       "issue": "91605d4d",
@@ -913,7 +913,7 @@
       "id": "premeasure-v1-grid-mismatch",
       "surfaced_at": "2026-08-18",
       "issue": "7a816262",
-      "summary": "premeasure-plan-v1 nominates 60 gap cells over n=4..27 but the permanent_sampling_feas grid is fixed at NS=[12,16,20,24,28]; 51/60 cells cannot be selected by --only. The 5/5 shell tests and validation.md did not exercise the real harness grid, so the mismatch survived to the overnight run.",
+      "summary": "premeasure-plan-v1 nominates 60 gap cells over n=4..27 but the permanent_sampling_feas grid is fixed at NS=[12,16,20,24,28]; 51/60 cells cannot be selected by --only. The shell tests and validation.md did not exercise the real harness grid, so the mismatch survived to the overnight run.",
       "status": "resolved: owner chose the opt-in orders flag 2026-08-18; the admission recovery landed at 03db1bbb with plan-vs-real-grid validation, and the fresh 2026-08-24 prepare admitted the complete 1,440-process plan under one pinned cohort binary"
     },
     {
@@ -952,7 +952,7 @@
       "issue": "7a816262",
       "source": "2026-08-24 host-crash recovery",
       "finding": "The transient target/permanent-campaign tree and premeasure-v1 process receipts are absent after the host crash. No durable artifact proves that the re-armed 2026-08-19 run completed, so none of its intended measurements can be credited.",
-      "disposition": "Resolved operationally by a fresh prepare at revision 1350d5b4 into <local path> The first session persisted 539 completed receipts and one valid signal-censored receipt; 900 positions remain. Resume and collector timers are armed for 2026-08-25, and all evidence stays outside target."
+      "disposition": "Resolved operationally by a fresh prepare at revision 1350d5b4 into <local path> The first session persisted completed and signal-censored receipts; positions remain. Resume and collector timers are armed for 2026-08-25, and all evidence stays outside target."
     },
     {
       "issue": "53d8e438",
@@ -975,7 +975,7 @@
     {
       "issue": "7a816262",
       "source": "session-16 collector rerun",
-      "finding": "Current main's collector cannot read the premeasure-v1 cohort: 679cf170 renamed session provenance keys (source_revision -> repository_revision and related), so a main-side premeasure-collect marks all 1008 terminal positions session_repository_revision_count_or_value invalid. Collect this cohort only from the pinned worktree branch worktree-agent-389aa4de (8811d7b6). A main collect run regenerates the ledger wrongly but is repaired by re-running the pinned collector; receipts are untouched."
+      "finding": "Current main's collector cannot read the premeasure-v1 cohort: 679cf170 renamed session provenance keys (source_revision -> repository_revision and related), so a main-side premeasure-collect marks terminal positions session_repository_revision_count_or_value invalid. Collect this cohort only from the pinned worktree branch worktree-agent-389aa4de (8811d7b6). A main collect run regenerates the ledger wrongly but is repaired by re-running the pinned collector; receipts are untouched."
     },
     {
       "issue": "b8206228",
@@ -986,18 +986,18 @@
       "issue": "7a816262",
       "source": "session-17 service and durable-root reconciliation",
       "finding": "The 2026-08-26 collector unit failed with status 200/CHDIR because its old worktree path had vanished, even though the overnight resume session completed every remaining preregistered position.",
-      "disposition": "Recovered without touching receipts: ran premeasure-collect from a temporary worktree at pinned commit 8811d7b6, obtained 1,440 valid terminal ledger rows, 1,439 candidate rows, zero invalid rows, and removed the temporary worktree. The final evidence is committed at 5e2799f7."
+      "disposition": "Recovered without touching receipts: ran premeasure-collect from a temporary worktree at pinned commit 8811d7b6, obtained valid terminal ledger rows and candidate rows, with no invalid rows, and removed the temporary worktree. The final evidence is committed at 5e2799f7."
     },
     {
       "issue": "7a816262",
       "source": "session-17 premeasurement summary audit",
-      "finding": "A successful process exit does not imply a finite throughput measurement. Forty-three candidate rows have scratch_outcome=censored and a NaN composite rate: seven at q3n27 accelerator and twelve each at q5n21, q5n22, and q5n23 accelerator. Position 539 adds one signal-censored q3n26 accelerator process.",
+      "finding": "A successful process exit does not imply a finite throughput measurement. Some candidate rows have scratch_outcome=censored and a NaN composite rate, including accelerator outcomes at q3n27, q5n21, q5n22, and q5n23. A q3n26 accelerator process was signal-censored.",
       "disposition": "The committed summary labels all five affected configurations ranking_rule_required and makes no backend choice. The frozen protocol has no censor eligibility rule, so an owner decision is open."
     },
     {
       "issue": "7a816262/ec22205e",
       "source": "session-17 freeze evidence audit",
-      "finding": "The canonical determinant-cost receipt directly measures 11 representative cells, while the freeze enables the determinant companion on all 63 cells and requires measured marginal cost per enabled cell.",
+      "finding": "The canonical determinant-cost receipt directly measures representative cells, while the freeze enables the determinant companion on all 63 cells and requires measured marginal cost per enabled cell.",
       "disposition": "Created and wired prerequisite ec22205e for a preregistered extension covering the 52 omitted cells; commit 2d6d9648. Interpolation is not accepted as measurement."
     },
     "ec22205e | research-review F4 (medium, advisory, PASS verdict): the v5 determinant-cost runner suppresses untracked files while Cargo.lock is gitignored and absent from the producing revision, and the receipt records rustc and cargo_profile but not the Cargo version or build argv, so the measured binary is identified by hash yet not reconstructible. The reviewer applied its convergence-across-rounds policy and did not block. Not an ec22205e REQ-03 violation (that criterion's 'compiler and build identity' is supplied by rustc, cargo_profile and binary_sha256). Reconcile before the epic holistic-review gate; note that CampaignManifest.provenance already carries deps_source_revision and deps_source_dirty, so the campaign's own reproducibility path does not inherit the gap.",
@@ -1007,7 +1007,7 @@
     "7a816262 | REQ-06 tamper-detection does not reach the freeze record, which is the sole record of REQ-04, REQ-05, REQ-07 and REQ-08 construction. checksums.sha256 covers manifest.json alone, and adding the freeze record to it raises IntegrityFault::OutsideRawSet in verify_dataset (provenance.rs:1096). Needs an owner decision before the campaign is treated as immutably frozen.",
     "7a816262 | Protocol obligation possibly unmet and outside REQ-01..08: protocol.md:3-6 requires a committed pre-draw execution receipt recording the manifest's repository-relative path, content SHA-256, and root-manifest identity. The freeze record supplies all three bindings but never claims the role, and no artifact is named as that receipt. Resolve before the first campaign draw.",
     "Pre-existing, epic-wide: README.md:253-254 claims an execution receipt quotes the sidecar SHA-256, but driver.rs:206 emits blake3 over a fresh serde_json re-serialization, not SHA-256 over on-disk bytes. Two unrelated values with no way to tell which artifact is wrong.",
-    "7a816262 | research-review tier-2 F2 (advisory): the gpu_hip native-M projection rule was established after 359 processes had emitted dual rows; mitigated by the value-independent slot rule and deviation record. Standing rule for future cohorts: fix the selected grid slot before timing and retain a committed checksum inventory for every raw row.",
+    "7a816262 | research-review tier-2 F2 (advisory): the gpu_hip native-M projection rule was established after processes had emitted dual rows; mitigated by the value-independent slot rule and deviation record. Standing rule for future cohorts: fix the selected grid slot before timing and retain a committed checksum inventory for every raw row.",
     {
       "id": "env-rs-sibling-path-dep-uncovered",
       "issue": "86185f88",

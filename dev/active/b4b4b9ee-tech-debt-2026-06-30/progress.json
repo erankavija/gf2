@@ -289,7 +289,7 @@
     {
      "id": "174295c9-674a-426a-90ce-96f34eee2bf1",
      "short_id": "174295c9",
-     "title": "Flaky: symlinked-writer-ancestor coordinator test failed its timing assertion once in a merged-tree CI run",
+     "title": "Flaky: symlinked-writer-ancestor coordinator test failed its timing assertion in a merged-tree CI run",
      "classification": "implementation",
      "priority": "normal",
      "status": "pending"
@@ -297,7 +297,7 @@
     {
      "id": "f21b25ac-eb3a-4255-817e-c24f8dbf1f19",
      "short_id": "f21b25ac",
-     "title": "Flaky: two GPU tests and one allocation-count test failed once under load",
+     "title": "Flaky: GPU and allocation-count tests failed under load",
      "classification": "implementation",
      "priority": "normal",
      "status": "pending"
