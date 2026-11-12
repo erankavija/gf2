@@ -306,7 +306,7 @@ arXiv:2206.09572v2 (22 Dec 2022), retrieved 2026-08-24, SHA-256
 reference [6] is `Fossorier1995`.
 
 The committed
-[`yue2022_fig1_receipt.json`](/dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/yue2022_fig1_receipt.json)
+[`yue2022_fig1_digitization.json`](/dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/yue2022_fig1_digitization.json)
 pins those source bytes and records the page, figure, panel, series, all six
 manual reads, their precision, and the near-ML reference comparison used
 below. Each read records `source_sample_count` and

@@ -71,9 +71,20 @@ measurement_columns = [
 # A CSV or TSV table under `table_documents` is a result table when a header
 # cell names one of `measurement_columns`.
 table_documents = '^(benchmarks|crates|dev|experiments)/.*\.(csv|tsv)$'
+# Published reference data of other authors is external conformance data under
+# `standards-vector-conformance`, not a measurement of this code; owner ruling
+# 2026-11-12.
 [[exception]]
 path = "dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/*"
-reason = "digitization of published figures, not a measurement of this code"
+reason = "digitization of published figures: external conformance data; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/reference_data/*.csv"
+reason = "curves transcribed or digitized from published figures: external conformance data; owner ruling 2026-11-12"
+
+[[exception]]
+path = "experiments/permanent-statistics/data/scheinerman2024-*.csv"
+reason = "published target values of Scheinerman 2024: external conformance data; owner ruling 2026-11-12"
 
 [[exception]]
 path = "experiments/permanent-statistics/tests/fixtures/analysis/*/execution.jsonl"
