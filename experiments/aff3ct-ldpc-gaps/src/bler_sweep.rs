@@ -1,7 +1,6 @@
 //! Slice and point logic of the LDPC BLER sweep: seeded all-zero-codeword
 //! frames from [`AwgnLlrSource`], decoded per slice through one
-//! [`BatchSoftDecoder`]. Compiled under `cfg(test)` or the `test-support`
-//! feature with [`testutil`](crate::testutil).
+//! [`BatchSoftDecoder`].
 
 use std::num::NonZeroUsize;
 
@@ -12,7 +11,7 @@ use gf2_coding::ldpc::{DecodedWord, DecoderAlgorithm, DecoderConfig, LdpcBatchDe
 use gf2_coding::traits::{BatchSoftDecoder, DecodeOutcome};
 use gf2_coding::{LdpcCode, Llr};
 
-use crate::testutil::AwgnLlrSource;
+use gf2_sim::testutil::AwgnLlrSource;
 
 /// Normalization factor of the min-sum decoder of the sweep.
 pub const NMS_SCALE: f32 = 0.75;

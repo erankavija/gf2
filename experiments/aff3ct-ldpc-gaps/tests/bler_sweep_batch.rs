@@ -1,10 +1,10 @@
 //! Frame error counts of the BLER sweep equal those of an independent
 //! per-frame `decode_iterative` loop, for one worker and for the default pool.
 
+use aff3ct_ldpc_gaps::bler_sweep::{run_point, NMS_SCALE, SLICE_FRAMES};
 use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcDecoder, QuasiCyclicLdpc};
 use gf2_coding::traits::IterativeSoftDecoder;
 use gf2_coding::LdpcCode;
-use gf2_sim::bler_sweep::{run_point, NMS_SCALE, SLICE_FRAMES};
 use gf2_sim::testutil::AwgnLlrSource;
 
 const MAX_ITER: usize = 20;

@@ -500,7 +500,6 @@ mod worker_context {
     use gf2_coding::Llr;
     use gf2_core::BitVec;
     use gf2_sim::batch::LlrBatch;
-    use gf2_sim::bler_sweep::slice_errors;
     use gf2_sim::stage::Stage;
     use gf2_sim::stages::batch_decode::{BatchDecode, BatchDecodeScratch};
 
@@ -547,9 +546,8 @@ mod worker_context {
     }
 
     #[test]
-    fn stage_and_sweep_pass_execution_workers_when_decoders_are_reused() {
+    fn stage_passes_execution_workers_when_decoders_are_reused() {
         let stage_calls = Arc::new(Mutex::new(Vec::new()));
-        let sweep_calls = Arc::new(Mutex::new(Vec::new()));
         let factories = Arc::new(Mutex::new(0));
         let stage = BatchDecode::new({
             let calls = stage_calls.clone();
@@ -560,11 +558,9 @@ mod worker_context {
             }
         });
         let mut scratch = BatchDecodeScratch::default();
-        let mut decoder = RecordingDecoder(sweep_calls.clone());
         let input = LlrBatch::new(vec![vec![Llr::new(1.0), Llr::new(-2.0), Llr::new(3.0)]]);
         assert!(rayon::current_thread_index().is_none());
         let expected = stage.process(&input, &mut scratch).unwrap().frames;
-        let expected_errors = slice_errors(&mut decoder, 42, 1.0, 5);
 
         for width in [1, 2, 4] {
             let pool = rayon::ThreadPoolBuilder::new()
@@ -576,16 +572,13 @@ mod worker_context {
                     stage.process(&input, &mut scratch).unwrap().frames,
                     expected
                 );
-                assert_eq!(slice_errors(&mut decoder, 42, 1.0, 5), expected_errors);
             });
         }
         assert_eq!(
             stage.process(&input, &mut scratch).unwrap().frames,
             expected
         );
-        assert_eq!(slice_errors(&mut decoder, 42, 1.0, 5), expected_errors);
         assert_eq!(*stage_calls.lock().unwrap(), [1, 1, 2, 4, 1]);
-        assert_eq!(*sweep_calls.lock().unwrap(), [1, 1, 2, 4, 1]);
         assert_eq!(*factories.lock().unwrap(), 1);
     }
 }
