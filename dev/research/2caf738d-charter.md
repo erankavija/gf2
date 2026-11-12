@@ -20,6 +20,7 @@ Optimization never relaxes mathematical or standards conformance.
 - D-3: Polar CA-SCL, SIMD and platform expansion, and decoder improvements stay in 1.0.
 - D-4: Trade-offs resolve to the fastest conforming default behind a simple API.
 - D-5: A ratio is recorded against the reference's fastest build configuration.
+- D-6: Permanent documentation carries harness and method; measured ratios live in issue history.
 
 ## Decision Details
 
@@ -84,4 +85,18 @@ Optimization never relaxes mathematical or standards conformance.
   lead of 1.16 and 1.38 into 0.69 and 0.77 (`@/issue/040bc2b8`).
 - **Reasoning:** D-2 counts cells at 1.0 or above; a cell measured against a
   weaker configuration does not count.
+- **Date:** 2026-11-12
+
+### D-6: Documentation carries harness and method only
+
+- **Chosen:** A permanent page names each comparison, its harness, its
+  configuration and how to reproduce it. Measured ratios, intervals and result
+  tables live in issue history, under `@/inv/committed-evidence-budget`.
+- **Rejected:** One host-labelled example ratio per comparison: a
+  hand-maintained copy goes stale, as `@/inv/single-source-prose` states.
+- **Rejected:** Treating the performance reference page as a decision record:
+  it decides nothing by a pre-registered rule.
+- **Reasoning:** The NR encoding entry of the performance reference page stated
+  a reference lead after `@/issue/be6d6f45` had recorded a gf2 lead; a page
+  without measured values cannot contradict the latest window.
 - **Date:** 2026-11-12
