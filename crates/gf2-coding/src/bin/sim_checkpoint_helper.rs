@@ -5,6 +5,8 @@
 //! flushing a checkpoint, and 2 on a usage error or without the
 //! `sim-observability` feature; a rerun with the same directory resumes.
 
+#![deny(unsafe_code)]
+
 fn main() {
     #[cfg(feature = "sim-observability")]
     {

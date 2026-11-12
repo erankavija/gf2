@@ -5,6 +5,8 @@
 //! `tracing` events to stderr as JSON lines, and exits with status `1` when the
 //! error propagates.
 
+#![deny(unsafe_code)]
+
 use std::collections::BTreeMap;
 use std::io::Write;
 use std::path::PathBuf;

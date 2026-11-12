@@ -1,6 +1,8 @@
 //! Simulation campaign runner: reads a TOML campaign of LDPC, product-code and
 //! GLDPC curves and runs each through [`SimulationRunner`].
 
+#![deny(unsafe_code)]
+
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
