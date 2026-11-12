@@ -4,7 +4,7 @@
 #
 # Usage: smoke-campaign-arms.test.sh
 #
-# The script runs in a scratch repository whose cargo wrapper, plan projection
+# The script runs in a scratch repository whose cargo, plan projection
 # and runner are stubs that record what they were handed, over synthetic addenda
 # that carry cell roles and nothing else. The cases assert what the script
 # decides itself: the label of the projected plan the runner writes the record
@@ -15,7 +15,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK}"' EXIT
 
-mkdir -p "${WORK}/scripts" "${WORK}/target/release"
+mkdir -p "${WORK}/.cargo/bin" "${WORK}/target/release"
 git -C "${WORK}" init -q
 cp "${HERE}/smoke-campaign-arms.sh" "${WORK}/"
 
@@ -32,8 +32,9 @@ addendum pilot exploratory exploratory
 addendum confirmation confirmatory confirmatory
 addendum holdout holdout
 
-# The cargo wrapper builds nothing here.
-printf '#!/usr/bin/env bash\n' >"${WORK}/scripts/cargo-budget.sh"
+# The script puts ${HOME}/.cargo/bin first on PATH; with HOME at the scratch
+# repository, this cargo is the one it finds, and it builds nothing.
+printf '#!/usr/bin/env bash\n' >"${WORK}/.cargo/bin/cargo"
 # The projection stub writes a plan holding the label it was handed.
 cat >"${WORK}/make-plan.py" <<'PY'
 import argparse, json
@@ -57,13 +58,13 @@ case "$1" in
     *) exit 2 ;;
 esac
 SH
-chmod +x "${WORK}/scripts/cargo-budget.sh" "${WORK}/target/release/benchmark-ab-runner"
+chmod +x "${WORK}/.cargo/bin/cargo" "${WORK}/target/release/benchmark-ab-runner"
 
 # Runs the script over one addendum; further arguments are passed on.
 smoke() {
     local stage=$1
     shift
-    (cd "${WORK}" && ./smoke-campaign-arms.sh \
+    (cd "${WORK}" && HOME="${WORK}" ./smoke-campaign-arms.sh \
         --issue fixture \
         --addendum "${stage}.json" \
         --arm-manifest unused/Cargo.toml \

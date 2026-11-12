@@ -38,12 +38,12 @@ aff3ct_bin="$(target_dir "$aff3ct_manifest")/release/aff3ct-fast-bench"
 
 if [[ "${1:-}" != --measure ]]; then
     export RUSTFLAGS="-C target-cpu=native" CARGO_INCREMENTAL=0
-    ./scripts/cargo-budget.sh cargo build --locked --release -p aff3ct-ldpc-gaps --bin gf2-fast-bench
+    cargo build --locked --release -p aff3ct-ldpc-gaps --bin gf2-fast-bench
     # The adapter's build script needs the compiler's dependency file, which an
     # sccache hit does not write.
-    SCCACHE_RECACHE=1 ./scripts/cargo-budget.sh cargo build --locked --release \
+    SCCACHE_RECACHE=1 cargo build --locked --release \
         --manifest-path "$aff3ct_manifest" --bin aff3ct-fast-bench
-    CARGO_CI_NO_LOCK=1 exec "$flock" --full-host \
+    exec "$flock" --full-host \
         bash "$here/quick-compare.sh" --measure
 fi
 

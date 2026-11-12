@@ -53,14 +53,14 @@ repository's own campaign files are in
 Check that the file parses and expands to the intended points:
 
 ```bash
-./scripts/cargo-budget.sh cargo run -p gf2-coding --release --features parallel --bin sim_runner -- \
+cargo run -p gf2-coding --release --features parallel --bin sim_runner -- \
     campaign.toml --dry-run
 ```
 
 Run every curve, or select curves with repeated `--curve <name>`:
 
 ```bash
-./scripts/cargo-budget.sh cargo run -p gf2-coding --release --features parallel --bin sim_runner -- \
+cargo run -p gf2-coding --release --features parallel --bin sim_runner -- \
     campaign.toml --parallel --seed 7
 ```
 
@@ -103,7 +103,7 @@ curves run with `--parallel` reuse no rows and recompute every point.
 `dvb_t2_awgn_campaign` takes its configuration on the command line:
 
 ```bash
-./scripts/cargo-budget.sh cargo run -p dvb-t2-awgn --release --bin dvb_t2_awgn_campaign -- \
+cargo run -p dvb-t2-awgn --release --bin dvb_t2_awgn_campaign -- \
     --rate 1/2 --modulation 16qam --esn0-range 4.0:7.0:0.5 \
     --target-errors 100 --max-frames 10000000 \
     --output-dir dvb_r12_16qam --seed 42

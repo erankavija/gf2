@@ -10,10 +10,9 @@ slow-timeout = { period = "10s", terminate-after = 1 }
 # covered by the gf2-sim override below.
 #
 # 8 s was ~1.6x the measured worst case in isolation, and that margin proved too
-# thin in practice. The CPU budget in `scripts/cargo-budget.sh` lets sibling
-# builds run during a test step, and a parallel agent wave puts several of them
-# there at once. Under that load four tests were killed at the 8 s boundary
-# while passing in isolation: the two GPU smokes
+# thin in practice. Sibling builds run during a test step, and a parallel agent
+# wave puts several of them there at once. Under that load four tests were
+# killed at the 8 s boundary while passing in isolation: the two GPU smokes
 # `test_gpu_box_muller_within_1_ulp_over_1024_frames` (SIGABRT) and
 # `test_gpu_chacha_raw_words_full_range_byte_identical`,
 # `tuning_calibration::campaign_owner::tests::accepted_complete_experiment_measures_defaults_and_reopens_only_its_27_leaves`
@@ -84,17 +83,14 @@ slow-timeout = { period = "60s", terminate-after = 1 }
 gpu-serial = { max-threads = 1 }
 slow-serial = { max-threads = 1 }
 
-# Thread budget for the fast tier. `scripts/cargo-ci.sh` runs the workspace
-# nextest step under an exclusive host-wide lock, so the run owns every core;
-# the budget is then divided among the tests rather than multiplied by them.
-# The wrapper exports RAYON_NUM_THREADS (default 4) to bound each test
-# process's pool, and the override below reserves the same number of nextest
-# scheduler slots for every test binary that builds one. Product per parallel
-# test: 4 slots x 4 rayon threads = 4 CPUs. Scalar tests keep the default
+# Thread budget for the fast tier. `.cargo/config.toml` sets RAYON_NUM_THREADS
+# to 4 to bound each test process's pool, and the override below reserves the
+# same number of nextest scheduler slots for every test binary that builds one.
+# Product per parallel test: 4 slots x 4 rayon threads = 4 CPUs. Scalar tests keep the default
 # reservation of one slot and one thread, so they still fill the machine.
 #
 # The two numbers are one setting expressed in two files, because nextest
-# config cannot read the environment. Changing CARGO_CI_RAYON_THREADS without
+# config cannot read the environment. Changing RAYON_NUM_THREADS without
 # changing `threads-required` here restores the oversubscription this replaces:
 # nproc test binaries each opening an nproc-wide rayon pool, which is what the
 # gpu-serial group and the 20 s CPU-smoke overrides above were sized against.

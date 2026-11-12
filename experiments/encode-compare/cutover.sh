@@ -61,7 +61,7 @@ build_revision() {
     cp "$here/src/cutover/harness.rs" "$example/harness.rs"
     cp "$adapter" "$example/api.rs"
     (cd "$tree" && RUSTFLAGS="-C target-cpu=native" CARGO_INCREMENTAL=0 \
-        "$repo/scripts/cargo-budget.sh" cargo build --locked --release --quiet \
+        cargo build --locked --release --quiet \
         -p gf2-coding --example bch_cutover)
 }
 
@@ -69,10 +69,10 @@ if [[ "${1:-}" != --measure ]]; then
     build_revision "$pre" "$here/cutover/pre.rs"
     build_revision "$current" "$here/src/cutover/current.rs"
     RUSTFLAGS="-C target-cpu=native" CARGO_INCREMENTAL=0 \
-        ./scripts/cargo-budget.sh cargo build --locked --release --quiet \
+        cargo build --locked --release --quiet \
         --manifest-path "$here/external/Cargo.toml"
     if [[ $mode == window ]]; then
-        CARGO_CI_NO_LOCK=1 exec "$flock" bash "$here/cutover.sh" --measure
+        exec "$flock" bash "$here/cutover.sh" --measure
     fi
 fi
 

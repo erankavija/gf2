@@ -31,9 +31,9 @@ if [[ "${1:-}" != --measure ]]; then
     prefixes | while read -r prefix; do
         GF2_GF2X_PREFIX="$prefix" RUSTFLAGS="-C target-cpu=native" CARGO_INCREMENTAL=0 \
             CARGO_TARGET_DIR="$build/$(basename "$prefix")" \
-            ./scripts/cargo-budget.sh cargo build --locked --release --manifest-path "$manifest"
+            cargo build --locked --release --manifest-path "$manifest"
     done
-    CARGO_CI_NO_LOCK=1 exec "$flock" bash "$here/compare.sh" --measure
+    exec "$flock" bash "$here/compare.sh" --measure
 fi
 
 out="$repo/target/clmul-compare"

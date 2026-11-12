@@ -24,7 +24,7 @@ def record(name, out=None):
             raise ValueError("GF2_AFF3CT_ROOT must contain build/lib/libaff3ct-4.7.0.a")
     environment = dict(os.environ)
     environment.update(RUSTFLAGS="-C target-cpu=native", CARGO_INCREMENTAL="0")
-    command = [str(ROOT / "scripts/cargo-budget.sh"), "cargo", "+1.95", "build", "--locked",
+    command = ["cargo", "+1.95", "build", "--locked",
                "--release", "--manifest-path", str(manifest), "--package", arm["package"],
                "--bin", arm["executable"]]
     subprocess.run(command, cwd=ROOT, env=environment, check=True)

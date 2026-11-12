@@ -111,7 +111,7 @@ features in other crates.
 | [`gf2-stats`](../../crates/gf2-stats/Cargo.toml) | no features | none |
 
 List the resolved set with
-`./scripts/cargo-budget.sh cargo metadata --format-version 1 --no-deps`.
+`cargo metadata --format-version 1 --no-deps`.
 
 ## Installation
 
@@ -132,9 +132,9 @@ Pin a `rev` for reproducible builds.
 
 `gf2-kernels-hip` is excluded from the default workspace because its build
 script requires `hipcc`. Build it directly with
-`./scripts/cargo-budget.sh cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml`.
+`cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml`.
 The `hip` features of `gf2-coding`, `gf2-algebra` and `gf2-sim` depend on it
-by path, so `./scripts/cargo-budget.sh cargo build --workspace --all-features`
+by path, so `cargo build --workspace --all-features`
 also requires ROCm; without ROCm, select features explicitly, as
 [`scripts/cargo-ci.sh`](../../scripts/cargo-ci.sh) does.
 

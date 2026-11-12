@@ -300,9 +300,9 @@ fatal.
 visible. Check the device paths against the CPU on the target device:
 
 ```bash
-./scripts/cargo-budget.sh --test cargo nextest run -p gf2-coding --features hip \
+cargo nextest run -p gf2-coding --features hip \
     --cargo-profile ci-test --profile ci -E 'test(/::gpu::/)'
-./scripts/cargo-budget.sh cargo run -p gf2-sim --release --features hip --example gpu_hybrid
+cargo run -p gf2-sim --release --features hip --example gpu_hybrid
 ```
 
 The tests compare BCH device decoding with the CPU path; those that need a

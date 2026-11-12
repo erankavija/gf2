@@ -475,7 +475,7 @@ The suite is then
 
 ```bash
 DVB_TEST_VECTORS_PATH=<the directory holding VV001-CR35_CSP> \
-  ./scripts/cargo-budget.sh --test cargo nextest run -p gf2-coding --all-features \
+  cargo nextest run -p gf2-coding --all-features \
     --cargo-profile ci-test --profile ci -E 'binary(bch_oracle_agreement)'
 ```
 

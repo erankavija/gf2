@@ -88,7 +88,7 @@ def run(plan_path, identities, untimed=False):
     ledger.parent.mkdir(parents=True, exist_ok=True)
     ledger.touch(exist_ok=True)
     out = output_path(ledger.parent / plan["campaign_id"])
-    environment = {**os.environ, "GF2_BENCH": "1", "CARGO_CI_NO_LOCK": "1",
+    environment = {**os.environ, "GF2_BENCH": "1",
                    "GF2_CCX1_LOCK": plan["lock_path"]}
     if not (out / "receipt.json").exists():
         while not stage_complete(stage / "execution.log"):

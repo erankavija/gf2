@@ -12,16 +12,12 @@ set -euo pipefail
 #   1 — one or more steps failed
 #   2 — environment problem: no real cargo available on PATH
 
-# CPU budget and serialization live in `scripts/cargo-budget.sh`, which wraps
-# every step below. Build and lint steps share the machine by budget; `--test`
-# marks the steps whose per-test wall-clock kills need the exclusive lock. The
-# same wrapper is what direct agent invocations use, so one mechanism governs
-# both — see the commands section of AGENTS.md.
-#
-# It is not the only mutex on this host. Benchmark evidence runs serialize
-# separately under `dev/scripts/ccx1-bench-flock.sh`; the two are independent by
-# design and neither subsumes the other. Do not double-wrap.
-BUDGET="$(dirname "$0")/cargo-budget.sh"
+# Every step runs its command directly and takes no host lock. Compile
+# parallelism is cargo's own: its default job count, or the jobserver it
+# inherits. `RAYON_NUM_THREADS` from `.cargo/config.toml` bounds each test
+# process's pool and pairs with `threads-required` in `.config/nextest.toml`.
+# Benchmark runs serialize among themselves under
+# `dev/scripts/ccx1-bench-flock.sh`, which this script never takes.
 SCALAR_LANE="$(dirname "$0")/scalar-lane-tests.sh"
 
 # BUSY_HOST_OVERRIDE=1 selects the `ci-busy` nextest profile, whose per-test
@@ -144,16 +140,8 @@ run_step() {
     summary+="  ✓ $name: $detail ($((SECONDS - started))s)"$'\n'
   else
     local rc=$?
-    if [ "$rc" -eq 75 ]; then
-      # Exit 75 from the budget wrapper: this step lost the queue for a host
-      # lock — the exclusive test lock, or the CCX1 mutex held by a --full-host
-      # bench run. It is the only status here that says nothing about the tree
-      # under evaluation, so it must not read as a test failure.
-      summary+="  ⏳ $name: QUEUED OUT on a host lock ($((SECONDS - started))s)"$'\n'
-    else
-      summary+="  ✗ $name: FAILED (exit $rc, $((SECONDS - started))s)"$'\n'
-      summarize_fail "$name"
-    fi
+    summary+="  ✗ $name: FAILED (exit $rc, $((SECONDS - started))s)"$'\n'
+    summarize_fail "$name"
     failed=1
   fi
 }
@@ -233,17 +221,17 @@ else
 fi
 
 # Run all steps in order; continue through failures to report all of them.
-run_step check  "$BUDGET" cargo check --workspace $FEAT_FLAGS
+run_step check  cargo check --workspace $FEAT_FLAGS
 
 # Typed selector sections and active accessors are always built; JSON codecs
 # are separately opt-in. Keep the no-default and codec-only surfaces explicit
 # so optional dependency unification cannot make this layout pass accidentally.
-run_step tuning-core-no-default "$BUDGET" cargo check -p gf2-core --no-default-features
-run_step tuning-core-codec-only "$BUDGET" cargo check -p gf2-core --no-default-features --features tuning-profile
-run_step tuning-algebra-no-default "$BUDGET" cargo check -p gf2-algebra --no-default-features
-run_step tuning-algebra-codec-only "$BUDGET" cargo check -p gf2-algebra --no-default-features --features tuning-profile
-run_step tuning-coding-no-default "$BUDGET" cargo check -p gf2-coding --no-default-features
-run_step tuning-coding-codec-only "$BUDGET" cargo check -p gf2-coding --no-default-features --features tuning-profile
+run_step tuning-core-no-default cargo check -p gf2-core --no-default-features
+run_step tuning-core-codec-only cargo check -p gf2-core --no-default-features --features tuning-profile
+run_step tuning-algebra-no-default cargo check -p gf2-algebra --no-default-features
+run_step tuning-algebra-codec-only cargo check -p gf2-algebra --no-default-features --features tuning-profile
+run_step tuning-coding-no-default cargo check -p gf2-coding --no-default-features
+run_step tuning-coding-codec-only cargo check -p gf2-coding --no-default-features --features tuning-profile
 
 # One package configuration without --all-features: default features, no
 # `simd`, the build a bare `cargo nextest run -p <package>` selects. The check
@@ -251,39 +239,38 @@ run_step tuning-coding-codec-only "$BUDGET" cargo check -p gf2-coding --no-defau
 # name fails here. The execution step runs the target of the kernel-dispatch
 # fallback contract (`gf2_core::dispatch_contract`) in the build that has no
 # kernel route to select.
-run_step default-features-core-check "$BUDGET" cargo check -p gf2-core --all-targets --profile ci-test
-run_step default-features-core-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback --no-run
-run_step default-features-core-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback
+run_step default-features-core-check cargo check -p gf2-core --all-targets --profile ci-test
+run_step default-features-core-build cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback --no-run
+run_step default-features-core-nextest cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --test dispatch_fallback
 
 # The scalar lane of the two packages whose default features select `simd`:
 # their suites in a build that resolves no `simd` feature, which the script
 # verifies and whose resolved feature lists the summary carries.
-run_step scalar-lane-build "$BUDGET" "$SCALAR_LANE" --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --no-run
-run_step scalar-lane-nextest "$BUDGET" --test "$SCALAR_LANE" --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
+run_step scalar-lane-build "$SCALAR_LANE" --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --no-run
+run_step scalar-lane-nextest "$SCALAR_LANE" --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
 
-# Build outside the exclusive lock, then execute inside it. The workspace
-# compile with GPU/SIMD features is the heaviest work here, and holding the
-# whole host for it would serialize the part that has no wall-clock assertion.
+# The build is its own step, so the summary times the workspace compile apart
+# from test execution.
 #
 # `ci-test` rather than `release`: see the profile's rationale in Cargo.toml.
 # Benchmarks and receipts stay on `release`.
-run_step test-build "$BUDGET" cargo nextest run --workspace $FEAT_FLAGS --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --no-run
-run_step test   "$BUDGET" --test cargo nextest run --workspace $FEAT_FLAGS --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
+run_step test-build cargo nextest run --workspace $FEAT_FLAGS --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --no-run
+run_step test   cargo nextest run --workspace $FEAT_FLAGS --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
 
 # The ordinary non-HIP feature set intentionally omits profile I/O, so keep the
 # format-2 authority, process lifecycle, and calibration producer unit surface
 # explicitly reachable in the fast tier. These are ordinary fast-tier tests: no
 # ignored test or benchmark/calibration action is selected.
-run_step tuning-profile-build "$BUDGET" cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_conservative_cfg --test tuning_extent_runtime --test tuning_extent_candidates --test tuning_observation_quiet --test field_vec_dot_chunk --test tuning_profile_prime_k_chunk_install --test tuning_profile_sparse_block_rows_install --no-run
-run_step tuning-profile-nextest "$BUDGET" --test cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_conservative_cfg --test tuning_extent_runtime --test tuning_extent_candidates --test tuning_observation_quiet --test field_vec_dot_chunk --test tuning_profile_prime_k_chunk_install --test tuning_profile_sparse_block_rows_install
-run_step tuning-core-calibration-build "$BUDGET" cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test core_calibration_harness --no-run
-run_step tuning-core-calibration-nextest "$BUDGET" --test cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test core_calibration_harness
-run_step tuning-algebra-calibration-build "$BUDGET" cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test algebra_calibration_harness --no-run
-run_step tuning-algebra-calibration-nextest "$BUDGET" --test cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test algebra_calibration_harness
-run_step tuning-coding-calibration-build "$BUDGET" cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test coding_calibration_harness --no-run
-run_step tuning-coding-calibration-nextest "$BUDGET" --test cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test coding_calibration_harness
-run_step tuning-campaign-support-build "$BUDGET" cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --no-run
-run_step tuning-campaign-support-nextest "$BUDGET" --test cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
+run_step tuning-profile-build cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_conservative_cfg --test tuning_extent_runtime --test tuning_extent_candidates --test tuning_observation_quiet --test field_vec_dot_chunk --test tuning_profile_prime_k_chunk_install --test tuning_profile_sparse_block_rows_install --no-run
+run_step tuning-profile-nextest cargo nextest run -p gf2-core --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test tuning_envelope_v2 --test tuning_process_lifecycle --test tuning_conservative_cfg --test tuning_extent_runtime --test tuning_extent_candidates --test tuning_observation_quiet --test field_vec_dot_chunk --test tuning_profile_prime_k_chunk_install --test tuning_profile_sparse_block_rows_install
+run_step tuning-core-calibration-build cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test core_calibration_harness --no-run
+run_step tuning-core-calibration-nextest cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test core_calibration_harness
+run_step tuning-algebra-calibration-build cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test algebra_calibration_harness --no-run
+run_step tuning-algebra-calibration-nextest cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test algebra_calibration_harness
+run_step tuning-coding-calibration-build cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test coding_calibration_harness --no-run
+run_step tuning-coding-calibration-nextest cargo nextest run -p tuning-calibration --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --features parallel,simd,test-support,tuning-profile --test coding_calibration_harness
+run_step tuning-campaign-support-build cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE" --no-run
+run_step tuning-campaign-support-nextest cargo nextest run -p tuning-campaign-support --cargo-profile ci-test --profile "$NEXTEST_CI_PROFILE"
 run_step tuning-campaign-validator python3 dev/scripts/validate-tuning-extent-campaign.py --self-test
 run_step aff3ct-ldpc-gaps-python python3 -m pytest -q experiments/aff3ct-ldpc-gaps
 run_step repository-files-self-test python3 dev/scripts/repository_files_test.py
@@ -293,19 +280,19 @@ run_step tracked-budget-self-test python3 -B scripts/check-tracked-budget.py --s
 run_step tracked-budget python3 -B scripts/check-tracked-budget.py
 run_step docs-mechanical-self-test python3 contrib/gates/tests/docs-mechanical-test.py
 run_step tuning-campaign-launcher-syntax bash -n dev/scripts/tuning-extent-campaign.sh
-run_step tuning-lifecycle-cargo "$BUDGET" cargo test -p gf2-core --profile ci-test --no-default-features --test tuning_process_lifecycle
+run_step tuning-lifecycle-cargo cargo test -p gf2-core --profile ci-test --no-default-features --test tuning_process_lifecycle
 
 # Add profile I/O to the same host-appropriate feature selection used by the
 # workspace lint. On ordinary hosts FEAT_FLAGS is the explicit non-HIP set, so
 # this reaches both owner codecs without pulling in the excluded ROCm crate.
-run_step clippy "$BUDGET" cargo clippy --workspace --all-targets $FEAT_FLAGS --features tuning-profile -- -D warnings
-run_step fmt    "$BUDGET" cargo fmt --all -- --check
+run_step clippy cargo clippy --workspace --all-targets $FEAT_FLAGS --features tuning-profile -- -D warnings
+run_step fmt    cargo fmt --all -- --check
 
 # Fixed rather than host-dependent: matches the doc and doctest steps of
 # .github/workflows/ci.yml.
 DOC_FEAT_FLAGS="--features simd,parallel,visualization,io,rand"
-run_step doc     env RUSTDOCFLAGS="-D warnings" "$BUDGET" cargo doc --workspace --release --no-deps $DOC_FEAT_FLAGS
-run_step doctest "$BUDGET" --test cargo test --doc --workspace --release $DOC_FEAT_FLAGS
+run_step doc     env RUSTDOCFLAGS="-D warnings" cargo doc --workspace --release --no-deps $DOC_FEAT_FLAGS
+run_step doctest cargo test --doc --workspace --release $DOC_FEAT_FLAGS
 
 # Documents every gf2-coding item the workspace feature selection above leaves
 # out. The `hip` feature compiles only where hipcc exists, so hosts without it
@@ -315,7 +302,7 @@ if command -v hipcc &>/dev/null || [ -x /opt/rocm/bin/hipcc ]; then
 else
   CODING_DOC_FEAT_FLAGS="--features simd,parallel,visualization,bench-csv,sim-observability,tuning-profile,test-support"
 fi
-run_step doc-coding env RUSTDOCFLAGS="-D warnings" "$BUDGET" cargo doc -p gf2-coding --release --no-deps $CODING_DOC_FEAT_FLAGS
+run_step doc-coding env RUSTDOCFLAGS="-D warnings" cargo doc -p gf2-coding --release --no-deps $CODING_DOC_FEAT_FLAGS
 
 # The gf2_tuning_baked cfg is not a Cargo feature, so --all-features never
 # builds it; this scoped step executes the
@@ -323,15 +310,15 @@ run_step doc-coding env RUSTDOCFLAGS="-D warnings" "$BUDGET" cargo doc -p gf2-co
 # target here. The frozen selector non-regression harness is excluded
 # deliberately: its self-tests bracket the default configuration's threshold
 # and are expected to report a re-pinning need under the baked cfg.
-run_step baked-core env RUSTFLAGS="--cfg gf2_tuning_baked" "$BUDGET" cargo test -p gf2-core --profile ci-test --features simd,test-support,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test tuning_conservative_cfg --test backend_selection --test backend_selection_profile --test backend_selection_tunable --test tuning_profile_prime_k_chunk_install --test tuning_profile_sparse_block_rows_install
+run_step baked-core env RUSTFLAGS="--cfg gf2_tuning_baked" cargo test -p gf2-core --profile ci-test --features simd,test-support,tuning-profile --lib --test backend_selection_baked --test matrix_selection_baked --test gemm_tiles_baked --test prime_route_baked --test field_vec_baked --test tuning_conservative_cfg --test backend_selection --test backend_selection_profile --test backend_selection_tunable --test tuning_profile_prime_k_chunk_install --test tuning_profile_sparse_block_rows_install
 
 # Format-2 artifacts are opt-in I/O surfaces rather than ordinary feature
 # defaults. Validate each explicit owner and the mechanically composed complete
 # repository envelope without filesystem discovery.
-run_step tuning-core-artifact "$BUDGET" cargo test -p gf2-core --profile ci-test --features tuning-profile --test tuning_profile_committed --test tuning_profile_prime_k_chunk_install --test tuning_profile_sparse_block_rows_install
-run_step tuning-algebra-artifacts "$BUDGET" cargo test -p gf2-algebra --profile ci-test --features parallel,tuning-profile --test tuning_section --test tuning_repository_envelopes --test tuning_profile_permanent_install --test tuning_profile_permanent_install_large_chunk
-run_step tuning-coding-codec "$BUDGET" cargo test -p gf2-coding --profile ci-test --features parallel,tuning-profile --test bch_encode_dispatch_profile --test bch_encode_dispatch_allocation
-run_step tuning-composer "$BUDGET" cargo test --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml
+run_step tuning-core-artifact cargo test -p gf2-core --profile ci-test --features tuning-profile --test tuning_profile_committed --test tuning_profile_prime_k_chunk_install --test tuning_profile_sparse_block_rows_install
+run_step tuning-algebra-artifacts cargo test -p gf2-algebra --profile ci-test --features parallel,tuning-profile --test tuning_section --test tuning_repository_envelopes --test tuning_profile_permanent_install --test tuning_profile_permanent_install_large_chunk
+run_step tuning-coding-codec cargo test -p gf2-coding --profile ci-test --features parallel,tuning-profile --test bch_encode_dispatch_profile --test bch_encode_dispatch_allocation
+run_step tuning-composer cargo test --release --manifest-path dev/tools/tuning-profile-compose/Cargo.toml
 
 fixtures_after=$(fixture_inventory)
 before_count=$(printf '%s\n' "$fixtures_before" | grep -c . || true)

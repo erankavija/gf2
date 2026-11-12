@@ -65,10 +65,10 @@ checked against the standard's minimal polynomials `g₁`…`g₁₂` by unit te
 `bch::dvb_t2`.
 
 ```bash
-DVB_TEST_VECTORS_PATH=/path/to/streams ./scripts/cargo-budget.sh --test \
+DVB_TEST_VECTORS_PATH=/path/to/streams \
   cargo nextest run -p gf2-coding --release --profile slow --run-ignored all \
   -E 'binary(dvb_t2_bch_verification) | binary(dvb_t2_ldpc_verification_suite) | binary(dvb_t2_concat_batch_decoder) | binary(dvb_t2_chain_tp07a) | binary(dvb_t2_cell_mapping_vv001)'
-DVB_TEST_VECTORS_PATH=/path/to/streams ./scripts/cargo-budget.sh --test \
+DVB_TEST_VECTORS_PATH=/path/to/streams \
   cargo nextest run -p gf2-sim --cargo-profile ci-test --profile ci \
   -E 'binary(dvb_t2_chain_cells_vv001)'
 ```

@@ -69,7 +69,7 @@ def output_path(path):
 
 
 def build_tools():
-    command = [str(ROOT / "scripts/cargo-budget.sh"), "cargo", "+1.95", "build", "--locked",
+    command = ["cargo", "+1.95", "build", "--locked",
                "--release", "-p", "tuning-campaign-support", "--bin", "benchmark-ab-runner",
                "--bin", "benchmark-acceptance"]
     subprocess.run(command, cwd=ROOT, check=True)

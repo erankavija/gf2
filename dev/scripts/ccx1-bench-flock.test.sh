@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 TMP=$(mktemp -d)
 
-# Section 3 starts daemons that record their PIDs in $TMP/*.pid.
+# Section 2 starts a daemon that records its PID in $TMP/*.pid.
 cleanup() {
   local pidfile
   for pidfile in "$TMP"/*.pid; do
@@ -14,8 +14,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Both wrappers apply their lock discipline only inside a benchmark window.
-# Every lock below is a file under $TMP, so the host mutex is never touched.
+# The wrapper runs only inside a benchmark window. Every lock below is a file
+# under $TMP, so the host mutex is never touched.
 export GF2_BENCH_WINDOW=1
 # The default-list cases below run without a caller's CPU list.
 unset GF2_CCX1_CPUS
@@ -23,9 +23,8 @@ unset GF2_CCX1_CPUS
 # --- 1. Command composition, against stubbed flock, taskset and nice ---------
 #
 # The stubs print what they are asked to do instead of doing it, so this
-# asserts the exact sequence: take the turnstile, take the mutex, run the
-# command, then unlock the mutex and the turnstile. The flock stub names the
-# file behind the descriptor it is given.
+# asserts the exact sequence: take the mutex, run the command, then unlock the
+# mutex. The flock stub names the file behind the descriptor it is given.
 
 mkdir "$TMP/bin"
 cat >"$TMP/bin/flock" <<'EOF'
@@ -38,7 +37,7 @@ echo "$(basename "$0") $*"
 EOF
 cp "$TMP/bin/taskset" "$TMP/bin/nice"
 chmod +x "$TMP/bin/flock" "$TMP/bin/taskset" "$TMP/bin/nice"
-touch "$TMP/lock" "$TMP/lock.turnstile"
+touch "$TMP/lock"
 lock=$(readlink -f "$TMP/lock")
 
 default=$(
@@ -50,10 +49,10 @@ full_host=$(
     "$ROOT/dev/scripts/ccx1-bench-flock.sh" --full-host probe arg
 )
 
-expected_default=$(printf '%s\n' "flock -x $lock.turnstile" "flock -x $lock" \
-  "taskset -c 6-11 nice -n -5 probe arg" "flock -u $lock" "flock -u $lock.turnstile")
-expected_full_host=$(printf '%s\n' "flock -x $lock.turnstile" "flock -x $lock" \
-  "nice -n -5 probe arg" "flock -u $lock" "flock -u $lock.turnstile")
+expected_default=$(printf '%s\n' "flock -x $lock" \
+  "taskset -c 6-11 nice -n -5 probe arg" "flock -u $lock")
+expected_full_host=$(printf '%s\n' "flock -x $lock" \
+  "nice -n -5 probe arg" "flock -u $lock")
 
 test "$default" = "$expected_default"
 test "$full_host" = "$expected_full_host"
@@ -65,120 +64,44 @@ pinned=$(
 )
 test "$pinned" = "${expected_default/taskset -c 6-11/taskset -c 0-3}"
 
-# The turnstile path is derived from the mutex path, so overriding the mutex in
-# one place does not leave two runs sharing a stale turnstile.
-custom=$(
-  PATH="$TMP/bin:$PATH" GF2_CCX1_LOCK="$TMP/lock" GF2_CCX1_TURNSTILE="$TMP/ts" \
-    "$ROOT/dev/scripts/ccx1-bench-flock.sh" --full-host probe
-)
-ts=$(readlink -f "$TMP/ts")
-test "$custom" = "$(printf '%s\n' "flock -x $ts" "flock -x $lock" \
-  "nice -n -5 probe" "flock -u $lock" "flock -u $ts")"
-
-# --- 2. Writer preference, against the real flock ----------------------------
-#
-# The regression this guards: a pending `flock -x` does not block a new
-# `flock -s` on Linux, so before the turnstile a stream of builds could keep
-# the shared side permanently occupied and a measurement run was never granted.
-# Observed 2026-09-08 with four runners queued 10-29 minutes.
-#
-# Timeline: a build takes the shared side and holds it for HOLD seconds; a
-# measurement run queues behind it; a second build starts after that. The
-# second build must land after the measurement run, not slip in ahead of it.
-
 if ! command -v flock >/dev/null 2>&1; then
-  echo "ccx1-bench-flock.test: flock unavailable, skipping the ordering and release tests" >&2
+  echo "ccx1-bench-flock.test: flock unavailable, skipping the release test" >&2
   exit 0
 fi
 
-HOLD=4
-events="$TMP/events"
-: >"$events"
-
 export GF2_CCX1_LOCK="$TMP/rt.lock"
-export GF2_CCX1_TURNSTILE="$TMP/rt.lock.turnstile"
-export CARGO_CI_LOCK_DIR="$TMP/slots"
-export CARGO_CI_BUILD_LOCK="$TMP/build.lock"
-touch "$GF2_CCX1_LOCK" "$GF2_CCX1_TURNSTILE"
+touch "$GF2_CCX1_LOCK"
 
-"$ROOT/scripts/cargo-budget.sh" \
-  sh -c "echo build-1 >>'$events'; sleep $HOLD" &
-build1=$!
-
-# Wait until build 1 actually holds the shared side.
-for _ in $(seq 1 100); do
-  grep -q build-1 "$events" && break
-  sleep 0.1
-done
-grep -q build-1 "$events" || { echo "build 1 never started" >&2; exit 1; }
-
-"$ROOT/dev/scripts/ccx1-bench-flock.sh" --full-host \
-  sh -c "echo bench >>'$events'" &
-bench=$!
-
-sleep 1  # let the bench run reach the turnstile and queue for the mutex
-
-"$ROOT/scripts/cargo-budget.sh" sh -c "echo build-2 >>'$events'" &
-build2=$!
-
-wait "$build1" "$bench" "$build2"
-
-got=$(tr '\n' ' ' <"$events")
-test "$got" = "build-1 bench build-2 " || {
-  echo "expected 'build-1 bench build-2 ', got '$got'" >&2
-  exit 1
-}
-
-# --- 3. No lock outlives the wrapped command ---------------------------------
+# --- 2. No lock outlives the wrapped command ---------------------------------
 #
 # What this guards: a daemon the wrapped command starts inherits its
 # descriptors, and a flock lock lasts until every copy of its descriptor is
 # closed or one of them unlocks it. Under `ccx1-bench-flock.sh --full-host` the
-# command holds the mutex descriptor by design, so an inherited copy in a
-# daemon it leaves running — a compiler-cache server started by a cargo-ci run
-# is the case that arises in practice — would hold the mutex past the run and
-# every acquirer on the host would wait for it. The wrapper's unlock is what
-# prevents that, and this test is what holds it to it. The turnstile is not
-# exposed the same way, because the wrapper closes that descriptor in the
-# command; the test asserts the daemon holds none.
+# command holds the mutex descriptor by design, because the benchmark runner
+# refuses to measure without an inherited descriptor for the held lock
+# (`host::inherited_lock`). An inherited copy in a daemon the command leaves
+# running — a compiler-cache server is the case that arises in practice —
+# would hold the mutex past the run and every acquirer on the host would wait
+# for it. The wrapper's unlock is what prevents that, and this test is what
+# holds it to it.
 #
-# The wrapped command records the locks as it sees them, then starts a daemon
+# The wrapped command records the lock as it sees it, then starts a daemon
 # the way the sccache server starts: in its own session with its standard
-# streams detached, so that it outlives the command. Under each wrapper every
-# lock must be free once the wrapper returns, while the daemon still runs and
-# holds no turnstile descriptor.
-#
-# cargo-budget.sh passes because it never gives the command a lock
-# descriptor: it closes its CCX1 and slot descriptors in the child with the
-# `{SLOT_FD}>&- {CCX1_FD}>&-` redirections and takes the test lock with
-# `flock -o`. Under the benchmark wrapper the command and so the daemon do
-# hold the mutex descriptor, because the benchmark runner refuses to measure
-# without an inherited descriptor for the held lock (`host::inherited_lock`);
-# the wrapper's unlock after the command must free the lock all the same.
+# streams detached, so that it outlives the command. The lock must be free
+# once the wrapper returns, while the daemon still runs and holds its
+# descriptor.
 
-# Prints the state of every lock, then which of them process $1 has open.
+# Prints the state of the lock, then whether process $1 has it open.
 cat >"$TMP/observe" <<'EOF'
 #!/usr/bin/env bash
 set -eu
-shopt -s nullglob
 probe() { if flock -n "$@" true 2>/dev/null; then echo free; else echo held; fi; }
-slot=free
-for path in "$CARGO_CI_LOCK_DIR"/slot.*; do
-  [ "$(probe -x "$path")" = free ] || slot=held
-done
 open=$(for fd in /proc/"$1"/fd/*; do readlink "$fd" || true; done)
 has() { grep -qxF "$(readlink -f "$1")" <<<"$open"; }
-descriptors=
-if has "$GF2_CCX1_LOCK"; then descriptors+=mutex,; fi
-if has "$GF2_CCX1_TURNSTILE"; then descriptors+=turnstile,; fi
-if has "$CARGO_CI_BUILD_LOCK"; then descriptors+=test,; fi
-for path in "$CARGO_CI_LOCK_DIR"/slot.*; do
-  if has "$path"; then descriptors+=slot,; fi
-done
-descriptors=${descriptors%,}
+descriptors=none
+if has "$GF2_CCX1_LOCK"; then descriptors=mutex; fi
 echo "exclusive=$(probe -x "$GF2_CCX1_LOCK") shared=$(probe -s "$GF2_CCX1_LOCK")" \
-  "turnstile=$(probe -x "$GF2_CCX1_TURNSTILE") slot=$slot" \
-  "test=$(probe -x "$CARGO_CI_BUILD_LOCK") descriptors=${descriptors:-none}"
+  "descriptors=$descriptors"
 EOF
 
 # The wrapped command: $1 receives its observation, $2 its daemon's PID.
@@ -195,8 +118,8 @@ exit 1
 EOF
 chmod +x "$TMP/observe" "$TMP/wrapped"
 
-# Runs one wrapper invocation, then checks the locks after it returned and as
-# the command saw them while it ran.
+# Runs one wrapper invocation, then checks the lock after it returned and as
+# the command saw it while it ran.
 check_release() {
   local name=$1 during=$2 after=$3 pid got
   shift 3
@@ -216,19 +139,9 @@ check_release() {
   kill "$pid"
 }
 
-free="exclusive=free shared=free turnstile=free slot=free test=free"
-
-check_release build \
-  "exclusive=held shared=free turnstile=free slot=held test=free descriptors=none" \
-  "$free descriptors=none" \
-  "$ROOT/scripts/cargo-budget.sh"
-check_release test \
-  "exclusive=held shared=free turnstile=free slot=held test=held descriptors=none" \
-  "$free descriptors=none" \
-  "$ROOT/scripts/cargo-budget.sh" --test
 check_release bench \
-  "exclusive=held shared=held turnstile=held slot=free test=free descriptors=mutex" \
-  "$free descriptors=mutex" \
+  "exclusive=held shared=held descriptors=mutex" \
+  "exclusive=free shared=free descriptors=mutex" \
   "$ROOT/dev/scripts/ccx1-bench-flock.sh" --full-host
 
 echo "ccx1-bench-flock.test: ok"
