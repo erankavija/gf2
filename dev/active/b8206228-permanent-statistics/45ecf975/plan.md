@@ -56,7 +56,7 @@ Starts only when the window has ended and 55c3e433's pilots are collected and co
 5. Force-push all refs. Reseat the local checkout and the 17 worktrees by runbook, preserving untracked built arms in the pinned ones. Ask for GitHub cache cleanup if old objects stay reachable.
 6. Commit the old-to-new commit map, compressed, under the budget. Note in `AGENTS.md` that commit IDs recorded before the rewrite resolve through it, and record this as the single exception to immutable `main`.
 
-Recorded commit IDs in receipts and tracker text are not rewritten. `@/inv/behavioral-evidence-validity` already says they never decide acceptance. The rehearsal must surface any tool that still depends on them.
+Recorded commit IDs in receipts and tracker text are not rewritten. `@/inv/campaign-evidence` already says they never decide acceptance. The rehearsal must surface any tool that still depends on them.
 
 ## Phase C: separate experiments
 
