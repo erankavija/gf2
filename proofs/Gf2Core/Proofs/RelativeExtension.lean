@@ -48,14 +48,14 @@ namespace RelativeExtension
 `B ⊆ E` is carried as `[Algebra B E]` with `E` finite. The base field is then
 finite too, so `q = Nat.card B` and `r = Module.finrank B E` are the model's
 counterparts of `FieldExtension::base_order`
-(`crates/gf2-core/src/field/extension.rs:2597`) and
-`FieldExtension::relative_degree` (`:2592`). -/
+(`crates/gf2-core/src/field/extension.rs`) and
+`FieldExtension::relative_degree`. -/
 
 /-- The base field of a finite extension is finite, because `ι` embeds it in `E`.
 
 This is the model's counterpart of the certificate invariant that a
 `FieldExtension` names two finite fields
-(`ExtensionCertificate`, `crates/gf2-core/src/field/extension.rs:1418`). -/
+(`ExtensionCertificate`, `crates/gf2-core/src/field/extension.rs`). -/
 theorem finite_base (B E : Type*) [Field B] [Field E] [Algebra B E] [Finite E] :
     Finite B :=
   Finite.of_injective (algebraMap B E) (algebraMap B E).injective
@@ -78,12 +78,12 @@ variable (B : Type*) {E : Type*} [Field B] [Field E] [Algebra B E] [Finite E]
 for the absolute base degree `d_B`.
 
 Model counterpart of `FieldExtension::characteristic`
-(`crates/gf2-core/src/field/extension.rs:2575`) and
-`FieldExtension::base_degree` (`:2580`), which read both numbers off the shared
-`FieldId` (`:621`).
+(`crates/gf2-core/src/field/extension.rs`) and
+`FieldExtension::base_degree`, which read both numbers off the shared
+`FieldId`.
 
 Refinement anchor: `check_extension_structure`
-(`crates/gf2-core/src/field/axiom_tests.rs:1498`), which asserts that base and
+(`crates/gf2-core/src/field/axiom_tests.rs`), which asserts that base and
 extension report the same characteristic. -/
 theorem exists_char_pow :
     ∃ p dB : ℕ, Nat.Prime p ∧ CharP E p ∧ Nat.card B = p ^ dB := by
@@ -102,11 +102,11 @@ omit [Finite E] in
 commutes with addition and multiplication, and is injective.
 
 Production path: `FieldExtension::embed`
-(`crates/gf2-core/src/field/extension.rs:2558`).
+(`crates/gf2-core/src/field/extension.rs`).
 
 Refinement anchors: `check_embedding_homomorphism`
-(`crates/gf2-core/src/field/axiom_tests.rs:1549`) and
-`check_embedding_injective` (`crates/gf2-core/src/field/axiom_tests.rs:1573`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`) and
+`check_embedding_injective` (`crates/gf2-core/src/field/axiom_tests.rs`). -/
 theorem embedding_laws :
     algebraMap B E 0 = 0 ∧ algebraMap B E 1 = 1 ∧
       (∀ a b : B, algebraMap B E (a + b) = algebraMap B E a + algebraMap B E b) ∧
@@ -120,12 +120,12 @@ theorem embedding_laws :
 /-- **L1.2 (orders).** `|E| = q ^ r`.
 
 Production path: `FieldExtension::ext_order`
-(`crates/gf2-core/src/field/extension.rs:2602`), which reads `|E|` off the
+(`crates/gf2-core/src/field/extension.rs`), which reads `|E|` off the
 extension `FieldId`.
 
 Refinement anchor: `check_extension_structure`
-(`crates/gf2-core/src/field/axiom_tests.rs:1498`), whose `|E| = |B| ^ r`
-assertion sits at `crates/gf2-core/src/field/axiom_tests.rs:1512-1530`. -/
+(`crates/gf2-core/src/field/axiom_tests.rs`), whose `|E| = |B| ^ r`
+assertion sits at `crates/gf2-core/src/field/axiom_tests.rs`. -/
 theorem card_ext_eq_baseCard_pow_finrank :
     Nat.card E = Nat.card B ^ Module.finrank B E := by
   haveI : Finite B := finite_base B E
@@ -138,17 +138,17 @@ omit [Finite E] in
 /-- **L1.2 (unit group).** `|E*| = |E| - 1`.
 
 Production path: `FieldExtension::ext_unit_group_order`
-(`crates/gf2-core/src/field/extension.rs:2607`).
+(`crates/gf2-core/src/field/extension.rs`).
 
 Refinement anchor: `check_extension_structure`
-(`crates/gf2-core/src/field/axiom_tests.rs:1498`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`). -/
 theorem card_units_ext : Nat.card Eˣ = Nat.card E - 1 :=
   Nat.card_units E
 
 /-- The relative degree is positive; the production certificate carries the same
 fact as exact divisibility of `d_E` by `d_B`
 (`FieldExtension::relative_degree`,
-`crates/gf2-core/src/field/extension.rs:2592`). -/
+`crates/gf2-core/src/field/extension.rs`). -/
 theorem finrank_pos : 0 < Module.finrank B E := by
   rcases Nat.eq_zero_or_pos (Module.finrank B E) with h | h
   · exfalso
@@ -162,12 +162,12 @@ theorem finrank_pos : 0 < Module.finrank B E := by
 `|E| = p ^ (d_B · r)`.
 
 Production path: `FieldExtension::ext_degree`
-(`crates/gf2-core/src/field/extension.rs:2585`), whose value the certificate
+(`crates/gf2-core/src/field/extension.rs`), whose value the certificate
 ties to `base_degree () * relative_degree ()`.
 
 Refinement anchor: `check_extension_structure`
-(`crates/gf2-core/src/field/axiom_tests.rs:1498`), degree-product assertions at
-`crates/gf2-core/src/field/axiom_tests.rs:1512-1530`. -/
+(`crates/gf2-core/src/field/axiom_tests.rs`), degree-product assertions at
+`crates/gf2-core/src/field/axiom_tests.rs`. -/
 theorem card_ext_eq_char_pow {p dB : ℕ} (hcard : Nat.card B = p ^ dB) :
     Nat.card E = p ^ (dB * Module.finrank B E) := by
   rw [card_ext_eq_baseCard_pow_finrank B (E := E), hcard, ← pow_mul]
@@ -187,10 +187,10 @@ theorem relFrobenius_add' (x y : E) :
 endomorphism of `E`.
 
 Production path: `FieldExtension::relative_frobenius`
-(`crates/gf2-core/src/field/extension.rs:2637`) at `k = 1`.
+(`crates/gf2-core/src/field/extension.rs`) at `k = 1`.
 
 Refinement anchor: `check_relative_frobenius`
-(`crates/gf2-core/src/field/axiom_tests.rs:1643`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`). -/
 def relFrobenius : E →+* E where
   toFun x := x ^ Nat.card B
   map_one' := one_pow _
@@ -204,7 +204,7 @@ theorem relFrobenius_apply (x : E) : relFrobenius B x = x ^ Nat.card B := rfl
 /-- **L1.3 (base is fixed).** `φ_B` fixes the image of `ι` pointwise.
 
 Refinement anchor: `check_relative_frobenius`
-(`crates/gf2-core/src/field/axiom_tests.rs:1643`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`). -/
 theorem relFrobenius_algebraMap (a : B) :
     relFrobenius B (algebraMap B E a) = algebraMap B E a := by
   haveI : Finite B := finite_base B E
@@ -249,11 +249,11 @@ theorem relFrobenius_iterate_mul_finrank (j : ℕ) (x : E) :
 relative degree before iterating is sound.
 
 Production path: `FieldExtension::relative_frobenius`
-(`crates/gf2-core/src/field/extension.rs:2637`), which reduces `k` modulo
+(`crates/gf2-core/src/field/extension.rs`), which reduces `k` modulo
 `relative_degree ()` first.
 
 Refinement anchor: `check_relative_frobenius`
-(`crates/gf2-core/src/field/axiom_tests.rs:1643`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`). -/
 theorem relFrobenius_iterate_mod (k : ℕ) (x : E) :
     (relFrobenius B : E → E)^[k] x =
       (relFrobenius B : E → E)^[k % Module.finrank B E] x := by
@@ -265,14 +265,14 @@ applications of `pow (characteristic)` — computes `φ_B^[k]`, without ever
 forming `q ^ k`.
 
 Production path: `FieldExtension::relative_frobenius`
-(`crates/gf2-core/src/field/extension.rs:2637`), whose body sets
+(`crates/gf2-core/src/field/extension.rs`), whose body sets
 `steps = base_degree () * (k % relative_degree ())` and then raises to the
 characteristic `steps` times.
 
 Refinement anchors: `test_extension_laws_gf9_in_gf81`
-(`crates/gf2-core/src/field/axiom_tests.rs:2042`) and
+(`crates/gf2-core/src/field/axiom_tests.rs`) and
 `tower_relative_frobenius_takes_two_absolute_steps`
-(`crates/gf2-core/src/field/extension.rs:4353`), the two cases with `d_B > 1`. -/
+(`crates/gf2-core/src/field/extension.rs`), the two cases with `d_B > 1`. -/
 theorem production_loop_eq_relFrobenius {p dB : ℕ} (hcard : Nat.card B = p ^ dB)
     (k : ℕ) (x : E) :
     (fun y : E => y ^ p)^[dB * (k % Module.finrank B E)] x =
@@ -286,11 +286,11 @@ theorem production_loop_eq_relFrobenius {p dB : ℕ} (hcard : Nat.card B = p ^ d
 of `ι`.
 
 This is the load-bearing statement: `FieldExtension::contains`
-(`crates/gf2-core/src/field/extension.rs:2652`) decides base membership by this
+(`crates/gf2-core/src/field/extension.rs`) decides base membership by this
 test alone.
 
 Refinement anchor: `check_relative_frobenius`
-(`crates/gf2-core/src/field/axiom_tests.rs:1679`), the `phi_x == x` versus
+(`crates/gf2-core/src/field/axiom_tests.rs`), the `phi_x == x` versus
 `contains (x)` assertion. -/
 theorem fixedPoints_eq_range :
     {x : E | relFrobenius B x = x} = Set.range (algebraMap B E) := by
@@ -334,11 +334,11 @@ theorem fixedPoints_eq_range :
 `try_restrict (x)` answers.
 
 Production paths: `FieldExtension::contains`
-(`crates/gf2-core/src/field/extension.rs:2652`) and
-`FieldExtension::try_restrict` (`:2562`).
+(`crates/gf2-core/src/field/extension.rs`) and
+`FieldExtension::try_restrict`.
 
 Refinement anchor: `check_membership_matches_restriction`
-(`crates/gf2-core/src/field/axiom_tests.rs:1610`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`). -/
 theorem relFrobenius_fixed_iff_mem_range (x : E) :
     relFrobenius B x = x ↔ ∃ a : B, algebraMap B E a = x := by
   have := fixedPoints_eq_range B (E := E)
@@ -353,12 +353,11 @@ theorem relFrobenius_fixed_iff_mem_range (x : E) :
 preimage under `ι`, so `try_restrict` is a genuine partial inverse of `embed`.
 
 Production paths: `FieldExtension::embed`
-(`crates/gf2-core/src/field/extension.rs:2558`),
-`FieldExtension::try_restrict` (`:2562`), and `FieldExtension::restrict`
-(`:2661`).
+(`crates/gf2-core/src/field/extension.rs`),
+`FieldExtension::try_restrict`, and `FieldExtension::restrict`.
 
 Refinement anchor: `check_restriction_round_trip`
-(`crates/gf2-core/src/field/axiom_tests.rs:1588`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`). -/
 theorem existsUnique_restrict {x : E} (hx : relFrobenius B x = x) :
     ∃! a : B, algebraMap B E a = x := by
   obtain ⟨a, ha⟩ := (relFrobenius_fixed_iff_mem_range B x).mp hx
@@ -375,7 +374,7 @@ theorem exists_return_time (x : E) :
 /-- The orbit period `ℓ` of `x`: the least positive `i` with `φ_B^[i] x = x`.
 
 Production counterpart: the length of the vector `conjugates`
-(`crates/gf2-core/src/field/extension.rs:2329`) returns. -/
+(`crates/gf2-core/src/field/extension.rs`) returns. -/
 def orbitPeriod (x : E) : ℕ := Nat.find (exists_return_time B x)
 
 theorem orbitPeriod_pos (x : E) : 0 < orbitPeriod B x :=
@@ -416,9 +415,9 @@ theorem iterate_eq_self_iff_dvd (x : E) (i : ℕ) :
 /-- **L1.8 (period divides the relative degree).** `ℓ ∣ r`.
 
 Refinement anchors: `assert_minimal_polynomial_properties`
-(`crates/gf2-core/src/field/extension.rs:4053`) and
+(`crates/gf2-core/src/field/extension.rs`) and
 `const_ext_relative_frobenius_agrees_with_the_conjugate`
-(`crates/gf2-core/src/field/extension.rs:4340`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem orbitPeriod_dvd_finrank (x : E) : orbitPeriod B x ∣ Module.finrank B E :=
   (iterate_eq_self_iff_dvd B x _).mp (relFrobenius_iterate_finrank B x)
 
@@ -479,17 +478,17 @@ theorem orbit_injOn (x : E) :
   exact hmod
 
 /-- **L1.8 (the `conjugates` loop is safe).** Three facts discharge both
-assertions of `conjugates` (`crates/gf2-core/src/field/extension.rs:2329`) as
+assertions of `conjugates` (`crates/gf2-core/src/field/extension.rs`) as
 unreachable: no repeat occurs before index `ℓ`; the value at index `ℓ` equals the
 value at index `0`, so the reported first-repeat position is `0`
-(`crates/gf2-core/src/field/extension.rs:2336`); and `ℓ ≤ r`, so the
+(`crates/gf2-core/src/field/extension.rs`); and `ℓ ≤ r`, so the
 `0..=r` loop reaches index `ℓ` and never falls through to the panic
-(`crates/gf2-core/src/field/extension.rs:2346`).
+(`crates/gf2-core/src/field/extension.rs`).
 
 Refinement anchors: `assert_minimal_polynomial_properties`
-(`crates/gf2-core/src/field/extension.rs:4053`) and
+(`crates/gf2-core/src/field/extension.rs`) and
 `const_ext_relative_frobenius_agrees_with_the_conjugate`
-(`crates/gf2-core/src/field/extension.rs:4340`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem conjugates_loop_is_safe (x : E) :
     (∀ i < orbitPeriod B x, ∀ j < i,
         (relFrobenius B : E → E)^[j] x ≠ (relFrobenius B : E → E)^[i] x) ∧
@@ -503,12 +502,12 @@ theorem conjugates_loop_is_safe (x : E) :
 /-! ### L1.9 — trace and norm land in the base field -/
 
 /-- `Tr_{E/B} (x) = Σ_{i<r} φ_B^[i] x`, the model of `relative_trace`
-(`crates/gf2-core/src/field/extension.rs:2439`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 def relTrace (x : E) : E :=
   ∑ i ∈ Finset.range (Module.finrank B E), (relFrobenius B : E → E)^[i] x
 
 /-- `N_{E/B} (x) = Π_{i<r} φ_B^[i] x`, the model of `relative_norm`
-(`crates/gf2-core/src/field/extension.rs:2486`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 def relNorm (x : E) : E :=
   ∏ i ∈ Finset.range (Module.finrank B E), (relFrobenius B : E → E)^[i] x
 
@@ -554,19 +553,19 @@ theorem relFrobenius_relNorm (x : E) :
 
 /-- **L1.9 (trace lands in `B`).** `Tr_{E/B} (x)` is `φ_B`-fixed, hence in the
 image of `ι`. This discharges the `restrict_invariant` panic
-(`crates/gf2-core/src/field/extension.rs:2510`) for `relative_trace`.
+(`crates/gf2-core/src/field/extension.rs`) for `relative_trace`.
 
 Refinement anchor: `assert_trace_norm_laws`
-(`crates/gf2-core/src/field/extension.rs:4082`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem relTrace_mem_range (x : E) : ∃ a : B, algebraMap B E a = relTrace B x :=
   (relFrobenius_fixed_iff_mem_range B _).mp (relFrobenius_relTrace B x)
 
 /-- **L1.9 (norm lands in `B`).** `N_{E/B} (x)` is `φ_B`-fixed, hence in the
 image of `ι`. This discharges the `restrict_invariant` panic
-(`crates/gf2-core/src/field/extension.rs:2510`) for `relative_norm`.
+(`crates/gf2-core/src/field/extension.rs`) for `relative_norm`.
 
 Refinement anchor: `assert_trace_norm_laws`
-(`crates/gf2-core/src/field/extension.rs:4082`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem relNorm_mem_range (x : E) : ∃ a : B, algebraMap B E a = relNorm B x :=
   (relFrobenius_fixed_iff_mem_range B _).mp (relFrobenius_relNorm B x)
 
@@ -574,12 +573,12 @@ theorem relNorm_mem_range (x : E) : ∃ a : B, algebraMap B E a = relNorm B x :=
 
 /-- **L1.10 (trivial extension).** `r = 1` makes `ι` bijective.
 
-Production path: `TrivialExt` (`crates/gf2-core/src/field/extension.rs:3124`).
+Production path: `TrivialExt` (`crates/gf2-core/src/field/extension.rs`).
 
 Refinement anchors: `test_extension_laws_trivial_fp7`
-(`crates/gf2-core/src/field/axiom_tests.rs:2124`) and
+(`crates/gf2-core/src/field/axiom_tests.rs`) and
 `trivial_ext_is_the_identity_on_every_operation`
-(`crates/gf2-core/src/field/extension.rs:4365`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem algebraMap_bijective_of_finrank_eq_one (h : Module.finrank B E = 1) :
     Function.Bijective (algebraMap B E) := by
   refine (Nat.bijective_iff_injective_and_card _).mpr ⟨(algebraMap B E).injective, ?_⟩
@@ -588,9 +587,9 @@ theorem algebraMap_bijective_of_finrank_eq_one (h : Module.finrank B E = 1) :
 /-- **L1.10 (trivial extension).** `r = 1` makes `φ_B` the identity on `E`.
 
 Refinement anchors: `test_extension_laws_trivial_fp7`
-(`crates/gf2-core/src/field/axiom_tests.rs:2124`) and
+(`crates/gf2-core/src/field/axiom_tests.rs`) and
 `trivial_ext_is_the_identity_on_every_operation`
-(`crates/gf2-core/src/field/extension.rs:4365`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem relFrobenius_eq_id_of_finrank_eq_one (h : Module.finrank B E = 1) (x : E) :
     relFrobenius B x = x := by
   have := relFrobenius_iterate_finrank B x
@@ -598,13 +597,13 @@ theorem relFrobenius_eq_id_of_finrank_eq_one (h : Module.finrank B E = 1) (x : E
 
 /-- **L1.10 at the identity extension.** `B ⊆ B` has `r = 1`, so `ι` is bijective
 and `φ_B` is the identity. This is the model of `TrivialExt`
-(`crates/gf2-core/src/field/extension.rs:3124`), whose `embed` (`:3159`) and
-`try_restrict` (`:3163`) are the identity and `Some`.
+(`crates/gf2-core/src/field/extension.rs`), whose `embed` and
+`try_restrict` are the identity and `Some`.
 
 Refinement anchors: `test_extension_laws_trivial_fp7`
-(`crates/gf2-core/src/field/axiom_tests.rs:2124`) and
+(`crates/gf2-core/src/field/axiom_tests.rs`) and
 `trivial_ext_is_the_identity_on_every_operation`
-(`crates/gf2-core/src/field/extension.rs:4365`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem trivial_self (F : Type*) [Field F] [Finite F] :
     Function.Bijective (algebraMap F F) ∧ ∀ x : F, relFrobenius F x = x := by
   have h : Module.finrank F F = 1 := Module.finrank_self F
@@ -620,17 +619,17 @@ pipeline extracts transparently, `gfpn::quadratic::QuadraticExt` and
 `gfpn::cubic::CubicExt`. Their `Field` instances are the transferred ones from
 `Gf2Core.Proofs.QuadraticExtField` and `Gf2Core.Proofs.CubicExtField`; the
 `Algebra` structure below is the model of `FieldExtension::embed`
-(`crates/gf2-core/src/field/extension.rs:2558`) at those carriers, sending a
+(`crates/gf2-core/src/field/extension.rs`) at those carriers, sending a
 base element `a` to the coefficient vector `(a, 0)` resp. `(a, 0, 0)`.
 
-`ValidExtConfig` (`Gf2Core/Proofs/ExtDefs.lean:65`) carries no finiteness, so
+`ValidExtConfig` (`Gf2Core/Proofs/ExtDefs.lean`) carries no finiteness, so
 these instantiations take `[Finite BF]` as an added hypothesis, exactly as the
 sketch's binding section states.
 
 L1.1 through L1.4 instantiate at both carriers below. L1.10 governs `r = 1`,
 which `quad_finrank` and `cubic_finrank` refute for these two carriers; its
 instantiation is `RelativeExtension.trivial_self`, the identity extension that
-models `TrivialExt` (`crates/gf2-core/src/field/extension.rs:3124`). -/
+models `TrivialExt` (`crates/gf2-core/src/field/extension.rs`). -/
 
 namespace ExtractedExtension
 
@@ -661,7 +660,7 @@ instance instFiniteQuadraticExt [Finite BF] :
 omit [Field BF] in
 /-- `|E| = q ^ 2` for the extracted quadratic carrier. This is the Lean
 counterpart of `order_eq_base_squared`
-(`Gf2Core/Proofs/QuadraticExtField.lean:89`), which pins the same cardinality on
+(`Gf2Core/Proofs/QuadraticExtField.lean`), which pins the same cardinality on
 the extracted `order` implementation. -/
 theorem quad_card [Finite BF] :
     Nat.card (gfpn.quadratic.QuadraticExt C BF Char Wide) = Nat.card BF ^ 2 := by
@@ -669,7 +668,7 @@ theorem quad_card [Finite BF] :
     Nat.card_prod, sq]
 
 /-- The model of `FieldExtension::embed`
-(`crates/gf2-core/src/field/extension.rs:2558`) at the extracted quadratic
+(`crates/gf2-core/src/field/extension.rs`) at the extracted quadratic
 carrier: `a ↦ (a, 0)`. -/
 @[reducible]
 noncomputable def quadAlgebra (hv : ValidExtConfig inst) :
@@ -773,7 +772,7 @@ theorem cubic_card [Finite BF] :
   ring
 
 /-- The model of `FieldExtension::embed`
-(`crates/gf2-core/src/field/extension.rs:2558`) at the extracted cubic carrier:
+(`crates/gf2-core/src/field/extension.rs`) at the extracted cubic carrier:
 `a ↦ (a, 0, 0)`. -/
 @[reducible]
 noncomputable def cubicAlgebra (hv : ValidCubicExtConfig inst) :

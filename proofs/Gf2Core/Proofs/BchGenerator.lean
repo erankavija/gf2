@@ -16,33 +16,33 @@
   here.
 
   The production path is `BchCode::construct`
-  (`crates/gf2-coding/src/bch/spec.rs:633`). Its supporting core functions are
-  `minimal_polynomial` (`crates/gf2-core/src/field/extension.rs:2390`) and
-  `conjugates` (`:2329`), together with `FieldPoly::lcm`
-  (`crates/gf2-core/src/field/poly.rs:1934`), `FieldPoly::div_rem` (`:1779`) and
-  `FieldPoly::eval` (`:1144`).
+  (`crates/gf2-coding/src/bch/spec.rs`). Its supporting core functions are
+  `minimal_polynomial` (`crates/gf2-core/src/field/extension.rs`) and
+  `conjugates`, together with `FieldPoly::lcm`
+  (`crates/gf2-core/src/field/poly.rs`), `FieldPoly::div_rem` and
+  `FieldPoly::eval`.
 
   Every model lemma names its refinement anchor: an executable Rust check that
   decides the same statement on that path. The anchors live in the production
   module's own test module and in the extension module's. One anchor is specific
   to this obligation: `the_generator_vanishes_at_every_defining_set_root`
-  (`crates/gf2-coding/src/bch/spec.rs:2129`) lifts each constructed generator
+  (`crates/gf2-coding/src/bch/spec.rs`) lifts each constructed generator
   into `E` through `FieldExtension::embed`
-  (`crates/gf2-core/src/field/extension.rs:2558`) and decides that it vanishes at
+  (`crates/gf2-core/src/field/extension.rs`) and decides that it vanishes at
   `root ^ j` for exactly the exponents `j` of the defining set, over the binary,
   GF(5)-base and GF(9)-base codes the suite builds. Its shared generic helper is
   `assert_generator_vanishes_exactly_on_the_defining_set`
-  (`crates/gf2-coding/src/bch/spec.rs:2102`).
+  (`crates/gf2-coding/src/bch/spec.rs`).
 
   The witnessed run of L4.7 and L4.8 is the one `witness_longest_run`
-  (`crates/gf2-coding/src/bch/spec.rs:1533`) returns, over all three of its
+  (`crates/gf2-coding/src/bch/spec.rs`) returns, over all three of its
   branches. Its two base cases carry their own anchors:
   `a_full_defining_set_yields_the_zero_dimensional_code`
-  (`crates/gf2-coding/src/bch/spec.rs:2673`) reads first root `Some(0)`, run
+  (`crates/gf2-coding/src/bch/spec.rs`) reads first root `Some(0)`, run
   `15`, bound `16` and radius `7` off the zero-dimensional code of length `15`,
-  and `a_designed_distance_of_one_yields_the_full_space_code` (`:2659`) reads
+  and `a_designed_distance_of_one_yields_the_full_space_code` reads
   first root `None`, run `0`, bound `1` and radius `0` off the full-space code.
-  `assert_witnessed_run_is_maximal` (`:1960`) covers the scan branch and
+  `assert_witnessed_run_is_maximal` covers the scan branch and
   re-decides the bound and radius on every constructed code.
 
   Scope: L4.7 and L4.8 characterise the witnessed run, a combinatorial property
@@ -51,9 +51,9 @@
   the sketch's register row A-09 and risk R-02. `α` having exact order `n` is a
   hypothesis of the model (row A-07), discharged in production by
   `validate_length_divides_unit_group`
-  (`crates/gf2-coding/src/bch/spec.rs:1271`), `resolve_root` (`:1320`),
-  `multiplicative_order` (`:1354`) and `has_exact_order`
-  (`crates/gf2-core/src/field/extension.rs:1678`). The model is
+  (`crates/gf2-coding/src/bch/spec.rs`), `resolve_root`,
+  `multiplicative_order` and `has_exact_order`
+  (`crates/gf2-core/src/field/extension.rs`). The model is
   representation-free, so the typed size rejections row A-10 names are outside
   it.
 
@@ -71,7 +71,7 @@
     `B[X]`. `generator` is the product over the coset representatives, and
     `minpoly_dvd_generator` with `generator_dvd_of_forall_minpoly_dvd` proves
     the two halves of the least-common-multiple property, which is the contract
-    `FieldPoly::lcm` (`crates/gf2-core/src/field/poly.rs:1934`) implements. This states the same
+    `FieldPoly::lcm` (`crates/gf2-core/src/field/poly.rs`) implements. This states the same
     fact without depending on which `GCDMonoid` instance `B[X]` carries.
   * L4.5 — the sketch names a separability-and-descent argument through
     `Polynomial.map_modByMonic`. `prod_X_sub_C_dvd` reaches the same conclusion
@@ -86,10 +86,10 @@
   * L4.7 — the sketch names `Fin n` combinatorics. `runLen` is `Nat.find` on the
     scan's own stopping condition over `ZMod n`, mirroring
     `CyclotomicClosure.cosetLen`, because the production loop computes exactly
-    that minimum (`crates/gf2-coding/src/bch/spec.rs:1560-1563`). The scan's
+    that minimum (`crates/gf2-coding/src/bch/spec.rs`). The scan's
     `bestRun` and `bestStart` are that loop alone; `witnessedRun` and
     `witnessedStart` are the reported witness, which the two early returns at
-    `crates/gf2-coding/src/bch/spec.rs:1534-1547` decide on the empty and the
+    `crates/gf2-coding/src/bch/spec.rs` decide on the empty and the
     full defining set. `reportedBound` and `correctionRadius` read off the
     reported witness, so L4.7 and L4.8 hold on every defining set rather than
     only on the ones that reach the scan.
@@ -165,15 +165,15 @@ theorem alphaPow_add {α : E} (hord : orderOf α = n) (i j : ZMod n) :
 their exponents. This is what ties the exponent combinatorics of O-3 to the field statement
 of this obligation, and it is where `ord(α) = n` is used.
 
-Production path: `derive_generator` (`crates/gf2-coding/src/bch/spec.rs:1439`) raises the root
+Production path: `derive_generator` (`crates/gf2-coding/src/bch/spec.rs`) raises the root
 to each coset representative and hands the result to `minimal_polynomial`
-(`crates/gf2-core/src/field/extension.rs:2390`), whose orbit is generated by the relative
+(`crates/gf2-core/src/field/extension.rs`), whose orbit is generated by the relative
 Frobenius.
 
 Refinement anchor: the closure assertion of `assert_construction_is_consistent`
-(`crates/gf2-coding/src/bch/spec.rs:1948-1954`), which recomputes `exponent * q mod n` for every
+(`crates/gf2-coding/src/bch/spec.rs`), which recomputes `exponent * q mod n` for every
 member of the defining set, and `the_generator_vanishes_at_every_defining_set_root`
-(`crates/gf2-coding/src/bch/spec.rs:2129`), which decides the field statement directly. -/
+(`crates/gf2-coding/src/bch/spec.rs`), which decides the field statement directly. -/
 theorem relFrobenius_alphaPow {α : E} (hord : orderOf α = n) (j : ZMod n) :
     relFrobenius B (alphaPow α j) = alphaPow α (CyclotomicClosure.mu (Nat.card B) j) := by
   rw [relFrobenius_apply]
@@ -190,7 +190,7 @@ def orbitFinset (x : E) : Finset E :=
   (Finset.range (orbitPeriod B x)).image fun i => (relFrobenius B : E → E)^[i] x
 
 /-- Orbit membership in the form the `conjugates` loop advances
-(`crates/gf2-core/src/field/extension.rs:2329`): reachable from `x` by fewer than `ℓ`
+(`crates/gf2-core/src/field/extension.rs`): reachable from `x` by fewer than `ℓ`
 Frobenius steps. -/
 theorem mem_orbitFinset {x y : E} :
     y ∈ orbitFinset B x ↔ ∃ i < orbitPeriod B x, (relFrobenius B : E → E)^[i] x = y := by
@@ -259,11 +259,11 @@ theorem map_relFrobenius_conjProd (x : E) :
 
 /-- **L4.1 (b).** Every coefficient of `m_x` is `φ_B`-fixed, hence in `ι(B)`. This is what
 discharges the coefficient restriction inside `minimal_polynomial`
-(`crates/gf2-core/src/field/extension.rs:2398`): `restrict_invariant` (`:2507`) never
+(`crates/gf2-core/src/field/extension.rs`): `restrict_invariant` never
 panics.
 
 Refinement anchor: `assert_minimal_polynomial_properties`
-(`crates/gf2-core/src/field/extension.rs:4104`), whose base-membership assertion restricts every
+(`crates/gf2-core/src/field/extension.rs`), whose base-membership assertion restricts every
 coefficient. -/
 theorem conjProd_coeff_mem_range (x : E) (k : ℕ) :
     (conjProd B x).coeff k ∈ Set.range (algebraMap B E) := by
@@ -273,7 +273,7 @@ theorem conjProd_coeff_mem_range (x : E) (k : ℕ) :
   rw [coeff_map]
 
 /-- The conjugate product lifts to a monic polynomial over `B` of the same degree, the
-polynomial `minimal_polynomial` (`crates/gf2-core/src/field/extension.rs:2390`) returns. -/
+polynomial `minimal_polynomial` (`crates/gf2-core/src/field/extension.rs`) returns. -/
 theorem exists_lift_conjProd (x : E) :
     ∃ m : Polynomial B, m.Monic ∧ m.map (algebraMap B E) = conjProd B x ∧
       m.natDegree = orbitPeriod B x := by
@@ -335,15 +335,15 @@ theorem orbitPeriod_le_natDegree_minpoly (x : E) :
 /-- **L4.1 (d).** The conjugate product is the image of `minpoly B x`, so `minpoly B x` is the
 model's `m_x` over the base field and parts (a) and (c) read off it.
 
-Production path: `minimal_polynomial` (`crates/gf2-core/src/field/extension.rs:2390`), which
-forms the product over `conjugates` (`:2329`) with `FieldPoly::from_roots`
-(`crates/gf2-core/src/field/poly.rs:1455`) and restricts the coefficients.
+Production path: `minimal_polynomial` (`crates/gf2-core/src/field/extension.rs`), which
+forms the product over `conjugates` with `FieldPoly::from_roots`
+(`crates/gf2-core/src/field/poly.rs`) and restricts the coefficients.
 
 Refinement anchor: `assert_minimal_polynomial_properties`
-(`crates/gf2-core/src/field/extension.rs:4104`), driven by
-`prop_binary_minimal_polynomial_and_relative_laws` (`:4171`),
-`prop_odd_prime_minimal_polynomial_and_relative_laws` (`:4195`) and
-`prop_odd_tower_minimal_polynomial` (`:4208`). -/
+(`crates/gf2-core/src/field/extension.rs`), driven by
+`prop_binary_minimal_polynomial_and_relative_laws`,
+`prop_odd_prime_minimal_polynomial_and_relative_laws` and
+`prop_odd_tower_minimal_polynomial`. -/
 theorem conjProd_eq_map_minpoly (x : E) :
     conjProd B x = (minpoly B x).map (algebraMap B E) := by
   obtain ⟨m, hmonic, hmap, hdeg⟩ := exists_lift_conjProd B x
@@ -362,7 +362,7 @@ theorem conjProd_eq_map_minpoly (x : E) :
 /-- **L4.1 (a).** `m_x` is monic of degree `ℓ`, the length of the conjugate orbit.
 
 Refinement anchor: `assert_minimal_polynomial_properties`
-(`crates/gf2-core/src/field/extension.rs:4104`), whose degree and monicity assertions decide
+(`crates/gf2-core/src/field/extension.rs`), whose degree and monicity assertions decide
 both halves. -/
 theorem minpoly_monic_natDegree (x : E) :
     (minpoly B x).Monic ∧ (minpoly B x).natDegree = orbitPeriod B x := by
@@ -373,7 +373,7 @@ theorem minpoly_monic_natDegree (x : E) :
 /-- **L4.1 (c).** `m_x` vanishes at `x`.
 
 Refinement anchor: `assert_minimal_polynomial_properties`
-(`crates/gf2-core/src/field/extension.rs:4104`), whose root assertion evaluates the returned
+(`crates/gf2-core/src/field/extension.rs`), whose root assertion evaluates the returned
 polynomial at `x`. -/
 theorem aeval_minpoly_self (x : E) : Polynomial.aeval x (minpoly B x) = 0 :=
   minpoly.aeval B x
@@ -510,7 +510,7 @@ theorem cosetFinset_pairwiseDisjoint {q : ℕ} (hq : Nat.Coprime q n) (T : Finse
   rw [← ((mem_reps hq T a).1 ha).2, ← ((mem_reps hq T b).1 hb).2, hmin]
 
 /-- The defining set is the disjoint union of the cosets of its representatives, which is what
-`derive_generator` (`crates/gf2-coding/src/bch/spec.rs:1446`) iterates over. -/
+`derive_generator` (`crates/gf2-coding/src/bch/spec.rs`) iterates over. -/
 theorem biUnion_cosetFinset_reps {q : ℕ} (hq : Nat.Coprime q n) {T : Finset (ZMod n)}
     (hclosed : ∀ j ∈ T, CyclotomicClosure.mu q j ∈ T) :
     (reps hq T).biUnion (cosetFinset hq) = T := by
@@ -538,13 +538,13 @@ polynomials of the coset representatives. It is a polynomial over `B` by
 typing, which is the membership half of this obligation, because L4.1 (b) has
 already put each factor there.
 
-Production path: `derive_generator` (`crates/gf2-coding/src/bch/spec.rs:1439`), which folds
-`FieldPoly::lcm` (`crates/gf2-core/src/field/poly.rs:1934`) over the coset minimal polynomials.
+Production path: `derive_generator` (`crates/gf2-coding/src/bch/spec.rs`), which folds
+`FieldPoly::lcm` (`crates/gf2-core/src/field/poly.rs`) over the coset minimal polynomials.
 
 Refinement anchors: `prime_base_primitive_construction_derives_a_base_field_generator`
-(`crates/gf2-coding/src/bch/spec.rs:2051`) and
+(`crates/gf2-coding/src/bch/spec.rs`) and
 `extension_base_primitive_construction_derives_a_base_field_generator`
-(`crates/gf2-coding/src/bch/spec.rs:2071`), which assert `base_field_id()` against the intended
+(`crates/gf2-coding/src/bch/spec.rs`), which assert `base_field_id()` against the intended
 base. -/
 def generator (hq : Nat.Coprime (Nat.card B) n) (α : E) (T : Finset (ZMod n)) : Polynomial B :=
   ∏ c ∈ reps hq T, minpoly B (alphaPow α c)
@@ -553,7 +553,7 @@ def generator (hq : Nat.Coprime (Nat.card B) n) (α : E) (T : Finset (ZMod n)) :
 dimension is exact.
 
 Refinement anchor: `assert_construction_is_consistent`
-(`crates/gf2-coding/src/bch/spec.rs:1928`), whose `degree()` call rejects a zero generator. -/
+(`crates/gf2-coding/src/bch/spec.rs`), whose `degree()` call rejects a zero generator. -/
 theorem generator_monic (hq : Nat.Coprime (Nat.card B) n) (α : E) (T : Finset (ZMod n)) :
     (generator B hq α T).Monic :=
   monic_prod_of_monic _ _ fun _ _ => minpoly.monic (IsIntegral.of_finite B _)
@@ -576,13 +576,13 @@ theorem map_generator (hord : orderOf α = n) (hq : Nat.Coprime (Nat.card B) n)
 exponent `j` of the defining set. This is the root-correctness half of the
 obligation.
 
-Production path: `derive_generator` (`crates/gf2-coding/src/bch/spec.rs:1439`) together with
-`assemble` (`:1488`), which stores the defining set the generator's roots are
+Production path: `derive_generator` (`crates/gf2-coding/src/bch/spec.rs`) together with
+`assemble`, which stores the defining set the generator's roots are
 indexed by.
 
 Refinement anchor: `the_generator_vanishes_at_every_defining_set_root`
-(`crates/gf2-coding/src/bch/spec.rs:2129`), whose shared helper
-`assert_generator_vanishes_exactly_on_the_defining_set` (`:2102`) lifts the
+(`crates/gf2-coding/src/bch/spec.rs`), whose shared helper
+`assert_generator_vanishes_exactly_on_the_defining_set` lifts the
 generator into `E` and decides `eval(root ^ j).is_zero()` against defining-set
 membership for every exponent below `n`. -/
 theorem aeval_generator_alphaPow (hord : orderOf α = n) (hq : Nat.Coprime (Nat.card B) n)
@@ -612,10 +612,10 @@ generator, so the generator is a common multiple of the family — the first hal
 of the `lcm` contract.
 
 Production path: the `FieldPoly::lcm` fold of `derive_generator`
-(`crates/gf2-coding/src/bch/spec.rs:1445-1452`).
+(`crates/gf2-coding/src/bch/spec.rs`).
 
 Refinement anchor: `the_generator_vanishes_at_every_defining_set_root`
-(`crates/gf2-coding/src/bch/spec.rs:2129`), which fails as soon as one coset's roots are missing
+(`crates/gf2-coding/src/bch/spec.rs`), which fails as soon as one coset's roots are missing
 from the generator. -/
 theorem minpoly_dvd_generator (hord : orderOf α = n) (hq : Nat.Coprime (Nat.card B) n)
     {T : Finset (ZMod n)} (hclosed : ∀ j ∈ T, CyclotomicClosure.mu (Nat.card B) j ∈ T)
@@ -630,11 +630,11 @@ theorem minpoly_dvd_generator (hord : orderOf α = n) (hq : Nat.Coprime (Nat.car
 
 /-- **L4.2 (upper bound).** The generator divides every common multiple of the coset minimal
 polynomials. With the lower bound this is the least-common- multiple property, which is what
-`FieldPoly::lcm` (`crates/gf2-core/src/field/poly.rs:1934`) computes and what keeps the
+`FieldPoly::lcm` (`crates/gf2-core/src/field/poly.rs`) computes and what keeps the
 generator's degree from exceeding `|T|`.
 
 Refinement anchor: `assert_construction_is_consistent`
-(`crates/gf2-coding/src/bch/spec.rs:1940`), whose `one root per generator degree` assertion
+(`crates/gf2-coding/src/bch/spec.rs`), whose `one root per generator degree` assertion
 rejects a generator carrying a factor more than once. -/
 theorem generator_dvd_of_forall_minpoly_dvd (hord : orderOf α = n)
     (hq : Nat.Coprime (Nat.card B) n) {T : Finset (ZMod n)}
@@ -661,12 +661,11 @@ theorem generator_dvd_of_forall_minpoly_dvd (hord : orderOf α = n)
 /-- **L4.5 (divisibility).** The generator divides `X ^ n - 1` over the base field.
 
 Production path: `derive_generator` re-checks exactly this at run time
-(`crates/gf2-coding/src/bch/spec.rs:1459-1466`) against `cyclic_polynomial` (`:1470`) and
+(`crates/gf2-coding/src/bch/spec.rs`) against `cyclic_polynomial` and
 reports `BchError::GeneratorNotDivisorOfCyclicPolynomial` when it fails.
 
 Refinement anchors: `generator_divides_cyclic_polynomial`
-(`crates/gf2-coding/src/bch/spec.rs:1893`) through `assert_construction_is_consistent`
-(`:1930`), and `binary_generators_divide_the_cyclic_polynomial` (`:2041`). -/
+(`crates/gf2-coding/src/bch/spec.rs`) through `assert_construction_is_consistent`, and `binary_generators_divide_the_cyclic_polynomial`. -/
 theorem generator_dvd_X_pow_sub_one (hord : orderOf α = n) (hq : Nat.Coprime (Nat.card B) n)
     {T : Finset (ZMod n)} (hclosed : ∀ j ∈ T, CyclotomicClosure.mu (Nat.card B) j ∈ T) :
     generator B hq α T ∣ (X ^ n - 1 : Polynomial B) := by
@@ -692,11 +691,11 @@ theorem generator_dvd_X_pow_sub_one (hord : orderOf α = n) (hq : Nat.Coprime (N
 /-- **L4.6 (degree).** The generator has one root per exponent of the defining set, so its
 degree is `|T|`.
 
-Production path: `assemble` (`crates/gf2-coding/src/bch/spec.rs:1488`) reads the degree off the
+Production path: `assemble` (`crates/gf2-coding/src/bch/spec.rs`) reads the degree off the
 generator and the defining set off the closure.
 
 Refinement anchor: `assert_construction_is_consistent`
-(`crates/gf2-coding/src/bch/spec.rs:1940`), the `one root per generator degree` assertion. -/
+(`crates/gf2-coding/src/bch/spec.rs`), the `one root per generator degree` assertion. -/
 theorem natDegree_generator (hord : orderOf α = n) (hq : Nat.Coprime (Nat.card B) n)
     {T : Finset (ZMod n)} (hclosed : ∀ j ∈ T, CyclotomicClosure.mu (Nat.card B) j ∈ T) :
     (generator B hq α T).natDegree = T.card := by
@@ -711,10 +710,10 @@ theorem card_le_length (T : Finset (ZMod n)) : T.card ≤ n := by
     _ = n := ZMod.card n
 
 /-- **L4.6 (dimension).** `k = n - |T|` is a genuine subtraction, so the `checked_sub` that
-forms the dimension (`crates/gf2-coding/src/bch/spec.rs:1505`) is total and `0 ≤ k ≤ n`.
+forms the dimension (`crates/gf2-coding/src/bch/spec.rs`) is total and `0 ≤ k ≤ n`.
 
 Refinement anchor: `assert_construction_is_consistent`
-(`crates/gf2-coding/src/bch/spec.rs:1929`), the `k must be n - deg(g)` assertion. -/
+(`crates/gf2-coding/src/bch/spec.rs`), the `k must be n - deg(g)` assertion. -/
 theorem dimension_add_natDegree (hord : orderOf α = n) (hq : Nat.Coprime (Nat.card B) n)
     {T : Finset (ZMod n)} (hclosed : ∀ j ∈ T, CyclotomicClosure.mu (Nat.card B) j ∈ T) :
     (n - (generator B hq α T).natDegree) + (generator B hq α T).natDegree = n := by
@@ -735,7 +734,7 @@ theorem exists_run_stop (s : ZMod n) : ∃ r : ℕ, r = n ∨ (s + (r : ZMod n))
 at `n`.
 
 Production path: the inner loop of `witness_longest_run`
-(`crates/gf2-coding/src/bch/spec.rs:1560-1563`), whose guard `run < length && present[(start +
+(`crates/gf2-coding/src/bch/spec.rs`), whose guard `run < length && present[(start +
 run) % length]` stops at the first absent exponent or at `length`. -/
 def runLen (s : ZMod n) : ℕ := Nat.find (exists_run_stop T s)
 
@@ -780,12 +779,12 @@ theorem runLen_eq_length_of_univ (hT : ∀ x : ZMod n, x ∈ T) (s : ZMod n) : r
 /-- The scan's guard: `s` starts a run when `s` is present and `s - 1` is not.
 
 Production path: the `continue` guard of `witness_longest_run`
-(`crates/gf2-coding/src/bch/spec.rs:1557-1559`), `!present[start] || present[(start + length -
+(`crates/gf2-coding/src/bch/spec.rs`), `!present[start] || present[(start + length -
 1) % length]`. -/
 def IsRunStart (s : ZMod n) : Prop := s ∈ T ∧ s - 1 ∉ T
 
 /-- The exponents at which the scan opens a run: the candidates the outer loop
-of `witness_longest_run` (`crates/gf2-coding/src/bch/spec.rs:1556`) does not skip. -/
+of `witness_longest_run` (`crates/gf2-coding/src/bch/spec.rs`) does not skip. -/
 def runStarts : Finset (ZMod n) := Finset.univ.filter fun s => IsRunStart T s
 
 /-- Membership in the candidate set is the scan's guard. -/
@@ -794,7 +793,7 @@ theorem mem_runStarts {s : ZMod n} : s ∈ runStarts T ↔ IsRunStart T s := by
 
 /-- Walking backwards from a present exponent reaches a run start, as long as
 some exponent is absent. This is why the scan's outer loop
-(`crates/gf2-coding/src/bch/spec.rs:1556`) loses nothing by skipping the
+(`crates/gf2-coding/src/bch/spec.rs`) loses nothing by skipping the
 exponents its guard rejects. -/
 theorem exists_backward_runStart {s : ZMod n} (hs : s ∈ T) (hne : ∃ y : ZMod n, y ∉ T) :
     ∃ d : ℕ, IsRunStart T (s - ((d : ℕ) : ZMod n)) ∧
@@ -816,7 +815,7 @@ theorem exists_backward_runStart {s : ZMod n} (hs : s ∈ T) (hne : ∃ y : ZMod
 /-- The scan opens at least one run whenever `T` is neither empty nor the whole
 cycle. These are exactly the defining sets that reach the scan:
 `witness_longest_run` returns before it for the other two
-(`crates/gf2-coding/src/bch/spec.rs:1534-1547`). -/
+(`crates/gf2-coding/src/bch/spec.rs`). -/
 theorem runStarts_nonempty (h0 : T ≠ ∅) (hu : T ≠ Finset.univ) : (runStarts T).Nonempty := by
   obtain ⟨x, hx⟩ := Finset.nonempty_iff_ne_empty.2 h0
   have hne : ∃ y : ZMod n, y ∉ T := by
@@ -826,10 +825,10 @@ theorem runStarts_nonempty (h0 : T ≠ ∅) (hu : T ≠ Finset.univ) : (runStart
   exact ⟨_, (mem_runStarts T).2 hstart⟩
 
 /-- The longest cyclic run of consecutive members of `T`: the `best_run` the
-scan accumulates (`crates/gf2-coding/src/bch/spec.rs:1564-1567`).
+scan accumulates (`crates/gf2-coding/src/bch/spec.rs`).
 
-Refinement anchor: `assert_witnessed_run_is_maximal` (`crates/gf2-coding/src/bch/spec.rs:1960`),
-whose closing sweep at `:1994-2003` recomputes the run from every present
+Refinement anchor: `assert_witnessed_run_is_maximal` (`crates/gf2-coding/src/bch/spec.rs`),
+whose closing sweep recomputes the run from every present
 exponent and rejects a longer one. -/
 def bestRun : ℕ := (runStarts T).sup (runLen T)
 
@@ -838,8 +837,8 @@ witnessed one. Walking backwards from any exponent reaches a run start whose run
 which is why scanning only the run starts loses nothing.
 
 Refinement anchors: `assert_witnessed_run_is_maximal`
-(`crates/gf2-coding/src/bch/spec.rs:1994-2003`) and
-`the_witnessed_run_is_present_and_maximal_in_the_defining_set` (`:2646`). -/
+(`crates/gf2-coding/src/bch/spec.rs`) and
+`the_witnessed_run_is_present_and_maximal_in_the_defining_set`. -/
 theorem runLen_le_bestRun (hne : ∃ y : ZMod n, y ∉ T) (s : ZMod n) :
     runLen T s ≤ bestRun T := by
   rcases Nat.eq_zero_or_pos (runLen T s) with h0 | hpos
@@ -872,7 +871,7 @@ theorem exists_bestRun_start (hs : (runStarts T).Nonempty) :
 
 /-- The witnessed start: the least exponent that opens a longest run, which is
 the tie-break the scan's strict `run > best_run` comparison implements
-(`crates/gf2-coding/src/bch/spec.rs:1564`). -/
+(`crates/gf2-coding/src/bch/spec.rs`). -/
 def bestStart (hs : (runStarts T).Nonempty) : ℕ := Nat.find (exists_bestRun_start T hs)
 
 /-- The witnessed start opens a run. -/
@@ -889,7 +888,7 @@ theorem runLen_bestStart (hs : (runStarts T).Nonempty) :
 length, so the witness is reproducible.
 
 Refinement anchor: `first_root_flavor_witnesses_the_run_it_actually_has`
-(`crates/gf2-coding/src/bch/spec.rs:2150`), whose expected first root is the least start of the
+(`crates/gf2-coding/src/bch/spec.rs`), whose expected first root is the least start of the
 longest run rather than the requested one. -/
 theorem bestStart_le (hs : (runStarts T).Nonempty) {m : ℕ}
     (hm : IsRunStart T ((m : ℕ) : ZMod n)) (hrun : runLen T ((m : ℕ) : ZMod n) = bestRun T) :
@@ -899,7 +898,7 @@ theorem bestStart_le (hs : (runStarts T).Nonempty) {m : ℕ}
 /-- **L4.7 (the witness is present).** Every exponent of the witnessed run lies
 in the defining set.
 
-Refinement anchor: `assert_witnessed_run_is_maximal` (`crates/gf2-coding/src/bch/spec.rs:1981`),
+Refinement anchor: `assert_witnessed_run_is_maximal` (`crates/gf2-coding/src/bch/spec.rs`),
 the `witnessed exponent {exponent} is absent` assertion. -/
 theorem mem_of_lt_bestRun (hs : (runStarts T).Nonempty) {i : ℕ} (hi : i < bestRun T) :
     ((bestStart T hs : ℕ) : ZMod n) + (i : ZMod n) ∈ T :=
@@ -909,7 +908,7 @@ theorem mem_of_lt_bestRun (hs : (runStarts T).Nonempty) {i : ℕ} (hi : i < best
 on both sides by absent exponents.
 
 Refinement anchor: `assert_witnessed_run_is_maximal`
-(`crates/gf2-coding/src/bch/spec.rs:1983-1992`), the two `if run < n` assertions. -/
+(`crates/gf2-coding/src/bch/spec.rs`), the two `if run < n` assertions. -/
 theorem bestRun_boundaries (hs : (runStarts T).Nonempty) (hlt : bestRun T < n) :
     ((bestStart T hs : ℕ) : ZMod n) - 1 ∉ T ∧
       ((bestStart T hs : ℕ) : ZMod n) + ((bestRun T : ℕ) : ZMod n) ∉ T := by
@@ -924,23 +923,22 @@ theorem univ_ne_empty : (Finset.univ : Finset (ZMod n)) ≠ ∅ :=
 
 /-- The run `witness_longest_run` reports: the whole cycle on the full defining
 set, zero on the empty one, and the scan's `best_run` otherwise. The two base
-cases are the early returns at `crates/gf2-coding/src/bch/spec.rs:1534-1547`,
+cases are the early returns at `crates/gf2-coding/src/bch/spec.rs`,
 which production decides before the scan ever runs; the third branch is the
-`consecutive_root_count: best_run` of the returned witness (`:1572`).
+`consecutive_root_count: best_run` of the returned witness.
 
 Refinement anchors: `a_full_defining_set_yields_the_zero_dimensional_code`
-(`crates/gf2-coding/src/bch/spec.rs:2673`), which reads `15` on the full set of
-a length-`15` code, and `a_designed_distance_of_one_yields_the_full_space_code`
-(`:2659`), which reads `0` on the empty one. -/
+(`crates/gf2-coding/src/bch/spec.rs`), which reads `15` on the full set of
+a length-`15` code, and `a_designed_distance_of_one_yields_the_full_space_code`, which reads `0` on the empty one. -/
 def witnessedRun : ℕ := if T = ∅ then 0 else if T = Finset.univ then n else bestRun T
 
 /-- The first root `witness_longest_run` reports: `0` on the full defining set,
 none on the empty one, and the scan's least best start otherwise
-(`crates/gf2-coding/src/bch/spec.rs:1534-1547` and `:1571`).
+(`crates/gf2-coding/src/bch/spec.rs`).
 
 Refinement anchors: `a_full_defining_set_yields_the_zero_dimensional_code`
-(`crates/gf2-coding/src/bch/spec.rs:2673`), which reads `Some(RootExponent(0))`,
-and `a_designed_distance_of_one_yields_the_full_space_code` (`:2659`), which
+(`crates/gf2-coding/src/bch/spec.rs`), which reads `Some(RootExponent(0))`,
+and `a_designed_distance_of_one_yields_the_full_space_code`, which
 reads `None`. -/
 def witnessedStart : Option ℕ :=
   if h0 : T = ∅ then none
@@ -948,12 +946,12 @@ def witnessedStart : Option ℕ :=
   else some (bestStart T (runStarts_nonempty T h0 hu))
 
 /-- The reported minimum-distance lower bound: the witnessed run plus one
-(`crates/gf2-coding/src/bch/spec.rs:531`, and the three
-`minimum_distance_lower_bound` fields at `:1538`, `:1545` and `:1573`). -/
+(`crates/gf2-coding/src/bch/spec.rs`, and the three
+`minimum_distance_lower_bound` fields). -/
 def reportedBound : ℕ := witnessedRun T + 1
 
 /-- The reported correction radius: half the witnessed run, the
-`consecutive_root_count / 2` of `assemble` (`crates/gf2-coding/src/bch/spec.rs:1514`). -/
+`consecutive_root_count / 2` of `assemble` (`crates/gf2-coding/src/bch/spec.rs`). -/
 def correctionRadius : ℕ := witnessedRun T / 2
 
 /-- The empty defining set takes the first early return. -/
@@ -993,7 +991,7 @@ theorem exists_notMem_of_ne_univ (hu : T ≠ Finset.univ) : ∃ y : ZMod n, y �
 
 /-- With no member present no exponent opens a run and every run length is zero, so the scan
 cannot name a start. This is why `witness_longest_run` decides the empty defining set before
-the scan (`crates/gf2-coding/src/bch/spec.rs:1534-1540`). -/
+the scan (`crates/gf2-coding/src/bch/spec.rs`). -/
 theorem scan_of_empty (h : T = ∅) :
     runStarts T = ∅ ∧ bestRun T = 0 ∧ ∀ s : ZMod n, runLen T s = 0 := by
   subst h
@@ -1003,7 +1001,7 @@ theorem scan_of_empty (h : T = ∅) :
 
 /-- With every exponent present no exponent opens a run either, because none has an absent
 predecessor. This is why `witness_longest_run` decides the full defining set before the scan
-(`crates/gf2-coding/src/bch/spec.rs:1541-1547`). -/
+(`crates/gf2-coding/src/bch/spec.rs`). -/
 theorem scan_of_univ (h : ∀ x : ZMod n, x ∈ T) : runStarts T = ∅ ∧ bestRun T = 0 := by
   have hempty : runStarts T = ∅ :=
     Finset.eq_empty_of_forall_notMem fun s hs => ((mem_runStarts T).1 hs).2 (h _)
@@ -1011,11 +1009,11 @@ theorem scan_of_univ (h : ∀ x : ZMod n, x ∈ T) : runStarts T = ∅ ∧ bestR
 
 /-- **L4.7 (base case `T = ∅`).** The empty defining set reports no first root, a run of `0`,
 a bound of `1` and a radius of `0`, the first early return of `witness_longest_run`
-(`crates/gf2-coding/src/bch/spec.rs:1534-1540`).
+(`crates/gf2-coding/src/bch/spec.rs`).
 
 Refinement anchor: `a_designed_distance_of_one_yields_the_full_space_code`
-(`crates/gf2-coding/src/bch/spec.rs:2659`), which reads exactly those four values off the
-full-space code, and `assert_witnessed_run_is_maximal` (`:1973-1976`), the branch that asserts
+(`crates/gf2-coding/src/bch/spec.rs`), which reads exactly those four values off the
+full-space code, and `assert_witnessed_run_is_maximal`, the branch that asserts
 an empty defining set against a `None` first root. -/
 theorem run_of_empty (h : T = ∅) :
     witnessedRun T = 0 ∧ witnessedStart T = none ∧ reportedBound T = 1 ∧
@@ -1027,11 +1025,11 @@ theorem run_of_empty (h : T = ∅) :
 /-- **L4.7 (base case `|T| = n`).** The full defining set reports first root `0`, a run of `n`,
 a bound of `n + 1` and a radius of `⌊n/2⌋`, and every exponent `0 + i` with `i < n` lies in it.
 This is the second early return of `witness_longest_run`
-(`crates/gf2-coding/src/bch/spec.rs:1541-1547`), which production takes before the scan; the
+(`crates/gf2-coding/src/bch/spec.rs`), which production takes before the scan; the
 scan itself finds no run start here, which `scan_of_univ` records.
 
 Refinement anchor: `a_full_defining_set_yields_the_zero_dimensional_code`
-(`crates/gf2-coding/src/bch/spec.rs:2673`), which reads `Some(RootExponent(0))`, `15`, `16`
+(`crates/gf2-coding/src/bch/spec.rs`), which reads `Some(RootExponent(0))`, `15`, `16`
 and `7` off the zero-dimensional code of length `15`. -/
 theorem run_of_univ (h : ∀ x : ZMod n, x ∈ T) :
     T.card = n ∧ witnessedRun T = n ∧ witnessedStart T = some 0 ∧
@@ -1048,7 +1046,7 @@ theorem run_of_univ (h : ∀ x : ZMod n, x ∈ T) :
 set, on every defining set: through the scan when one is reached, and through membership itself
 on the full cycle.
 
-Refinement anchor: `assert_witnessed_run_is_maximal` (`crates/gf2-coding/src/bch/spec.rs:1981`),
+Refinement anchor: `assert_witnessed_run_is_maximal` (`crates/gf2-coding/src/bch/spec.rs`),
 the `witnessed exponent {exponent} is absent` assertion, which runs on the reported first root
 whichever branch produced it. -/
 theorem mem_of_lt_witnessedRun {m : ℕ} (hm : witnessedStart T = some m) {i : ℕ}
@@ -1068,7 +1066,7 @@ on both sides by absent exponents. The full defining set has no such boundary, a
 the whole cycle, so the hypothesis excludes it; the empty one reports no first root.
 
 Refinement anchor: `assert_witnessed_run_is_maximal`
-(`crates/gf2-coding/src/bch/spec.rs:1983-1992`), the two `if run < n` assertions. -/
+(`crates/gf2-coding/src/bch/spec.rs`), the two `if run < n` assertions. -/
 theorem witnessedRun_boundaries {m : ℕ} (hm : witnessedStart T = some m)
     (hlt : witnessedRun T < n) :
     ((m : ℕ) : ZMod n) - 1 ∉ T ∧
@@ -1088,9 +1086,9 @@ witnessed one, on every defining set. On the full cycle every run is `n`, which 
 witnessed run itself.
 
 Refinement anchors: `assert_witnessed_run_is_maximal`
-(`crates/gf2-coding/src/bch/spec.rs:1994-2003`), whose closing sweep recomputes the run from
+(`crates/gf2-coding/src/bch/spec.rs`), whose closing sweep recomputes the run from
 every present exponent and rejects a longer one, and
-`the_witnessed_run_is_present_and_maximal_in_the_defining_set` (`:2646`). -/
+`the_witnessed_run_is_present_and_maximal_in_the_defining_set`. -/
 theorem runLen_le_witnessedRun (s : ZMod n) : runLen T s ≤ witnessedRun T := by
   by_cases h0 : T = ∅
   · rw [witnessedRun_empty T h0]
@@ -1105,7 +1103,7 @@ witness is reproducible. On the full defining set the reported start is `0`, whi
 undercuts.
 
 Refinement anchor: `first_root_flavor_witnesses_the_run_it_actually_has`
-(`crates/gf2-coding/src/bch/spec.rs:2150`), whose expected first root is the least start of the
+(`crates/gf2-coding/src/bch/spec.rs`), whose expected first root is the least start of the
 longest run rather than the requested one. -/
 theorem witnessedStart_le {m : ℕ} (hm : witnessedStart T = some m) {m' : ℕ}
     (hstart : IsRunStart T ((m' : ℕ) : ZMod n))
@@ -1129,7 +1127,7 @@ about the witnessed run alone; the step from it to the code's true minimum
 distance is the Vandermonde argument the sketch's row A-09 places out of scope.
 
 Refinement anchor: `assert_witnessed_run_is_maximal`
-(`crates/gf2-coding/src/bch/spec.rs:1970-1971`), which recomputes both fields
+(`crates/gf2-coding/src/bch/spec.rs`), which recomputes both fields
 from the run. -/
 theorem two_mul_correctionRadius_lt_reportedBound :
     2 * correctionRadius T + 1 ≤ reportedBound T := by
@@ -1139,12 +1137,12 @@ theorem two_mul_correctionRadius_lt_reportedBound :
 /-- **L4.8 (consecutive flavors, scan branch).** A run of `δ - 1` consecutive seeds inside a
 defining set that the scan reaches forces the scan's run to be at least that long. The seeds
 are in the defining set by O-3's L3.5, because `consecutive_seeds`
-(`crates/gf2-coding/src/bch/spec.rs:1407`) feeds them to the closure.
+(`crates/gf2-coding/src/bch/spec.rs`) feeds them to the closure.
 
 Refinement anchors: `primitive_narrow_sense_agrees_with_the_current_binary_generators`
-(`crates/gf2-coding/src/bch/spec.rs:2009`),
-`first_root_flavor_witnesses_the_run_it_actually_has` (`:2150`) and
-`narrow_sense_is_the_first_root_flavor_at_exponent_one` (`:2175`). -/
+(`crates/gf2-coding/src/bch/spec.rs`),
+`first_root_flavor_witnesses_the_run_it_actually_has` and
+`narrow_sense_is_the_first_root_flavor_at_exponent_one`. -/
 theorem le_bestRun_of_consecutive (hne : ∃ y : ZMod n, y ∉ T) (b : ZMod n) {m : ℕ}
     (hm : m ≤ n) (hseeds : ∀ i < m, b + (i : ZMod n) ∈ T) : m ≤ bestRun T := by
   have h1 := le_runLen_of_forall T hseeds
@@ -1156,8 +1154,8 @@ forces the witnessed run to be at least that long, on every defining set. The fu
 holds because the seeds cannot exceed the cycle and the witnessed run is the whole cycle.
 
 Refinement anchors: `primitive_narrow_sense_agrees_with_the_current_binary_generators`
-(`crates/gf2-coding/src/bch/spec.rs:2009`) and
-`a_full_defining_set_yields_the_zero_dimensional_code` (`:2673`), whose designed distance of
+(`crates/gf2-coding/src/bch/spec.rs`) and
+`a_full_defining_set_yields_the_zero_dimensional_code`, whose designed distance of
 `16` on a length-`15` code closes over the full defining set. -/
 theorem le_witnessedRun_of_consecutive (b : ZMod n) {m : ℕ} (hm : m ≤ n)
     (hseeds : ∀ i < m, b + (i : ZMod n) ∈ T) : m ≤ witnessedRun T := by
@@ -1175,9 +1173,9 @@ consecutive seeds land in the defining set is reached by the reported bound, on 
 set. At `δ = n + 1` the seeds fill the cycle, and the reported bound is `n + 1`.
 
 Refinement anchors: `primitive_narrow_sense_agrees_with_the_current_binary_generators`
-(`crates/gf2-coding/src/bch/spec.rs:2009`), which compares the reported bound
+(`crates/gf2-coding/src/bch/spec.rs`), which compares the reported bound
 against the designed distance of every pinned binary parameter point, and
-`a_full_defining_set_yields_the_zero_dimensional_code` (`:2673`), which reads `16` against a
+`a_full_defining_set_yields_the_zero_dimensional_code`, which reads `16` against a
 designed distance of `16`. -/
 theorem le_reportedBound_of_consecutive (b : ZMod n) {d : ℕ}
     (hd : d - 1 ≤ n) (hseeds : ∀ i < d - 1, b + (i : ZMod n) ∈ T) : d ≤ reportedBound T := by

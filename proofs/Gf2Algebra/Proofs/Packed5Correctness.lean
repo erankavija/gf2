@@ -14,7 +14,7 @@ namespace Packed5Correctness
 
 The 3-bit-plane lane decoder. `(b0, b1, b2 : Bool)` for one lane decode
 to the canonical F_5 value; the three redundant codepoints 5,6,7 decode
-to 0 (matching `Packed5::lane`, packed5.rs:578-582). -/
+to 0 (matching `Packed5::lane`, packed5.rs). -/
 
 /-- 3-plane lane decoder for `Packed5`. The bit pattern
 `b0 | (b1 << 1) | (b2 << 2)` is the canonical F_5 value for codepoints
@@ -76,7 +76,7 @@ is one of the five F_5 values `0..=4`; the three redundant codepoints
 `5 = (1,0,1)`, `6 = (0,1,1)`, `7 = (1,1,1)` are excluded.
 
 This is exactly the production invariant documented at
-`crates/gf2-algebra/src/packed/packed5.rs:20,181`: *"Codepoints 5..=7 are
+`crates/gf2-algebra/src/packed/packed5.rs`: *"Codepoints 5..=7 are
 redundant and never produced by canonical packings"*. Every `Packed5`
 constructor (`splat`, `set_lane`, `from_field_slice`, `from_fp_slice`)
 only ever writes canonical codepoints, so a well-formed `Packed5` value
@@ -367,7 +367,7 @@ circuits are `Result`-pure (pure bitwise, no error path). -/
 /-- §3.4 L17 add-correct: per-lane add correctness on the inherent
 wrapper, against canonical `ZMod 5` addition. The `canon5` hypotheses on
 the two input lanes encode the production invariant
-(`packed5.rs:20,181`: redundant codepoints 5..=7 are never produced by
+(`packed5.rs`: redundant codepoints 5..=7 are never produced by
 any `Packed5` constructor), matching the D5 sketch §2 "25 canonical
 input pairs" contract for the carry-coupled `add` op. -/
 theorem packed5_add_correct (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64)
@@ -469,7 +469,7 @@ def dec5_lane (a : packed.packed5.Packed5) (i : Fin 64) : ZMod 5 :=
 
 /-- Lane `i` of a `Packed5` value holds a canonical (non-redundant)
 codepoint. Every `Packed5` constructor preserves this on every lane
-(`packed5.rs:20,181`); it is the well-formedness invariant carried by
+(`packed5.rs`); it is the well-formedness invariant carried by
 all values the production code actually produces. -/
 def canon5_lane (a : packed.packed5.Packed5) (i : Fin 64) : Prop :=
   canon5 (a.b0.bv.getLsbD i) (a.b1.bv.getLsbD i) (a.b2.bv.getLsbD i)
@@ -478,7 +478,7 @@ def canon5_lane (a : packed.packed5.Packed5) (i : Fin 64) : Prop :=
 (`ZMod 5`) arithmetic on every lane, for every `ArithOp` tag. The four
 per-op theorems provide the case-split discharge (D5 §1 headline). The
 `canon5_lane` hypotheses encode the production well-formedness invariant
-(redundant codepoints 5..=7 are never produced — `packed5.rs:20,181`);
+(redundant codepoints 5..=7 are never produced — `packed5.rs`);
 they are consumed by the carry-coupled `add`/`sub` branches and held
 trivially available for `mul`/`neg` (whose lane lemmas hold
 unconditionally). -/

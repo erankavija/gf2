@@ -162,8 +162,8 @@ auto-generated template (no hand-edits are needed: bipedal3 uses only `&&&`,
 
 The D2 sketch §1 states the V1 contract over `{add, sub, mul, div}`. The
 production code at `crates/gf2-algebra/src/packed/bipedal3.rs` exposes
-`{add, sub, mul, neg}` — the `PackedField` trait surface
-(`packed/mod.rs:185–224`) has no `div` method, so there is no production
+`{add, sub, mul, neg}` — the trait surface
+(`PackedField` in `packed/mod.rs`) has no `div` method, so there is no production
 function to verify against for `div`. Per the verification-work convention
 (sketch supersedes the JIT description, but production code supersedes both
 when the sketch names a function that does not exist), V1 proves `neg`
