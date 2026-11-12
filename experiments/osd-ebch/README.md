@@ -6,7 +6,7 @@ and receipt format. It consumes `gf2-sim::checkpoint`, worker scheduling and
 `gf2-coding` encoders, channels and OSD decoders.
 
 ```bash
-./scripts/cargo-budget.sh cargo run -p osd-ebch --release --bin ebch_osd_awgn_campaign -- \
+cargo run -p osd-ebch --release --bin ebch_osd_awgn_campaign -- \
     --checkpoint /tmp/osd/checkpoint.json --receipt /tmp/osd/receipt.json
 ```
 

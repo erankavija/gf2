@@ -18,31 +18,9 @@
 # Use it for a benchmark whose named configuration requires the full processor;
 # it does not create a second lock domain or weaken serialization.
 #
-# ## Writer preference
-#
-# `scripts/cargo-budget.sh` takes the same mutex SHARED, so builds run together
-# and a measurement run excludes them. On Linux a pending `flock -x` does not
-# block a new `flock -s`, so with several sibling workers building there is
-# never an instant with zero shared holders and a measurement run is never
-# granted. Observed 2026-09-08: four benchmark runners queued 10-29 minutes
-# behind seven shared holders that kept being replenished, each needing under
-# five minutes of lock time.
-#
-# The fix is a turnstile that every acquirer passes through first. A
-# measurement run takes it exclusively and holds it for its whole run, so
-# builds arriving afterwards block on the turnstile instead of joining the
-# shared side ahead of it. Builds take it exclusively too, but release it the
-# moment they hold the shared side, so they never serialize against each other
-# for longer than one lock acquisition.
-#
-# This wrapper takes the turnstile, then the mutex, and holds both until the
-# command exits. Deadlock is not reachable: an acquirer waits for the
-# turnstile holding no lock, and for the mutex holding only the turnstile,
-# which no holder of the mutex waits for.
-#
 # ## Lock lifetime
 #
-# Both locks are released when the command exits, even if it left a daemon
+# The lock is released when the command exits, even if it left a daemon
 # running.
 #
 # The command inherits the mutex descriptor, and so does every process it
@@ -55,28 +33,13 @@
 # case that arises in practice — would hold the mutex for as long as that
 # daemon lived, and every acquirer on the host would wait for it. The wrapper
 # closes that path by unlocking the mutex once the command exits, which
-# releases it whatever copies remain. The turnstile never reaches a descendant
-# at all: its descriptor is closed in the command.
+# releases it whatever copies remain.
 #
 # HUP, INT and TERM are caught so that the wrapper outlives the command and
 # the unlock runs; the command still receives any signal sent to it or to its
 # process group. SIGKILL cannot be caught: if the wrapper is killed with it,
-# the unlock cannot run, the turnstile is released at once, and the mutex
-# stays held until the command and every process holding a copy of its
-# descriptor, a daemon included, have exited.
-#
-# A run that already holds this mutex MUST set CARGO_CI_NO_LOCK=1 for its own
-# cargo work: that keeps it from taking the shared side underneath its own
-# exclusive side, and from blocking on the turnstile it holds itself.
-#
-# The turnstile binds only acquirers that pass through it. A script taking
-# `flock -s` on this mutex directly — rather than through
-# `scripts/cargo-budget.sh` — skips it and can still enter ahead of a queued
-# measurement run. Observed in two survey launchers, wrapping a harness build.
-# One such holder delays a measurement run by the length of its build, which is
-# bounded; a stream of them restores the starvation this turnstile removes.
-# Take the shared side through `cargo-budget.sh`, which is the only supported
-# shared acquirer.
+# the unlock cannot run and the mutex stays held until the command and every
+# process holding a copy of its descriptor, a daemon included, have exited.
 set -euo pipefail
 
 # Invoker policy (2026-09-13): the host is never locked during a working
@@ -88,9 +51,7 @@ if [[ -z "${GF2_BENCH_WINDOW:-}" ]]; then
 fi
 
 LOCK_FILE="${GF2_CCX1_LOCK:-/tmp/gf2-ccx1.lock}"
-TURNSTILE="${GF2_CCX1_TURNSTILE:-${LOCK_FILE}.turnstile}"
 test -f "$LOCK_FILE" || touch "$LOCK_FILE"
-test -f "$TURNSTILE" || touch "$TURNSTILE"
 
 PIN=(taskset -c "${GF2_CCX1_CPUS:-6-11}")
 if [[ "${1:-}" == "--full-host" ]]; then
@@ -102,14 +63,11 @@ if [[ "${1:-}" == "--full-host" ]]; then
   PIN=()
 fi
 
-exec {TURNSTILE_FD}<"$TURNSTILE"
-flock -x "$TURNSTILE_FD"
 exec {LOCK_FD}<"$LOCK_FILE"
 flock -x "$LOCK_FD"
 
 trap : HUP INT TERM
 rc=0
-"${PIN[@]}" nice -n -5 "$@" {TURNSTILE_FD}<&- || rc=$?
+"${PIN[@]}" nice -n -5 "$@" || rc=$?
 flock -u "$LOCK_FD"
-flock -u "$TURNSTILE_FD"
 exit "$rc"

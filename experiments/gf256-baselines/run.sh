@@ -29,12 +29,12 @@ mode=indication
 
 if [[ "${1:-}" != --measure ]]; then
   mkdir -p "$out"
-  (cd "$root" && ./scripts/cargo-budget.sh cargo build --locked --release -p gf256-baselines --quiet)
+  (cd "$root" && cargo build --locked --release -p gf256-baselines --quiet)
   cc -O2 -Wall -I"$GF256_BASELINE_PREFIX/include" -o "$out/arm" "$here/ext/arm.c" \
     -L"$GF256_BASELINE_PREFIX/lib" -lisal -lm4rie -lm4ri -Wl,-rpath,"$GF256_BASELINE_PREFIX/lib"
   if [[ $mode == window ]]; then
     cd "$root"
-    CARGO_CI_NO_LOCK=1 exec "$flock" bash "$here/run.sh" --measure
+    exec "$flock" bash "$here/run.sh" --measure
   fi
 fi
 

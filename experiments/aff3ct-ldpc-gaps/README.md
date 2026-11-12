@@ -140,8 +140,8 @@ AList form for AFF3CT. Both share `ComparisonCode` and draw noise from
 `gf2_sim::testutil::AwgnLlrSource`:
 
 ```sh
-./scripts/cargo-budget.sh cargo run -p aff3ct-ldpc-gaps --release \
+cargo run -p aff3ct-ldpc-gaps --release \
     --bin ldpc_bler_sweep -- --code dvb-t2-r12 ...
-./scripts/cargo-budget.sh cargo run -p aff3ct-ldpc-gaps --release \
+cargo run -p aff3ct-ldpc-gaps --release \
     --bin export_alist -- --code dvb-t2-r12 --output dvb_t2_r12.alist
 ```

@@ -12,7 +12,7 @@ runs it at small dimensions in the fast test tier.
 ## Run it
 
 ```text
-./scripts/cargo-budget.sh cargo run --release -p gf2-core --example field_linear_algebra -- \
+cargo run --release -p gf2-core --example field_linear_algebra -- \
     --n 1024 --charpoly-n 512 --seed 2
 ```
 
@@ -163,4 +163,4 @@ Replace `Mersenne31` with another `Fp<P>` or `ExtConfig` declaration and
 supply a matching sampler; `check_field` is unchanged. API contracts, panics
 and complexity for each operation are in the `gf2_core::field::matrix`
 rustdoc
-(`./scripts/cargo-budget.sh cargo doc -p gf2-core --no-deps`).
+(`cargo doc -p gf2-core --no-deps`).

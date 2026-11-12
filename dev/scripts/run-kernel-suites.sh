@@ -22,7 +22,7 @@ quiet=(--cargo-profile ci-test --profile ci --status-level fail --final-status-l
 run() {
     local log="$logs/$1.txt"
     shift
-    local command=(nice -n 19 ./scripts/cargo-budget.sh --test cargo nextest run "$@" "${quiet[@]}")
+    local command=(nice -n 19 cargo nextest run "$@" "${quiet[@]}")
     {
         echo "# toolchain: $(rustc --version)"
         echo "# command: ${command[*]}"

@@ -66,11 +66,11 @@ else
 fi
 
 emitter="./target/release/examples/bch_oracle_messages"
-build_cmd="./scripts/cargo-budget.sh cargo build --release -p gf2-coding --features test-support --example bch_oracle_messages"
+build_cmd="cargo build --release -p gf2-coding --features test-support --example bch_oracle_messages"
 emit_cmd="$emitter $corpus"
 sage_cmd="python3 $sage_script $corpus $sage_out $sage_host"
 gap_cmd="gap -q -A -T -o $gap_heap -c 'CORPUS:=\"$corpus\"; OUTPUT:=\"$gap_out\"; HOST:=\"$gap_host\";' $gap_script"
-vectors_cmd="./scripts/cargo-budget.sh --test cargo nextest run -p gf2-coding \
+vectors_cmd="cargo nextest run -p gf2-coding \
 --features test-support --test bch_oracle_agreement --cargo-profile ci-test \
 --profile ci -E 'test($vectors_case)' --no-capture"
 
@@ -104,8 +104,7 @@ if [ ! -f "$gap_out" ] || [ ! -f "$gap_host" ]; then
   exit 1
 fi
 
-# The standards-vector case, run through the budget wrapper like every other
-# cargo invocation in this repository. `--no-capture` is what puts the facts
+# The standards-vector case. `--no-capture` is what puts the facts
 # the case prints into this run's log, and so into the receipt.
 echo "== standards vectors =="
 vectors_log="$out_dir/bch-oracle-vectors.log"

@@ -27,7 +27,7 @@ permanent-zero-fraction campaigns over its permanents.
 - Build and test commands: [`AGENTS.md`](../../AGENTS.md#supported-toolchain-and-commands).
 
 ```bash
-./scripts/cargo-budget.sh cargo doc -p gf2-algebra --no-deps
+cargo doc -p gf2-algebra --no-deps
 ```
 
 Rendered output: Rustdoc.

@@ -30,8 +30,8 @@ bin="$here/external/target/release/encode-compare"
 
 if [[ "${2:-}" != --measure ]]; then
     RUSTFLAGS="-C target-cpu=native" CARGO_INCREMENTAL=0 \
-        ./scripts/cargo-budget.sh cargo build --locked --release --manifest-path "$manifest"
-    CARGO_CI_NO_LOCK=1 exec "$flock" --full-host \
+        cargo build --locked --release --manifest-path "$manifest"
+    exec "$flock" --full-host \
         bash "$here/compare.sh" "$suite" --measure
 fi
 

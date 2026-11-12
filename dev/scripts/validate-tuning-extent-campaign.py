@@ -5546,7 +5546,11 @@ def self_test() -> None:
     repository = repository_root()
     for issue in ["a83583e0", "dbd8787d"]:
         declaration = load_declaration(f"gf2-{issue}-19700101t000000z-1")
-        actual_inputs = producing_inputs(repository, declaration["producing_manifest"])
+        # A finished campaign's manifest is a record: it may name a source
+        # absent from today's tree, so it is checked as recorded data.
+        manifest = declaration["producing_manifest"]
+        actual_inputs = producing_inputs(repository, manifest,
+                                         (repository / manifest).read_bytes())
         require(len(actual_inputs["behavior_sources"]) > len(actual_inputs["lifecycle_sources"])
                 and len(actual_inputs["build_inputs"]) > len(actual_inputs["behavior_sources"]),
                 "real producing-input manifest does not distinguish its three boundaries")

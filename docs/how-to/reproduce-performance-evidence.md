@@ -11,7 +11,7 @@ From the repository root, build the release harness and run its untimed
 configuration checks:
 
 ```sh
-./scripts/cargo-budget.sh cargo bench -p permanent-benchmarks \
+cargo bench -p permanent-benchmarks \
     --bench batched_f3_permanent --features simd,test-support -- --self-check
 ```
 
@@ -29,13 +29,12 @@ estimated minutes, and command, separated by tabs.
 Use the following command as a queue entry's command, from the repository root:
 
 ```sh
-dev/scripts/ccx1-bench-flock.sh env CARGO_CI_NO_LOCK=1 \
-    ./scripts/cargo-budget.sh cargo bench -p permanent-benchmarks \
+dev/scripts/ccx1-bench-flock.sh \
+    cargo bench -p permanent-benchmarks \
     --bench batched_f3_permanent --features simd,test-support -- --execution 1 --repetitions 5 \
     --target-ms 250 --output target/benchmarks/f3-repro.csv
 ```
 
-`CARGO_CI_NO_LOCK=1` lets the benchmark wrapper own the host mutex for the run.
 The wrapper pins the command to the `taskset -c` CPU list in `GF2_CCX1_CPUS`,
 which defaults to `6-11`, the CCX1 cores of the reference host. On another
 host, set it in the queue command to one core complex of that host, for example

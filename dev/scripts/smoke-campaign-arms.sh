@@ -66,11 +66,11 @@ SCRATCH=target/${ISSUE}-campaigns/arms-smoke
 export PATH="${HOME}/.cargo/bin:${PATH}"
 export RUSTUP_TOOLCHAIN=1.95
 
-CARGO_TARGET_DIR="${ARM_TARGET}" ./scripts/cargo-budget.sh --test cargo test --locked \
+CARGO_TARGET_DIR="${ARM_TARGET}" cargo test --locked \
     --manifest-path "${MANIFEST}"
-CARGO_TARGET_DIR="${ARM_TARGET}" ./scripts/cargo-budget.sh cargo build --release --locked \
+CARGO_TARGET_DIR="${ARM_TARGET}" cargo build --release --locked \
     --manifest-path "${MANIFEST}"
-./scripts/cargo-budget.sh cargo build --release --locked -p tuning-campaign-support \
+cargo build --release --locked -p tuning-campaign-support \
     --bin benchmark-ab-runner >/dev/null
 
 rm -rf "${SCRATCH}"
