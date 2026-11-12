@@ -46,7 +46,7 @@ the substrate before drawing conclusions.
 After a successful image build, `run.sh` records the local
 content-addressable id into `image.lock` (the `[image].local_id` slot);
 a mismatch with the committed id signals environment drift. A rebuild on
-different hardware commits the stamped id together with its results.
+different hardware commits the stamped id; its results stay outside the tree.
 
 ## CSV schema
 
