@@ -13,4 +13,6 @@ The comparison binary is the [`external/`](external/) crate, outside the
 workspace: its build links the gf2x install prefix `GF2_GF2X_PREFIX` names.
 `compare.sh` builds it once for every `prefix-*` directory under
 `GF2_GF2X_ROOT`, so the table reports gf2x's fastest configuration per size.
-It runs inside a benchmark window and writes the table under `target/`.
+It runs inside a benchmark window and writes the table under `target/`, below
+the host and the SHA-256 of each measured binary and of the gf2x library it
+loads.

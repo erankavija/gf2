@@ -2,7 +2,8 @@
 //! (`@/citation/GfTwoX2026`) on identical operands at each size of
 //! [`clmul_compare::SIZES`], after checking that the two agree word for word.
 //! Prints one tab-separated line per arm and size: arm, words, products per
-//! second.
+//! second. With `--digests <path>...` it prints the SHA-256 of itself and of
+//! each path instead.
 
 use clmul_compare::{gf2_product, operands, products_per_second, SIZES};
 use std::os::raw::c_int;
@@ -46,6 +47,12 @@ fn gf2x_product(pool: &mut Pool, a: &[u64], b: &[u64], out: &mut [u64]) {
 }
 
 fn main() {
+    let mut args = std::env::args().skip(1);
+    if args.next().as_deref() == Some("--digests") {
+        experiments_common::write_executable_digests(&mut std::io::stdout(), args)
+            .expect("the executable and the listed files are readable");
+        return;
+    }
     let mut pool = Pool {
         stk: std::ptr::null_mut(),
         stk_size: 0,

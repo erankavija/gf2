@@ -67,5 +67,20 @@ cap_check runs 0 60
 cap_check runs 60 60
 cap_check deferred 20 60
 
+# External inputs resolve under the window's repository root unless overridden,
+# and no queue command finds them relative to its worktree's depth.
+root=$("$HERE/run-window.sh" --print-root)
+ext=$(env -u GF2_EXT_ROOT "$HERE/run-window.sh" --print-ext-root)
+[[ $ext == "$root/.agents/ext" ]] || {
+  printf 'run-window.test: default external-input root %s, expected %s\n' "$ext" "$root/.agents/ext" >&2
+  exit 1
+}
+ext=$(GF2_EXT_ROOT="$TMP/ext" "$HERE/run-window.sh" --print-ext-root)
+[[ $ext == "$TMP/ext" ]] || {
+  printf 'run-window.test: GF2_EXT_ROOT override gave %s\n' "$ext" >&2
+  exit 1
+}
+reject queue '^[^#].*\.\./' "$(cat "$HERE/queue.tsv")"
+
 printf '%s\n' "$quiet" "$loaded" "$capped"
 echo "run-window.test: ok"

@@ -242,13 +242,21 @@ pub fn erroneous_frames(workload: &Workload, decisions: &[u8]) -> usize {
 }
 
 /// Runs `run` on the process arguments and maps an error to a failing exit
-/// status with the program name.
+/// status with the program name. `--digests <path>...` prints the SHA-256 of
+/// the executable and of each path instead.
 pub fn main_with(
     program: &str,
     run: impl FnOnce(&[String]) -> Result<(), String>,
 ) -> std::process::ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    match run(&args) {
+    let result = match args.split_first() {
+        Some((flag, paths)) if flag == "--digests" => {
+            experiments_common::write_executable_digests(&mut std::io::stdout(), paths)
+                .map_err(|error| error.to_string())
+        }
+        _ => run(&args),
+    };
+    match result {
         Ok(()) => std::process::ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("{program}: {error}");

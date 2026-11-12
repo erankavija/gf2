@@ -8,8 +8,10 @@
 # in arms.json. QUICK_COMPARE_CALLS sets the timed calls per run (default 30).
 #
 # The script builds both fast-bench executables with target-cpu=native, then
-# re-runs itself under `dev/scripts/ccx1-bench-flock.sh --full-host`, which
-# refuses outside a benchmark window. Each run prints one JSON line; a run
+# re-runs itself under `ccx1-bench-flock.sh --full-host`, which
+# refuses outside a benchmark window. Below the host line it prints the
+# SHA-256 of both executables, AFF3CT's static library included in its arm's.
+# Each run prints one JSON line; a run
 # whose batch is not whole native waves of its decoder is skipped. Each code's
 # table goes to stdout and target/aff3ct-ldpc-gaps/quick-compare/<UTC>.txt as
 # soon as that code's runs finish, beside the raw lines. The ratio is best gf2
@@ -21,6 +23,7 @@ set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo=$(git -C "$here" rev-parse --show-toplevel)
 cd "$repo"
+flock="$repo/$(python3 "$repo/$(git -C "$repo" ls-files -- ':(glob)**/repository_files.py')" file ccx1-bench-flock.sh)"
 : "${GF2_AFF3CT_ROOT:?GF2_AFF3CT_ROOT must name the staged AFF3CT tree}"
 : "${GF2_LDPC_BUNDLES:?GF2_LDPC_BUNDLES must name the directory of bundle directories}"
 export GF2_AFF3CT_ROOT GF2_LDPC_BUNDLES
@@ -40,7 +43,7 @@ if [[ "${1:-}" != --measure ]]; then
     # sccache hit does not write.
     SCCACHE_RECACHE=1 ./scripts/cargo-budget.sh cargo build --locked --release \
         --manifest-path "$aff3ct_manifest" --bin aff3ct-fast-bench
-    CARGO_CI_NO_LOCK=1 exec ./dev/scripts/ccx1-bench-flock.sh --full-host \
+    CARGO_CI_NO_LOCK=1 exec "$flock" --full-host \
         bash "$here/quick-compare.sh" --measure
 fi
 
@@ -125,6 +128,7 @@ EOF
     echo "host $(hostname); FER = frames with an information-bit error over the decoded frames;"
     echo "ratio = best gf2 frames/s / best AFF3CT frames/s;"
     echo "flooding ratio = the same over flooding decoders only"
+    "$gf2_bin" --digests "$aff3ct_bin"
     arm_codes | while read -r bundle code; do
         dir="$GF2_LDPC_BUNDLES/$bundle"
         for cell in "${cells[@]}"; do

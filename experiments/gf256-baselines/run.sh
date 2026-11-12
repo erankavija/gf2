@@ -10,7 +10,7 @@ set -euo pipefail
 # The prefix holds include/ and lib/ of ISA-L (libisal) and M4RIE (libm4rie,
 # libm4ri). GF256_BASELINE_CORE (default 8) is the core both arms run pinned
 # to. The script builds both arms, then measures: inside a benchmark window
-# (GF2_BENCH_WINDOW=1) it re-runs itself under dev/scripts/ccx1-bench-flock.sh,
+# (GF2_BENCH_WINDOW=1) it re-runs itself under ccx1-bench-flock.sh,
 # which pins to cores 6-11, and labels the table a window measurement; outside
 # one it measures unlocked and labels the table an indication. Beside the host
 # line it prints the SHA-256 of both measured executables and of the ISA-L
@@ -21,7 +21,8 @@ set -euo pipefail
 export GF256_BASELINE_PREFIX
 core=${GF256_BASELINE_CORE:-8}
 here=$(cd "$(dirname "$0")" && pwd)
-root=$(cd "$here/../.." && pwd)
+root=$(git -C "$here" rev-parse --show-toplevel)
+flock="$root/$(python3 "$root/$(git -C "$root" ls-files -- ':(glob)**/repository_files.py')" file ccx1-bench-flock.sh)"
 out="$root/target/gf256-baselines"
 mode=indication
 [[ "${GF2_BENCH_WINDOW:-}" == 1 ]] && mode=window
@@ -33,7 +34,7 @@ if [[ "${1:-}" != --measure ]]; then
     -L"$GF256_BASELINE_PREFIX/lib" -lisal -lm4rie -lm4ri -Wl,-rpath,"$GF256_BASELINE_PREFIX/lib"
   if [[ $mode == window ]]; then
     cd "$root"
-    CARGO_CI_NO_LOCK=1 exec ./dev/scripts/ccx1-bench-flock.sh bash "$here/run.sh" --measure
+    CARGO_CI_NO_LOCK=1 exec "$flock" bash "$here/run.sh" --measure
   fi
 fi
 

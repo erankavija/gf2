@@ -1,5 +1,5 @@
-//! Identity, repository-root, and durable-publish mechanics shared by
-//! permanent-statistics and osd-ebch.
+//! Identity, repository-root, and durable-publish mechanics shared by the gf2
+//! experiments.
 
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
@@ -11,7 +11,9 @@ mod publish;
 mod repository;
 mod run;
 
-pub use identity::{ArtifactPath, GitRevision, IdentityError, Sha256Digest};
+pub use identity::{
+    write_executable_digests, ArtifactPath, GitRevision, IdentityError, Sha256Digest,
+};
 pub use publish::{create_durable, publish_atomic, DurabilityUnconfirmed};
 pub use repository::RepositoryRoot;
 pub use run::{

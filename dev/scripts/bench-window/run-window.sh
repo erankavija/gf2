@@ -24,6 +24,11 @@
 # interrupted campaign resumes under its own identity without repeating cells.
 # Each campaign's own execution log stays the authoritative record of its run.
 #
+# Host-local external inputs (comparator trees, install prefixes, recorded
+# bundles) live under $GF2_EXT_ROOT (default <repo>/.agents/ext), which the
+# window exports to every job; a queue command names an input as
+# "$GF2_EXT_ROOT/<id>/...", independent of its worktree's depth.
+#
 # Before its first job the window waits until the one-minute load average is
 # below LOAD_MAX, polling every LOAD_POLL_S seconds for at most LOAD_WAIT_MAX_S
 # seconds. When the bound passes with the host still loaded, it logs that and
@@ -37,8 +42,8 @@
 # working session's builds take for a window; the night window sets
 # GF2_WINDOW_MAX_EST_MIN=0, which lifts the cap.
 #
-# --print-root prints the resolved repository root and exits before the window
-# opens. --load-wait-only runs the load wait into the window log and exits
+# --print-root prints the resolved repository root and --print-ext-root the
+# external-input root; each exits before the window opens. --load-wait-only runs the load wait into the window log and exits
 # before the window opens, and --cap-check <minutes> exits 0 when a job of
 # that estimate runs under the cap and 1 when it is deferred;
 # run-window.test.sh drives both.
@@ -59,8 +64,13 @@ fi
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo=$(git -C "$here" rev-parse --show-toplevel) || exit 1
 state="${GF2_WINDOW_STATE:-$repo/.agents/bench-window}"
+export GF2_EXT_ROOT="${GF2_EXT_ROOT:-$repo/.agents/ext}"
 if [[ "${1:-}" == --print-root ]]; then
     printf '%s\n' "$repo"
+    exit 0
+fi
+if [[ "${1:-}" == --print-ext-root ]]; then
+    printf '%s\n' "$GF2_EXT_ROOT"
     exit 0
 fi
 mkdir -p "$state"

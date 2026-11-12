@@ -113,6 +113,32 @@ impl Sha256Digest {
     }
 }
 
+/// Writes `sha256 <digest> <path>` for the running executable and for each of
+/// `others`, the files it loads: the identity a harness prints beside its host
+/// line for a measurement that spans benchmark windows.
+///
+/// # Errors
+///
+/// Fails when a file cannot be read or `out` refuses the write.
+pub fn write_executable_digests<P: AsRef<Path>>(
+    out: &mut impl io::Write,
+    others: impl IntoIterator<Item = P>,
+) -> io::Result<()> {
+    let own = std::env::current_exe()?;
+    let own_digest = Sha256Digest::of_file(Path::new("/proc/self/exe"))?;
+    writeln!(out, "sha256 {own_digest} {}", own.display())?;
+    for path in others {
+        let path = path.as_ref();
+        writeln!(
+            out,
+            "sha256 {} {}",
+            Sha256Digest::of_file(path)?,
+            path.display()
+        )?;
+    }
+    Ok(())
+}
+
 fn is_lowercase_hex(value: &str, length: usize) -> bool {
     value.len() == length
         && value

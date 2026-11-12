@@ -7,8 +7,8 @@ use std::process::Command;
 use std::thread;
 
 use experiments_common::{
-    create_durable, publish_atomic, ArtifactPath, DurabilityUnconfirmed, GitRevision,
-    RepositoryRoot, RngAlgorithm, RngIdentity, RunRecord, Sha256Digest,
+    create_durable, publish_atomic, write_executable_digests, ArtifactPath, DurabilityUnconfirmed,
+    GitRevision, RepositoryRoot, RngAlgorithm, RngIdentity, RunRecord, Sha256Digest,
 };
 
 fn git(directory: &Path, arguments: &[&str]) {
@@ -75,6 +75,25 @@ fn sha256_matches_the_fips_180_4_abc_vector_from_bytes_and_files() {
     let file = directory.path().join("abc");
     fs::write(&file, b"abc").unwrap();
     assert_eq!(Sha256Digest::of_file(&file).unwrap(), expected);
+}
+
+#[test]
+fn executable_digests_name_the_running_executable_then_each_file() {
+    let directory = tempfile::tempdir().unwrap();
+    let file = directory.path().join("abc");
+    fs::write(&file, b"abc").unwrap();
+    let mut out = Vec::new();
+    write_executable_digests(&mut out, [&file]).unwrap();
+
+    let executable = std::env::current_exe().unwrap();
+    let expected = format!(
+        "sha256 {} {}\nsha256 {} {}\n",
+        Sha256Digest::of_file(&executable).unwrap(),
+        executable.display(),
+        Sha256Digest::of(b"abc"),
+        file.display()
+    );
+    assert_eq!(String::from_utf8(out).unwrap(), expected);
 }
 
 #[test]
