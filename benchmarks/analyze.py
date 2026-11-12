@@ -18,14 +18,14 @@ Usage
 -----
     # Merge both sides:
     python3 benchmarks/analyze.py \\
-        --gf2 target/bench_results/2026-04-26-gf2.csv \\
-        --reference target/bench_results/2026-04-26-reference.csv \\
-        --out target/bench_results/2026-04-26-tables.md
+        --gf2 target/reference-benchmarks/2026-04-26-gf2.csv \\
+        --reference target/reference-benchmarks/2026-04-26-reference.csv \\
+        --out target/reference-benchmarks/2026-04-26-tables.md
 
     # gf2-only (reference cells will be marked PENDING):
     python3 benchmarks/analyze.py \\
-        --gf2 target/bench_results/2026-04-26-gf2.csv \\
-        --out target/bench_results/2026-04-26-tables.md
+        --gf2 target/reference-benchmarks/2026-04-26-gf2.csv \\
+        --out target/reference-benchmarks/2026-04-26-tables.md
 
     # Self-test on a tiny synthetic CSV:
     python3 benchmarks/analyze.py --smoke

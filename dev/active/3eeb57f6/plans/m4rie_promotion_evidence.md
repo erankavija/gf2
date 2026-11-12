@@ -312,7 +312,7 @@ historical record of the cross-cutting flag and its disposition.
   follow-up because the C-side harness has no FFI access to gf2-core
   constants.
 * Container base image refresh past `debian:bookworm-20260421-slim` —
-  re-build, re-stamp `[image].local_id`, re-capture the host and
+  re-build, re-record the local image id, re-capture the host and
   perf-stat under the new microarchitecture-class baseline.
 * **A scalar GF(2^m) RREF reference (`ref_gf2m_rref`) is added to the
   harness.** When that lands, M4RIE's `mzed_echelonize` can be
