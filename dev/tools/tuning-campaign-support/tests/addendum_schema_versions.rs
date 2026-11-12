@@ -22,7 +22,7 @@ const VERSIONED_FIXTURES: &[(&str, &str)] = &[
     ),
     (
         "44dd132a6203c5d04676bbc9d596915a0aeb4c250fb88975ab930a81ffe6aca1",
-        "91bfe5b44c5a2e9efd56e87b8742a7242c4f1f69ed032705a35591e237446d61",
+        "aefb0d1f46e161313b7f19cfe231c24d1ce732b5e4e2728595a42128ac310c15",
     ),
     (
         "4900f412729a76cd6ecf94de21b1f3fb36239f977975490ab8e182397a6fadef",
@@ -30,7 +30,7 @@ const VERSIONED_FIXTURES: &[(&str, &str)] = &[
     ),
     (
         "513f37627dd82dbce95f49ff3f714af83131320fdbd0fe704baffc18a57412cd",
-        "da40614dccec31e32260b91c29cfb08a323998639e67391fc183c05eb91cf102",
+        "56e6a12e6b9ce41612029ef0124cd9c41e08a4259395d11ae39b6ae801cd58a3",
     ),
     (
         "ebd969ef6ae666d0c85f05f96a6d07ebbbf74a9cf69d88d474d2e39d66a2dc47",

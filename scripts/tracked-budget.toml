@@ -146,3 +146,18 @@ reason = "complete tuning profiles the composer and gf2-algebra envelope tests l
 [[exception]]
 path = "experiments/*/tuning-profiles/*.json"
 reason = "tuning profiles an experiment arm installs"
+
+# Frozen protocol addenda of the tuning campaigns state the resolution values
+# their pre-registered decision rules use; tests pin each by digest. Decision
+# records under committed-evidence-budget; steward ruling 2026-11-12.
+[[exception]]
+path = "dev/tools/tuning-campaign-support/config/addendum-dvb-t2-bit-interleave-v3-confirmation-42850bc4.json"
+reason = "frozen addendum: states the resolution its pre-registered rule decides on; steward ruling 2026-11-12"
+
+[[exception]]
+path = "dev/tools/tuning-campaign-support/config/addendum-popcount-5ff212e5.json"
+reason = "frozen addendum: states the resolution its pre-registered rule decides on; steward ruling 2026-11-12"
+
+[[exception]]
+path = "dev/tools/tuning-campaign-support/config/addendum-protocol-smoke.json"
+reason = "frozen addendum: states the resolution its pre-registered rule decides on; steward ruling 2026-11-12"

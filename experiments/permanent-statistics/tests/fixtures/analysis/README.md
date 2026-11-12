@@ -3,8 +3,8 @@
 Synthetic schema-3 datasets for `tests/test_permanent_zero_fraction_analysis.py`
 and `committed_analysis_fixtures_verify`. Run identity is placeholder: zero
 executable digest and source revision, host and toolchain `synthetic`, argv
-without output paths. Shard counts are the sampler's seeded draws from the
-tracked configurations.
+without output paths. Shard counts come from the seeded sampler run on the
+tracked configurations, not from a measurement run.
 
 - `small-campaign`, `small-campaign-halted`: complete and halted datasets.
 - `checksum-mismatch`: `small-campaign` with a stale `summary.csv` digest.

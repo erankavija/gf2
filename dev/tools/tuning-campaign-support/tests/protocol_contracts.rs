@@ -1211,7 +1211,7 @@ fn addendum_schema_accepts_the_frozen_smoke_addendum_and_rejects_unknown_fields(
         serde_json::from_slice(&committed("addendum*.schema.json", V1_SCHEMA_SHA256)).unwrap();
     let bytes = committed(
         "addendum-protocol-smoke.json",
-        "6c8897df8290da0c8eb74d615330baa178ae916dc98d493153f183e33e580234",
+        "025bf59d0cc0584ba16be24559d591623f32250485eed2cde7c37f02ed8ae0c7",
     );
     let instance: Value = serde_json::from_slice(&bytes).unwrap();
     assert!(schema::validate(&schema_value, &instance).is_empty());
