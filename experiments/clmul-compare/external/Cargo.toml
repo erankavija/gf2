@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 clmul-compare = { path = ".." }
+experiments-common = { path = "../../common" }
 
 [[bin]]
 name = "clmul-compare"

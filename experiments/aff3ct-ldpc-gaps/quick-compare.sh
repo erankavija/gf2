@@ -9,7 +9,9 @@
 #
 # The script builds both fast-bench executables with target-cpu=native, then
 # re-runs itself under `ccx1-bench-flock.sh --full-host`, which
-# refuses outside a benchmark window. Each run prints one JSON line; a run
+# refuses outside a benchmark window. Below the host line it prints the
+# SHA-256 of both executables, AFF3CT's static library included in its arm's.
+# Each run prints one JSON line; a run
 # whose batch is not whole native waves of its decoder is skipped. Each code's
 # table goes to stdout and target/aff3ct-ldpc-gaps/quick-compare/<UTC>.txt as
 # soon as that code's runs finish, beside the raw lines. The ratio is best gf2
@@ -126,6 +128,7 @@ EOF
     echo "host $(hostname); FER = frames with an information-bit error over the decoded frames;"
     echo "ratio = best gf2 frames/s / best AFF3CT frames/s;"
     echo "flooding ratio = the same over flooding decoders only"
+    "$gf2_bin" --digests "$aff3ct_bin"
     arm_codes | while read -r bundle code; do
         dir="$GF2_LDPC_BUNDLES/$bundle"
         for cell in "${cells[@]}"; do

@@ -9,7 +9,8 @@
 # `ccx1-bench-flock.sh --full-host`, which refuses outside a
 # benchmark window. Each profile writes perf.data, the fast-bench JSON line and
 # a `perf report` of the top self-time symbols under
-# target/aff3ct-ldpc-gaps/profile-routes/<UTC>/.
+# target/aff3ct-ldpc-gaps/profile-routes/<UTC>/, beside a summary that opens
+# with the host and the executable's SHA-256.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -42,6 +43,9 @@ for arm in json.load(open(sys.argv[1]))["codes"].values():
     print(arm["bundle"], arm["code"])' "$here/arms.json"
 }
 
+{
+echo "host $(hostname)"
+"$gf2_bin" --digests
 arm_codes | while read -r bundle code; do
     dir="$GF2_LDPC_BUNDLES/$bundle"
     for cell in "1 1" "1 16" "12 16"; do
@@ -58,4 +62,5 @@ arm_codes | while read -r bundle code; do
             printf '%s\n' "$name" "$(head -n 12 "$out/$name.txt")"
         done
     done
-done | tee "$out/summary.txt"
+done
+} | tee "$out/summary.txt"

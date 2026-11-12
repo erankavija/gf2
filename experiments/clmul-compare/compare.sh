@@ -9,7 +9,8 @@
 # The script builds the comparison binary once per gf2x prefix with
 # target-cpu=native, then re-runs itself under `ccx1-bench-flock.sh`,
 # which refuses outside a benchmark window. The table goes to stdout and to
-# target/clmul-compare/<UTC>.md.
+# target/clmul-compare/<UTC>.md, below the host and the SHA-256 of each
+# measured binary and of the gf2x library it loads.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -43,16 +44,20 @@ prefixes | while read -r prefix; do
     taskset -c "$cpu" "$build/$configuration/release/clmul-compare" |
         sed "s/^/$configuration\t/"
 done > "$raw"
-python3 - "$raw" "$(hostname)" "$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//')" "$cpu" <<'PY' | tee "${raw%.tsv}.md"
+digests=$(prefixes | while read -r prefix; do
+    "$build/$(basename "$prefix")/release/clmul-compare" --digests "$prefix/lib/libgf2x.so"
+done)
+python3 - "$raw" "$(hostname)" "$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//')" "$cpu" "$digests" <<'PY' | tee "${raw%.tsv}.md"
 import sys
 from collections import defaultdict
-raw, host, model, cpu = sys.argv[1:5]
+raw, host, model, cpu, digests = sys.argv[1:6]
 gf2, gf2x = defaultdict(list), defaultdict(list)
 for line in open(raw):
     configuration, arm, words, rate = line.split("\t")
     (gf2 if arm == "gf2" else gf2x)[int(words)].append((float(rate), configuration))
 print(f"Host {host} ({model}), one core ({cpu}); products per second, median of the samples")
 print("each binary takes; gf2 is the median over the per-prefix builds, gf2x its fastest prefix.")
+print(digests)
 print()
 print("| words | gf2 | gf2x (configuration) | gf2 / gf2x |")
 print("|---|---|---|---|")
