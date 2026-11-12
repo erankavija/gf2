@@ -950,7 +950,7 @@ static int oracle_sparse_matmul(const Field& F, const char* field_label,
 // same primitive polynomial gf2-core uses (see `Gf2mField` constants
 // at the top of this file). Two independent GF(2^m) matmul
 // implementations agreeing on every byte gives the regression signal
-// acceptance criterion 3 calls for.
+// the comparable-semantics requirement calls for.
 static int oracle_sparse_matmul_gf2m(const Gf2mField& F,
                                      const char* field_label,
                                      uint64_t seed,
@@ -1178,7 +1178,7 @@ static int oracle_sparse_elim(const Field& F, const char* field_label, uint64_t 
     // line 813, `LigneA[k] = Vzer;`). Only `rank` and `det` are
     // exported as cross-checkable invariants; the matrix-content output
     // is not useful as an RREF witness. Rank-equality across the two
-    // independent libraries is the acceptance criterion 3 invariant we enforce
+    // independent libraries is the comparable-semantics requirement invariant we enforce
     // here.
     using LBMatrix = LinBox::SparseMatrix<Field>;
     LBMatrix A_linbox(F, n, n);
@@ -1455,7 +1455,7 @@ int main(int argc, char** argv) {
     // GF(p) primes jit:a3412e15 promotes fflas-ffpack as canonical
     // for, plus GF(2) (jit:521390db). The oracle_sparse_dense template
     // calls fflas-ffpack's `fspmm` against the gf2-core
-    // `SparseFieldMatrix::matmat` ground-truth, satisfying acceptance criterion 3
+    // `SparseFieldMatrix::matmat` ground-truth, satisfying the comparable-semantics requirement
     // *Comparable semantics* with the gf2-core integration that 96fde7c7
     // landed.
     {
@@ -1503,7 +1503,7 @@ int main(int argc, char** argv) {
                                    gf2_bench_derive_seed(master_seed ^ 0x77ULL, "smoke-spmm", 0, 0, 0), et);
 
     // LinBox-side sparse×dense smoke oracle (jit:47698404 R9). Closes
-    // the acceptance criterion 3 candidate-specific smoke contract for
+    // the comparable-semantics requirement candidate-specific smoke contract for
     // the LinBox-canonical `sparse×dense × GF(2)` cell (issue 47698404)
     // and provides a redundant second witness for the four GF(p) cells
     // where LinBox is the secondary cross-check. Reuses the same

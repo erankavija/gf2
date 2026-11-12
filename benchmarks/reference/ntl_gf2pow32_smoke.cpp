@@ -9,7 +9,7 @@
 //
 // Replaces the prior R1 implementation that used a transitive smoke
 // (NTL ↔ scalar reference + gf2-core ↔ scalar reference in
-// `crates/gf2-core/tests/gf2pow32_matmul.rs`). The acceptance criterion 3 (issue 1d6043e8)
+// `crates/gf2-core/tests/gf2pow32_matmul.rs`). The comparable-semantics requirement (issue 1d6043e8)
 // criterion-3 contract names the reference and gf2-core directly; the
 // transitive form did not satisfy the literal text and burned a review
 // cycle. The Rust-side gf2-core ↔ scalar test (`gf2pow32_matmul.rs`)

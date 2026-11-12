@@ -12,7 +12,7 @@
 The original promotion (commit `b8ed382`) covered both `matmul` and
 `echelon`. The round-3 code-review rejected the echelon scope on the
 grounds that the echelon contract in
-acceptance criterion 3 (@/issue/1d6043e8) is
+the comparable-semantics requirement (@/issue/1d6043e8) is
 *bitwise canonical RREF equality* against an independent RREF
 implementation, and that the structural-RREF-invariants oracle added
 in `b8ed382` (`smoke_echelon_one_cell()`) certifies only the structure
@@ -59,9 +59,9 @@ dispatch contract for wave 2.
 | # | Criterion | Status | Evidence |
 |---|-----------|--------|----------|
 | 1 | Reproducible build | **PASS** | `benchmarks/Containerfile` `# === m4rie begin/end ===` stanza pinning `M4RIE_VERSION=20250128` and `M4RIE_SHA256=96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7`. `benchmarks/image.lock` `[libs.m4rie]` block carries the same fields. `benchmarks/run.sh:163` carries `verify_sha M4RIE_SHA256 libs.m4rie` (added by the lead's wave-2 cleanup commit `e3592fe`); the M4RIE pin is now cross-checked between Containerfile and image.lock at run-time, in addition to `sha256sum -c -` inside the Containerfile build. The container build is the first command under *Build evidence*. |
-| 2 | Same hardware | **PASS** | The host capture of acceptance criterion 2 and the timing sweep run on the same host and image. `benchmarks/reference/m4rie_one_cell.c` drives the in-scope cell **matmul GF(2^16) n=1024 uniform** under `perf stat -r 10 -e cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses` (10 inner iterations × 10 repeats). Both write outside the tracked tree. |
-| 3 | Comparable semantics | **PASS** (matmul only) | `m4rie_bench --smoke` runs the n=16 bitwise-equality contract for matmul over GF(2^4), GF(2^8), GF(2^16) against an independent scalar reference (`ref_gf2m_mul`) plus M4RIE's own internal scalar (`ff->mul`); both pass for all three fields. The matmul cross-check is element-wise bitwise equality against `ref_gf2m_mul`, satisfying acceptance criterion 3's *Bitwise equality of every element of A·B over the field* contract. **No basis-change matrix is required** because `gf2e_init(minpoly)` accepts an arbitrary polynomial — gf2-core's `0x13`, `0x11d`, `0x1002d` are passed in directly and are also present in M4RIE's `irreducible_polynomials[]` table in M4RIE's gf2e.c source. Echelon is **out of scope** — the acceptance criterion 3 echelon contract is bitwise canonical RREF equality against an independent RREF reference, which this harness does not yet supply (see *Target-matrix designation*). See § 5 below for the polynomial table. |
-| 4 | Shared data shape | **PASS** | `benchmarks/reference/m4rie_bench.c` emits exactly the 10-column schema with `lib=m4rie` and `field ∈ {GF(2^4), GF(2^8), GF(2^16)}`. The `GF(2^4)` tag is new (see § 8 below for the cross-cutting `analyze.py FIELD_FAMILY` flag); `GF(2^8)` and `GF(2^16)` are already declared in the schema of acceptance criterion 4. The timing sweep emits one row per in-scope cell (3 fields × 1 op × 3 sizes × 2 regimes). |
+| 2 | Same hardware | **PASS** | The host capture of the same-hardware requirement and the timing sweep run on the same host and image. `benchmarks/reference/m4rie_one_cell.c` drives the in-scope cell **matmul GF(2^16) n=1024 uniform** under `perf stat -r 10 -e cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses` (10 inner iterations × 10 repeats). Both write outside the tracked tree. |
+| 3 | Comparable semantics | **PASS** (matmul only) | `m4rie_bench --smoke` runs the n=16 bitwise-equality contract for matmul over GF(2^4), GF(2^8), GF(2^16) against an independent scalar reference (`ref_gf2m_mul`) plus M4RIE's own internal scalar (`ff->mul`); both pass for all three fields. The matmul cross-check is element-wise bitwise equality against `ref_gf2m_mul`, satisfying the comparable-semantics requirement's *Bitwise equality of every element of A·B over the field* contract. **No basis-change matrix is required** because `gf2e_init(minpoly)` accepts an arbitrary polynomial — gf2-core's `0x13`, `0x11d`, `0x1002d` are passed in directly and are also present in M4RIE's `irreducible_polynomials[]` table in M4RIE's gf2e.c source. Echelon is **out of scope** — the comparable-semantics requirement echelon contract is bitwise canonical RREF equality against an independent RREF reference, which this harness does not yet supply (see *Target-matrix designation*). See § 5 below for the polynomial table. |
+| 4 | Shared data shape | **PASS** | `benchmarks/reference/m4rie_bench.c` emits exactly the 10-column schema with `lib=m4rie` and `field ∈ {GF(2^4), GF(2^8), GF(2^16)}`. The `GF(2^4)` tag is new (see § 8 below for the cross-cutting `analyze.py FIELD_FAMILY` flag); `GF(2^8)` and `GF(2^16)` are already declared in the schema of the shared-data-shape requirement. The timing sweep emits one row per in-scope cell (3 fields × 1 op × 3 sizes × 2 regimes). |
 | 5 | CSV merge support | **PASS** | `python3 benchmarks/analyze.py --smoke` accepts the sweep's rows. `python3 benchmarks/analyze.py --gf2 <gf2 sweep>.csv --reference <m4rie sweep>.csv --out <tables>.md` merges both sweeps. Per-cell column header reads `m4rie` for GF(2^m) families: the cross-cutting `reference_lib_for()` change landed in commit `e3592fe` (see § 8 item 2). |
 
 ## Build evidence
@@ -111,7 +111,7 @@ the operations and shapes listed below.
 * Operation: **`echelon` (full RREF)**.
 
 **Rationale for the echelon exclusion.**
-The acceptance criterion 3 contract for the `echelon` row demands
+The comparable-semantics requirement contract for the `echelon` row demands
 *"Bitwise equality of the canonical RREF (unit pivots, zero columns
 above pivots, zero rows below rank). RREF is unique."* The contract
 language is bitwise, not structural: a candidate's RREF output for
@@ -139,7 +139,7 @@ theorem-based scalar inverse (`a^(2^m − 2) = a^{−1}` in GF(2^m)).
 Once that reference exists, `smoke_echelon_one_cell` can be
 re-introduced with a `memcmp`-style bitwise equality check between
 M4RIE's `mzed_echelonize` output and the scalar reference's RREF on
-the same input, satisfying acceptance criterion 3. At that point M4RIE's
+the same input, satisfying the comparable-semantics requirement. At that point M4RIE's
 echelon scope can be re-evaluated for promotion (re-evaluation
 trigger appended below).
 
@@ -301,7 +301,7 @@ historical record of the cross-cutting flag and its disposition.
 | `benchmarks/reference/m4rie_bench.c`                              | created  | M4RIE timing harness + `--smoke` correctness oracle. |
 | `benchmarks/reference/m4rie_one_cell.c`                           | created  | Single-cell driver used to capture perf-stat for the chosen in-scope cell (matmul GF(2^16) n=1024 uniform). |
 | `benchmarks/reference/Makefile`                                   | modified | New `m4rie_bench` and `m4rie_one_cell` targets, `M4RIE_CFLAGS` / `M4RIE_LIBS` derived rules. |
-| `benchmarks/smoke.sh`                                             | modified | Runs the existing fflas+m4ri smoke first, then drives `m4rie_bench --smoke` inside the same container image to satisfy the acceptance criterion 3 correctness contract for criterion #3. |
+| `benchmarks/smoke.sh`                                             | modified | Runs the existing fflas+m4ri smoke first, then drives `m4rie_bench --smoke` inside the same container image to satisfy the comparable-semantics requirement correctness contract for criterion #3. |
 | `dev/active/3eeb57f6/plans/m4rie_promotion_evidence.md`           | created  | This document. |
 
 ## Re-evaluation triggers
@@ -320,5 +320,5 @@ historical record of the cross-cutting flag and its disposition.
   perf-stat under the new microarchitecture-class baseline.
 * **A scalar GF(2^m) RREF reference (`ref_gf2m_rref`) is added to the
   harness.** When that lands, M4RIE's `mzed_echelonize` can be
-  re-evaluated for promotion under the acceptance criterion 3 bitwise-RREF
+  re-evaluated for promotion under the comparable-semantics requirement bitwise-RREF
   contract. See *Target-matrix designation → Future work*.

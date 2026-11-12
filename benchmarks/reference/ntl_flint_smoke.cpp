@@ -140,8 +140,8 @@ int check_field(long p, const char* label) {
     // therefore verify A·x ≡ b for both libraries' solutions
     // independently rather than requiring x_ntl == x_flint
     // (which would force the implementations to agree on internal
-    // pivot ordering and is not part of the acceptance criterion 3 (issue 1d6043e8) contract).
-    // The `solve` row in acceptance criterion 3 explicitly notes "equality is
+    // pivot ordering and is not part of the comparable-semantics requirement (issue 1d6043e8) contract).
+    // The `solve` row in the comparable-semantics requirement explicitly notes "equality is
     // on the **specific** particular solution by basis convention".
     // For a square non-singular system the basis convention is
     // immaterial: the unique solution agrees regardless. We verify
