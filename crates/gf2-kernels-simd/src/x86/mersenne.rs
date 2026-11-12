@@ -7,8 +7,6 @@
 //! All public functions are `unsafe`: callers must ensure AVX2 is available at
 //! runtime; `crate::mersenne::detect` returns the safe dispatched table.
 
-#![allow(clippy::missing_safety_doc)]
-
 use core::arch::x86_64::*;
 
 /// Reduces four packed 64-bit products modulo `M31 = 2^31 - 1`, returning

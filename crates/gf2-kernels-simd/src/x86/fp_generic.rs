@@ -4,8 +4,6 @@
 //! multiplier for `m·P`, keeping the whole vector loop in YMM registers and
 //! falling back to scalar code only for the tail.
 
-#![allow(clippy::missing_safety_doc)]
-
 use core::arch::x86_64::*;
 
 /// # Safety
@@ -247,6 +245,10 @@ unsafe fn fp_montgomery_batch_mul_vecs<const SIGNED_FINAL: bool>(
     p_inv: __m256i,
 ) {
     let unrolled = nvec / 4;
+    // SAFETY (all loads and stores below): the caller guarantees `nvec`
+    // readable vectors behind `a_ptr` and `b_ptr` and `nvec` writable vectors
+    // behind `o_ptr`; every offset is below `nvec`, and `loadu`/`storeu` need
+    // no alignment.
     for i in 0..unrolled {
         let base = i * 4;
         let a0 = _mm256_loadu_si256(a_ptr.add(base));
@@ -281,7 +283,9 @@ unsafe fn fp_montgomery_batch_mul_vecs<const SIGNED_FINAL: bool>(
 ///
 /// The host supports AVX2. The length assertions bound every load and store,
 /// and the slice references carry pointer validity and exclusive access to
-/// `out`.
+/// `out`. `modulus` is at most 2^63 (asserted), `p_inv` is `-modulus^-1 mod
+/// 2^64`, and every element of `a` and `b` is reduced below `modulus`.
+/// Violating the last two yields unspecified field values, not memory errors.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_montgomery_batch_mul(
     a: &[u64],
@@ -305,6 +309,8 @@ pub unsafe fn fp_montgomery_batch_mul(
     let b_ptr = b.as_ptr() as *const __m256i;
     let o_ptr = out.as_mut_ptr() as *mut __m256i;
 
+    // SAFETY: AVX2 is the caller's precondition. The three slices have length
+    // `n >= nvec * 4`, so the `nvec` unaligned 256-bit accesses stay in bounds.
     if modulus <= (1u64 << 62) {
         fp_montgomery_batch_mul_vecs::<true>(a_ptr, b_ptr, o_ptr, nvec, p, inv);
     } else {
@@ -312,9 +318,11 @@ pub unsafe fn fp_montgomery_batch_mul(
     }
 
     for i in (nvec * 4)..n {
+        // SAFETY: `i < n`, and the assertions give `a`, `b` and `out` length `n`.
         let t = *a.get_unchecked(i) as u128 * *b.get_unchecked(i) as u128;
         let m = (t as u64).wrapping_mul(p_inv);
         let u = ((t + m as u128 * modulus as u128) >> 64) as u64;
+        // SAFETY: `i < out.len()`; see above.
         *out.get_unchecked_mut(i) = if u >= modulus { u - modulus } else { u };
     }
 }
@@ -323,7 +331,8 @@ pub unsafe fn fp_montgomery_batch_mul(
 ///
 /// The host supports AVX2. The length assertions bound every load and store,
 /// and the slice references carry pointer validity and exclusive access to
-/// `out`.
+/// `out`. Every element of `a` and `b` is reduced below `modulus`; otherwise
+/// the field values are unspecified, not memory errors.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_montgomery_batch_add(a: &[u64], b: &[u64], modulus: u64, out: &mut [u64]) {
     assert_eq!(a.len(), b.len(), "fp_montgomery_batch_add: length mismatch");
@@ -336,6 +345,9 @@ pub unsafe fn fp_montgomery_batch_add(a: &[u64], b: &[u64], modulus: u64, out: &
     let b_ptr = b.as_ptr() as *const __m256i;
     let o_ptr = out.as_mut_ptr() as *mut __m256i;
     for i in 0..nvec {
+        // SAFETY: `i < nvec <= n / 4`, so both loads and the store below cover
+        // elements `4 * i..4 * i + 4 <= n` of slices of length `n`; AVX2 is the
+        // caller's precondition.
         let rv = add_mod_u64x4(
             _mm256_loadu_si256(a_ptr.add(i)),
             _mm256_loadu_si256(b_ptr.add(i)),
@@ -344,8 +356,10 @@ pub unsafe fn fp_montgomery_batch_add(a: &[u64], b: &[u64], modulus: u64, out: &
         _mm256_storeu_si256(o_ptr.add(i), rv);
     }
     for i in (nvec * 4)..n {
+        // SAFETY: `i < n`, and the assertions give `a`, `b` and `out` length `n`.
         let sum = (*a.get_unchecked(i)).wrapping_add(*b.get_unchecked(i));
         let overflow = sum < *a.get_unchecked(i);
+        // SAFETY: `i < out.len()`; see above.
         *out.get_unchecked_mut(i) = if overflow || sum >= modulus {
             sum.wrapping_sub(modulus)
         } else {
@@ -358,7 +372,8 @@ pub unsafe fn fp_montgomery_batch_add(a: &[u64], b: &[u64], modulus: u64, out: &
 ///
 /// The host supports AVX2. The length assertions bound every load and store,
 /// and the slice references carry pointer validity and exclusive access to
-/// `out`.
+/// `out`. Every element of `a` and `b` is reduced below `modulus`; otherwise
+/// the field values are unspecified, not memory errors.
 #[target_feature(enable = "avx2")]
 pub unsafe fn fp_montgomery_batch_sub(a: &[u64], b: &[u64], modulus: u64, out: &mut [u64]) {
     assert_eq!(a.len(), b.len(), "fp_montgomery_batch_sub: length mismatch");
@@ -371,6 +386,9 @@ pub unsafe fn fp_montgomery_batch_sub(a: &[u64], b: &[u64], modulus: u64, out: &
     let b_ptr = b.as_ptr() as *const __m256i;
     let o_ptr = out.as_mut_ptr() as *mut __m256i;
     for i in 0..nvec {
+        // SAFETY: `i < nvec <= n / 4`, so both loads and the store below cover
+        // elements `4 * i..4 * i + 4 <= n` of slices of length `n`; AVX2 is the
+        // caller's precondition.
         let rv = sub_mod_u64x4(
             _mm256_loadu_si256(a_ptr.add(i)),
             _mm256_loadu_si256(b_ptr.add(i)),
@@ -379,7 +397,9 @@ pub unsafe fn fp_montgomery_batch_sub(a: &[u64], b: &[u64], modulus: u64, out: &
         _mm256_storeu_si256(o_ptr.add(i), rv);
     }
     for i in (nvec * 4)..n {
+        // SAFETY: `i < n`, and the assertions give `a`, `b` and `out` length `n`.
         let (diff, borrow) = (*a.get_unchecked(i)).overflowing_sub(*b.get_unchecked(i));
+        // SAFETY: `i < out.len()`; see above.
         *out.get_unchecked_mut(i) = if borrow {
             diff.wrapping_add(modulus)
         } else {

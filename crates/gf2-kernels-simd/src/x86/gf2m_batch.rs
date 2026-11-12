@@ -10,7 +10,6 @@
 //! `crate::gf2m_batch::detect` publishes function pointers only when all four
 //! features are present.
 
-#![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
 
 #[cfg(target_arch = "x86")]

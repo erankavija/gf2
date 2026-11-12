@@ -7,8 +7,6 @@
 //! All public functions are `unsafe`: callers must ensure AVX2 is available at
 //! runtime; `crate::fp65537::detect` returns the safe dispatched table.
 
-#![allow(clippy::missing_safety_doc)]
-
 use core::arch::x86_64::*;
 
 /// Reduces four packed 64-bit products of canonical `Fp<65537>` values

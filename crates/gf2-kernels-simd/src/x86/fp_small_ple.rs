@@ -10,7 +10,6 @@
 //! runtime, `p` is an odd prime in `[3, 251]`, and all input bytes are
 //! canonical (`< p`).
 
-#![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::needless_range_loop)]
 

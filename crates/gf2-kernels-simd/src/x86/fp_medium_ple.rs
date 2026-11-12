@@ -10,7 +10,6 @@
 //! runtime, `p` is an odd prime in `(251, 65536)`, and all input u16 lanes are
 //! canonical (`< p`).
 
-#![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::needless_range_loop)]
 

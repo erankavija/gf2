@@ -7,7 +7,6 @@
 //! safe wrapper in `crate::gf2m_gemm` publishes the function pointer only
 //! when the CPU supports the feature set.
 
-#![allow(clippy::missing_safety_doc)]
 #![allow(clippy::too_many_arguments)]
 
 #[cfg(target_arch = "x86")]
