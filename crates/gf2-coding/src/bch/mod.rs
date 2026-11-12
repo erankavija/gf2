@@ -11,13 +11,12 @@
 //! Internal coordinate $i$ is the coefficient of $x^i$
 //! ([`spec`](spec#coordinate-convention)), a [`SystematicLayout`] maps user
 //! coordinates to internal ones, and [`matrix`] states the layout of $G$ and
-//! $H$. [`BinaryBchDecoder`] reads internal coordinates. A cyclic rotation of
-//! a codeword is a codeword, so a default-layout word decodes directly and the
-//! reported error positions index the supplied word. A reversed codeword
-//! belongs to the reciprocal code, which in general differs, so a
-//! descending-layout word is mapped to internal coordinates first, through
-//! [`SystematicPlan::internal_coordinate`](encode::SystematicPlan::internal_coordinate);
-//! [`dvb_t2::DvbT2BchDecoder`] performs that mapping for the DVB-T2 layout.
+//! $H$. [`BinaryBchDecoder::correct_in_place`] reads internal coordinates, and
+//! [`BinaryBchDecoder::correct_systematic_in_place`] reads a word in a
+//! declared layout through that layout's map, so a word decodes in the layout
+//! it was encoded in and the reported error positions index the supplied
+//! word. A reversed codeword belongs to the reciprocal code, which in general
+//! differs, so a descending-layout word decodes only through its layout.
 //!
 //! # Examples
 //!
@@ -41,12 +40,10 @@
 //!
 //! let decoder = BinaryBchDecoder::new(&code);
 //! let mut workspace = decoder.workspace();
-//! let outcome = decoder.correct_in_place(&mut received, &mut workspace)?;
+//! let layout = SystematicLayout::default();
+//! let outcome = decoder.correct_systematic_in_place(&mut received, layout, &mut workspace)?;
 //! assert_eq!(outcome, BchDecodeOutcome::Corrected { count: 2 });
-//! assert_eq!(
-//!     code.systematic_message(&received, SystematicLayout::default())?,
-//!     message
-//! );
+//! assert_eq!(code.systematic_message(&received, layout)?, message);
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 

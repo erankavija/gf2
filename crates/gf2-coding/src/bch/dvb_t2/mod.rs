@@ -10,16 +10,15 @@ pub use params::{DvbBchParams, FrameSize};
 
 use gf2_core::field::extension::BinaryPrimeExt;
 use gf2_core::gf2m::Gf2mField;
-use gf2_core::gfp::Fp;
 use gf2_core::{BitMatrix, BitVec};
 
-use crate::bch::encode::{LayoutView, SystematicLayout, SystematicPlan};
+use crate::bch::encode::{LayoutView, SystematicLayout};
 use crate::bch::error::BchError;
 use crate::bch::spec::{BinaryBchCode, DesignedDistance};
 use crate::bch::{BchDecodeOutcome, BchDecodeWorkspace, BinaryBchDecoder};
 use crate::error::CodeError;
 use crate::traits::block::BlockCode;
-use crate::transform::{CoordinateMap, Shortened};
+use crate::transform::Shortened;
 use crate::CodeRate;
 
 /// The systematic user layout the DVB-T2 outer BCH code declares.
@@ -96,7 +95,8 @@ pub fn dvb_t2_bch_code(frame_size: FrameSize, rate: CodeRate) -> Result<DvbT2Bch
 /// are sized here, so the per-word path reaches no allocator.
 #[derive(Clone, Debug)]
 pub struct DvbT2DecodeWorkspace {
-    /// The mother-length word the canonical decoder runs on.
+    /// The mother-length word, in the mother's layout, the canonical decoder
+    /// runs on.
     word: BitVec,
     /// The canonical decoder's own scratch.
     inner: BchDecodeWorkspace,
@@ -106,8 +106,10 @@ pub struct DvbT2DecodeWorkspace {
 ///
 /// A shortened word is decoded through the mother code: the decoder writes
 /// the received coordinates into a mother-length buffer whose removed
-/// coordinates carry zero symbols, runs [`BinaryBchDecoder`] on that buffer,
-/// and reads the result back through the shortened code's coordinate map. A
+/// coordinates carry zero symbols, corrects that buffer with
+/// [`BinaryBchDecoder::correct_systematic_in_place`] under the mother's
+/// [`DVB_T2_LAYOUT`], and reads the result back through the shortened code's
+/// coordinate map. A
 /// zero symbol at a removed coordinate is never in error, so the mother's
 /// guarantees apply to the shortened word unchanged: an outcome of
 /// [`BchDecodeOutcome::Corrected`] carries a verified correction, and
@@ -185,10 +187,9 @@ impl<'code> DvbT2BchDecoder<'code> {
         let outcome = self.correct_lifted(received, workspace)?;
         if matches!(outcome, BchDecodeOutcome::Corrected { .. }) {
             let map = self.code.coordinate_map();
-            let plan = self.code.mother().plan();
             for derived in 0..BlockCode::n(self.code) {
-                let internal = internal_of(map, &plan, derived)?;
-                received.set(derived, workspace.word.get(internal));
+                let mother = map.mother_position(derived).map_err(BchError::Decode)?;
+                received.set(derived, workspace.word.get(mother));
             }
         }
         Ok(outcome)
@@ -227,10 +228,9 @@ impl<'code> DvbT2BchDecoder<'code> {
 
         let outcome = self.correct_lifted(received, workspace)?;
         let map = self.code.coordinate_map();
-        let plan = self.code.mother().plan();
         for derived in 0..dimension {
-            let internal = internal_of(map, &plan, derived)?;
-            bbframe.set(derived, workspace.word.get(internal));
+            let mother = map.mother_position(derived).map_err(BchError::Decode)?;
+            bbframe.set(derived, workspace.word.get(mother));
         }
         Ok(outcome)
     }
@@ -273,26 +273,18 @@ impl<'code> DvbT2BchDecoder<'code> {
         workspace.word.resize(mother_length, false);
 
         let map = self.code.coordinate_map();
-        let plan = self.code.mother().plan();
         for derived in 0..length {
-            let internal = internal_of(map, &plan, derived)?;
-            workspace.word.set(internal, received.get(derived));
+            let mother = map.mother_position(derived).map_err(BchError::Decode)?;
+            workspace.word.set(mother, received.get(derived));
         }
 
-        self.mother
-            .correct_in_place(&mut workspace.word, &mut workspace.inner)
+        let mother = self.code.mother();
+        self.mother.correct_systematic_in_place(
+            &mut workspace.word,
+            mother.layout(),
+            &mut workspace.inner,
+        )
     }
-}
-
-/// Returns the mother internal coordinate carrying derived position
-/// `derived` of a shortened code with map `map` under plan `plan`.
-fn internal_of(
-    map: &CoordinateMap,
-    plan: &SystematicPlan<'_, Fp<2>>,
-    derived: usize,
-) -> Result<usize, BchError> {
-    let user = map.mother_position(derived).map_err(BchError::Decode)?;
-    plan.internal_coordinate(user).map_err(BchError::Decode)
 }
 
 #[cfg(test)]

@@ -10,7 +10,7 @@
 use gf2_coding::bch::dvb_t2::{dvb_t2_bch_code, DvbT2BchCode, DvbT2BchDecoder, FrameSize};
 use gf2_coding::bch::error::BchError;
 use gf2_coding::bch::spec::{BinaryBchCode, DesignedDistance};
-use gf2_coding::bch::{BchDecodeOutcome, BinaryBchDecoder, SystematicLayout};
+use gf2_coding::bch::{BchDecodeOutcome, BchDecodeReport, BinaryBchDecoder, SystematicLayout};
 use gf2_coding::error::CodeError;
 use gf2_coding::traits::block::{BlockCode, BlockEncoder};
 use gf2_coding::CodeRate;
@@ -76,59 +76,17 @@ fn assert_generator_vanishes_at_consecutive_powers(code: &BinaryBchCode, t: usiz
     }
 }
 
-/// What the canonical decoder established about one default-layout word.
-struct LayoutDecode {
-    outcome: BchDecodeOutcome,
-    /// The corrected word's message, or `None` without a verified correction.
-    message: Option<BitVec>,
-    /// The corrected user coordinates, ascending.
-    error_positions: Vec<usize>,
-}
-
-/// The decoder reads internal coordinates, so the received word crosses the
-/// layout's coordinate map on the way in, and the corrected word and its
-/// corrected coordinates cross it on the way out.
-fn decode(code: &BinaryBchCode, received: &BitVec) -> LayoutDecode {
-    let plan = code.systematic_plan(SystematicLayout::default());
-    let internal_of = |user: usize| {
-        plan.internal_coordinate(user)
-            .expect("a user coordinate below the length")
-    };
-    let mut internal = BitVec::zeros(code.n());
-    for user in 0..code.n() {
-        internal.set(internal_of(user), received.get(user));
-    }
-
-    let report = BinaryBchDecoder::new(code)
-        .decode(&internal)
-        .expect("a length-n word decodes");
-    let message = report.codeword().map(|corrected| {
-        let mut message = BitVec::zeros(code.k());
-        for user in 0..code.k() {
-            message.set(user, corrected.get(internal_of(user)));
-        }
-        message
-    });
-    let mut error_positions: Vec<usize> = report
-        .error_positions()
-        .iter()
-        .map(|&degree| {
-            plan.user_coordinate(degree)
-                .expect("a corrected coordinate below the length")
-        })
-        .collect();
-    error_positions.sort_unstable();
-
-    LayoutDecode {
-        outcome: report.outcome(),
-        message,
-        error_positions,
-    }
+/// Decodes a word in the default layout, the one [`encode`] writes.
+fn decode(code: &BinaryBchCode, received: &BitVec) -> BchDecodeReport {
+    BinaryBchDecoder::new(code)
+        .decode_systematic(received, SystematicLayout::default())
+        .expect("a length-n word decodes")
 }
 
 fn decode_message(code: &BinaryBchCode, received: &BitVec) -> BitVec {
     decode(code, received)
-        .message
+        .message()
+        .cloned()
         .expect("a word within the correction radius decodes")
 }
 
@@ -338,11 +296,11 @@ mod syndrome_tests {
 
         let decoded = decode(&code, &cw);
         assert_eq!(
-            decoded.outcome,
+            decoded.outcome(),
             BchDecodeOutcome::NoErrors,
             "Syndrome must be zero for valid codeword"
         );
-        assert!(decoded.error_positions.is_empty());
+        assert!(decoded.error_positions().is_empty());
     }
 
     #[test]
@@ -358,7 +316,7 @@ mod syndrome_tests {
         cw.set(5, !cw.get(5));
 
         assert_ne!(
-            decode(&code, &cw).outcome,
+            decode(&code, &cw).outcome(),
             BchDecodeOutcome::NoErrors,
             "Syndrome must detect error"
         );
@@ -387,7 +345,7 @@ mod syndrome_tests {
         cw.set(10, !cw.get(10));
 
         assert_ne!(
-            decode(&code, &cw).outcome,
+            decode(&code, &cw).outcome(),
             BchDecodeOutcome::NoErrors,
             "Syndromes must detect multiple errors"
         );
@@ -419,7 +377,7 @@ mod berlekamp_massey_tests {
 
         // The zero word has all-zero syndromes, so Λ(x) = 1.
         let decoded = decode(&code, &BitVec::zeros(15));
-        assert_eq!(decoded.outcome.corrected_count(), Some(0));
+        assert_eq!(decoded.outcome().corrected_count(), Some(0));
     }
 
     #[test]
@@ -431,7 +389,7 @@ mod berlekamp_massey_tests {
         cw.set(5, !cw.get(5));
 
         assert_eq!(
-            decode(&code, &cw).outcome,
+            decode(&code, &cw).outcome(),
             BchDecodeOutcome::Corrected { count: 1 }
         );
     }
@@ -447,7 +405,7 @@ mod berlekamp_massey_tests {
         cw.set(10, !cw.get(10));
 
         assert_eq!(
-            decode(&code, &cw).outcome,
+            decode(&code, &cw).outcome(),
             BchDecodeOutcome::Corrected { count: 2 }
         );
     }
@@ -463,7 +421,7 @@ mod berlekamp_massey_tests {
         cw.set(8, !cw.get(8));
 
         let count = decode(&code, &cw)
-            .outcome
+            .outcome()
             .corrected_count()
             .expect("t errors are corrected");
         assert!(count <= code.correction_radius());
@@ -480,7 +438,7 @@ mod chien_search_tests {
 
         // Λ(x) = 1 means no errors
         let decoded = decode(&code, &BitVec::zeros(15));
-        assert_eq!(decoded.error_positions.len(), 0);
+        assert_eq!(decoded.error_positions().len(), 0);
     }
 
     #[test]
@@ -493,7 +451,7 @@ mod chien_search_tests {
         let bitvec_error_pos = 5;
         cw.set(bitvec_error_pos, !cw.get(bitvec_error_pos));
 
-        let bitvec_positions = decode(&code, &cw).error_positions;
+        let bitvec_positions = decode(&code, &cw).error_positions().to_vec();
 
         assert_eq!(bitvec_positions.len(), 1);
         assert_eq!(bitvec_positions[0], bitvec_error_pos);
@@ -511,7 +469,7 @@ mod chien_search_tests {
             cw.set(pos, !cw.get(pos));
         }
 
-        let bitvec_positions = decode(&code, &cw).error_positions;
+        let bitvec_positions = decode(&code, &cw).error_positions().to_vec();
 
         assert_eq!(bitvec_positions.len(), 2);
         assert_eq!(bitvec_positions, bitvec_errors);
@@ -527,7 +485,7 @@ mod chien_search_tests {
         cw.set(0, !cw.get(0));
         cw.set(14, !cw.get(14));
 
-        let positions = decode(&code, &cw).error_positions;
+        let positions = decode(&code, &cw).error_positions().to_vec();
         assert_eq!(positions.len(), code.correction_radius());
     }
 }
@@ -977,6 +935,225 @@ mod dvb_t2_validation {
             let cw = code.encode(&msg).unwrap();
 
             assert_corrects(&code, &msg, &cw, 1, &mut rng);
+        }
+    }
+}
+
+/// Decoding in a declared layout: the decoder reads and corrects the caller's
+/// coordinates, so a word encoded under a layout decodes under the same one.
+mod layout_decode_tests {
+    use super::*;
+    use gf2_coding::bch::dvb_t2::DVB_T2_LAYOUT;
+
+    const LAYOUTS: [SystematicLayout; 2] =
+        [SystematicLayout::MessageParityAscending, DVB_T2_LAYOUT];
+
+    /// BCH(127, 64) with $t = 10$: the message block ends at coordinate 63, so
+    /// the first word boundary is also the message-parity boundary.
+    fn wide_code() -> BinaryBchCode {
+        let extension = BinaryPrimeExt::new(Gf2mField::new(7, 0b1000_0011).with_tables())
+            .expect("x^7 + x + 1 presents GF(128)");
+        let code = BinaryBchCode::primitive_narrow_sense(
+            extension,
+            DesignedDistance::try_from(21).expect("a positive designed distance"),
+        )
+        .expect("a primitive narrow-sense code over GF(128)");
+        assert_eq!(
+            (code.n(), code.k(), code.correction_radius()),
+            (127, 64, 10)
+        );
+        code
+    }
+
+    fn codes() -> [BinaryBchCode; 2] {
+        [gf16_code(2), wide_code()]
+    }
+
+    fn message(k: usize) -> BitVec {
+        let mut message = BitVec::zeros(k);
+        for i in 0..k {
+            message.set(i, i % 3 == 0 || i % 7 == 1);
+        }
+        message
+    }
+
+    fn flipped(word: &BitVec, positions: &[usize]) -> BitVec {
+        let mut word = word.clone();
+        for &position in positions {
+            word.set(position, !word.get(position));
+        }
+        word
+    }
+
+    /// The word boundaries 0, 1, 63, 64, 65 and the block edges $k - 1$, $k$
+    /// and $n - 1$ that lie inside the code, ascending.
+    fn boundary_positions(code: &BinaryBchCode) -> Vec<usize> {
+        let mut positions: Vec<usize> = [0, 1, 63, 64, 65, code.k() - 1, code.k(), code.n() - 1]
+            .into_iter()
+            .filter(|&position| position < code.n())
+            .collect();
+        positions.sort_unstable();
+        positions.dedup();
+        positions
+    }
+
+    /// `count` distinct ascending positions, the boundary ones first.
+    fn spread_positions(code: &BinaryBchCode, count: usize) -> Vec<usize> {
+        let boundary = boundary_positions(code);
+        let mut positions = boundary.clone();
+        positions.extend((2..code.n()).filter(|position| !boundary.contains(position)));
+        positions.truncate(count);
+        positions.sort_unstable();
+        positions
+    }
+
+    /// Decodes `received` under `layout` on both paths and checks they agree;
+    /// returns the fast path's outcome and corrected word with the report.
+    fn decode_both(
+        code: &BinaryBchCode,
+        received: &BitVec,
+        layout: SystematicLayout,
+    ) -> (BchDecodeOutcome, BitVec, BchDecodeReport) {
+        let decoder = BinaryBchDecoder::new(code);
+        let mut workspace = decoder.workspace();
+        let mut word = received.clone();
+        let outcome = decoder
+            .correct_systematic_in_place(&mut word, layout, &mut workspace)
+            .expect("a length-n word decodes");
+        let report = decoder
+            .decode_systematic(received, layout)
+            .expect("a length-n word decodes");
+        assert_eq!(report.outcome(), outcome, "{layout:?}");
+        (outcome, word, report)
+    }
+
+    fn assert_corrects(code: &BinaryBchCode, layout: SystematicLayout, errors: &[usize]) {
+        let message = message(code.k());
+        let codeword = code
+            .encode_systematic(&message, layout)
+            .expect("a k-bit message encodes");
+        let received = flipped(&codeword, errors);
+        let (outcome, corrected, report) = decode_both(code, &received, layout);
+
+        let expected = if errors.is_empty() {
+            BchDecodeOutcome::NoErrors
+        } else {
+            BchDecodeOutcome::Corrected {
+                count: errors.len(),
+            }
+        };
+        let label = format!("n = {} under {layout:?} with errors {errors:?}", code.n());
+        assert_eq!(outcome, expected, "{label}");
+        assert_eq!(corrected, codeword, "{label}");
+        assert_eq!(report.codeword(), Some(&codeword), "{label}");
+        assert_eq!(report.message(), Some(&message), "{label}");
+        assert_eq!(report.error_positions(), errors, "{label}");
+        assert_eq!(report.error_count(), Some(errors.len()), "{label}");
+    }
+
+    #[test]
+    fn a_layout_codeword_decodes_unchanged() {
+        for code in codes() {
+            for layout in LAYOUTS {
+                assert_corrects(&code, layout, &[]);
+            }
+        }
+    }
+
+    #[test]
+    fn single_errors_on_message_and_parity_coordinates_are_corrected() {
+        for code in codes() {
+            for layout in LAYOUTS {
+                for position in boundary_positions(&code) {
+                    assert_corrects(&code, layout, &[position]);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn radius_many_errors_across_word_boundaries_are_corrected() {
+        for code in codes() {
+            let errors = spread_positions(&code, code.correction_radius());
+            for layout in LAYOUTS {
+                assert_corrects(&code, layout, &errors);
+            }
+        }
+    }
+
+    /// Beyond the radius the word is left untouched, or replaced by a
+    /// different codeword of the same layout.
+    #[test]
+    fn beyond_the_radius_the_word_is_untouched_or_a_different_codeword() {
+        for code in codes() {
+            let errors = spread_positions(&code, code.correction_radius() + 1);
+            for layout in LAYOUTS {
+                let codeword = code
+                    .encode_systematic(&message(code.k()), layout)
+                    .expect("a k-bit message encodes");
+                let received = flipped(&codeword, &errors);
+                let (outcome, word, report) = decode_both(&code, &received, layout);
+                match outcome {
+                    BchDecodeOutcome::Uncorrectable => {
+                        assert_eq!(word, received, "{layout:?}");
+                        assert_eq!(report.codeword(), None);
+                        assert!(report.error_positions().is_empty());
+                    }
+                    BchDecodeOutcome::Corrected { count } => {
+                        assert_ne!(word, codeword, "{layout:?}");
+                        let message = code
+                            .systematic_message(&word, layout)
+                            .expect("a length-n word");
+                        assert_eq!(
+                            code.encode_systematic(&message, layout),
+                            Ok(word.clone()),
+                            "a miscorrection is a codeword of the layout"
+                        );
+                        assert_eq!(report.codeword(), Some(&word));
+                        assert_eq!(report.error_positions().len(), count);
+                    }
+                    BchDecodeOutcome::NoErrors => panic!("{layout:?}: t + 1 errors are visible"),
+                }
+            }
+        }
+    }
+
+    /// For BCH(127, 64) the radius-10 balls cover about $2^{-15}$ of the
+    /// space, and this pattern falls outside every one of them.
+    #[test]
+    fn the_wide_code_reports_failure_beyond_its_radius() {
+        let code = wide_code();
+        let errors = spread_positions(&code, code.correction_radius() + 1);
+        for layout in LAYOUTS {
+            let codeword = code
+                .encode_systematic(&message(code.k()), layout)
+                .expect("a k-bit message encodes");
+            let (outcome, ..) = decode_both(&code, &flipped(&codeword, &errors), layout);
+            assert_eq!(outcome, BchDecodeOutcome::Uncorrectable, "{layout:?}");
+        }
+    }
+
+    #[test]
+    fn a_wrong_length_layout_word_is_rejected() {
+        let code = gf16_code(2);
+        let decoder = BinaryBchDecoder::new(&code);
+        let mut workspace = decoder.workspace();
+        let mismatch = BchError::Decode(CodeError::BufferLengthMismatch {
+            expected: 15,
+            actual: 14,
+        });
+        for layout in LAYOUTS {
+            let mut word = BitVec::zeros(14);
+            assert_eq!(
+                decoder
+                    .correct_systematic_in_place(&mut word, layout, &mut workspace)
+                    .err(),
+                Some(mismatch.clone())
+            );
+            assert_eq!(
+                decoder.decode_systematic(&word, layout).err(),
+                Some(mismatch.clone())
+            );
         }
     }
 }

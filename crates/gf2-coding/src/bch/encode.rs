@@ -227,7 +227,7 @@ impl<'a, F: FiniteField> SystematicPlan<'a, F> {
     }
 
     /// The layout mapping, for a `user` already known to be in range.
-    fn internal_at(&self, user: usize) -> usize {
+    pub(crate) fn internal_at(&self, user: usize) -> usize {
         match self.layout {
             SystematicLayout::MessageParityAscending => {
                 let shifted = user + self.redundancy();
@@ -243,7 +243,7 @@ impl<'a, F: FiniteField> SystematicPlan<'a, F> {
 
     /// The inverse layout mapping, for an `internal` already known to be in
     /// range.
-    fn user_at(&self, internal: usize) -> usize {
+    pub(crate) fn user_at(&self, internal: usize) -> usize {
         match self.layout {
             SystematicLayout::MessageParityAscending => {
                 let shifted = internal + self.dimension;
@@ -254,6 +254,25 @@ impl<'a, F: FiniteField> SystematicPlan<'a, F> {
                 }
             }
             SystematicLayout::MessageParityDescending => self.length - 1 - internal,
+        }
+    }
+
+    /// An upper bound on the internal coordinates the user coordinates
+    /// `first..=last` carry, for `first <= last` below the length.
+    ///
+    /// The bound is exact when the range lies inside one systematic block
+    /// under [`SystematicLayout::MessageParityAscending`], and always under
+    /// [`SystematicLayout::MessageParityDescending`].
+    pub(crate) fn internal_upper_bound(&self, first: usize, last: usize) -> usize {
+        match self.layout {
+            SystematicLayout::MessageParityAscending => {
+                if last < self.dimension || first >= self.dimension {
+                    self.internal_at(last)
+                } else {
+                    self.length - 1
+                }
+            }
+            SystematicLayout::MessageParityDescending => self.internal_at(first),
         }
     }
 
