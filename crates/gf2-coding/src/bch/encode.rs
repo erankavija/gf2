@@ -529,21 +529,39 @@ fn select_family_resolved(
 /// under the process-wide profile.
 ///
 /// This is the one place a batch entry point reads the profile. It resolves
-/// the coding tuning section once per batch call, never per message.
-fn select_family<F, S>(plan: &SystematicPlan<'_, F>, batch_len: usize) -> EncodeFamily
+/// the coding tuning section once per batch call, never per message, and
+/// returns its encode selectors with the family, for the family's
+/// preparation.
+fn select_family<F, S>(
+    plan: &SystematicPlan<'_, F>,
+    batch_len: usize,
+) -> (EncodeFamily, &'static EncodeSelectors)
 where
     F: FieldIdentity,
     S: SystematicKernel<F>,
 {
-    let active = crate::tuning::active();
-    select_family_resolved(
-        active.encode(),
+    let selectors = active_encode_selectors();
+    let family = select_family_resolved(
+        selectors,
         plan.redundancy(),
         batch_len,
         encode_kernels_accelerated(),
         |family| S::family_available(family, plan),
-    )
+    );
+    (family, selectors)
 }
+
+/// The encode selectors of the process-wide coding section. Reading them
+/// resolves the process's tuning authority, which is why only encode entry
+/// points call this and building registers never does.
+fn active_encode_selectors() -> &'static EncodeSelectors {
+    crate::tuning::active().section.encode()
+}
+
+/// The encode selectors registers are built with: the structural defaults of
+/// [`CodingSelectors::CONSERVATIVE`](crate::tuning::CodingSelectors::CONSERVATIVE),
+/// which resolve no profile.
+const STRUCTURAL_SELECTORS: &EncodeSelectors = &crate::tuning::CodingSelectors::CONSERVATIVE.encode;
 
 /// The buffers a systematic recurrence runs over.
 ///
@@ -818,9 +836,10 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
     /// later is what keeps a batch call allocation-free on its first
     /// iteration as well as its later ones: the profile chooses among
     /// families whose storage already exists, so no selection can reach the
-    /// allocator. It also makes the buffers a function of the plan alone,
-    /// so a workspace built before a profile is installed serves the
-    /// selection made after it.
+    /// allocator. Each family is prepared under the structural selectors, so
+    /// the buffers are a function of the plan alone and building them reads
+    /// no profile; a batch under an installed fold override reshapes the fold
+    /// buffer once, on its first call.
     ///
     /// # Complexity
     ///
@@ -837,7 +856,7 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
         Self::reset_registers(plan, &mut registers);
         for &family in EncodeFamily::REGISTERED {
             if Self::family_available(family, plan) {
-                Self::reset_family(family, plan, &mut registers);
+                Self::reset_family(family, plan, STRUCTURAL_SELECTORS, &mut registers);
             }
         }
         registers
@@ -860,15 +879,20 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
     /// [`reset_registers`](Self::reset_registers) established.
     ///
     /// A family whose step reads precomputed state builds that state here
-    /// rather than per message. [`registers`](Self::registers) runs it for
-    /// every available family when it builds the buffers, so a workspace
-    /// batch never runs it at all; the entry points that own no workspace
-    /// run it for the selected family alone, over scratch their thread
-    /// keeps. The default implementation does nothing, which is what
-    /// [`EncodeFamily::REFERENCE`] needs.
+    /// rather than per message, shaped by `selectors`' caller overrides.
+    /// [`registers`](Self::registers) runs it for every available family
+    /// under the structural selectors when it builds the buffers, so building
+    /// a workspace resolves no profile. Every encode entry point runs it for
+    /// the selected family under the active selectors before its first
+    /// message: over a workspace it finds the buffers prepared unless an
+    /// installed override reshapes them, and the entry points that own no
+    /// workspace prepare scratch their thread keeps. The default
+    /// implementation does nothing, which is what [`EncodeFamily::REFERENCE`]
+    /// needs.
     ///
     /// An implementation resizes rather than reallocates, so a second call
-    /// over buffers this one already prepared reaches no allocator.
+    /// over buffers this one already prepared under the same selectors
+    /// reaches no allocator.
     ///
     /// # Complexity
     ///
@@ -877,9 +901,10 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
     fn reset_family(
         family: EncodeFamily,
         plan: &SystematicPlan<'_, F>,
+        selectors: &EncodeSelectors,
         registers: &mut EncodeRegisters<Self::Word>,
     ) {
-        let _ = (family, plan, registers);
+        let _ = (family, plan, selectors, registers);
     }
 
     /// Writes the systematic codeword of `message` into `codeword` under
@@ -997,10 +1022,10 @@ pub trait SystematicKernel<F: FieldIdentity>: SymbolSequence<F> {
         message: &Self,
         codeword: &mut Self,
     ) -> Result<(), CodeError> {
-        let family = select_family::<F, Self>(plan, 1);
+        let (family, selectors) = select_family::<F, Self>(plan, 1);
         with_encode_scratch(|registers: &mut EncodeRegisters<Self::Word>| {
             Self::reset_registers(plan, registers);
-            Self::reset_family(family, plan, registers);
+            Self::reset_family(family, plan, selectors, registers);
             Self::encode_systematic_family(family, plan, message, registers, codeword)
         })
     }
@@ -1203,9 +1228,9 @@ impl SystematicKernel<Fp<2>> for BitVec {
     /// Builds the reduction tables [`EncodeFamily::TableRemainder`] reads,
     /// the lane-group scratch [`EncodeFamily::BitsliceInterleaved`] reduces
     /// over, and the constants and message-block run
-    /// [`EncodeFamily::ClmulFold`] folds through, the run sized by the active
-    /// selectors' [`EncodeSelectors::clmul_fold_run_blocks`] or the plan's
-    /// [`clmul_fold_run_blocks`].
+    /// [`EncodeFamily::ClmulFold`] folds through, for the accumulator count
+    /// and run length `selectors` override or, without overrides, for
+    /// [`clmul_fold_accumulators`] and [`clmul_fold_run_blocks`].
     ///
     /// Each buffer is cleared and resized rather than replaced, so preparing
     /// registers that already carry storage of this length reaches no
@@ -1222,6 +1247,7 @@ impl SystematicKernel<Fp<2>> for BitVec {
     fn reset_family(
         family: EncodeFamily,
         plan: &SystematicPlan<'_, Fp<2>>,
+        selectors: &EncodeSelectors,
         registers: &mut EncodeRegisters<u64>,
     ) {
         let redundancy = plan.redundancy();
@@ -1244,13 +1270,12 @@ impl SystematicKernel<Fp<2>> for BitVec {
                     fold,
                     ..
                 } = registers;
-                let run_blocks = || {
-                    crate::tuning::active()
-                        .encode()
-                        .clmul_fold_run_blocks()
-                        .unwrap_or(clmul_fold_run_blocks(plan.dimension()))
-                };
-                packed_build_fold(redundancy, run_blocks, low, register, fold);
+                let accumulators =
+                    fold_accumulators_for(redundancy, selectors.clmul_fold_accumulators());
+                let run_blocks = selectors
+                    .clmul_fold_run_blocks()
+                    .unwrap_or(clmul_fold_run_blocks(plan.dimension()));
+                packed_build_fold(redundancy, accumulators, run_blocks, low, register, fold);
             }
             EncodeFamily::ClmulFold => {}
         }
@@ -1664,16 +1689,56 @@ fn fold_body_words(accumulators: usize, words: usize, run: usize) -> usize {
 /// Words of [`EncodeRegisters::fold`] ahead of the chunk constants.
 const FOLD_HEADER_WORDS: usize = 3;
 
-/// The accumulator count [`EncodeFamily::ClmulFold`] prepares at
-/// `redundancy`: [`bch_encode::fold_accumulators`] for the bundle this
-/// process encodes with, and zero above the widths the chunk fold unrolls,
-/// where the fold runs one block at a time.
-fn fold_default_accumulators(redundancy: usize) -> usize {
+/// The accumulator count [`EncodeFamily::ClmulFold`] folds chunks into by
+/// default at `redundancy` $r$, or `None` above the
+/// [`FOLD_UNROLLED_WORDS`](bch_encode::FOLD_UNROLLED_WORDS) remainder words
+/// the chunk fold unrolls, where the fold runs one block at a time.
+///
+/// The count is [`bch_encode::fold_accumulators`] for the kernel bundle this
+/// process encodes with: the larger of $W + 1$, the fewest accumulators that
+/// hold a chunk's products unreduced, and
+/// $\lceil \text{in\_flight} / W \rceil$, the fewest whose $L W$
+/// independent products per chunk cover the multiplier's latency, with
+/// $W = \lceil r/64 \rceil$ and `in_flight` the bundle's
+/// [`fold_in_flight`](bch_encode::BchEncodeFns::fold_in_flight), its
+/// multiply's latency times its issue rate.
+/// [`EncodeSelectors::with_clmul_fold_accumulators`] overrides it.
+///
+/// # Panics
+///
+/// Panics when `redundancy` is zero.
+#[must_use]
+pub fn clmul_fold_accumulators(redundancy: usize) -> Option<NonZeroUsize> {
+    assert!(
+        redundancy > 0,
+        "a fold needs a generator of positive degree"
+    );
     if redundancy.div_ceil(64) <= bch_encode::FOLD_UNROLLED_WORDS {
-        bch_encode::fold_accumulators(redundancy, encode_kernels().fold_in_flight)
+        NonZeroUsize::new(bch_encode::fold_accumulators(
+            redundancy,
+            encode_kernels().fold_in_flight,
+        ))
     } else {
-        0
+        None
     }
+}
+
+/// The accumulator count [`EncodeFamily::ClmulFold`] prepares at
+/// `redundancy` under the caller's `requested` count: `requested` clamped to
+/// the admissible $W + 1$ to
+/// [`FOLD_MAX_ACCUMULATORS`](bch_encode::FOLD_MAX_ACCUMULATORS), or
+/// [`clmul_fold_accumulators`] without one, and zero where the fold runs one
+/// block at a time.
+fn fold_accumulators_for(redundancy: usize, requested: Option<NonZeroUsize>) -> usize {
+    let Some(structural) = clmul_fold_accumulators(redundancy) else {
+        return 0;
+    };
+    requested.map_or(structural.get(), |count| {
+        count.get().clamp(
+            redundancy.div_ceil(64) + 1,
+            bch_encode::FOLD_MAX_ACCUMULATORS,
+        )
+    })
 }
 
 /// Words a prepared buffer of `body` words holds with its [`prepared_for`]
@@ -1700,33 +1765,31 @@ fn stamp_prepared(buffer: &mut Vec<u64>, body: usize, redundancy: usize, low: &[
     buffer.extend_from_slice(low);
 }
 
-/// Derives the constants [`EncodeFamily::ClmulFold`] folds through and sizes
-/// its run for `run_blocks` message blocks, unless `fold` already holds them
-/// for this generator.
+/// Derives the constants [`EncodeFamily::ClmulFold`] folds through for
+/// `accumulators` accumulators, zero for the fold that runs one block at a
+/// time, and sizes its run for `run_blocks` message blocks, unless `fold`
+/// already holds them for this generator.
 ///
-/// A prepared buffer keeps the run it was sized with: every run length writes
-/// the same codewords, so `run_blocks` is consulted only when the buffer is
-/// prepared. The buffer is cleared and resized rather than replaced, so
-/// preparing registers that already carry the constants reaches no allocator.
-/// The Barrett division runs over `register`, whose contents carry no meaning
+/// The buffer is cleared and resized rather than replaced, so preparing
+/// registers that already carry the constants reaches no allocator. The
+/// Barrett division runs over `register`, whose contents carry no meaning
 /// outside an encode, so the constants cost no scratch of their own.
 fn packed_build_fold(
     redundancy: usize,
-    run_blocks: impl FnOnce() -> NonZeroUsize,
+    accumulators: usize,
+    run_blocks: NonZeroUsize,
     low: &[u64],
     register: &mut [u64],
     fold: &mut Vec<u64>,
 ) {
-    let accumulators = fold_default_accumulators(redundancy);
-    if let Some(&[_, prepared_accumulators, prepared_run]) = fold.get(..FOLD_HEADER_WORDS) {
-        let body = fold_body_words(accumulators, low.len(), prepared_run as usize);
-        if prepared_accumulators == accumulators as u64 && prepared_for(fold, body, redundancy, low)
-        {
-            return;
-        }
-    }
-    let run = fold_run_capacity(run_blocks(), accumulators);
+    let run = fold_run_capacity(run_blocks, accumulators);
     let body = fold_body_words(accumulators, low.len(), run);
+    if prepared_for(fold, body, redundancy, low)
+        && fold[1] == accumulators as u64
+        && fold[2] == run as u64
+    {
+        return;
+    }
     fold.clear();
     fold.resize(body, 0);
     fold[0] = bch_encode::fold_barrett_constant(low, redundancy, register);
@@ -2097,8 +2160,10 @@ where
     /// # Complexity
     ///
     /// That of [`encode_systematic_into`](Self::encode_systematic_into),
-    /// without its $O(r)$ register reset and family preparation, plus $O(r)$
-    /// mixing steps to decide the workspace fingerprint. A batch pays that
+    /// without its $O(r)$ register reset, with a family preparation that
+    /// finds the workspace prepared unless an installed fold override
+    /// reshapes it, plus $O(r)$ mixing steps to decide the workspace
+    /// fingerprint. A batch pays that
     /// check once for the whole batch.
     pub fn encode_systematic_with(
         &self,
@@ -2111,7 +2176,8 @@ where
         let plan = self.systematic_plan(layout);
         plan.validate_lengths(message.len(), codeword.len())?;
         validate_symbol_field(&plan, message)?;
-        let family = select_family::<X::Base, S>(&plan, 1);
+        let (family, selectors) = select_family::<X::Base, S>(&plan, 1);
+        S::reset_family(family, &plan, selectors, &mut workspace.registers);
         S::encode_systematic_family(family, &plan, message, &mut workspace.registers, codeword)?;
         Ok(())
     }
@@ -2150,7 +2216,7 @@ where
         codewords: &mut [S],
     ) -> Result<(), BchError> {
         let plan = self.systematic_plan(layout);
-        let family = select_family::<X::Base, S>(&plan, messages.len());
+        let (family, _) = select_family::<X::Base, S>(&plan, messages.len());
         self.encode_batch_family_into(family, messages, layout, workspace, codewords)
     }
 
@@ -2188,7 +2254,15 @@ where
             return Err(BchError::EncodeFamilyUnavailable { family });
         }
         validate_batch(&plan, messages, codewords)?;
-        encode_partition(family, &plan, messages, &mut workspace.registers, codewords);
+        let selectors = active_encode_selectors();
+        encode_partition(
+            family,
+            selectors,
+            &plan,
+            messages,
+            &mut workspace.registers,
+            codewords,
+        );
         Ok(())
     }
 
@@ -2212,7 +2286,7 @@ where
         layout: SystematicLayout,
         batch_len: usize,
     ) -> EncodeFamily {
-        select_family::<X::Base, S>(&self.systematic_plan(layout), batch_len)
+        select_family::<X::Base, S>(&self.systematic_plan(layout), batch_len).0
     }
 
     /// Encodes every message of `messages` into a new vector of codewords.
@@ -2247,11 +2321,17 @@ where
         let plan = self.systematic_plan(layout);
         let mut codewords = vec![S::zeroed(plan.length(), plan.symbol_zero()); messages.len()];
         validate_batch(&plan, messages, &codewords)?;
-        let family = select_family::<X::Base, S>(&plan, messages.len());
+        let (family, selectors) = select_family::<X::Base, S>(&plan, messages.len());
         with_encode_scratch(|registers: &mut EncodeRegisters<S::Word>| {
             S::reset_registers(&plan, registers);
-            S::reset_family(family, &plan, registers);
-            encode_partition(family, &plan, messages, registers, &mut codewords);
+            encode_partition(
+                family,
+                selectors,
+                &plan,
+                messages,
+                registers,
+                &mut codewords,
+            );
         });
         Ok(codewords)
     }
@@ -2310,8 +2390,8 @@ where
         self.validate_workspaces(workspaces)?;
         let plan = self.systematic_plan(layout);
         validate_batch(&plan, messages, codewords)?;
-        let family = select_family::<X::Base, S>(&plan, messages.len());
-        encode_partitions(family, &plan, messages, workspaces, codewords);
+        let (family, selectors) = select_family::<X::Base, S>(&plan, messages.len());
+        encode_partitions(family, selectors, &plan, messages, workspaces, codewords);
         Ok(())
     }
 
@@ -2346,9 +2426,16 @@ where
         let plan = self.systematic_plan(layout);
         let mut codewords = vec![S::zeroed(plan.length(), plan.symbol_zero()); messages.len()];
         validate_batch(&plan, messages, &codewords)?;
-        let family = select_family::<X::Base, S>(&plan, messages.len());
+        let (family, selectors) = select_family::<X::Base, S>(&plan, messages.len());
         let mut workspaces = self.encode_workspaces(workers);
-        encode_partitions(family, &plan, messages, &mut workspaces, &mut codewords);
+        encode_partitions(
+            family,
+            selectors,
+            &plan,
+            messages,
+            &mut workspaces,
+            &mut codewords,
+        );
         Ok(codewords)
     }
 
@@ -2488,11 +2575,12 @@ where
     Ok(())
 }
 
-/// Encodes one worker's contiguous partition under `family`.
+/// Encodes one worker's contiguous partition under `family`, after
+/// preparing `registers` for it under `selectors`.
 ///
 /// Every argument has already passed [`validate_batch`], and `registers` has
-/// the geometry and family state [`SystematicKernel::registers`] gives this
-/// plan, so the kernel cannot reject anything here.
+/// the geometry [`SystematicKernel::reset_registers`] gives this plan, so the
+/// kernel cannot reject anything here.
 ///
 /// The whole partition goes to
 /// [`SystematicKernel::encode_batch_family`] in one call, which is what lets
@@ -2500,6 +2588,7 @@ where
 /// $i$ whatever grouping it chooses.
 fn encode_partition<F, S>(
     family: EncodeFamily,
+    selectors: &EncodeSelectors,
     plan: &SystematicPlan<'_, F>,
     messages: &[S],
     registers: &mut EncodeRegisters<S::Word>,
@@ -2508,6 +2597,7 @@ fn encode_partition<F, S>(
     F: FieldIdentity,
     S: SystematicKernel<F>,
 {
+    S::reset_family(family, plan, selectors, registers);
     S::encode_batch_family(family, plan, messages, registers, codewords)
         .expect("a validated batch encodes under its own plan");
 }
@@ -2540,6 +2630,7 @@ fn partition_offset(messages: usize, workers: usize, index: usize) -> usize {
 /// runs its partition directly, so a one-worker dispatch reaches no pool.
 fn encode_partitions_over<F, S>(
     family: EncodeFamily,
+    selectors: &EncodeSelectors,
     plan: &SystematicPlan<'_, F>,
     messages: &[S],
     workspaces: &mut [BchEncodeWorkspace<S::Word>],
@@ -2552,6 +2643,7 @@ fn encode_partitions_over<F, S>(
     if workspaces.len() < 2 {
         encode_partition(
             family,
+            selectors,
             plan,
             messages,
             &mut workspaces[0].registers,
@@ -2568,10 +2660,20 @@ fn encode_partitions_over<F, S>(
 
     #[cfg(feature = "parallel")]
     rayon::join(
-        || encode_partitions_over(family, plan, left_messages, left_workspaces, left_codewords),
         || {
             encode_partitions_over(
                 family,
+                selectors,
+                plan,
+                left_messages,
+                left_workspaces,
+                left_codewords,
+            )
+        },
+        || {
+            encode_partitions_over(
+                family,
+                selectors,
                 plan,
                 right_messages,
                 right_workspaces,
@@ -2581,9 +2683,17 @@ fn encode_partitions_over<F, S>(
     );
     #[cfg(not(feature = "parallel"))]
     {
-        encode_partitions_over(family, plan, left_messages, left_workspaces, left_codewords);
         encode_partitions_over(
             family,
+            selectors,
+            plan,
+            left_messages,
+            left_workspaces,
+            left_codewords,
+        );
+        encode_partitions_over(
+            family,
+            selectors,
             plan,
             right_messages,
             right_workspaces,
@@ -2603,6 +2713,7 @@ fn encode_partitions_over<F, S>(
 /// the order the partitions happen to run in.
 fn encode_partitions<F, S>(
     family: EncodeFamily,
+    selectors: &EncodeSelectors,
     plan: &SystematicPlan<'_, F>,
     messages: &[S],
     workspaces: &mut [BchEncodeWorkspace<S::Word>],
@@ -2618,6 +2729,7 @@ fn encode_partitions<F, S>(
     }
     encode_partitions_over(
         family,
+        selectors,
         plan,
         messages,
         &mut workspaces[..workers],
@@ -3781,7 +3893,7 @@ mod tests {
         for (code, shortened) in &codes {
             for &layout in LAYOUTS {
                 let plan = code.systematic_plan(layout);
-                let accumulators = fold_default_accumulators(plan.redundancy());
+                let accumulators = fold_accumulators_for(plan.redundancy(), None);
                 assert_eq!(accumulators == 0, plan.redundancy() > 256);
                 let mut messages = seeded_bit_batch(code.k(), 3, plan.redundancy() as u64);
                 let mut frame = seeded_bits(code.k(), 0x5EED);
@@ -3806,8 +3918,14 @@ mod tests {
                             fold,
                             ..
                         } = &mut registers;
-                        fold.clear();
-                        packed_build_fold(plan.redundancy(), || blocks, low, register, fold);
+                        packed_build_fold(
+                            plan.redundancy(),
+                            accumulators,
+                            blocks,
+                            low,
+                            register,
+                            fold,
+                        );
                     }
                     assert_eq!(registers.fold[2] as usize, run.next_multiple_of(chunk));
                     for (message, expected) in messages.iter().zip(&expected) {
@@ -3833,12 +3951,125 @@ mod tests {
     }
 
     #[test]
+    fn every_admissible_fold_accumulator_count_writes_the_reference_codeword() {
+        // One code per remainder width W = 1 to 4 the chunk fold unrolls; each
+        // admits the counts W + 1 to FOLD_MAX_ACCUMULATORS.
+        let codes = [
+            binary_narrow_sense(7, 0b10000011, 21),
+            BinaryBchCode::construct(BchSpec::PrimitiveFirstRoot {
+                extension: BinaryPrimeExt::new(Gf2mField::gf256()).expect("a primitive modulus"),
+                first_root: RootExponent::from(0),
+                designed_distance: DesignedDistance::try_from(18).expect("positive"),
+            })
+            .expect("a valid GF(2^8) first-root spec"),
+            binary_narrow_sense(10, 0b100_0000_1001, 35),
+            binary_narrow_sense(10, 0b100_0000_1001, 45),
+        ];
+        let widths: Vec<usize> = codes
+            .iter()
+            .map(|code| BlockCode::redundancy(code).div_ceil(64))
+            .collect();
+        assert_eq!(widths, [1, 2, 3, 4]);
+
+        for (code, words) in codes.iter().zip(widths) {
+            for &layout in LAYOUTS {
+                let plan = code.systematic_plan(layout);
+                let structural = clmul_fold_accumulators(plan.redundancy())
+                    .expect("the chunk fold unrolls this width")
+                    .get();
+                assert!(structural > words && structural <= bch_encode::FOLD_MAX_ACCUMULATORS);
+                let messages = seeded_bit_batch(code.k(), 4, plan.redundancy() as u64 + 3);
+                let expected = bit_serial_batch(code, &messages, layout);
+                let run = clmul_fold_run_blocks(plan.dimension());
+                for count in words + 1..=bch_encode::FOLD_MAX_ACCUMULATORS {
+                    let requested = NonZeroUsize::new(count).expect("a positive count");
+                    let accumulators = fold_accumulators_for(plan.redundancy(), Some(requested));
+                    assert_eq!(accumulators, count);
+                    let mut registers = BitVec::registers(&plan);
+                    {
+                        let EncodeRegisters {
+                            register,
+                            low,
+                            fold,
+                            ..
+                        } = &mut registers;
+                        packed_build_fold(
+                            plan.redundancy(),
+                            accumulators,
+                            run,
+                            low,
+                            register,
+                            fold,
+                        );
+                    }
+                    assert_eq!(fold_run_shape(&registers).map(|shape| shape.0), Some(count));
+                    for (message, expected) in messages.iter().zip(&expected) {
+                        let mut codeword = BitVec::ones(code.n());
+                        BitVec::encode_systematic_family(
+                            EncodeFamily::ClmulFold,
+                            &plan,
+                            message,
+                            &mut registers,
+                            &mut codeword,
+                        )
+                        .expect("prepared registers encode a k-bit message");
+                        assert_eq!(
+                            &codeword,
+                            expected,
+                            "{count} accumulators at r = {}, under {layout:?}",
+                            plan.redundancy()
+                        );
+                    }
+                }
+                // Counts outside the admissible range clamp onto it.
+                assert_eq!(
+                    fold_accumulators_for(plan.redundancy(), Some(NonZeroUsize::MIN)),
+                    words + 1
+                );
+                assert_eq!(
+                    fold_accumulators_for(plan.redundancy(), Some(NonZeroUsize::MAX)),
+                    bch_encode::FOLD_MAX_ACCUMULATORS
+                );
+            }
+        }
+        // A width the chunk fold does not unroll folds one block at a time
+        // whatever the request.
+        let wide = binary_narrow_sense(10, 0b100_0000_1001, 61);
+        assert_eq!(clmul_fold_accumulators(BlockCode::redundancy(&wide)), None);
+        assert_eq!(
+            fold_accumulators_for(BlockCode::redundancy(&wide), NonZeroUsize::new(8)),
+            0
+        );
+    }
+
+    #[test]
+    fn the_selectors_shape_the_fold_preparation() {
+        let code = binary_narrow_sense(7, 0b10000011, 21);
+        let plan = code.systematic_plan(SystematicLayout::default());
+        let mut registers = BitVec::registers(&plan);
+        let structural = fold_run_shape(&registers).expect("a prepared fold");
+        let selectors = STRUCTURAL_SELECTORS
+            .clone()
+            .with_clmul_fold_accumulators(NonZeroUsize::new(5).expect("positive"))
+            .with_clmul_fold_run_blocks(NonZeroUsize::new(11).expect("positive"));
+        BitVec::reset_family(EncodeFamily::ClmulFold, &plan, &selectors, &mut registers);
+        assert_eq!(fold_run_shape(&registers), Some((5, 15)));
+        BitVec::reset_family(
+            EncodeFamily::ClmulFold,
+            &plan,
+            STRUCTURAL_SELECTORS,
+            &mut registers,
+        );
+        assert_eq!(fold_run_shape(&registers), Some(structural));
+    }
+
+    #[test]
     fn the_default_fold_run_is_the_whole_message() {
         let code = binary_narrow_sense(7, 0b10000011, 21);
         let layout = SystematicLayout::default();
         let plan = code.systematic_plan(layout);
         let registers = BitVec::registers(&plan);
-        let chunk = fold_default_accumulators(plan.redundancy()).max(1);
+        let chunk = fold_accumulators_for(plan.redundancy(), None).max(1);
         assert_eq!(
             registers.fold[2] as usize,
             plan.dimension().div_ceil(64).next_multiple_of(chunk)
@@ -4360,34 +4591,41 @@ mod tests {
     #[test]
     fn a_workspace_single_encode_runs_the_family_a_batch_of_one_selects() {
         // The redundancy admits every family, so a batch of one selects one
-        // that reads prepared state. Stripping that state from the workspace
-        // makes the selected family reject it, which only the reference
-        // recurrence would not.
+        // that reads prepared state. A workspace stripped of the table and
+        // fold state gets back the selected family's state alone, which only
+        // an encode under that family prepares.
         let code = binary_narrow_sense(8, 0b100011101, 9);
         let layout = SystematicLayout::default();
         let family = code.selected_encode_family(layout, 1);
-        assert_ne!(family, EncodeFamily::REFERENCE);
+        assert!(matches!(
+            family,
+            EncodeFamily::TableRemainder | EncodeFamily::ClmulFold
+        ));
 
         let message = seeded_bits(code.k(), 5);
+        let expected = code.encode_systematic(&message, layout).unwrap();
         let mut workspace = code.encode_workspace();
         let mut codeword = BitVec::zeros(code.n());
         code.encode_systematic_with(&message, layout, &mut workspace, &mut codeword)
             .expect("a prepared workspace encodes");
         assert_eq!(
-            codeword,
-            code.encode_systematic(&message, layout).unwrap(),
+            codeword, expected,
             "the workspace path writes the codeword the scratch path writes"
         );
 
         workspace.registers.tables.clear();
         workspace.registers.fold.clear();
-        let error = code
-            .encode_systematic_with(&message, layout, &mut workspace, &mut codeword)
-            .expect_err("the selected family reads state the stripped workspace lacks");
-        assert!(matches!(
-            error,
-            BchError::Code(CodeError::BufferLengthMismatch { actual: 0, .. })
-        ));
+        code.encode_systematic_with(&message, layout, &mut workspace, &mut codeword)
+            .expect("the selected family prepares its own state");
+        assert_eq!(codeword, expected);
+        assert_eq!(
+            !workspace.registers.tables.is_empty(),
+            family == EncodeFamily::TableRemainder
+        );
+        assert_eq!(
+            !workspace.registers.fold.is_empty(),
+            family == EncodeFamily::ClmulFold
+        );
     }
 
     #[test]

@@ -42,10 +42,14 @@ pub const GRANULES_PER_TASK: NonZeroUsize = NonZeroUsize::MIN;
 /// [`EncodeFamily::ClmulFold`](crate::bch::encode::EncodeFamily::ClmulFold).
 /// They compose with, and never override, the representation availability the
 /// kernels report, so no selector value can select a family that cannot run.
-/// `clmul_fold_run_blocks` is a caller's override of the fold's run length,
-/// never part of a profile; without one the fold takes
+/// `clmul_fold_run_blocks` and `clmul_fold_accumulators` are a caller's
+/// overrides of the fold's run length and accumulator count, never part of a
+/// profile; without them the fold takes
 /// [`clmul_fold_run_blocks`](crate::bch::encode::clmul_fold_run_blocks) of the
-/// code's dimension.
+/// code's dimension and
+/// [`clmul_fold_accumulators`](crate::bch::encode::clmul_fold_accumulators) of
+/// its redundancy. An encode entry point reads them with the family it
+/// selects, so building a workspace resolves no profile.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EncodeSelectors {
     table_remainder_min_redundancy: usize,
@@ -53,6 +57,7 @@ pub struct EncodeSelectors {
     bitslice_interleaved_min_batch: usize,
     clmul_fold_min_batch: usize,
     clmul_fold_run_blocks: Option<NonZeroUsize>,
+    clmul_fold_accumulators: Option<NonZeroUsize>,
 }
 
 impl EncodeSelectors {
@@ -76,6 +81,7 @@ impl EncodeSelectors {
             bitslice_interleaved_min_batch,
             clmul_fold_min_batch,
             clmul_fold_run_blocks: None,
+            clmul_fold_accumulators: None,
         })
     }
 
@@ -90,6 +96,23 @@ impl EncodeSelectors {
     #[must_use]
     pub const fn with_clmul_fold_run_blocks(mut self, blocks: NonZeroUsize) -> Self {
         self.clmul_fold_run_blocks = Some(blocks);
+        self
+    }
+
+    /// Sets the accumulator count [`EncodeFamily::ClmulFold`] folds chunks
+    /// into in place of the structural
+    /// [`clmul_fold_accumulators`](crate::bch::encode::clmul_fold_accumulators),
+    /// for equivalence tests, benchmarks and multipliers whose latency or
+    /// issue rate differs. At a redundancy of $W = \lceil r/64 \rceil$ words
+    /// the count is clamped to the admissible $W + 1$ to
+    /// [`FOLD_MAX_ACCUMULATORS`](gf2_kernels_simd::bch_encode::FOLD_MAX_ACCUMULATORS),
+    /// and a redundancy that folds one block at a time ignores it; the
+    /// codewords are the same at every count.
+    ///
+    /// [`EncodeFamily::ClmulFold`]: crate::bch::encode::EncodeFamily::ClmulFold
+    #[must_use]
+    pub const fn with_clmul_fold_accumulators(mut self, accumulators: NonZeroUsize) -> Self {
+        self.clmul_fold_accumulators = Some(accumulators);
         self
     }
 
@@ -125,6 +148,13 @@ impl EncodeSelectors {
     #[must_use]
     pub const fn clmul_fold_run_blocks(&self) -> Option<NonZeroUsize> {
         self.clmul_fold_run_blocks
+    }
+
+    /// Returns the caller's fold accumulator count, `None` for the structural
+    /// [`clmul_fold_accumulators`](crate::bch::encode::clmul_fold_accumulators).
+    #[must_use]
+    pub const fn clmul_fold_accumulators(&self) -> Option<NonZeroUsize> {
+        self.clmul_fold_accumulators
     }
 }
 
@@ -259,6 +289,7 @@ impl CodingSelectors {
             bitslice_interleaved_min_batch: BITSLICE_INTERLEAVED_MIN_BATCH,
             clmul_fold_min_batch: CLMUL_FOLD_MIN_BATCH,
             clmul_fold_run_blocks: None,
+            clmul_fold_accumulators: None,
         },
         decode: DecodeSelectors::CONSERVATIVE,
     };
