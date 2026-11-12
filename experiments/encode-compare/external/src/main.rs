@@ -7,7 +7,8 @@
 //! the cell's messages; an arm that does not, or whose library derives
 //! another base graph or lifting size, is reported and not timed.
 //! `encode-compare cutover round <n>` runs one round of the external arms of
-//! the BCH cutover comparison, [`cutover`].
+//! the BCH cutover comparison, [`cutover`]. With `--digests <path>...` it
+//! prints the SHA-256 of itself and of each path.
 
 use encode_compare::bch::{BchCell, Gf2BchArm, BCH_CELLS};
 use encode_compare::nr::{Gf2NrArm, NrCell, NR_CELLS};
@@ -592,8 +593,15 @@ fn main() {
         Some("nr") => nr(),
         Some("bch") => bch(),
         Some("cutover") => cutover::main(),
+        Some("--digests") => {
+            experiments_common::write_executable_digests(
+                &mut std::io::stdout(),
+                std::env::args().skip(2),
+            )
+            .expect("every digested file is readable");
+        }
         _ => {
-            eprintln!("usage: encode-compare nr|bch|cutover round <n>");
+            eprintln!("usage: encode-compare nr|bch|cutover round <n>|--digests <path>...");
             std::process::exit(2);
         }
     }

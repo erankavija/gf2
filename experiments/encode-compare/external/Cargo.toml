@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 encode-compare = { path = ".." }
+experiments-common = { path = "../../common" }
 gf2-core = { path = "../../../crates/gf2-core" }
 gf2-coding = { path = "../../../crates/gf2-coding" }
 

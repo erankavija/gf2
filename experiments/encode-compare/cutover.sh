@@ -15,17 +15,19 @@
 # of gf2-coding from `cutover/main.rs`, `src/cutover/harness.rs` and that
 # revision's adapter, and builds the external comparison binary, all with
 # target-cpu=native. Inside a benchmark window (GF2_BENCH_WINDOW=1) it re-runs
-# itself under `dev/scripts/ccx1-bench-flock.sh`, which pins to the CCX1 cores
+# itself under `ccx1-bench-flock.sh`, which pins to the CCX1 cores
 # and refuses outside a window, and labels the table a window measurement;
 # outside one it measures on CUTOVER_CORES and labels the table an indication.
 # Each round runs every arm once, in an order that rotates between rounds. The
 # table goes to stdout and, with the raw rounds, to
-# target/encode-compare/cutover/<UTC>/. It exits 1 when an arm's output
+# target/encode-compare/cutover/<UTC>/, below the SHA-256 of each measured
+# binary and of the AFF3CT and M4RI libraries. It exits 1 when an arm's output
 # differs from the current revision's on a cell.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo=$(git -C "$here" rev-parse --show-toplevel)
+flock="$repo/$(python3 "$repo/$(git -C "$repo" ls-files -- ':(glob)**/repository_files.py')" file ccx1-bench-flock.sh)"
 cd "$repo"
 : "${GF2_SRSRAN_ROOT:?GF2_SRSRAN_ROOT must name the staged srsRAN tree}"
 : "${GF2_AFF3CT_ROOT:?GF2_AFF3CT_ROOT must name the staged AFF3CT tree}"
@@ -70,8 +72,7 @@ if [[ "${1:-}" != --measure ]]; then
         ./scripts/cargo-budget.sh cargo build --locked --release --quiet \
         --manifest-path "$here/external/Cargo.toml"
     if [[ $mode == window ]]; then
-        CARGO_CI_NO_LOCK=1 exec ./dev/scripts/ccx1-bench-flock.sh \
-            bash "$here/cutover.sh" --measure
+        CARGO_CI_NO_LOCK=1 exec "$flock" bash "$here/cutover.sh" --measure
     fi
 fi
 
@@ -103,5 +104,9 @@ done
     fi
     echo "# pre-cutover ${pre:0:9}, current ${current:0:9}; $rounds interleaved rounds;" \
         "call budget ${CUTOVER_CALL_BUDGET_S:-10} s; harness experiments/encode-compare/cutover.sh"
+    "$external" --digests "$(arm_binary "$pre")" "$(arm_binary "$current")" \
+        "$GF2_AFF3CT_ROOT/build/lib/libaff3ct-4.7.0.a" "$GF2_M4RI_ROOT/lib/libm4ri.so" |
+        sed 's/^/# /'
+
     python3 -B "$here/cutover/summarize.py" "$raw"
 } | tee "$run/table.md"
