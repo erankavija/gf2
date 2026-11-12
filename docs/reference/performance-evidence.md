@@ -21,15 +21,16 @@ harness end to end.
 
 ## Reference builds
 
-Each reference is built once from its release source under the staging
-directory and used by every entry that names it. The options below make each
+Each reference is built from its release source under the staging directory,
+either once into a prefix or by the comparison binary's build as the table
+states, and used by every entry that names it. The options below make each
 the reference's fastest build on the host; a host with another instruction set
 rebuilds with the same options.
 
 | Reference | Build options | Backend selection |
 |---|---|---|
 | AFF3CT v4.7.0 | CMake `Release`, `CMAKE_CXX_FLAGS="-O3 -march=native -funroll-loops"`, static library on, shared library, MPI and GSL off | Compile-time SIMD from `-march=native`; the harness requests scalar or inter-frame SIMD and the precision per run |
-| srsRAN Project 25.10 | CMake `Release`, `MARCH=native` (its x86-64 default), `AUTO_DETECT_ISA` on | The encoder its "auto" factory selects at run time |
+| srsRAN Project 25.10 | [`build.rs`](../../experiments/encode-compare/external/build.rs) compiles `SRSRAN_SOURCES` and the adapter with `cc`, `-std=c++17 -O3 -march=native`, and `NDEBUG` | [`srsran_nr.cpp`](../../experiments/encode-compare/external/cpp/srsran_nr.cpp) constructs `ldpc_encoder_avx2` when `__builtin_cpu_supports("avx2")` is true and `ldpc_encoder_generic` otherwise, plus `ldpc_rate_matcher_impl`. srsRAN 25.10 has no AVX-512 LDPC encoder, so AVX2 is its fastest x86 encoder |
 | bchlib | Compiled by the comparison binary's build with `-O3 -march=native`, once with run-time parameters and once with `CONFIG_BCH_CONST_PARAMS` fixed to each cell's $(m, t)$ | The faster build per cell |
 | gf2x 1.3.0 | `./configure --disable-static --enable-shared` once per `prefix-*` install: `native` with `CFLAGS="-O3 -march=native"`, `tuned` with `CFLAGS="-O3 -march=x86-64-v3"`, `conservative` with `CFLAGS=-O2`; configure adds `-msse2 -msse3 -mssse3 -msse4.1 -mpclmul` to each | PCLMULQDQ low-level multiplication, detected by configure; the fastest prefix per size |
 | ISA-L | `./configure --disable-static CFLAGS="-O3 -march=native -fPIC"`, assembled with NASM 2.16.03 | The multibinary entry point `gf_vect_mad` selects among its SSE, AVX, AVX2 and AVX-512 variants, GFNI ones included, by CPUID at load |
@@ -139,8 +140,10 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
 ### NR rate-matched LDPC encoding against srsRAN and AFF3CT
 
 - **Issues:** @/issue/12fdeb5b (baselines), @/issue/be6d6f45 (word-wise encoder).
-- **Reference:** srsRAN Project 25.10 (`@/citation/Srsran2026`) encoder with the
-  rate matcher its "auto" factory selects, and AFF3CT v4.7.0
+- **Reference:** srsRAN Project 25.10 (`@/citation/Srsran2026`), whose adapter
+  constructs `ldpc_encoder_avx2` when `__builtin_cpu_supports("avx2")` is true
+  and `ldpc_encoder_generic` otherwise, with `ldpc_rate_matcher_impl`, and
+  AFF3CT v4.7.0
   `Encoder_LDPC_QC_fast` with `Puncturer_5G` at int8 and int32 bits, both built
   as in [Reference builds](#reference-builds).
 - **gf2 path:** rate-matched encoding per `@/citation/ThreeGpp2017` from $k$
@@ -259,3 +262,11 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
           --append --output target/benchmarks/f3-repro.csv
   done
   ```
+
+## Comparisons without an in-tree harness
+
+The core route (native against tuned-portable build) and LDPC decoder route
+(tuned against conservative selectors) have no harness in the tree;
+@/issue/31727c57 records their methods and measured values. NR LLR
+de-rate-matching against AFF3CT `Puncturer_5G::depuncture` has no harness in the
+tree; @/issue/eda07788 records its method and measured values.
