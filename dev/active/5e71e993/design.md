@@ -69,25 +69,30 @@ batches 1, 16, 256 and 4096 under both layouts; it gains the forced-scalar run,
 batch lengths 0, 1, 63, 64, 65 and $G \pm 1$, and B1 messages whose only set
 coefficient is degree 0, 1 and $k - 1 = 4$.
 
-## Harness step and routes
+## Target and routes
 
-The planned harness step and both routes are the B2 design's: after the night
-window, `experiments/encode-compare/src/cutover/current.rs` times
-`encode_batch_into` over a workspace beside `encode_batch`, each its own row,
-and the issue owner decides which row REQ-02 reads. Route (a) is
-`encode_batch_into`; route (b) is the allocating `encode_batch`, whose
-remaining cost after changes 1 to 6 and @/issue/c6b20bec is one heap buffer
-per codeword (8.6 to 9.0 ns at batch 16 and about 17 ns at batch 256 and 4096
-in that design's indication, within 1 ns at $n = 15$), removed either by
-inline `BitVec` storage (b1) or by `encode_batch_matrix` returning the batch
-as one `BitMatrix` (b2, the recommendation).
+Charter decision D-7 (`dev/research/2caf738d-charter.md`) makes the counted
+cell `encode_batch_into` with a reused workspace, since AFF3CT writes into
+caller-provided buffers; the allocating `encode_batch` is reported beside it
+as its own row with no 1.0 requirement. The target route is therefore the B2
+design's route (a), and the planned harness step is that design's: after the
+night window, `experiments/encode-compare/src/cutover/current.rs` times
+`encode_batch_into` beside `encode_batch`, each its own row, with labels
+citing D-7.
+
+Route (b) is secondary: under D-4 the allocating default gets the cheap fixes
+too. Its remaining cost after changes 1 to 6 and @/issue/c6b20bec is one heap
+buffer per codeword (8.6 to 9.0 ns at batch 16 and about 17 ns at batch 256
+and 4096 in the B2 design's indication, within 1 ns at $n = 15$), removed by
+inline `BitVec` storage (b1, the recommendation) or by the matrix-returning
+`encode_batch_matrix` (b2).
 
 ## Expected gain (estimate)
 
 | Path after the change | Estimate, ns per message | vs AFF3CT (13.9 ns at batch 16, 12.4 at 4096) |
 | --- | --- | --- |
-| (a) `encode_batch_into`, batch $\ge 16$ | 7 to 10 | 1.2 to 2.0 |
-| (a) `encode_batch_into`, batch 1 (harness clock read included) | 45 to 55 against 55 | 1.0 to 1.2 |
+| (a) `encode_batch_into`, batch $\ge 16$, D-7 cell | 7 to 10 | 1.2 to 2.0 |
+| (a) `encode_batch_into`, batch 1, D-7 cell (harness clock read included) | 45 to 55 against 55 | 1.0 to 1.2 |
 | (b) `encode_batch` after changes 1 to 6 and @/issue/c6b20bec, batch 16 | 16 to 19 | 0.73 to 0.87 |
 | (b) same, batch 256 and 4096 | 24 to 28 | 0.45 to 0.55 |
 | (b1) `encode_batch` with inline `BitVec` storage, batch $\ge 16$ | 8 to 12 | 1.0 to 1.7 |
