@@ -25,8 +25,7 @@ it; `@/issue/45ecf975` waits on those, `@/issue/1aea3958` and
 ## Open findings at `87df671e5`
 
 1. **High, REQ-02 and REQ-05.** `dev/research/permanent_wave_gpu` holds a run
-   receipt (`architecture_compile_evidence-v1.md`) and compiler-resource result
-   tables in its README.
+   receipt and compiler-resource result tables in its README.
    `dev/research/permanent_wave_gpu/scripts/compile_arch_evidence.sh` writes the
    receipt and log into the source directory. The budget admits Markdown there
    without inspecting it.
