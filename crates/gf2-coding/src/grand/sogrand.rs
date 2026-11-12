@@ -1128,25 +1128,16 @@ mod fig2_validation {
         let empirical_bler = empirical_misses as f64 / num_frames as f64;
         let avg_predicted_bler = total_predicted_bler / num_frames as f64;
 
-        // The predicted BLER can be very close to 0 when the list covers
-        // most of the codebook probability.
-        if avg_predicted_bler < 0.001 && empirical_bler < 0.05 {
-            return;
-        }
-        let ratio = if empirical_bler > 0.0 {
-            avg_predicted_bler / empirical_bler
-        } else {
-            assert!(
-                avg_predicted_bler < 0.1,
-                "Predicted BLER {avg_predicted_bler:.3} too high when empirical is 0"
-            );
-            return;
-        };
-
+        // The LLRs are the true AWGN posteriors, so the transmitted codeword
+        // lies outside frame i's list with probability p_i = predicted_i. The empirical miss rate is the mean
+        // of `num_frames` independent Bernoulli(p_i) draws, with standard
+        // deviation at most 0.5 / sqrt(num_frames) around avg_predicted_bler.
+        // The fixed seed makes the check deterministic; 4 sigma bounds it.
+        let tolerance = 4.0 * 0.5 / (num_frames as f64).sqrt();
         assert!(
-            ratio > 0.2 && ratio < 5.0,
+            (avg_predicted_bler - empirical_bler).abs() <= tolerance,
             "Predicted ({avg_predicted_bler:.4}) and empirical ({empirical_bler:.4}) \
-             list-BLER differ by more than 5x (ratio={ratio:.2})"
+             list-BLER differ by more than {tolerance:.4}"
         );
     }
 

@@ -846,7 +846,14 @@ mod tests {
 
         let result = rref(&m, true);
 
+        // Pivots at columns 1 and 2, found right to left; each pivot column
+        // holds a single one. Left-to-right pivoting yields columns [0, 1].
         assert_eq!(result.rank, 2);
+        assert_eq!(result.pivot_cols, vec![1, 2]);
+        let rows: Vec<Vec<bool>> = (0..2)
+            .map(|r| (0..3).map(|c| result.reduced.get(r, c)).collect())
+            .collect();
+        assert_eq!(rows, vec![vec![true, true, false], vec![true, false, true]]);
     }
 
     #[test]
