@@ -2,7 +2,7 @@
 
 ## Context
 
-`@/inv/library-first-generality` makes about 17,600 lines of permanent campaign code in `gf2-sim` a defect, along with other campaign code. Measuring where experiment data should live also showed 3.9 GB in the tree against 13.6 MB of `crates/`. Of that, 2.9 GB is copied `inputs/` and 411 MB is `source-inputs/`. Actual results (`simulation_results`) are 2.4 MB.
+`@/inv/library-first-generality` makes permanent campaign code in `gf2-sim` a defect, along with other campaign code. The tree review also determined where experiment data should live.
 
 Owner decisions from the interview:
 
@@ -73,7 +73,7 @@ Create as tasks under `b8206228`, labelled `epic:permanent-statistics`, each wit
 | C7 Delete one-shots | Six throughput and receipt binaries in `gf2-sim/src/bin`; four `gf2-algebra` examples. Trace remaining references first. Reasons in the commit. | Luna |
 | C8 Move OSD, DVB-T2 | `osd_campaign.rs`, `ebch_osd_awgn_campaign`, `dvb_t2_awgn_campaign` and their tests. Drop `rand08` and other experiment-only dependencies from `gf2-sim`. | Sol |
 | C9 Aff3ct comparison | `ldpc_bler_sweep`, `export_alist`, `bler_sweep.rs`, `ComparisonCode`. **Last, after coordinating with 55c3e433's lead**, because its harness uses them. | Sol |
-| C10 Mixed items | `dvb_t2_bicm_harness.rs` baseline parts to `baseline_runner`; `RicianConfig::fig*` to config; `failure.rs` default `dev/` path. Audit report for benches and remaining judgement calls; move or file each. | Luna |
+| C10 Mixed items | Remove baseline-specific parts from `dvb_t2_bicm_harness.rs`; move `RicianConfig::fig*` to config; resolve `failure.rs` default `dev/` path. Audit report for benches and remaining judgement calls; move or file each. | Luna |
 
 Order: A1, A2, A3, B, C1, then C2/C3/C7 in parallel, C4, C5, C6, C8, C10, C9.
 

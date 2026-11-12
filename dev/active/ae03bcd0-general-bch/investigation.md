@@ -258,8 +258,7 @@ Documentation, campaign, data, presentation, and development references:
 `dev/reference_data/osd_ebch_128_64_fossorier1994.md`,
 `dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/README.md`,
 `extract.py`, and `yue2022_fig1_digitization.json` in that directory,
-and every file under
-`osd-ebch-128-64/`.
+and the earlier generated simulation output.
 
 Historical JIT/development references are also present in
 `.jit/events.jsonl`, the BCH-related `.jit/issues/*.json` records, and these

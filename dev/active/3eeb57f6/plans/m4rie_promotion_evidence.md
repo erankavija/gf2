@@ -169,17 +169,16 @@ matrix multiplication (`mzed_mul`) produce bitwise-identical outputs —
 **no basis-change matrix `T` is required**, and we therefore commit
 **no `m4rie_basis_change_<m>.txt` files** for any m. The decision is
 recorded inline in `benchmarks/reference/m4rie_bench.c` and is the
-witness for the empty-output case of open question 1 of the acceptance protocol.
+witness for the empty-output case of the evaluator's first open question.
 
-## Proposed Amendment 1 (for open question 1 of the acceptance protocol)
+## Proposed Amendment 1 (answer to the evaluator's first open question)
 
-The acceptance protocol's open question 1 asks the M4RIE evaluator to choose
+The evaluator's first open question asks the M4RIE evaluator to choose
 a wire format for `<lib>_basis_change_<m>.txt` and back-port the
 decision into an amendment. **In the M4RIE-as-promoted case, no
 basis-change matrix exists, so the *open question* answer is the
-following amendment text** — proposed here, not yet written into
-the acceptance protocol (its owner
-accepts the amendment in a follow-up commit on story `cbecfced`):
+following amendment text** — proposed here for owner acceptance
+on story `cbecfced`:
 
 ```
 ## Amendment 1 — basis-change matrix file format (closes open question 1)

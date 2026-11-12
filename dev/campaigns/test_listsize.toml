@@ -1,5 +1,5 @@
 # Hypothesis test: does list_size=64 fix the dRM alignment gap at 1.0 dB?
-# Paper SOGRAND at 1.0 dB: BLER=0.072. Ours with list_size=4: BLER=0.667.
+# Compare the paper's SOGRAND reference with the current list-size configuration.
 
 [campaign]
 name = "test_listsize"

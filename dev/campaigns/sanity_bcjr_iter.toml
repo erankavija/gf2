@@ -1,5 +1,5 @@
 # Test BCJR with more iterations and alpha tuning at 1.0 dB
-# Paper drops 9x from 0.5→1.0 dB. We drop 1.5x. Need steeper waterfall.
+# Compare the simulated waterfall slope with the paper's reported curve.
 
 [campaign]
 name = "sanity_bcjr_iter"

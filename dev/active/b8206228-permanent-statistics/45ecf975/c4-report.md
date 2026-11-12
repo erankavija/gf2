@@ -99,8 +99,8 @@ Changed files are listed completely below. `new` denotes an untracked prepared f
 | D | `permanent_campaign_bin.rs` |
 | D | `permanent_validation.rs` |
 | M | `dev/index.md` |
-| M | `dev/scripts/permanent-campaign-runner.sh` |
-| M | `dev/scripts/permanent-campaign-runner.test.sh` |
+| M | simulation-campaign execution support |
+| M | simulation-campaign execution tests |
 | D | `checksums.sha256` |
 | D | `manifest.json` |
 | D | `shard-000000.json` |

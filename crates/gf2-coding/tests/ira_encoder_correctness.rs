@@ -154,7 +154,7 @@ fn test_ira_short_rate_1_2_encode_decode_roundtrip() {
 }
 
 #[test]
-#[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate (load-sensitive at 5 s fast-tier budget)"]
+#[ignore = "slow: RREF preprocessing for Short DVB-T2 is load-sensitive at the fast-tier budget"]
 fn test_ira_vs_rref_short_rate_1_2() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
 
@@ -178,7 +178,7 @@ fn test_ira_vs_rref_short_rate_1_2() {
 }
 
 #[test]
-#[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate"]
+#[ignore = "slow: RREF preprocessing for Short DVB-T2"]
 fn test_ira_vs_rref_short_rate_3_5() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
 
@@ -197,7 +197,7 @@ fn test_ira_vs_rref_short_rate_3_5() {
 }
 
 #[test]
-#[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate"]
+#[ignore = "slow: RREF preprocessing for Short DVB-T2"]
 fn test_ira_vs_rref_short_rate_2_3() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
 
@@ -216,7 +216,7 @@ fn test_ira_vs_rref_short_rate_2_3() {
 }
 
 #[test]
-#[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate"]
+#[ignore = "slow: RREF preprocessing for Short DVB-T2"]
 fn test_ira_vs_rref_short_rate_3_4() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
 
@@ -235,7 +235,7 @@ fn test_ira_vs_rref_short_rate_3_4() {
 }
 
 #[test]
-#[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate"]
+#[ignore = "slow: RREF preprocessing for Short DVB-T2"]
 fn test_ira_vs_rref_short_rate_4_5() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
 
@@ -254,7 +254,7 @@ fn test_ira_vs_rref_short_rate_4_5() {
 }
 
 #[test]
-#[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate"]
+#[ignore = "slow: RREF preprocessing for Short DVB-T2"]
 fn test_ira_vs_rref_short_rate_5_6() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
 

@@ -24,7 +24,7 @@ fn main() {
     println!("    k (message bits):     {}", code1.k());
     println!("    Rate:                 {:.4}", code1.rate());
 
-    println!("  Computing generator matrix (this takes ~1 minute)...");
+    println!("  Computing generator matrix...");
     let g1 = code1.generator_matrix();
     g1.save_image("output_dvb_t2_rate_1_2_generator.png")
         .unwrap();

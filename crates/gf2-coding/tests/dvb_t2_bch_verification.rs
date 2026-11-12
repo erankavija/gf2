@@ -134,7 +134,7 @@ fn test_bch_decoding_tp05_to_tp04_error_free() {
 }
 
 #[test]
-#[ignore = "slow: 600 seeded decodes of VV001-CR35 normal-frame words, 16 s on the reference host"]
+#[ignore = "slow: 600 seeded decodes of VV001-CR35 normal-frame words"]
 fn test_bch_error_correction() {
     if !test_vectors_available() {
         eprintln!("Test vectors not available at {:?}", test_vectors_path());

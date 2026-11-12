@@ -61,22 +61,7 @@ fn main() {
     println!("- Avg Iter: Average number of BP iterations per frame");
     println!("- Uncoded BER: Baseline bit error rate without coding");
     println!("- Capacity: BI-AWGN capacity at this Eb/N0 and the code rate (max achievable rate)");
-    println!("- LDPC shows coding gain: lower FER than uncoded BER at same Eb/N0");
     println!();
-    println!("Shannon Limit Analysis:");
-    println!(
-        "  Shannon limit: {:.2} dB (min Eb/N0 for R={:.3})",
-        shannon_limit_db,
-        code.rate()
-    );
-    println!(
-        "  Gap to Shannon limit at FER=0.01: ~{:.1} dB",
-        5.0 - shannon_limit_db
-    );
-    println!();
-    println!("Typical results:");
-    println!("  At Eb/N0 = 2 dB: FER ≈ 0.1-0.5 (converging)");
-    println!("  At Eb/N0 = 4 dB: FER ≈ 0.01 (good performance)");
 }
 
 /// Builds an `m × n` code with column weight 3 by cyclic row assignment.

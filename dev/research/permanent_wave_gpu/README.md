@@ -47,8 +47,8 @@ cargo test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release 
     --test fixtures_oracle
 ```
 
-The corpus is addressed through the feasibility study's existing
-`MeasurementPurpose::Equivalence` stream domain; it does not introduce another
+The corpus uses the existing `MeasurementPurpose::Equivalence` stream domain;
+it does not introduce another
 randomness-purpose registry.  It includes structural empty, singleton, Gray
 partition, add/subtract, partial-word, zero-product, and nonzero exponent-class
 fixtures for each supported field, plus $\mathbb{F}_7$ orders 16, 20, and 24.

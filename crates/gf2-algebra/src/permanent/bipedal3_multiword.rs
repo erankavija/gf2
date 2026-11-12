@@ -376,14 +376,14 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "slow: multi-word vs ryser at n=20 (50 trials; ~4 s solo, \
+    #[ignore = "slow: multi-word vs ryser at n=20 (50 trials; \
                 exceeds the 5 s fast-tier hard kill under parallel --workspace load)"]
     fn test_multiword_vs_ryser_n20_slow() {
         run_multiword_vs_ryser_at_n(20, 50, 0x0014);
     }
 
     #[test]
-    #[ignore = "slow: multi-word vs ryser at n=24 (per-trial ~1 s; 5 trials ~5 s)"]
+    #[ignore = "slow: multi-word vs ryser at n=24 (5 trials)"]
     fn test_multiword_vs_ryser_n24_slow() {
         run_multiword_vs_ryser_at_n(24, 5, 0x0018);
     }
