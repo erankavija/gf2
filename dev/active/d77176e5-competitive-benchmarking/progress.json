@@ -10,7 +10,7 @@
         {
           "short_id": "c9cb0dd2",
           "title": "Match ISA-L and M4RIE on GF(2^8) region and matrix products",
-          "status": "rework 1 landed; code-review pending on the repo-root branch (F1)",
+          "status": "done",
           "branch": "worktree-agent-c9cb0dd2"
         },
         {
@@ -22,7 +22,7 @@
         {
           "short_id": "259acf37",
           "title": "Layered quantized SIMD LDPC decoder",
-          "status": "code-review F1 (DVB-T2 flooding crossing) escalated to owner: needs an hours-long simulation",
+          "status": "waits on owner: REQ-05 simulation run",
           "branch": "worktree-agent-259acf37"
         },
         {
@@ -40,13 +40,13 @@
         {
           "short_id": "fd9d5416",
           "title": "BCH cutover: non-regression and external comparison",
-          "status": "dispatched",
+          "status": "code merged; waits on owner budget decision and a window",
           "branch": "jit-fd9d5416-cutover"
         },
         {
           "short_id": "befccab3",
           "title": "Match gf2x on long carry-less polynomial products",
-          "status": "code-review failed (F1 repo-root, F2 rustdoc); convention worker on jit-befccab3-review"
+          "status": "done"
         },
         {
           "short_id": "de311215",
@@ -57,14 +57,29 @@
           "short_id": "07a1813a",
           "title": "Add word-level fast path to polar_transform_into for stride>=64",
           "status": "done"
+        },
+        {
+          "short_id": "1ce7e8a5",
+          "title": "Align the BCH encoding proof model with the word-wise codeword assembly",
+          "status": "done"
+        },
+        {
+          "short_id": "cbd1eb28",
+          "title": "Decode user-layout words with the canonical binary BCH decoder",
+          "status": "done"
         }
       ]
     }
   ],
   "created_during_execution": [
-    "9d1c580c"
+    "9d1c580c",
+    "a6039c72"
   ],
-  "escalations": [],
+  "escalations": [
+    "259acf37 REQ-05 simulation run and one-sided reading",
+    "fd9d5416 REQ-02 per-call budget; REQ-03 gap issues timing",
+    "docs/reference/performance-evidence.md under committed-evidence-budget"
+  ],
   "rework_counts": {
     "040bc2b8": 1,
     "8a8a3bc9": 1,
