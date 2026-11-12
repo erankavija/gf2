@@ -6,7 +6,7 @@ This document fixes the `bchspec-model` and `block-code-traits` contracts from
 the [epic plan](plan.md). It consumes the approved
 [`field-extension-api`](extension-design.md) without introducing another field,
 extension, identity, or conversion abstraction. The exhaustive evidence and
-consumer paths were recorded in the planning investigation of `@/issue/2aa2279e`; this document
+consumer paths remain in the [investigation](investigation.md); this document
 classifies those paths by family instead of copying their volatile inventory.
 
 ## Problem statement
@@ -18,7 +18,7 @@ primitive narrow-sense codes. `BchCode::from_generator` accepts the same
 dependent values beside a supplied generator. Both surfaces can therefore
 represent inconsistent mathematics, and their validation uses panics. The
 concrete facts and source anchors are recorded in
-its claim 1.
+[investigation claim 1](investigation.md#claim-classification-numbered-verdicts).
 
 The shared coding interfaces also encode binary storage into their meaning.
 `BlockEncoder` accepts and returns `BitVec`, `GeneratorMatrixAccess` returns
@@ -27,7 +27,7 @@ methods. That surface cannot express a code over an arbitrary finite field,
 cannot select another symbol representation, and gives generic algorithms no
 common parity-check contract. BCH additionally places an unconditional matrix
 cache behind a mutex even though matrix access itself does not require caching
-(its claims 3 and 4).
+([investigation claims 3 and 4](investigation.md#claim-classification-numbered-verdicts)).
 
 The design establishes these single sources of truth:
 
@@ -916,7 +916,7 @@ a date or a release guess, and the module does not acquire unrelated helpers.
 ## Consumer-family mapping
 
 The tables cover every family grouping in the investigation's
-`BchCode`, trait, matrix-I/O, and GF(2^m) primitive inventories.
+[`BchCode`, trait, matrix-I/O, and GF(2^m) primitive inventories](investigation.md#consumer-inventory).
 Individual paths remain cited there as the single source of truth
 (`@/inv/single-source-prose`). “Canonical” means the family migrates inside
 epic `ae03bcd0`; “boundary” means its bit-only coding interface stays inside

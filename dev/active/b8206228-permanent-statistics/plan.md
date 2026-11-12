@@ -332,6 +332,8 @@ superseded text are named, since the study's record stands unedited.
 - The planning investigation of `@/issue/912f1008` — claim-by-claim verdicts.
 - Design SSOT: the feasibility study — envelope §4.6, sampling plan §7.2,
   seeding §7.3, storage §7.4, analysis §7.5, prior-art delta §7.6.
+- Review cost analysis: `dev/active/b8206228-permanent-statistics/sessions/2026-08-08-b488f02c-review-rca.md`.
+- Standing decisions: `dev/active/b8206228-permanent-statistics/sessions/2026-08-07-research-frontier-handoff.md`.
 
 Source identifiers used in `planning.source_refs`: `REQ-01`–`REQ-06` are the
 epic's success criteria; `G1`–`G8` are the feasibility study's §5 gaps;

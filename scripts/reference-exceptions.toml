@@ -48,3 +48,26 @@ reason = "creates the named path in a temporary repository"
 [[exception]]
 path = "proofs/lake-manifest.json"
 reason = "Lake writes it; `subDir` names a directory inside the upstream repository at `url`"
+
+# Dated session records state the tree at their date; owner ruling 2026-11-12.
+# The entries name the session-record forms under dev/active: handoffs, session
+# notes, per-session prompt directories, and dispatch and rework prompts.
+[[exception]]
+path = "dev/active/*/handoff*.md"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/sessions/*"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/session-*-prompts/*"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/dispatch-*.md"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/rework-*.md"
+reason = "dated session record; owner ruling 2026-11-12"

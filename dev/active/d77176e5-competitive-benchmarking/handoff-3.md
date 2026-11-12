@@ -1,6 +1,7 @@
 # Handoff: Competitive benchmarking against Magma/Sage/AFF3CT (d77176e5), session 3
 
 **Date:** 2026-11-12
+**Prior handoffs:** `dev/active/d77176e5-competitive-benchmarking/handoff.md`, `dev/active/d77176e5-competitive-benchmarking/handoff-2.md`
 
 ## Current state
 
@@ -17,7 +18,7 @@
 
 - Recorded the 2026-11-11 night window in five issues; updated the dashboard `https://claude.ai/artifact/4ZoceRZh2aYohYxaumogP7`, now at the 2026-11-12 values.
 - `07a1813a` REQ-01 amended by owner decision, with the falsified helper measurement.
-- `c9cb0dd2`: the 1 MiB axpy gap was a destination at 16 mod 32 in gf2's AVX2 kernel; an aligning scalar head took the cell from 0.98 to 1.33 of ISA-L (window 2026-11-12).
+- `c9cb0dd2`: the 1 MiB axpy gap was a destination at 16 mod 32 in gf2's AVX2 kernel; an aligning scalar head closes it (window 2026-11-12).
 - One repository-root convention for the bench window and the harnesses: `run-window.sh` exports `GF2_EXT_ROOT`; the harnesses find `ccx1-bench-flock.sh` through `repository_files.py`; every harness prints executable SHA-256 digests via `experiments_common::write_executable_digests`.
 - `de311215`: the fast-bench workers now start their timed calls together after warm-up; multi-worker tables recorded before `a02010986` include the skew, noted in the issue.
 - 8a8a3bc9's tutorial no longer commits measured rows (`@/inv/committed-evidence-budget`, doc-review verdict).

@@ -47,22 +47,11 @@ Code lines by module follow. Counts use every Rust file in the experiment and th
 | [tests/rare_event_runner.rs](/experiments/permanent-statistics/tests/rare_event_runner.rs) | 203 |
 | **Total** | **4,825** |
 
-Verification commands and results are listed below. Cargo commands and test invocations set `CARGO_NET_OFFLINE=true` and `CARGO_CI_NO_SCCACHE=1`. No timed measurement was run.
-
-| Command | Result | Output |
-|---|---|---|
-| `./scripts/cargo-budget.sh cargo build --workspace --all-features` | PASS | build |
-| `./scripts/cargo-budget.sh --test cargo nextest run -p permanent-statistics -p gf2-sim --all-features --cargo-profile ci-test --profile ci` | PASS: 489 passed, 53 skipped | tests |
-| `./scripts/cargo-budget.sh cargo clippy -p permanent-statistics -p gf2-sim --all-targets --all-features -- -D warnings` | PASS | clippy |
-| `./scripts/cargo-budget.sh cargo fmt --all -- --check` | PASS | format |
-| `./scripts/cargo-ci.sh` | PASS: all configured steps; workspace 6,372 passed, 246 skipped; scalar lane 2,321 passed, 170 skipped | full CI |
-| `./scripts/cargo-budget.sh cargo build -p permanent-statistics --features hip` | PASS | HIP feature build |
-| `./scripts/cargo-budget.sh cargo +1.95.0 build -p permanent-statistics --release --bins` | PASS; Rust 1.95 release binaries used to regenerate analysis fixtures | MSRV release build |
-| `python -m unittest discover -s tests -p test_permanent_zero_fraction_analysis.py` | PASS: 6 tests | analysis tests |
-| `bash dev/scripts/permanent-campaign-runner.test.sh` | PASS: 10/10 | shell tests |
-| `git diff --check` | PASS | No whitespace errors |
-| `git grep -n permanent_campaign -- crates` | PASS: benchmark path string only | `batched_f3_permanent.rs:455` |
-| `./scripts/cargo-budget.sh cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml` | BLOCKED by offline dependency cache | standalone HIP attempt |
+Verification uses the repository commands: the workspace build, the
+`permanent-statistics` and `gf2-sim` fast tier, clippy, fmt, `./scripts/cargo-ci.sh`,
+the HIP feature build, the Rust 1.95 release binaries that regenerate the
+analysis fixtures, and the analysis unit tests. Cargo commands set
+`CARGO_NET_OFFLINE=true` and `CARGO_CI_NO_SCCACHE=1`.
 
 Test-first evidence includes the missing experiment API, rejection replay after an interruption before halt propagation, and invalid validation preflight. Those cases failed before implementation/fix and pass in the final suites. Dispatch panic diagnostics are tested through the same guard used by campaign execution and validation.
 

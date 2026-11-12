@@ -1,6 +1,7 @@
 # Handoff — Technical debt assessment remediation (2026-06-30) (b4b4b9ee) — session 2
 
 **Date:** 2026-11-10
+**Prior handoffs:** `dev/active/b4b4b9ee-tech-debt-2026-06-30/handoff.md`
 
 ## Current state
 

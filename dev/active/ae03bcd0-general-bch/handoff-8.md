@@ -2,30 +2,31 @@
 
 **Date:** 2026-10-01T11:40+00:00
 **Session number:** 11
+**Prior handoffs:** handoff.md through handoff-7.md — their Traps sections remain in force unless resolved below.
 
 ## Current state
 
 - Epic `ae03bcd0` — state: backlog (container); claimed by agent:jit-execution-lead.
 - Wave in progress: wave 14 (`current_wave` = 14). Every child except `fd9d5416` is done (direct deps 5/6).
-- Open: `fd9d5416` (Committed performance receipts), claimed by agent:worker. Its preparation (receipt protocol and renderer) has left the tree under `@/inv/committed-evidence-budget`; the issue needs re-scoping before dispatch.
+- Open: `fd9d5416` (Committed performance receipts), claimed by agent:worker. Preparation merged: `receipt-protocol.md` (linked), `render_receipt.py`, `test_render_receipt.py` (6/6 on a synthetic fixture). Gates doc-review, research-review pending.
 - Open escalations: none.
 - Progress file: `progress.json` here (R-55..R-59, session_notes_s11, surfaced_pitfalls).
-- **Queued measurement:** the bench window (timer `gf2-bench-window-20261002`, 2026-10-01T23:00Z) runs `dbd8787d` (epic 6dc81018, ~3 h) and then `d1b4f85e`'s runner from `.agents/worktrees/agent-d1b4f85e-run` (detached at `eb5575495`), writing its output in that worktree.
+- **Queued measurement:** the bench window (timer `gf2-bench-window-20261002`, 2026-10-01T23:00Z) runs `dbd8787d` (epic 6dc81018, ~3 h) and then `d1b4f85e`'s runner from `.agents/worktrees/agent-d1b4f85e-run` (detached at `eb5575495`), writing `2026-10-02-d1b4f85e-w1w2` in that worktree (~105 min). Host idle until ~04:30Z.
 
 ## What just happened
 
 - Gate re-runs closed b1bd75ca, 3f7edef1. Code-review reworks closed 5ee83cd3, 97410c80 (generic `LayoutView`; 113ae672 delivered and closed), e1e0e7ff (production DVB-T2 and `ExtendedBchComponent` in the roster).
-- Wave 12 (591a1c5e, ef8ff9c4, 0c21cb1e, 227ac5c8) and 94597a51 (Lean O-5) closed; 591a1c5e renamed non-comparable bench IDs.
+- Wave 12 (591a1c5e, ef8ff9c4, 0c21cb1e, 227ac5c8) and 94597a51 (Lean O-5) closed; 591a1c5e renamed non-comparable bench IDs (mapping in `smoke-run.md`).
 - 4a2baa12 deleted the superseded surface (`BchCode::new/dvb_t2`, legacy encoder/decoder, `ExtendedBchCode`).
 - f759d724 closed under invoker DEC-01 (archives out of scope). d1b4f85e closed (W1/W2 cells, dispatch records with digests, window runner). 4ad869d6 closed (bch module guide, two runnable examples, `tests/bch_examples.rs`).
 - Invoker deleted-as-obsolete: all ROADMAP files, Copilot instructions and agent config (R-59). Filed cbd1eb28 (user-layout decode) outside the epic.
 
 ## What to do next
 
-- [ ] After the window: confirm the window runner's log shows the d1b4f85e job exit 0 and the runner's post-check passed.
-- [ ] Re-scope fd9d5416 to a harness and configuration under `@/inv/committed-evidence-budget`, then dispatch it. If Tier A/B shows a DVB-T2 W1 regression, a33fda32 becomes a prerequisite (REQ-13). If research-review rejects the cross-harness Tier B basis, take option B from the protocol note (legacy encoder re-measured at 74871c6b in its own window).
+- [ ] After the window: confirm `window.log` shows the d1b4f85e job exit 0 and the runner's post-check passed; copy `2026-10-02-d1b4f85e-w1w2` from the run worktree onto main.
+- [ ] Dispatch fd9d5416 (Opus) to render and commit the receipt with `render_receipt.py` under R-57/R-58, link it, then run doc-review and research-review. If Tier A/B shows a DVB-T2 W1 regression, a33fda32 becomes a prerequisite (REQ-13). If research-review rejects the cross-harness Tier B basis, take option B from the protocol note (legacy encoder re-measured at 74871c6b in its own window).
 - [ ] Epic close: map success criteria, reconcile `surfaced_pitfalls` against criteria, `jit gate evaluate-all ae03bcd0`, completion report, transition, archive.
-- [ ] Reclaim `agent-d1b4f85e-run`.
+- [ ] Reclaim `agent-d1b4f85e-run` after copying its output.
 
 ## Traps — do not repeat these
 
@@ -35,7 +36,8 @@
 - **cargo-ci builds all features**, so a default-feature-only warning (a hip-gated test import) passes CI; check `cargo check -p <crate> --tests` without features when a change gates code by feature.
 - **Commit with explicit paths.** Another session shares main; `git add .jit`/`commit -a` would sweep its files.
 - **Merge into main only between gate runs**, so a running cargo-ci or AI review does not see a moving tree.
-- **Kept bench IDs must measure the same workload** (591a1c5e F1); renamed cells need a committed ID mapping.
+- **Kept bench IDs must measure the same workload** (591a1c5e F1); renamed cells need a committed ID mapping and smoke evidence.
+- Prior traps remain in force.
 
 ## Open questions needing invoker input
 
@@ -43,5 +45,7 @@ None.
 
 ## Reference artefacts
 
-- Oracle runner: [oracle/run.sh](oracle/run.sh).
+- Receipt protocol: `receipt-protocol.md`; renderer `render_receipt.py`.
+- Runner: `run.sh`; smoke evidence `smoke-run.md`; contract amendments in `workload-selection.md`.
+- Baselines: `88ca7d2f/`, survey `findings.md`.
 - Queue: `dev/scripts/bench-window/queue.tsv`.

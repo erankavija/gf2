@@ -263,16 +263,14 @@ def reference_lib_for(field_value: str, operation: Optional[str] = None) -> str:
 
     * charpoly × GF(p): canonical = fflas-ffpack. fflas-ffpack
       promotes charpoly via FFPACK::CharPoly with the n^3 normalizer,
-      already published in 2026-04-26-reference.csv across all four
-      reference primes at n ∈ {64, 256}. LinBox + FLINT + NTL rows
+      measured across all four reference primes at n ∈ {64, 256}. LinBox + FLINT + NTL rows
       exist as secondary-reference cross-checks (issues 79388011,
       73ab8eef) — they merge into the reference CSV stream but
       analyze.py renders only the fflas-ffpack column to keep the
       side-by-side narrow.
 
     * minpoly × GF(p): canonical = fflas-ffpack. fflas-ffpack
-      promotes minpoly via FFPACK::MinPoly (added in 2026-05-04
-      issue 5dea7457; rows in 2026-05-04-5dea7457-reference-extension.csv
+      promotes minpoly via FFPACK::MinPoly (added in issue 5dea7457,
       across all four primes at n ∈ {64, 256, 1024}). Before 5dea7457
       no fflas-ffpack minpoly rows existed; LinBox + FLINT minpoly
       rows continue to exist as secondary-reference cross-checks

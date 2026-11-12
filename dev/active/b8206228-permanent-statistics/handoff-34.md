@@ -1,6 +1,7 @@
 # Handoff: Remove artifacts and unresolvable references (daef2dc3), session 37
 
 **Date:** 2026-11-12
+**Prior handoffs:** [handoff-33.md](handoff-33.md) and its predecessors.
 
 ## Current state
 
@@ -25,12 +26,14 @@ it; `@/issue/45ecf975` waits on those, `@/issue/1aea3958` and
 ## Open findings at `87df671e5`
 
 1. **High, REQ-02 and REQ-05.** `dev/research/permanent_wave_gpu` holds a run
-   receipt and compiler-resource result tables in its README.
+   receipt (`architecture_compile_evidence-v1.md`) and compiler-resource result
+   tables in its README.
    `dev/research/permanent_wave_gpu/scripts/compile_arch_evidence.sh` writes the
    receipt and log into the source directory. The budget admits Markdown there
    without inspecting it.
-2. **Medium, REQ-04.** Base-name citations of deleted files in that README
-   pass the reference check, which needs a slash in an inline path. The receipt also names an execution log
+2. **Medium, REQ-04.** Base-name citations of deleted files, such as
+   `f5_wave_resource_usage.log` in that README, pass the reference check, which
+   needs a slash in an inline path. The receipt also names an execution log
    that no longer exists.
 
 ## Next
@@ -53,7 +56,7 @@ it; `@/issue/45ecf975` waits on those, `@/issue/1aea3958` and
 - **Do NOT start a gate run on main without the other lead's hold.** A merge
   two seconds after the start moved the tree under the run.
 - **A cold `cargo-ci` exceeds the gate's 900 s timeout.** Warm the build with a
-  direct run first; a warm run took 394 s.
+  direct run first; a warm run fits within it.
 
 ## Open questions for the invoker
 
