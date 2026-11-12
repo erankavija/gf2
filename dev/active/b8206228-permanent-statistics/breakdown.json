@@ -1040,12 +1040,9 @@
       "terminal": {
         "consumer_family": "gf2-algebra permanent callers",
         "test_boundary": "gf2-algebra benchmark harness",
-        "worker_sized_reason": "One benchmark sweep over settled kernels with one committed receipt fits one focused cycle.",
+        "worker_sized_reason": "One benchmark sweep over settled kernels fits one focused cycle.",
         "footprint": {
-          "creates": [
-            "f3-batched-rates.csv",
-            "f3-batched-rates.md"
-          ],
+          "creates": [],
           "touches": [
             "s1_n36_speedup.rs"
           ]
@@ -1081,12 +1078,10 @@
       "terminal": {
         "consumer_family": "campaign preregistration",
         "test_boundary": "gf2-algebra benchmark harness",
-        "worker_sized_reason": "One benchmark over two existing routines with one committed receipt fits one focused cycle.",
+        "worker_sized_reason": "One benchmark over two existing routines fits one focused cycle.",
         "footprint": {
           "creates": [
-            "determinant_companion.rs",
-            "determinant-cost.csv",
-            "determinant-cost.md"
+            "determinant_companion.rs"
           ],
           "touches": [
             "crates/gf2-algebra/Cargo.toml"
@@ -1126,10 +1121,7 @@
         "test_boundary": "campaign backend measurement harness",
         "worker_sized_reason": "One replicated measurement round over existing backends fits one focused cycle.",
         "footprint": {
-          "creates": [
-            "backend-ordering.csv",
-            "backend-ordering.md"
-          ]
+          "creates": []
         }
       }
     }
@@ -1310,8 +1302,7 @@
         "worker_sized_reason": "One estimation sweep over an existing predicate fits one focused cycle.",
         "footprint": {
           "creates": [
-            "permanental_rank_rates.rs",
-            "rank-event-rates.csv"
+            "permanental_rank_rates.rs"
           ],
           "touches": [
             "crates/gf2-algebra/Cargo.toml"
@@ -1360,8 +1351,7 @@
         "footprint": {
           "creates": [
             "crates/gf2-algebra/src/permanent/exact.rs",
-            "crates/gf2-algebra/tests/permanent_exact_anchors.rs",
-            "exact-anchors.csv"
+            "crates/gf2-algebra/tests/permanent_exact_anchors.rs"
           ],
           "touches": [
             "crates/gf2-algebra/src/permanent/mod.rs",

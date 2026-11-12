@@ -52,7 +52,7 @@
      "title": "Mark SimulationRunner modem-analysis integration tests as ignored",
      "classification": "implementation",
      "priority": "high",
-     "status": "rejected: finding does not hold (tests run in 6 ms); tags reverted"
+     "status": "rejected: finding does not hold (the tests are fast); tags reverted"
     },
     {
      "id": "79a62102-0a4a-4f8c-a261-dc474d09593e",
@@ -289,7 +289,7 @@
     {
      "id": "174295c9-674a-426a-90ce-96f34eee2bf1",
      "short_id": "174295c9",
-     "title": "Flaky: symlinked-writer-ancestor coordinator test failed once (61ms assertion) in a merged-tree CI run",
+     "title": "Flaky: symlinked-writer-ancestor coordinator test failed its timing assertion once in a merged-tree CI run",
      "classification": "implementation",
      "priority": "normal",
      "status": "pending"

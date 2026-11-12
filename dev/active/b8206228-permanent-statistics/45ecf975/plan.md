@@ -2,7 +2,7 @@
 
 ## Context
 
-`@/inv/experiment-library-separation` makes about 17,600 lines of permanent campaign code in `gf2-sim` a defect, along with other campaign code. Measuring where experiment data should live also showed 3.9 GB in the tree against 13.6 MB of `crates/`. Of that, 2.9 GB is copied `inputs/` and 411 MB is `source-inputs/`. Actual results (`simulation_results`) are 2.4 MB.
+`@/inv/library-first-generality` makes about 17,600 lines of permanent campaign code in `gf2-sim` a defect, along with other campaign code. Measuring where experiment data should live also showed 3.9 GB in the tree against 13.6 MB of `crates/`. Of that, 2.9 GB is copied `inputs/` and 411 MB is `source-inputs/`. Actual results (`simulation_results`) are 2.4 MB.
 
 Owner decisions from the interview:
 
@@ -27,7 +27,7 @@ Default is delete. Code moves only if an epic criterion or a live consumer needs
 - `inputs/`, `source-inputs/`
 - `*.log`, `*.err`, perf `*.data`, `*.zst`, raw `test-logs/`
 
-Keep receipts, summaries, CSV, TSV, and every `execution.log` and execution journal (`@/inv/campaign-resumability` makes these authoritative).
+Receipts, summaries, CSV and TSV result tables, execution logs and execution journals leave the tree too: under `@/inv/committed-evidence-budget` the repository keeps the harness and its configuration, and a run writes its records outside the tracked tree.
 
 Exempt until landed or closed: `dev/active/55c3e433-aff3ct-ldpc-gaps`, `02b8137c`, `.agents/`, and `bench-window/` (the armed timer runs `run-window.sh`).
 

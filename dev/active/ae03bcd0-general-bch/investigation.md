@@ -390,7 +390,7 @@ matches are through BCH/eBCH consumers listed above.
   five-second per-test kill and 60-second suite budget; longer tests need
   descriptive `slow:`/`sim:` ignores, and the nightly ignored tier is capped at
   600 seconds with host-data/benchmark self-gating where needed
-  (`AGENTS.md:83-90,143`). No `TESTING.md` exists in this checkout; the
+  (`AGENTS.md:83-90,143`). No TESTING.md exists in this checkout; the
   repository-wide test contract is the cited `AGENTS.md`.
 
 ## Architecture fit

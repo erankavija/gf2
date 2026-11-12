@@ -160,7 +160,7 @@
           "short_id": "ec22205e",
           "title": "Complete determinant marginal-cost coverage for campaign cells",
           "classification": "research",
-          "status": "done: all four registered gates re-evaluated on the clean tree at HEAD 0e389483 and passed (cargo-ci, code-review, doc-review, research-review VERDICT: PASS). The committed v5 receipt revalidated byte-for-byte: PASS, 63 cells, 315 process outcomes, receipt sha256 d3779aa3817bbefc995b858527bf418b4d3931a8f5406281eb4f0b71a7b45e77. Lead six-tier review PASS; Tier 1.5 confirms all four prior findings closed with no regression, Tiers 2.5 and 2.75 empty. research-review advisory F4 recorded in surfaced_pitfalls. Closed session 22."
+          "status": "done: all four registered gates re-evaluated on the clean tree at HEAD 0e389483 and passed (cargo-ci, code-review, doc-review, research-review VERDICT: PASS). The v5 receipt revalidated byte-for-byte. Lead six-tier review PASS; Tier 1.5 confirms all four prior findings closed with no regression, Tiers 2.5 and 2.75 empty. research-review advisory F4 recorded in surfaced_pitfalls. Closed session 22."
         }
       ],
       "note": "Historical wave complete. The final freeze repair passed both gates and the lead review on 2026-08-30."
@@ -310,7 +310,7 @@
       "reason": "Owner-approved wire-and-rerun resolution of the 2026-08-14 escalation; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
       "wave": "0.9",
       "status": "done",
-      "note": "Closed 2026-08-14 (session 6). Implementation 3933338a; budget fix de5f7414 (per-cell 240 s rule, q=5,n=28 count 4->2); full-order host equivalence validation 0c0f525f (234 rows, 0 mismatches, 5690 s wall); smoke evidence 7174718d. All three gates passed with persisted records; lead review PASS."
+      "note": "Closed 2026-08-14 (session 6). Implementation 3933338a; budget fix de5f7414 (per-cell 240 s rule, q=5,n=28 count 4->2); full-order host equivalence validation 0c0f525f; smoke evidence 7174718d. All three gates passed with persisted records; lead review PASS."
     },
     {
       "short_id": "a2c0db52",
@@ -408,7 +408,7 @@
       "wave": "8 (freeze closure)",
       "reason": "research-review F3 owner decision: produce the evidence; wired before all three campaign arms; full run scheduled for the 02:00 exclusive window",
       "status": "in_progress",
-      "note": "Session 24: harness extension landed at 4e847a3f (Sol xhigh worker; embedded SHA-256-pinned selection authority, 63 cells / 124 nominations verified by deterministic tests; budget rule extends de5f7414 with conservative higher-order substitution and recorded 2-matrix floor). Addendum draft committed with TO FILL placeholders. Full receipt run scheduled inside the 02:00 window; reservation 8312 s. Gates (code-review, doc-review) run after the receipt and addendum finalization."
+      "note": "Session 24: harness extension landed at 4e847a3f (Sol xhigh worker; embedded SHA-256-pinned selection authority, 63 cells / 124 nominations verified by deterministic tests; budget rule extends de5f7414 with conservative higher-order substitution and recorded 2-matrix floor). Addendum draft committed with TO FILL placeholders. Full receipt run scheduled inside the 02:00 window. Gates (code-review, doc-review) run after the receipt and addendum finalization."
     },
     {
       "short_id": "02b8137c",
@@ -615,7 +615,7 @@
       "status": "resolved",
       "requested_at": "2026-08-18T18:40:00+03:00",
       "resolved_at": "2026-08-18T18:45:00+03:00",
-      "decision": "Owner: opt-in orders flag, mirroring the --batch-size precedent. Default grid untouched so committed evidence identity is preserved; the rebuilt binary is a new cohort and each cell's two candidates are measured under one binary, so within-cell ranking stays cohort-clean; the 9 completed cells keep their receipts; rework dispatch on 7a816262 (count 2 = MAX), then re-arm. Owner also reported the GPU wedge symptom for the record: monitor at 100% utilisation with high power draw until reboot (~18:16 EEST); filed as cb494ea4 under the tech-debt umbrella."
+      "decision": "Owner: opt-in orders flag, mirroring the --batch-size precedent. Default grid untouched so committed evidence identity is preserved; the rebuilt binary is a new cohort and each cell's two candidates are measured under one binary, so within-cell ranking stays cohort-clean; the 9 completed cells keep their receipts; rework dispatch on 7a816262 (count 2 = MAX), then re-arm. Owner also reported the GPU wedge symptom for the record: monitor at full utilisation with high power draw until reboot; filed as cb494ea4 under the tech-debt umbrella."
     },
     {
       "issue": "7a816262",
@@ -810,7 +810,7 @@
   ],
   "standing_rules": [
     "Owner directive 2026-08-18: within this epic, codex Luna may be used for at most one rework round per issue; any subsequent rework round is dispatched to an Opus subagent (Agent tool, model opus).",
-    "codex luna dispatches can wedge before doing any work: a stalled worker shows a live process with 00:00:00 CPU time and no <local path> rollout file for that run. Diagnose with `ps -o etime,time` plus the session-log listing before concluding it is merely slow, then TaskStop rather than waiting. Observed session 13: a39bb161 rework-1 held 47 minutes at zero CPU and produced nothing.",
+    "codex luna dispatches can wedge before doing any work: a stalled worker shows a live process with 00:00:00 CPU time and no <local path> rollout file for that run. Diagnose with `ps -o etime,time` plus the session-log listing before concluding it is merely slow, then TaskStop rather than waiting. Observed session 13: a39bb161 rework-1 held at zero CPU and produced nothing.",
     "Owner directive 2026-08-24: agent dispatch and rework prompts are ephemeral coordination material and do not belong in the repository.",
     "Owner directive 2026-08-24: GPU-heavy work is guaranteed safe from 02:00 local unless the owner says otherwise. Baldur's Gate 3 belongs to another user, so this workflow must not use process visibility as the admission test.",
     "The premeasure-v1 cohort is immutable at source revision 1350d5b4. Recollect it only with the pinned collector behavior at 8811d7b6; current main uses incompatible provenance keys. Never rerun, repair, or delete terminal position 539."
@@ -896,13 +896,13 @@
     "Gray-update isolate rows for wave-gf3/fold-gf3 in run 20260813T230032Z-1321576 alias the shipped gray_update_micro_kernel (field selected from q alone); do not cite them as prototype evidence anywhere downstream.",
     "RESOLVED 2026-08-14 (de5f7414): equivalence counts are now budgeted per (q,n) cell against the summed committed probe costs of that cell's measured CPU backends (240 s per-cell budget; only q=5,n=28 halves to 2). The general lesson stands: never derive a per-cell budget from one field's fastest backend; sum the participating backends' measured costs.",
     "The runner's smoke outputs land under each campaign study's smoke/ directory; a new smoke run supersedes the smoke evidence linked on closed 2ddf2f4b — git rm the superseded evidence and re-point the jit doc links in the same commit.",
-    "The Ryser work-model projection is conservative (lands low) only on fixed-batch GPU chains; on probe-calibrated prototype chains it lands HIGH by up to ~680% at large orders because batch size moves up to 20x between adjacent orders (F_3 receipts section 5). Never treat a censored prototype cell's projection as a lower bound.",
+    "The Ryser work-model projection is conservative (lands low) only on fixed-batch GPU chains; on probe-calibrated prototype chains it lands HIGH at large orders because batch size moves sharply between adjacent orders. Never treat a censored prototype cell's projection as a lower bound.",
     "Harness defects surfaced by the F_3 receipts and filed under the tech-debt umbrella 86b9c719: 3ea21d74 (grid CSV emits unquoted note columns; 25 malformed rows per field-grid) and 79c5ace7 (host_submission_s carries two semantics across backend rows). Receipt tooling for F_5/F_7 must reuse the seed_root-anchored CSV split and the device-clock launch column, as the F_3 analysis does.",
     "Lead and worker sharing one checkout share one git index: the lead's `git add <paths> && git commit` commits ANYTHING the worker has staged, burying the worker's change in the lead's commit (happened to the 047b62ed receipts alignment; repaired by splitting unpushed HEAD, commits 2a5cda47 + 62c061c7). Before any lead commit while a worker is active on the same checkout, run `git diff --cached --stat` and abort if staged paths are not the lead's own; better, never run lead commits while a same-checkout worker is mid-task.",
     {
       "issue": "91605d4d",
       "source": "code-review round 1 (advisory, pre-existing)",
-      "finding": "The measurement harness embeds historical receipt figures and narrative instead of an identity-based derivation reference (main.rs:64), cited against @/inv/runtime-observed-provenance.",
+      "finding": "The measurement harness embeds historical receipt figures and narrative instead of an identity-based derivation reference (main.rs:64), cited against @/inv/campaign-evidence.",
       "disposition": "Owned by retrofit task 0ba493e1 REQ-03 (preamble/tool-prose audit) under the tech-debt umbrella; no campaign issue owns harness changes."
     },
     "Code-review enforces the AGENTS.md 72-character commit-subject limit on the lead's own commits: 63d931a9 round 1 failed solely on an 89-character lead subject. Fixed by reset-amend-cherry-pick over the unpushed chain; gate records citing the rewritten hashes were re-run at the new HEAD. Check subject lengths before committing.",
@@ -920,7 +920,7 @@
       "id": "gpu-wedge-2026-08-18",
       "surfaced_at": "2026-08-18",
       "issue": "7a816262",
-      "summary": "After the premeasure session the GPU sat at 100% utilisation with high power draw until the owner rebooted (~18:16 EEST); no kernel-visible fault, all 1440 processes had recorded exits. Distinct from the 10071e51 stuck-telemetry state (that one drew no power). Filed as cb494ea4 (tech-debt umbrella) with provenance-recorded GPU health snapshots as its first deliverable; until it is bounded, treat every overnight gpu_hip session as capable of requiring a reboot and check GPU health before trusting same-day device work.",
+      "summary": "After the premeasure session the GPU sat at full utilisation with high power draw until the owner rebooted; no kernel-visible fault, all processes had recorded exits. Distinct from the 10071e51 stuck-telemetry state (that one drew no power). Filed as cb494ea4 (tech-debt umbrella) with provenance-recorded GPU health snapshots as its first deliverable; until it is bounded, treat every overnight gpu_hip session as capable of requiring a reboot and check GPU health before trusting same-day device work.",
       "status": "open"
     },
     {
@@ -933,14 +933,14 @@
     {
       "issue": "a39bb161",
       "source": "lead host verification, session 13",
-      "finding": "crates/gf2-algebra/tests/gpu_dispatcher.rs test_permanent_batch_bipedal5_matches_cpu_n24 and the _bipedal7_ equivalent time out at the slow profile's 600 s budget on this host; 4 of 6 pass. The cost is on the CPU reference side, not the device.",
+      "finding": "crates/gf2-algebra/tests/gpu_dispatcher.rs test_permanent_batch_bipedal5_matches_cpu_n24 and the _bipedal7_ equivalent time out at the slow profile's 600 s budget on this host. The cost is on the CPU reference side, not the device.",
       "disposition": "@/inv/test-tier-budgets violation, pre-existing (gpu_dispatcher.rs untouched by a39bb161). FILED as 370f0d33."
     },
     {
       "issue": "a39bb161",
       "source": "lead review, session 13",
       "finding": "Four campaign shard timing assertions compare an unsigned Duration >= Duration::ZERO and therefore cannot fail; they would have passed through the exact F1 phase-attribution defect fixed in this issue.",
-      "disposition": "@/inv/semantic-test-assertions violation, pre-existing. FILED as dc744095."
+      "disposition": "@/inv/shared-test-contracts violation, pre-existing. FILED as dc744095."
     },
     {
       "issue": "a39bb161",
@@ -1002,7 +1002,7 @@
     },
     "ec22205e | research-review F4 (medium, advisory, PASS verdict): the v5 determinant-cost runner suppresses untracked files while Cargo.lock is gitignored and absent from the producing revision, and the receipt records rustc and cargo_profile but not the Cargo version or build argv, so the measured binary is identified by hash yet not reconstructible. The reviewer applied its convergence-across-rounds policy and did not block. Not an ec22205e REQ-03 violation (that criterion's 'compiler and build identity' is supplied by rustc, cargo_profile and binary_sha256). Reconcile before the epic holistic-review gate; note that CampaignManifest.provenance already carries deps_source_revision and deps_source_dirty, so the campaign's own reproducibility path does not inherit the gap.",
         "7a816262 | research-review Tier 1 check 3 is issue-scope-blind: it greps the whole gate context for cites:<key>, and the context embeds dependency labels but only dependency titles. Any issue whose dependency owns a cites: label that is not bracketed in the combined context fails deterministically, before the AI review runs. Contrast a82f2dd9, which owned its cites:Yue2022 label and so failed genuinely. Repo-wide condition, not specific to this epic.",
-    "7a816262 | The freeze has passed doc-review and the lead's independent structural verification, but its research-review Tier 2 AI methodology review has NEVER executed (Tier 1 fails first, in 117 ms). Do not treat the doc-review pass as scientific review of the freeze.",
+    "7a816262 | The freeze has passed doc-review and the lead's independent structural verification, but its research-review Tier 2 AI methodology review has NEVER executed (Tier 1 fails first). Do not treat the doc-review pass as scientific review of the freeze.",
     "7a816262 | doc-review PASSED while the freeze record violated the present-tense-prose invariant in a permanent path (simulation_results), narrating the pre-commit worker tree as current state. The independent audit caught it; the gate did not. Do not treat a doc-review pass as coverage of present-tense-prose.",
     "7a816262 | REQ-06 tamper-detection does not reach the freeze record, which is the sole record of REQ-04, REQ-05, REQ-07 and REQ-08 construction. checksums.sha256 covers manifest.json alone, and adding the freeze record to it raises IntegrityFault::OutsideRawSet in verify_dataset (provenance.rs:1096). Needs an owner decision before the campaign is treated as immutably frozen.",
     "7a816262 | Protocol obligation possibly unmet and outside REQ-01..08: protocol.md:3-6 requires a committed pre-draw execution receipt recording the manifest's repository-relative path, content SHA-256, and root-manifest identity. The freeze record supplies all three bindings but never claims the role, and no artifact is named as that receipt. Resolve before the first campaign draw.",
@@ -1041,12 +1041,12 @@
     {
       "issue": "6639435f",
       "severity": "advisory",
-      "finding": "gf2-sim rare-event fast-tier headroom: rare_event_artifact_final_receipt_regeneration 3.7s and rare_event_artifact_partial_publish_recovery 3.5s sit near the 5s per-test kill on a contended host; next candidates to trip. Reported by the rework worker 2026-08-30."
+      "finding": "gf2-sim rare-event fast-tier headroom: rare_event_artifact_final_receipt_regeneration and rare_event_artifact_partial_publish_recovery sit near the 5s per-test kill on a contended host; next candidates to trip. Reported by the rework worker 2026-08-30."
     },
     {
       "issue": "epic",
       "severity": "advisory",
-      "finding": "Dispatch cost model: full CI in a fresh worktree hit 1.7% sccache Rust hit rate (9/519) against a 44 GiB cache on 2026-08-30; cause unestablished (peer measurement). The hardlinked cache pool, not sccache, carries cross-worktree reuse. Cold fresh-worktree CI: 661s; warm: 62s."
+      "finding": "Dispatch cost model: full CI in a fresh worktree hit almost no sccache Rust hits on 2026-08-30; cause unestablished. The hardlinked cache pool, not sccache, carries cross-worktree reuse; a cold fresh-worktree CI run is far slower than a warm one."
     }
   ],
   "started_at": "2026-08-09T12:20:30Z"

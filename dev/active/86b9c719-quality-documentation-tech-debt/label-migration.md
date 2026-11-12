@@ -189,9 +189,6 @@ Each row lists where the labels that credited the requirement before now resolve
 
 ## Validation after migration
 
-| Rule | Errors |
-|---|---|
-| `dangling-item-link` | 0 |
-| `hard-criteria-covered` | 0 |
-| `coverage-preview` | 0 |
-| derived-state drift | 1 (`.jit/.gitignore` absent) |
+`jit validate` reported no `dangling-item-link`, `hard-criteria-covered` or
+`coverage-preview` error after the migration; its derived-state drift check
+reported the absent `.jit/.gitignore`.
