@@ -34,7 +34,7 @@ Exempt until landed or closed: the `55c3e433` AFF3CT LDPC gaps directory, `02b81
 **A2. Remove the rule and its tooling.**
 - Replace the "receipt carries every input" paragraph in `AGENTS.md`: receipts hold results, configuration and digests, and the source revision is the rebuild pointer.
 - Delete the receipt-input snapshot check, its omission list and their `scripts/cargo-ci.sh` steps.
-- Stop snapshot writing in `dev/tools/tuning-campaign-support/src/receipt.rs`, `src/bin/benchmark-ab-runner.rs`, `src/bin/tuning-extent-campaign-driver.rs`. Update `dev/scripts/validate-tuning-extent-campaign.py`.
+- Stop snapshot writing in `dev/tools/tuning-campaign-support/src/receipt.rs`, `dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs`, `dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs`. Update `dev/scripts/validate-tuning-extent-campaign.py`.
 - Remove `inputs/` entries from `contrib/gates/docs-mechanical-baseline.md`. This resolves the open docs-mechanical question.
 - Fix or delete every CI step and test that read purged files. A check that only re-verifies purged bytes is deleted.
 

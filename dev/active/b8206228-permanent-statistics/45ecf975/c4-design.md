@@ -23,15 +23,15 @@ Goal: replace `permanent_campaign/` and three bins with `experiments/permanent-s
 | File under `experiments/permanent-statistics/src/` | Code lines | Content |
 |---|---:|---|
 | `lib.rs` | 10 | adds `campaign`, `execution_log`, `sampler_rng()` (the `rand_chacha 0.9.0` `RngIdentity`, also used by `permanent_rare_event`) |
-| `execution_log.rs` | 70 | `open`, `append<E>`, `read<E>` with torn-line tolerance, lifted from `rare_event/runner.rs` `ExecutionLog` and `logged_progress`; rare_event converts to it, as does its `field_order` serde module |
-| `campaign/mod.rs` | 60 | orientation paragraph, `CampaignError`, re-exports |
-| `campaign/config.rs` | 300 | `CampaignConfig`, `load`, `validate`, `digest`, group expansion to `Cell` and `ShardSpec` |
-| `campaign/evaluate.rs` | 480 | `Backend`, `Kernel`, `evaluate_shard`, launch sizing, hip dispatch |
-| `campaign/decide.rs` | 130 | `AcceptancePlan`, `assess_completed_cell` |
-| `campaign/dataset.rs` | 520 | records, `manifest.json`, shard JSONL, CSV, `runs.json`, checksums, `verify` |
-| `campaign/runner.rs` | 520 | events, state replay, checkpoint, `run_cell`, halt propagation |
-| `campaign/validation.rs` | 420 | preregistered checks, resumable at anchor boundaries, `receipt.json` |
-| `bin/permanent_campaign.rs`, `permanent_dataset.rs`, `permanent_validation.rs` | 110, 70, 70 | thin; exit codes as `permanent_rare_event` |
+| `execution_log.rs` | 70 | `open`, `append<E>`, `read<E>` with torn-line tolerance, lifted from `experiments/permanent-statistics/src/rare_event/runner.rs` `ExecutionLog` and `logged_progress`; rare_event converts to it, as does its `field_order` serde module |
+| `experiments/permanent-statistics/src/campaign/mod.rs` | 60 | orientation paragraph, `CampaignError`, re-exports |
+| `experiments/permanent-statistics/src/campaign/config.rs` | 300 | `CampaignConfig`, `load`, `validate`, `digest`, group expansion to `Cell` and `ShardSpec` |
+| `experiments/permanent-statistics/src/campaign/evaluate.rs` | 480 | `Backend`, `Kernel`, `evaluate_shard`, launch sizing, hip dispatch |
+| `experiments/permanent-statistics/src/campaign/decide.rs` | 130 | `AcceptancePlan`, `assess_completed_cell` |
+| `experiments/permanent-statistics/src/campaign/dataset.rs` | 520 | records, `manifest.json`, shard JSONL, CSV, `runs.json`, checksums, `verify` |
+| `experiments/permanent-statistics/src/campaign/runner.rs` | 520 | events, state replay, checkpoint, `run_cell`, halt propagation |
+| `experiments/permanent-statistics/src/campaign/validation.rs` | 420 | preregistered checks, resumable at anchor boundaries, `receipt.json` |
+| `experiments/permanent-statistics/src/bin/permanent_campaign.rs`, `permanent_dataset.rs`, `permanent_validation.rs` | 110, 70, 70 | thin; exit codes as `permanent_rare_event` |
 
 `Cargo.toml`: add `rayon` and `hip = ["gf2-algebra/hip"]`; `gf2-algebra` default features cover the kernels, as they do for `gf2-sim`. Digests go through `Sha256Digest::of`, so no `sha2`.
 
@@ -45,7 +45,7 @@ Goal: replace `permanent_campaign/` and three bins with `experiments/permanent-s
 | `coordinator` | delete; intent to `runner.rs` | Lift only `halt_other_cells` logic, `halted_row`, `pooled_accepted_from_receipt` as tally replay, `validate_raw_record` checks. All receipts, authorization persistence, sidecars, Q3 parsing, monotonic and forged-receipt validation go |
 | `validation.rs` | shrink to `validation.rs` | `exact_anchor`, `evaluate_exact_batch`, `backend_agreements_pass`, `sample`, `probe_backend`, `determinant_singular_count`. Delete the continuation machinery, every `FROZEN_*` and `AUTHORIZED_*`, `snapshot_frozen_campaign`, journal verifiers, `read_exact_anchor_authority`, `publish_or_adopt` |
 | `provenance.rs` | delete | `generate_integrity_file`, `encode_integrity_file`, `decode_integrity_file` logic move to `dataset.rs`; identity observation already lives in `experiments_common`; OSD parts go to the `osd_identity` module |
-| `root_fs`, `launch_cost`, `fixture`, `mod`, `coordinator_tests` | delete | Costs move to config. New tests build configs in a `tests/common/mod.rs` of about 60 lines |
+| `root_fs`, `launch_cost`, `fixture`, `mod`, `coordinator_tests` | delete | Costs move to config. New tests build configs in a `experiments/permanent-statistics/tests/common/mod.rs` of about 60 lines |
 | binaries `permanent_campaign`, `permanent_dataset` and `permanent_validation`, tests `permanent_campaign_bin` and `permanent_validation`, compile-fail case `no_public_field_sidecar_mutator` | delete from `gf2-sim` | Rewritten as below |
 
 ## Config (`config/*.json`, `deny_unknown_fields`, digest as `rare_event::Configuration::digest`)
@@ -65,7 +65,7 @@ Goal: replace `permanent_campaign/` and three bins with `experiments/permanent-s
    "anchors": [{"q": 3, "n": 1, "stream_index": 0, "permanent_zero_count": 1}]}}
 ```
 
-Cells expand in group order; groups must be sorted and non-overlapping. `stream_index = (cell_ordinal << 32) | shard_id` and shard count is `ceil(matrix_count / shard_size)`, as the manifest-draft generator does. `accelerator_per_matrix_us` is required exactly for `accelerator` groups. $K$ is the number of tests in that family: all cells for permanents and only determinant-enabled cells for determinants. `validate` also checks `backend_supports_cell`, and `first_cell` names a cell. C4 ships `config/small-campaign.json` (cheap cells, CPU backends) for tests; C5 writes the real protocol. `backend_evidence` paths are `ArtifactPath` and are only copied to the manifest.
+Cells expand in group order; groups must be sorted and non-overlapping. `stream_index = (cell_ordinal << 32) | shard_id` and shard count is `ceil(matrix_count / shard_size)`, as the manifest-draft generator does. `accelerator_per_matrix_us` is required exactly for `accelerator` groups. $K$ is the number of tests in that family: all cells for permanents and only determinant-enabled cells for determinants. `validate` also checks `backend_supports_cell`, and `first_cell` names a cell. C4 ships `experiments/permanent-statistics/config/small-campaign.json` (cheap cells, CPU backends) for tests; C5 writes the real protocol. `backend_evidence` paths are `ArtifactPath` and are only copied to the manifest.
 
 ## Data formats (dataset directory, `schema_version` 3, exact equality only)
 
@@ -75,7 +75,7 @@ Cells expand in group order; groups must be sorted and non-overlapping. `stream_
 - `shards/q{q}-n{n:02}.jsonl`: compact lines `{shard_id, stream_index, matrix_count, permanent_zero_count, permanent_histogram, determinant_zero_count: u64|null, executed_backend}`. A projection of the log, published with `publish_atomic` at cell terminal. Partial cells publish what they accepted.
 - `summary.csv`: the current 18 columns of the script's `SUMMARY_FIELDS` plus `permanent_log_p_value`, `determinant_log_p_value`. One row per cell; halted rows pool accepted shards and leave estimates empty.
 - `runs.json`: `[{record: RunRecord, cells: [[q, n]]}]` from the log. `checksums.sha256`: `sha256sum` text over everything above except the checkpoint.
-- `data/literature-claim.json` (committed): `{"fields": [5, 7], "claim": "...", "source": "literature search of 2026-08-08 under @/issue/b488f02c", "limitations": "..."}`; text taken from that source. `git mv` the target CSV to `data/`, fixing the link in `protocol.md`.
+- `experiments/permanent-statistics/data/literature-claim.json` (committed): `{"fields": [5, 7], "claim": "...", "source": "literature search of 2026-08-08 under @/issue/b488f02c", "limitations": "..."}`; text taken from that source. `git mv` the target CSV to `data/`, fixing the link in `protocol.md`.
 
 Validation directory: `execution.jsonl` (`start`, `anchor_terminal {anchor}`, `invocation_end`) and `receipt.json` `{record, configuration, anchors: [{q, n, enumerated, oracle_zero_count, determinant_zero_count, backends: [{backend, status, compared, mismatches}], regeneration: {workers: [1, W], sha256: [a, b], identical}, sample: {matrix_count, zero_count, log_p_value}, verdict}], verdict}`.
 
@@ -113,7 +113,7 @@ Deleted without replacement: receipt forgery and mutation, symlink refusals, emi
 
 ## `osd_campaign.rs` during transition
 
-Add the `osd_identity` module, about 420 code lines, carrying only what `osd_campaign.rs`, `ebch_osd_awgn_campaign.rs` and `tests/osd_campaign_protocol.rs` import: `ArtifactPath`, `Sha256Digest`, `GitRevision`, their error types, `ArtifactIdentity`, `Availability`, `RngAlgorithm`, `Provenance` (all moved verbatim from `schema.rs`, so OSD checkpoints and receipts keep their bytes), and `observe_cpu_identity`, `observe_provenance`, `repository_top_level` with their private git helpers from `provenance.rs`, returning `io::Error`. No `crates/*` may depend on `experiments/`, so this is a named exception to `@/inv/convention-convergence`: its module comment cites `@/issue/779d1926`, which deletes it. Update the three import sites and the rustdoc at `osd_campaign.rs:407`.
+Add the `osd_identity` module, about 420 code lines, carrying only what `osd_campaign.rs`, `ebch_osd_awgn_campaign.rs` and `experiments/osd-ebch/tests/osd_campaign_protocol.rs` import: `ArtifactPath`, `Sha256Digest`, `GitRevision`, their error types, `ArtifactIdentity`, `Availability`, `RngAlgorithm`, `Provenance` (all moved verbatim from `schema.rs`, so OSD checkpoints and receipts keep their bytes), and `observe_cpu_identity`, `observe_provenance`, `repository_top_level` with their private git helpers from `provenance.rs`, returning `io::Error`. No `crates/*` may depend on `experiments/`, so this is a named exception to `@/inv/convention-convergence`: its module comment cites `@/issue/779d1926`, which deletes it. Update the three import sites and the rustdoc at `osd_campaign.rs:407`.
 
 ## Other changes
 
