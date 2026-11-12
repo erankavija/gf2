@@ -26,4 +26,4 @@ mod batch_tests;
 
 pub use backend::ComputeBackend;
 pub use cpu::CpuBackend;
-pub use partition::{for_each_partition, partition_offset};
+pub use partition::{for_each_partition, partition_offset, PartitionDispatch};

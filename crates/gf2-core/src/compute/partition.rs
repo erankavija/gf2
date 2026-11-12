@@ -22,6 +22,20 @@ pub fn partition_offset(items: usize, partitions: usize, index: usize) -> usize 
     index * (items / partitions) + index.min(items % partitions)
 }
 
+/// Where [`for_each_partition`] runs its partitions.
+///
+/// A caller crate with its own `parallel` feature selects by that feature, so
+/// its threading does not change when feature unification enables gf2-core's.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PartitionDispatch {
+    /// The halves of each split go to [`rayon::join`] under gf2-core's
+    /// `parallel` feature and run left before right on the calling thread
+    /// without it.
+    Pool,
+    /// Every partition runs on the calling thread, in partition order.
+    CallingThread,
+}
+
 /// Splits `outputs` into one contiguous partition per workspace and calls
 /// `f(workspace, items, partition_outputs)` once for each.
 ///
@@ -30,15 +44,16 @@ pub fn partition_offset(items: usize, partitions: usize, index: usize) -> usize 
 /// [`partition_offset`] over `min(workspaces.len(), outputs.len())`
 /// partitions, so they depend only on the two lengths: partition `p` runs
 /// with `workspaces[p]`, workspaces beyond the item count are not touched, and
-/// an empty `outputs` calls `f` never. When `f` writes each output from its
-/// item index and its workspace alone, the result does not depend on the
-/// workspace count.
+/// an empty `outputs` calls `f` never.
 ///
-/// The partitions are reached by halving the workspace slice. With the
-/// `parallel` feature the halves go to [`rayon::join`]; without it they run
-/// left before right on the calling thread. One partition runs directly on
-/// the calling thread without reaching the pool. The dispatch allocates
-/// nothing.
+/// The result does not depend on the workspace count when `f` writes each
+/// output from its item index and the inputs alone: any workspace state it
+/// reads is reset per partition or equivalent across workspaces, and no output
+/// depends on the items processed before it in the same partition.
+///
+/// The partitions are reached by halving the workspace slice, on the threads
+/// `dispatch` selects. One partition runs directly on the calling thread
+/// without reaching the pool. The dispatch allocates nothing.
 ///
 /// # Panics
 ///
@@ -53,21 +68,30 @@ pub fn partition_offset(items: usize, partitions: usize, index: usize) -> usize 
 /// # Examples
 ///
 /// ```
-/// use gf2_core::compute::for_each_partition;
+/// use gf2_core::compute::{for_each_partition, PartitionDispatch};
 ///
 /// let messages: Vec<u64> = (0..100).collect();
 /// let mut codewords = vec![0_u64; messages.len()];
 /// // One scratch buffer per worker, allocated once and reused across batches.
 /// let mut workspaces = vec![Vec::<u64>::new(); 4];
-/// for_each_partition(&mut codewords, &mut workspaces, |scratch, items, out| {
-///     scratch.clear();
-///     scratch.extend(messages[items].iter().map(|m| m.wrapping_mul(3)));
-///     out.copy_from_slice(scratch);
-/// });
+/// for_each_partition(
+///     PartitionDispatch::Pool,
+///     &mut codewords,
+///     &mut workspaces,
+///     |scratch, items, out| {
+///         scratch.clear();
+///         scratch.extend(messages[items].iter().map(|m| m.wrapping_mul(3)));
+///         out.copy_from_slice(scratch);
+///     },
+/// );
 /// assert_eq!(codewords[99], 297);
 /// ```
-pub fn for_each_partition<O, W, F>(outputs: &mut [O], workspaces: &mut [W], f: F)
-where
+pub fn for_each_partition<O, W, F>(
+    dispatch: PartitionDispatch,
+    outputs: &mut [O],
+    workspaces: &mut [W],
+    f: F,
+) where
     O: Send,
     W: Send,
     F: Fn(&mut W, Range<usize>, &mut [O]) + Sync,
@@ -80,11 +104,16 @@ where
         "a non-empty batch needs at least one workspace"
     );
     let partitions = workspaces.len().min(outputs.len());
-    partitions_over(0, outputs, &mut workspaces[..partitions], &f);
+    partitions_over(dispatch, 0, outputs, &mut workspaces[..partitions], &f);
 }
 
-fn partitions_over<O, W, F>(first: usize, outputs: &mut [O], workspaces: &mut [W], f: &F)
-where
+fn partitions_over<O, W, F>(
+    dispatch: PartitionDispatch,
+    first: usize,
+    outputs: &mut [O],
+    workspaces: &mut [W],
+    f: &F,
+) where
     O: Send,
     W: Send,
     F: Fn(&mut W, Range<usize>, &mut [O]) + Sync,
@@ -98,16 +127,25 @@ where
     let at = partition_offset(outputs.len(), workspaces.len(), left_workers);
     let (left_outputs, right_outputs) = outputs.split_at_mut(at);
     let (left_workspaces, right_workspaces) = workspaces.split_at_mut(left_workers);
+    let left = |outputs: &mut [O], workspaces: &mut [W]| {
+        partitions_over(dispatch, first, outputs, workspaces, f);
+    };
+    let right = |outputs: &mut [O], workspaces: &mut [W]| {
+        partitions_over(dispatch, first + at, outputs, workspaces, f);
+    };
 
-    #[cfg(feature = "parallel")]
-    rayon::join(
-        || partitions_over(first, left_outputs, left_workspaces, f),
-        || partitions_over(first + at, right_outputs, right_workspaces, f),
-    );
-    #[cfg(not(feature = "parallel"))]
-    {
-        partitions_over(first, left_outputs, left_workspaces, f);
-        partitions_over(first + at, right_outputs, right_workspaces, f);
+    match dispatch {
+        #[cfg(feature = "parallel")]
+        PartitionDispatch::Pool => {
+            rayon::join(
+                || left(left_outputs, left_workspaces),
+                || right(right_outputs, right_workspaces),
+            );
+        }
+        _ => {
+            left(left_outputs, left_workspaces);
+            right(right_outputs, right_workspaces);
+        }
     }
 }
 
@@ -130,19 +168,37 @@ mod tests {
         fold: u64,
     }
 
-    fn run(len: usize, workers: usize) -> (Vec<u64>, Vec<u32>, Vec<Recorder>) {
+    const DISPATCHES: [PartitionDispatch; 2] =
+        [PartitionDispatch::Pool, PartitionDispatch::CallingThread];
+
+    fn cases() -> impl Iterator<Item = (PartitionDispatch, usize)> {
+        DISPATCHES
+            .into_iter()
+            .flat_map(|dispatch| WORKERS.map(|workers| (dispatch, workers)))
+    }
+
+    fn run(
+        dispatch: PartitionDispatch,
+        len: usize,
+        workers: usize,
+    ) -> (Vec<u64>, Vec<u32>, Vec<Recorder>) {
         let inputs: Vec<u64> = (0..len).map(value).collect();
         let mut outputs = vec![(0_u64, 0_u32); len];
         let mut workspaces: Vec<Recorder> = (0..workers).map(|_| Recorder::default()).collect();
-        for_each_partition(&mut outputs, &mut workspaces, |workspace, items, out| {
-            assert_eq!(out.len(), items.len());
-            workspace.ranges.push(items.clone());
-            for (input, slot) in inputs[items].iter().zip(out) {
-                workspace.fold = workspace.fold.wrapping_add(*input);
-                slot.0 = input.rotate_left(7);
-                slot.1 += 1;
-            }
-        });
+        for_each_partition(
+            dispatch,
+            &mut outputs,
+            &mut workspaces,
+            |workspace, items, out| {
+                assert_eq!(out.len(), items.len());
+                workspace.ranges.push(items.clone());
+                for (input, slot) in inputs[items].iter().zip(out) {
+                    workspace.fold = workspace.fold.wrapping_add(*input);
+                    slot.0 = input.rotate_left(7);
+                    slot.1 += 1;
+                }
+            },
+        );
         let (values, visits) = outputs.into_iter().unzip();
         (values, visits, workspaces)
     }
@@ -151,9 +207,12 @@ mod tests {
     fn test_output_is_identical_across_worker_counts() {
         for len in LENGTHS {
             let expected: Vec<u64> = (0..len).map(|i| value(i).rotate_left(7)).collect();
-            for workers in WORKERS {
-                let (values, _, _) = run(len, workers);
-                assert_eq!(values, expected, "len {len}, {workers} workers");
+            for (dispatch, workers) in cases() {
+                let (values, _, _) = run(dispatch, len, workers);
+                assert_eq!(
+                    values, expected,
+                    "{dispatch:?}, len {len}, {workers} workers"
+                );
             }
         }
     }
@@ -161,8 +220,8 @@ mod tests {
     #[test]
     fn test_every_item_is_covered_exactly_once() {
         for len in LENGTHS {
-            for workers in WORKERS {
-                let (_, visits, workspaces) = run(len, workers);
+            for (dispatch, workers) in cases() {
+                let (_, visits, workspaces) = run(dispatch, len, workers);
                 assert!(
                     visits.iter().all(|&v| v == 1),
                     "len {len}, {workers} workers"
@@ -180,8 +239,8 @@ mod tests {
     #[test]
     fn test_each_workspace_runs_its_own_balanced_partition() {
         for len in LENGTHS {
-            for workers in WORKERS {
-                let (_, _, workspaces) = run(len, workers);
+            for (dispatch, workers) in cases() {
+                let (_, _, workspaces) = run(dispatch, len, workers);
                 let partitions = workers.min(len);
                 let mut next = 0;
                 for (p, workspace) in workspaces.iter().enumerate() {
@@ -208,9 +267,33 @@ mod tests {
     fn test_empty_batch_touches_no_workspace() {
         let mut outputs: [u8; 0] = [];
         let mut workspaces: [u8; 0] = [];
-        for_each_partition(&mut outputs, &mut workspaces, |_, _, _| unreachable!());
+        for_each_partition(
+            PartitionDispatch::Pool,
+            &mut outputs,
+            &mut workspaces,
+            |_, _, _| unreachable!(),
+        );
         let mut workspaces = [0_u8; 3];
-        for_each_partition(&mut outputs, &mut workspaces, |_, _, _| unreachable!());
+        for_each_partition(
+            PartitionDispatch::Pool,
+            &mut outputs,
+            &mut workspaces,
+            |_, _, _| unreachable!(),
+        );
+    }
+
+    #[test]
+    fn test_calling_thread_dispatch_stays_on_the_calling_thread() {
+        let caller = std::thread::current().id();
+        let mut outputs = vec![None; 65];
+        let mut workspaces = [(); 7];
+        for_each_partition(
+            PartitionDispatch::CallingThread,
+            &mut outputs,
+            &mut workspaces,
+            |(), _, out| out.fill(Some(std::thread::current().id())),
+        );
+        assert!(outputs.iter().all(|&thread| thread == Some(caller)));
     }
 
     #[test]
@@ -218,7 +301,12 @@ mod tests {
     fn test_non_empty_batch_without_workspaces_panics() {
         let mut outputs = [0_u8; 1];
         let mut workspaces: [u8; 0] = [];
-        for_each_partition(&mut outputs, &mut workspaces, |_, _, _| {});
+        for_each_partition(
+            PartitionDispatch::Pool,
+            &mut outputs,
+            &mut workspaces,
+            |_, _, _| {},
+        );
     }
 
     #[test]

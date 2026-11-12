@@ -54,7 +54,7 @@ use std::num::NonZeroUsize;
 use std::slice;
 use std::sync::OnceLock;
 
-use gf2_core::compute::for_each_partition;
+use gf2_core::compute::{for_each_partition, PartitionDispatch};
 use gf2_core::field::extension::{FieldExtension, FieldId, FieldIdentity};
 use gf2_core::field::{FieldPoly, FieldVec, FiniteField};
 use gf2_core::gfp::Fp;
@@ -2631,6 +2631,8 @@ fn encode_partition<F, S>(
 /// [`for_each_partition`] places the partitions, so the output is in input
 /// order and independent of both the workspace count and the order the
 /// partitions happen to run in; workspaces beyond the batch length go unused.
+/// The partitions reach the rayon pool only under this crate's `parallel`
+/// feature, whatever features gf2-core carries.
 fn encode_partitions<F, S>(
     family: EncodeFamily,
     selectors: &EncodeSelectors,
@@ -2643,16 +2645,26 @@ fn encode_partitions<F, S>(
     S: SystematicKernel<F> + Send + Sync,
     S::Word: Send,
 {
-    for_each_partition(codewords, workspaces, |workspace, items, codewords| {
-        encode_partition(
-            family,
-            selectors,
-            plan,
-            &messages[items],
-            &mut workspace.registers,
-            codewords,
-        );
-    });
+    let dispatch = if cfg!(feature = "parallel") {
+        PartitionDispatch::Pool
+    } else {
+        PartitionDispatch::CallingThread
+    };
+    for_each_partition(
+        dispatch,
+        codewords,
+        workspaces,
+        |workspace, items, codewords| {
+            encode_partition(
+                family,
+                selectors,
+                plan,
+                &messages[items],
+                &mut workspace.registers,
+                codewords,
+            );
+        },
+    );
 }
 
 /// Decides that a message's symbols come from the code's own field.

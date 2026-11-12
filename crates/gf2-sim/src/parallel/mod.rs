@@ -5,7 +5,7 @@
 
 use std::num::NonZeroUsize;
 
-use gf2_core::compute::for_each_partition;
+use gf2_core::compute::{for_each_partition, PartitionDispatch};
 use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
 use rayon::prelude::*;
@@ -105,12 +105,17 @@ where
     let mut slots: Vec<Option<T>> = std::iter::repeat_with(|| None).take(len).collect();
     // The state stays on its worker's stack, so `S` need not be `Send`.
     let mut workers = vec![(); parallelism.get()];
-    for_each_partition(&mut slots, &mut workers, |(), items, slots| {
-        let mut state = make_state();
-        for (offset, slot) in items.zip(slots) {
-            *slot = Some(evaluate(indices.start + offset as u64, &mut state));
-        }
-    });
+    for_each_partition(
+        PartitionDispatch::Pool,
+        &mut slots,
+        &mut workers,
+        |(), items, slots| {
+            let mut state = make_state();
+            for (offset, slot) in items.zip(slots) {
+                *slot = Some(evaluate(indices.start + offset as u64, &mut state));
+            }
+        },
+    );
     slots
         .into_iter()
         .map(|slot| slot.expect("the partitions cover every dispatched index"))
