@@ -18,7 +18,7 @@
   window, from worktree `agent-67194d70` detached at `259366a0b`.
 - `@/issue/3478cb98`, `@/issue/506f76d4` and `@/issue/595e2fe5` wait on
   daef2dc3. `@/issue/45ecf975` waits on them and on 67194d70.
-- The ignored leftovers under `dev/studies` are deleted; no tracked file changed.
+- The ignored studies leftovers on this host are deleted; no tracked file changed.
 
 ## What happened
 
