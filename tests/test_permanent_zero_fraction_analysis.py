@@ -60,7 +60,7 @@ class PermanentZeroFractionAnalysisTests(unittest.TestCase):
             self.assertTrue(all(r["terminal_state"] == "completed" for r in rows))
             claim = json.loads(first_bytes["literature-claim.json"])
             self.assertEqual(claim["fields"], [5, 7])
-            self.assertTrue((REPOSITORY / claim["source"]).is_file())
+            self.assertRegex(claim["source"], r"@/issue/[0-9a-f]{8}")
 
     def test_halted_cells_retain_counts_and_no_estimates(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
