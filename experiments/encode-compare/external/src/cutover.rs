@@ -112,7 +112,7 @@ impl Arm for Bchlib {
             .filter(|build| build.constant.is_none_or(|fixed| fixed == (m, t)))
             .map(|&build| -> Prepared<'a> {
                 let skip = |reason: &str| Err((build.label.to_owned(), reason.to_owned()));
-                if row.k % 8 != 0 {
+                if !row.k.is_multiple_of(8) {
                     return skip("bch_encode takes whole message bytes");
                 }
                 // SAFETY: null signals rejection; a non-null handle is owned
