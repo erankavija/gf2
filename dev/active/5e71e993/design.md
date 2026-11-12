@@ -69,25 +69,40 @@ batches 1, 16, 256 and 4096 under both layouts; it gains the forced-scalar run,
 batch lengths 0, 1, 63, 64, 65 and $G \pm 1$, and B1 messages whose only set
 coefficient is degree 0, 1 and $k - 1 = 4$.
 
+## Harness step and routes
+
+The planned harness step and both routes are the B2 design's: after the night
+window, `experiments/encode-compare/src/cutover/current.rs` times
+`encode_batch_into` over a workspace beside `encode_batch`, each its own row,
+and the issue owner decides which row REQ-02 reads. Route (a) is
+`encode_batch_into`; route (b) is the allocating `encode_batch`, whose
+remaining cost after changes 1 to 6 and @/issue/c6b20bec is one heap buffer
+per codeword (8.6 to 9.0 ns at batch 16 and about 17 ns at batch 256 and 4096
+in that design's indication, within 1 ns at $n = 15$), removed either by
+inline `BitVec` storage (b1) or by `encode_batch_matrix` returning the batch
+as one `BitMatrix` (b2, the recommendation).
+
 ## Expected gain (estimate)
 
-| Path after the change | Estimate, ns per message | vs AFF3CT |
+| Path after the change | Estimate, ns per message | vs AFF3CT (13.9 ns at batch 16, 12.4 at 4096) |
 | --- | --- | --- |
-| `encode_batch_into` with workspace, batch $\ge 16$ | 7 to 10 | 1.2 to 1.9 |
-| `encode_batch_into`, batch 1 (harness clock read included) | 45 to 55 against 55 | 1.0 to 1.2 |
-| `encode_batch` (allocating), batch $\ge 16$ | 24 to 27 | 0.45 to 0.55 |
+| (a) `encode_batch_into`, batch $\ge 16$ | 7 to 10 | 1.2 to 2.0 |
+| (a) `encode_batch_into`, batch 1 (harness clock read included) | 45 to 55 against 55 | 1.0 to 1.2 |
+| (b) `encode_batch` after changes 1 to 6 and @/issue/c6b20bec, batch 16 | 16 to 19 | 0.73 to 0.87 |
+| (b) same, batch 256 and 4096 | 24 to 28 | 0.45 to 0.55 |
+| (b1) `encode_batch` with inline `BitVec` storage, batch $\ge 16$ | 8 to 12 | 1.0 to 1.7 |
+| (b2) `encode_batch_matrix`, batch $\ge 16$ | 7 to 12 | 1.0 to 2.0 |
+| (b), (b1), (b2), batch 1 | 55 to 70 against 55 | 0.8 to 1.0 |
 
 Reasoning: the prototype's 4.5 ns plus a `BitVec` read and a one-word codeword
-write per message ($n = 15$) and amortized group dispatch. The allocating
-entry point keeps one `malloc`/`free` per codeword (17 ns measured on B2), so
-REQ-02 on B1 needs the matched-configuration decision of the B2 design's first
-open question.
+write per message ($n = 15$) and amortized group dispatch gives route (a);
+route (b) adds the storage cost per codeword, (b1) an 88-byte struct
+initialization in its place and (b2) the contiguous allocation's 0.1 to
+2.3 ns. B1 has less margin than B2 on every route, since its 5-bit messages
+leave AFF3CT's per-frame cost low.
 
-## Open questions for the lead
+## Open question for the lead
 
-1. The adapter's timed entry point, as in the B2 design: the recommendation is
-   the same, add `encode_batch_into` over a workspace as a configuration of
-   the current arm.
-2. The batch-1 margin is the thinnest cell of REQ-02 on B1; if the window table
+1. The batch-1 margin is the thinnest cell of REQ-02 on B1; if the window table
    leaves it below 1.0 after the change, the remaining per-call costs are the
-   ones the B2 design's third open question names.
+   ones the B2 design's open question names.
