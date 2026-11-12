@@ -17,12 +17,12 @@ namespace Packed7Correctness
 The 4-bit-slot lane decoder. We model the encoding arithmetically:
 nibble `i` of a word value `w : Nat` is `(w / 16^i) % 16`; byte `bi`
 is `(w / 256^bi) % 256`. This is exactly the Rust `(w >> 4i) & 0xf`
-(packed7.rs:280) — see `nib_shift` for the bridge to the extracted
+(packed7.rs) — see `nib_shift` for the bridge to the extracted
 `>>>`/`&&&`. -/
 
 /-- 4-bit-slot lane decoder for `Packed7`. Codepoints `0..=6` decode to
 themselves; codepoints `7..=15` decode to `0` (matching
-`Fp::<7>::new`, packed7.rs:281). -/
+`Fp::<7>::new`, packed7.rs). -/
 def dec7 (v : Nat) : ZMod 7 := if v < 7 then (v : ZMod 7) else 0
 
 /-- Lane `i`'s 4-bit nibble of a word value (`(w / 16^i) % 16`). -/
@@ -105,23 +105,23 @@ the exhaustive Rust `test_*_lut_contract_exhaustive` tests. They are
 §7). This is the user-accepted Path-B limitation (D6 §8).
 
 Key/byte layout transcribed verbatim from the `const fn` source
-(`build_add_lut`, packed7.rs:54-75; the loop writes
+(`build_add_lut`, packed7.rs; the loop writes
 `lut[(bp<<8)|ap] = r0 | (r1<<4)` with `ap = a0|(a1<<4)`,
 `bp = b0|(b1<<4)`, only when `a0,a1,b0,b1 < 7`, else the array
-zero-init at packed7.rs:55 leaves `0`). The 16-bit key, as a `Nat`, is
+zero-init at packed7.rs leaves `0`). The 16-bit key, as a `Nat`, is
 `a0 + 16·a1 + 256·b0 + 4096·b1`. -/
 
 /-- **ADD_LUT contract axiom (Path B).**
 
 JUSTIFICATION / cited source: `build_add_lut`
-(`crates/gf2-algebra/src/packed/packed7.rs:54-75`) zero-inits the array
-(`packed7.rs:55`) then, for every `ap,bp < 256`, writes
+(`crates/gf2-algebra/src/packed/packed7.rs`) zero-inits the array
+(`packed7.rs`) then, for every `ap,bp < 256`, writes
 `lut[(bp<<8)|ap] = r0 | (r1<<4)` with `r0 = (a0+b0)%7`,
 `r1 = (a1+b1)%7`, `a0 = ap&0xf`, `a1 = ap>>4`, `b0 = bp&0xf`,
 `b1 = bp>>4`, **only** under the guard `a0<7 && a1<7 && b0<7 && b1<7`
-(`packed7.rs:64`); non-canonical keys keep the zero-init value
-(`packed7.rs:29-30,55`). The static `ADD_LUT = build_add_lut()`
-(`packed7.rs:137`).
+(`packed7.rs`); non-canonical keys keep the zero-init value
+(`packed7.rs`). The static `ADD_LUT = build_add_lut()`
+(`packed7.rs`).
 
 NOT proved from the extracted loop (Path B, D6 §4.3; Path A out of
 scope per the user decision 2026-05-16 / D6 §7). Cross-validated by the
@@ -139,11 +139,11 @@ axiom add_lut_spec :
 /-- **SUB_LUT contract axiom (Path B).**
 
 JUSTIFICATION / cited source: `build_sub_lut`
-(`crates/gf2-algebra/src/packed/packed7.rs:82-103`), identical structure
+(`crates/gf2-algebra/src/packed/packed7.rs`), identical structure
 to `build_add_lut` with `r0 = (a0+7-b0)%7`, `r1 = (a1+7-b1)%7`
-(`packed7.rs:93-94`), guarded by `a0<7 && a1<7 && b0<7 && b1<7`
-(`packed7.rs:92`); non-canonical keys keep the `packed7.rs:83`
-zero-init. The static `SUB_LUT = build_sub_lut()` (`packed7.rs:143`).
+(`packed7.rs`), guarded by `a0<7 && a1<7 && b0<7 && b1<7`
+(`packed7.rs`); non-canonical keys keep the `packed7.rs`
+zero-init. The static `SUB_LUT = build_sub_lut()` (`packed7.rs`).
 
 NOT proved from the extracted loop (Path B, D6 §4.3). Cross-validated by
 the exhaustive Rust test `test_sub_lut_contract_exhaustive`. -/
@@ -158,11 +158,11 @@ axiom sub_lut_spec :
 /-- **MUL_LUT contract axiom (Path B).**
 
 JUSTIFICATION / cited source: `build_mul_lut`
-(`crates/gf2-algebra/src/packed/packed7.rs:110-131`), identical
+(`crates/gf2-algebra/src/packed/packed7.rs`), identical
 structure to `build_add_lut` with `r0 = (a0*b0)%7`, `r1 = (a1*b1)%7`
-(`packed7.rs:121-122`), guarded by `a0<7 && a1<7 && b0<7 && b1<7`
-(`packed7.rs:120`); non-canonical keys keep the `packed7.rs:111`
-zero-init. The static `MUL_LUT = build_mul_lut()` (`packed7.rs:149`).
+(`packed7.rs`), guarded by `a0<7 && a1<7 && b0<7 && b1<7`
+(`packed7.rs`); non-canonical keys keep the `packed7.rs`
+zero-init. The static `MUL_LUT = build_mul_lut()` (`packed7.rs`).
 
 NOT proved from the extracted loop (Path B, D6 §4.3). Cross-validated by
 the exhaustive Rust test `test_mul_lut_contract_exhaustive`. -/
@@ -177,16 +177,16 @@ axiom mul_lut_spec :
 /-! ## §3.3 `binary_op_word` loop-composition lemma (L9 — real proof)
 
 `binary_op_word a b lut` runs the extracted 8-iteration loop
-`packed.packed7.binary_op_word_loop` (packed7.rs:167-178). Iteration
+`packed.packed7.binary_op_word_loop` (packed7.rs). Iteration
 `bi` reads byte `bi` of `a`/`b`, indexes `lut` at the 16-bit key, and
 ORs the LUT result byte into output bit position `8*bi`. We
 characterise the loop result byte-by-byte via the in-repo
 `apply spec_imp_exists; apply loop.spec` idiom
-(`MontgomeryRoundtrip.lean:215-217` precedent referenced by D6 §4.1). -/
+(`MontgomeryRoundtrip.lean` precedent referenced by D6 §4.1). -/
 
 /-- The LUT key for byte index `bi` as the `Nat`
 `a0 + 16·a1 + 256·b0 + 4096·b1` — exactly the Rust
-`ap | (bp << 8)` with `ap`/`bp` the `a`/`b` byte (packed7.rs:173). -/
+`ap | (bp << 8)` with `ap`/`bp` the `a`/`b` byte (packed7.rs). -/
 def keyByte (a b bi : Nat) : Nat :=
   nib a (2 * bi) + 16 * nib a (2 * bi + 1)
     + 256 * nib b (2 * bi) + 4096 * nib b (2 * bi + 1)
@@ -302,7 +302,7 @@ theorem byteN_lutSum (a b : Nat) (L : Array Std.U8 65536#usize)
 (`@[reducible]` over `binary_op_word_loop a b L 0 0`) terminates with a
 word whose byte `bi` (`bi < 8`) equals `(L.val[keyByte a b bi]!).val`.
 Proved by `apply spec_imp_exists; apply loop.spec`
-(`MontgomeryRoundtrip.lean:215-217` precedent) with measure `8 - i` and
+(`MontgomeryRoundtrip.lean` precedent) with measure `8 - i` and
 the closed-form `lutSum` invariant; the body is one `Array.index_usize`
 (closed by `keyByte_lt`) plus concrete `i32`/`u64` shift/mask. -/
 theorem binary_op_word_spec
@@ -325,7 +325,7 @@ theorem binary_op_word_spec
       -- `Result`-fallible; only `*`, `>>>`, `<<<`, `index_usize`, `+` are
       -- genuine `Result` ops needing `step`). Mirrors the
       -- `simp only [..., Std.lift, bind_tc_ok]` precedent in
-      -- `MontgomeryRoundtrip.lean:1127`.
+      -- `MontgomeryRoundtrip.lean`.
       simp only [hlt, ite_true, Std.lift, bind_tc_ok]
       have hival : i.val < 8 := by scalar_tac
       have hivalN : i.val.toNat < 8 := by omega
@@ -495,16 +495,16 @@ theorem binary_op_word_nib
 
 The byte-pair LUT couples two adjacent lanes (`2·bi` and `2·bi+1`) into
 one 16-bit key; a non-canonical *partner* lane zeroes the whole result
-byte (the `build_*_lut` guard, packed7.rs:64). So the per-lane theorems
+byte (the `build_*_lut` guard, packed7.rs). So the per-lane theorems
 carry a word-level canonicality hypothesis: every lane of both operands
 holds a canonical codepoint `0..=6` — exactly the production
-well-formedness invariant (packed7.rs:7-8,29-30; every `Packed7`
+well-formedness invariant (packed7.rs; every `Packed7`
 constructor only writes canonical nibbles). This mirrors the D5
 `canon5_lane`-on-every-lane contract. -/
 
 /-- Word-level canonicality: every one of the 16 lanes holds a canonical
 F_7 codepoint (`< 7`). Carried by every value the production code
-produces (packed7.rs:7-8,29-30). -/
+produces (packed7.rs). -/
 def Canon7Word (w : Nat) : Prop := ∀ j : Fin 16, nib w j.val < 7
 
 /-- The four byte-key nibbles are the operand lane nibbles at `2·bi` and
@@ -581,7 +581,7 @@ private theorem lane_correct_of_lut
 
 /-- §3.4 L10 add-correct: per-lane add on the inherent wrapper, against
 canonical `ZMod 7` addition. Word-level canonicality on both operands
-(packed7.rs:7-8,29-30 — redundant codepoints never produced). -/
+(packed7.rs — redundant codepoints never produced). -/
 theorem packed7_add_correct (a b : Std.U64) (i : Fin 16)
     (ha : Canon7Word a.val) (hb : Canon7Word b.val) :
     ∃ r, packed.packed7.Packed7.add_inherent ⟨a⟩ ⟨b⟩ = ok r ∧
@@ -634,7 +634,7 @@ theorem packed7_mul_correct (a b : Std.U64) (i : Fin 16)
 
 /-- §3.4 L13 neg-correct: per-lane neg on the inherent wrapper, against
 canonical `ZMod 7` negation. `neg` is `binary_op_word 0 self SUB_LUT`
-(packed7.rs:631-635), i.e. the `0 - x` lane of `SUB_LUT`. The constant
+(packed7.rs), i.e. the `0 - x` lane of `SUB_LUT`. The constant
 `0` operand is trivially canonical on every lane. -/
 theorem packed7_neg_correct (a : Std.U64) (i : Fin 16)
     (ha : Canon7Word a.val) :
@@ -696,7 +696,7 @@ def dec7_lane (a : packed.packed7.Packed7) (i : Fin 16) : ZMod 7 :=
 (`ZMod 7`) arithmetic on every lane, for every `ArithOp` tag. The four
 per-op theorems provide the case-split discharge (D6 §1 headline). The
 `Canon7Word` hypotheses encode the production well-formedness invariant
-(codepoints `7..=15` never produced — packed7.rs:7-8,29-30). -/
+(codepoints `7..=15` never produced — packed7.rs). -/
 theorem packed7_correct_vs_canonical_F7
     (op : ArithOp) (a b : packed.packed7.Packed7) (i : Fin 16)
     (ha : Canon7Word a.w.val) (hb : Canon7Word b.w.val) :
@@ -728,7 +728,7 @@ stated against `dec5` (pure `ZMod 5`) and the V1 `bipedal3_*_correct`
 against `psi` (pure `ZMod 3`). The connection to the production `Fp<7>`
 field is the `fpEquiv` / `FpVal.instCommRing` ring-iso already verified
 at `P = 7` (7 prime, `1 < 7`, `7 ≤ 2^63`) in
-`Gf2Core/Proofs/FpField.lean:87`. Per D6 §1 / risk R7, the `Fp<7>`
+`Gf2Core/Proofs/FpField.lean`. Per D6 §1 / risk R7, the `Fp<7>`
 rephrasing is a cited, additive note; the bridge equiv is not re-proved
 here. It is *not* load-bearing for the issue's `add/sub/mul/neg`
 correctness criteria, which are fully discharged by the `*_correct` /

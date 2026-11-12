@@ -29,7 +29,7 @@
   Axiom footprint: this module declares no axiom and contains no `sorry`. Every
   declaration in both sections rests on `propext`, `Classical.choice` and
   `Quot.sound` alone, and several on fewer. The Section 2 instantiations add
-  none: `FpVal` (`Gf2Core/Proofs/Defs.lean:23`) is a structure over `Std.U64`
+  none: `FpVal` (`Gf2Core/Proofs/Defs.lean`) is a structure over `Std.U64`
   and `Gf2Core.Proofs.FpField` transfers its `Field` structure across
   `fpValRingEquiv` from `ZMod P`, so the external-type axiom
   `Aeneas.Std.core.fmt.Formatter` that `Gf2Core/TypesExternal.lean` regenerates
@@ -55,7 +55,7 @@ open Polynomial
 The model fixes a field `B`, a monic modulus `f : B[X]`, and the quotient
 `Q = AdjoinRoot f`; `r = f.natDegree` is the relative degree, and the lemmas
 that need `r ≥ 1` carry it as a hypothesis. The stored
-coefficient vector of `QuotientElement` (`crates/gf2-core/src/gfpn/quotient.rs:749`)
+coefficient vector of `QuotientElement` (`crates/gf2-core/src/gfpn/quotient.rs`)
 is modelled by `Fin r → B`, constant coefficient first, exactly as the
 production layout stores it. -/
 
@@ -66,8 +66,7 @@ variable {B : Type*} [Field B]
 /-- The polynomial `∑_{i < n} g i · X ^ i`.
 
 This is the shape both padding maps take: `QuotientField::element_from_remainder`
-(`crates/gf2-core/src/gfpn/quotient.rs:543`) and `ConstQuotient::from_remainder`
-(`:1536`) copy a reduced polynomial into an `r`-slot buffer and zero-fill the
+(`crates/gf2-core/src/gfpn/quotient.rs`) and `ConstQuotient::from_remainder` copy a reduced polynomial into an `r`-slot buffer and zero-fill the
 rest. -/
 def ofCoeffs (n : ℕ) (g : ℕ → B) : B[X] :=
   ∑ i ∈ Finset.range n, monomial i (g i)
@@ -93,7 +92,7 @@ theorem trunc_eq_self {n : ℕ} {p : B[X]} (h : p.natDegree < n) : trunc n p = p
 
 /-- Peeling one Horner step off a truncation: this is the algebraic content of
 the accumulator shift in `ConstQuotient::multiply`
-(`crates/gf2-core/src/gfpn/quotient.rs:1551`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem trunc_succ (n : ℕ) (p : B[X]) :
     trunc (n + 1) p = X * trunc n p.divX + C (p.coeff 0) := by
   simp only [trunc, ofCoeffs, Finset.sum_range_succ' (fun i => monomial i (p.coeff i)) n,
@@ -112,15 +111,15 @@ variable (f : B[X])
 coefficient first.
 
 Production path: `QuotientElement::coefficients`
-(`crates/gf2-core/src/gfpn/quotient.rs:810`) read back as a polynomial, the
-inverse of the copy that `QuotientField::element_from_remainder` (`:543`)
+(`crates/gf2-core/src/gfpn/quotient.rs`) read back as a polynomial, the
+inverse of the copy that `QuotientField::element_from_remainder`
 performs. -/
 def pad (c : Fin f.natDegree → B) : B[X] := ofCoeffs f.natDegree (extend c)
 
 /-- `red a` is the stored coefficient vector `QuotientField::element`
-(`crates/gf2-core/src/gfpn/quotient.rs:426`) returns for the coefficient vector
+(`crates/gf2-core/src/gfpn/quotient.rs`) returns for the coefficient vector
 of `a`: the remainder of `FieldPoly::div_rem`
-(`crates/gf2-core/src/field/poly.rs:1779`), copied into `r` slots. -/
+(`crates/gf2-core/src/field/poly.rs`), copied into `r` slots. -/
 def red (a : B[X]) : Fin f.natDegree → B := fun i => (a %ₘ f).coeff i
 
 /-- The class map `κ = π ∘ pad` from stored vectors to the quotient. -/
@@ -152,8 +151,8 @@ theorem degree_modByMonic_lt_natDegree (hf : f.Monic) (a : B[X]) :
 stored slots hold exactly the residue's coefficients.
 
 Production path: `QuotientField::element`
-(`crates/gf2-core/src/gfpn/quotient.rs:426`) divides by the modulus and hands the
-remainder to `element_from_remainder` (`:543`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`) divides by the modulus and hands the
+remainder to `element_from_remainder`. -/
 theorem pad_red (hf : f.Monic) (a : B[X]) : pad f (red f a) = a %ₘ f := by
   refine Polynomial.ext fun j => ?_
   rw [coeff_pad]
@@ -166,12 +165,11 @@ theorem pad_red (hf : f.Monic) (a : B[X]) : pad f (red f a) = a %ₘ f := by
 `a` by a multiple of `f`, and its polynomial has degree below `r`.
 
 Production path: `QuotientField::element`
-(`crates/gf2-core/src/gfpn/quotient.rs:426`) and `ConstQuotient::reduce`
-(`:1378`), which both call `FieldPoly::div_rem`
-(`crates/gf2-core/src/field/poly.rs:1779`) and keep the remainder.
+(`crates/gf2-core/src/gfpn/quotient.rs`) and `ConstQuotient::reduce`, which both call `FieldPoly::div_rem`
+(`crates/gf2-core/src/field/poly.rs`) and keep the remainder.
 
 Refinement anchor: `reduction_is_invariant_under_multiples_of_the_modulus`
-(`crates/gf2-core/src/gfpn/quotient.rs:2541`), which draws a coefficient vector
+(`crates/gf2-core/src/gfpn/quotient.rs`), which draws a coefficient vector
 `a` and a cofactor `h` and checks that `a` and `a + h · f` reduce to one stored
 vector of exactly `relative_degree()` entries. -/
 theorem dvd_sub_pad_red (hf : f.Monic) (a : B[X]) : f ∣ a - pad f (red f a) := by
@@ -182,7 +180,7 @@ theorem dvd_sub_pad_red (hf : f.Monic) (a : B[X]) : f ∣ a - pad f (red f a) :=
 the `r` stored slots.
 
 Refinement anchor: `reduction_is_invariant_under_multiples_of_the_modulus`
-(`crates/gf2-core/src/gfpn/quotient.rs:2541`), whose length assertion pins the
+(`crates/gf2-core/src/gfpn/quotient.rs`), whose length assertion pins the
 stored vector at exactly `relative_degree()` entries. -/
 theorem degree_pad_red_lt (hf : f.Monic) (a : B[X]) :
     (pad f (red f a)).degree < f.degree := by
@@ -193,7 +191,7 @@ theorem degree_pad_red_lt (hf : f.Monic) (a : B[X]) :
 class of its input.
 
 Refinement anchor: `reduction_is_invariant_under_multiples_of_the_modulus`
-(`crates/gf2-core/src/gfpn/quotient.rs:2541`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem cls_red (hf : f.Monic) (a : B[X]) : cls f (red f a) = AdjoinRoot.mk f a := by
   rw [cls, pad_red hf, mk_modByMonic]
 
@@ -216,11 +214,11 @@ theorem degree_pad_lt_degree (hf : f.Monic) (c : Fin f.natDegree → B) :
 already of length `r`, so a stored vector is its own canonical representative.
 
 Production path: `ConstQuotient::new`
-(`crates/gf2-core/src/gfpn/quotient.rs:1364`) states this as its contract —
+(`crates/gf2-core/src/gfpn/quotient.rs`) states this as its contract —
 every array of `R` base coefficients is canonical, so no reduction runs.
 
 Refinement anchor: `identity_is_structural_across_instances_and_presentations`
-(`crates/gf2-core/src/gfpn/quotient.rs:2236`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem red_pad (hf : f.Monic) (c : Fin f.natDegree → B) : red f (pad f c) = c := by
   have hmod : pad f c %ₘ f = pad f c :=
     (modByMonic_eq_self_iff hf).mpr (degree_pad_lt_degree hf c)
@@ -230,7 +228,7 @@ theorem red_pad (hf : f.Monic) (c : Fin f.natDegree → B) : red f (pad f c) = c
 /-- **L2.2 (injectivity).** Distinct stored vectors name distinct classes.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2581`), whose distinctness assertion over
+(`crates/gf2-core/src/gfpn/quotient.rs`), whose distinctness assertion over
 the whole enumeration is the executable form of this claim. -/
 theorem cls_injective (hf : f.Monic) : Function.Injective (cls f) := by
   intro c c' h
@@ -241,8 +239,7 @@ theorem cls_injective (hf : f.Monic) : Function.Injective (cls f) := by
 /-- **L2.2 (surjectivity).** Every class has a stored vector.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2581`), which checks that `elements()`
-(`:530`) materializes `|E|` members. -/
+(`crates/gf2-core/src/gfpn/quotient.rs`), which checks that `elements()` materializes `|E|` members. -/
 theorem cls_surjective (hf : f.Monic) : Function.Surjective (cls f) := by
   intro q
   obtain ⟨a, rfl⟩ := AdjoinRoot.mk_surjective q
@@ -251,11 +248,11 @@ theorem cls_surjective (hf : f.Monic) : Function.Surjective (cls f) := by
 /-- **L2.2 (canonical representatives).** `κ : B^r → Q` is a bijection: one
 class, one stored vector.
 
-Production path: `QuotientElement` (`crates/gf2-core/src/gfpn/quotient.rs:749`)
+Production path: `QuotientElement` (`crates/gf2-core/src/gfpn/quotient.rs`)
 stores exactly the `r` coefficients and nothing else.
 
 Refinement anchor: `identity_is_structural_across_instances_and_presentations`
-(`crates/gf2-core/src/gfpn/quotient.rs:2236`), which pins that one algebraic
+(`crates/gf2-core/src/gfpn/quotient.rs`), which pins that one algebraic
 field has one stored presentation across descriptor instances. -/
 theorem cls_bijective (hf : f.Monic) : Function.Bijective (cls f) :=
   ⟨cls_injective hf, cls_surjective hf⟩
@@ -271,11 +268,11 @@ def clsEquiv (hf : f.Monic) : (Fin f.natDegree → B) ≃ AdjoinRoot f where
 
 /-- **L2.2 (stored equality decides the quotient).** Two polynomials reduce to
 one stored vector exactly when they name one class, so `QuotientElement`'s
-`PartialEq` (`crates/gf2-core/src/gfpn/quotient.rs:773`), which compares the
+`PartialEq` (`crates/gf2-core/src/gfpn/quotient.rs`), which compares the
 field identity and the coefficient vector, decides equality in `Q`.
 
 Refinement anchor: `identity_is_structural_across_instances_and_presentations`
-(`crates/gf2-core/src/gfpn/quotient.rs:2236`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem red_eq_iff_mk_eq (hf : f.Monic) (a b : B[X]) :
     red f a = red f b ↔ AdjoinRoot.mk f a = AdjoinRoot.mk f b := by
   constructor
@@ -288,12 +285,12 @@ theorem red_eq_iff_mk_eq (hf : f.Monic) (a b : B[X]) :
 /-! ### L2.3 — reduction is a ring homomorphism -/
 
 /-- Stored-vector addition: `QuotientElement`'s `Add`
-(`crates/gf2-core/src/gfpn/quotient.rs:982`) adds coefficient-wise without
+(`crates/gf2-core/src/gfpn/quotient.rs`) adds coefficient-wise without
 reducing. -/
 def vadd (f : B[X]) (x y : Fin f.natDegree → B) : Fin f.natDegree → B := fun i => x i + y i
 
 /-- Stored-vector multiplication: `QuotientElement::multiply`
-(`crates/gf2-core/src/gfpn/quotient.rs:896`) convolves and reduces. -/
+(`crates/gf2-core/src/gfpn/quotient.rs`) convolves and reduces. -/
 def vmul (f : B[X]) (x y : Fin f.natDegree → B) : Fin f.natDegree → B :=
   red f (pad f x * pad f y)
 
@@ -326,13 +323,13 @@ theorem modByMonic_eq_of_mk_eq (hf : f.Monic) {p q : B[X]}
 /-- **L2.3 (additive).** `ρ(a + b) = ρ(a) ⊕ ρ(b)`.
 
 Production path: `QuotientElement`'s `Add`
-(`crates/gf2-core/src/gfpn/quotient.rs:982`).
+(`crates/gf2-core/src/gfpn/quotient.rs`).
 
 Refinement anchors: the addition case of `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2351`) and the field-law registrations
+(`crates/gf2-core/src/gfpn/quotient.rs`) and the field-law registrations
 `test_quotient_gf125_field_axioms`
-(`crates/gf2-core/src/field/axiom_tests.rs:1793`) and
-`test_quotient_gf81_over_gf9_field_axioms` (`:1799`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`) and
+`test_quotient_gf81_over_gf9_field_axioms`. -/
 theorem red_add (a b : B[X]) : red f (a + b) = vadd f (red f a) (red f b) := by
   funext i
   simp [red, vadd, add_modByMonic]
@@ -341,14 +338,14 @@ theorem red_add (a b : B[X]) : red f (a + b) = vadd f (red f a) (red f b) := by
 first is sound.
 
 Production path: `QuotientElement::multiply`
-(`crates/gf2-core/src/gfpn/quotient.rs:896`), which convolves the two stored
+(`crates/gf2-core/src/gfpn/quotient.rs`), which convolves the two stored
 vectors and folds the high terms.
 
 Refinement anchors: the multiplication case of `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2353`) and the field-law registrations
+(`crates/gf2-core/src/gfpn/quotient.rs`) and the field-law registrations
 `test_quotient_gf125_field_axioms`
-(`crates/gf2-core/src/field/axiom_tests.rs:1793`) and
-`test_quotient_gf81_over_gf9_field_axioms` (`:1799`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`) and
+`test_quotient_gf81_over_gf9_field_axioms`. -/
 theorem red_mul (hf : f.Monic) (a b : B[X]) : red f (a * b) = vmul f (red f a) (red f b) := by
   rw [vmul, pad_red hf, pad_red hf]
   refine (red_eq_iff_mk_eq hf _ _).mpr ?_
@@ -357,7 +354,7 @@ theorem red_mul (hf : f.Monic) (a b : B[X]) : red f (a * b) = vmul f (red f a) (
 /-- **L2.3 (the class map is additive).**
 
 Refinement anchor: the addition case of `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2351`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem cls_vadd (x y : Fin f.natDegree → B) :
     cls f (vadd f x y) = cls f x + cls f y := by
   rw [cls, pad_vadd, map_add, cls, cls]
@@ -365,7 +362,7 @@ theorem cls_vadd (x y : Fin f.natDegree → B) :
 /-- **L2.3 (the class map is multiplicative).**
 
 Refinement anchor: the multiplication case of `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2353`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem cls_vmul (hf : f.Monic) (x y : Fin f.natDegree → B) :
     cls f (vmul f x y) = cls f x * cls f y := by
   rw [vmul, cls_red hf, map_mul, cls, cls]
@@ -373,13 +370,13 @@ theorem cls_vmul (hf : f.Monic) (x y : Fin f.natDegree → B) :
 /-! ### L2.3 — the production-shaped high-to-low fold -/
 
 /-- One iteration of the fold in `QuotientElement::multiply`
-(`crates/gf2-core/src/gfpn/quotient.rs:907-917`): the coefficient at high index
+(`crates/gf2-core/src/gfpn/quotient.rs`): the coefficient at high index
 `r + d` is cleared by subtracting `c · X^d · f`, where `d = high - degree` is the
-production offset (`:912`).
+production offset.
 
-The production step subtracts only the `r` low modulus coefficients (`:913`),
+The production step subtracts only the `r` low modulus coefficients,
 which touches slots `d` through `r + d - 1` and leaves slot `r + d` for the
-final `truncate` (`:918`) to discard. Subtracting the whole monic `f` clears
+final `truncate` to discard. Subtracting the whole monic `f` clears
 that slot instead. The two steps agree on every slot below `r + d`, no later
 iteration reads a slot at or above its own high index, and `truncate` keeps only
 slots below `r`, so the loops produce one stored vector. -/
@@ -387,7 +384,7 @@ def foldStep (f : B[X]) (p : B[X]) (d : ℕ) : B[X] :=
   p - C (p.coeff (f.natDegree + d)) * (X ^ d * f)
 
 /-- The fold loop of `QuotientElement::multiply`
-(`crates/gf2-core/src/gfpn/quotient.rs:907`), which visits the offsets
+(`crates/gf2-core/src/gfpn/quotient.rs`), which visits the offsets
 `n - 1, n - 2, …, 0` in that decreasing order. -/
 def foldDown (f : B[X]) : ℕ → B[X] → B[X]
   | 0, p => p
@@ -434,13 +431,13 @@ working polynomial stays in the class of the input, and its degree falls below
 the current high index.
 
 Production path: the fold of `QuotientElement::multiply`
-(`crates/gf2-core/src/gfpn/quotient.rs:907-917`).
+(`crates/gf2-core/src/gfpn/quotient.rs`).
 
 Refinement anchors: the multiplication case of `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2353`) and the field-law registrations
+(`crates/gf2-core/src/gfpn/quotient.rs`) and the field-law registrations
 `test_quotient_gf125_field_axioms`
-(`crates/gf2-core/src/field/axiom_tests.rs:1793`) and
-`test_quotient_gf81_over_gf9_field_axioms` (`:1799`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`) and
+`test_quotient_gf81_over_gf9_field_axioms`. -/
 theorem foldDown_eq_modByMonic (hf : f.Monic) :
     ∀ (n : ℕ) (p : B[X]), p.degree < ((f.natDegree + n : ℕ) : WithBot ℕ) →
       foldDown f n p = p %ₘ f := by
@@ -463,13 +460,13 @@ theorem foldDown_eq_modByMonic (hf : f.Monic) :
 /-- **L2.3 (the production multiply).** Convolving two stored vectors into the
 `2r - 1` buffer and running the fold over its `r - 1` high offsets produces the
 padded stored product `⊗`. This is the loop `QuotientElement::multiply`
-(`crates/gf2-core/src/gfpn/quotient.rs:896`) runs, offsets and all.
+(`crates/gf2-core/src/gfpn/quotient.rs`) runs, offsets and all.
 
 Refinement anchors: the multiplication case of `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2353`) and the field-law registrations
+(`crates/gf2-core/src/gfpn/quotient.rs`) and the field-law registrations
 `test_quotient_gf125_field_axioms`
-(`crates/gf2-core/src/field/axiom_tests.rs:1793`) and
-`test_quotient_gf81_over_gf9_field_axioms` (`:1799`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`) and
+`test_quotient_gf81_over_gf9_field_axioms`. -/
 theorem foldDown_pad_mul (hf : f.Monic) (hr : 0 < f.natDegree)
     (x y : Fin f.natDegree → B) :
     foldDown f (f.natDegree - 1) (pad f x * pad f y) = pad f (vmul f x y) := by
@@ -485,13 +482,13 @@ theorem foldDown_pad_mul (hf : f.Monic) (hr : 0 < f.natDegree)
 /-! ### L2.4 — the compile-time Horner form -/
 
 /-- One step of the Horner loop in `ConstQuotient::multiply`
-(`crates/gf2-core/src/gfpn/quotient.rs:1551`): multiply the accumulator by `x` —
+(`crates/gf2-core/src/gfpn/quotient.rs`): multiply the accumulator by `x` —
 a shift plus the rewrite `x^R = -∑_{i<R} f_i x^i`, which is division by the monic
 `f` — and add a scalar multiple of the right operand. -/
 def hornerStep (f b acc : B[X]) (c : B) : B[X] := (acc * X) %ₘ f + C c * b
 
 /-- The Horner loop of `ConstQuotient::multiply`
-(`crates/gf2-core/src/gfpn/quotient.rs:1551`), which walks the left operand's
+(`crates/gf2-core/src/gfpn/quotient.rs`), which walks the left operand's
 coefficient indices downward. `hornerLoop f b n a` runs the `n` steps for
 indices `n - 1, …, 0`, so the accumulator never leaves its `R`-wide array and no
 `2R - 1` convolution buffer is formed. -/
@@ -538,13 +535,12 @@ theorem degree_hornerLoop_lt (hf : f.Monic) {b : B[X]} (hb : b.degree < f.degree
 
 /-- **L2.4 (the Horner form computes the residue).** The accumulator after `r`
 steps is exactly the residue of the product, so `ConstQuotient::multiply`
-(`crates/gf2-core/src/gfpn/quotient.rs:1551`) and `QuotientElement::multiply`
-(`:896`) agree on every pair of operands.
+(`crates/gf2-core/src/gfpn/quotient.rs`) and `QuotientElement::multiply` agree on every pair of operands.
 
 Refinement anchor: `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2290`), driven by
-`const_and_runtime_forms_agree_on_gf16` (`:2370`), `..._on_gf125` (`:2375`) and
-`..._on_gf81_over_gf9` (`:2380`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`), driven by
+`const_and_runtime_forms_agree_on_gf16`, `..._on_gf125` and
+`..._on_gf81_over_gf9`. -/
 theorem hornerLoop_eq_modByMonic (hf : f.Monic) {a b : B[X]}
     (ha : a.natDegree < f.natDegree) (hb : b.degree < f.degree) :
     hornerLoop f b f.natDegree a = (a * b) %ₘ f := by
@@ -553,14 +549,14 @@ theorem hornerLoop_eq_modByMonic (hf : f.Monic) {a b : B[X]}
   rw [hornerLoop_mk, trunc_eq_self ha, mk_modByMonic, map_mul]
 
 /-- **L2.4 (the two carriers agree).** For one declaration, the Horner loop of
-`ConstQuotient::multiply` (`crates/gf2-core/src/gfpn/quotient.rs:1551`) and the
-convolve-and-fold loop of `QuotientElement::multiply` (`:896`) produce one
+`ConstQuotient::multiply` (`crates/gf2-core/src/gfpn/quotient.rs`) and the
+convolve-and-fold loop of `QuotientElement::multiply` produce one
 polynomial, hence one stored vector.
 
 Refinement anchor: `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2290`), driven by
-`const_and_runtime_forms_agree_on_gf16` (`:2370`), `..._on_gf125` (`:2375`) and
-`..._on_gf81_over_gf9` (`:2380`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`), driven by
+`const_and_runtime_forms_agree_on_gf16`, `..._on_gf125` and
+`..._on_gf81_over_gf9`. -/
 theorem hornerLoop_eq_foldDown (hf : f.Monic) (hr : 0 < f.natDegree)
     (x y : Fin f.natDegree → B) :
     hornerLoop f (pad f y) f.natDegree (pad f x) =
@@ -569,8 +565,8 @@ theorem hornerLoop_eq_foldDown (hf : f.Monic) (hr : 0 < f.natDegree)
     (degree_pad_lt_degree hf y), vmul, pad_red hf]
 
 /-- The modulus a compile-time declaration materializes:
-`ConstQuotientConfig::MODULUS` (`crates/gf2-core/src/gfpn/quotient.rs:1294`)
-stores the `R` low coefficients and `ConstQuotient::modulus` (`:1398`) restores
+`ConstQuotientConfig::MODULUS` (`crates/gf2-core/src/gfpn/quotient.rs`)
+stores the `R` low coefficients and `ConstQuotient::modulus` restores
 the implicit leading one. -/
 def constModulus (R : ℕ) (m : Fin R → B) : B[X] := X ^ R + ofCoeffs R (extend m)
 
@@ -579,23 +575,23 @@ every declaration monic, so every lemma of this section applies to the
 compile-time carrier.
 
 Production path: `ConstQuotientConfig::MODULUS`
-(`crates/gf2-core/src/gfpn/quotient.rs:1294`), whose documentation states the
+(`crates/gf2-core/src/gfpn/quotient.rs`), whose documentation states the
 monicity this lemma proves.
 
 Refinement anchor: `const_quotient_modulus_and_indeterminate_match_the_declaration`
-(`crates/gf2-core/src/gfpn/quotient.rs:2441`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem constModulus_monic (R : ℕ) (m : Fin R → B) : (constModulus R m).Monic :=
   monic_X_pow_add (degree_ofCoeffs_lt R (extend m))
 
 /-- **L2.4 (the declared width is the relative degree).** A declaration of `R`
 low coefficients has relative degree `R`, so the compile-time `R`-wide array and
 the runtime `relative_degree()` slots are one width and
-`ConstQuotient::runtime_field` (`crates/gf2-core/src/gfpn/quotient.rs:1530`)
+`ConstQuotient::runtime_field` (`crates/gf2-core/src/gfpn/quotient.rs`)
 bridges without reshaping.
 
 Refinement anchor: `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2290`), whose `relative_degree` assertion
-sits at `:2308`. -/
+(`crates/gf2-core/src/gfpn/quotient.rs`), whose `relative_degree` assertion
+compares the two widths. -/
 theorem natDegree_constModulus (R : ℕ) (m : Fin R → B) :
     (constModulus R m).natDegree = R := by
   have hdeg : (constModulus R m).degree = (R : WithBot ℕ) := by
@@ -608,7 +604,7 @@ theorem natDegree_constModulus (R : ℕ) (m : Fin R → B) :
 /-! ### L2.5 — inversion through Bezout -/
 
 /-- Bezout for an irreducible modulus: the extended-Euclid run of
-`euclid_inverse` (`crates/gf2-core/src/gfpn/quotient.rs:950`) computes exactly
+`euclid_inverse` (`crates/gf2-core/src/gfpn/quotient.rs`) computes exactly
 this pair of coefficients, normalised so that the gcd is one. -/
 theorem exists_bezout (hirr : Irreducible f) {v : B[X]} (hv : ¬ f ∣ v) :
     ∃ a b : B[X], a * f + b * v = 1 := by
@@ -621,14 +617,14 @@ outside `(f)`, there is exactly one residue `u` of degree below `r` with
 residue.
 
 Production path: `euclid_inverse`
-(`crates/gf2-core/src/gfpn/quotient.rs:950`), the single extended-Euclid
-implementation both carriers use; `QuotientElement::inverse_euclid` (`:925`) and
-`ConstQuotient::inverse` (`:1577`) each store its reduced output in their own
+(`crates/gf2-core/src/gfpn/quotient.rs`), the single extended-Euclid
+implementation both carriers use; `QuotientElement::inverse_euclid` and
+`ConstQuotient::inverse` each store its reduced output in their own
 layout.
 
 Refinement anchors: `sampled_nonzero_elements_have_multiplicative_inverses`
-(`crates/gf2-core/src/gfpn/quotient.rs:2267`) and the `inv` case of
-`assert_forms_agree` (`:2354`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`) and the `inv` case of
+`assert_forms_agree`. -/
 theorem existsUnique_inverse_residue (hf : f.Monic) (hirr : Irreducible f) {v : B[X]}
     (hv : ¬ f ∣ v) :
     ∃! u : B[X], u.degree < f.degree ∧ AdjoinRoot.mk f (u * v) = 1 := by
@@ -654,16 +650,15 @@ theorem existsUnique_inverse_residue (hf : f.Monic) (hirr : Irreducible f) {v : 
 /-- **L2.6 (field structure).** An irreducible modulus makes `Q` a field.
 
 Production path: `QuotientField::new`
-(`crates/gf2-core/src/gfpn/quotient.rs:251`) and `ConstQuotient::extension`
-(`:1464`), which decide irreducibility before issuing a witness.
+(`crates/gf2-core/src/gfpn/quotient.rs`) and `ConstQuotient::extension`, which decide irreducibility before issuing a witness.
 
 Refinement anchors: the axiom-harness registrations that build every in-tree
 compile-time declaration through `ConstQuotient::extension` and then run the
 shared field-law suite against it —
 `test_const_quotient_gf16_const_field_axioms`
-(`crates/gf2-core/src/field/axiom_tests.rs:1817`),
-`test_const_quotient_gf125_const_field_axioms` (`:1826`) and
-`test_const_quotient_gf81_over_gf9_const_field_axioms` (`:1835`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`),
+`test_const_quotient_gf125_const_field_axioms` and
+`test_const_quotient_gf81_over_gf9_const_field_axioms`. -/
 @[reducible] def adjoinRootField (hirr : Irreducible f) : Field (AdjoinRoot f) :=
   haveI : Fact (Irreducible f) := ⟨hirr⟩
   AdjoinRoot.instField
@@ -671,11 +666,11 @@ shared field-law suite against it —
 /-- **L2.6 (order).** `|Q| = |B|^r`, from the bijection of L2.2.
 
 Production path: `QuotientField::order`
-(`crates/gf2-core/src/gfpn/quotient.rs:491`), which reads `|B|^r` off the
+(`crates/gf2-core/src/gfpn/quotient.rs`), which reads `|B|^r` off the
 identity metadata.
 
 Refinement anchor: `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2290`), whose identity assertions pin the
+(`crates/gf2-core/src/gfpn/quotient.rs`), whose identity assertions pin the
 same `FieldId` on both carriers. -/
 theorem card_adjoinRoot [Finite B] (hf : f.Monic) :
     Nat.card (AdjoinRoot f) = Nat.card B ^ f.natDegree := by
@@ -685,14 +680,14 @@ theorem card_adjoinRoot [Finite B] (hf : f.Monic) :
 /-- **L2.6 (converse).** A reducible modulus leaves a nonzero non-unit in `Q`,
 so the quotient is not a field. This is what the GIGO contract of
 `ConstQuotient::extension_unchecked`
-(`crates/gf2-core/src/gfpn/quotient.rs:1511`) and
-`QuotientField::from_certificate_unchecked` (`:357`) means precisely: a caller
+(`crates/gf2-core/src/gfpn/quotient.rs`) and
+`QuotientField::from_certificate_unchecked` means precisely: a caller
 that declares a reducible modulus gets a ring in which some nonzero element has
 no inverse.
 
 Refinement anchors: `validating_construction_rejects_reducible_modulus`
-(`crates/gf2-core/src/gfpn/quotient.rs:2051`) and
-`const_validation_rejects_a_reducible_declaration` (`:2387`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`) and
+`const_validation_rejects_a_reducible_declaration`. -/
 theorem exists_ne_zero_not_isUnit_of_not_irreducible (hf : f.Monic) (hr : 0 < f.natDegree)
     (hirr : ¬ Irreducible f) : ∃ z : AdjoinRoot f, z ≠ 0 ∧ ¬ IsUnit z := by
   have hfu : ¬ IsUnit f := fun h => absurd (natDegree_eq_zero_of_isUnit h) (by omega)
@@ -732,14 +727,14 @@ converse above, the deciding constructors' precondition is necessary as well as
 sufficient.
 
 Production path: `QuotientField::new`
-(`crates/gf2-core/src/gfpn/quotient.rs:251`) and `ConstQuotient::extension`
-(`:1464`).
+(`crates/gf2-core/src/gfpn/quotient.rs`) and `ConstQuotient::extension`.
 
 Refinement anchors: `validating_construction_rejects_reducible_modulus`
-(`crates/gf2-core/src/gfpn/quotient.rs:2051`),
-`const_validation_rejects_a_reducible_declaration` (`:2387`) and the
-axiom-harness registrations at
-`crates/gf2-core/src/field/axiom_tests.rs:1817`, `:1826` and `:1835`. -/
+(`crates/gf2-core/src/gfpn/quotient.rs`),
+`const_validation_rejects_a_reducible_declaration` and the
+axiom-harness registrations in
+`crates/gf2-core/src/field/axiom_tests.rs` and
+`test_const_quotient_gf81_over_gf9_const_field_axioms`. -/
 theorem irreducible_iff_forall_isUnit (hf : f.Monic) (hr : 0 < f.natDegree) :
     Irreducible f ↔ ∀ z : AdjoinRoot f, z ≠ 0 → IsUnit z := by
   constructor
@@ -758,10 +753,10 @@ The canonical index and the canonical prime coordinates are pure arithmetic on
 ℕ, so this subsection is stated over ℕ and applies to both quotient carriers.
 `p` is the characteristic, `dB` the absolute base degree, and `r` the relative
 degree, so the absolute degree is `dB · r` exactly as `checked_degrees`
-(`crates/gf2-core/src/gfpn/quotient.rs:633`) computes it. -/
+(`crates/gf2-core/src/gfpn/quotient.rs`) computes it. -/
 
 /-- The repeated-division loop of `QuotientField::element_at_canonical_index`
-(`crates/gf2-core/src/gfpn/quotient.rs:554`): `d` iterations, each pushing
+(`crates/gf2-core/src/gfpn/quotient.rs`): `d` iterations, each pushing
 `index % p` and then dividing `index` by `p`. -/
 def divLoop (p : ℕ) : ℕ → ℕ → List ℕ
   | 0, _ => []
@@ -772,7 +767,7 @@ def digit (p k m : ℕ) : ℕ := m / p ^ k % p
 
 /-- The canonical index of a coordinate vector, `∑_k c_k · p^k`. This is the
 value `canonical_index_of_a_gf2m_element_is_its_stored_value`
-(`crates/gf2-core/src/field/extension.rs:3529`) folds for the GF(2^m) carrier. -/
+(`crates/gf2-core/src/field/extension.rs`) folds for the GF(2^m) carrier. -/
 def coordValue (p : ℕ) {d : ℕ} (c : Fin d → ℕ) : ℕ := ∑ k : Fin d, c k * p ^ (k : ℕ)
 
 theorem digit_zero (p m : ℕ) : digit p 0 m = m % p := by simp [digit]
@@ -781,11 +776,11 @@ theorem digit_succ (p k m : ℕ) : digit p (k + 1) m = digit p k (m / p) := by
   rw [digit, digit, pow_succ', Nat.div_div_eq_div_mul]
 
 /-- **L2.7 (the division loop is base-`p` decoding).** The loop of
-`element_at_canonical_index` (`crates/gf2-core/src/gfpn/quotient.rs:554`) writes
+`element_at_canonical_index` (`crates/gf2-core/src/gfpn/quotient.rs`) writes
 exactly the base-`p` digits, in the order it divides.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2581`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem divLoop_eq_ofFn (p : ℕ) :
     ∀ (d m : ℕ), divLoop p d m = List.ofFn (fun k : Fin d => digit p (k : ℕ) m) := by
   intro d
@@ -801,7 +796,7 @@ theorem divLoop_eq_ofFn (p : ℕ) :
 its `d` canonical coordinates.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2581`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem coordValue_digit (p : ℕ) (hp : 0 < p) :
     ∀ (d m : ℕ), m < p ^ d → coordValue p (fun k : Fin d => digit p (k : ℕ) m) = m := by
   intro d
@@ -832,7 +827,7 @@ theorem coordValue_digit (p : ℕ) (hp : 0 < p) :
 below `p` is recovered from its canonical index.
 
 Refinement anchor: `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2581`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem digit_coordValue (p : ℕ) (hp : 0 < p) :
     ∀ (d : ℕ) (c : Fin d → ℕ), (∀ k, c k < p) →
       ∀ k : Fin d, digit p (k : ℕ) (coordValue p c) = c k := by
@@ -856,7 +851,7 @@ theorem digit_coordValue (p : ℕ) (hp : 0 < p) :
         exact ih t (fun j => hc j.succ) j
 
 /-- The flattening of `QuotientElement::write_prime_coords`
-(`crates/gf2-core/src/gfpn/quotient.rs:1205`): the `r · dB` absolute coordinates
+(`crates/gf2-core/src/gfpn/quotient.rs`): the `r · dB` absolute coordinates
 are the `r` base blocks in stored order. -/
 def flatten {r dB : ℕ} (C : Fin r → Fin dB → ℕ) : Fin (r * dB) → ℕ :=
   fun k => C (finProdFinEquiv.symm k).1 (finProdFinEquiv.symm k).2
@@ -866,15 +861,15 @@ def flatten {r dB : ℕ} (C : Fin r → Fin dB → ℕ) : Fin (r * dB) → ℕ :
 varies fastest.
 
 Production path: `QuotientElement::write_prime_coords`
-(`crates/gf2-core/src/gfpn/quotient.rs:1205`), which concatenates the base
-blocks, and `QuotientField::element_from_prime_coords` (`:568`), which splits
+(`crates/gf2-core/src/gfpn/quotient.rs`), which concatenates the base
+blocks, and `QuotientField::element_from_prime_coords`, which splits
 them back with `chunks_exact`.
 
 Refinement anchors: the coordinate-agreement case of `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2336-2341`),
-`const_quotient_coordinates_round_trip_through_the_runtime_carrier` (`:2474`)
+(`crates/gf2-core/src/gfpn/quotient.rs`),
+`const_quotient_coordinates_round_trip_through_the_runtime_carrier`
 and `tower_coordinates_vary_the_base_coordinate_fastest`
-(`crates/gf2-core/src/field/extension.rs:3543`) for the `dB > 1` ordering. -/
+(`crates/gf2-core/src/field/extension.rs`) for the `dB > 1` ordering. -/
 theorem flatten_apply {r dB : ℕ} (C : Fin r → Fin dB → ℕ) (i : Fin r) (j : Fin dB) :
     flatten C (finProdFinEquiv (i, j)) = C i j := by
   simp [flatten]
@@ -886,15 +881,15 @@ theorem flatten_index {r dB : ℕ} (i : Fin r) (j : Fin dB) :
 /-- **L2.7 (canonical index of a quotient element).** The absolute index of a
 stored vector is `∑_i idx_B(c_i) · q^i` for `q = p^{dB}`, the base-`q`
 value of its coefficient indices. Together with the two round-trip lemmas this
-makes `write_prime_coords` (`crates/gf2-core/src/gfpn/quotient.rs:1205`) and
-`element_at_canonical_index` (`:554`) mutually inverse.
+makes `write_prime_coords` (`crates/gf2-core/src/gfpn/quotient.rs`) and
+`element_at_canonical_index` mutually inverse.
 
 Refinement anchors: `const_quotient_coordinates_round_trip_through_the_runtime_carrier`
-(`crates/gf2-core/src/gfpn/quotient.rs:2474`),
+(`crates/gf2-core/src/gfpn/quotient.rs`),
 `tower_coordinates_vary_the_base_coordinate_fastest`
-(`crates/gf2-core/src/field/extension.rs:3543`) and
+(`crates/gf2-core/src/field/extension.rs`) and
 `canonical_index_decodes_to_its_prime_coordinates`
-(`crates/gf2-core/src/gfpn/quotient.rs:2581`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem coordValue_flatten (p : ℕ) {r dB : ℕ} (C : Fin r → Fin dB → ℕ) :
     coordValue p (flatten C) = ∑ i : Fin r, coordValue p (C i) * (p ^ dB) ^ (i : ℕ) := by
   rw [coordValue, ← Equiv.sum_comp (finProdFinEquiv (m := r) (n := dB))
@@ -909,11 +904,11 @@ theorem coordValue_flatten (p : ℕ) {r dB : ℕ} (C : Fin r → Fin dB → ℕ)
 
 /-- **L2.8 (absolute period).** In a finite field of order `p^d` the `d`-fold
 absolute Frobenius is the identity, so `QuotientElement::frobenius`
-(`crates/gf2-core/src/gfpn/quotient.rs:865`) may reduce `k` modulo the absolute
+(`crates/gf2-core/src/gfpn/quotient.rs`) may reduce `k` modulo the absolute
 degree before raising to the characteristic that many times.
 
 Refinement anchor: `frobenius_has_absolute_and_relative_orders`
-(`crates/gf2-core/src/gfpn/quotient.rs:2147`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem absFrobenius_iterate_mod {E : Type*} [Field E] [Fintype E] {p d : ℕ}
     (hcard : Fintype.card E = p ^ d) (k : ℕ) (x : E) :
     (fun y : E => y ^ p)^[k] x = (fun y : E => y ^ p)^[k % d] x := by
@@ -937,21 +932,21 @@ the production loop that applies `pow (characteristic)` `dB · j` times computes
 `FieldExtension::relative_frobenius` at `j`.
 
 Production path: `QuotientElement::frobenius`
-(`crates/gf2-core/src/gfpn/quotient.rs:865`).
+(`crates/gf2-core/src/gfpn/quotient.rs`).
 
 Refinement anchor: `frobenius_has_absolute_and_relative_orders`
-(`crates/gf2-core/src/gfpn/quotient.rs:2147`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem absFrobenius_iterate_baseDegree {E : Type*} [Monoid E] (p dB j : ℕ) (x : E) :
     (fun y : E => y ^ p)^[dB * j] x = x ^ (p ^ dB) ^ j := by
   rw [RelativeExtension.iterate_pow_apply, pow_mul]
 
 /-- **L2.8 at the quotient.** An irreducible modulus makes `Q` a finite field of
 order `|B|^r = p^{dB · r}`, so its absolute degree is `dB · r` — the product
-`checked_degrees` (`crates/gf2-core/src/gfpn/quotient.rs:633`) computes — and
+`checked_degrees` (`crates/gf2-core/src/gfpn/quotient.rs`) computes — and
 reducing `k` modulo it before iterating is sound.
 
 Refinement anchor: `frobenius_has_absolute_and_relative_orders`
-(`crates/gf2-core/src/gfpn/quotient.rs:2147`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem adjoinRoot_frobenius_iterate_mod [Finite B] (hf : f.Monic) (hirr : Irreducible f)
     {p dB : ℕ} (hcard : Nat.card B = p ^ dB) (k : ℕ) (x : AdjoinRoot f) :
     letI := adjoinRootField hirr
@@ -980,7 +975,7 @@ included.
 Instantiating here binds the quotient model to the carrier type the extraction
 produces, the Montgomery value `FpVal P`; its `CommRing` and `Field` structure
 is the one `Gf2Core.Proofs.FpField` transfers across `fpValRingEquiv`
-(`Gf2Core/Proofs/FpField.lean:136`) from `ZMod P`. The quotient layer above it
+(`Gf2Core/Proofs/FpField.lean`) from `ZMod P`. The quotient layer above it
 stays refinement-bound, because `gf2_core::gfpn::quotient` is `--opaque` to
 `scripts/verify-lean.sh`.
 
@@ -994,7 +989,7 @@ open Aeneas Aeneas.Std Polynomial
 variable {P : Std.U64}
 
 /-- The extracted base carrier is finite, through the ring equivalence with
-`ZMod P` (`Gf2Core/Proofs/FpField.lean:136`). -/
+`ZMod P` (`Gf2Core/Proofs/FpField.lean`). -/
 theorem finite_fpVal (hP : ValidPrime P) (hP2 : P.val ≠ 2) : Finite (FpVal P) := by
   haveI : NeZero P.val := ⟨by have := hP.2.1; omega⟩
   letI := FpField.FpVal.instCommRing hP hP2
@@ -1013,11 +1008,11 @@ represents the class of its input, its polynomial has degree below `r`, reductio
 fixes vectors already of length `r`, and the class map is a bijection.
 
 Production path: `QuotientField::element`
-(`crates/gf2-core/src/gfpn/quotient.rs:426`) over an `Fp<P>` base.
+(`crates/gf2-core/src/gfpn/quotient.rs`) over an `Fp<P>` base.
 
 Refinement anchors: `reduction_is_invariant_under_multiples_of_the_modulus`
-(`crates/gf2-core/src/gfpn/quotient.rs:2541`) and
-`identity_is_structural_across_instances_and_presentations` (`:2236`), whose
+(`crates/gf2-core/src/gfpn/quotient.rs`) and
+`identity_is_structural_across_instances_and_presentations`, whose
 GF(125) row has an `Fp<5>` base. -/
 theorem fpVal_reduction_laws (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
     letI := FpField.FpVal.instField hP hP2
@@ -1034,13 +1029,12 @@ theorem fpVal_reduction_laws (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
 the production high-to-low fold computes the stored product.
 
 Production path: `QuotientElement`'s `Add`
-(`crates/gf2-core/src/gfpn/quotient.rs:982`) and `QuotientElement::multiply`
-(`:896`) over an `Fp<P>` base.
+(`crates/gf2-core/src/gfpn/quotient.rs`) and `QuotientElement::multiply` over an `Fp<P>` base.
 
 Refinement anchors: the addition and multiplication cases of `assert_forms_agree`
-(`crates/gf2-core/src/gfpn/quotient.rs:2351`, `:2353`) and
+(`crates/gf2-core/src/gfpn/quotient.rs`) and
 `test_quotient_gf125_field_axioms`
-(`crates/gf2-core/src/field/axiom_tests.rs:1793`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`). -/
 theorem fpVal_hom_laws (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
     letI := FpField.FpVal.instField hP hP2
     ∀ (f : Polynomial (FpVal P)), f.Monic → 0 < f.natDegree →
@@ -1060,12 +1054,11 @@ runtime convolve-and-fold loop produce one polynomial, and a declaration's
 materialized modulus is monic of the declared degree.
 
 Production path: `ConstQuotient::multiply`
-(`crates/gf2-core/src/gfpn/quotient.rs:1551`) against `QuotientElement::multiply`
-(`:896`) over an `Fp<P>` base.
+(`crates/gf2-core/src/gfpn/quotient.rs`) against `QuotientElement::multiply` over an `Fp<P>` base.
 
 Refinement anchors: `const_and_runtime_forms_agree_on_gf125`
-(`crates/gf2-core/src/gfpn/quotient.rs:2375`) and
-`const_and_runtime_forms_agree_on_gf16` (`:2370`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`) and
+`const_and_runtime_forms_agree_on_gf16`. -/
 theorem fpVal_horner_agrees (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
     letI := FpField.FpVal.instField hP hP2
     ∀ (f : Polynomial (FpVal P)), f.Monic → 0 < f.natDegree →
@@ -1079,11 +1072,11 @@ theorem fpVal_horner_agrees (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
 /-- **L2.5 at the extracted base carrier.** Inversion has one reduced answer.
 
 Production path: `euclid_inverse`
-(`crates/gf2-core/src/gfpn/quotient.rs:950`) over an `Fp<P>` base.
+(`crates/gf2-core/src/gfpn/quotient.rs`) over an `Fp<P>` base.
 
 Refinement anchors: `sampled_nonzero_elements_have_multiplicative_inverses`
-(`crates/gf2-core/src/gfpn/quotient.rs:2267`) and the `inv` case of
-`assert_forms_agree` (`:2354`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`) and the `inv` case of
+`assert_forms_agree`. -/
 theorem fpVal_inverse (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
     letI := FpField.FpVal.instField hP hP2
     ∀ (f : Polynomial (FpVal P)), f.Monic → Irreducible f → ∀ v, ¬ f ∣ v →
@@ -1095,14 +1088,14 @@ theorem fpVal_inverse (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
 it is a field exactly when the modulus is irreducible.
 
 Production path: `QuotientField::order`
-(`crates/gf2-core/src/gfpn/quotient.rs:491`), `QuotientField::new` (`:251`) and
-`ConstQuotient::extension_unchecked` (`:1511`) over an `Fp<P>` base.
+(`crates/gf2-core/src/gfpn/quotient.rs`), `QuotientField::new` and
+`ConstQuotient::extension_unchecked` over an `Fp<P>` base.
 
 Refinement anchors: `validating_construction_rejects_reducible_modulus`
-(`crates/gf2-core/src/gfpn/quotient.rs:2051`),
-`const_validation_rejects_a_reducible_declaration` (`:2387`) and
+(`crates/gf2-core/src/gfpn/quotient.rs`),
+`const_validation_rejects_a_reducible_declaration` and
 `test_const_quotient_gf125_const_field_axioms`
-(`crates/gf2-core/src/field/axiom_tests.rs:1826`). -/
+(`crates/gf2-core/src/field/axiom_tests.rs`). -/
 theorem fpVal_field_structure (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
     letI := FpField.FpVal.instField hP hP2
     ∀ (f : Polynomial (FpVal P)), f.Monic → 0 < f.natDegree →
@@ -1115,11 +1108,11 @@ theorem fpVal_field_structure (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
 
 /-- **L2.8 at the extracted base carrier.** The extracted base has absolute
 degree one, so the quotient's absolute degree is its relative degree `r` and
-`QuotientElement::frobenius` (`crates/gf2-core/src/gfpn/quotient.rs:865`) may
+`QuotientElement::frobenius` (`crates/gf2-core/src/gfpn/quotient.rs`) may
 reduce `k` modulo `r`.
 
 Refinement anchor: `frobenius_has_absolute_and_relative_orders`
-(`crates/gf2-core/src/gfpn/quotient.rs:2147`). -/
+(`crates/gf2-core/src/gfpn/quotient.rs`). -/
 theorem fpVal_frobenius_period (hP : ValidPrime P) (hP2 : P.val ≠ 2) :
     letI := FpField.FpVal.instField hP hP2
     ∀ (f : Polynomial (FpVal P)), f.Monic → ∀ hirr : Irreducible f,

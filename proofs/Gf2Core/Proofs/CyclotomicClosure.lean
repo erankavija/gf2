@@ -18,20 +18,20 @@
   Every lemma names its refinement anchor: an executable Rust check that decides
   the same statement on the production path
   `crates/gf2-core/src/field/extension.rs`. The anchors live in that module's
-  own test module. `iterative_closure` (`crates/gf2-core/src/field/extension.rs:3917`)
+  own test module. `iterative_closure` (`crates/gf2-core/src/field/extension.rs`)
   is an independent fixed-point implementation of the closure that the two
   property tests compare the production result against, so it is a differential
   oracle rather than a law check. One anchor is specific to this obligation:
   `base_order_mod_matches_the_hand_computed_multiplier`
-  (`crates/gf2-core/src/field/extension.rs:4062`) pins the multiplier
+  (`crates/gf2-core/src/field/extension.rs`) pins the multiplier
   `q = p ^ d_B mod n` over two bases of degree `d_B > 1`, where
-  `base_order_mod` (`:2281`) computes it without materializing `|B|`.
+  `base_order_mod` computes it without materializing `|B|`.
 
   Axiom footprint: this module declares no axiom and contains no `sorry`. Every
   declaration rests on `propext`, `Classical.choice` and `Quot.sound` alone, and
   a third of them on fewer. The dependency on `Gf2Core.Proofs.RelativeExtension`
   reaches only its Section 1 model (`RelativeExtension.exists_char_pow`,
-  `proofs/Gf2Core/Proofs/RelativeExtension.lean:88`), which is stated over
+  `proofs/Gf2Core/Proofs/RelativeExtension.lean`), which is stated over
   Mathlib, so the external-type axiom `Aeneas.Std.core.fmt.Formatter` that the
   extracted carriers of that module carry does not reach any declaration here.
 
@@ -42,14 +42,14 @@
     `MulAction.card_orbit_mul_card_stabilizer_eq_card_group` and `orderOf`; the
     orbit length is instead `Nat.find` on the return-time predicate, mirroring
     `RelativeExtension.orbitPeriod`
-    (`proofs/Gf2Core/Proofs/RelativeExtension.lean:379`), because the counting
+    (`proofs/Gf2Core/Proofs/RelativeExtension.lean`), because the counting
     pass computes exactly that minimum
-    (`crates/gf2-core/src/field/extension.rs:2254-2262`) and the stabiliser
+    (`crates/gf2-core/src/field/extension.rs`) and the stabiliser
     cardinality is a detour around it.
   * L3.4 — the sketch names `Finset.min'` for the least member of an orbit;
     `orbitMin` is `Nat.find` over the natural representatives instead, which
     states the same minimum directly as a scan index
-    (`crates/gf2-core/src/field/extension.rs:2246`).
+    (`crates/gf2-core/src/field/extension.rs`).
   * L3.6 — the sketch names `ZMod.natCast_self_eq_zero`; `ZMod.natCast_mod`
     states the needed identity in one step.
 
@@ -78,22 +78,21 @@ namespace CyclotomicClosure
 
 `n ≥ 1` is carried as `[NeZero n]`, matching the production rejection of `n = 0`
 with `FieldError::InvalidCyclotomicModulus`
-(`crates/gf2-core/src/field/extension.rs:2222-2224`). The multiplier is a
+(`crates/gf2-core/src/field/extension.rs`). The multiplier is a
 natural number `q`, the production's `q_mod_n`; `mu q` is the model's
 counterpart of the `modular_mul (current, q_mod_n, n)` step
-(`crates/gf2-core/src/field/extension.rs:1686`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 
 variable {n : ℕ} [NeZero n]
 
 /-- `μ_q : ZMod n → ZMod n`, `i ↦ q · i`.
 
-Production path: `modular_mul` (`crates/gf2-core/src/field/extension.rs:1686`)
+Production path: `modular_mul` (`crates/gf2-core/src/field/extension.rs`)
 applied with the partition's stored multiplier, the single arithmetic step of
-both orbit passes (`:2258`, `:2270`).
+both orbit passes.
 
 Refinement anchor: `assert_coset_partition_properties`
-(`crates/gf2-core/src/field/extension.rs:3890`), whose successor assertion at
-`:3905-3906` recomputes `modular_mul` on every stored member. -/
+(`crates/gf2-core/src/field/extension.rs`), whose successor assertion recomputes `modular_mul` on every stored member. -/
 def mu (q : ℕ) (x : ZMod n) : ZMod n := (q : ZMod n) * x
 
 /-- `μ_q` is multiplication by the residue of `q`. -/
@@ -104,12 +103,12 @@ theorem mu_apply (q : ℕ) (x : ZMod n) : mu q x = (q : ZMod n) * x := rfl
 leaves `μ_q` unchanged.
 
 Production path: `cyclotomic_cosets_mod` normalizes its argument once more with
-`q_mod_n % n` (`crates/gf2-core/src/field/extension.rs:2226`), and
-`cyclotomic_cosets` (`:2129`) feeds it the already reduced `base_order_mod`
+`q_mod_n % n` (`crates/gf2-core/src/field/extension.rs`), and
+`cyclotomic_cosets` feeds it the already reduced `base_order_mod`
 result.
 
 Refinement anchor: `cyclotomic_coset_order_is_deterministic`
-(`crates/gf2-core/src/field/extension.rs:4041`), whose first assertion compares
+(`crates/gf2-core/src/field/extension.rs`), whose first assertion compares
 the partitions for `q = 17` and `q = 2` modulo 15. -/
 theorem mu_mod (q : ℕ) : mu (n := n) (q % n) = mu q := by
   funext x
@@ -122,7 +121,7 @@ variable {q : ℕ}
 /-- `q` as a unit of `ZMod n`, available exactly under `gcd(q, n) = 1`.
 
 Production path: the `gcd_u64` decision at
-`crates/gf2-core/src/field/extension.rs:2227-2234`, which rejects a non-coprime
+`crates/gf2-core/src/field/extension.rs`, which rejects a non-coprime
 multiplier with `FieldError::NonCoprimeCyclotomicParameters`. -/
 def qUnit (hq : Nat.Coprime q n) : (ZMod n)ˣ := ZMod.unitOfCoprime q hq
 
@@ -138,11 +137,11 @@ def qSubgroup (hq : Nat.Coprime q n) : Subgroup (ZMod n)ˣ := Subgroup.zpowers (
 partition exist at all.
 
 Production path: `cyclotomic_cosets_mod`
-(`crates/gf2-core/src/field/extension.rs:2221`) returns a partition only past
-the `gcd` check at `:2228`.
+(`crates/gf2-core/src/field/extension.rs`) returns a partition only past
+the `gcd` check.
 
 Refinement anchor: `cyclotomic_cosets_reject_invalid_moduli_and_non_coprime_parameters`
-(`crates/gf2-core/src/field/extension.rs:4018`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem mu_bijective (hq : Nat.Coprime q n) : Function.Bijective (mu (n := n) q) := by
   refine Function.bijective_iff_has_inverse.2
     ⟨fun x => (((qUnit hq)⁻¹ : (ZMod n)ˣ) : ZMod n) * x, ?_, ?_⟩
@@ -174,17 +173,17 @@ theorem mu_bijective_iff_coprime :
 multiplication.
 
 Production path: one emitted coset of `cyclotomic_cosets_mod`
-(`crates/gf2-core/src/field/extension.rs:2264-2273`).
+(`crates/gf2-core/src/field/extension.rs`).
 
 Refinement anchor: `assert_coset_partition_properties`
-(`crates/gf2-core/src/field/extension.rs:3890`), whose disjointness and cover
-assertions at `:3903` and `:3910-3913` decide the partition property. -/
+(`crates/gf2-core/src/field/extension.rs`), whose disjointness and cover
+assertions decide the partition property. -/
 def orbit (hq : Nat.Coprime q n) (c : ZMod n) : Set (ZMod n) :=
   MulAction.orbit (qSubgroup hq) c
 
 /-- Orbit membership in the form the production loop advances: `x` is reachable
 from `c` by finitely many `modular_mul` steps
-(`crates/gf2-core/src/field/extension.rs:2270`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem mem_orbit_iff_exists_pow (hq : Nat.Coprime q n) (c x : ZMod n) :
     x ∈ orbit hq c ↔ ∃ t : ℕ, (q : ZMod n) ^ t * c = x := by
   constructor
@@ -221,8 +220,8 @@ theorem orbit_eq_of_mem (hq : Nat.Coprime q n) {a b : ZMod n} (h : a ∈ orbit h
 /-- **L3.2 (disjointness).** Two orbits are equal or disjoint.
 
 Refinement anchor: `assert_coset_partition_properties`
-(`crates/gf2-core/src/field/extension.rs:3890`), the `cosets are not disjoint`
-assertion at `:3903`. -/
+(`crates/gf2-core/src/field/extension.rs`), the `cosets are not disjoint`
+assertion. -/
 theorem orbit_eq_or_disjoint (hq : Nat.Coprime q n) (a b : ZMod n) :
     orbit hq a = orbit hq b ∨ Disjoint (orbit hq a) (orbit hq b) := by
   by_cases h : (orbit hq a ∩ orbit hq b).Nonempty
@@ -233,8 +232,7 @@ theorem orbit_eq_or_disjoint (hq : Nat.Coprime q n) (a b : ZMod n) :
 /-- **L3.2 (cover).** The orbits cover `ZMod n`.
 
 Refinement anchor: `assert_coset_partition_properties`
-(`crates/gf2-core/src/field/extension.rs:3890`), the full-partition assertions
-at `:3910-3913`. -/
+(`crates/gf2-core/src/field/extension.rs`), the full-partition assertions. -/
 theorem iUnion_orbit (hq : Nat.Coprime q n) : (⋃ c : ZMod n, orbit hq c) = Set.univ :=
   Set.eq_univ_of_forall fun x => Set.mem_iUnion.2 ⟨x, mem_orbit_self hq x⟩
 
@@ -256,7 +254,7 @@ theorem mu_mem_orbit (hq : Nat.Coprime q n) {c x : ZMod n} (hx : x ∈ orbit hq 
 /-! ### L3.3 — an orbit is a cycle from any member
 
 `cosetLen` is the counting pass at
-`crates/gf2-core/src/field/extension.rs:2254-2262`: the least positive number of
+`crates/gf2-core/src/field/extension.rs`: the least positive number of
 `modular_mul` steps that returns to the starting residue. -/
 
 /-- The scan's counting loop terminates: some positive power of `q` fixes `c`.
@@ -273,11 +271,10 @@ theorem exists_return_time (hq : Nat.Coprime q n) (c : ZMod n) :
 /-- **L3.3.** `ℓ_c`, the length of the coset entered at `c`.
 
 Production path: `coset_len` of the counting pass
-(`crates/gf2-core/src/field/extension.rs:2254-2262`).
+(`crates/gf2-core/src/field/extension.rs`).
 
 Refinement anchor: `assert_coset_partition_properties`
-(`crates/gf2-core/src/field/extension.rs:3890`), whose successor assertion at
-`:3905-3906` forces the stored coset to close up after exactly its own
+(`crates/gf2-core/src/field/extension.rs`), whose successor assertion forces the stored coset to close up after exactly its own
 length. -/
 def cosetLen (hq : Nat.Coprime q n) (c : ZMod n) : ℕ := Nat.find (exists_return_time hq c)
 
@@ -286,7 +283,7 @@ theorem cosetLen_pos (hq : Nat.Coprime q n) (c : ZMod n) : 0 < cosetLen hq c :=
   (Nat.find_spec (exists_return_time hq c)).1
 
 /-- The counting pass returns to its starting residue after `ℓ_c` steps, the
-loop exit at `crates/gf2-core/src/field/extension.rs:2259-2261`. -/
+loop exit at `crates/gf2-core/src/field/extension.rs`. -/
 theorem pow_cosetLen_mul (hq : Nat.Coprime q n) (c : ZMod n) :
     (q : ZMod n) ^ cosetLen hq c * c = c :=
   (Nat.find_spec (exists_return_time hq c)).2
@@ -365,17 +362,17 @@ theorem pow_mul_injOn (hq : Nat.Coprime q n) (c : ZMod n) :
 /-! ### L3.3 — the emitted coset -/
 
 /-- The list the emitting pass pushes
-(`crates/gf2-core/src/field/extension.rs:2266-2271`): the cycle from `c`, one
+(`crates/gf2-core/src/field/extension.rs`): the cycle from `c`, one
 `modular_mul` step per element.
 
 Refinement anchor: `cyclotomic_cosets_match_the_worked_binary_vector_and_pure_form`
-(`crates/gf2-core/src/field/extension.rs:3935`), whose expected vector lists
+(`crates/gf2-core/src/field/extension.rs`), whose expected vector lists
 each coset in exactly this order. -/
 def cosetList (hq : Nat.Coprime q n) (c : ZMod n) : List (ZMod n) :=
   (List.range (cosetLen hq c)).map fun t => (q : ZMod n) ^ t * c
 
 /-- The emitted coset has the length the counting pass reserved for it
-(`crates/gf2-core/src/field/extension.rs:2265`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 @[simp]
 theorem cosetList_length (hq : Nat.Coprime q n) (c : ZMod n) :
     (cosetList hq c).length = cosetLen hq c := by
@@ -388,11 +385,11 @@ theorem cosetList_getElem (hq : Nat.Coprime q n) (c : ZMod n) (i : ℕ)
   simp only [cosetList, List.getElem_map, List.getElem_range]
 
 /-- The emitting pass starts at the representative it was entered with
-(`crates/gf2-core/src/field/extension.rs:2266`).
+(`crates/gf2-core/src/field/extension.rs`).
 
 Refinement anchor: `assert_coset_partition_properties`
-(`crates/gf2-core/src/field/extension.rs:3890`), the `coset[0] == representative`
-assertion at `:3899`. -/
+(`crates/gf2-core/src/field/extension.rs`), the `coset[0] == representative`
+assertion. -/
 theorem cosetList_head (hq : Nat.Coprime q n) (c : ZMod n) :
     (cosetList hq c)[0]'(by simpa using cosetLen_pos hq c) = c := by
   rw [cosetList_getElem]
@@ -412,8 +409,8 @@ theorem mem_cosetList_iff (hq : Nat.Coprime q n) (c x : ZMod n) :
 /-- **L3.3 (distinctness).** The emitted coset lists `ℓ_c` distinct residues.
 
 Refinement anchor: `assert_coset_partition_properties`
-(`crates/gf2-core/src/field/extension.rs:3890`), whose `cosets are not disjoint`
-assertion at `:3903` also rejects a repeat inside one coset. -/
+(`crates/gf2-core/src/field/extension.rs`), whose `cosets are not disjoint`
+assertion also rejects a repeat inside one coset. -/
 theorem cosetList_nodup (hq : Nat.Coprime q n) (c : ZMod n) : (cosetList hq c).Nodup := by
   refine List.Nodup.map_on ?_ (List.nodup_range)
   intro i hi j hj hij
@@ -429,7 +426,7 @@ theorem mu_pow_mul_succ (hq : Nat.Coprime q n) (c : ZMod n) (i : ℕ) :
 and the last back to the head.
 
 Refinement anchor: `assert_coset_partition_properties`
-(`crates/gf2-core/src/field/extension.rs:3890`), the assertion at `:3905-3906`
+(`crates/gf2-core/src/field/extension.rs`), the assertion
 that `modular_mul(member, q, n)` is `coset[(index + 1) % coset.len()]`. -/
 theorem mu_cosetList_getElem (hq : Nat.Coprime q n) (c : ZMod n) {i : ℕ}
     (hi : i < cosetLen hq c) :
@@ -442,14 +439,13 @@ theorem mu_cosetList_getElem (hq : Nat.Coprime q n) (c : ZMod n) {i : ℕ}
 
 /-- **L3.3 (the two passes agree).** With `V` the residues visited before the
 coset is entered, the emitting pass
-(`crates/gf2-core/src/field/extension.rs:2267-2271`) first meets an already
-visited residue after exactly `ℓ_c` steps — the count the counting pass
-(`:2254-2262`) produced. The emitted vector therefore has the length that was
+(`crates/gf2-core/src/field/extension.rs`) first meets an already
+visited residue after exactly `ℓ_c` steps — the count the counting pass produced. The emitted vector therefore has the length that was
 reserved for it.
 
 Refinement anchor: `cyclotomic_cosets_match_the_worked_binary_vector_and_pure_form`
-(`crates/gf2-core/src/field/extension.rs:3935`) together with
-`assert_coset_partition_properties` (`:3890`): a disagreement between the passes
+(`crates/gf2-core/src/field/extension.rs`) together with
+`assert_coset_partition_properties`: a disagreement between the passes
 is a wrong coset length in the compared vectors. -/
 theorem emit_stop_isLeast (hq : Nat.Coprime q n) (c : ZMod n) (V : Set (ZMod n))
     (hV : Disjoint (orbit hq c) V) :
@@ -471,13 +467,13 @@ theorem emit_stop_isLeast (hq : Nat.Coprime q n) (c : ZMod n) (V : Set (ZMod n))
 /-! ### L3.4 — the scan is deterministic
 
 The scan runs over representatives `0, 1, …, n-1`
-(`crates/gf2-core/src/field/extension.rs:2246`) and skips the ones already
-marked (`:2247-2249`). The invariant that carries the determinism argument is
+(`crates/gf2-core/src/field/extension.rs`) and skips the ones already
+marked. The invariant that carries the determinism argument is
 that the visited table holds exactly the union of the orbits of the
 representatives already considered. -/
 
 /-- The residues the scan has marked once it has considered every representative
-below `k` (`crates/gf2-core/src/field/extension.rs:2267-2270`). -/
+below `k` (`crates/gf2-core/src/field/extension.rs`). -/
 def visited (hq : Nat.Coprime q n) (k : ℕ) : Set (ZMod n) :=
   {x | ∃ j < k, x ∈ orbit hq ((j : ℕ) : ZMod n)}
 
@@ -503,7 +499,7 @@ theorem exists_natCast_mem_orbit (hq : Nat.Coprime q n) (x : ZMod n) :
 /-- The least member of an orbit, as a scan index.
 
 Production counterpart: the representative at which `cyclotomic_cosets_mod`
-enters the coset (`crates/gf2-core/src/field/extension.rs:2246`). -/
+enters the coset (`crates/gf2-core/src/field/extension.rs`). -/
 def orbitMin (hq : Nat.Coprime q n) (x : ZMod n) : ℕ :=
   Nat.find (exists_natCast_mem_orbit hq x)
 
@@ -541,8 +537,8 @@ exactly when `j` is the least member of its orbit. The outer ordering and the
 inner starting point are therefore functions of the partition alone.
 
 Refinement anchor: `cyclotomic_coset_order_is_deterministic`
-(`crates/gf2-core/src/field/extension.rs:4041`) and
-`cyclotomic_cosets_match_the_worked_binary_vector_and_pure_form` (`:3935`),
+(`crates/gf2-core/src/field/extension.rs`) and
+`cyclotomic_cosets_match_the_worked_binary_vector_and_pure_form`,
 whose expected vector fixes both orders. -/
 theorem notMem_visited_iff (hq : Nat.Coprime q n) {j : ℕ} (hj : j < n) :
     ((j : ℕ) : ZMod n) ∉ visited hq j ↔ orbitMin hq ((j : ℕ) : ZMod n) = j := by
@@ -565,12 +561,12 @@ theorem notMem_visited_iff (hq : Nat.Coprime q n) {j : ℕ} (hj : j < n) :
     omega
 
 /-- The representatives at which the scan enters a coset
-(`crates/gf2-core/src/field/extension.rs:2246-2249`), in scan order. -/
+(`crates/gf2-core/src/field/extension.rs`), in scan order. -/
 def scanHeads (hq : Nat.Coprime q n) : List ℕ :=
   (List.range n).filter fun j => decide (orbitMin hq ((j : ℕ) : ZMod n) = j)
 
 /-- The cosets the scan emits, in emission order
-(`crates/gf2-core/src/field/extension.rs:2264-2273`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 def scanCosets (hq : Nat.Coprime q n) : List (List (ZMod n)) :=
   (scanHeads hq).map fun j => cosetList hq ((j : ℕ) : ZMod n)
 
@@ -583,8 +579,8 @@ theorem mem_scanHeads_iff (hq : Nat.Coprime q n) (j : ℕ) :
 cosets leave the scan ordered by their least member.
 
 Refinement anchor: `assert_coset_partition_properties`
-(`crates/gf2-core/src/field/extension.rs:3890`), the `pair[0][0] < pair[1][0]`
-assertion at `:3893`. -/
+(`crates/gf2-core/src/field/extension.rs`), the `pair[0][0] < pair[1][0]`
+assertion. -/
 theorem scanHeads_sortedLT (hq : Nat.Coprime q n) : (scanHeads hq).SortedLT := by
   rw [List.sortedLT_iff_pairwise]
   exact List.Pairwise.filter _ List.pairwise_lt_range
@@ -596,8 +592,8 @@ theorem scanHeads_nodup (hq : Nat.Coprime q n) : (scanHeads hq).Nodup :=
 /-- **L3.4 (partition).** Every residue lies in exactly one emitted coset.
 
 Refinement anchor: `assert_coset_partition_properties`
-(`crates/gf2-core/src/field/extension.rs:3890`), the disjointness and cover
-assertions at `:3903` and `:3910-3913`. -/
+(`crates/gf2-core/src/field/extension.rs`), the disjointness and cover
+assertions. -/
 theorem existsUnique_mem_scanCosets (hq : Nat.Coprime q n) (x : ZMod n) :
     ∃! l, l ∈ scanCosets hq ∧ x ∈ l := by
   have hxmin : ((orbitMin hq x : ℕ) : ZMod n) ∈ orbit hq x := orbitMin_mem hq x
@@ -620,11 +616,11 @@ theorem existsUnique_mem_scanCosets (hq : Nat.Coprime q n) (x : ZMod n) :
 /-! ### L3.5 and L3.6 — the closure is the least closed superset -/
 
 /-- The seeds reduced into `ZMod n`; production reduces each seed with `seed % n`
-(`crates/gf2-core/src/field/extension.rs:2182`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 def seedSet (S : Set ℕ) : Set (ZMod n) := (fun s : ℕ => (s : ZMod n)) '' S
 
 /-- `cl_q(S)`, the union of the orbits the seeds meet
-(`crates/gf2-core/src/field/extension.rs:2179-2187`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 def closure (hq : Nat.Coprime q n) (S : Set ℕ) : Set (ZMod n) :=
   ⋃ s ∈ seedSet (n := n) S, orbit hq s
 
@@ -645,10 +641,9 @@ theorem pow_mul_mem_of_closed {U : Set (ZMod n)}
 set — the property issue `d7749931` names.
 
 Refinement anchor: `iterative_closure`
-(`crates/gf2-core/src/field/extension.rs:3917`), an independent fixed-point
-implementation of the same closure, driven by `prop_binary_cyclotomic_closure_laws`
-(`:3976`) and `prop_nonbinary_cyclotomic_closure_laws` (`:3997`), together with
-`cyclotomic_closure_selects_complete_seed_cosets` (`:3956`). -/
+(`crates/gf2-core/src/field/extension.rs`), an independent fixed-point
+implementation of the same closure, driven by `prop_binary_cyclotomic_closure_laws` and `prop_nonbinary_cyclotomic_closure_laws`, together with
+`cyclotomic_closure_selects_complete_seed_cosets`. -/
 theorem closure_isLeast (hq : Nat.Coprime q n) (S : Set ℕ) :
     IsLeast {U : Set (ZMod n) | seedSet S ⊆ U ∧ ∀ x ∈ U, mu q x ∈ U} (closure hq S) := by
   refine ⟨⟨?_, ?_⟩, ?_⟩
@@ -685,12 +680,12 @@ theorem mu_image_closure (hq : Nat.Coprime q n) (S : Set ℕ) :
 
 /-- **L3.6 (seed normalization).** Reducing seeds modulo `n` changes nothing, so
 duplicate seeds and seeds outside `[0, n)` have no effect
-(`crates/gf2-core/src/field/extension.rs:2182`).
+(`crates/gf2-core/src/field/extension.rs`).
 
 Refinement anchor: `prop_binary_cyclotomic_closure_laws`
-(`crates/gf2-core/src/field/extension.rs:3976`), which draws seeds from `0..64`
+(`crates/gf2-core/src/field/extension.rs`), which draws seeds from `0..64`
 against moduli of at most 31, and
-`cyclotomic_closure_selects_complete_seed_cosets` (`:3956`), whose seed `20`
+`cyclotomic_closure_selects_complete_seed_cosets`, whose seed `20`
 lies outside `[0, 15)`. -/
 theorem seedSet_mod (S : Set ℕ) : seedSet (n := n) ((· % n) '' S) = seedSet (n := n) S := by
   ext x
@@ -709,7 +704,7 @@ theorem closure_mod (hq : Nat.Coprime q n) (S : Set ℕ) :
 
 /-- **L3.6 (idempotence).** Re-closing the defining set reproduces the closure;
 the `again` comparison of `prop_binary_cyclotomic_closure_laws`
-(`crates/gf2-core/src/field/extension.rs:3985-3989`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem closure_val_image (hq : Nat.Coprime q n) (S : Set ℕ) :
     closure hq (ZMod.val '' closure hq S) = closure hq S := by
   have hseed : seedSet (n := n) (ZMod.val '' closure hq S) = closure hq S := by
@@ -734,15 +729,15 @@ theorem closure_val_image (hq : Nat.Coprime q n) (S : Set ℕ) :
 
 /-- **L3.7.** `|B| mod n = p ^ d_B mod n`, and modular exponentiation reaches it
 without forming `|B|`: `Nat.pow_mod` is the identity the repeated-squaring loop
-of `modular_pow_usize` (`crates/gf2-core/src/field/extension.rs:1712`) runs on,
+of `modular_pow_usize` (`crates/gf2-core/src/field/extension.rs`) runs on,
 and `RelativeExtension.exists_char_pow`
-(`proofs/Gf2Core/Proofs/RelativeExtension.lean:88`) supplies `|B| = p ^ d_B`.
+(`proofs/Gf2Core/Proofs/RelativeExtension.lean`) supplies `|B| = p ^ d_B`.
 
 Production path: `base_order_mod`
-(`crates/gf2-core/src/field/extension.rs:2281`).
+(`crates/gf2-core/src/field/extension.rs`).
 
 Refinement anchor: `base_order_mod_matches_the_hand_computed_multiplier`
-(`crates/gf2-core/src/field/extension.rs:4062`), which pins the derived
+(`crates/gf2-core/src/field/extension.rs`), which pins the derived
 multiplier against hand-computed `p ^ d_B mod n` over a `GF(9)` base
 (`d_B = 2`) and a `GF(2 ^ 64)` base (`d_B = 64`, where `q` exceeds
 `u64::MAX`). -/
@@ -761,7 +756,7 @@ theorem natCast_eq_pow {N p dB : ℕ} (hcard : N = p ^ dB) :
 
 /-- The reduced multiplier is coprime to `n` exactly when `|B|` is, so the
 production `gcd` check on `q_mod_n`
-(`crates/gf2-core/src/field/extension.rs:2226-2234`) decides the model's
+(`crates/gf2-core/src/field/extension.rs`) decides the model's
 hypothesis. -/
 theorem coprime_mod_iff (m : ℕ) : Nat.Coprime (m % n) n ↔ Nat.Coprime m n :=
   ZMod.coprime_mod_iff_coprime m n
@@ -769,12 +764,12 @@ theorem coprime_mod_iff (m : ℕ) : Nat.Coprime (m % n) n ↔ Nat.Coprime m n :=
 /-! ### L3.8 — the partition's derived views -/
 
 /-- The cosets of the closure: the emitted cosets a seed meets
-(`crates/gf2-core/src/field/extension.rs:2179-2187`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 def closureCosets (hq : Nat.Coprime q n) (S : Set ℕ) : List (List (ZMod n)) :=
   (scanCosets hq).filter fun l => decide (∃ x ∈ l, x ∈ seedSet (n := n) S)
 
 /-- A coset is selected exactly when a seed lands in it
-(`crates/gf2-core/src/field/extension.rs:2180-2182`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem mem_closureCosets_iff (hq : Nat.Coprime q n) (S : Set ℕ) (l : List (ZMod n)) :
     l ∈ closureCosets hq S ↔ l ∈ scanCosets hq ∧ ∃ x ∈ l, x ∈ seedSet (n := n) S := by
   simp [closureCosets, List.mem_filter]
@@ -783,7 +778,7 @@ theorem mem_closureCosets_iff (hq : Nat.Coprime q n) (S : Set ℕ) (l : List (ZM
 the selected cosets holds it.
 
 Refinement anchor: `cyclotomic_closure_selects_complete_seed_cosets`
-(`crates/gf2-core/src/field/extension.rs:3956`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 theorem mem_closure_iff_mem_closureCosets (hq : Nat.Coprime q n) (S : Set ℕ) (x : ZMod n) :
     x ∈ closure hq S ↔ ∃ l ∈ closureCosets hq S, x ∈ l := by
   constructor
@@ -823,12 +818,12 @@ theorem notMem_closureCosets (hq : Nat.Coprime q n) (S : Set ℕ) {x : ZMod n}
   hx ((mem_closure_iff_mem_closureCosets hq S x).2 ⟨l, hl, hxl⟩)
 
 /-- The exponents of the closure, as the `u64` residues the production returns
-(`crates/gf2-core/src/field/extension.rs:2036-2044`). -/
+(`crates/gf2-core/src/field/extension.rs`). -/
 def definingFinset (hq : Nat.Coprime q n) (S : Set ℕ) : Finset ℕ :=
   (Finset.range n).filter fun m => ((m : ℕ) : ZMod n) ∈ closure hq S
 
 /-- `CosetPartition::defining_set`
-(`crates/gf2-core/src/field/extension.rs:2036`): the sorted union of the
+(`crates/gf2-core/src/field/extension.rs`): the sorted union of the
 selected cosets. -/
 def definingList (hq : Nat.Coprime q n) (S : Set ℕ) : List ℕ :=
   (definingFinset hq S).sort
@@ -842,9 +837,9 @@ theorem mem_definingFinset_iff (hq : Nat.Coprime q n) (S : Set ℕ) (m : ℕ) :
 increase, so the union is sorted and duplicate-free.
 
 Refinement anchor: `cyclotomic_closure_selects_complete_seed_cosets`
-(`crates/gf2-core/src/field/extension.rs:3956`), whose expected defining set is
-`[3, 5, 6, 9, 10, 12]`, and `assert_coset_partition_properties` (`:3890`), whose
-disjointness assertion at `:3903` rules out a repeat. -/
+(`crates/gf2-core/src/field/extension.rs`), whose expected defining set is
+`[3, 5, 6, 9, 10, 12]`, and `assert_coset_partition_properties`, whose
+disjointness assertion rules out a repeat. -/
 theorem definingList_sortedLT (hq : Nat.Coprime q n) (S : Set ℕ) :
     (definingList hq S).SortedLT :=
   Finset.sortedLT_sort _
@@ -861,10 +856,10 @@ theorem mem_definingList_iff (hq : Nat.Coprime q n) (S : Set ℕ) (m : ℕ) :
 
 /-- **L3.8 (`contains` reduces).** `contains` reduces its argument modulo `n`, so
 `n + e` and `e` decide alike
-(`crates/gf2-core/src/field/extension.rs:2066-2067`).
+(`crates/gf2-core/src/field/extension.rs`).
 
 Refinement anchor: `cyclotomic_closure_selects_complete_seed_cosets`
-(`crates/gf2-core/src/field/extension.rs:3956`), whose `coset_of(18)` query
+(`crates/gf2-core/src/field/extension.rs`), whose `coset_of(18)` query
 reduces to exponent `3`. -/
 theorem contains_iff (hq : Nat.Coprime q n) (S : Set ℕ) (e : ℕ) :
     ((e : ℕ) : ZMod n) ∈ closure hq S ↔ (e % n) ∈ definingFinset hq S := by

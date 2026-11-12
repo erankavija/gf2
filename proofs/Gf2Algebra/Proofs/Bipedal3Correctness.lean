@@ -123,7 +123,7 @@ theorem bipedal3_mul_word (m1 s1 m2 s2 : BitVec 64) (i : Fin 64) :
 `(mag, sgn) = ((m2 &&& (m1 ^^^ s1 ^^^ s2)) ||| (m1 ^^^ m2),
                (m2 &&& (m1 ^^^ s1 ^^^ s2)) ^^^ s1)`
 lifted lane-wise. The composed expression matches the `add` impl in
-`crates/gf2-algebra/src/packed/bipedal3.rs:581-593`. -/
+`crates/gf2-algebra/src/packed/bipedal3.rs`. -/
 theorem bipedal3_add_word (m1 s1 m2 s2 : BitVec 64) (i : Fin 64) :
     let t := m1 ^^^ s1 ^^^ s2
     let u := m2 &&& t
@@ -139,7 +139,7 @@ theorem bipedal3_add_word (m1 s1 m2 s2 : BitVec 64) (i : Fin 64) :
 `(mag, sgn) = ((m1 &&& (s1 ^^^ s2)) ||| (m1 ^^^ m2),
                (m1 &&& (s1 ^^^ s2)) ^^^ (m2 ^^^ s2))`
 lifted lane-wise. The composed expression matches the `sub` impl in
-`crates/gf2-algebra/src/packed/bipedal3.rs:620-632`. -/
+`crates/gf2-algebra/src/packed/bipedal3.rs`. -/
 theorem bipedal3_sub_word (m1 s1 m2 s2 : BitVec 64) (i : Fin 64) :
     let t := s1 ^^^ s2
     let u := m1 &&& t
@@ -154,7 +154,7 @@ theorem bipedal3_sub_word (m1 s1 m2 s2 : BitVec 64) (i : Fin 64) :
 /-- §3.4-word: bipedal neg formula `(mag, sgn) = (m, s ^^^ m)` lifted
 lane-wise. Only the `sgn` lane needs lifting (the `mag` lane is the
 identity). Matches the `neg` impl in
-`crates/gf2-algebra/src/packed/bipedal3.rs:652-657`. -/
+`crates/gf2-algebra/src/packed/bipedal3.rs`. -/
 theorem bipedal3_neg_word (m s : BitVec 64) (i : Fin 64) :
     (s ^^^ m).getLsbD i = xor (s.getLsbD i) (m.getLsbD i) := by
   simp
