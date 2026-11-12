@@ -92,12 +92,13 @@ fn gemm_matches_element_arithmetic_across_block_edges() {
 }
 
 #[test]
-fn gemm_gives_one_product_under_every_blocking() {
+fn gemm_gives_one_product_under_every_blocking_and_tile() {
     let mut state = 3;
-    let blocking = |depth, width| {
+    let blocking = |depth, width, tile| {
         Gf256GemmBlocking::new(
             NonZeroUsize::new(depth).unwrap(),
             NonZeroUsize::new(width).unwrap(),
+            NonZeroUsize::new(tile).unwrap(),
         )
     };
     let structural = Gf256GemmBlocking::structural();
@@ -106,20 +107,28 @@ fn gemm_gives_one_product_under_every_blocking() {
             (5, 33, 65),
             (9, structural.depth() + 1, 70),
             (3, 7, structural.width() + 1),
+            (4, structural.tile() + 3, structural.tile() * 2 + 5),
         ] {
             let a: Vec<u8> = (0..m * k).map(|_| lcg(&mut state)).collect();
             let b: Vec<u8> = (0..k * n).map(|_| lcg(&mut state)).collect();
+            let b_t: Vec<u8> = (0..n * k).map(|i| b[(i % k) * n + i / k]).collect();
             let mut expected = vec![0; m * n];
             field.gf256_gemm(m, k, n, &a, &b, &mut expected);
+            let mut transposed = vec![0x5a; m * n];
+            field.gf256_gemm_transposed(m, k, n, &a, &b_t, &mut transposed);
+            assert_eq!(transposed, expected, "{m}x{k}x{n} transposed");
             for blocking in [
-                blocking(1, 1),
-                blocking(3, 33),
-                blocking(16, 32),
-                blocking(k, n),
+                blocking(1, 1, 1),
+                blocking(3, 33, 7),
+                blocking(16, 32, 64),
+                blocking(k, n, k.max(n) + 1),
             ] {
                 let mut c = vec![0x5a; m * n];
                 field.gf256_gemm_with(m, k, n, &a, &b, &mut c, blocking);
                 assert_eq!(c, expected, "{m}x{k}x{n} under {blocking:?}");
+                let mut c = vec![0x5a; m * n];
+                field.gf256_gemm_transposed_with(m, k, n, &a, &b_t, &mut c, blocking);
+                assert_eq!(c, expected, "{m}x{k}x{n} transposed under {blocking:?}");
             }
         }
     }

@@ -646,6 +646,69 @@ impl Gf2mField_ {
         );
     }
 
+    /// `c = a · b` over byte-coded elements of this GF(2^8) field with `b`
+    /// given transposed: `a` is `m × k`, `b_t` `n × k` and `c` `m × n`, all
+    /// row-major, and `c` is overwritten.
+    ///
+    /// Restores `b` to row order in square tiles, `O(k · n)` byte moves,
+    /// then runs [`Self::gf256_gemm`]'s product, in the blocks and tiles of
+    /// [`Gf256GemmBlocking::structural`](crate::gf2m::Gf256GemmBlocking::structural).
+    /// Allocates the `k · n` bytes of the restored operand.
+    ///
+    /// # Panics
+    ///
+    /// Panics unless the field has degree 8 and the slices hold `m · k`,
+    /// `n · k` and `m · n` bytes.
+    pub fn gf256_gemm_transposed(
+        &self,
+        m: usize,
+        k: usize,
+        n: usize,
+        a: &[u8],
+        b_t: &[u8],
+        c: &mut [u8],
+    ) {
+        self.gf256_gemm_transposed_with(
+            m,
+            k,
+            n,
+            a,
+            b_t,
+            c,
+            crate::gf2m::Gf256GemmBlocking::structural(),
+        );
+    }
+
+    /// [`Self::gf256_gemm_transposed`] in the caller's blocks and tiles.
+    ///
+    /// # Panics
+    ///
+    /// As [`Self::gf256_gemm_transposed`].
+    #[allow(clippy::too_many_arguments)]
+    pub fn gf256_gemm_transposed_with(
+        &self,
+        m: usize,
+        k: usize,
+        n: usize,
+        a: &[u8],
+        b_t: &[u8],
+        c: &mut [u8],
+        blocking: crate::gf2m::Gf256GemmBlocking,
+    ) {
+        let tables = self.gf256_split_tables();
+        assert_eq!(a.len(), m * k, "gf256_gemm: a holds m * k bytes");
+        assert_eq!(b_t.len(), n * k, "gf256_gemm: b_t holds n * k bytes");
+        assert_eq!(c.len(), m * n, "gf256_gemm: c holds m * n bytes");
+        crate::gf2m::byte_table::gemm_transposed_bytes(
+            tables,
+            &crate::gf2m::byte_table::GemmShape { m, k, n },
+            blocking,
+            a,
+            b_t,
+            c,
+        );
+    }
+
     fn gf256_split_tables(&self) -> &'static crate::gf2m::byte_table::Gf256SplitTables {
         assert_eq!(
             self.params.m, 8,
@@ -1201,6 +1264,7 @@ impl<V: UintExt> crate::field::FiniteField for Gf2mElement_<V> {
             &crate::gf2m::byte_table::GemmShape { m, k, n },
             out,
             table,
+            crate::gf2m::Gf256GemmBlocking::structural(),
             |source| source.value.as_u64_truncated() as u8,
             |destination, product| destination.value = V::from_u64(u64::from(product)),
         );

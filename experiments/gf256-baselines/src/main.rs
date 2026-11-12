@@ -1,11 +1,15 @@
 //! gf2's arm of the GF(2^8) comparison: the byte-region API and the generic
 //! `FieldVec`/`FieldMatrix` API over one-byte `Gf256` elements, on the cells
-//! and inputs `ext/arm.c` shares, one line per cell and route.
+//! and inputs `ext/arm.c` shares, one line per cell and route. With
+//! `--digests <path>...` it prints the SHA-256 of itself and of each path
+//! instead.
 
+use experiments_common::Sha256Digest;
 use gf2_core::field::matrix::{gemm, FieldMatrix};
 use gf2_core::field::FieldVec;
 use gf2_core::gf2m::{Gf256, Gf2mField, Gf2mWideConfig};
 use std::hint::black_box;
+use std::path::Path;
 use std::time::Instant;
 
 /// Timed batches per cell after one untimed batch.
@@ -79,7 +83,24 @@ fn best(mut batch: impl FnMut()) -> f64 {
         .fold(f64::INFINITY, f64::min)
 }
 
+/// Prints `sha256 <digest> <path>` for this executable and for each path in
+/// `others`: the identity of the measured arms and the libraries they load.
+fn print_digests(others: impl Iterator<Item = String>) -> std::io::Result<()> {
+    let own = std::env::current_exe()?;
+    let own_digest = Sha256Digest::of_file(Path::new("/proc/self/exe"))?;
+    println!("sha256 {own_digest} {}", own.display());
+    for path in others {
+        println!("sha256 {} {path}", Sha256Digest::of_file(Path::new(&path))?);
+    }
+    Ok(())
+}
+
 fn main() {
+    let mut args = std::env::args().skip(1);
+    if args.next().as_deref() == Some("--digests") {
+        print_digests(args).expect("the executables are readable");
+        return;
+    }
     let field = Gf2mField::gf256();
     for len in AXPY_LENGTHS {
         let mut rng = SplitMix(len as u64);
