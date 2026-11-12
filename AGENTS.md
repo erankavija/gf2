@@ -81,6 +81,9 @@ The slow tier uses
 `cargo nextest run --workspace --all-features --release --profile slow --run-ignored ignored-only`
 and has a 600-second budget. Tests too heavy for that tier must self-gate on
 required host data or benchmark mode, or use the configured `slow-serial` group.
+Under nextest, every test in the `gpu-serial` or `slow-serial` group holds the
+host-wide GPU lock `GF2_GPU_LOCK` (default `/tmp/gf2-gpu.lock`) through
+`scripts/nextest-gpu-lock.sh`, so a device-opening test joins `gpu-serial`.
 Do not widen a wall-clock assertion to accommodate a busy runner.
 
 ## Performance and research evidence
