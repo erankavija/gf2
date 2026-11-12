@@ -21,6 +21,7 @@ Optimization never relaxes mathematical or standards conformance.
 - D-4: Trade-offs resolve to the fastest conforming default behind a simple API.
 - D-5: A ratio is recorded against the reference's fastest build configuration.
 - D-6: Permanent documentation carries harness and method; measured ratios live in issue history.
+- D-7: A cell is measured at the output contract its reference is timed at.
 
 ## Decision Details
 
@@ -99,4 +100,20 @@ Optimization never relaxes mathematical or standards conformance.
 - **Reasoning:** The NR encoding entry of the performance reference page stated
   a reference lead after `@/issue/be6d6f45` had recorded a gf2 lead; a page
   without measured values cannot contradict the latest window.
+- **Date:** 2026-11-12
+
+### D-7: A cell matches the reference's output contract
+
+- **Chosen:** A D-2 cell times the gf2 entry point whose output contract equals
+  the reference's. Where the reference writes into caller-provided buffers, the
+  cell is the `_into` form with a reused workspace; the allocating call is
+  reported beside it as its own row. This reads the vision's "default path" for
+  buffer-reuse forms and leaves D-4 in force.
+- **Rejected:** The allocating call as the cell: it charges gf2 an allocation
+  per codeword that bchlib and AFF3CT are not timed for.
+- **Rejected:** Both forms at 1.0 or above: the allocating row has no
+  like-for-like reference.
+- **Reasoning:** `@/issue/60c82c4c` and `@/issue/5e71e993` found the cutover
+  harness timing `BchCode::encode_batch` against comparators that write into
+  preallocated buffers; D-5 asks for the fair comparison in both directions.
 - **Date:** 2026-11-12

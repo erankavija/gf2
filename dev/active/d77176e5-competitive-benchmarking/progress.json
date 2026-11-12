@@ -71,7 +71,32 @@
         {
           "short_id": "ebfaff31",
           "title": "Keep measured performance values out of permanent documentation",
-          "status": "merged; doc-review failed with five findings; rework next"
+          "status": "rework 2 dispatched (session 4, Claude Sonnet): F1-F5; F3 issue records get pins to 0dda4342",
+          "branch": "worktree-agent-ebfaff31"
+        },
+        {
+          "short_id": "a6039c72",
+          "title": "Recover the GF(2^8) 4 KiB axpy and n=1024 byte product",
+          "status": "dispatched (session 4, Codex gpt-6.1-sol high: kernel regression, test-first)",
+          "branch": "worktree-agent-a6039c72"
+        },
+        {
+          "short_id": "60c82c4c",
+          "title": "Encode BCH row B2 in batches as fast as bchlib",
+          "status": "backlog; profiling and design only (session 4, Claude Opus: perf design), awaits fd9d5416",
+          "branch": "worktree-agent-60c82c4c"
+        },
+        {
+          "short_id": "5e71e993",
+          "title": "Encode BCH row B1 as fast as AFF3CT",
+          "status": "backlog; profiling and design only (session 4, Claude Opus: perf design), awaits fd9d5416",
+          "branch": "worktree-agent-60c82c4c"
+        },
+        {
+          "short_id": "92ec2e2b",
+          "title": "Materialize BCH generators as fast as M4RI and AFF3CT",
+          "status": "backlog; profiling and design only (session 4, Claude Opus: perf design), awaits fd9d5416",
+          "branch": "worktree-agent-60c82c4c"
         }
       ]
     }
@@ -89,7 +114,7 @@
     "040bc2b8": 1,
     "8a8a3bc9": 1,
     "c9cb0dd2": 1,
-    "ebfaff31": 1
+    "ebfaff31": 2
   },
   "surfaced_pitfalls": [
     "The window runner waits for a quiet host only before its first job; a single-core job queued after a multi-worker job starts in that job's load tail. Order single-core lines first or add a per-job quiet wait.",
@@ -102,6 +127,7 @@
     "BCH reflected-domain fold filed as 9d1c580c, low priority (owner)",
     "No push; every push is the owner's",
     "A lead may arm a short window once its queue lines are merged and the host is quiet, after both leads' workers confirm idle; one window at a time",
-    "4f21da96 goes to gf2-79"
+    "4f21da96 goes to gf2-79",
+    "Session 4 lead gf2-3d succeeds gf2-7b (steward gf2-08); night window 2026-11-13 02:00 armed by owner; workers idle by 01:45"
   ]
 }

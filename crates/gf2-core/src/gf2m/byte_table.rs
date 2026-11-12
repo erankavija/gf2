@@ -270,7 +270,23 @@ pub(crate) fn gemm_bytes(
     if m == 0 || k == 0 || n == 0 {
         return;
     }
-    let kernel = crate::gf256_region().gemm_block;
+    let fns = crate::gf256_region();
+    let strip = fns.gemm_strip;
+    // Whole-strip rows and blocks preserve an aligned base. Copy once so
+    // every row group reuses loads that do not straddle cache lines.
+    let mut packed = Vec::new();
+    let b = if n.is_multiple_of(strip)
+        && blocking.width().is_multiple_of(strip)
+        && b.as_ptr().align_offset(strip) != 0
+    {
+        packed.resize(b.len() + strip - 1, 0);
+        let offset = packed.as_ptr().align_offset(strip);
+        packed[offset..offset + b.len()].copy_from_slice(b);
+        &packed[offset..offset + b.len()]
+    } else {
+        b
+    };
+    let kernel = fns.gemm_block;
     for depth_start in (0..k).step_by(blocking.depth()) {
         let depth = blocking.depth().min(k - depth_start);
         for column in (0..n).step_by(blocking.width()) {
