@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Ran verbatim on host fraktaali on 2026-09-02 (start 15:59:28Z, end 16:08:45Z); its outputs are the files beside it.
 # Lead-side B4 retry (owner decision, session 8): GUAVA BCHCode(65535,1,25,GF(2)) with a large heap,
 # bounded to 20 min wall and 52 GB by a user scope; RSS sampled every 5 s.
 SP="$(git rev-parse --show-toplevel)/target/gap-b4-probe"

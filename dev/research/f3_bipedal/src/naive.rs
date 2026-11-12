@@ -1,11 +1,10 @@
 //! Naive F_3 — per-element scalar `(a OP b) % 3` on a `Vec<u8>`.
 //!
-//! This is the in-Rust analogue of the Julia naive Ryser baseline that the
-//! Scheinerman paper (arxiv 2407.20205v2) reports an 86.9× speedup over.
-//! Reproducing the paper's exact wall-clock comparison requires a Julia
-//! Ryser implementation on the same machine, which is out of scope for
-//! this prototype — but the per-element op cost in **Rust** gives an
-//! apples-to-apples baseline against the bipedal F_3 numbers measured by
+//! This is the in-Rust analogue of the Julia naive Ryser baseline discussed in
+//! the Scheinerman paper (arxiv 2407.20205v2). Reproducing the paper's exact
+//! wall-clock comparison requires a Julia Ryser implementation on the same
+//! machine, which is out of scope for this prototype. The per-element op cost
+//! in **Rust** gives an apples-to-apples baseline against the bipedal F_3 numbers measured by
 //! the same harness on the same host.
 //!
 //! `[hard]` correctness is guaranteed by exhaustive 3×3 verification + a

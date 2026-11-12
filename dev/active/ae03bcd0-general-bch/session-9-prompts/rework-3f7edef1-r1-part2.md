@@ -52,7 +52,7 @@ Reply in messages under 2500 characters each; the first carries: branch tip SHA,
 
 ## B4 — the lead's bounded GUAVA attempt (owner decision: retry idle, then amend)
 
-Observed on this host (AMD Ryzen 9 5900X, 64196 MiB RAM, 32 GiB swap), otherwise idle (load 0.2), 2026-09-02 15:59:28Z–16:08:45Z:
+Run on this host, otherwise idle:
 
 ```
 systemd-run --user --scope -p MemoryMax=52G timeout 1200 \
@@ -60,9 +60,7 @@ systemd-run --user --scope -p MemoryMax=52G timeout 1200 \
 ```
 
 - Result: `CALL_WITH_CATCH` returned `false`; GAP printed `Error, reached the pre-set memory limit (change it with the -o command line option)`.
-- Wall clock 9 min 17 s; CPU 9 min 14 s (`Runtime()` delta 273885 ms).
-- Peak resident set 54 428 680 KiB (`VmHWM`, sampled every 5 s); the systemd scope reports 52 G memory peak and 15.6 G swap peak.
-- The 50 GiB heap is the largest this host can back: 48.6 GiB was available at launch and the attempt already swapped 15.6 GiB. A 40 GiB heap was tried earlier the same day (reached 25.7 GiB resident after 160 s, still growing, stopped by the lead).
+- The 50 GiB heap is the largest this host can back: it exceeded the memory free at launch.
 
 **Therefore the failure branch of the owner's decision applies.** Do all of the following:
 

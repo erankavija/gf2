@@ -1,5 +1,5 @@
 # Test dRM with list_size=128 at 0.75-1.0 dB
-# Previous: ls=4 → BLER=0.667, ls=64 → BLER~0.44, paper=0.072
+# Compare larger dRM list sizes with the paper's reported result.
 
 [campaign]
 name = "test_drm_ls128"

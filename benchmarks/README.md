@@ -39,14 +39,14 @@ Rootless podman quirks worth noting:
 The Containerfile compiles every C and C++ artefact with
 `-O3 -march=native` so timings reflect what production code on the
 target host can actually achieve. `-march=native` does mean numbers are
-not portable across host CPUs — `host.txt` captures the CPU model,
+not portable across host CPUs — `host.txt` (in the output directory) captures the CPU model,
 microarchitecture flags, and cache topology so any reader can verify
 the substrate before drawing conclusions.
 
-After a successful image build, `run.sh` records the local
-content-addressable id into `image.lock` (the `[image].local_id` slot);
-a mismatch with the committed id signals environment drift. A rebuild on
-different hardware commits the stamped id together with its results.
+All run output goes to `target/reference-benchmarks/` under the repository
+root (override with `GF2_BENCH_OUT`): `host.txt`, `results/`, and
+`image-id.txt`, the local content-addressable id of the built image.
+`run.sh --skip-build` warns when the image id differs from the recorded one.
 
 ## CSV schema
 
@@ -142,8 +142,8 @@ sparse paths.
 
 `cargo-ci` validates neither the container build nor the harness
 binaries. `./benchmarks/run.sh` on a host with a container runtime
-validates both and writes `benchmarks/results/<timestamp>.csv` and
-`benchmarks/host.txt`. `benchmarks/smoke.sh` builds the image and runs
+validates both and writes `target/reference-benchmarks/results/<timestamp>.csv`
+and `target/reference-benchmarks/host.txt`. `benchmarks/smoke.sh` builds the image and runs
 the harnesses with `--warmup 0 --iters 1`, without a full timing run.
 
 ## Determinism guarantees
@@ -151,8 +151,8 @@ the harnesses with `--warmup 0 --iters 1`, without a full timing run.
 - Re-running with the same `--seed` produces *identical* matrices on
   every (field, op, size, regime) cell. Timing of course varies.
 - Re-building the image from the pinned Containerfile + `image.lock`
-  on the **same host** produces an identical local image-id (stamped
-  into `[image].local_id`); cross-host the digest will differ because
+  on the **same host** produces an identical local image-id (recorded
+  in `image-id.txt`); cross-host the digest will differ because
   every C/C++ object is built with `-O3 -march=native` and is therefore
   microarchitecture-specific. The library-source pins (base-image
   digest, tarball sha256s, Debian apt versions) are reproducible across
@@ -167,7 +167,7 @@ the harnesses with `--warmup 0 --iters 1`, without a full timing run.
 
 ```bash
 # Default: build the image (if not already built), capture host info,
-# run both harnesses, write benchmarks/results/<timestamp>.csv.
+# run both harnesses, write target/reference-benchmarks/results/<timestamp>.csv.
 ./benchmarks/run.sh
 
 # Override the master seed (for cross-validation with a sibling run).

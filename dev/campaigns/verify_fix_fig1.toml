@@ -1,8 +1,8 @@
 # Verify SOGRAND fix for dRM product code at 0.5-1.5 dB
 # Paper uses Q=100K total queries. With the corrected ORBGRAND that collects
 # ALL codewords, max_queries controls the total pattern budget per SOGRAND call.
-# For n=32 (dRM), 50K queries is enough to find 20-30 codewords and achieve
-# ~0.95 cumulative probability.
+# For n=32 (dRM), this budget aims to collect multiple codewords with high
+# cumulative probability.
 
 [campaign]
 name = "verify_fix_fig1"

@@ -17,7 +17,7 @@
 ## What just happened
 
 - Session-24's armed 02:00 run had fired on time and died 30 s in, at the `cargo build --features hip` step. Cause: `hipcc` adds `-I$ROCM_PATH/include` only when `ROCM_PATH` is set, and a systemd user unit does not source `/etc/profile.d/rocm.sh`. Isolated in both directions before fixing.
-- Receipt delivered: 124 nominated configurations across all 63 exact campaign cells agree with the reference per matrix. `rows=124 q3=50 q5=41 q7=33 mismatches=0 unexecuted=0`, wall time 230 s, run started 03:22:05+03:00 inside the owner's window.
+- Receipt delivered: 124 nominated configurations across all 63 exact campaign cells agree with the reference per matrix. The run started inside the owner's window.
 - `code-review` first failed `86185f88` with two findings, both now closed:
   - **F1**: `campaign_selection.rs` carried the prior-run probe costs as a hand-written constant table, which `@/inv/behavioral-evidence-validity` names a staleness defect. The 28 observations now live in `probe-costs-de5f7414.csv`, parsed under a pinned SHA-256. Every row was verified to appear verbatim in the `de5f7414` grid receipts, and every per-cell budget is unchanged.
   - **F2**: the addendum mis-attributed the preamble's `git_worktree_dirty` flag to the CSV. `HostInfo::probe()` captures the flag before `open_csv` creates the CSV; it is the `.log`, which `tee` creates first.

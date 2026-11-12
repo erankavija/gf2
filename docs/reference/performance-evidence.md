@@ -101,7 +101,7 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
 - **gf2 path, `cutover.sh`:** `BchCode::encode_batch` at batch $1$, $16$, $256$
   and $4096$ (workload W1) and `BchCode::generator_matrix` (W2), against the
   pre-cutover revision (`BchEncoder::encode_batch` and the legacy
-  `generator_matrix`), over the five rows of `src/cutover/harness.rs`.
+  `generator_matrix`), over the five rows of `experiments/encode-compare/src/cutover/harness.rs`.
 - **Both:** messages are seeded; each arm takes its library's native format,
   converted before timing, and reproduces gf2's codewords before it is timed.
   gf2 builds with `-C target-cpu=native`.
@@ -177,9 +177,9 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
   prefix per size.
 - **gf2 path:** the unreduced carry-less long product `clmul_slice_overwrite`
   with the `simd` feature at $16$, $64$, $256$, $1000$, $1536$ and $2048$ words
-  (`SIZES` in `src/lib.rs`). Operands are seeded; the arms agree word for word
+  (`SIZES` in `experiments/clmul-compare/src/lib.rs`). Operands are seeded; the arms agree word for word
   before timing. One core, warm; a rate is the median of the samples
-  `src/lib.rs` states.
+  `experiments/clmul-compare/src/lib.rs` states.
 - **Harness:** [`experiments/clmul-compare`](../../experiments/clmul-compare/README.md);
   the harness times no reduced field product.
 - **Output:** the host and the SHA-256 of each measured binary and of the gf2x
@@ -201,7 +201,7 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
 - **Reference:** ISA-L `gf_vect_mad`, and M4RIE's fastest of `mzed_mul`,
   `mzed_mul_newton_john` and bitsliced `mzd_slice_mul_karatsuba`, at modulus
   `0x11D`, built as in [Reference builds](#reference-builds); a row reports the
-  fastest reference configuration. The reference arm `ext/arm.c` compiles with
+  fastest reference configuration. The reference arm `experiments/gf256-baselines/ext/arm.c` compiles with
   `cc -O2` and links `-lisal -lm4rie -lm4ri`.
 - **gf2 path:** `Gf2mField::gf256_axpy` and `Gf2mField::gf256_gemm`, and the
   generic `FieldVec::axpy` and `FieldMatrix` product over `Gf256`, on one pinned

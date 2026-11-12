@@ -56,7 +56,7 @@ it; `@/issue/45ecf975` waits on those, `@/issue/1aea3958` and
 - **Do NOT start a gate run on main without the other lead's hold.** A merge
   two seconds after the start moved the tree under the run.
 - **A cold `cargo-ci` exceeds the gate's 900 s timeout.** Warm the build with a
-  direct run first; a warm run took 394 s.
+  direct run first; a warm run fits within it.
 
 ## Open questions for the invoker
 

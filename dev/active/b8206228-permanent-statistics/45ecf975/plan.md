@@ -2,7 +2,7 @@
 
 ## Context
 
-`@/inv/experiment-library-separation` makes about 17,600 lines of permanent campaign code in `gf2-sim` a defect, along with other campaign code. Measuring where experiment data should live also showed 3.9 GB in the tree against 13.6 MB of `crates/`. Of that, 2.9 GB is copied `inputs/` and 411 MB is `source-inputs/`. Actual results (`simulation_results`) are 2.4 MB.
+`@/inv/library-first-generality` makes permanent campaign code in `gf2-sim` a defect, along with other campaign code. The tree review also determined where experiment data should live.
 
 Owner decisions from the interview:
 
@@ -13,7 +13,7 @@ Owner decisions from the interview:
 | Code home | `experiments/<name>/` at repo root. `dev/` is for developer documentation. |
 | Shared mechanics | `experiments/common` |
 | Other experiment code | All in this effort |
-| `gf2-stats` | Keep `binomial`, `intervals`, `weighted`. Delete `accumulator.rs` and the zero-floor wrapper. Move `sampler.rs`. |
+| `gf2-stats` | Keep `binomial`, `intervals`, `weighted`. Delete the `accumulator` module and the zero-floor wrapper. Move `sampler.rs`. |
 | Tracking | Tasks under epic `b8206228` |
 | Snapshots | Stop and purge right away |
 | Purge depth | Inputs plus raw logs and perf data |
@@ -27,14 +27,14 @@ Default is delete. Code moves only if an epic criterion or a live consumer needs
 - `inputs/`, `source-inputs/`
 - `*.log`, `*.err`, perf `*.data`, `*.zst`, raw `test-logs/`
 
-Keep receipts, summaries, CSV, TSV, and every `execution.log` and execution journal (`@/inv/campaign-resumability` makes these authoritative).
+Receipts, summaries, CSV and TSV result tables, execution logs and execution journals leave the tree too: under `@/inv/committed-evidence-budget` the repository keeps the harness and its configuration, and a run writes its records outside the tracked tree.
 
-Exempt until landed or closed: `dev/active/55c3e433-aff3ct-ldpc-gaps`, `02b8137c`, `.agents/`, and `bench-window/` (the armed timer runs `run-window.sh`).
+Exempt until landed or closed: the `55c3e433` AFF3CT LDPC gaps directory, `02b8137c`, `.agents/`, and `bench-window/` (the armed timer runs `run-window.sh`).
 
 **A2. Remove the rule and its tooling.**
 - Replace the "receipt carries every input" paragraph in `AGENTS.md`: receipts hold results, configuration and digests, and the source revision is the rebuild pointer.
-- Delete `check-receipt-input-snapshots.py`, `receipt-input-omissions.json` and their `scripts/cargo-ci.sh` steps.
-- Stop snapshot writing in `dev/tools/tuning-campaign-support/src/receipt.rs`, `src/bin/benchmark-ab-runner.rs`, `src/bin/tuning-extent-campaign-driver.rs`. Update `dev/scripts/validate-tuning-extent-campaign.py`.
+- Delete the receipt-input snapshot check, its omission list and their `scripts/cargo-ci.sh` steps.
+- Stop snapshot writing in `dev/tools/tuning-campaign-support/src/receipt.rs`, `dev/tools/tuning-campaign-support/src/bin/benchmark-ab-runner.rs`, `dev/tools/tuning-campaign-support/src/bin/tuning-extent-campaign-driver.rs`. Update `dev/scripts/validate-tuning-extent-campaign.py`.
 - Remove `inputs/` entries from `contrib/gates/docs-mechanical-baseline.md`. This resolves the open docs-mechanical question.
 - Fix or delete every CI step and test that read purged files. A check that only re-verifies purged bytes is deleted.
 
@@ -56,7 +56,7 @@ Starts only when the window has ended and 55c3e433's pilots are collected and co
 5. Force-push all refs. Reseat the local checkout and the 17 worktrees by runbook, preserving untracked built arms in the pinned ones. Ask for GitHub cache cleanup if old objects stay reachable.
 6. Commit the old-to-new commit map, compressed, under the budget. Note in `AGENTS.md` that commit IDs recorded before the rewrite resolve through it, and record this as the single exception to immutable `main`.
 
-Recorded commit IDs in receipts and tracker text are not rewritten. `@/inv/behavioral-evidence-validity` already says they never decide acceptance. The rehearsal must surface any tool that still depends on them.
+Recorded commit IDs in receipts and tracker text are not rewritten. `@/inv/campaign-evidence` already says they never decide acceptance. The rehearsal must surface any tool that still depends on them.
 
 ## Phase C: separate experiments
 
@@ -66,14 +66,14 @@ Create as tasks under `b8206228`, labelled `epic:permanent-statistics`, each wit
 |---|---|---|
 | C1 Home | `experiments/` as workspace members. `experiments/common` with identity types, provenance observation, atomic publish, each with two real consumers. File a tracked convergence issue with `tuning-campaign-support`'s copies (`@/inv/convention-convergence`). Update `AGENTS.md`, `dev/index.md`. | Claude Opus |
 | C2 `gf2-stats` | As decided. Local draw helper for `gf2-algebra` tests. | Luna |
-| C3 Rare event | Move sampler and `runner.rs` to `experiments/permanent-statistics` on `gf2-sim::checkpoint` and one log. Delete `artifact.rs`, `artifact/*`. Amend `3f664839`-derived issue text where it names the artifact system. | Sol |
+| C3 Rare event | Move sampler and `runner.rs` to `experiments/permanent-statistics` on `gf2-sim::checkpoint` and one log. Delete the `permanent_rare_event::artifact` module. Amend `3f664839`-derived issue text where it names the artifact system. | Sol |
 | C4 Campaign | Rebuild small in the same crate. Keep exact-anchor checks, sampling, scheduling with HIP, statistics, resume, dataset schema, closed-set identity. Delete continuation and frozen decoders, git-dependent acceptance, emission approval, `root_fs`, hard-coded paths, `FROZEN_*`, experiment paper types as compiled enums (move to data). `build.rs` version stamp moves with it. | Claude Opus designs, Sol implements |
 | C5 Re-freeze | New protocol, campaign id and preregistration under `experiments/permanent-statistics/`. Drop "identical source revision" and "clean closure" clauses that conflict with the invariant. Retire the unused draft dataset. Reject `02b8137c` and `02ed3c51` as superseded. New validation task. Rewire arms onto it and `scripts/permanent_zero_fraction_analysis.py`, `.config/nextest.toml`. | Claude Opus |
 | C6 Validation | Queue line for the overnight window. Campaign draws still need the owner's separate go. | Lead |
 | C7 Delete one-shots | Six throughput and receipt binaries in `gf2-sim/src/bin`; four `gf2-algebra` examples. Trace remaining references first. Reasons in the commit. | Luna |
 | C8 Move OSD, DVB-T2 | `osd_campaign.rs`, `ebch_osd_awgn_campaign`, `dvb_t2_awgn_campaign` and their tests. Drop `rand08` and other experiment-only dependencies from `gf2-sim`. | Sol |
 | C9 Aff3ct comparison | `ldpc_bler_sweep`, `export_alist`, `bler_sweep.rs`, `ComparisonCode`. **Last, after coordinating with 55c3e433's lead**, because its harness uses them. | Sol |
-| C10 Mixed items | `dvb_t2_bicm_harness.rs` baseline parts to `baseline_runner`; `RicianConfig::fig*` to config; `failure.rs` default `dev/` path. Audit report for benches and remaining judgement calls; move or file each. | Luna |
+| C10 Mixed items | Remove baseline-specific parts from `dvb_t2_bicm_harness.rs`; move `RicianConfig::fig*` to config; resolve `failure.rs` default `dev/` path. Audit report for benches and remaining judgement calls; move or file each. | Luna |
 
 Order: A1, A2, A3, B, C1, then C2/C3/C7 in parallel, C4, C5, C6, C8, C10, C9.
 

@@ -133,7 +133,6 @@
   },
   "surfaced_pitfalls": [
     "The window runner waits for a quiet host only before its first job; a single-core job queued after a multi-worker job starts in that job's load tail. Order single-core lines first or add a per-job quiet wait.",
-    "docs/reference/performance-evidence.md commits measured ratios; whether it is a decision record under committed-evidence-budget needs an owner ruling.",
     "Gate runs on the main checkout stall the other lead's merges; a fast-tier test timed out at 15 s under three concurrent worker builds. Run cargo-ci when worker builds are idle.",
     "jit doc add scans linked documents for assets by default; use --skip-scan for pinned historical pages"
   ],

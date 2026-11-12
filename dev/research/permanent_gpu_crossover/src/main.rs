@@ -41,13 +41,9 @@ mod harness {
 
     /// Matrix dimensions swept at the **fixed batch size** specified by [`BATCH_SIZE`].
     ///
-    /// The sweep is restricted to `n ∈ {24, 28}` so the CPU SIMD side completes within the
-    /// per-cell wall-clock budget (~5 min CPU at n=24, ~14 min CPU at n=28). Larger `n` at
-    /// `M = 256` is impractical: CPU SIMD time grows as `M × n × 2^n`, putting n=32 at
-    /// ~13,500 s of CPU wall-clock per repetition (~3.7 h). The crossover question at the
-    /// production batch size is fully answerable from these two points: the GPU wins at
-    /// both with comparable speedup, so the crossover threshold (at M=256) lies below the
-    /// smallest tested n.
+    /// The sweep compares the CPU SIMD and GPU paths at `n ∈ {24, 28}` with a
+    /// fixed production batch size. CPU work grows with `M × n × 2^n`, so the
+    /// sweep focuses on dimensions where both paths can be run by the harness.
     pub const N_VALUES: &[usize] = &[24, 28];
 
     /// Fixed batch size for both CPU and GPU paths. The criterion requires a single

@@ -476,7 +476,7 @@ def plot_gpu_crossover(input_dir: Path, output_dir: Path) -> Path:
         na_ns = [n for n, r, w in zip(ns, ratios, gpu_wins_flags) if r is None]
         if na_ns:
             na_text = "N/A: " + ", ".join(f"n={n}" for n in na_ns)
-            ax_ratio.text(0.97, 0.05, na_text + "\n(GPU killed; est. >37 min)",
+            ax_ratio.text(0.97, 0.05, na_text + "\n(GPU killed; no timing)",
                           transform=ax_ratio.transAxes, fontsize=7,
                           ha="right", va="bottom",
                           bbox=dict(boxstyle="round,pad=0.3", facecolor="#f8d7da", alpha=0.8))

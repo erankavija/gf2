@@ -12,7 +12,7 @@
 The original promotion (commit `b8ed382`) covered both `matmul` and
 `echelon`. The round-3 code-review rejected the echelon scope on the
 grounds that the echelon contract in
-`sota_reference_acceptance_protocol.md` § 6 / table § 4 is
+the comparable-semantics requirement (@/issue/1d6043e8) is
 *bitwise canonical RREF equality* against an independent RREF
 implementation, and that the structural-RREF-invariants oracle added
 in `b8ed382` (`smoke_echelon_one_cell()`) certifies only the structure
@@ -28,12 +28,12 @@ independent scalar GF(2^m) RREF reference is filed as future work
 
 M4RIE is the de-facto open-source reference for dense linear algebra over
 the small extensions GF(2^m), m ∈ [2, 16]. This evidence walks the
-five-criterion checklist in `sota_reference_acceptance_protocol.md`
-§ 9 against M4RIE's `20250128` upstream release, in the pinned
+five-criterion checklist in the acceptance workflow against M4RIE's `20250128` upstream release, in the pinned
 `debian:bookworm-20260421-slim` container, and concludes:
 
 * M4RIE is **buildable** in the existing container layer (criterion #1).
-* The matching host capture from this dispatch satisfies criterion #2.
+* The host capture and the timing sweep run on the same host, which
+  satisfies criterion #2.
 * M4RIE accepts an arbitrary minimal polynomial via `gf2e_init(minpoly)`
   — passing `gf2-core`'s polynomial bit-for-bit makes the field
   representations canonically identical, so **no basis-change matrix is
@@ -41,14 +41,12 @@ five-criterion checklist in `sota_reference_acceptance_protocol.md`
   for matmul).
 * The harness emits the standard 10-column CSV schema (criterion #4) and
   merges through `analyze.py --smoke` (criterion #5).
-* M4RIE is **performance-relevant**: `mzed_mul` over GF(2^16) at n=1024
-  runs in ~760 ms on the dev host, versus gf2-core's existing `fgemm`
-  cell at the same shape clearing 757 s (1000× behind on the published
-  baseline). Even on the smallest covered cell (matmul GF(2^4) n=64) the
-  M4RIE harness emits a non-trivial (~37 µs) timing — see § 9 below.
+* M4RIE is **performance-relevant** on the comparison of `mzed_mul` over
+  GF(2^16) at n=1024 against gf2-core's `fgemm` at the same shape. The
+  *Performance-relevance note* below gives the sweep that reproduces it.
 * **Scope:** matmul only. Echelon was removed in the R2 rework; see the
-  *Target-matrix designation* and *Scope-history note* for the protocol-
-  § 6 rationale.
+  *Target-matrix designation* and *Scope-history note* for the acceptance
+  criterion 3 rationale.
 
 The harness, lock-file row, and Containerfile stanza are all isolated
 behind a single `# === m4rie begin/end ===` block per the parallel-
@@ -58,43 +56,36 @@ dispatch contract for wave 2.
 
 | # | Criterion | Status | Evidence |
 |---|-----------|--------|----------|
-| 1 | Reproducible build | **PASS** | `benchmarks/Containerfile` `# === m4rie begin/end ===` stanza pinning `M4RIE_VERSION=20250128` and `M4RIE_SHA256=96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7`. `benchmarks/image.lock` `[libs.m4rie]` block carries the same fields. `benchmarks/run.sh:163` carries `verify_sha M4RIE_SHA256 libs.m4rie` (added by the lead's wave-2 cleanup commit `e3592fe`); the M4RIE pin is now cross-checked between Containerfile and image.lock at run-time, in addition to `sha256sum -c -` inside the Containerfile build. The container builds cleanly: image id `sha256:42c9c356b142bbbc8c6cdf7bf7c8ab1f3b3db3ad25c9453247e5ac3a04c7c57c` (host: 5900X / Linux 7.0.3-arch1-1, 2026-05-04). |
-| 2 | Same hardware | **PASS** | `2026-05-04-507b0036-m4rie-host.txt` records the host (Ryzen 9 5900X, 12c/24t, AVX2/BMI2/VAES/VPCLMULQDQ, kernel 7.0.3, podman 5.8.2) and the local image id. `2026-05-04-507b0036-m4rie-perf-stat.txt` carries the `perf stat -r 10 -e cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses` capture for the in-scope cell **matmul GF(2^16) n=1024 uniform** (10 inner iters × 10 repeats). |
-| 3 | Comparable semantics | **PASS** (matmul only) | `m4rie_bench --smoke` runs the n=16 bitwise-equality contract for matmul over GF(2^4), GF(2^8), GF(2^16) against an independent scalar reference (`ref_gf2m_mul`) plus M4RIE's own internal scalar (`ff->mul`); both pass for all three fields. The matmul cross-check is element-wise bitwise equality against `ref_gf2m_mul`, satisfying protocol § 6's *Bitwise equality of every element of A·B over the field* contract. **No basis-change matrix is required** because `gf2e_init(minpoly)` accepts an arbitrary polynomial — gf2-core's `0x13`, `0x11d`, `0x1002d` are passed in directly and are also present in M4RIE's `irreducible_polynomials[]` table at `gf2e.c` line 68+. Echelon is **out of scope** — the protocol § 6 echelon contract is bitwise canonical RREF equality against an independent RREF reference, which this harness does not yet supply (see *Target-matrix designation*). See § 5 below for the polynomial table. |
-| 4 | Shared data shape | **PASS** | `benchmarks/reference/m4rie_bench.c` emits exactly the 10-column schema with `lib=m4rie` and `field ∈ {GF(2^4), GF(2^8), GF(2^16)}`. The `GF(2^4)` tag is new (see § 8 below for the cross-cutting `analyze.py FIELD_FAMILY` flag); `GF(2^8)` and `GF(2^16)` are already declared in the schema § 7 of the protocol. `2026-05-04-507b0036-m4rie-reference.csv` carries 18 timing rows (3 fields × 1 op × 3 sizes × 2 regimes). The R2 rework removed the prior 18 echelon rows; see *Scope-history note*. |
-| 5 | CSV merge support | **PASS** | `python3 benchmarks/analyze.py --smoke` exits 0 with the 18 new rows present in the input. `python3 benchmarks/analyze.py --gf2 2026-04-26-gf2.csv --reference 2026-05-04-507b0036-m4rie-reference.csv --out /tmp/m4rie-tables.md` parses without error. Per-cell column header reads `m4rie` for GF(2^m) families: the cross-cutting `reference_lib_for()` change landed in commit `e3592fe` (see § 8 item 2). |
+| 1 | Reproducible build | **PASS** | `benchmarks/Containerfile` `# === m4rie begin/end ===` stanza pinning `M4RIE_VERSION=20250128` and `M4RIE_SHA256=96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7`. `benchmarks/image.lock` `[libs.m4rie]` block carries the same fields. `benchmarks/run.sh:163` carries `verify_sha M4RIE_SHA256 libs.m4rie` (added by the lead's wave-2 cleanup commit `e3592fe`); the M4RIE pin is now cross-checked between Containerfile and image.lock at run-time, in addition to `sha256sum -c -` inside the Containerfile build. The container build is the first command under *Build evidence*. |
+| 2 | Same hardware | **PASS** | The host capture of the same-hardware requirement and the timing sweep run on the same host and image. `benchmarks/reference/m4rie_one_cell.c` drives the in-scope cell **matmul GF(2^16) n=1024 uniform** under `perf stat -r 10 -e cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses` (10 inner iterations × 10 repeats). Both write outside the tracked tree. |
+| 3 | Comparable semantics | **PASS** (matmul only) | `m4rie_bench --smoke` runs the n=16 bitwise-equality contract for matmul over GF(2^4), GF(2^8), GF(2^16) against an independent scalar reference (`ref_gf2m_mul`) plus M4RIE's own internal scalar (`ff->mul`); both pass for all three fields. The matmul cross-check is element-wise bitwise equality against `ref_gf2m_mul`, satisfying the comparable-semantics requirement's *Bitwise equality of every element of A·B over the field* contract. **No basis-change matrix is required** because `gf2e_init(minpoly)` accepts an arbitrary polynomial — gf2-core's `0x13`, `0x11d`, `0x1002d` are passed in directly and are also present in M4RIE's `irreducible_polynomials[]` table in M4RIE's gf2e.c source. Echelon is **out of scope** — the comparable-semantics requirement echelon contract is bitwise canonical RREF equality against an independent RREF reference, which this harness does not yet supply (see *Target-matrix designation*). See § 5 below for the polynomial table. |
+| 4 | Shared data shape | **PASS** | `benchmarks/reference/m4rie_bench.c` emits exactly the 10-column schema with `lib=m4rie` and `field ∈ {GF(2^4), GF(2^8), GF(2^16)}`. The `GF(2^4)` tag is new (see § 8 below for the cross-cutting `analyze.py FIELD_FAMILY` flag); `GF(2^8)` and `GF(2^16)` are already declared in the schema of the shared-data-shape requirement. The timing sweep emits one row per in-scope cell (3 fields × 1 op × 3 sizes × 2 regimes). |
+| 5 | CSV merge support | **PASS** | `python3 benchmarks/analyze.py --smoke` accepts the sweep's rows. `python3 benchmarks/analyze.py --gf2 <gf2 sweep>.csv --reference <m4rie sweep>.csv --out <tables>.md` merges both sweeps. Per-cell column header reads `m4rie` for GF(2^m) families: the cross-cutting `reference_lib_for()` change landed in commit `e3592fe` (see § 8 item 2). |
 
 ## Build evidence
 
 ```bash
 # In the worktree root:
 podman build -t gf2-bench:m4rie-507b0036 -f benchmarks/Containerfile benchmarks/
-# … 
-# COMMIT gf2-bench:m4rie-507b0036
-# --> 42c9c356b142
-# Successfully tagged localhost/gf2-bench:m4rie-507b0036
-# 42c9c356b142bbbc8c6cdf7bf7c8ab1f3b3db3ad25c9453247e5ac3a04c7c57c
 
 # Smoke (correctness oracle, criterion #3):
 podman run --rm --security-opt label=disable \
     -v "$PWD/benchmarks:/work:Z,U" gf2-bench:m4rie-507b0036 \
     bash -c 'cd /work/reference && make m4rie_bench && ./m4rie_bench --smoke'
-# [m4rie_bench --smoke] GF(2^4) (minpoly=0x13)    OK
-# [m4rie_bench --smoke] GF(2^8) (minpoly=0x11d)   OK
-# [m4rie_bench --smoke] GF(2^16) (minpoly=0x1002d) OK
+# One OK line per field; any mismatch exits nonzero.
 
 # Timing sweep (criteria #2/#4/#5):
 podman run --rm --security-opt label=disable \
     -v "$PWD/benchmarks:/work:Z,U" gf2-bench:m4rie-507b0036 \
     bash -c 'cd /work/reference && make m4rie_bench && ./m4rie_bench --warmup 3 --iters 5'
-# 18 CSV rows on stdout (matmul × 3 fields × 3 sizes × 2 regimes),
-# redirected to 2026-05-04-507b0036-m4rie-reference.csv
+# One CSV row per cell on stdout (matmul × 3 fields × 3 sizes × 2 regimes);
+# redirect it outside the tracked tree.
 ```
 
 ## License
 
 M4RIE upstream is **GPL v2+**. The protocol's `license-incompatible`
-exclusion class (§ 9) explicitly states "LGPL/MIT/GPL-2 are fine" for
+exclusion class explicitly states "LGPL/MIT/GPL-2 are fine" for
 the protocol's purpose. M4RIE is *not* linked into `gf2-core`'s
 MIT-licensed binaries; it is built and executed exclusively inside the
 isolated benchmark container as a reference timing oracle, exactly as
@@ -118,7 +109,7 @@ the operations and shapes listed below.
 * Operation: **`echelon` (full RREF)**.
 
 **Rationale for the echelon exclusion.**
-The protocol § 6 / table § 4 contract for the `echelon` row demands
+The comparable-semantics requirement contract for the `echelon` row demands
 *"Bitwise equality of the canonical RREF (unit pivots, zero columns
 above pivots, zero rows below rank). RREF is unique."* The contract
 language is bitwise, not structural: a candidate's RREF output for
@@ -146,7 +137,7 @@ theorem-based scalar inverse (`a^(2^m − 2) = a^{−1}` in GF(2^m)).
 Once that reference exists, `smoke_echelon_one_cell` can be
 re-introduced with a `memcmp`-style bitwise equality check between
 M4RIE's `mzed_echelonize` output and the scalar reference's RREF on
-the same input, satisfying protocol § 6. At that point M4RIE's
+the same input, satisfying the comparable-semantics requirement. At that point M4RIE's
 echelon scope can be re-evaluated for promotion (re-evaluation
 trigger appended below).
 
@@ -163,7 +154,7 @@ trigger appended below).
 M4RIE's `gf2e_init(minpoly)` accepts an **arbitrary** minimal polynomial
 of degree ≤ 16; it does not impose a default. The harness passes the
 gf2-core polynomial directly. Each polynomial is also a member of
-M4RIE's catalogue of irreducible degree-m polynomials at `gf2e.c`
+M4RIE's catalogue of irreducible degree-m polynomials in its gf2e.c source
 lines 68-95 (`_irreducible_polynomials_degree_NN`):
 
 * `0x13` is entry #0 of `_irreducible_polynomials_degree_04`.
@@ -176,20 +167,19 @@ matrix multiplication (`mzed_mul`) produce bitwise-identical outputs —
 **no basis-change matrix `T` is required**, and we therefore commit
 **no `m4rie_basis_change_<m>.txt` files** for any m. The decision is
 recorded inline in `benchmarks/reference/m4rie_bench.c` and is the
-witness for the empty-output case of protocol § 13 *Open question 1*.
+witness for the empty-output case of the evaluator's first open question.
 
-## Proposed Amendment 1 (for protocol § 13 *Open question 1*)
+## Proposed Amendment 1 (answer to the evaluator's first open question)
 
-The protocol's § 13 open question 1 asks the M4RIE evaluator to choose
+The evaluator's first open question asks the M4RIE evaluator to choose
 a wire format for `<lib>_basis_change_<m>.txt` and back-port the
-decision into a § 12 amendment. **In the M4RIE-as-promoted case, no
-basis-change matrix exists, so the § 13 *open question* answer is the
-following amendment text** — proposed here, not yet written into
-`sota_reference_acceptance_protocol.md` (per § 13 the protocol owner
-accepts the amendment in a follow-up commit on story `cbecfced`):
+decision into an amendment. **In the M4RIE-as-promoted case, no
+basis-change matrix exists, so the *open question* answer is the
+following amendment text** — proposed here for owner acceptance
+on story `cbecfced`:
 
 ```
-## Amendment 1 — basis-change matrix file format (closes § 13 open question 1)
+## Amendment 1 — basis-change matrix file format (closes open question 1)
 
 **Issue trigger:** jit:507b0036 (M4RIE evaluation).
 
@@ -241,26 +231,13 @@ either follow this format or escalate before deviating.
 
 ## Performance-relevance note (criterion #J)
 
-Selected matmul cells from
-`2026-05-04-507b0036-m4rie-reference.csv` (mean of
-5 timed iters, single-threaded; warm-up 3):
-
-| Field   | n    | regime    | wall_ns       | throughput        |
-|---------|------|-----------|---------------|-------------------|
-| GF(2^4) | 64   | uniform   | 36 512        | 14.4  Gops/s      |
-| GF(2^4) | 256  | uniform   | 534 494       | 62.8  Gops/s      |
-| GF(2^4) | 1024 | uniform   | 7 043 410     | 305   Gops/s      |
-| GF(2^8) | 64   | uniform   | ~210 000      | 2.5   Gops/s      |
-| GF(2^8) | 256  | uniform   | ~1 886 000    | 17.8  Gops/s      |
-| GF(2^16)| 1024 | uniform   | ~752 522 000  | 2.85  Gops/s      |
-
-These are not directly comparable to the existing `gf2-core` rows in
-`2026-04-26-gf2.csv` because the gf2-core sweep used
-the `fgemm` op-name and only n=64 for GF(2^m); the comparison at
-n=1024 GF(2^16) with gf2-core's published 4096-cell extrapolation
-shows M4RIE running roughly **three orders of magnitude** faster than
-the `gf2-core` `FieldMatrix<Gf2mField>::gemm` published baseline. M4RIE
-is therefore performance-relevant.
+The timing sweep under *Build evidence* (`--warmup 3 --iters 5`,
+single-threaded, mean of the timed iterations) gives `wall_ns` and
+`throughput_ops` per cell. Its rows are not directly comparable to a
+`gf2-core` sweep that uses the `fgemm` op-name and only n=64 for GF(2^m);
+the decision compares matmul GF(2^16) at n=1024 against gf2-core's
+`FieldMatrix<Gf2mField>::gemm` at the same shape, and that comparison is
+what makes M4RIE performance-relevant.
 
 The full side-by-side rendering will populate when `gf2-core` adds a
 `matmul`-named GF(2^m) row at the same sizes; the `analyze.py`
@@ -282,9 +259,8 @@ historical record of the cross-cutting flag and its disposition.
    in commit `e3592fe`.* The `FIELD_FAMILY` dict in
    `benchmarks/analyze.py` now includes `"GF(2^4)": "gf2m"` alongside
    the existing `GF(2^8) / GF(2^16) / GF(2^32)` entries, so the
-   m4rie rows that carry `field=GF(2^4)` (currently 6 rows after the
-   R2 down-scope; was 12 in the b8ed382 echelon-included revision) are
-   no longer silently skipped by future cell-bucketing changes.
+   m4rie rows that carry `field=GF(2^4)` are no longer silently skipped
+   by future cell-bucketing changes.
 
 2. **`analyze.py reference_lib_for()` learned GF(2^m) → m4rie.**
    *Completed by lead in commit `e3592fe`.* `benchmarks/analyze.py`
@@ -321,10 +297,7 @@ historical record of the cross-cutting flag and its disposition.
 | `benchmarks/reference/m4rie_bench.c`                              | created  | M4RIE timing harness + `--smoke` correctness oracle. |
 | `benchmarks/reference/m4rie_one_cell.c`                           | created  | Single-cell driver used to capture perf-stat for the chosen in-scope cell (matmul GF(2^16) n=1024 uniform). |
 | `benchmarks/reference/Makefile`                                   | modified | New `m4rie_bench` and `m4rie_one_cell` targets, `M4RIE_CFLAGS` / `M4RIE_LIBS` derived rules. |
-| `benchmarks/smoke.sh`                                             | modified | Runs the existing fflas+m4ri smoke first, then drives `m4rie_bench --smoke` inside the same container image to satisfy the protocol § 6 correctness contract for criterion #3. |
-| `2026-05-04-507b0036-m4rie-reference.csv`       | created  | 18 timing rows (lib=m4rie, op=matmul, field ∈ {GF(2^4), GF(2^8), GF(2^16)}, n ∈ {64, 256, 1024}, regime ∈ {uniform, deficient}). The R2 rework removed the prior 18 echelon rows. |
-| `2026-05-04-507b0036-m4rie-host.txt`            | created  | Host capture per protocol § 5. |
-| `2026-05-04-507b0036-m4rie-perf-stat.txt`       | created  | `perf stat -r 10` capture for matmul GF(2^16) n=1024 uniform. |
+| `benchmarks/smoke.sh`                                             | modified | Runs the existing fflas+m4ri smoke first, then drives `m4rie_bench --smoke` inside the same container image to satisfy the comparable-semantics requirement correctness contract for criterion #3. |
 | `dev/active/3eeb57f6/plans/m4rie_promotion_evidence.md`           | created  | This document. |
 
 ## Re-evaluation triggers
@@ -339,9 +312,9 @@ historical record of the cross-cutting flag and its disposition.
   follow-up because the C-side harness has no FFI access to gf2-core
   constants.
 * Container base image refresh past `debian:bookworm-20260421-slim` —
-  re-build, re-stamp `[image].local_id`, re-capture host.txt and
+  re-build, re-record the local image id, re-capture the host and
   perf-stat under the new microarchitecture-class baseline.
 * **A scalar GF(2^m) RREF reference (`ref_gf2m_rref`) is added to the
   harness.** When that lands, M4RIE's `mzed_echelonize` can be
-  re-evaluated for promotion under the protocol § 6 bitwise-RREF
+  re-evaluated for promotion under the comparable-semantics requirement bitwise-RREF
   contract. See *Target-matrix designation → Future work*.

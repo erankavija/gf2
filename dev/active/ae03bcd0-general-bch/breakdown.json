@@ -1667,7 +1667,7 @@
     "footprint": {
      "touches": [
       "ebch_osd_awgn_campaign.rs",
-      "gpu_bch_syndrome_throughput.rs",
+      "the GPU BCH syndrome throughput binary",
       "ebch_osd_campaign_cli.rs",
       "crates/gf2-sim/tests/gpu_byte_identity.rs",
       "osd_campaign_protocol.rs"
@@ -1758,7 +1758,7 @@
     "footprint": {
      "touches": [
       "crates/gf2-coding/src/bch/core.rs",
-      "extended.rs",
+      "the extended BCH module",
       "crates/gf2-coding/src/bch/mod.rs"
      ]
     }
@@ -1798,10 +1798,7 @@
     "worker_sized_reason": "A prose sweep over a named file set",
     "footprint": {
      "touches": [
-      "crates/gf2-coding/README.md",
-      "SYSTEMATIC_ENCODING_CONVENTION.md",
-      "PARALLELIZATION.md",
-      "PRIMITIVE_POLYNOMIALS.md"
+      "crates/gf2-coding/README.md"
      ]
     }
    },
@@ -1844,7 +1841,7 @@
     "worker_sized_reason": "Single sketch document; no proof code",
     "footprint": {
      "creates": [
-      "proof-sketch.md"
+      "a proof sketch document"
      ]
     }
    },
@@ -2185,7 +2182,7 @@
     "worker_sized_reason": "Single survey document with receipts; no library code",
     "footprint": {
      "creates": [
-      "baseline-survey.md"
+      "a baseline survey document"
      ]
     }
    },
@@ -2275,9 +2272,7 @@
     "test_boundary": "receipt review against the predeclared protocol",
     "worker_sized_reason": "One measurement-and-receipt campaign over finished benches",
     "footprint": {
-     "creates": [
-      "ae03bcd0-bch-encode-receipts.md"
-     ]
+     "creates": []
     }
    },
    "landing_group": "performance"

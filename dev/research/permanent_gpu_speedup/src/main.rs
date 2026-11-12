@@ -1,4 +1,4 @@
-// S1g (jit:9480f8a6): GPU 50x speedup measurement vs reference for permanent_bipedal3 (F_3).
+// S1g (jit:9480f8a6): GPU speedup harness for permanent_bipedal3 (F_3).
 //
 // Measures the speedup of the batched GPU path (`permanent_batch_bipedal3`) over the
 // single-thread reference (`permanent_mod3_reference`) at n ∈ {24, 28, 32, 36}.
@@ -8,16 +8,13 @@
 // (`target/benchmarks/gf2_algebra_permanent/s1_speedup-<SA_DATE|today>.csv`, rows
 // impl=permanent_mod3_reference; falls back to the newest s1_speedup-*.csv). They
 // are NOT hard-coded — this keeps the one-command repro SSOT/end-to-end (S1g
-// speedup derives from THIS run's S1 measurement). Given the committed
-// s1_speedup-2026-05-11.csv the loaded values reproduce the committed
-// s1g_gpu_speedup CSV's ratios byte-for-byte. The GPU contender time is measured
-// by batching M matrices through `permanent_batch_bipedal3` and reporting the
+// speedup derives from THIS run's S1 measurement. The GPU contender time is
+// measured by batching M matrices through `permanent_batch_bipedal3` and reporting the
 // per-matrix-equivalent GPU time as T_gpu = total_wallclock / M. The speedup
 // ratio is T_reference / T_gpu.
 //
-// Batch size: M=80 is chosen so that ceil(M/80)=1 round on gfx1030 (80 CUs). All M blocks
-// run in parallel, so the total wall-clock equals 1 GPU-block time at each n. Measured:
-// n=32 M=80 ≈ 452 s/rep; n=36 M=80 ≈ 452×16 ≈ 7226 s/rep (~2 h). T_gpu_equiv = total/M.
+// Batch size: M=80 fills one scheduling round on gfx1030 (80 CUs). All M blocks
+// run in parallel. T_gpu_equiv = total_wallclock / M.
 //
 // Build and run (requires ROCm + gfx1030):
 //   cargo build --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml \
@@ -63,12 +60,9 @@ mod harness {
 
     /// Batch size chosen to fill exactly one GPU scheduling round on gfx1030
     /// (80 compute units, 1 block per matrix).  With M=80, ceil(M/80)=1 round.
-    /// This minimises wall-clock at n=36 while maximising the per-matrix-
-    /// equivalent speedup from batching.
+    /// This keeps all matrices in one scheduling round.
     ///
     /// Per-matrix-equivalent GPU time: T_gpu_equiv = total_wallclock / M.
-    /// Measured at n=32: total ≈ 452 s → T_gpu_equiv = 452/80 ≈ 5.65 s → speedup ≈ 88.6×.
-    /// Estimated at n=36: total ≈ 7226 s → T_gpu_equiv ≈ 90.3 s → speedup ≈ 100×.
     pub const BATCH_SIZE: usize = 80;
 
     /// Number of timed repetitions per cell; the median is reported.
@@ -95,10 +89,6 @@ mod harness {
     // CSV resolution (same approach as the S3 Part-A reader):
     //   1. target/benchmarks/gf2_algebra_permanent/s1_speedup-<SA_DATE|today>.csv
     //   2. fall back to the newest s1_speedup-*.csv in that directory.
-    // Given the committed s1_speedup-2026-05-11.csv the loaded values are
-    // {1.473800, 27.360000, 500.027842, 9030.740871} s, identical to the
-    // numbers previously embedded, so the computed ratios are unchanged and
-    // still match the committed s1g_gpu_speedup CSV.
     // -----------------------------------------------------------------------
 
     /// Load the S1 reference wall-clock times (seconds) for `N_VALUES` from
@@ -286,7 +276,7 @@ mod harness {
 
         write_csv_header_common(
             &mut csv_file,
-            "S1g (jit:9480f8a6) GPU 50x speedup measurement for permanent_bipedal3 (F_3)",
+            "S1g (jit:9480f8a6) GPU speedup measurement for permanent_bipedal3 (F_3)",
             &hw,
             &commit_sha,
             &rustc_ver,
@@ -301,7 +291,7 @@ mod harness {
         .unwrap();
 
         // Header.
-        println!("S1g (jit:9480f8a6) — GPU 50x speedup measurement for permanent_bipedal3");
+        println!("S1g (jit:9480f8a6) — GPU speedup measurement for permanent_bipedal3");
         println!("  commit: {commit_sha}  rustc: {rustc_ver}");
         println!("  cpu: {}", hw.cpu_model);
         println!(

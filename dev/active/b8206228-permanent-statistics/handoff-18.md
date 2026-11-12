@@ -33,7 +33,7 @@
 
 ### `research-review` on `7a816262` fails at Tier 1 — unresolved
 
-- The failure is in the deterministic Tier 1 citation check, not the AI methodology review, and it took 117 ms.
+- The failure is in the deterministic Tier 1 citation check, not the AI methodology review.
 - `7a816262` owns **no** `cites:` label. Its dependencies do: `9c5b26fb` owns `cites:GGK2025`, `cites:HKS2026`, `cites:Scheinerman2024`, and `0de41c82` owns `cites:Scheinerman2024`.
 - `contrib/gates/research-review.sh` Tier 1 check 3 greps the whole gate context file for `cites:<key>` tokens. That context embeds each dependency's **labels** but only dependency **titles**, never dependency descriptions. So the check demands a `[GGK2025]` bracketed citation in text that structurally cannot contain one, and reports exactly the union of the dependencies' three keys.
 - Contrast case proving the check normally works: `a82f2dd9` failed the same check on `cites:Yue2022`, but `a82f2dd9` **owns** that label, so that was genuine label/text drift on the issue itself.

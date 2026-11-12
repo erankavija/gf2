@@ -24,7 +24,7 @@ model; perfect receiver CSI. No code is changed by this document.
 | Fan-in concat / split-half know four canonical batch types, rebuilding `SymbolBatch` from `i`, `q` only | `executor/topology.rs:751-779, 786-818` |
 | Presets materialise only `Channel::Awgn` and couple demapper `noise_var` via `es_n0_db_to_n0` | `presets/nr_5g.rs:302-366`, `presets/dvb_t2.rs:192` |
 | Tests pinning `SymbolBatch` shape/edges: `preset_vs_graph` finds the channel as the unique `SymbolBatch -> SymbolBatch` stage and drives a fixed batch into the `SymbolBatch -> LlrBatch` demapper | `tests/preset_vs_graph.rs:117-123, 313-366` |
-| Other `SymbolBatch` constructors/consumers | `tests/{checkpoint_compat,channels_determinism,channels_smoke,gpu_byte_identity,gpu_demap_byte_identity,type_mismatch,dag_topology,dvb_t2_chain_via_graph,dvb_t2_stage_roundtrip}.rs`, `src/bin/{checkpoint_sweep,gpu_awgn_throughput,gpu_demap_throughput}.rs`, `examples/dvb_t2_graph_api.rs` |
+| Other `SymbolBatch` constructors/consumers | `tests/{checkpoint_compat,channels_determinism,channels_smoke,gpu_byte_identity,gpu_demap_byte_identity,type_mismatch,dag_topology,dvb_t2_chain_via_graph,dvb_t2_stage_roundtrip}.rs`, `crates/gf2-sim/src/bin/checkpoint_sweep.rs`, `crates/gf2-sim/examples/dvb_t2_graph_api.rs` |
 | No struct-literal construction of `SymbolBatch` exists; all sites use `SymbolBatch::new` | `rg 'SymbolBatch \{'` |
 | A parallel fading model exists in the coding layer (`RicianChannel`, f64 `Complex`, `generate_frame_gains`) | `crates/gf2-coding/src/fading.rs:46, 272, 413` |
 
@@ -97,15 +97,15 @@ the **convention-convergence** invariant classifies as a defect. Rejected.
 
 Production:
 1. `batch.rs` — add `ChannelGains`, `SymbolBatch::gains`, `with_gains`, shape assertions; update type and module docs (`batch.rs:1-23, 80-102`).
-2. `channels/rayleigh.rs` — `apply` writes gains; reject already-faded input in `process` (`:175-230`); module docs `:1-36`.
-3. `channels/rician.rs` — same (`:219-281`); module docs.
-4. `channels/mod.rs` — module doc (`:1-15`) states fading stages attach gains.
-5. `channels/awgn.rs` — no code change (clone preserves gains); doc note that gains pass through.
-6. `stages/mod.rs` — `GrayQamDemapCore::demap_frame`/`demap_batch` forward gains (`:206-233`); core doc "under AWGN" (`:124-131`) and `GrayQamDemap` doc "AWGN-shaped" (`:508-515`) become "coherent, AWGN when gains are absent".
-7. `stages/nr_5g.rs` — doc only (`:330-336`); behaviour inherited from the core.
-8. `gpu/demap.rs` — `CpuGrayQamDemapper` inherits core behaviour (`:161-166`); `GpuGrayQamDemapper::process`/`demap_batch`/`demap_batch_on_stream` delegate to `cpu_fallback` when `gains.is_some()` (`:389, 470, 493`); doc `:365-372`.
-9. `executor/topology.rs` — `execute_gpu_demap` gains check (`:645-680`); `concat_batches` concatenates gains, materialising unit gains `(1, 0)` for parts with `None` when any part has gains (bit-identical per §1) (`:773-777`); `split_half` splits gains (`:809-814`).
-10. `gpu/awgn.rs` — no code change (`clone` at `:577-580`); confirm in a test.
+2. `crates/gf2-sim/src/channels/rayleigh.rs` — `apply` writes gains; reject already-faded input in `process` (`:175-230`); module docs `:1-36`.
+3. `crates/gf2-sim/src/channels/rician.rs` — same (`:219-281`); module docs.
+4. `crates/gf2-sim/src/channels/mod.rs` — module doc (`:1-15`) states fading stages attach gains.
+5. `crates/gf2-sim/src/channels/awgn.rs` — no code change (clone preserves gains); doc note that gains pass through.
+6. `crates/gf2-sim/src/stages/mod.rs` — `GrayQamDemapCore::demap_frame`/`demap_batch` forward gains (`:206-233`); core doc "under AWGN" (`:124-131`) and `GrayQamDemap` doc "AWGN-shaped" (`:508-515`) become "coherent, AWGN when gains are absent".
+7. `crates/gf2-sim/src/stages/nr_5g.rs` — doc only (`:330-336`); behaviour inherited from the core.
+8. `crates/gf2-sim/src/gpu/demap.rs` — `CpuGrayQamDemapper` inherits core behaviour (`:161-166`); `GpuGrayQamDemapper::process`/`demap_batch`/`demap_batch_on_stream` delegate to `cpu_fallback` when `gains.is_some()` (`:389, 470, 493`); doc `:365-372`.
+9. `crates/gf2-sim/src/executor/topology.rs` — `execute_gpu_demap` gains check (`:645-680`); `concat_batches` concatenates gains, materialising unit gains `(1, 0)` for parts with `None` when any part has gains (bit-identical per §1) (`:773-777`); `split_half` splits gains (`:809-814`).
+10. `crates/gf2-sim/src/gpu/awgn.rs` — no code change (`clone` at `:577-580`); confirm in a test.
 
 Tests (new, per issue criteria):
 - REQ-03: Rayleigh (and Rician) stage → `GrayQamDemap`/`NrGrayQamDemap` LLRs equal direct `FastGrayQamDemapper::demap_llrs` with the batch's `rx` and `gains`, bit for bit (`to_bits`), fixed seed.

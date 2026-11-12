@@ -277,8 +277,8 @@ struct MeasuredOwner {
     cells: u64,
 }
 /// An owner the campaign takes from a committed envelope without measuring
-/// it. `complete` is the committed complete envelope whose `section` wrapper
-/// the campaign's complete envelope must reproduce byte for byte.
+/// it. The campaign's complete envelope reproduces its `section` wrapper byte
+/// for byte.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct ImportedOwner {
@@ -286,7 +286,6 @@ struct ImportedOwner {
     name: Owner,
     section: String,
     envelope: RepositoryArtifact,
-    complete: RepositoryArtifact,
 }
 /// The committed declaration of one campaign: its issue, which also forms the
 /// run-ID prefix `gf2-<issue>-`, protocol, producing-input manifest, measured
@@ -399,7 +398,6 @@ impl CampaignDeclaration {
         }
         for imported in &self.imported_owners {
             repository_relative(&imported.envelope.path)?;
-            repository_relative(&imported.complete.path)?;
             if imported.section != imported.name.section() {
                 return Err(invalid("imported owner section mismatch"));
             }
@@ -874,9 +872,8 @@ fn section_wrapper(document: &[u8], section: &str) -> io::Result<Value> {
 
 /// Verifies and stages one declared imported owner before any timed child.
 ///
-/// The committed envelope must have its declared digest and carry the same
-/// section wrapper as its declared committed complete envelope. Its bytes are
-/// staged as `<name>-owner.json`, the composition input, and the staged
+/// The committed envelope must have its declared digest and carry its
+/// declared section. Its bytes are staged as `<name>-owner.json`, the composition input, and the staged
 /// composer then strictly reopens the staged copy with the owner-only codec
 /// by composing it with a conservative probe of every other required owner.
 /// The composer runs are journaled verification actions; their outputs are
@@ -892,13 +889,7 @@ fn import_owner(
 ) -> io::Result<ImportedOwnerEvidence> {
     let stage = &channels.stage;
     let bytes = imported.envelope.read(root)?;
-    let reference = imported.complete.read(root)?;
     let wrapper = section_wrapper(&bytes, &imported.section)?;
-    if wrapper != section_wrapper(&reference, &imported.section)? {
-        return Err(invalid(
-            "imported owner wrapper differs from its committed complete envelope",
-        ));
-    }
     let staged = publish_artifact(stage, &stage.join(imported.name.envelope()), &bytes)?;
     let root = stage.join("imported");
     fs::create_dir_all(&root)?;
@@ -995,7 +986,6 @@ fn import_owner(
         "owner":imported.owner,
         "section":imported.section,
         "source":imported.envelope,
-        "reference":imported.complete,
         "staged":staged,
         "wrapper_sha256":Sha256Digest::of(&encoded(&wrapper)?),
         "probe_complete":artifact(&probe_complete)?,
@@ -2018,13 +2008,11 @@ fn render_receipt(
         receipt.push_str("## Imported owners\n\n");
         for imported in &facts.declaration.imported_owners {
             receipt.push_str(&format!(
-                "Owner `{}` is imported unmeasured from `{}` (SHA-256 `{}`). The complete envelope carries its `{}` section wrapper unchanged; the committed complete envelope `{}` (SHA-256 `{}`) holds the same wrapper.\n\n",
+                "Owner `{}` is imported unmeasured from `{}` (SHA-256 `{}`). The complete envelope carries its `{}` section wrapper unchanged.\n\n",
                 imported.owner.as_str(),
                 imported.envelope.path,
                 imported.envelope.sha256.as_str(),
                 imported.section,
-                imported.complete.path,
-                imported.complete.sha256.as_str(),
             ));
         }
     }
@@ -3063,7 +3051,7 @@ impl RepositoryLayout<'_> {
         }
     }
     fn complete(&self) -> String {
-        format!("dev/reference_data/tuning-profiles/{}.json", self.id)
+        format!("{TUNING_EVIDENCE}/{}-complete.json", self.id)
     }
     fn receipt(&self) -> String {
         format!("{TUNING_EVIDENCE}/{}.md", self.id)
@@ -4379,7 +4367,7 @@ mod tests {
                 .is_err()
         );
         assert!(validate_campaign_stage(
-            Path::new("/home/example/gf2-dbd8787d-20261001t000000z-1"),
+            Path::new("/srv/example/gf2-dbd8787d-20261001t000000z-1"),
             "gf2-dbd8787d-20261001t000000z-1",
             &declaration
         )
@@ -4444,12 +4432,7 @@ mod tests {
         assert_eq!(seam.executables(), ["composer", "core-producer", "driver"]);
         assert!(seam.evidence_index);
         let imported = seam.imported("algebra").unwrap();
-        let envelope = imported.envelope.read(&root).unwrap();
-        let complete = imported.complete.read(&root).unwrap();
-        assert_eq!(
-            section_wrapper(&envelope, &imported.section).unwrap(),
-            section_wrapper(&complete, &imported.section).unwrap()
-        );
+        section_wrapper(&imported.envelope.read(&root).unwrap(), &imported.section).unwrap();
         for (mutate, what) in [
             (
                 (|d: &mut CampaignDeclaration| d.imported_owners.clear())
@@ -5351,7 +5334,7 @@ mod tests {
         let declaration = seam_declaration();
         let imported = declaration.imported("algebra").unwrap().clone();
         let campaign = Token::new(format!("{}19700101t000000z-1", declaration.prefix())).unwrap();
-        let reference = repository_root().unwrap().join(&imported.complete.path);
+        let reference = repository_root().unwrap().join(&imported.envelope.path);
         let composer_path = root.join("composer");
         fs::write(
             &composer_path,
@@ -5608,7 +5591,6 @@ mod tests {
                 sha256: Sha256Digest::of(&fs::read(root.join(&core_path)).unwrap()),
                 path: core_path,
             },
-            complete: algebra.complete.clone(),
         };
         let mut declaration = CampaignDeclaration {
             schema: DECLARATION_SCHEMA.into(),
@@ -5677,12 +5659,7 @@ mod tests {
         reopened.sha256 = coding.sha256.clone();
         assert_eq!(reopened, coding);
         for imported in &coding.imported_owners {
-            assert_eq!(
-                section_wrapper(&imported.envelope.read(&root).unwrap(), &imported.section)
-                    .unwrap(),
-                section_wrapper(&imported.complete.read(&root).unwrap(), &imported.section)
-                    .unwrap()
-            );
+            section_wrapper(&imported.envelope.read(&root).unwrap(), &imported.section).unwrap();
         }
         for two_owner in [extent_declaration(), seam_declaration()] {
             assert!(!two_owner.owners().contains(&Owner::Coding));
@@ -5817,6 +5794,21 @@ mod tests {
         let [core, algebra] = ["core", "algebra"].map(|name| declaration.imported(name).unwrap());
         let campaign = Token::new(format!("{}19700101t000000z-1", declaration.prefix())).unwrap();
         let probe = Sha256Digest::of(b"{}");
+        // The probe composition carries both imported wrappers.
+        let sections: serde_json::Map<String, Value> = [core, algebra]
+            .into_iter()
+            .map(|imported| {
+                let wrapper = section_wrapper(
+                    &imported.envelope.read(&repository_root().unwrap()).unwrap(),
+                    &imported.section,
+                )
+                .unwrap();
+                (imported.section.clone(), wrapper)
+            })
+            .collect();
+        let reference = root.join("reference.json");
+        fs::write(&reference, encoded(&json!({"sections": sections})).unwrap()).unwrap();
+        let reference_sha256 = Sha256Digest::of(&fs::read(&reference).unwrap());
         // Accepts a staged import only in its own composition slot, beside a
         // probe in the other.
         let composer = stand_in(
@@ -5827,7 +5819,7 @@ mod tests {
                 core = core.envelope.sha256.as_str(),
                 algebra = algebra.envelope.sha256.as_str(),
                 probe = probe.as_str(),
-                reference = repository_root().unwrap().join(&core.complete.path).display(),
+                reference = reference.display(),
             ),
         );
         let channels = SessionChannels::for_stage(&stage).unwrap();
@@ -5854,10 +5846,7 @@ mod tests {
             assert_eq!(evidence.staged.sha256, imported.envelope.sha256);
             let record: Value = read_json(&evidence.reopen.path).unwrap();
             assert_eq!(record["staged"]["sha256"], json!(imported.envelope.sha256));
-            assert_eq!(
-                record["probe_complete"]["sha256"],
-                json!(core.complete.sha256)
-            );
+            assert_eq!(record["probe_complete"]["sha256"], json!(reference_sha256));
             assert_eq!(record[format!("probe_{other}")]["sha256"], json!(probe));
             assert!(record
                 .get(format!("probe_{}", imported.name.as_str()))

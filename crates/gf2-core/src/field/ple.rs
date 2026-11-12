@@ -2265,7 +2265,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "slow: full panelized PLE wall-time sweep (~30 s)"]
+    #[ignore = "slow: full panelized PLE wall-time sweep"]
     fn test_ple_panelized_wall_time_full_sweep() {
         const CELLS: &[(u64, &str, usize, &str)] = &[
             (7, "GF(7)", 64, "uniform"),
@@ -2383,7 +2383,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "slow: echelon wall-time sweep for A8 rows 18-33 and 72-73 (~60 s)"]
+    #[ignore = "slow: echelon wall-time sweep for A8 rows 18-33 and 72-73"]
     fn test_echelon_wall_time_full_sweep() {
         const CELLS: &[(u64, &str, usize, &str)] = &[
             (7, "GF(7)", 64, "uniform"),
@@ -2548,7 +2548,7 @@ mod tests {
     /// Paired `rref` timing, scalar against blocked back-substitution, as CSV
     /// on stderr. Runs only under `GF2_BENCH=1`.
     #[test]
-    #[ignore = "bench: rref SC#5 non-regression paired 10-trial sweep (~30 s); run on a quiesced host"]
+    #[ignore = "bench: rref SC#5 non-regression paired 10-trial sweep; run on a quiesced host"]
     fn test_rref_non_regression_wall_time() {
         if !matches!(std::env::var("GF2_BENCH"), Ok(ref v) if v != "0") {
             eprintln!(

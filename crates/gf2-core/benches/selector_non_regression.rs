@@ -2779,10 +2779,10 @@ mod tests {
         assert_eq!(member_index(128), 127);
     }
 
-    /// The enumeration the predeclaration fixes — `layout-attribution-verdict-v1.md`
-    /// §3.1 — gives distinct members whose level sum has the parity of the
-    /// member index, which is what makes §3.2's half-split balanced on every
-    /// axis. Both rungs of §6.6's ladder are checked.
+    /// The enumeration the layout-attribution predeclaration fixes (its §3.1)
+    /// gives distinct members whose level sum has the parity of the member
+    /// index, which is what makes §3.2's half-split balanced on every axis.
+    /// Both rungs of §6.6's ladder are checked.
     #[test]
     fn the_predeclared_enumeration_balances_its_halves() {
         for size in ENSEMBLE_SIZES {

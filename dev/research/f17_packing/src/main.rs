@@ -2,9 +2,8 @@
 //! mul-via-log prediction from the cross-prime generalization analysis.
 //!
 //! Three encodings: naive, LUT-A, (z, log) split. The headline question is
-//! whether F_17-B's bit-parallel mod-16 log addition delivers the same
-//! ~10× mul speedup over LUT-A that F_5-B and F_7-B did over their
-//! respective LUT baselines.
+//! whether F_17-B's bit-parallel mod-16 log addition improves multiplication
+//! over LUT-A while retaining the predicted addition trade-off.
 //!
 //! Build:   `cargo build --release`
 //! Test:    `cargo test --release`
@@ -112,8 +111,6 @@ fn main() {
     print_speedup(z_log::ZLog17::NAME, ns_b);
 
     println!();
-    println!("Cross-prime prediction check: B should give cheap mul (Fermat-like");
-    println!("p−1 = 16 = 2^4) and slow add (per-element fallback). Compare vs");
-    println!("F_5-B (mul=0.015 ns/elem, add=10 ns/elem) and F_7-B (mul=0.02,");
-    println!("add=8.4) to see the pattern.");
+    println!("Cross-prime prediction check: B uses Fermat-like p−1 = 16 = 2^4");
+    println!("for multiplication and a per-element fallback for addition.");
 }

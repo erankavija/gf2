@@ -122,10 +122,8 @@ fn main() {
     println!("  {}", s.join("  "));
 
     println!();
-    println!("The paper (arxiv 2407.20205v2) reports an 86.9x wall-clock speedup");
-    println!("of bipedal F_3 over Julia's naive Ryser at 4.20 GHz on a single");
-    println!("thread. This Rust harness uses (a OP b) % 3 on Vec<u8> as the");
-    println!("in-language naive baseline — the absolute speedup factor is not");
-    println!("directly comparable to the paper's Julia number, but the per-");
-    println!("element op count and bipedal-vs-LUT cost ratios are.");
+    println!("The paper (arxiv 2407.20205v2) uses Julia's naive Ryser as a");
+    println!("reference baseline. This Rust harness uses (a OP b) % 3 on Vec<u8>");
+    println!("as its in-language naive baseline; compare the measured operation");
+    println!("costs here rather than treating the implementations as one timing.");
 }

@@ -29,7 +29,7 @@ fn main() {
 #[allow(dead_code)]
 fn generate_cache(cache_dir: &Path) {
     println!("=== Generating LDPC Cache Files ===\n");
-    println!("This is a one-time operation that takes ~30-60 seconds.");
+    println!("This is a one-time operation that may take a while.");
     println!("Cache directory: {}\n", cache_dir.display());
 
     let start = Instant::now();
@@ -144,7 +144,5 @@ fn use_cache(cache_dir: &Path) {
     );
 
     println!("\n=== Summary ===");
-    println!("✓ File cache enables instant encoder creation (<1μs vs 2-3 seconds)");
-    println!("✓ 12,000× speedup for initialization");
-    println!("✓ All DVB-T2 configurations available instantly");
+    println!("Cache-backed encoder construction completed for the selected configuration.");
 }

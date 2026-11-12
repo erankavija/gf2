@@ -28,7 +28,7 @@ fn main() {
         encoder_no_cache.k()
     );
 
-    println!("2. With cache (first call - preprocesses and caches):");
+    println!("2. With cache (first call):");
 
     let cache = EncodingCache::new();
     println!("   Creating encoder with cache...");
@@ -37,10 +37,7 @@ fn main() {
     let _encoder_cached_1 = LdpcEncoder::with_cache(code.clone(), &cache);
     let time_first = start.elapsed();
 
-    println!(
-        "   Time: {:.2}s (similar to no-cache)",
-        time_first.as_secs_f64()
-    );
+    println!("   Time: {:.2}s", time_first.as_secs_f64());
     println!("   Cache entries: {}\n", cache.stats().entries);
 
     println!("3. With cache (second call - cache hit):");
@@ -50,13 +47,10 @@ fn main() {
     let time_second = start.elapsed();
 
     println!(
-        "   Time: {:.6}s (<1μs - instant!)",
+        "   Cache-hit construction time: {:.6}s",
         time_second.as_secs_f64()
     );
-    println!(
-        "   Speedup: {:.0}×\n",
-        time_first.as_secs_f64() / time_second.as_secs_f64()
-    );
+    println!();
 
     println!("4. Encoding performance (all encoders work the same):");
 
@@ -72,7 +66,7 @@ fn main() {
         codeword.len()
     );
     println!(
-        "   Encoding time: {:.3}ms (same for all)\n",
+        "   Encoding time: {:.3}ms\n",
         encode_time.as_secs_f64() * 1000.0
     );
 
@@ -85,14 +79,11 @@ fn main() {
     cache_precomp.precompute_dvb_t2();
     let precomp_time = start.elapsed();
 
-    println!(
-        "   Precomputation time: {:.1}s (one-time cost)",
-        precomp_time.as_secs_f64()
-    );
+    println!("   Precomputation time: {:.1}s", precomp_time.as_secs_f64());
     println!("   Cached entries: {}", cache_precomp.stats().entries);
-    println!("   Memory: ~200 MB\n");
+    println!();
 
-    println!("   Creating encoders for different rates (all instant):");
+    println!("   Creating encoders for different rates:");
 
     let rates = [CodeRate::Rate1_2, CodeRate::Rate3_5, CodeRate::Rate2_3];
     for rate in &rates {

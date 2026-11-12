@@ -726,7 +726,7 @@ error branch.
 identity where the representation carries runtime field elements, and any
 layout-specific precondition before writing output. A mismatch returns
 `CodeError`; it does not partially report success. The allocating method is
-the only default allocation. Batch/workspace APIs in `bch/encode.rs` reuse the
+the only default allocation. Batch/workspace APIs in `crates/gf2-coding/src/bch/encode.rs` reuse the
 same `encode_into` implementation, keeping the shared trait small for the
 streaming/batch unification story.
 
@@ -789,7 +789,7 @@ or a full-rank materialization is the canonical trait value.
 
 Neither matrix trait implies storage or caching. `*_matrix_into` is the
 allocation-free contract, `*_matrix` allocates on each call, and the explicit
-opt-in cache is `CachedMatrices<C>` in `bch/matrix.rs`. The wrapper implements
+opt-in cache is `CachedMatrices<C>` in `crates/gf2-coding/src/bch/matrix.rs`. The wrapper implements
 only matrix-access traits already implemented by `C` and caches each successful
 materialization independently; failures are not cached. A type that never
 exposes a parity-check capability does not implement
@@ -1012,7 +1012,7 @@ letting either worker create a local error alias.
 
 Construction never writes `encode.rs` or `matrix.rs`; encoding and matrix
 materialization therefore run in parallel after their shared prerequisites.
-The `bch/mod.rs` declaration touch is the second necessary manifest-footprint
+The `crates/gf2-coding/src/bch/mod.rs` declaration touch is the second necessary manifest-footprint
 addition for `coding-error-surface`; its direct dependent
 `bch-construct-core` writes the file only after that task completes.
 
@@ -1023,7 +1023,7 @@ addition for `coding-error-surface`; its direct dependent
 | `crates/gf2-coding/src/transform/coordinate_map.rs` | `coordinate-provenance` | Composable derived-to-mother coordinate maps and compact regular representations. |
 | `crates/gf2-coding/src/transform/mod.rs` | `shorten-transform` → `puncture-transform` → `extend-transform` → `@/issue/203ee826` | `Shortened<C>`, shared rank/information-set machinery, `Punctured<C>`, and `Extended<C>` in dependency order, then the `ShortenedDerivation` split that gives `Shortened<C>` its systematic restriction. |
 
-`coordinate_map.rs` is complete before `transform/mod.rs` starts. The three
+`coordinate_map.rs` is complete before `crates/gf2-coding/src/transform/mod.rs` starts. The three
 wrapper implementations share one file only along a serial chain, while BCH
 construction and encoding use disjoint modules.
 
@@ -1038,10 +1038,10 @@ construction and encoding use disjoint modules.
 | `cutover-bins-examples` | `crates/gf2-coding/src/bin/sim_runner.rs`, `crates/gf2-coding/src/bin/check_encoding.rs`, `crates/gf2-coding/examples/dvb_t2_bch_demo.rs`, `crates/gf2-coding/examples/block_code_intro.rs` |
 | `cutover-test-suite` | `crates/gf2-coding/tests/bch_tests.rs`, `crates/gf2-coding/tests/dvb_t2_bch_verification.rs`, `crates/gf2-coding/tests/ebch_128_64_reference.rs`, `crates/gf2-coding/tests/backend_integration.rs`, `crates/gf2-coding/tests/grand_phase1_smoke.rs`, `crates/gf2-coding/tests/bch_primitive_verification.rs` |
 | `cutover-benches` | `crates/gf2-coding/benches/bch_parallel.rs`, `crates/gf2-coding/benches/batch_operations.rs` |
-| `cutover-sim` | `ebch_osd_awgn_campaign.rs`, `gpu_bch_syndrome_throughput.rs`, `ebch_osd_campaign_cli.rs`, `crates/gf2-sim/tests/gpu_byte_identity.rs`, `osd_campaign_protocol.rs` |
+| `cutover-sim` | `ebch_osd_awgn_campaign.rs`, the GPU BCH syndrome throughput bench, `ebch_osd_campaign_cli.rs`, `crates/gf2-sim/tests/gpu_byte_identity.rs`, `osd_campaign_protocol.rs` |
 | `cutover-hip-tests` | `crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs`, `crates/gf2-kernels-hip/tests/gpu_bch_syndrome_field.rs` |
-| `cutover-removal` | `crates/gf2-coding/src/bch/core.rs`, `extended.rs`, and final `crates/gf2-coding/src/bch/mod.rs` cleanup after every consumer group |
-| `legacy-reference-sweep` | `crates/gf2-coding/README.md`, `SYSTEMATIC_ENCODING_CONVENTION.md`, `PARALLELIZATION.md`, `PRIMITIVE_POLYNOMIALS.md` |
+| `cutover-removal` | `crates/gf2-coding/src/bch/core.rs`, the extended-code module, and final `crates/gf2-coding/src/bch/mod.rs` cleanup after every consumer group |
+| `legacy-reference-sweep` | `crates/gf2-coding/README.md` |
 
 The direct migration groups are file-disjoint and may run in parallel after
 their graph prerequisites, with one ordered exception: `@/issue/97410c80`
@@ -1129,7 +1129,7 @@ test.
 **K-12 — Shared files are serial chains; parallel waves own disjoint files.**
 The layout follows the manifest rather than creating extra modules after
 dispatch. `traits.rs`, `spec.rs`, `encode.rs`, `matrix.rs`, and
-`transform/mod.rs` each have one ordered writer chain. Consumer migration
+`crates/gf2-coding/src/transform/mod.rs` each have one ordered writer chain. Consumer migration
 groups share no files until the removal join.
 
 ## Success Criteria

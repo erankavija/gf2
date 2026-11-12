@@ -7,7 +7,6 @@ of random matrices over small prime fields*. The authoritative work graph is the
 | File | What it is |
 |---|---|
 | `plan.md` | The reviewed plan: outcome, criterion approach, and the reasoning behind the breakdown's shape. Live document. |
-| `investigation.md` | The epic's own analysis narrative — a read-only verification of the tree against the claims the feasibility study carried into planning. Live document, kept current with the code. |
 | `execution-batching.md` | How-to guidance for dispatching the breakdown: which serial runs one worker should take. Live document. |
 | `breakdown.json` | The manifest this epic's issues were created from, excluded from live-prose audits. See below. |
 | `progress.json` | Execution state: waves, per-issue status, rework counts, escalations, surfaced pitfalls. Maintained by the execution lead. |

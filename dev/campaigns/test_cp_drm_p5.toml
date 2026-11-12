@@ -1,5 +1,5 @@
 # Test Chase-Pyndiah dRM with p=5 (32 test patterns) at 0.75-1.0 dB
-# At 0.5 dB, coded BER~16% → ~5 errors per 32-bit block, p=4 insufficient
+# A higher test-pattern order can cover error patterns missed by p=4.
 
 [campaign]
 name = "test_cp_drm_p5"

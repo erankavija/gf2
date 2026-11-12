@@ -4,7 +4,13 @@
 Enforces `@/inv/committed-evidence-budget`. Limits and exceptions live in
 `tracked-budget.toml`; limits may only fall. A JSON document the path rules
 admit under `record_documents` is also read, and refused when any member name
-matches `record_members`, the vocabulary of an execution record.
+matches `record_members`, the vocabulary of an execution record, or, under
+`workflow_documents`, `workflow_record_members`. A Markdown document under
+`markdown_documents` is refused when its title declares a receipt, when a
+`name: value` line records one of those members, or when a table has a
+`measurement_columns` header over numeric body cells. A CSV or TSV
+table under `table_documents` is refused when a header cell names one of
+`measurement_columns`.
 
   check-tracked-budget.py                 check the tree at HEAD
   check-tracked-budget.py --staged        check the index and staged additions
@@ -72,11 +78,11 @@ def record_faults(paths, config, read):
     `read(path)` returns the document's text at the revision being checked.
     """
     documents = re.compile(config.get("record_documents", "(?!)"))
-    members = [re.compile(m) for m in config.get("record_members", [])]
     faults = []
     for path in paths:
         if not documents.search(path) or path_faults([path], config) or excepted(path, config):
             continue
+        members = _record_members(path, config)
         try:
             names = set(_member_names(json.loads(read(path))))
         except json.JSONDecodeError:
@@ -86,6 +92,112 @@ def record_faults(paths, config, read):
         if found:
             faults.append(f"{path}: execution record members {', '.join(found)}")
     return faults
+
+
+NUMERIC_CELL = re.compile(
+    r"[~≈<>±+-]?\s*\d[\d,._ ]*(?:[eE][+-]?\d+|\s*[×x]\s*10\^?\{?[+-−]?\d+\}?)?"
+    r"(?:\s*/\s*\d[\d,._]*)?\s*(?:%|×|x|[A-Za-zµ/]{1,8}(?:/[A-Za-z]+)?)?"
+)
+RECORDED_VALUE = re.compile(r"[0-9a-f]{16,}|-?\d[\d,._:]*\s*[A-Za-zµ%]{0,4}|\d{4}-\d\d-\d\dT[\d:.]+Z?")
+KEY_VALUE = re.compile(r"\s*(?:[-*]\s+)?`?([a-z][a-z0-9_]*)`?\s*:\s*`?([^`\s][^`]*?)`?\s*$")
+
+
+def markdown_faults(paths, config, read):
+    """Admitted Markdown documents that carry a receipt or a result table.
+
+    A receipt declares itself in its first heading or its front matter
+    `title`, or records a `record_members` member as a `name: value` line
+    with a literal value. A result table has a header cell matching
+    `measurement_columns` over a column whose body cells are mostly numeric.
+    """
+    documents = re.compile(config.get("markdown_documents", "(?!)"))
+    title = re.compile(config.get("receipt_title", "(?!)"), re.IGNORECASE)
+    columns = _columns(config)
+    faults = []
+    for path in paths:
+        if not documents.search(path) or path_faults([path], config) or excepted(path, config):
+            continue
+        members = _record_members(path, config)
+        lines = read(path).splitlines()
+        found = _receipt_title(lines, title)
+        for number, line in enumerate(lines, 1):
+            pair = KEY_VALUE.fullmatch(line)
+            if pair and any(m.fullmatch(pair[1]) for m in members) and RECORDED_VALUE.fullmatch(pair[2]):
+                found.append(f"record line {number}")
+        found += [f"result table line {n}" for n in _result_tables(lines, columns)]
+        if found:
+            faults.append(f"{path}: {', '.join(found)}")
+    return faults
+
+
+def table_faults(paths, config, read):
+    """Admitted CSV and TSV tables whose header names a measurement column."""
+    documents = re.compile(config.get("table_documents", "(?!)"))
+    columns = _columns(config)
+    faults = []
+    for path in paths:
+        if not documents.search(path) or path_faults([path], config) or excepted(path, config):
+            continue
+        header = next(iter(read(path).splitlines()), "")
+        cells = [cell.strip().strip('"') for cell in re.split(r"[,\t]", header)]
+        found = [cell for cell in cells if columns.search(cell)]
+        if found:
+            faults.append(f"{path}: result table columns {', '.join(found)}")
+    return faults
+
+
+def _record_members(path, config):
+    """`record_members`, and under `workflow_documents` the workflow members too."""
+    names = list(config.get("record_members", []))
+    if re.search(config.get("workflow_documents", "(?!)"), path):
+        names += config.get("workflow_record_members", [])
+    return [re.compile(name) for name in names]
+
+
+def _columns(config):
+    return re.compile(
+        r"(?<![\w])(?:" + "|".join(config.get("measurement_columns", ["(?!)"])) + r")(?![\w])",
+        re.IGNORECASE,
+    )
+
+
+def _receipt_title(lines, title):
+    if lines[:1] == ["---"]:
+        for line in lines[1:]:
+            if line == "---":
+                break
+            if line.startswith("title:") and title.search(line):
+                return ["receipt title"]
+    heading = next((line for line in lines if line.startswith("# ")), "")
+    return ["receipt title"] if title.search(heading) else []
+
+
+def _cells(line):
+    return [cell.strip().strip("`*").strip() for cell in line.strip().strip("|").split("|")]
+
+
+def _result_tables(lines, columns):
+    """First lines of tables whose measurement columns hold numbers."""
+    starts = []
+    number = 0
+    while number + 1 < len(lines):
+        header, rule = lines[number], lines[number + 1]
+        if not (header.lstrip().startswith("|") and re.fullmatch(r"\s*\|?[\s:|-]*-[\s:|-]*", rule)):
+            number += 1
+            continue
+        body = []
+        row = number + 2
+        while row < len(lines) and lines[row].lstrip().startswith("|"):
+            body.append(_cells(lines[row]))
+            row += 1
+        for index, name in enumerate(_cells(header)):
+            values = [cells[index] for cells in body if index < len(cells) and cells[index]]
+            numeric = sum(1 for value in values if NUMERIC_CELL.fullmatch(value))
+            if columns.search(name) and values and 2 * numeric >= len(values) and numeric:
+                starts.append(number + 1)
+                break
+        number = row
+    return starts
 
 
 def _member_names(value):
@@ -115,7 +227,8 @@ def size_faults(sizes, config):
 def tree_faults(sizes, config, read):
     total = sum(sizes.values())
     faults = path_faults(sizes, config) + size_faults(sizes, config)
-    faults += record_faults(sizes, config, read)
+    faults += record_faults(sizes, config, read) + markdown_faults(sizes, config, read)
+    faults += table_faults(sizes, config, read)
     if total > config["max_tree_bytes"]:
         faults.append(f"tree: {total} bytes exceeds {config['max_tree_bytes']}")
     return faults
@@ -215,6 +328,8 @@ def check_range(revisions, cwd):
         faults += [f"{label}: {f}" for f in path_faults(touched, config)]
         faults += [f"{label}: {f}" for f in size_faults(touched, config)]
         faults += [f"{label}: {f}" for f in record_faults(touched, config, reader(commit, cwd))]
+        faults += [f"{label}: {f}" for f in markdown_faults(touched, config, reader(commit, cwd))]
+        faults += [f"{label}: {f}" for f in table_faults(touched, config, reader(commit, cwd))]
         faults += change_faults(parent, commit, config, label, cwd)
     return faults
 
@@ -224,12 +339,16 @@ def policy_faults(config):
     refused = (
         "dev/active/x/oracle/gap.out", "experiments/a/run.stdout", "dev/x/receipt.yaml",
         "dev/active/x/receipt.toml", "dev/active/x/outcome.txt", "dev/active/x/config.json",
+        "dev/active/x/campaign.toml",
         "dev/active/x/execution.log", "experiments/a/results/table.md", "dev/research/x/table.csv",
         "dev/studies/x/findings.md", "dev/archive/x/plan.md", "dev/bench_results/x.md",
+        "dev/tools/x/trial-ledger.jsonl", "experiments/a/runs/r/shards/q3.jsonl", "experiments/a/runs.json",
+        "experiments/a/summary.csv", "experiments/a/run.journal.jsonl",
     )
     admitted = (
         "crates/a/src/lib.rs", "dev/active/x/handoff.md", "dev/active/x/progress.json",
         "dev/active/x/tool/Cargo.toml", "crates/a/tests/compile_fail/b.stderr",
+        "dev/research/x/hip/kernel.hip",
     )
     faults = [f"admits {path}" for path in refused if not path_faults([path], config)]
     faults += [f"refuses {path}" for path in admitted if path_faults([path], config)]
@@ -239,6 +358,38 @@ def policy_faults(config):
         faults.append("admits an execution record in dev/active/x/progress.json")
     if record_faults(["dev/research/x/progress.json"], config, lambda _: workflow):
         faults.append("refuses workflow state in dev/research/x/progress.json")
+    measured = '{"sections": {"a": {"measured_at": "t", "host": "h"}}}'
+    if not record_faults(["experiments/a/config/profile.json"], config, lambda _: measured):
+        faults.append("admits a measurement record in experiments/a/config/profile.json")
+    pin = '{"envelope": {"path": "crates/a/data/p.json", "sha256": "ab"}}'
+    if record_faults(["dev/tools/x/config/declaration.json"], config, lambda _: pin):
+        faults.append("refuses a configuration pin in dev/tools/x/config/declaration.json")
+    for where in ("dev/tools/x/curve.csv", "docs/curve.csv"):
+        if not table_faults([where], config, lambda _: "snr,frames,errors,BER\n"):
+            faults.append(f"admits a result table in {where}")
+    if not record_faults(["scripts/profile.json"], config, lambda _: measured):
+        faults.append("admits a measurement record in scripts/profile.json")
+    receipts = {
+        "receipt title": "# Device arithmetic receipt\n\nIt passed.\n",
+        "record line": "# Compile evidence\n\nmeasured_at: 2026-08-10T12:00:00Z\n",
+        "result table": "| Kernel | SGPRs | VGPRs |\n| --- | ---: | ---: |\n| `a` | 78 | 77 |\n",
+    }
+    receipts["results title"] = "# Decoder results\n"
+    receipts["scientific table"] = "| SNR | BER |\n|---|---|\n| 1 | 1.2e-5 |\n| 2 | 3.4e-6 |\n"
+    for kind, text in receipts.items():
+        for where in ("dev/research/x/README.md", "crates/a/README.md", "docs/a.md", "README.md"):
+            if not markdown_faults([where], config, lambda _, t=text: t):
+                faults.append(f"admits a {kind} in {where}")
+    digest = "# Compile evidence\n\nraw_log_sha256: db51eadb86102cc72339714a25684ff2a0f169ad\n"
+    if not markdown_faults(["dev/research/x/README.md"], config, lambda _: digest):
+        faults.append("admits a digest record line in dev/research/x/README.md")
+    prose = (
+        "# Design\n\nThe report names VGPRs and wall time per kernel.\n\n"
+        "| Kernel | Shared bytes per block |\n|---|---:|\n| three-plane | 24n |\n| control | 576 |\n\n"
+        "| Step | Time |\n|---|---|\n| build | before the window |\n\n- `binary_sha256`: the executable's digest\n"
+    )
+    if markdown_faults(["dev/active/x/plan.md"], config, lambda _: prose):
+        faults.append("refuses design prose in dev/active/x/plan.md")
     return faults
 
 
@@ -252,9 +403,16 @@ def self_test():
 max_file_bytes = 1000
 max_commit_added_bytes = 2500
 max_tree_bytes = 10000
-forbidden_paths = ['(^|/)inputs/', '\\.log$', '(^|/)receipt\\.json$', '(^|/)(execution|journal)[^/]*\\.jsonl$', '^dev/(bench_results|benchmarks|simulation_results|archive)/']
-record_documents = '^dev/(active|research)/.*\\.json$'
-record_members = ['ran_at', '(\\w+_)?sha256', 'wall_seconds']
+forbidden_paths = ['(^|/)inputs/', '\\.log$', '(^|/)receipt\\.json$', '(^|/)(execution|journal)[^/]*\\.jsonl$', '^dev/(bench_results|benchmarks|simulation_results|archive)/', '^dev/active/(?!(.*/)?Cargo\\.toml$).*\\.toml$', '\\.jsonl$', '(^|/)runs\\.json$', '(^|/)summary\\.(csv|tsv)$']
+record_documents = '.*\\.json$'
+record_members = ['ran_at', 'wall_seconds', 'measured_at']
+workflow_documents = '^dev/(active|research)/'
+workflow_record_members = ['(\\w+_)?sha256']
+markdown_documents = '.*\\.md$'
+receipt_title = '\\b(receipts?|results)\\b'
+measurement_columns = ['wall(_\\w+)?', 'VGPRs?', 'GB/s', 'BER', 'frames']
+table_documents = '.*\\.(csv|tsv)$'
+
 [[exception]]
 path = "experiments/*/tests/fixtures/*"
 reason = "test fixture"
@@ -295,6 +453,23 @@ reason = "fixture"
             ("run record", lambda: write("dev/active/x/progress.json", 0, '{"waves": [{"run": {"ran_at": "t"}}]}'), "execution record"),
             ("run digest", lambda: write("dev/research/x/progress.json", 0, '{"binary_sha256": "ab"}'), "execution record"),
             ("unreadable document", lambda: write("dev/active/x/progress.json", 0, "{"), "not JSON"),
+            ("receipt title", lambda: write("dev/active/x/run.md", 0, "---\ntitle: Run receipt\n---\n"), "receipt title"),
+            ("record line", lambda: write("dev/research/x/README.md", 0, "- ran_at: 2026-08-10T12:00:00Z\n"), "record line"),
+            ("result table", lambda: write("dev/active/x/notes.md", 0, "| Cell | GB/s |\n|---|---:|\n| a | 1.33 |\n| b | 0.98 |\n"), "result table"),
+            ("scientific table", lambda: write("experiments/a/README.md", 0, "| SNR | BER |\n|---|---|\n| 1 | 1.2e-5 |\n| 2 | 3.4 × 10^-6 |\n"), "result table"),
+            ("results title", lambda: write("crates/a/notes.md", 0, "# Decoder results\n"), "receipt title"),
+            ("crate record", lambda: write("crates/a/data/profile.json", 0, '{"sections": {"a": {"measured_at": "t"}}}'), "execution record"),
+            ("csv table", lambda: write("crates/a/data/curve.csv", 0, "snr,frames,errors\n1,100,3\n"), "result table columns frames"),
+            ("tsv table", lambda: write("dev/tools/x/t.tsv", 0, "cell\twall_ns\na\t3\n"), "result table columns wall_ns"),
+            ("ledger", lambda: write("dev/tools/x/trial-ledger.jsonl", 1), "forbidden path"),
+            ("run shard", lambda: write("experiments/a/runs/r1/shards/q3.jsonl", 1), "forbidden path"),
+            ("run journal", lambda: write("experiments/a/run.journal.jsonl", 1), "forbidden path"),
+            ("run index", lambda: write("experiments/a/runs.json", 0, "{}"), "forbidden path"),
+            ("pooled summary", lambda: write("experiments/a/summary.csv", 0, "q,n\n3,2\n"), "forbidden path"),
+            ("record outside the roots", lambda: write("scripts/a.json", 0, '{"wall_seconds": 1}'), "execution record"),
+            ("receipt outside the roots", lambda: write("docs/a.md", 0, "| Cell | GB/s |\n|---|---:|\n| a | 1.3 |\n"), "result table"),
+            ("table outside the roots", lambda: write("table.tsv", 0, "cell\twall_ns\na\t3\n"), "result table columns"),
+            ("frozen run configuration", lambda: write("dev/active/x/campaign.toml", 0, "seed = 1\n"), "forbidden path"),
             ("commit size", lambda: [write(f"f{i}", 900) for i in range(3)], "adds"),
             ("tree size", lambda: write("big.lock", 9000), "tree:"),
             ("raised limit", lambda: write(CONFIG, 0, config.replace("10000", "20000")), "rises"),
@@ -310,6 +485,13 @@ reason = "fixture"
         write("dev/active/x/progress.json", 0, '{"started_at": "t", "completed_at": "t", "status": "done", "notes": "ran_at"}')
         assert_faults(check_staged(repo), [], "workflow state")
         run("reset", "-q", "--hard", "HEAD")
+        write("dev/active/x/plan.md", 0, "# Plan\n\n| Cell | GB/s |\n|---|---|\n| a | after tuning |\n\nran_at: when the run started\n")
+        write("crates/a/data/pin.json", 0, '{"envelope": {"path": "a.json", "sha256": "ab"}}')
+        write("crates/a/data/vectors.csv", 0, "index,codeword\n0,0101\n")
+        write("dev/active/x/tool/Cargo.toml", 0, "[package]\n")
+        write("experiments/demo/tests/fixtures/curve.csv", 0, "snr,BER\n1,0.1\n")
+        assert_faults(check_staged(repo), [], "prose, a configuration pin, test data and a manifest")
+        run("reset", "-q", "--hard", "HEAD")
         write("/".join(["experiments", "demo", "tests", "fixtures", "execution.jsonl"]), 1)
         write("/".join(["experiments", "demo", "tests", "fixtures", "receipt.json"]), 1)
         write("old.bin", 899)
@@ -322,6 +504,10 @@ reason = "fixture"
         write("dev/active/x/progress.json", 0, '{"wall_seconds": 3}')
         run("commit", "-qm", "record", "--no-verify")
         assert_faults(check_range("HEAD~1..HEAD", repo), ["execution record"], "range record")
+        write("dev/research/x/notes.md", 0, "# Receipt\n")
+        run("commit", "-qm", "receipt", "--no-verify")
+        assert_faults(check_range("HEAD~1..HEAD", repo), ["receipt"], "range receipt")
+        run("reset", "-q", "--hard", "HEAD~1")
         run("rm", "-q", "dev/active/x/progress.json", "a/inputs/c.rs")
         run("commit", "-qm", "drop record", "--no-verify")
         assert_faults(at_head(), [], "tree after the record left")

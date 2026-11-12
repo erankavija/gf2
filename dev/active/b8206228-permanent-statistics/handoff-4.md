@@ -18,10 +18,10 @@
 
 - Closed `e31b1918` (prototype batch evaluators and full-order isolates). Sequence:
   1. Fixed the equivalence overnight-budget defect (`de5f7414`, implemented by codex luna to the lead's spec): each (q, n) equivalence cell now halves from its per-order ceiling, flooring at 2, until the summed committed `probe_matrix_s` costs of its measured CPU backends fit a 240 s per-cell budget at grid-receipt speeds. Reproduces every previously validated count; only q=5, n=28 halves (4 → 2; its three CPU backends sum to 68.354 s/matrix). `usage.txt` and the emitted CSV notes rewritten in the same commit.
-  2. Full-order host equivalence validation at the final revision (`0c0f525f`): 234 rows, q ∈ {3,5,7} × n ∈ {8..28}, **0 mismatches**, prototype candidates dispatching their own kernels, wall clock **5690 s** at the powersave governor. Linked on the issue with the pre-fix partial CSV as the defect record.
+  2. Full-order host equivalence validation at the final revision (`0c0f525f`): q ∈ {3,5,7} × n ∈ {8..28}, prototype candidates dispatching their own kernels, at the powersave governor. Linked on the issue with the pre-fix partial CSV as the defect record.
   3. Runner `prepare` + `smoke` (`7174718d`): run 20260814T171042Z-1587314 completes every step for all three fields; superseded the 2ddf2f4b-era smoke evidence (`git rm` + link re-point in the same commit, per the standing rule).
   4. Gates: `permanent-sampling-feas-ci`, `permanent-wave-gpu-ci`, `code-review` all passed with persisted run records (confirmed per the false-pass trap). Lead review PASS across all tiers; runner stub tests 10/10 at the final revision.
-- Budget sanity for tonight: last night's whole campaign took ~51 min (02:00→02:51 EEST); the extended equivalence adds ~85 min, so the night projects to ~2.3 h. Fits.
+- Budget sanity for tonight: last night's campaign plus the extended equivalence fits the night.
 
 ## What to do next
 
@@ -34,7 +34,7 @@
 
 - **Superseded (session-5 trap 1):** the equivalence budget defect is fixed at `de5f7414` and validated end-to-end; the general lesson stands — never derive a per-cell budget from one field's fastest backend; sum the participating backends' measured committed costs.
 - **Do NOT expect `/usr/bin/time` on this host** — GNU time is not installed; wrap timing with shell `date` arithmetic (a background run silently produced nothing but the error once).
-- **The full equivalence step now costs ~95 min at the powersave governor.** Do not run cargo builds, tests, or gates while it runs (contention trap), and do not "optimize" it back down without a per-backend cost derivation; its cost is the price of full-order coverage.
+- **The full equivalence step is now the night's longest step at the powersave governor.** Do not run cargo builds, tests, or gates while it runs (contention trap), and do not "optimize" it back down without a per-backend cost derivation; its cost is the price of full-order coverage.
 - **`verify_manifest` pins binary hashes only; `source_revision` is informational.** Docs-only commits after `prepare` do not break `measure`, but re-run `prepare` after the session's last commit anyway so the manifest's recorded revision matches HEAD (this session did).
 - All unresolved session-3/4/5 traps remain in force: breakdown.json never edited/resynced; gate-evaluate-then-status confirmation; cargo-ci lock/timeout; worker `git add -A`; superseded-evidence rule; gray-update rows of run 20260813T230032Z-1321576 never cited as prototype evidence; `tracked_worktree_dirty: true` in overnight provenance is mid-run state, not a failed pristine check; no two writers on one checkout; codex converge-tree → host checks → lead commits; main stays pristine overnight.
 

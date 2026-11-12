@@ -1231,7 +1231,7 @@ max_frames = 1
     }
 
     #[test]
-    #[ignore = "sim: Rician product-code BLER decay across 3 SNR points, ~30-60 s"]
+    #[ignore = "sim: Rician product-code BLER decay across 3 SNR points"]
     fn test_run_curve_rician_product_bler_decays() {
         let toml_str = r#"
 [campaign]

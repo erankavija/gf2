@@ -12,7 +12,7 @@
   },
   "effect": {
     "worthwhile_speedup": 1.5,
-    "rationale": "The smoke candidate arm performs one pass while the doubled-work baseline performs two, so a genuine pipeline records a speedup near 2. The pilot's largest relative confidence-interval half-width was 0.0315; rounding it upward to 0.04 leaves the 1.5 threshold far above the observed resolution and far below the expected effect. This threshold is a pipeline check, not a consumer-benefit judgment.",
+    "rationale": "The smoke candidate arm performs one pass while the doubled-work baseline performs two, so a genuine pipeline records a speedup near 2. The pilot's largest relative confidence-interval half-width rounds up to 0.04, which leaves the 1.5 threshold far above the observed resolution and far below the expected effect. This threshold is a pipeline check, not a consumer-benefit judgment.",
     "measurement_resolution": 0.04,
     "resolution_evidence": {
       "receipt": "target/bench_results/f547c394/2026-09-07-f547c394-protocol-pilot/receipt.json",

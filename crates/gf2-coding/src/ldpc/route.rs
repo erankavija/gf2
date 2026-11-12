@@ -63,10 +63,8 @@ pub enum LaneCapability {
 /// takes the lane route instead of the QC route
 /// ([`QcRouteBounds::structural`]).
 ///
-/// Example, not a claim: `qc-route-sweep` of @/issue/c62356d2 on host
-/// fraktaali (AVX2, eight `f32` lanes) measured the lane route ahead of the
-/// QC route at eight frames and one worker on NR codes up to lifting size 24,
-/// three vectors, and behind it from 40 on, with 32 within 2% either way.
+/// Example, not a claim: the `qc-route-sweep` of @/issue/c62356d2 motivates
+/// the value; the issue records its host and measurements.
 pub const LANE_CLAIM_QC_VECTORS: usize = 3;
 
 /// Bounds of the QC route in [`decide_batch_route`].

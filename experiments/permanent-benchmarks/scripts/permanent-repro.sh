@@ -10,12 +10,12 @@
 #   S2  — parallel scaling 1..12 cores (example parallel_scaling_sweep)
 #   S3  — cross-CPU portability (fully automated, no manual step): Part A
 #           AVX2 throughput rows are reused (copied, not re-measured) from the
-#           S1 CSV; Part B scalar/avx2_sanity rows come from the ~1-min
+#           S1 CSV; Part B scalar/avx2_sanity rows come from the
 #           s3_scalar_vs_avx2_sanity example. The script assembles the complete
 #           dated s3_cross_cpu CSV deterministically.
 #   S5  — GPU-vs-CPU SIMD crossover at M=256 (research harness
 #           dev/research/permanent_gpu_crossover; GPU-only, skipped on non-ROCm)
-#   S1g — GPU 50x speedup vs reference (research harness
+#   S1g — GPU speedup measurement vs reference (research harness
 #           dev/research/permanent_gpu_speedup; GPU-only, skipped on non-ROCm)
 #   Figures — T27 plot script scripts/plot_permanent_benchmarks.py (all mode)
 #   provenance.json — (re)written with current commit + hardware fingerprint
@@ -34,17 +34,7 @@
 #   - ROCm / hipcc for GPU steps S5 and S1g (auto-skipped if absent or
 #     GF2_PERMANENT_REPRO_SKIP_GPU=1 is set)
 #
-# Approximate wall-clock (Ryzen 9 5900X, AVX2, GPU gfx1030):
-#   Step 1 (workspace build):               ~1-3 min
-#   Step 2 (criterion bench, n=24/28):      ~4 min  (x2 for ref + bipedal3)
-#   Step 3a (S2 parallel scaling):          ~15 min (n=28/32/36 x 5 threads)
-#   Step 3b (S3 sanity, CPU-only):          ~1 min  (n=16/20/24, 5 samples each)
-#   Step 4a (S5 GPU crossover, n=24/28):    ~1 hr   (skipped without GPU/ROCm)
-#   Step 4b (S1g GPU speedup, n=24..36):    ~2+ hr  (skipped without GPU/ROCm)
-#   Step 5  (S1 offline n=32):              ~30 min (skipped unless S1_OFFLINE_N32=1)
-#   Step 5  (S1 offline n=36):              ~10 hr  (skipped unless S1_OFFLINE_N36=1)
-#   Step 6  (plot figures):                 ~5 s
-#   Step 7  (provenance.json):              ~1 s
+# Runtime depends on the selected CPU, GPU, and optional offline workloads.
 #
 # Environment-variable knobs:
 #   GF2_PERMANENT_REPRO_SKIP_GPU=1
@@ -52,12 +42,12 @@
 #       Set this on non-ROCm hosts to reproduce only the CPU portion.
 #
 #   S1_OFFLINE_N32=1
-#       Run the offline (single-sample, ~20 min) n=32 timing cells in the S1
+#       Run the offline single-sample n=32 timing cells in the S1
 #       bench.  Off by default because the Criterion n=24/28 cells are
 #       sufficient for most reproduction checks.
 #
 #   S1_OFFLINE_N36=1
-#       Run the offline n=36 timing cell (~10 hr).  Implies S1_OFFLINE_N32=1
+#       Run the offline n=36 timing cell.  Implies S1_OFFLINE_N32=1
 #       (n=32 must run first so it appears in the CSV before n=36).  Off by
 #       default; only set this for a full publication-grade regeneration.
 #
@@ -172,7 +162,7 @@ cargo build \
 # ---------------------------------------------------------------------------
 
 echo ""
-echo "=== step 2: S1 — criterion bench s1_n36_speedup (n=24, n=28; ~4 min) ==="
+echo "=== step 2: S1 — criterion bench s1_n36_speedup (n=24, n=28) ==="
 echo "    cargo bench -p permanent-benchmarks --features 'simd test-support' --bench s1_n36_speedup"
 cargo bench -p permanent-benchmarks --features "simd test-support" --bench s1_n36_speedup
 
@@ -183,7 +173,7 @@ cargo bench -p permanent-benchmarks --features "simd test-support" --bench s1_n3
 if [[ "${offline_n32}" == "1" ]]; then
     if [[ "${offline_n36}" == "1" ]]; then
         echo ""
-        echo "=== step 2b: S1 offline n=32 + n=36 (~10+ hr total) ==="
+        echo "=== step 2b: S1 offline n=32 + n=36 ==="
         echo "    S1_OFFLINE=1 cargo bench -p permanent-benchmarks --features 'simd test-support' --bench s1_n36_speedup -- --nocapture"
         S1_OFFLINE=1 cargo bench \
             -p permanent-benchmarks \
@@ -192,7 +182,7 @@ if [[ "${offline_n32}" == "1" ]]; then
             -- --nocapture
     else
         echo ""
-        echo "=== step 2b: S1 offline n=32 only (~20 min) ==="
+        echo "=== step 2b: S1 offline n=32 only ==="
         echo "    S1_OFFLINE=1 S1_OFFLINE_MAX_N=32 cargo bench -p permanent-benchmarks --features 'simd test-support' --bench s1_n36_speedup -- --nocapture"
         S1_OFFLINE=1 S1_OFFLINE_MAX_N=32 cargo bench \
             -p permanent-benchmarks \
@@ -203,7 +193,7 @@ if [[ "${offline_n32}" == "1" ]]; then
 else
     echo ""
     echo "=== step 2b: S1 offline cells (n=32/n=36) — SKIPPED ==="
-    echo "    Set S1_OFFLINE_N32=1 or S1_OFFLINE_N36=1 to enable (~20 min / ~10 hr)."
+    echo "    Set S1_OFFLINE_N32=1 or S1_OFFLINE_N36=1 to enable."
 fi
 
 # ---------------------------------------------------------------------------
@@ -211,7 +201,7 @@ fi
 # ---------------------------------------------------------------------------
 
 echo ""
-echo "=== step 3a: S2 — parallel scaling sweep (n=28/32/36, ~15 min) ==="
+echo "=== step 3a: S2 — parallel scaling sweep (n=28/32/36) ==="
 echo "    cargo run --manifest-path experiments/permanent-benchmarks/Cargo.toml --release --features 'parallel test-support' --example parallel_scaling_sweep"
 cargo run --manifest-path experiments/permanent-benchmarks/Cargo.toml \
     --release \
@@ -230,7 +220,7 @@ cargo run --manifest-path experiments/permanent-benchmarks/Cargo.toml \
 #            example stdout (its data lines are already in the S3 schema).
 
 echo ""
-echo "=== step 3b: S3 — assemble s3_cross_cpu CSV (sanity sweep n=16/20/24, ~1 min) ==="
+echo "=== step 3b: S3 — assemble s3_cross_cpu CSV (sanity sweep n=16/20/24) ==="
 echo "    cargo run --manifest-path experiments/permanent-benchmarks/Cargo.toml --release --features 'simd test-support' --example s3_scalar_vs_avx2_sanity"
 
 # Locate the S1 CSV that supplies Part A. Prefer the SA_DATE/today dated file
@@ -335,7 +325,7 @@ header = [
     "#   singleword SIMD path zero-pads to a 4-element AVX2 lane (documented in bipedal3.rs",
     "#   module comment). The timing difference confirms that two distinct code paths are",
     "#   executed (correctness checked via bit-identical assertions). At large n (n in",
-    "#   {24,28,32,36} from S1), the AVX2 path is 6.9x-10.6x faster than the reference.",
+    "#   {24,28,32,36} from S1), rows record the AVX2/reference comparison.",
     "# avx2_dispatch_correctness: verified by test_simd_vs_scalar_n8 / n16 / n24 in",
     "#   crates/gf2-algebra/src/permanent/bipedal3.rs",
     "n,impl,mean_us,std_us,samples,ratio_vs_avx2,hardware_fingerprint",
@@ -367,7 +357,7 @@ if [[ "${skip_gpu}" == "1" ]]; then
     echo "      cargo build --manifest-path dev/research/permanent_gpu_crossover/Cargo.toml --release --features hip"
     echo "      cargo run   --manifest-path dev/research/permanent_gpu_crossover/Cargo.toml --release --features hip"
 else
-    echo "=== step 4a: S5 — GPU vs CPU crossover at M=256 (n=24/28; ~1 hr) ==="
+    echo "=== step 4a: S5 — GPU vs CPU crossover at M=256 (n=24/28) ==="
     echo "    cargo build --manifest-path dev/research/permanent_gpu_crossover/Cargo.toml --release --features hip"
     cargo build \
         --manifest-path dev/research/permanent_gpu_crossover/Cargo.toml \
@@ -379,19 +369,19 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Step 4b: S1g — GPU 50x speedup vs reference (ROCm only)
+# Step 4b: S1g — GPU speedup comparison (ROCm only)
 # ---------------------------------------------------------------------------
 
 echo ""
 if [[ "${skip_gpu}" == "1" ]]; then
-    echo "=== step 4b: S1g — GPU 50x speedup — SKIPPED (no ROCm / GF2_PERMANENT_REPRO_SKIP_GPU=1) ==="
+    echo "=== step 4b: S1g — GPU comparison — SKIPPED (no ROCm / GF2_PERMANENT_REPRO_SKIP_GPU=1) ==="
     echo "    To run: ensure ROCm + hipcc are present and unset GF2_PERMANENT_REPRO_SKIP_GPU."
     echo "    Command:"
     echo "      cargo build --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml --release --features hip"
     echo "      cargo run   --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml --release --features hip"
-    echo "    Wall-clock: n=24/28/32 ~3 reps each; n=36 ~1 rep (~7200 s). Budget ~2+ hr."
+    echo "    Run the command on a ROCm host with enough time for the full sweep."
 else
-    echo "=== step 4b: S1g — GPU 50x speedup vs reference (n=24/28/32/36; ~2+ hr) ==="
+    echo "=== step 4b: S1g — GPU comparison (n=24/28/32/36) ==="
     echo "    cargo build --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml --release --features hip"
     cargo build \
         --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml \

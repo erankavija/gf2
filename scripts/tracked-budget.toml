@@ -11,37 +11,122 @@ forbidden_paths = [
   '(^|/)outcomes?[^/]*\.(json|md|txt|csv|tsv|yaml|yml|toml)$',
   '\.(out|stdout|stderr)(\.[^/]*)?$',
   '(^|/)(stdout|stderr|output|timeline|scope)[^/]*\.txt$',
-  '^dev/(active|research)/(?!.*(\.(md|py|rs|sh|h|g|toml|lock)|/progress\.json|/[^/]*breakdown\.json)$)',
+  '^dev/(active|research)/(?!.*(\.(md|py|rs|sh|h|hip|g|toml|lock)|/progress\.json|/[^/]*breakdown\.json)$)',
   '^dev/studies/',
   '^experiments/[^/]+/results/',
   '(^|/)(execution|journal)[^/]*\.(log|jsonl|txt|csv|tsv)$',
+  # Execution streams, ledgers, run shards and pooled result records.
+  '\.jsonl$',
+  '(^|/)runs\.json$',
+  '(^|/)summary\.(csv|tsv)$',
   '^dev/(bench_results|benchmarks|simulation_results|archive)/',
   '\.asm\.txt$',
+  # A TOML file under dev/active is a frozen run configuration unless it is
+  # a build or tool manifest.
+  '^dev/active/(?!(.*/)?(Cargo|rust-toolchain|rustfmt|clippy|deny|pyproject|lakefile|nextest)\.toml$).*\.toml$',
 ]
 
-# A JSON document the rules above admit under `record_documents` holds workflow
-# state, such as statuses and `started_at`/`completed_at`. A member whose whole
-# name matches one of `record_members` makes it an execution record: when a run
-# happened or ended, what it cost, which executable ran, its exit status, or its
-# receipt.
-record_documents = '^dev/(active|research)/.*\.json$'
+# A JSON document the rules above admit under `record_documents` holds
+# configuration or workflow state, such as statuses and
+# `started_at`/`completed_at`. A member whose whole name matches one of
+# `record_members` makes it an execution record: when a run happened or ended,
+# what it cost or measured, on which host, and its exit status or verdict. Under
+# `workflow_documents`, where nothing pins a configuration, a member matching
+# `workflow_record_members` does too: which executable ran, its digest, or its
+# receipt. Elsewhere such a member is a configuration pin.
+record_documents = '.*\.json$'
 record_members = [
-  '(ran|ended|fired)_at',
+  '(ran|ended|fired|measured)_at',
   '(wall|cpu|run|elapsed)_(seconds|secs|ms|time)',
   '(elapsed|duration)(_\w+)?',
+  'wall_clock(_\w+)?',
+  '(median|mean|min|max|p\d+)_(ns|us|ms|s|seconds)',
+  'throughput(_\w+)?',
+  'exit_(status|code)(_\w+)?',
+  '(peak|max)_rss(_\w+)?',
+  'host',
+  'passed',
+]
+workflow_documents = '^dev/(active|research)/'
+workflow_record_members = [
   '(\w+_)?(sha256|digest)',
   '(\w+_)?(binary|executable)(_\w+)?',
   '(\w+_)?receipts?',
-  'exit_(status|code)(_\w+)?',
-  '(peak|max)_rss(_\w+)?',
 ]
+
+# A Markdown document under `markdown_documents` is prose: a design, a plan, a
+# handoff. It is a receipt when its first heading or front matter `title`
+# matches `receipt_title`, or when a `name: value` line records a
+# `record_members` member with a literal value (a digest, a number or a
+# timestamp). It holds a result table when a header cell names one of
+# `measurement_columns` and most body cells under it are numeric. The columns
+# name what a run measures: elapsed time, processor time, rate, compiler
+# resource allocation, cycle counts and memory peaks. Sizes and counts that
+# design arithmetic derives, such as bytes per lane or code lines, are left out.
+markdown_documents = '.*\.md$'
+receipt_title = '\b(receipts?|run records?|results|measurements)\b'
+measurement_columns = [
+  'time', 'times', 'wall(_\w+)?', 'wall[- ]clock', 'cpu(_\w+)?', 'runtime', 'elapsed', 'duration', 'latency',
+  'ns', 'us', 'µs', 'ms', 'seconds', 'throughput(_\w+)?', '[GMK]i?B/s', '[GM]elem/s', '[GM]?ops/s', 'Gops',
+  'speedup', 'cycles', 'VGPRs?', 'SGPRs?', 'spills?', 'scratch', 'LDS', 'occupancy', 'rss', 'peak memory',
+  'BER', 'BLER', 'FER', 'frames', 'errors', 'passed',
+]
+
+# A CSV or TSV table under `table_documents` is a result table when a header
+# cell names one of `measurement_columns`.
+table_documents = '.*\.(csv|tsv)$'
+# Published reference data of other authors is external conformance data under
+# `standards-vector-conformance`, not a measurement of this code; owner ruling
+# 2026-11-12.
 [[exception]]
 path = "dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/*"
-reason = "digitization of published figures, not a measurement of this code"
+reason = "digitization of published figures: external conformance data; owner ruling 2026-11-12"
 
 [[exception]]
-path = "experiments/*/tests/fixtures/*"
-reason = "behavioral test fixtures"
+path = "dev/reference_data/*.csv"
+reason = "curves transcribed or digitized from published figures: external conformance data; owner ruling 2026-11-12"
+
+[[exception]]
+path = "experiments/permanent-statistics/data/scheinerman2024-*.csv"
+reason = "published target values of Scheinerman 2024: external conformance data; owner ruling 2026-11-12"
+
+# Dated session records state the tree and the values of their date and stay
+# unedited; owner ruling 2026-11-12.
+[[exception]]
+path = "dev/active/*/handoff*.md"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/sessions/*"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/session-*-prompts/*"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/dispatch-*.md"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "dev/active/*/rework-*.md"
+reason = "dated session record; owner ruling 2026-11-12"
+
+[[exception]]
+path = "experiments/permanent-statistics/tests/fixtures/analysis/*/execution.jsonl"
+reason = "synthetic dataset member the schema-3 verifier requires; carries placeholder identity and seeded counts"
+
+[[exception]]
+path = "experiments/permanent-statistics/tests/fixtures/analysis/*/runs.json"
+reason = "synthetic dataset member the schema-3 verifier requires; carries placeholder identity"
+
+[[exception]]
+path = "experiments/permanent-statistics/tests/fixtures/analysis/*/shards/*.jsonl"
+reason = "synthetic dataset member the schema-3 verifier requires; carries seeded counts"
+
+[[exception]]
+path = "experiments/permanent-statistics/tests/fixtures/analysis/*/summary.csv"
+reason = "synthetic dataset member the schema-3 verifier requires; pools the seeded shard counts"
 
 [[exception]]
 path = ".jit/events.jsonl"
@@ -50,3 +135,29 @@ reason = "append-only tracker log; grows with the tracker"
 [[exception]]
 path = "crates/*/tests/compile_fail/*.stderr"
 reason = "expected compiler diagnostics of the trybuild tests"
+[[exception]]
+path = "crates/*/data/tuning-profiles/*.json"
+reason = "tuning profiles the library and its tests load; the profile format's strict codec requires each section's measurement provenance"
+
+[[exception]]
+path = "dev/reference_data/tuning-profiles/*.json"
+reason = "complete tuning profiles the composer and gf2-algebra envelope tests load"
+
+[[exception]]
+path = "experiments/*/tuning-profiles/*.json"
+reason = "tuning profiles an experiment arm installs"
+
+# Frozen protocol addenda of the tuning campaigns state the resolution values
+# their pre-registered decision rules use; tests pin each by digest. Decision
+# records under committed-evidence-budget; steward ruling 2026-11-12.
+[[exception]]
+path = "dev/tools/tuning-campaign-support/config/addendum-dvb-t2-bit-interleave-v3-confirmation-42850bc4.json"
+reason = "frozen addendum: states the resolution its pre-registered rule decides on; steward ruling 2026-11-12"
+
+[[exception]]
+path = "dev/tools/tuning-campaign-support/config/addendum-popcount-5ff212e5.json"
+reason = "frozen addendum: states the resolution its pre-registered rule decides on; steward ruling 2026-11-12"
+
+[[exception]]
+path = "dev/tools/tuning-campaign-support/config/addendum-protocol-smoke.json"
+reason = "frozen addendum: states the resolution its pre-registered rule decides on; steward ruling 2026-11-12"

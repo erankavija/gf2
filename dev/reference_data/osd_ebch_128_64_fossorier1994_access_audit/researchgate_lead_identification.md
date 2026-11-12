@@ -12,9 +12,8 @@ false positive, and the 1995 article remains unobtained.
 
 ## Examined local evidence
 
-The lead reviewer examined the local file
-`Soft-decision_decoding_of_linear_block_codes_based.pdf`. The
-file is not committed here.
+The lead reviewer examined a local copy of the delivered PDF, which is not
+committed here.
 
 | Field | Observed value |
 | --- | --- |

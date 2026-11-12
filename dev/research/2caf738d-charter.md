@@ -81,9 +81,9 @@ Optimization never relaxes mathematical or standards conformance.
 - **Chosen:** Before a ratio is recorded, the reference's build options are
   read and its fastest configuration is built, under
   `@/inv/performance-deliverable`.
-- **Rejected:** The reference's default build: for bchlib it ran at 0.54 to
-  0.59 of the `CONFIG_BCH_CONST_PARAMS` build on `fraktaali`, which turned a recorded
-  lead of 1.16 and 1.38 into 0.69 and 0.77 (`@/issue/040bc2b8`).
+- **Rejected:** The reference's default build: for bchlib it ran well below the
+  `CONFIG_BCH_CONST_PARAMS` build and turned a recorded gf2 lead into a deficit
+  (`@/issue/040bc2b8` records the values).
 - **Reasoning:** D-2 counts cells at 1.0 or above; a cell measured against a
   weaker configuration does not count.
 - **Date:** 2026-11-12

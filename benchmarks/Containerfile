@@ -125,7 +125,7 @@ RUN curl -fsSL -o /tmp/m4ri.tar.gz \
 # needed for our finite-field-only scope.
 #
 # `--disable-openmp` mirrors the existing fflas posture and ensures the
-# single-thread requirement of the SOTA acceptance protocol § 5 is met
+# single-thread requirement of the same-hardware requirement (issue 1d6043e8) is met
 # without runtime ENV overrides. `--disable-static` matches sibling pins.
 # ---------------------------------------------------------------------------
 ARG LINBOX_VERSION=1.7.1
@@ -152,7 +152,7 @@ RUN curl -fsSL -o /tmp/linbox.tar.gz \
 # 2 ≤ e ≤ 16. Depends on M4RI (built directly above) for the underlying
 # GF(2) bit-matrix layer and the Newton-John tables. Promoted as the
 # canonical reference for GF(2^4)/GF(2^8)/GF(2^16) under the SOTA reference
-# acceptance protocol (jit:507b0036).
+# acceptance protocol.
 # ---------------------------------------------------------------------------
 ARG M4RIE_VERSION=20250128
 ARG M4RIE_SHA256=96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7

@@ -3,9 +3,9 @@
 Planner: `dev/scripts/migrate-link-labels.py` (read-only over `.jit/`).
 [`migrate-labels.sh`](migrate-labels.sh) is generated at `95c60ccf`;
 [`migrate-labels-2.sh`](migrate-labels-2.sh) is generated at `358b19f0`, after
-the first script, with `--drop-orphans`. Tables below cover both scripts
-together, planned from the `95c60ccf` labels; coverage and validation come from
-a scratch clone of `358b19f0` with `migrate-labels-2.sh` applied.
+the first script, with `--drop-orphans`. The table below covers both scripts
+together, planned from the `95c60ccf` labels; `--verify` checks coverage on a
+migrated copy.
 
 ```sh
 python3 dev/scripts/migrate-link-labels.py --drop-orphans \
@@ -26,15 +26,6 @@ python3 dev/scripts/migrate-link-labels.py --root <pre-migration-copy> \
 
 Containers are `milestone`, `epic` and `story` issues; the coverage walk never
 enters `planning` or `breakdown` issues.
-
-## Label counts
-
-| Namespace | Unqualified | Rewritten | Requalified | Ambiguous | Orphan / unregistered |
-|---|---|---|---|---|---|
-| satisfies | 736 | 647 | 0 | 0 | 89 |
-| cites | 177 | 177 | 0 | 0 | 0 |
-
-Owner distance of rewritten `satisfies` labels: 1 edge(s): 73, 2 edge(s): 237, 3 edge(s): 85, 4 edge(s): 84, 5 edge(s): 66, 6 edge(s): 61, 7 edge(s): 17, 8 edge(s): 20, 9 edge(s): 2, 10 edge(s): 1, 11 edge(s): 1.
 
 ## Removed satisfies labels
 
@@ -189,9 +180,6 @@ Each row lists where the labels that credited the requirement before now resolve
 
 ## Validation after migration
 
-| Rule | Errors |
-|---|---|
-| `dangling-item-link` | 0 |
-| `hard-criteria-covered` | 0 |
-| `coverage-preview` | 0 |
-| derived-state drift | 1 (`.jit/.gitignore` absent) |
+`jit validate` reported no `dangling-item-link`, `hard-criteria-covered` or
+`coverage-preview` error after the migration; its derived-state drift check
+reported the absent `.jit/.gitignore`.

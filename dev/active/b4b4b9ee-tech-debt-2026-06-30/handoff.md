@@ -25,7 +25,7 @@
 - Gates: added the invoker-approved gate sets to 41 gateless issues. The invoker asked to be consulted before any further gate change.
 - Reviewer models changed (invoker-approved): `code-review`, `doc-review`, `plan-review`, `breakdown-review` on `gpt-6.1-sol`; `research-review`, `holistic-review` on `gpt-6-astra`. `codex-cli` upgraded 0.157.0 → 0.162.0 (0.157.0 refuses `gpt-6.1-sol`).
 - Closed, all gates passed: `6bb13c31`, `6b5f4f3c`, `df144ecf` (no-claim branch), `79a62102`, `9600eb56` (rework 1), `33057520` (lead fixed two doc findings), `0657c9fa` (rework 1), `8342487d`, `2a9cc72c` (lead fixed three rustdoc findings), `f556d663`, `c7c11e7e` and `f0228940` (shared rework 1), `b2520e0f` (lead-requested touch-up keeping an unrolled fold for N in 22..=31), `9d474049`, `5c62bb1c`, `1fe6e218`, `d1bfe986`.
-- Rejected `45a962da` (invoker decision): the five tests run in about 6 ms; ignore tags reverted.
+- Rejected `45a962da` (invoker decision): the five tests are fast; ignore tags reverted.
 - `dfb8820b`: worker deleted two schema-v2/v3 profiles; both reviews failed because `tuning_profiles/*.sha256` and zen3 producing-input records pin them by path and digest. Merge reverted in `fix(jit:dfb8820b): restore the receipt-pinned core tuning profiles`.
 - `dd493649`: merged with `5c62bb1c` (one worker, two commits). Review F1 (high): a multi-frame seeded call still crosses its reserved stride. F2: the regression runs with debug assertions in CI.
 - `fbcadf17`: two reviews failed on REQ-01. The substituting arm is unreachable; the reviewer reads the criterion's other branch (reject with evidence) as the applicable one and notes `DvbT2Concat::new` never returns `Unsupported`.
@@ -47,14 +47,14 @@
 ## Traps — do not repeat these
 
 - **Do NOT run `code-review` or `doc-review` before `cargo-ci` has passed.** Reviewers fail an issue whose `cargo-ci` is pending (`45a962da` F2, `6bb13c31` summary). Order: merge, `cargo-ci`, then reviews in parallel.
-- **Do NOT run a `cargo-ci` per merge.** A run on a changed tree took 11 min 40 s, a second issue on the same tree 1 min 40 s. Merge the batch, then `jit gate evaluate-many cargo-ci <ids>`.
+- **Do NOT run a `cargo-ci` per merge.** A run on a changed tree takes several times longer than a second issue's run on the same tree. Merge the batch, then `jit gate evaluate-many cargo-ci <ids>`.
 - **Do NOT merge, edit or commit source while a `cargo-ci` gate is running on `main`.** The gate judges the working tree. `.jit/`-only commits are safe.
 - **Do NOT read the first `cargo-ci` failure after a cold rebuild as a defect.** `tuning-campaign-support::protocol_contracts acceptance_rejects_unrecorded_restarts_double_completions_and_abandoned_samples` (6 s deadline) failed twice for `d1bfe986` right after merges and passed on the warm re-run; `0657c9fa` lost its test step once under eight-worker load.
 - **Do NOT trust "could not compile" across many dependency crates.** `sccache: error: Failed to create temp dir` broke every build on `main` until `sccache --stop-server`. Open issue `e250b5bb` describes the cause.
 - **Do NOT let the disk fill.** Each worktree grows to 4–11 GB, `main`'s `target` is 36 GB. ENOSPC truncated `target/doc/trait.impl/core/marker/trait.UnsafeUnpin.js` in the pool and five workers hit "invalid template". Run a watchdog; reclaim on merge.
 - **Do NOT recreate the cache pool from existing worktrees.** It carried a stale `gf2-kernels-simd` artifact ("cannot find m4rm") that every worker had to clean. Delete `<worktree>/target` before `reclaim-worker-worktree.sh` so nothing is harvested.
 - **Do NOT let a worker delete a committed artifact without a pin search.** `git grep -n <filename> -- dev` first; receipts pin inputs by path and digest (`dfb8820b`).
-- **Do NOT accept a "reproduce" criterion on an issue whose premise is unverified.** Time or run the reported behavior first: `45a962da`'s five "slow" tests ran in 6 ms, `fbcadf17`'s arm is unreachable, `3464c241`'s swapped column exists in no probed code. A report that does not hold is rejected with evidence, not worked around with an injected or synthetic case.
+- **Do NOT accept a "reproduce" criterion on an issue whose premise is unverified.** Time or run the reported behavior first: `45a962da`'s five "slow" tests were fast, `fbcadf17`'s arm is unreachable, `3464c241`'s swapped column exists in no probed code. A report that does not hold is rejected with evidence, not worked around with an injected or synthetic case.
 - **Do NOT tell a worker to make a test "independent" in a way that duplicates a canonical verifier.** `0657c9fa` failed review for a private primitivity helper beside `Gf2mField::verify_primitive`. The standing brief now says to reuse canonical mechanisms.
 - **Do NOT leave a named behavior untested directly.** `9600eb56` failed review because no test called `decode_soft` itself.
 - **Do NOT put a hand-copied inventory in docs.** `33057520` failed doc review for listing the hash inputs in the campaign guide; cite the API.

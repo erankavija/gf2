@@ -2,9 +2,10 @@
 set -u
 set -o pipefail
 
-# Regenerate the narrow architecture compile receipt. The default claimed
-# scope is intentionally gfx1030; extra targets are recorded as attempts but
-# never become supported merely because they compile.
+# Writes the architecture compile receipt and its raw log under
+# `$repo_dir/target/permanent_wave_gpu/`, outside the tracked tree. The default
+# claimed scope is gfx1030; extra targets are recorded as attempts but never
+# become supported merely because they compile.
 crate_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 repo_dir=$(cd "$crate_dir/../../.." && pwd)
 rocm_path=${ROCM_PATH:-/opt/rocm}
@@ -104,7 +105,7 @@ for raw_arch in "${arches[@]}"; do
     else
         echo "  outcome: failed; excluded_from_supported_scope: true" >> "$receipt_tmp"
     fi
-    echo "  raw_log: hip/architecture_compile_evidence-v1.log" >> "$receipt_tmp"
+    echo "  raw_log: architecture_compile_evidence-v1.log" >> "$receipt_tmp"
 done
 
 raw_log_sha256=$(sha256sum "$log_tmp" | awk '{print $1}')
@@ -117,8 +118,9 @@ attempt remains part of the raw log, including the exact toolchain diagnostic.
 Compile success does not establish runtime portability or performance.
 EOF
 
-# Publish canonical files only after all attempts and provenance hashes exist.
-mkdir -p "$crate_dir/hip"
-mv "$receipt_tmp" "$crate_dir/architecture_compile_evidence-v1.md"
-mv "$log_tmp" "$crate_dir/hip/architecture_compile_evidence-v1.log"
-echo "wrote $crate_dir/architecture_compile_evidence-v1.md and $crate_dir/hip/architecture_compile_evidence-v1.log"
+# Publish the receipt and log only after all attempts and provenance hashes exist.
+publish_dir="$repo_dir/target/permanent_wave_gpu"
+mkdir -p "$publish_dir"
+mv "$receipt_tmp" "$publish_dir/architecture_compile_evidence-v1.md"
+mv "$log_tmp" "$publish_dir/architecture_compile_evidence-v1.log"
+echo "wrote $publish_dir/architecture_compile_evidence-v1.md and $publish_dir/architecture_compile_evidence-v1.log"

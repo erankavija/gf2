@@ -20,10 +20,10 @@ use gf2_core::rng::Lcg;
 /// Correctness smoke test at n=36, M=1: GPU output must match CPU SIMD
 /// on the same seeded matrix.  This satisfies the [hard] determinism criterion.
 ///
-/// Note: n=36 GPU takes ~7200 s (~2 h), so this test carries #[ignore = "external:..."].
-/// It is the canonical determinism check run manually on the gfx1030 host.
+/// This test is ignored because it requires the gfx1030 device and a long GPU run.
+/// It is the canonical determinism check run manually on that host.
 #[test]
-#[ignore = "external: gfx1030 device required; n=36 takes ~7200 s (~2 h)"]
+#[ignore = "external: gfx1030 device required; long-running GPU check"]
 fn test_gpu_matches_simd_at_n36() {
     let n = 36;
     let seed = 0x9480_F8A6_0000_0024_u64; // S1g seed XOR n
@@ -80,10 +80,10 @@ fn test_gpu_matches_simd_n8() {
 /// Verify the GPU path does not panic for n=36 with a realistic batch size.
 /// Does NOT check correctness (too slow) — only checks liveness.
 #[test]
-#[ignore = "external: gfx1030 device required; n=36 M=4 takes ~450 s"]
+#[ignore = "external: gfx1030 device required; long-running GPU check"]
 fn test_gpu_liveness_n36_small_batch() {
     let n = 36;
-    let m = 4; // use small M for a feasible liveness check in ~500 s
+    let m = 4; // use a small batch for a liveness check
     let seed = 0x9480_F8A6_DEAD_BEEF_u64;
 
     let mut rng = Lcg::new(seed);

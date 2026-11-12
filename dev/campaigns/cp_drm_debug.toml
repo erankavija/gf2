@@ -1,4 +1,4 @@
-# Chase-Pyndiah debug for dRM(32,21) - confirm BLER=1.0
+# Chase-Pyndiah debug for dRM(32,21) to inspect BLER.
 [campaign]
 name = "cp_drm_debug"
 output_dir = "target/simulation_results/chase_pyndiah"

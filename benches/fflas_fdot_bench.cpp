@@ -151,7 +151,7 @@ int main() {
 
     std::cout << "\n--- p=~2^62: NOT SUPPORTED ---" << std::endl;
     std::cout << "Modular<int64_t> max cardinality is ~2^31; primes near 2^62" << std::endl;
-    std::cout << "require Modular<Integer> (GMP), which has ~100x overhead." << std::endl;
+    std::cout << "require Modular<Integer> (GMP), which carries a large overhead." << std::endl;
     std::cout << "gf2-core handles this range natively via Montgomery arithmetic." << std::endl;
 
     return 0;

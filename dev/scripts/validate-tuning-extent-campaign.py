@@ -573,14 +573,13 @@ def issue_declaration(issue: str, root: Path | None = None) -> dict[str, Any]:
                 and owner["cells"] > 0, "declared measured owner is malformed")
         names.append((owner["name"], owner["owner"]))
     for owner in imported:
-        require(set(owner) == {"owner", "name", "section", "envelope", "complete"}
+        require(set(owner) == {"owner", "name", "section", "envelope"}
                 and owner["section"] == OWNER_SECTIONS.get(owner["owner"]),
                 "declared imported owner is malformed")
-        for artifact_name in ["envelope", "complete"]:
-            entry = owner[artifact_name]
-            require(set(entry) == {"path", "sha256"}, "declared imported artifact is malformed")
-            relative_path(entry["path"], "declared imported artifact")
-            require_sha(entry["sha256"], "declared imported artifact digest")
+        entry = owner["envelope"]
+        require(set(entry) == {"path", "sha256"}, "declared imported artifact is malformed")
+        relative_path(entry["path"], "declared imported artifact")
+        require_sha(entry["sha256"], "declared imported artifact digest")
         names.append((owner["name"], owner["owner"]))
     order = list(OWNER_NAMES)
     declared = [name for name, _ in names]
@@ -3740,23 +3739,19 @@ def validate_imported_owners(stage: Path, config: Any, declaration: Any,
                 and entry["source"] == declared["envelope"],
                 "imported owner evidence identity mismatch")
         source = (root / declared["envelope"]["path"]).read_bytes()
-        reference = (root / declared["complete"]["path"]).read_bytes()
-        require(digest(source) == declared["envelope"]["sha256"]
-                and digest(reference) == declared["complete"]["sha256"],
+        require(digest(source) == declared["envelope"]["sha256"],
                 "committed imported envelope differs from its declared SHA-256")
         staged_path, staged = byte_artifact(entry["staged"], "staged imported owner", stage)
         require(staged_path == stage / f"{declared['name']}-owner.json" and staged == source,
                 "staged imported owner is not the committed envelope")
         wrapper = section_of(source, declared["section"])
-        require(compact(wrapper) == compact(section_of(reference, declared["section"])),
-                "imported owner wrapper differs from its committed complete envelope")
         record_path, record = artifact(entry["reopen"], "imported-owner reopen record", stage)
         directory = record_path.parent
         require(record_path.name == "reopen.json" and directory.parent == stage / "imported"
                 and directory.name.startswith(f"{declared['name']}-"),
                 "imported-owner reopen record path mismatch")
         probed = [name for name in REQUIRED_OWNERS if name != declared["name"]]
-        require_keys(record, ["schema", "owner", "section", "source", "reference", "staged",
+        require_keys(record, ["schema", "owner", "section", "source", "staged",
                               "wrapper_sha256", "probe_complete", "runs",
                               *(f"probe_{name}" for name in probed)],
                      "imported-owner reopen record")
@@ -3764,7 +3759,6 @@ def validate_imported_owners(stage: Path, config: Any, declaration: Any,
                 and record["owner"] == declared["owner"]
                 and record["section"] == declared["section"]
                 and record["source"] == declared["envelope"]
-                and record["reference"] == declared["complete"]
                 and record["staged"] == entry["staged"]
                 # The driver hashes the wrapper as a sorted-key JSON value.
                 and record["wrapper_sha256"] == digest(compact(sorted_json(wrapper))),
@@ -3953,7 +3947,7 @@ def validate_envelopes(stage: Path, campaign: str, responses: dict[str, Any],
                 f"{name} calibrated provenance/citation mismatch")
         if imported is not None:
             reference = section_of(
-                (repository_root() / imported["complete"]["path"]).read_bytes(),
+                (repository_root() / imported["envelope"]["path"]).read_bytes(),
                 imported["section"])
             require(compact(complete["sections"][imported["section"]]) == compact(reference),
                     f"complete envelope changed the imported {name} wrapper")
@@ -4352,8 +4346,7 @@ def imported_receipt_section(declaration: Any) -> str:
         text += (f"Owner `{owner['owner']}` is imported unmeasured from "
                  f"`{owner['envelope']['path']}` (SHA-256 `{owner['envelope']['sha256']}`). "
                  f"The complete envelope carries its `{owner['section']}` section wrapper "
-                 f"unchanged; the committed complete envelope `{owner['complete']['path']}` "
-                 f"(SHA-256 `{owner['complete']['sha256']}`) holds the same wrapper.\n\n")
+                 f"unchanged.\n\n")
     return text
 
 
@@ -4838,7 +4831,7 @@ def publication_layout(campaign: str) -> dict[str, str]:
         "core-owner.json": f"crates/gf2-core/data/tuning-profiles/{campaign}.json",
         "algebra-owner.json": f"crates/gf2-algebra/data/tuning-profiles/{campaign}.json",
         "coding-owner.json": f"crates/gf2-coding/data/tuning-profiles/{campaign}.json",
-        "complete.json": f"dev/reference_data/tuning-profiles/{campaign}.json",
+        "complete.json": f"{TUNING_EVIDENCE}/{campaign}-complete.json",
         "receipt.md": f"{TUNING_EVIDENCE}/{campaign}.md",
         "evidence-index": f"{TUNING_EVIDENCE}/{campaign}-evidence.md",
         "checksum": f"{TUNING_EVIDENCE}/{campaign}.sha256",
@@ -5446,8 +5439,8 @@ def coding_owner_self_test() -> None:
     issue = "c0d1f1ed"
     committed = {"path": "committed.json", "sha256": "0" * 64}
     imported = [{"owner": OWNER_NAMES[name], "name": name,
-                 "section": OWNER_SECTIONS[OWNER_NAMES[name]], "envelope": committed,
-                 "complete": committed} for name in REQUIRED_OWNERS]
+                 "section": OWNER_SECTIONS[OWNER_NAMES[name]], "envelope": committed}
+                for name in REQUIRED_OWNERS]
     measured = lambda name: {"owner": OWNER_NAMES[name], "name": name, "cells": 1}
     with tempfile.TemporaryDirectory(prefix="gf2-validator-coding-", dir="/tmp") as temporary:
         root = Path(temporary)

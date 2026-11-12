@@ -18,7 +18,7 @@
 - Prevention: `@/inv/committed-evidence-budget`, `scripts/check-tracked-budget.py`, versioned hooks in `.githooks`, `cargo-ci` and GitHub CI steps.
 - Separation: library production code fell from 106,454 to 84,451 code lines by the same count as the session's first measurement; `gf2-sim` from 29,013 to 7,997. Experiments live in `experiments/`.
 - `permanent-statistics` is 6,177 Rust code lines including tests and the moved sampler, 177 over the aspirational 6,000 in `fd1ef344`.
-- Rewrite rehearsal: pack 221 MiB to 63 MiB, 334 pinned commits mapped, `jit validate` and full `cargo-ci` pass on the rewritten checkout. See [45ecf975/history-rewrite-runbook.md](45ecf975/history-rewrite-runbook.md). The rehearsal mirror is at `local-path
+- Rewrite rehearsal: pinned commits mapped, `jit validate` and full `cargo-ci` pass on the rewritten checkout. See [45ecf975/history-rewrite-runbook.md](45ecf975/history-rewrite-runbook.md). The rehearsal mirror is at `local-path
 
 ## What to do next
 

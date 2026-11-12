@@ -2,15 +2,11 @@
 
 Issue `a83583e0` supplies the success criteria.
 
-This declaration applies the selector convention in
-`design.md`, its appended extent amendment,
-and the ownership, strict-envelope, installation, and composition contract in
-`design.md`. The retained core threshold
-experiment is the exact experiment in
-`premeasurement-protocol.md`
-and its executed receipt.
-Those historical artifacts remain immutable. This campaign takes fresh samples;
-it does not copy their measured values into a different measurement wrapper.
+This declaration applies the selector convention of the tuning-profile design,
+its extent amendment, and that design's ownership, strict-envelope,
+installation, and composition contract. The retained core threshold experiment
+is the earlier core premeasurement protocol. This campaign takes fresh samples;
+it does not copy earlier measured values into a different measurement wrapper.
 
 ## 1. Architecture and decisions before implementation
 
@@ -856,7 +852,7 @@ Repository destinations are derived from that one ID:
 |---|---|
 | Core-owner envelope | `crates/gf2-core/data/tuning-profiles/<run-id>.json` |
 | Algebra-owner envelope | `crates/gf2-algebra/data/tuning-profiles/<run-id>.json` |
-| Complete envelope | `dev/reference_data/tuning-profiles/<run-id>.json` |
+| Complete envelope | `target/benchmarks/tuning_profiles/<run-id>-complete.json` |
 | Receipt | `target/benchmarks/tuning_profiles/<run-id>.md` |
 | Repository-relative checksum manifest | `target/benchmarks/tuning_profiles/<run-id>.sha256` |
 | Declared small build/provenance/composition/validation/reopen records | `target/benchmarks/tuning_profiles/<run-id>-session/` |

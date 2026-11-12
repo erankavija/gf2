@@ -7,14 +7,14 @@ candidate experiments and their rejected paths stay independently buildable.
 
 ## Architecture scope and compile evidence
 
-The current claimed and measured architecture scope is exactly `gfx1030`, the
-target exercised by the committed device receipts below. HIP builds accept an
-explicit comma-separated `PERMANENT_WAVE_GPU_OFFLOAD_ARCHES` value and default
-to `gfx1030`; the value is passed to every retained prototype kernel source and
-executable build. This compile-time selection does not claim runtime support,
-portability, or performance on an architecture without device evidence.
+The claimed architecture scope is exactly `gfx1030`, the target the device
+drivers below run on. HIP builds accept an explicit comma-separated
+`PERMANENT_WAVE_GPU_OFFLOAD_ARCHES` value and default to `gfx1030`; the value
+is passed to every prototype kernel source and executable build. This
+compile-time selection does not claim runtime support, portability, or
+performance on an architecture without device evidence.
 
-Regenerate the compact versioned receipt from a fully clean tracked and
+Produce the versioned compile receipt from a fully clean tracked and
 untracked worktree on a ROCm host with:
 
 ```sh
@@ -22,14 +22,13 @@ bash dev/research/permanent_wave_gpu/scripts/compile_arch_evidence.sh
 ```
 
 The script captures revision and clean-worktree provenance before creating
-outputs, uses an isolated target directory, and records the verbose Cargo/build
-and toolchain output in
-`architecture_compile_evidence-v1.log`,
-and writes `architecture_compile_evidence-v1.md` only after every attempt
-finishes. The default receipt claims only `gfx1030`; set
-`PERMANENT_WAVE_GPU_EVIDENCE_ARCHES` to record an explicit extra attempt. The
-script always includes `gfx1030`, and preserves any extra architecture's exact
-outcome and diagnostic without silently promoting it into the claimed set.
+outputs, uses an isolated target directory, and writes the receipt and the
+verbose Cargo, build and toolchain log under `target/permanent_wave_gpu/` at
+the repository root only after every attempt finishes. The default receipt
+claims only `gfx1030`; set `PERMANENT_WAVE_GPU_EVIDENCE_ARCHES` to record an
+explicit extra attempt. The script always includes `gfx1030`, and preserves
+any extra architecture's exact outcome and diagnostic without promoting it
+into the claimed set.
 
 Run the host-only registry tests with:
 
@@ -48,8 +47,8 @@ cargo test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release 
     --test fixtures_oracle
 ```
 
-The corpus is addressed through the feasibility study's existing
-`MeasurementPurpose::Equivalence` stream domain; it does not introduce another
+The corpus uses the existing `MeasurementPurpose::Equivalence` stream domain;
+it does not introduce another
 randomness-purpose registry.  It includes structural empty, singleton, Gray
 partition, add/subtract, partial-word, zero-product, and nonzero exponent-class
 fixtures for each supported field, plus $\mathbb{F}_7$ orders 16, 20, and 24.
@@ -77,23 +76,6 @@ permanent kernel: the host fixture corpus remains the evidence for permanent
 equality at orders 16, 20, and 24, and `cc162697` owns permanent-shaped device
 paths.
 
-### Device arithmetic receipt — 2026-08-10
-
-This non-performance conformance run was made from clean implementation commit
-`df5a51f6` (`fix(jit:7b998fb9): add device arithmetic conformance`) on an AMD
-Radeon RX 6950 XT (`gfx1030`, UUID `GPU-8cd14d6d8a3c8a73`) with ROCm HIP
-`7.2.53211-9999` and AMD clang `22.0.0git`. The command was:
-
-```sh
-cargo +1.95.0 test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
-    --release --features hip --test hip_f7_three_plane -- --nocapture
-```
-
-It passed `device_f7_three_plane_arithmetic_is_exact`: release build 2.56 s,
-device test 0.06 s, command wall time 2.64 s. The result confirms device
-arithmetic only; it neither measures performance nor claims a device permanent
-implementation.
-
 The candidate list is deliberately complete from the first commit and is
 authoritatively defined by `MeasurementPath::ALL`. Add a candidate
 implementation only by replacing its stub in the owning candidate module and
@@ -101,61 +83,48 @@ adding that candidate's HIP and test files. Do not add a second registry or
 edit `src/lib.rs` or `src/paths.rs`; the measurement driver always enumerates
 `MeasurementPath::ALL` and dispatches through that one registry.
 
-## F_5 wave device/resource clean receipt — 2026-08-10
+## Compiler resource capture
 
-This non-performance evidence was captured from clean implementation commit
-`9b78666c2a75d8217d8191db323c801cb0e0c95e`
-(`feat(jit:56c69654): add F5 three-plane prototype`):
-`git status --porcelain=v1 --untracked-files=all` was empty immediately before
-the checks. The host GPU was an AMD Radeon RX 6950 XT (`gfx1030`, UUID
-`GPU-8cd14d6d8a3c8a73`), driver `7.1.6-arch1-1`. The toolchain was Rust and
-Cargo `1.95.0`, ROCm HIP `7.2.53211-9999`, and AMD clang `22.0.0git`.
+The gfx1030 report of `-Rpass-analysis=kernel-resource-usage` is the
+authoritative allocation evidence for every kernel: SGPRs, VGPRs, private
+scratch, SGPR/VGPR spills, static LDS and occupancy. Capture it for one source
+from this directory with:
 
-The normal device-evidence driver — not an ignored Cargo test — was:
+```sh
+mkdir -p target
+/opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 \
+    -Rpass-analysis=kernel-resource-usage \
+    -c hip/wave_gf3_equivalence.hip \
+    -o target/wave_gf3_equivalence.o \
+    2> target/wave_gf3_resource.log
+```
+
+and likewise for `hip/f5_wave_equivalence.hip` and
+`hip/wave_gf7_equivalence.hip`. The report names each kernel instantiation
+separately. Its `LDS Size` field is static LDS only: it excludes the dynamic
+shared column tables each launch requests, which are $16n$ bytes for the F_3
+folds, $n^2$ bytes for the F_5 byte control, $24n$ bytes for the F_5 and F_7
+three-plane kernels, and $8n\lceil n/16 \rceil$ bytes for the F_7 lookup
+control. A resource report is allocation evidence, not a timing or throughput
+claim.
+
+## F_5 wave device evidence
+
+The device-evidence driver is a normal binary, not an ignored Cargo test:
 
 ```sh
 cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
     --release --features hip --bin f5-wave-device-evidence
 ```
 
-It exited 0 and reported equality for all 14 committed F_5 fixtures admitted
-by the exact host bound `n <= 16`. Each fixture carries canonical row-major
-bytes and an independently calculated `gf2_algebra::permanent::permanent_ryser`
-value; both the byte-control and canonical Packed5 three-plane kernels matched
-that value element-wise. The same driver then passed the exact n=63 interval
-mapping, active-mask, exhaustive ordered F_5 add/subtract, and three-lane C4
-product probes. The n=63 corpus rows remain explicit `Unsupported` full
-permanents rather than an infeasible `2^63` device walk. The executed driver
-binary SHA-256 was
-`ae7a2db7170164ecad58159dd356d8c711bf980ce77dfd5d673f90835ecd51b3`.
-
-The clean compiler capture was:
-
-```sh
-/opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 \
-    -Rpass-analysis=kernel-resource-usage \
-    -c hip/f5_wave_equivalence.hip \
-    -o /tmp/56c69654-f5-wave.o \
-    2> /tmp/56c69654-f5-wave-resource.log
-```
-
-The resulting object SHA-256 was
-`463e2b157180b7304b7d71db87bb32d740da41eb1d6261a0b1e3e2a7a5aba520`.
-Its byte-faithful 6,563-byte stderr is
-`f5_wave_resource_usage.log`, SHA-256
-`3557d29800abb331d2a429aa3444a368867512554e4677ca9fb00ec634fee88d`.
-The two permanent kernels are separately named in that report:
-
-| Path | Kernel | SGPRs | VGPRs | Scratch | Spills | Static LDS | Occupancy |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Byte control | `f5_byte_control_kernel` | 78 | 77 | 0 B/lane | 0 / 0 | 0 B/block | 12 waves/SIMD |
-| Three plane | `f5_three_plane_kernel` | 20 | 66 | 0 B/lane | 0 / 0 | 0 B/block | 12 waves/SIMD |
-
-The compiler's `LDS Size` is static LDS only. It reports zero for both
-kernels; this must not be read as an absence of the explicit dynamic shared
-column tables requested at launch: `n^2` bytes for byte control and `24n` bytes
-for the three-plane path. The driver and report establish correctness and
-resource allocation evidence, not a timing or throughput claim.
+It streams every committed F_5 fixture admitted by the exact host bound
+`n <= 16`, with canonical row-major bytes and an independently calculated
+`gf2_algebra::permanent::permanent_ryser` value, and requires both the
+byte-control and canonical Packed5 three-plane kernels to match it
+element-wise. It then runs the exact n=63 interval mapping, active-mask,
+exhaustive ordered F_5 add/subtract, and three-lane C4 product probes. The
+n=63 corpus rows remain explicit `Unsupported` full permanents rather than an
+infeasible `2^63` device walk.
 
 ## F_3 wave-cooperative evidence boundary
 
@@ -183,8 +152,7 @@ host and device checks retain exact interval union/disjointness and
 interval-start Gray-subset assertions at that order, plus active-tail-mask
 product probes. The device-touching Rust test is feature-gated and ignored with
 its required ROCm device reason. The separately invoked self-checking HIP
-executable provides the actual device evidence, and its resource receipt is
-recorded beside `wave_gf3_equivalence.hip` after the checked gfx1030 build.
+executable provides the actual device evidence.
 
 For actual element-wise device evidence, use the opt-in driver rather than an
 ignored Cargo test. It streams every committed F_3 fixture through the bound,
@@ -199,171 +167,15 @@ cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
     --release --features hip --bin wave-gf3-device-evidence -- --path fold-gf3
 ```
 
-### F_3 device/resource pre-commit capture — 2026-08-10
+In fixture-input mode a successful exit also requires the independent
+order-63 interval/start-subset mapping and active-mask product probes; it does
+not claim a full order-63 permanent.
 
-This capture is deliberately **not** a clean-revision receipt. It records the
-device evidence obtained before the implementation commit so the raw result is
-preserved rather than retroactively represented as clean. The final receipt
-must repeat the two commands below from the committed, clean implementation
-revision before making a clean-provenance claim.
-
-- Base revision: `a816d3b713835339a3f43307d5447dca5c7e9699`.
-- Source state: dirty implementation worktree; binary patch SHA-256
-  `e5f0a54da2e6bacc69f9db6fed9d23816f47d496424e4c1d2897eae017d9102a`.
-- Host: AMD Ryzen 9 5900X; AMD Radeon RX 6950 XT (`gfx1030`, UUID
-  `GPU-8cd14d6d8a3c8a73`).
-- Toolchain: ROCm HIP `7.2.53211-9999`; AMD clang `22.0.0git`.
-
-The resource command was:
-
-```sh
-/opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 \
-    -Rpass-analysis=kernel-resource-usage \
-    -c hip/wave_gf3_equivalence.hip \
-    -o /tmp/de2522d6-wave_gf3_equivalence.o \
-    2> /tmp/de2522d6-wave_gf3_resource.log
-```
-
-Its byte-faithful stderr is
-`wave_gf3_resource_usage-initial.log`, SHA-256
-`c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`.
-For `wave_gf3_kernel`, the report gives 22 SGPRs, 22 VGPRs, zero scratch
-bytes/lane, zero SGPR/VGPR spills, and occupancy 16 waves/SIMD. It gives zero
-LDS bytes/block because it reports static LDS only; this is preserved compiler
-output, not evidence that the kernel lacks its launch-time `16n`-byte dynamic
-column table.
-
-The directly executed prebuilt self-check was:
-
-```sh
-wave_gf3_equivalence
-```
-
-It exited 0 with no diagnostics. Its SHA-256 was
-`38c0cc9a9bfa48f2a9256d9426df7f6db37ab51cfbe9caaf5911661620e85a80`.
-The executable checks independent CPU-permutation references for the small
-structural cases and the device n=63 active-mask product probe; it does not
-claim an infeasible n=63 full permanent.
-
-### F_3 device/resource clean-revision receipt — 2026-08-10
-
-This final confirmation was made from clean implementation commit
-`18b022d6c6e13b6ae41759ce79a5ed420bd1d03f`
-(`feat(jit:de2522d6): add F3 wave Ryser prototype`):
-`git status --porcelain=v1 --untracked-files=all` was empty immediately before
-the resource capture and direct device execution. The host was the AMD Ryzen 9
-5900X / AMD Radeon RX 6950 XT (`gfx1030`, UUID
-`GPU-8cd14d6d8a3c8a73`) above, using HIP `7.2.53211-9999` and AMD clang
-`22.0.0git`.
-
-The clean compiler command repeated the pre-commit command with output
-`/tmp/de2522d6-wave_gf3_equivalence-clean.o` and stderr
-`/tmp/de2522d6-wave_gf3_resource-clean.log`. Its 2,165-byte stderr was
-byte-identical to the preserved initial raw log
-(`wave_gf3_resource_usage-initial.log`;
-`cmp` exit 0; SHA-256
-`c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`),
-so no resource difference was observed. It again reports 22 SGPRs, 22 VGPRs,
-zero scratch and spills, occupancy 16 waves/SIMD, and zero static LDS; the
-dynamic-LDS reporting limitation remains preserved rather than inferred away.
-
-From `dev/research/permanent_wave_gpu`, the clean prebuilt executable command
-was:
-
-```sh
-target/release/build/permanent-wave-gpu-8352961633a25476/out/wave_gf3_equivalence
-```
-
-It exited 0 with no diagnostics; its SHA-256 was
-`38c0cc9a9bfa48f2a9256d9426df7f6db37ab51cfbe9caaf5911661620e85a80`.
-The clean commit also passed both formatting checks, the default release test
-suite, the focused no-default-feature registry test, default and HIP-feature
-release Clippy with `-D warnings`, and compilation (without execution) of the
-feature-gated ignored HIP test.
-
-### F_3 device/resource review-rework capture — 2026-08-10
-
-This capture is deliberately **not** a clean-revision receipt. It records the
-review rework while the source tree was dirty relative to `8a788b03` (the
-prior landed F_3 implementation), so the clean commit must repeat both commands
-before it makes a clean-provenance claim. The host and toolchain were the
-gfx1030 RX 6950 XT / HIP 7.2.53211 / AMD clang 22.0.0git named above.
-
-The direct opt-in evidence command was:
-
-```sh
-cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
-    --release --features hip --bin wave-gf3-device-evidence
-```
-
-It exited 0 in 3.7 seconds and reported equality for all 12 streamed canonical
-F_3 fixtures through order 16. In its `--fixture-stdin` mode, this also runs
-the n=63 interval/start-subset mapping probe and active-mask product probe
-after the fixture comparisons.
-
-The resource command repeated the command above with output
-`/tmp/de2522d6-wave_gf3_equivalence-rework.o` and stderr
-`/tmp/de2522d6-wave_gf3_resource-rework.log`. Its then-canonical 4,400-byte
-stderr had SHA-256
-`4e052d08dab816ea569f9b0d2251d887cdc1d8db523300608c59a57c0a47ad8c`.
-The paired-fold capture below supersedes that control-only byte copy at the
-canonical resource-log path; this paragraph remains historical evidence for
-the reviewed control revision.
-`wave_gf3_kernel` remains 22 SGPRs, 22 VGPRs, zero scratch and spills,
-occupancy 16 waves/SIMD, and zero reported static LDS. The existing active-mask
-probe remains 7 SGPRs and 2 VGPRs. The new n=63 mapping probe reports 7 SGPRs
-and 8 VGPRs; the n=4 direction probe reports 9 SGPRs and 9 VGPRs. Both new
-probes also report zero scratch and spills, occupancy 16, and zero static LDS.
-The initial 2,165-byte capture remains preserved under its explicit
-`-initial` filename rather than being overwritten.
-
-### F_3 device/resource clean-rework receipt — 2026-08-10
-
-This confirmation was made from clean reviewed revision
-`22201e296b07ad1af20a738cefb56c13378f532d`; `git status --porcelain=v1
---untracked-files=all` was empty immediately before the checks. The host was
-an AMD Ryzen 9 5900X with an AMD Radeon RX 6950 XT (`gfx1030`, UUID
-`GPU-8cd14d6d8a3c8a73`), using ROCm HIP `7.2.53211-9999` and AMD clang
-`22.0.0git`.
-
-Both repository and standalone Rust 1.95 formatting checks passed in 1.3 s
-each. The default release suite passed 16 unit tests, 2 fixture-oracle tests,
-and the registry test (3.49 s build, 3.94 s test time). The focused
-no-default registry test passed (2.17 s build; its reusable mapping warnings
-remain the documented registry-only boundary). The host-only evidence
-selection/protocol test passed (9.43 s HIP-feature build), as did default and
-HIP-feature all-target Clippy with `-D warnings` (0.21 s and 6.93 s), and the
-feature-gated ignored HIP test's compile-only command (2.27 s).
-
-The direct non-test device command was:
-
-```sh
-cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
-    --release --features hip --bin wave-gf3-device-evidence
-```
-
-It exited 0 in 2.8 seconds, reporting element-wise equality for all 12
-canonical F_3 fixtures through order 16. The executable's fixture-input mode
-then ran the n=63 interval/start-subset mapping and active-mask product probes;
-this command is direct device evidence, not `cargo test -- --ignored`.
-
-The clean resource command was:
-
-```sh
-/opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 \
-    -Rpass-analysis=kernel-resource-usage \
-    -c hip/wave_gf3_equivalence.hip \
-    -o /tmp/de2522d6-wave_gf3_equivalence-clean-rework.o \
-    2> /tmp/de2522d6-wave_gf3_resource-clean-rework.log
-```
-
-It exited 0 in 4.1 seconds. At that revision `cmp` confirmed its stderr was
-byte-identical to the then-canonical 4,400-byte resource capture, with SHA-256
-`4e052d08dab816ea569f9b0d2251d887cdc1d8db523300608c59a57c0a47ad8c`.
-The paired-fold capture below later superseded that control-only byte copy.
-The historical 2,165-byte initial capture remains
-`wave_gf3_resource_usage-initial.log`,
-SHA-256 `c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`.
+The resource report falsifies a zero-allocation reading of the nine-register
+source model: neither fold adds persistent mapping state, but the zero-mask
+candidate's local mask and popcount work allocates more VGPRs than the halving
+control, with no scratch or spills in either. Any performance conclusion is a
+separate measurement.
 
 The default `fixture-oracle` feature retains the corpus and oracle surface,
 which imports the harness's canonical sampler. When the harness imports this
@@ -372,76 +184,9 @@ crate's registry, it disables that feature and enables its own default
 avoids a Cargo dependency cycle while keeping `MeasurementPath::ALL` available
 in both directions as the sole candidate list.
 
-### F_3 paired-fold clean device/resource receipt — 2026-08-10
+## F_7 wave permanent device evidence
 
-This evidence was recorded from clean implementation revision
-`682ef5787f5a3792872fb94441bf66e5c38c866c`
-(`feat(jit:739f43b0): add F3 sign-popcount fold`):
-`git status --porcelain=v1 --untracked-files=all` was empty immediately after
-that commit and before either driver or compiler command. The host was an AMD
-Ryzen 9 5900X 12-Core Processor with an AMD Radeon RX 6950 XT (`gfx1030`, UUID
-`GPU-8cd14d6d8a3c8a73`). ROCm SMI reported the GPU in a low-power state; this
-is correctness/resource evidence, not a performance measurement. The
-toolchain was ROCm HIP `7.2.53211-9999` and AMD clang `22.0.0git`.
-
-The direct, non-test evidence commands were:
-
-```sh
-cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
-    --release --features hip --bin wave-gf3-device-evidence -- --path wave-gf3
-cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
-    --release --features hip --bin wave-gf3-device-evidence -- --path fold-gf3
-```
-
-Both exited 0. The control reported `wave-gf3 device evidence matched 12
-streamed fixtures` and the candidate reported `fold-gf3 device evidence matched
-12 streamed fixtures`; each then reported success for all 12 committed F_3
-fixtures through order 16. The shell-measured totals were 0.093 s and 0.096 s,
-respectively. In fixture-input mode, a successful exit also requires the
-independent order-63 interval/start-subset mapping and active-mask probes; it
-does not claim a full order-63 permanent.
-
-The clean resource command was:
-
-```sh
-/opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 \
-    -Rpass-analysis=kernel-resource-usage \
-    -c hip/wave_gf3_equivalence.hip \
-    -o /tmp/739f43b0-wave-gf3.o \
-    2> /tmp/739f43b0-wave-gf3-resource.log
-```
-
-It exited 0 in 1.64 s. Its 6,485-byte stderr is byte-faithfully committed as
-`wave_gf3_resource_usage.log`, with
-SHA-256 `03ba52528a5cd363405409af0545c38348abddc0f01fafb9a34a3d103f36c6cf`.
-The compiler names both specializations: `FoldKindE0` is the halving control
-and `FoldKindE1` is the zero-mask/sign-popcount candidate, following their
-source declaration order. The control reports 22 SGPRs and 22 VGPRs; the
-candidate reports 22 SGPRs and 25 VGPRs. Both report zero scratch bytes per
-lane, zero SGPR and VGPR spills, occupancy 16 waves/SIMD, and zero static LDS
-bytes per block. The launch still reserves the source-declared dynamic column
-table of $16n$ bytes per block, which this static-LDS report does not include.
-
-The resource comparison falsifies a zero-allocation interpretation of the
-nine 32-bit-unit source-level mapping model: neither fold adds persistent
-mapping state, but the candidate's local zero-mask/popcount work costs three
-additional VGPRs. It preserves the no-scratch/no-spill result and the same
-reported occupancy, so any performance conclusion remains a later measurement
-question rather than an inference from this receipt.
-
-## F_7 wave permanent device/resource clean receipt — 2026-08-10
-
-This non-performance correctness and resource evidence was recorded from clean
-revision `a29c5e8a71a2795d5e1e97f10f698c4123b9275d`
-(`fix(jit:cc162697): align F7 evidence protocol`), containing the implementation
-commit `f1295700`. `git status --porcelain=v1 --untracked-files=all` was empty
-before the drivers and compiler capture. The host was an AMD Ryzen 9 5900X
-12-Core Processor with an AMD Radeon RX 6950 XT (`gfx1030`, UUID
-`GPU-8cd14d6d8a3c8a73`), driver `7.1.6-arch1-1`; ROCm SMI reported its
-low-power state. The toolchain was Rust/Cargo `1.95.0`, ROCm HIP
-`7.2.53211-9999`, and AMD clang `22.0.0git`.
-
-The direct non-test evidence commands were:
+The direct, non-test evidence commands are:
 
 ```sh
 cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
@@ -455,43 +200,9 @@ cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
     --path f7-three-plane-permanent --stage three-plane-preparation
 ```
 
-All exited 0. The lookup control and three-plane permanent each matched the
-host driver's independent generic `permanent_ryser` value for all 12 committed
-F_7 fixtures at orders 16, 20, and 24. The preparation command uses its
-separate stream, does not compute Ryser, and succeeded only after copying every
-prepared `b0`, `b1`, and `b2` column plane back from the device and comparing
-them with the canonical row-major matrix bytes.
-
-The clean resource command was:
-
-```sh
-/opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 \
-    -Rpass-analysis=kernel-resource-usage \
-    -c hip/wave_gf7_equivalence.hip \
-    -o /tmp/cc162697-wave_gf7_equivalence.o \
-    2> /tmp/cc162697-wave_gf7_resource.log
-```
-
-It exited 0. The 4,341-byte stderr was byte-copied after validation as
-`wave_gf7_resource_usage.log`, SHA-256
-`45edf675b1f198f407347d6872753684496b37344cdeac5246a449f7f3e65f97`;
-`cmp` against `/tmp/cc162697-wave_gf7_resource.log` succeeded. The object is
-122,896 bytes, SHA-256
-`53f57558172cfd68d1c1d15624e17e486c799353f558a73e61bc75eb0871997b`.
-The invoked Rust driver is 738,912 bytes, SHA-256
-`45cc43ba054dd1ecc53d3b3223a65a1d6e7526fcc83550ed5de7c87d582d442f`;
-its HIP executable is 121,216 bytes, SHA-256
-`6b5c52941bcb8b191cd38f512b16efd4298d9dd382aec37350e05fbdf3f34282`.
-
-| Kernel | SGPRs | VGPRs | Scratch bytes/lane | SGPR/VGPR spills | Static LDS bytes/block | Occupancy waves/SIMD |
-| --- | ---: | ---: | ---: | --- | ---: | ---: |
-| `prepare_three_plane_columns` | 16 | 17 | 0 | 0 / 0 | 0 | 16 |
-| `wave_gf7_three_plane_kernel` | 16 | 34 | 0 | 0 / 0 | 0 | 16 |
-| `wave_gf7_lookup_table_kernel<1>` | 19 | 31 | 0 | 0 / 0 | 0 | 16 |
-| `wave_gf7_lookup_table_kernel<2>` | 26 | 41 | 24 | 0 / 0 | 0 | 16 |
-
-`LDS Size` is the compiler's static-LDS field. It does not include the explicit
-dynamic shared column tables requested at launch: $24n$ bytes for the
-three-plane kernel and $8n\lceil n/16 \rceil$ bytes for the lookup control.
-The 24-byte lookup-`<2>` scratch result is preserved as compiler evidence, not
-interpreted as a performance conclusion.
+The lookup control and the three-plane permanent each compare against the
+host driver's independent generic `permanent_ryser` value for every committed
+F_7 fixture at orders 16, 20, and 24. The preparation stage uses its separate
+stream, does not compute Ryser, and succeeds only after copying every prepared
+`b0`, `b1`, and `b2` column plane back from the device and comparing it with
+the canonical row-major matrix bytes.

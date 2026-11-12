@@ -15,7 +15,7 @@
 
 ## What just happened
 
-- Confirmed `gf2-predraw-validation2.service` started at 2026-08-31 02:00:30 and ran for 17m36s; timer or user-bus permission was not the failure.
+- Confirmed `gf2-predraw-validation2.service` started at 2026-08-31 02:00:30 and ran; timer or user-bus permission was not the failure.
 - Preserved the complete failed-run journal at commit `3fd2893b`; it contains five immutable passing terminals: q=3,n=1..4 and q=5,n=1. No terminal was changed, deleted, or redrawn.
 - Reproduced the publisher failure in an exact Rust probe: default serde_json 1.0.151 parsing shifts q=5 `log_p_value` bits `bfb87fcfb6c9e338` to `bfb87fcfb6c9e339` and `p_value` bits `3fed145e4cad104e` to `3fed145e4cad104d`.
 - Disproved the racing-writer hypothesis: the publisher hardlinked the intended bytes, then rejected its own deserialized value because of the one-ULP shifts.
@@ -35,7 +35,7 @@
 
 ## Traps — do not repeat these
 
-- **Do not diagnose this as a permission or timer-start problem.** The service ran for 17m36s and consumed 6h26m CPU. Sandboxed `systemctl --user` inspection needs the explicit user bus or host approval, but that inspection constraint did not prevent the timer from firing.
+- **Do not diagnose this as a permission or timer-start problem.** The service ran. Sandboxed `systemctl --user` inspection needs the explicit user bus or host approval, but that inspection constraint did not prevent the timer from firing.
 - **Do not diagnose a racing or second writer.** An exact Rust probe reproduced both one-ULP shifts using a single deserialize. The hardlinked q=5 terminal bytes are the intended immutable bytes.
 - **Do not assume ordinary JSON finite-float parsing preserves Rust `f64` bits.** In this dependency configuration, default serde_json changed the two q=5 values. The merged `float_roundtrip` feature and regressions are the required repair.
 - **Do not resume with the old binary.** Its post-publication verifier deterministically rejects the already committed q=5 terminal, so it cannot adopt the journal and reach the remaining anchors.

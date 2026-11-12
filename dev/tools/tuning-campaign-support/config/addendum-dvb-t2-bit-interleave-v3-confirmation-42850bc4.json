@@ -22,7 +22,7 @@
       "sha256": "753c500b47e17f94c3d3a8ac53645290c001afb3f6a71ae71444be3420d3798d"
     },
     "equivalence_margin": 1.1,
-    "equivalence_rationale": "A 10% equivalence margin. The same-family 24-pair resolution pilot has a conservative relative bootstrap half-width of 0.032632, rounded up to the declared 0.04 resolution, so this margin strictly clears the protocol floor without changing the family decision rule.",
+    "equivalence_rationale": "A 10% equivalence margin. The same-family 24-pair resolution pilot rounds up to the declared 0.04 resolution, so this margin strictly clears the protocol floor without changing the family decision rule.",
     "material_gap_threshold": 1.2,
     "material_gap_rationale": "A 20% whole-consumer wall-clock gap is the smallest gap between two arms of this operation worth attributing to representation conversion, permutation-table traffic or codegen level rather than host noise. It strictly clears the same-family pilot resolution of 0.04."
   },

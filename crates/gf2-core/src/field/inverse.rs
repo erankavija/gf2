@@ -1831,7 +1831,7 @@ mod tests {
 
     /// Prints per-phase and whole-operation wall times as CSV on stderr.
     #[test]
-    #[ignore = "slow: GF(251)/n=64 cost decomposition for d36cc414 (~10 s)"]
+    #[ignore = "slow: GF(251)/n=64 cost decomposition for d36cc414"]
     fn test_gf251_n64_borderline_cost_decomposition() {
         const ECHELON_CELLS: &[(usize, &str)] = &[(64, "deficient")];
         const INVERT_CELLS: &[(usize, &str)] = &[(64, "uniform"), (256, "deficient")];

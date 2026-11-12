@@ -1,5 +1,5 @@
 # Test GLDPC with damping (alpha=0.7) and LLR saturation at 2.0 dB
-# Previous result without damping: BLER=0.938 at 2.0 dB (paper: 0.130)
+# Compare damping and LLR saturation with the undamped configuration.
 
 [campaign]
 name = "test_gldpc_damping"

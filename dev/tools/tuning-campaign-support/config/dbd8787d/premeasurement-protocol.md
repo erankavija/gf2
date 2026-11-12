@@ -5,9 +5,9 @@ Issue `dbd8787d` supplies the success criteria.
 This declaration amends the executed extent protocol
 [`a83583e0/premeasurement-protocol.md`](../a83583e0/premeasurement-protocol.md)
 (cited below as *a835*) by reference. Every rule of a835 holds unless a
-section here replaces it. The seam fields, their ranges and read sites come
-from `design.md` §4; the selector
-convention from `design.md`.
+section here replaces it. The seam fields, their ranges and read sites, and
+the selector convention, come from the selector design of the tuning-profile
+work.
 
 ## 1. Scope
 
@@ -57,7 +57,7 @@ per level, as production does.
 | Scalar base | public `FieldMatrix::ple` on `A = L*U` | none | PLE base route `(t, ScalarBase/BlockRecursive)`; no panel dispatch; carrier lane `None` |
 
 All three fields run over `Fp<2^31 - 1>`, the carrier of their defaults'
-recorded sweeps (`design.md` §4.4). Its whole-GEMM kernel accepts
+recorded sweeps. Its whole-GEMM kernel accepts
 every non-degenerate shape, so each classical GEMM leaf takes one
 capability-selected route; `gemm` reads no runtime GEMM selector, and the GEMM
 companions are read back to state the context explicitly. The Winograd
@@ -117,14 +117,10 @@ estimate, not a measurement.
 
 The declaration imports the committed a835 algebra owner
 `crates/gf2-algebra/data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
-(SHA-256 `c401c7606acef9fb7d86184a7fbc84fbbe603f318144266803671ca430adcd36`)
-whose `gf2-algebra/permanent` wrapper equals that of the committed complete
-envelope
-`dev/reference_data/tuning-profiles/gf2-a83583e0-20260930t230000z-2728298.json`
-(SHA-256 `5377bdec27d2e7c15d433f97654c3b7927dde3e67f4fbc834f5c1f2964d66776`).
+(SHA-256 `c401c7606acef9fb7d86184a7fbc84fbbe603f318144266803671ca430adcd36`).
 
-Preparation reads the owner, requires both digests and the wrapper equality,
-stages its bytes as `algebra-owner.json` and strictly reopens the staged copy
+Preparation reads the owner, requires its digest and its
+`gf2-algebra/permanent` section, stages its bytes as `algebra-owner.json` and strictly reopens the staged copy
 through the staged composer: a conservative core probe and a complete
 composition that reopens the algebra owner with the owner-only codec. Both
 composer runs are journaled verification actions before any timed child; the
@@ -132,7 +128,7 @@ algebra phase has no cells and no producer is built or staged.
 Composition under the lock uses the staged copy unchanged. Publication writes
 no algebra-owner destination, strictly reopens the committed import in its
 place, and archives the staged copy. The validator requires the complete
-envelope's algebra wrapper to equal the committed a835 one.
+envelope's algebra wrapper to equal the imported owner's.
 
 ## 7. Receipt and evidence index
 
@@ -153,7 +149,7 @@ Repository destinations are derived from the run ID:
 | Artifact | Destination |
 |---|---|
 | Core-owner envelope | `crates/gf2-core/data/tuning-profiles/<run-id>.json` |
-| Complete envelope | `dev/reference_data/tuning-profiles/<run-id>.json` |
+| Complete envelope | `target/benchmarks/tuning_profiles/<run-id>-complete.json` |
 | Receipt | `target/benchmarks/tuning_profiles/<run-id>.md` |
 | Evidence index | `target/benchmarks/tuning_profiles/<run-id>-evidence.md` |
 | Repository-relative checksum manifest | `target/benchmarks/tuning_profiles/<run-id>.sha256` |

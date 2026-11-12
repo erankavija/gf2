@@ -3,7 +3,7 @@
 # Canonical Phase 1 Figure 1 campaign.
 # Compares dRM(32,21)^2 product code decoded with GPU BCJR turbo
 # against 5G NR LDPC with BP (sum-product) and NMS decoders.
-# BCJR is used because SOGRAND is impractical for n=32 (~20s/frame).
+# BCJR is used because SOGRAND is impractical for n=32.
 
 [campaign]
 name = "phase1_fig1"

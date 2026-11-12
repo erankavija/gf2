@@ -13,12 +13,8 @@
 //! the outer kernel, we co-attribute the kernel entry points
 //! (`run_*_batch`) with `#[target_feature(enable = "avx2")]` and ensure the
 //! trait impl methods are `#[inline(always)]`. With both ends of the call
-//! enabled for AVX2, rustc inlines through the trait calls and emits the
-//! same AVX2 instruction stream as the per-prime kernel. Earlier versions
-//! that only put `#[target_feature]` on the per-prime side measured a 12-34x
-//! penalty against the generic framework — that was a benchmark artefact,
-//! not a real cost. The current implementation closes the gap modulo a
-//! small constant factor.
+//! enabled for AVX2, rustc can inline through the trait calls with the
+//! required target feature enabled.
 //!
 //! All `pub unsafe fn` here carry a top-of-function `// SAFETY:` comment.
 
@@ -233,10 +229,9 @@ impl<Mag: BipedalLogicalLanes, Sgn: BipedalLogicalLanes> BatchedBipedalLike<Mag,
 }
 
 // AVX2-specific batch entry points for the F_3 instantiation. We attach
-// `#[target_feature(enable = "avx2")]` here so rustc inlines the trait
+// `#[target_feature(enable = "avx2")]` here so rustc can inline the trait
 // method bodies (which use AVX2 intrinsics) into a function-level context
-// that has the feature enabled. Without these the generic kernel measures
-// 12-34x slower than per-prime, purely as an inlining-budget artefact.
+// that has the feature enabled.
 impl BatchedBipedalLike<Avx2Lane, Avx2Lane> {
     /// Apply [`BatchedBipedalLike::add`] across two slices of `(mag, sgn)` u64 words.
     ///

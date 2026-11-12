@@ -46,7 +46,7 @@ fn expected_permanent_anchor(field_order: u64, dimension: usize) -> ExactProbabi
 }
 
 fn historical_order_three_reading(field_order: u64) -> ExactProbability {
-    // Preserved from the historical receipt named in exact-anchors.csv.
+    // The order-three counts the historical exact-enumeration anchor recorded.
     match field_order {
         3 => ExactProbability::from_counts(8_163, 19_683),
         5 => ExactProbability::from_counts(439_525, 1_953_125),

@@ -18,14 +18,14 @@ Usage
 -----
     # Merge both sides:
     python3 benchmarks/analyze.py \\
-        --gf2 target/bench_results/2026-04-26-gf2.csv \\
-        --reference target/bench_results/2026-04-26-reference.csv \\
-        --out target/bench_results/2026-04-26-tables.md
+        --gf2 target/reference-benchmarks/2026-04-26-gf2.csv \\
+        --reference target/reference-benchmarks/2026-04-26-reference.csv \\
+        --out target/reference-benchmarks/2026-04-26-tables.md
 
     # gf2-only (reference cells will be marked PENDING):
     python3 benchmarks/analyze.py \\
-        --gf2 target/bench_results/2026-04-26-gf2.csv \\
-        --out target/bench_results/2026-04-26-tables.md
+        --gf2 target/reference-benchmarks/2026-04-26-gf2.csv \\
+        --out target/reference-benchmarks/2026-04-26-tables.md
 
     # Self-test on a tiny synthetic CSV:
     python3 benchmarks/analyze.py --smoke
@@ -263,16 +263,14 @@ def reference_lib_for(field_value: str, operation: Optional[str] = None) -> str:
 
     * charpoly × GF(p): canonical = fflas-ffpack. fflas-ffpack
       promotes charpoly via FFPACK::CharPoly with the n^3 normalizer,
-      already published in 2026-04-26-reference.csv across all four
-      reference primes at n ∈ {64, 256}. LinBox + FLINT + NTL rows
+      measured across all four reference primes at n ∈ {64, 256}. LinBox + FLINT + NTL rows
       exist as secondary-reference cross-checks (issues 79388011,
       73ab8eef) — they merge into the reference CSV stream but
       analyze.py renders only the fflas-ffpack column to keep the
       side-by-side narrow.
 
     * minpoly × GF(p): canonical = fflas-ffpack. fflas-ffpack
-      promotes minpoly via FFPACK::MinPoly (added in 2026-05-04
-      issue 5dea7457; rows in 2026-05-04-5dea7457-reference-extension.csv
+      promotes minpoly via FFPACK::MinPoly (added in issue 5dea7457,
       across all four primes at n ∈ {64, 256, 1024}). Before 5dea7457
       no fflas-ffpack minpoly rows existed; LinBox + FLINT minpoly
       rows continue to exist as secondary-reference cross-checks
@@ -313,9 +311,9 @@ def reference_lib_for(field_value: str, operation: Optional[str] = None) -> str:
         # Per jit:a3412e15 § 4: GF(p) routes to fflas-ffpack `fspmm`
         # (canonical). GF(2^m) cells fall back to gf2-core's
         # SparseFieldMatrix::matmat (no comparable external path —
-        # GivaroExtension is `semantics-mismatch` per protocol § 9). GF(2)
+        # GivaroExtension is `semantics-mismatch` per the acceptance workflow of issue 1d6043e8). GF(2)
         # routes to LinBox `applyLeft × Modular<int64_t>(2)` per the
-        # design doc's hard-reference designation; gf2-core's
+        # hard-reference designation of jit:a3412e15; gf2-core's
         # SpBitMatrix::matmat (jit:521390db) is the candidate, LinBox is
         # canonical (note throughput-unit normalisation: gf2-core
         # measures bit ops in u64 packed words; LinBox measures

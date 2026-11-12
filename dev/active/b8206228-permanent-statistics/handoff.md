@@ -45,7 +45,7 @@
 - **Do NOT trust a test that asserts an exemption without checking the fixture reaches the exempted path.** A `derived/` exemption test wrote its file untracked; the untracked rule excused it regardless, so the test would have passed with the exemption completely broken.
 - **Do NOT edit `scripts/cargo-ci.sh` while an instance is running.** Bash reads scripts lazily by byte offset; inserting lines can make a running instance resume mid-token. Done once this session (it survived, but do not rely on that).
 - **Do NOT hold merges out of fear the tree moves under a running review.** Owner feedback, and correct: it costs bandwidth. Only `cargo-ci` is genuinely exclusive (host lock). Review gates are API-bound; merge as soon as a branch is ready, gate concurrently. Hold only when two changesets touch the same files, which is visible from the diff.
-- **Do NOT run a `cargo-ci` gate while workers compile.** Seven `gf2-coding::ldpc_systematic_encoding` tests timed out at 5.0–5.3 s against the 5 s fast-tier kill; the same twelve pass in ~1.0 s each uncontended. The gate runs at `nice -n 19`, so it yields CPU and starves marginal tests.
+- **Do NOT run a `cargo-ci` gate while workers compile.** Seven `gf2-coding::ldpc_systematic_encoding` tests timed out against the 5 s fast-tier kill; the same twelve pass well inside it uncontended. The gate runs at `nice -n 19`, so it yields CPU and starves marginal tests.
 - Traps from prior sessions: none recorded (session 2 wrote no handoff). The `surfaced_pitfalls` array in `progress.json` carries 14 entries and remains in force.
 
 ## Open questions needing invoker input
