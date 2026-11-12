@@ -12,7 +12,9 @@ set -euo pipefail
 # to. The script builds both arms, then measures: inside a benchmark window
 # (GF2_BENCH_WINDOW=1) it re-runs itself under dev/scripts/ccx1-bench-flock.sh,
 # which pins to cores 6-11, and labels the table a window measurement; outside
-# one it measures unlocked and labels the table an indication. It exits 1 when
+# one it measures unlocked and labels the table an indication. Beside the host
+# line it prints the SHA-256 of both measured executables and of the ISA-L
+# and M4RIE libraries the reference arm loads. It exits 1 when
 # the arms' outputs differ on a cell.
 
 : "${GF256_BASELINE_PREFIX:?name the ISA-L and M4RIE install prefix}"
@@ -36,6 +38,8 @@ if [[ "${1:-}" != --measure ]]; then
 fi
 
 echo "host $(hostname), $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ //'), core $core, $mode"
+lib="$GF256_BASELINE_PREFIX/lib"
+"$root/target/release/gf256-baselines" --digests "$out/arm" "$lib/libisal.so" "$lib/libm4rie.so" "$lib/libm4ri.so"
 
 taskset -c "$core" "$root/target/release/gf256-baselines" >"$out/gf2.tsv"
 taskset -c "$core" "$out/arm" >"$out/ext.tsv"

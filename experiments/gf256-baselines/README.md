@@ -11,7 +11,9 @@ the same repetitions, and print an FNV-1a checksum of their output, for a
 region of one update of the drawn destination, since repeated equal updates
 cancel in pairs; the script fails when the checksums of a cell differ. A cell's time is the best
 of five batches after one untimed batch; a row reports the byte-region and
-generic routes, their ratio, and the fastest reference configuration.
+generic routes, their ratio, and the fastest reference configuration. Above
+the table the script prints the host and the SHA-256 of gf2's arm, of the
+references' arm and of the ISA-L and M4RIE libraries it loads.
 
 The libraries are built outside the tree and named by
 `GF256_BASELINE_PREFIX`, which holds their `include/` and `lib/`.

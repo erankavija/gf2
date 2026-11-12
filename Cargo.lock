@@ -646,6 +646,7 @@ dependencies = [
 name = "gf256-baselines"
 version = "0.1.0"
 dependencies = [
+ "experiments-common",
  "gf2-core",
 ]
 
