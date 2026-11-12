@@ -192,13 +192,15 @@ fn a_null_family_or_selector_is_rejected() {
     }
 }
 
-/// QC route bounds are a caller's parameter of the route, never a profile
-/// selector, so a body stating them is refused.
+/// The fold's run length and accumulator count are a caller's overrides,
+/// never profile selectors, so a body stating them is refused.
 #[test]
-fn a_body_stating_a_fold_run_length_is_rejected() {
+fn a_body_stating_a_fold_override_is_rejected() {
     for text in [
         r#"{"encode": {"clmul_fold_run_blocks": 64}}"#,
         r#"{"encode": {"clmul_fold_run_blocks": null}}"#,
+        r#"{"encode": {"clmul_fold_accumulators": 8}}"#,
+        r#"{"encode": {"clmul_fold_accumulators": null}}"#,
     ] {
         assert!(
             matches!(
@@ -210,6 +212,8 @@ fn a_body_stating_a_fold_run_length_is_rejected() {
     }
 }
 
+/// QC route bounds are a caller's parameter of the route, never a profile
+/// selector, so a body stating them is refused.
 #[test]
 fn a_body_stating_qc_route_bounds_is_rejected() {
     for text in [

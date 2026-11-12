@@ -9,7 +9,8 @@ use std::num::NonZeroUsize;
 use std::process::{Command, Stdio};
 
 use gf2_coding::bch::encode::{
-    clmul_fold_run_blocks, EncodeFamily, SystematicLayout, TABLE_REMAINDER_BLOCK_BITS,
+    clmul_fold_accumulators, clmul_fold_run_blocks, EncodeFamily, SystematicLayout,
+    TABLE_REMAINDER_BLOCK_BITS,
 };
 use gf2_coding::bch::spec::{BchSpec, BinaryBchCode, DesignedDistance};
 use gf2_coding::test_support;
@@ -50,10 +51,14 @@ const BATCH: usize = 16;
 /// worker count.
 const LANE_GROUP_BATCH: usize = 257;
 
-/// The fold run length [`FreshProcessCase::ClmulFoldRunOverride`] installs:
+/// The fold run length [`FreshProcessCase::ClmulFoldOverrides`] installs:
 /// a multiple of no accumulator count the fold derives, and above the
 /// structural run of [`corpus_row_b3`].
 pub const FOLD_RUN_BLOCKS: usize = 9;
+
+/// The fold accumulator count [`FreshProcessCase::ClmulFoldOverrides`]
+/// installs, admissible at every width the chunk fold unrolls.
+pub const FOLD_ACCUMULATORS: usize = 5;
 
 /// The decode family the decode cases install, as `lane_min_frames`,
 /// `lane_max_edges` and `granules_per_task`; every value differs from its
@@ -88,8 +93,9 @@ pub enum FreshProcessCase {
     #[cfg(feature = "tuning-profile")]
     ClmulFoldEncoded,
     /// A compiled envelope admitting the carry-less-multiply fold family with
-    /// [`FOLD_RUN_BLOCKS`] as its run length.
-    ClmulFoldRunOverride,
+    /// [`FOLD_ACCUMULATORS`] and [`FOLD_RUN_BLOCKS`] as its overrides, with a
+    /// workspace's fold shape reported when built and after a batch.
+    ClmulFoldOverrides,
     /// A compiled envelope carrying a decode family beside selectors
     /// admitting the table family.
     DecodeFamilyCompiled,
@@ -127,7 +133,7 @@ impl FreshProcessCase {
             Self::ClmulFoldAllocation => "clmul-fold-allocation",
             #[cfg(feature = "tuning-profile")]
             Self::ClmulFoldEncoded => "clmul-fold-encoded",
-            Self::ClmulFoldRunOverride => "clmul-fold-run-override",
+            Self::ClmulFoldOverrides => "clmul-fold-overrides",
             Self::DecodeFamilyCompiled => "decode-family-compiled",
             #[cfg(feature = "tuning-profile")]
             Self::DecodeFamilyEncoded => "decode-family-encoded",
@@ -163,7 +169,7 @@ impl FreshProcessCase {
             Some("clmul-fold-allocation") => Ok(Self::ClmulFoldAllocation),
             #[cfg(feature = "tuning-profile")]
             Some("clmul-fold-encoded") => Ok(Self::ClmulFoldEncoded),
-            Some("clmul-fold-run-override") => Ok(Self::ClmulFoldRunOverride),
+            Some("clmul-fold-overrides") => Ok(Self::ClmulFoldOverrides),
             Some("decode-family-compiled") => Ok(Self::DecodeFamilyCompiled),
             #[cfg(feature = "tuning-profile")]
             Some("decode-family-encoded") => Ok(Self::DecodeFamilyEncoded),
@@ -404,7 +410,7 @@ pub fn execute_child(case: FreshProcessCase) -> serde_json::Value {
         FreshProcessCase::ClmulFoldEncoded => {
             execute_install_child(encoded_envelope(selectors_admitting_the_clmul_family()))
         }
-        FreshProcessCase::ClmulFoldRunOverride => execute_fold_run_child(),
+        FreshProcessCase::ClmulFoldOverrides => execute_fold_overrides_child(),
         FreshProcessCase::DecodeFamilyCompiled => {
             execute_install_child(compiled_envelope(selectors_carrying_a_decode_family()))
         }
@@ -492,24 +498,53 @@ fn execute_conservative_child() -> serde_json::Value {
     })
 }
 
-/// Installs selectors admitting the fold family with [`FOLD_RUN_BLOCKS`] and
-/// reports the run a workspace is prepared with beside the structural one.
-fn execute_fold_run_child() -> serde_json::Value {
+/// Installs selectors admitting the fold family with [`FOLD_ACCUMULATORS`]
+/// and [`FOLD_RUN_BLOCKS`], then reports the fold shape a workspace holds when
+/// built and after a batch under them.
+///
+/// Installation comes first because constructing the code's splitting field
+/// resolves the process. A workspace built under the installed overrides
+/// still holding the structural shape is the witness that building it reads
+/// no profile; the batch is where the overrides take effect.
+fn execute_fold_overrides_child() -> serde_json::Value {
     let mut selectors = selectors_admitting_the_clmul_family();
     selectors.encode = selectors
         .encode
+        .with_clmul_fold_accumulators(NonZeroUsize::new(FOLD_ACCUMULATORS).unwrap())
         .with_clmul_fold_run_blocks(NonZeroUsize::new(FOLD_RUN_BLOCKS).unwrap());
     gf2_core::tuning::install(compiled_envelope(selectors)).unwrap();
+
     let code = corpus_row_b3();
+    let layout = SystematicLayout::default();
+    let mut workspace = code.encode_workspace();
+    let built =
+        test_support::encode_fold_run(&workspace).expect("a workspace prepares the fold family");
+    let messages: Vec<BitVec> = (0..BATCH)
+        .map(|index| BitVec::random_seeded(code.k(), index as u64 + 1))
+        .collect();
+    let mut codewords = vec![BitVec::zeros(code.n()); messages.len()];
+    code.encode_batch_into(&messages, layout, &mut workspace, &mut codewords)
+        .expect("a validated batch encodes");
+    let encoded = test_support::encode_fold_run(&workspace)
+        .expect("a workspace keeps the fold family prepared");
+    let mut reference = vec![BitVec::zeros(code.n()); messages.len()];
+    code.encode_batch_family_into(
+        EncodeFamily::REFERENCE,
+        &messages,
+        layout,
+        &mut code.encode_workspace(),
+        &mut reference,
+    )
+    .expect("the reference family is available for every code");
     let (selected, agrees) = encode_and_compare(&code);
-    let (accumulators, run) = test_support::encode_fold_run(&code.encode_workspace())
-        .expect("a workspace prepares the fold family");
     serde_json::json!({
         "family": selected.name(),
-        "agrees_with_reference": agrees,
-        "accumulators": accumulators,
-        "run_blocks": run,
+        "agrees_with_reference": agrees && codewords == reference,
+        "built": [built.0, built.1],
+        "structural_accumulators": clmul_fold_accumulators(code.n() - code.k())
+            .map_or(0, NonZeroUsize::get),
         "structural_run_blocks": clmul_fold_run_blocks(code.k()).get(),
+        "overridden": [encoded.0, encoded.1],
         "resolution": "installed",
     })
 }
