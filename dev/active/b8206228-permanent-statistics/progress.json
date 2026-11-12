@@ -799,6 +799,13 @@
       "lead_recommendation": "Authorize the versioned provenance-preserving continuation. It preserves every terminal, performs no redraw, leaves the preregistered scientific addresses and decisions unchanged, and makes the unavoidable producer transition explicit instead of disguising it.",
       "resolved_at": "2026-08-31T18:40:00+03:00",
       "decision": "Owner authorized weakening one exact producer for the complete cohort to one exact producer per immutable ordered segment. The original journal remains immutable; the continuation must explicitly bind both exact runtime-observed producers and the terminal boundary before another address opens. No redraw, third producer, scientific-protocol change, or campaign draw is authorized."
+    },
+    {
+      "issue": "daef2dc3",
+      "kind": "rework past limit",
+      "raised": "2026-11-12",
+      "status": "open",
+      "summary": "code-review failed a fifth time at 87df671e5: F1 receipts and result tables in dev/research/permanent_wave_gpu; F2 base-name citations of deleted files evade the reference check. See handoff-34.md."
     }
   ],
   "standing_rules": [
@@ -845,7 +852,9 @@
     "73317b2e_note": "Rework-2 is the execution-lead maximum. Rework-1 removed the public path-based sidecar mutator and completed coordinator-owned projection. Rework-2 closes the bounded interpretation and prose findings, exact-cell refreeze, and pre-gate canonical fixture/lint defects. Independent review and refreeze audit passed, followed by the complete raw cargo-ci contract on the clean branch.",
     "8ec10dde": 2,
     "02b8137c": 2,
-    "02b8137c_note": "Rework-1 fixed the reproduced q=5 one-ULP JSON publication drift with serde_json float_roundtrip and adoption/tamper regressions. Rework-2 closed the continuation review's four findings: canonical schema-v2 cutover, exact-SHA separation of historical evidence decoding from temporary execution admission, a fresh schema-v2 runtime-mismatch no-mutation regression, and on-disk rehash tests for both producer states and both terminal segments. Independent rereview passed and integrated cargo-ci passed 5,208 tests with zero failures. MAX is reached; any further readiness defect escalates."
+    "02b8137c_note": "Rework-1 fixed the reproduced q=5 one-ULP JSON publication drift with serde_json float_roundtrip and adoption/tamper regressions. Rework-2 closed the continuation review's four findings: canonical schema-v2 cutover, exact-SHA separation of historical evidence decoding from temporary execution admission, a fresh schema-v2 runtime-mismatch no-mutation regression, and on-disk rehash tests for both producer states and both terminal segments. Independent rereview passed and integrated cargo-ci passed 5,208 tests with zero failures. MAX is reached; any further readiness defect escalates.",
+    "daef2dc3": 5,
+    "daef2dc3_note": "code-review failed at 46bdf2114, 0971a9ba6, c709110e5, ac89f1a07 and 87df671e5; stopped for the owner"
   },
   "surfaced_pitfalls": [
     {
