@@ -6,7 +6,7 @@
 ## Current state
 
 - Main is `28a40f5e4` plus the commit that adds this file. Nothing is pushed, no worker of this lead is running, and no claim is held except `ebfaff31`.
-- `scripts/cargo-budget.sh` is gone (4f21da96, merged by gf2-79). Commands run directly, as `AGENTS.md` states. Briefs drop the prefix.
+- The cargo budget wrapper is gone (4f21da96, merged by gf2-79). Commands run directly, as `AGENTS.md` states, and briefs drop the wrapper prefix.
 - Every branch of this lead is merged into main. That includes `jit-fd9d5416-cutover` (merge `06ba1503d`; `git log main..jit-fd9d5416-cutover` is empty) and `worktree-agent-ebfaff31`. Checking the cutover worktree out at main runs the merged cutover harness.
 
 Open issues of this lead:
@@ -58,7 +58,7 @@ ebfaff31 doc-review findings at `28a40f5e4`:
 
 ## Traps
 
-- The traps of handoff-2 and handoff-3 stay in force, except the `cargo-budget.sh` command forms, which 4f21da96 removed.
+- The traps of handoff-2 and handoff-3 stay in force, except the wrapper command forms, which 4f21da96 removed.
 - The FER curve runs under libtest (`cargo test --release`), not nextest: the slow profile kills any test at 600 s.
 - `GF2_LAYERED_FER_GRID` replaces the grid of both decoders, and the comparator fails unless each crossing is bracketed. A grid that starts above the layered crossing near 1.13 dB fails by construction.
 - After gf2-79's coming daef2dc3 landing, `scripts/check-tracked-budget.py` refuses result tables and run records under `experiments/`, `dev/`, `benchmarks/` and `crates/`, and `scripts/check-references.py` checks `@/inv` citations and bare deleted file names.
