@@ -27,7 +27,9 @@ The force-push waits for the owner's confirmation in `@/issue/45ecf975`.
 4. Rewrite:
    `git filter-repo --force --strip-blobs-with-ids strip-ids.txt --filename-callback`
    with `exec` of [rewrite_paths.py](rewrite_paths.py) and
-   `return None if drop(filename) else filename`.
+   `return None if drop(filename) else filename`, and `--commit-callback` with
+   the contents of [reword_subjects.py](reword_subjects.py), which rewords the
+   subjects of the listed commits on `main` that break the commit convention.
 5. `git gc --prune=now --aggressive`. Clone the mirror to a checkout.
 6. In that checkout run [map_pins.py](map_pins.py) on `filter-repo/commit-map`, add
    the gzipped map as `dev/history-rewrite-commit-map.gz`, state in `AGENTS.md`
