@@ -1,7 +1,7 @@
 {
  "epic_id": "b4b4b9ee-7a92-4c6f-84fd-b7caf3a46a8e",
  "epic_short_id": "b4b4b9ee",
- "current_wave": 1,
+ "current_wave": 4,
  "waves": [
   {
    "wave_number": 1,
@@ -1377,6 +1377,68 @@
      "status": "pending"
     }
    ]
+  },
+  {
+   "wave_number": 4,
+   "session": 3,
+   "issues": [
+    {
+     "short_id": "ad978596",
+     "status": "done"
+    },
+    {
+     "short_id": "d1e5db10",
+     "status": "done"
+    },
+    {
+     "short_id": "75a71fab",
+     "status": "done"
+    },
+    {
+     "short_id": "8178ef79",
+     "status": "done"
+    },
+    {
+     "short_id": "32a8bc0e",
+     "status": "in_progress: rework 1 done, re-gate due; gated branch"
+    },
+    {
+     "short_id": "e29fd776",
+     "status": "in_progress: rework 1 done, re-gate due; gated branch"
+    },
+    {
+     "short_id": "9ff05f12",
+     "status": "in_progress: done by worker, gates due; gated branch"
+    },
+    {
+     "short_id": "1b7228b9",
+     "status": "in_progress: owner decision recorded; lands after f21b25ac"
+    },
+    {
+     "short_id": "22bb2dcd",
+     "status": "in_progress: code-review failed round 1, rework due"
+    },
+    {
+     "short_id": "697b9178",
+     "status": "in_progress: code-review failed round 1, rework due"
+    },
+    {
+     "short_id": "d73ac633",
+     "status": "in_progress: code-review failed round 1, rework due"
+    },
+    {
+     "short_id": "f21b25ac",
+     "status": "in_progress: REQ-04/REQ-05 open by steward ruling"
+    },
+    {
+     "short_id": "5a3abee1",
+     "status": "in_progress: committed, gates due"
+    },
+    {
+     "short_id": "51f299d2",
+     "status": "in_progress: checks finishing, gates due"
+    }
+   ]
   }
  ],
  "external_blockers": [
@@ -1425,7 +1487,12 @@
    "short_id": "f0228940",
    "title": "compute_lut_checksum_gpu states an error condition as a safety obligation",
    "surfaced_by": "79a62102"
-  }
+  },
+  "8178ef79",
+  "f2c15867",
+  "1b7228b9",
+  "903dc74c",
+  "2e6e3557"
  ],
  "escalations": [
   {
@@ -1468,7 +1535,12 @@
   "f0228940": 1,
   "c7c11e7e": 1,
   "dd493649": 0,
-  "dfb8820b": 0
+  "dfb8820b": 0,
+  "32a8bc0e": 1,
+  "e29fd776": 1,
+  "22bb2dcd": 0,
+  "697b9178": 0,
+  "d73ac633": 0
  },
  "surfaced_pitfalls": [
   {
@@ -1510,6 +1582,10 @@
   {
    "from": "1fe6e218",
    "note": "run_in_dedicated_parallel_pool is compiled under the parallel feature alone and panics if the pool cannot be built."
+  },
+  {
+   "session": 3,
+   "note": "standard_u128_irreducibility_note names irreducibility but states primitivity after 8178ef79"
   }
  ],
  "notes": [

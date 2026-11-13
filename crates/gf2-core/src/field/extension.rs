@@ -412,22 +412,25 @@ impl ModulusId {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 enum FieldIdRepr {
-    Prime {
-        characteristic: u64,
-    },
-    Quotient {
-        base: FieldId,
-        modulus: ModulusId,
-        basis: Basis,
-    },
+    Prime { characteristic: u64 },
+    Quotient(Arc<QuotientRepr>),
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct QuotientRepr {
+    base: FieldId,
+    modulus: ModulusId,
+    basis: Basis,
 }
 
 /// Canonical algebraic identity of a finite field presentation.
 ///
 /// Two carriers denote the same field exactly when their `FieldId`s are
-/// equal. Cloning is an `Arc` bump; equality and hashing are structural.
+/// equal. A prime identity is stored inline, so building and cloning one
+/// allocates nothing; a quotient identity shares its node through an `Arc`, so
+/// cloning it is a reference-count bump. Equality and hashing are structural.
 ///
 /// Three normalization rules make the representation canonical, so that
 /// structural equality is the identity predicate:
@@ -441,8 +444,31 @@ enum FieldIdRepr {
 ///    non-monic leading coefficient and any coordinate outside $[0, p)$.
 /// 3. **Degrees are minimal by construction.** A modulus of degree
 ///    $r \ge 2$ stores all $r + 1$ coefficients.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct FieldId(Arc<FieldIdRepr>);
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct FieldId(FieldIdRepr);
+
+impl std::fmt::Debug for FieldId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        struct Node<'a>(&'a FieldIdRepr);
+        impl std::fmt::Debug for Node<'_> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self.0 {
+                    FieldIdRepr::Prime { characteristic } => f
+                        .debug_struct("Prime")
+                        .field("characteristic", characteristic)
+                        .finish(),
+                    FieldIdRepr::Quotient(q) => f
+                        .debug_struct("Quotient")
+                        .field("base", &q.base)
+                        .field("modulus", &q.modulus)
+                        .field("basis", &q.basis)
+                        .finish(),
+                }
+            }
+        }
+        f.debug_tuple("FieldId").field(&Node(&self.0)).finish()
+    }
+}
 
 impl FieldId {
     /// Returns the identity of the prime field $\mathbb{F}_p$.
@@ -455,7 +481,7 @@ impl FieldId {
         if characteristic <= 1 || characteristic > (1u64 << 63) {
             return Err(FieldError::CharacteristicOutOfRange { characteristic });
         }
-        Ok(Self(Arc::new(FieldIdRepr::Prime { characteristic })))
+        Ok(Self(FieldIdRepr::Prime { characteristic }))
     }
 
     /// Returns the identity of $B\lbrack x\rbrack/(f)$ for the base `base`, the modulus
@@ -493,20 +519,20 @@ impl FieldId {
         if modulus.degree == 1 {
             return Ok(base);
         }
-        Ok(Self(Arc::new(FieldIdRepr::Quotient {
+        Ok(Self(FieldIdRepr::Quotient(Arc::new(QuotientRepr {
             base,
             modulus,
             basis,
-        })))
+        }))))
     }
 
     /// Returns the characteristic $p$.
     pub fn characteristic(&self) -> u64 {
         let mut node = self;
         loop {
-            match &*node.0 {
+            match &node.0 {
                 FieldIdRepr::Prime { characteristic } => return *characteristic,
-                FieldIdRepr::Quotient { base, .. } => node = base,
+                FieldIdRepr::Quotient(q) => node = &q.base,
             }
         }
     }
@@ -516,11 +542,11 @@ impl FieldId {
         let mut degree = 1usize;
         let mut node = self;
         loop {
-            match &*node.0 {
+            match &node.0 {
                 FieldIdRepr::Prime { .. } => return degree,
-                FieldIdRepr::Quotient { base, modulus, .. } => {
-                    degree *= modulus.degree;
-                    node = base;
+                FieldIdRepr::Quotient(q) => {
+                    degree *= q.modulus.degree;
+                    node = &q.base;
                 }
             }
         }
@@ -539,26 +565,26 @@ impl FieldId {
 
     /// Returns the base of this presentation, or `None` for a prime field.
     pub fn base(&self) -> Option<&FieldId> {
-        match &*self.0 {
+        match &self.0 {
             FieldIdRepr::Prime { .. } => None,
-            FieldIdRepr::Quotient { base, .. } => Some(base),
+            FieldIdRepr::Quotient(q) => Some(&q.base),
         }
     }
 
     /// Returns the modulus of this presentation, or `None` for a prime field.
     pub fn modulus(&self) -> Option<&ModulusId> {
-        match &*self.0 {
+        match &self.0 {
             FieldIdRepr::Prime { .. } => None,
-            FieldIdRepr::Quotient { modulus, .. } => Some(modulus),
+            FieldIdRepr::Quotient(q) => Some(&q.modulus),
         }
     }
 
     /// Returns the coordinate basis of this presentation, or `None` for a
     /// prime field, whose single coordinate needs no basis choice.
     pub fn basis(&self) -> Option<Basis> {
-        match &*self.0 {
+        match &self.0 {
             FieldIdRepr::Prime { .. } => None,
-            FieldIdRepr::Quotient { basis, .. } => Some(*basis),
+            FieldIdRepr::Quotient(q) => Some(q.basis),
         }
     }
 
@@ -615,16 +641,17 @@ impl FieldId {
     }
 
     fn encode_node(&self, out: &mut Vec<u8>) {
-        match &*self.0 {
+        match &self.0 {
             FieldIdRepr::Prime { characteristic } => {
                 out.push(FIELD_ID_TAG_PRIME);
                 out.extend_from_slice(&characteristic.to_le_bytes());
             }
-            FieldIdRepr::Quotient {
-                base,
-                modulus,
-                basis,
-            } => {
+            FieldIdRepr::Quotient(q) => {
+                let QuotientRepr {
+                    base,
+                    modulus,
+                    basis,
+                } = &**q;
                 out.push(FIELD_ID_TAG_QUOTIENT);
                 base.encode_node(out);
                 out.push(match basis {
@@ -2700,6 +2727,14 @@ impl<F: FieldIdentity> FieldExtension for TrivialExt<F> {
 mod tests {
     use super::*;
     use crate::gf2m::{Gf2mField, Gf2mWideConfig};
+
+    #[test]
+    fn prime_identity_debug_names_the_characteristic() {
+        assert_eq!(
+            format!("{:?}", FieldId::prime(7).unwrap()),
+            "FieldId(Prime { characteristic: 7 })"
+        );
+    }
 
     /// GF(7²) as GF(7)[u]/(u² − 3).
     struct Gf49Config;

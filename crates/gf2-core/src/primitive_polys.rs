@@ -31,12 +31,7 @@ impl ModulusRegistry for PrimitivePolynomialDatabase {
             return None;
         }
         Self::standard_u128(degree).map(|polynomial| {
-            let provenance = if degree <= 16 {
-                RegistryProvenance::VerifiedPrimitive
-            } else {
-                RegistryProvenance::VerifiedIrreducible
-            };
-            binary_registry_entry(polynomial, degree, provenance)
+            binary_registry_entry(polynomial, degree, RegistryProvenance::VerifiedPrimitive)
         })
     }
 }
@@ -129,27 +124,29 @@ impl PrimitivePolynomialDatabase {
     /// bit at position `m`.
     ///
     /// For `m <= 63` this is [`Self::standard`] widened, so degrees in
-    /// `17..=63` other than 32 return `None`; for `m = 64..=127` the entry
+    /// `17..=63` other than 32 return `None`. For `m = 64..=127` the entry
     /// comes from `@/citation/Seroussi1998` or `@/citation/Nist2013`
-    /// Appendix D.
+    /// Appendix D where that entry is primitive. At a degree where the cited
+    /// irreducible entry is not primitive, the entry is the lowest-weight
+    /// primitive polynomial: the trinomial `x^m + x^a + 1` with the smallest
+    /// `a`, or, when no trinomial is primitive, the pentanomial
+    /// `x^m + x^a + x^b + x^c + 1` with `a > b > c` and the lexicographically
+    /// smallest `(a, b, c)`. The table marks those entries.
     ///
     /// # Strength of the guarantee
     ///
-    /// - For `m <= 63` the polynomial is **primitive**, checked by
-    ///   `test_all_database_entries_are_primitive` in `gf2m/field.rs`.
-    /// - For `m = 64..=127` every entry is **irreducible over GF(2)**
-    ///   (`test_standard_u128_entries_are_irreducible`). All are also
-    ///   **primitive except degrees 84, 88, 100, 108, 110, 112 and 124**, whose
-    ///   entries are irreducible but non-primitive, as checked by
-    ///   `standard_u128_entries_primitivity` using [`is_primitive_u128`].
+    /// Every entry is **primitive**: for `m <= 63` checked by
+    /// `test_all_database_entries_are_primitive` in `gf2m/field.rs`, for
+    /// `m = 64..=127` by `standard_u128_entries_primitivity` using
+    /// [`is_primitive_u128`].
     pub fn standard_u128(m: usize) -> Option<u128> {
         if m <= 63 {
             return Self::standard(m).map(|p| p as u128);
         }
-        Self::seroussi_u128(m)
+        Self::wide_u128(m)
     }
 
-    fn seroussi_u128(m: usize) -> Option<u128> {
+    fn wide_u128(m: usize) -> Option<u128> {
         let tri = |m: usize, k: usize| Some((1u128 << m) | (1u128 << k) | 1);
         let penta = |m: usize, a: usize, b: usize, c: usize| {
             Some((1u128 << m) | (1u128 << a) | (1u128 << b) | (1u128 << c) | 1)
@@ -175,11 +172,11 @@ impl PrimitivePolynomialDatabase {
             81 => tri(81, 4),
             82 => penta(82, 9, 6, 4), // x^82 + x^9 + x^6 + x^4 + 1
             83 => penta(83, 7, 4, 2), // x^83 + x^7 + x^4 + x^2 + 1
-            84 => tri(84, 5),
+            84 => tri(84, 13),        // lowest-weight primitive
             85 => penta(85, 8, 2, 1), // x^85 + x^8 + x^2 + x + 1
             86 => penta(86, 6, 5, 2), // x^86 + x^6 + x^5 + x^2 + 1
             87 => tri(87, 13),
-            88 => penta(88, 7, 6, 2), // x^88 + x^7 + x^6 + x^2 + 1
+            88 => penta(88, 11, 9, 8), // x^88 + x^11 + x^9 + x^8 + 1, lowest-weight primitive
             89 => tri(89, 38),
             90 => penta(90, 5, 3, 2), // x^90 + x^5 + x^3 + x^2 + 1
             91 => penta(91, 8, 5, 1), // x^91 + x^8 + x^5 + x + 1
@@ -190,8 +187,8 @@ impl PrimitivePolynomialDatabase {
             96 => penta(96, 10, 9, 6), // x^96 + x^10 + x^9 + x^6 + 1
             97 => tri(97, 6),
             98 => tri(98, 11),
-            99 => penta(99, 7, 5, 4), // x^99 + x^7 + x^5 + x^4 + 1
-            100 => tri(100, 15),
+            99 => penta(99, 7, 5, 4),   // x^99 + x^7 + x^5 + x^4 + 1
+            100 => tri(100, 37),        // lowest-weight primitive
             101 => penta(101, 7, 6, 1), // x^101 + x^7 + x^6 + x + 1
             102 => penta(102, 6, 5, 3), // x^102 + x^6 + x^5 + x^3 + 1
             103 => tri(103, 9),
@@ -199,11 +196,11 @@ impl PrimitivePolynomialDatabase {
             105 => tri(105, 16),
             106 => tri(106, 15),
             107 => penta(107, 9, 7, 4), // x^107 + x^9 + x^7 + x^4 + 1
-            108 => tri(108, 17),
+            108 => tri(108, 31),        // lowest-weight primitive
             109 => penta(109, 5, 4, 2), // x^109 + x^5 + x^4 + x^2 + 1
-            110 => tri(110, 33),
+            110 => penta(110, 6, 4, 1), // x^110 + x^6 + x^4 + x + 1, lowest-weight primitive
             111 => tri(111, 10),
-            112 => penta(112, 5, 4, 3), // x^112 + x^5 + x^4 + x^3 + 1
+            112 => penta(112, 11, 6, 4), // x^112 + x^11 + x^6 + x^4 + 1, lowest-weight primitive
             113 => tri(113, 9),
             114 => penta(114, 11, 2, 1), // x^114 + x^11 + x^2 + x + 1
             115 => penta(115, 8, 7, 5),  // x^115 + x^8 + x^7 + x^5 + 1
@@ -215,7 +212,7 @@ impl PrimitivePolynomialDatabase {
             121 => tri(121, 18),
             122 => penta(122, 6, 2, 1), // x^122 + x^6 + x^2 + x + 1
             123 => tri(123, 2),
-            124 => tri(124, 19),
+            124 => tri(124, 37),        // lowest-weight primitive
             125 => penta(125, 7, 6, 5), // x^125 + x^7 + x^6 + x^5 + 1
             126 => penta(126, 7, 4, 2), // x^126 + x^7 + x^4 + x^2 + 1
             127 => tri(127, 1),
@@ -240,9 +237,8 @@ impl PrimitivePolynomialDatabase {
     /// Prose form of the `m = 64..=127` guarantee of [`Self::standard_u128`].
     pub const fn standard_u128_irreducibility_note() -> &'static str {
         "PrimitivePolynomialDatabase::standard_u128 entries for m = 64..=127 \
-         are verified irreducible over GF(2). Primitivity depends on the \
-         degree; see standard_u128's per-degree guarantee, or use \
-         primitive_polys::is_primitive_u128 to check a polynomial."
+         are verified primitive over GF(2) by \
+         primitive_polys::is_primitive_u128."
     }
 }
 
