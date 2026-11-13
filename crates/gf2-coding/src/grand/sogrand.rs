@@ -1061,14 +1061,17 @@ mod fig2_validation {
 
     #[test]
     fn test_predicted_vs_empirical_list_bler() {
+        // A 6-query budget truncates the search, so the list misses the
+        // transmitted codeword on a measurable fraction of frames.
+        const MAX_QUERIES: usize = 6;
         let code = LinearBlockCode::hamming(3); // (7,4)
         let h = code.parity_check().unwrap().clone();
         let n = code.n();
         let k = code.k();
 
         let config = OrbGrandConfig {
-            max_queries: 5000,
-            list_size: 2,
+            max_queries: MAX_QUERIES,
+            list_size: 1,
             even_code: false,
             systematic: true,
             list_bler_stop_threshold: None,
@@ -1077,8 +1080,8 @@ mod fig2_validation {
         let sogrand = SoGrand::new(OrbGrand::new(h, config));
 
         let mut rng = StdRng::seed_from_u64(42);
-        let num_frames = 200;
-        let sigma = 0.7;
+        let num_frames = 2000;
+        let sigma = 0.9;
         let mut empirical_misses = 0;
         let mut total_predicted_bler = 0.0;
 
@@ -1106,8 +1109,8 @@ mod fig2_validation {
             let orb_result = OrbGrand::new(
                 code.parity_check().unwrap().clone(),
                 OrbGrandConfig {
-                    max_queries: 5000,
-                    list_size: 2,
+                    max_queries: MAX_QUERIES,
+                    list_size: 1,
                     even_code: false,
                     systematic: true,
                     list_bler_stop_threshold: None,
@@ -1134,6 +1137,12 @@ mod fig2_validation {
         // deviation at most 0.5 / sqrt(num_frames) around avg_predicted_bler.
         // The fixed seed makes the check deterministic; 4 sigma bounds it.
         let tolerance = 4.0 * 0.5 / (num_frames as f64).sqrt();
+        // The truncated search must miss often enough that a constant-zero
+        // predictor lies outside the tolerance.
+        assert!(
+            empirical_bler > 2.0 * tolerance,
+            "Fixture produced too few list misses ({empirical_bler:.4}) to test the predictor"
+        );
         assert!(
             (avg_predicted_bler - empirical_bler).abs() <= tolerance,
             "Predicted ({avg_predicted_bler:.4}) and empirical ({empirical_bler:.4}) \

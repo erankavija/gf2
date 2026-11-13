@@ -2440,8 +2440,8 @@ mod tests {
         ]);
         assert_eq!(cubic, expected);
         // The minimal polynomial has degree 2 < 6, so no vector is cyclic
-        // and every Krylov matrix is singular: KG returns None, and the
-        // dispatching `charpoly` falls back to the cubic route.
+        // and every Krylov matrix is singular: KG returns None. At n = 6 the
+        // dispatching `charpoly` routes to the cubic implementation directly.
         assert!(a.charpoly_keller_gehrig(0x333).is_none());
         assert_eq!(a.charpoly(), expected);
         let pa = cubic.eval_at_matrix(&a);
