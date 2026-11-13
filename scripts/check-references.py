@@ -25,7 +25,11 @@ file there, and a name passes that tracked code (`WRITER_SUFFIXES`) writes
 (`written_names`): the name must reach a write-mode open, file create/write,
 shell redirect, `tee` or `-o` in the same function or script, directly or through
 a local binding or named constant. Read-only joins excuse nothing.
-Helper-mediated writers are listed exceptions, without cross-function flow.
+Calls to the named `writer_helpers` in the checker configuration count as
+writes of their configured zero-based path argument by the same local rule,
+without cross-function flow. Each listed helper
+must have a function definition in tracked code; a missing definition is a
+checker fault. Writers outside this rule need a reasoned exception.
 In Markdown and issue prose the same holds for every
 backticked bare file name (`BARE_INLINE`), whatever its kind, and so it does
 in a JSON string under `dev/` or `experiments/` (`DATA_PROSE`), where a string
@@ -212,7 +216,8 @@ def faults_in(
     faults = []
     markdown = base is not None or path.endswith(".md")
     prose = markdown or not (
-        path.endswith(CODE_SUFFIXES) or Path(path).name in {"Dockerfile", "Containerfile"}
+        path.endswith(CODE_SUFFIXES)
+        or Path(path).name in {"Dockerfile", "Containerfile", ".gitignore"}
     )
     base = str(Path(path).parent) if base is None else base
     before = ""
@@ -405,7 +410,7 @@ def _literal_names(value: str) -> set[str]:
     return {file['name']} if file else set()
 
 
-def _python_written(text: str) -> set[str]:
+def _python_written(text: str, helpers: dict[str, int]) -> set[str]:
     try:
         tree = ast.parse(text)
     except SyntaxError:
@@ -461,6 +466,11 @@ def _python_written(text: str) -> set[str]:
 
         def visit_Call(self, node):
             function = node.func
+            name = function.id if isinstance(function, ast.Name) else (
+                function.attr if isinstance(function, ast.Attribute) else ''
+            )
+            if name in helpers and len(node.args) > helpers[name]:
+                names.update(expression(node.args[helpers[name]], self.bindings))
             opened = isinstance(function, ast.Name) and function.id == 'open'
             method = function.attr if isinstance(function, ast.Attribute) else ''
             if opened or method == 'open':
@@ -542,7 +552,9 @@ def _native_constants(tokens):
     return constants
 
 
-def _native_written(text: str, constants: dict[str, set[str]]) -> set[str]:
+def _native_written(
+    text: str, constants: dict[str, set[str]], helpers: dict[str, int]
+) -> set[str]:
     tokens = [m[0] for m in SOURCE_TOKEN.finditer(text) if not m[0].startswith(('//', '/*'))]
     names = set()
 
@@ -596,12 +608,20 @@ def _native_written(text: str, constants: dict[str, set[str]]) -> set[str]:
                 and re.search(r'(?:OpenOptions::new|File::options)\(\)', receiver)
                 and re.search(r'\.(?:write|append|create|create_new|truncate)\(true\)', receiver)
             )
-            if re.search(r'(?<!\w)(?:File::create|fs::write|fopen)$', callee) or write_open:
+            if (re.search(r'(?<!\w)(?:File::create|fs::write|fopen)$', callee)
+                    or write_open or scope[i - 1] in helpers):
                 if not callee.endswith('fopen') or any(
                     re.fullmatch(r'"(?:[wax][^"\n]*|r[^"\n]*\+[^"\n]*)"', part)
                     for part in scope[arg_end + 1:end]
                 ):
-                    names.update(expression(scope[i + 1:arg_end], bindings))
+                    argument = i + 1
+                    for _ in range(helpers.get(scope[i - 1], 0)):
+                        argument = arg_end + 1
+                        arg_end = argument
+                        while arg_end < end and scope[arg_end] != ',':
+                            arg_end = (_matching(scope, arg_end) + 1
+                                       if scope[arg_end] in {'(', '[', '{'} else arg_end + 1)
+                    names.update(expression(scope[argument:arg_end], bindings))
     return names
 
 
@@ -642,13 +662,48 @@ def _shell_written(text: str) -> set[str]:
     return names
 
 
-def written_names(texts: dict[str, str]) -> frozenset[str]:
+def writer_helper_faults(texts: dict[str, str], helpers: dict[str, int]) -> list[str]:
+    """Configured helpers must still have a tracked function definition."""
+    defined = set()
+    for path, text in texts.items():
+        if path.endswith('.py'):
+            try:
+                tree = ast.parse(text)
+            except SyntaxError:
+                continue
+            defined.update(node.name for node in ast.walk(tree)
+                           if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)))
+        elif path.endswith('.sh'):
+            defined.update(re.findall(
+                r'^\s*(?:function\s+)?(\w+)\s*\(\s*\)\s*\{', text, re.MULTILINE
+            ))
+        elif path.endswith(WRITER_SUFFIXES):
+            tokens = [m[0] for m in SOURCE_TOKEN.finditer(text)
+                      if not m[0].startswith(('//', '/*'))]
+            for i, token in enumerate(tokens):
+                if token == 'fn' and i + 1 < len(tokens):
+                    body = next((part for part in tokens[i + 2:] if part in {'{', ';'}), None)
+                    if body == '{':
+                        defined.add(tokens[i + 1])
+                elif (path.endswith(('.c', '.cpp', '.h', '.hip')) and token == '('
+                      and i and re.fullmatch(r'\w+', tokens[i - 1])):
+                    end = _matching(tokens, i)
+                    if end + 1 < len(tokens) and tokens[end + 1] == '{':
+                        defined.add(tokens[i - 1])
+    return [f'{EXCEPTIONS}:1: writer helper {name} has no function definition'
+            for name in sorted(helpers.keys() - defined)]
+
+
+def written_names(
+    texts: dict[str, str], helpers: dict[str, int] | None = None
+) -> frozenset[str]:
     """Names reaching a syntactic write in one function or script.
 
     Only named constants enter function scopes. Python uses its AST;
     native sources use balanced tokens; shell scripts use redirects, tee and
-    -o. Arbitrary helper calls never count as writes.
+    -o. Listed writer helpers count as writes of their configured path argument.
     """
+    helpers = helpers or {}
     names = set()
     candidates: dict[str, set[str]] = {}
     for path, text in texts.items():
@@ -659,11 +714,11 @@ def written_names(texts: dict[str, str]) -> frozenset[str]:
     constants = {name: values for name, values in candidates.items() if len(values) == 1}
     for path, text in texts.items():
         if path.endswith('.py'):
-            names.update(_python_written(text))
+            names.update(_python_written(text, helpers))
         elif path.endswith('.sh'):
             names.update(_shell_written(text))
         elif path.endswith(WRITER_SUFFIXES):
-            names.update(_native_written(text, constants))
+            names.update(_native_written(text, constants, helpers))
     return frozenset(names)
 
 
@@ -773,9 +828,9 @@ def check(root: Path) -> list[str]:
     tracked = git(root, "ls-files", "-z").split("\0")[:-1]
     known = resolvable_set(tracked)
     config = root / EXCEPTIONS
-    exceptions = (
-        tomllib.loads(config.read_text())["exception"] if config.exists() else []
-    )
+    configuration = tomllib.loads(config.read_text()) if config.exists() else {}
+    exceptions = configuration.get('exception', [])
+    helpers = configuration.get('writer_helpers', {})
     texts = {}
     for path in tracked:
         file = root / path
@@ -787,10 +842,10 @@ def check(root: Path) -> list[str]:
             texts[path] = file.read_text()
         except UnicodeDecodeError:
             continue
-    written = written_names(texts)
+    written = written_names(texts, helpers)
     invariants = invariant_ids(root)
     removed = removed_paths(root)
-    faults = []
+    faults = writer_helper_faults(texts, helpers)
     for path, text in texts.items():
         found = scan(
             path,
@@ -816,6 +871,32 @@ def check(root: Path) -> list[str]:
 
 
 def self_test() -> None:
+    helpers = {'publish_atomic': 0}
+    sources = {'src/helpers.rs': (
+        'fn publish_atomic(path: &Path) {}\n'
+        'fn write(dir: &Path) { let path = dir.join("listed.log"); '
+        'publish_atomic(&path); unlisted(dir.join("unlisted.log")); }'
+    )}
+    assert written_names(sources, helpers) == {'listed.log'}
+    assert faults_in('docs/helpers.md', '`listed.log`\n`unlisted.log`', set(),
+                     written=written_names(sources, helpers)) == [
+        'docs/helpers.md:2: unlisted.log'
+    ]
+    assert not writer_helper_faults(sources, helpers)
+    assert writer_helper_faults(sources, {'missing': 0}) == [
+        f'{EXCEPTIONS}:1: writer helper missing has no function definition'
+    ]
+    assert writer_helper_faults({'src/declaration.rs': 'fn missing(path: &Path);'},
+                                {'missing': 0})
+    assert written_names({'src/helpers.rs': (
+        'fn write(dir: &Path) { write_csv("payload.log", dir.join("second.log")); }'
+    )}, {'write_csv': 1}) == {'second.log'}
+    assert written_names({'src/helpers.py': (
+        'def write(out):\n'
+        '    path = out / "python.log"\n'
+        '    publish_atomic(path, "payload.log")\n'
+        '    unlisted(out / "unlisted.log")\n'
+    )}, helpers) == {'python.log'}
     assert written_names({"src/write.py": (
         'OUTPUT = "constant.log"\n'
         'def write(out):\n'
@@ -875,6 +956,7 @@ def self_test() -> None:
         assert not faults_in("docs/page.md", line, set()), line
     assert faults_in("docs/page.md", "see `/tmp`", set())
     assert not faults_in("Containerfile", 'RUN cat /tmp/input', set())
+    assert not faults_in(".jit/.gitignore", '/tmp/', set())
     known = resolvable_set(["elsewhere/unique.rs", "docs/local.rs", "root.rs"])
     assert faults_in("docs/page.md", "`unique.rs`", known) == [
         "docs/page.md:1: unique.rs"

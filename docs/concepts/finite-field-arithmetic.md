@@ -76,7 +76,7 @@ element under the degree-8 modulus of a `Gf2mWideConfig<1>`, so
 products read the split tables of the byte-region kernels, and its axpy and
 dense product run those kernels on the element storage itself, through the
 byte views of
-[`gf256_bytes.rs`](../../crates/gf2-core/src/gf2m/gf256_bytes.rs), the one
+[`../../crates/gf2-core/src/gf2m/gf256_bytes.rs`](../../crates/gf2-core/src/gf2m/gf256_bytes.rs), the one
 module of `gf2-core` that contains `unsafe`. A `Gf2mWide<1, Cfg>` element of
 the same field takes 8 bytes and a `Gf2mElement` 16, so the generic API over them moves 8 and 16 times the
 memory per element and its region operations make one table lookup per
@@ -119,12 +119,12 @@ Batch and region entry points dispatch separately:
   basecase word products; `ClmulSplit` overrides the basecase and that width.
 
 The suites
-[`gf256_table_conformance.rs`](../../crates/gf2-core/tests/gf256_table_conformance.rs),
-[`gf256_bytes_conformance.rs`](../../crates/gf2-core/tests/gf256_bytes_conformance.rs)
+[`../../crates/gf2-core/tests/gf256_table_conformance.rs`](../../crates/gf2-core/tests/gf256_table_conformance.rs),
+[`../../crates/gf2-core/tests/gf256_bytes_conformance.rs`](../../crates/gf2-core/tests/gf256_bytes_conformance.rs)
 and
-[`clmul_wide_conformance.rs`](../../crates/gf2-core/tests/clmul_wide_conformance.rs)
+[`../../crates/gf2-core/tests/clmul_wide_conformance.rs`](../../crates/gf2-core/tests/clmul_wide_conformance.rs)
 hold each dispatched path to the portable result;
-[`clmul_split_conformance.rs`](../../crates/gf2-core/tests/clmul_split_conformance.rs)
+[`../../crates/gf2-core/tests/clmul_split_conformance.rs`](../../crates/gf2-core/tests/clmul_split_conformance.rs)
 holds the split to it at every operand length around each split point, and the
 unit suite of `gf2_kernels_simd::gf256_region` holds every byte-region backend
 to the definition.
@@ -203,7 +203,7 @@ carries the DVB-T2 BCH field polynomials of `@/citation/Etsi2015`.
 `primitive_polys::PrimitivePolynomialDatabase` returns polynomials in the
 single-word encoding. Its guarantee depends on the accessor and degree, and
 the module rustdoc of
-[`primitive_polys.rs`](../../crates/gf2-core/src/primitive_polys.rs) states
+[`../../crates/gf2-core/src/primitive_polys.rs`](../../crates/gf2-core/src/primitive_polys.rs) states
 the covered degrees, each entry's source and the test that verifies it:
 
 - `standard(m)` entries are primitive; its degree-32 entry is the Conway

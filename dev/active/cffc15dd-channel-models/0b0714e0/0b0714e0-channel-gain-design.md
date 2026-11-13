@@ -96,7 +96,7 @@ the **convention-convergence** invariant classifies as a defect. Rejected.
 ## 4. Consumers that change under design A (complete)
 
 Production:
-1. `batch.rs` — add `ChannelGains`, `SymbolBatch::gains`, `with_gains`, shape assertions; update type and module docs (`batch.rs:1-23, 80-102`).
+1. `crates/gf2-sim/src/batch.rs` — add `ChannelGains`, `SymbolBatch::gains`, `with_gains`, shape assertions; update type and module docs (`crates/gf2-sim/src/batch.rs:1-23, 80-102`).
 2. `crates/gf2-sim/src/channels/rayleigh.rs` — `apply` writes gains; reject already-faded input in `process` (`:175-230`); module docs `:1-36`.
 3. `crates/gf2-sim/src/channels/rician.rs` — same (`:219-281`); module docs.
 4. `crates/gf2-sim/src/channels/mod.rs` — module doc (`:1-15`) states fading stages attach gains.

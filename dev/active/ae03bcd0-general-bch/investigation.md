@@ -238,11 +238,11 @@ Direct code/tests/benches/examples and simulation consumers:
 `crates/gf2-coding/examples/dvb_t2_bch_demo.rs`, `crates/gf2-coding/tests/bch_tests.rs`,
 `crates/gf2-coding/tests/dvb_t2_bch_verification.rs`, `crates/gf2-coding/tests/ebch_128_64_reference.rs`,
 `crates/gf2-coding/tests/data/ebch_128_64_reference.json`, `crates/gf2-coding/tests/backend_integration.rs`,
-`crates/gf2-coding/tests/grand_phase1_smoke.rs`, `ebch_osd_awgn_campaign.rs`,
-`ebch_osd_campaign_cli.rs`,
+`crates/gf2-coding/tests/grand_phase1_smoke.rs`, `experiments/osd-ebch/src/bin/ebch_osd_awgn_campaign.rs`,
+`experiments/osd-ebch/tests/ebch_osd_campaign_cli.rs`,
 `crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs`,
 `crates/gf2-sim/tests/gpu_byte_identity.rs`,
-`osd_campaign_protocol.rs`, and
+`experiments/osd-ebch/tests/osd_campaign_protocol.rs`, and
 `crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs`.
 
 The coupling points are visible in `dvb_t2/mod.rs:59-105` (inherent
@@ -257,7 +257,7 @@ Documentation, campaign, data, presentation, and development references:
 `dev/reference_data/osd_ebch_128_64_fossorier1994.csv`,
 `dev/reference_data/osd_ebch_128_64_fossorier1994.md`,
 `dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/README.md`,
-`extract.py`, and `yue2022_fig1_digitization.json` in that directory,
+`dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/extract.py`, and `dev/reference_data/osd_ebch_128_64_fossorier1994_digitization/yue2022_fig1_digitization.json` in that directory,
 and the earlier generated simulation output.
 
 Historical JIT/development references are also present in
@@ -298,19 +298,19 @@ Exact source/test/bench/example consumers of `BlockEncoder` or
 `crates/gf2-coding/examples/ldpc_encoding_with_cache.rs`, `crates/gf2-coding/examples/ldpc_mother_check.rs`,
 `crates/gf2-coding/examples/visualize_large_matrices.rs`,
 and the corresponding coding tests in `crates/gf2-coding/tests/backend_integration.rs`,
-`bch_tests.rs`, `dvb_t2_bch_verification.rs`,
-`dvb_t2_ldpc_verification.rs`, `dvb_t2_ldpc_verification_suite.rs`,
-`ebch_128_64_reference.rs`, `grand_phase1_smoke.rs`,
-`ira_encoder_correctness.rs`, `ldpc_encoding_tests.rs`,
-`ldpc_systematic_encoding.rs`, `linear_codes_integration.rs`,
-`nr5g_diag_test.rs`, `nr5g_external_vectors.rs`, `nr5g_regression.rs`,
-`ldpc_cache_io.rs`, and `verify_cached_generator.rs`.
+`crates/gf2-coding/tests/bch_tests.rs`, `crates/gf2-coding/tests/dvb_t2_bch_verification.rs`,
+`crates/gf2-coding/tests/dvb_t2_ldpc_verification.rs`, `crates/gf2-coding/tests/dvb_t2_ldpc_verification_suite.rs`,
+`crates/gf2-coding/tests/ebch_128_64_reference.rs`, `crates/gf2-coding/tests/grand_phase1_smoke.rs`,
+`crates/gf2-coding/tests/ira_encoder_correctness.rs`, `crates/gf2-coding/tests/ldpc_encoding_tests.rs`,
+`crates/gf2-coding/tests/ldpc_systematic_encoding.rs`, `crates/gf2-coding/tests/linear_codes_integration.rs`,
+`crates/gf2-coding/tests/nr5g_diag_test.rs`, `crates/gf2-coding/tests/nr5g_external_vectors.rs`, `crates/gf2-coding/tests/nr5g_regression.rs`,
+`crates/gf2-coding/tests/ldpc_cache_io.rs`, and `crates/gf2-coding/tests/verify_cached_generator.rs`.
 
 HIP/SIMD direct trait references are limited to
 `crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs` and
 `crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs`; the SIMD kernel
 crate itself does not implement these coding traits. Simulation-facing matches
-are in `nr_5g_realtime.rs`,
+are in `experiments/nr-5g-realtime/benches/nr_5g_realtime.rs`,
 `crates/gf2-sim/src/stages/nr_5g.rs`, `crates/gf2-sim/src/gpu/ldpc_bp.rs`, and the GPU byte-identity tests.
 
 ### BitMatrix save/load and `.gf2` files
@@ -327,7 +327,7 @@ The only exact production `.gf2` round trip is the LDPC encoding cache;
 `BitMatrix`’s own tests live in `crates/gf2-core/src/io/matrix.rs`.
 
 The remaining exact matches are proof/generated or documentation references:
-`Funs.lean`.
+`proofs/Gf2Core/Funs.lean`.
 No HIP/SIMD crate, BCH matrix path, or simulation checkpoint uses the `.gf2`
 BitMatrix format.
 

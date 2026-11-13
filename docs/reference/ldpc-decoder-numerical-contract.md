@@ -3,7 +3,7 @@
 This page states the floating-point rules of the flooding min-sum LDPC decoder
 of `gf2-coding` and the clauses that bind a decoder carrying several frames at
 once. The canonical decoder is `gf2_coding::ldpc::LdpcDecoder`, defined in
-[`core.rs`](../../crates/gf2-coding/src/ldpc/core.rs), over the canonical edge
+[`../../crates/gf2-coding/src/ldpc/core.rs`](../../crates/gf2-coding/src/ldpc/core.rs), over the canonical edge
 indexing `gf2_coding::ldpc::EdgeLayout`. A decoder, kernel or entry point of
 the min-sum family conforms when its observable results equal the canonical
 decoder's under these rules.
@@ -42,7 +42,7 @@ ascending index.
 
 The canonical decoder writes each check's outgoing messages through
 `gf2_coding::ldpc::min_sum_check_row`
-([`min_sum.rs`](../../crates/gf2-coding/src/ldpc/min_sum.rs)). For the output
+([`../../crates/gf2-coding/src/ldpc/min_sum.rs`](../../crates/gf2-coding/src/ldpc/min_sum.rs)). For the output
 on edge $e$ of check $c$, the *other inputs* are the messages $\mu_{e'}$ on
 the check's edges $e' \neq e$.
 
@@ -96,7 +96,7 @@ follows the same sign and magnitude rules in its vector lanes and its
 remainder.
 
 The explicitly constructed `QcDecoder`
-([`qc.rs`](../../crates/gf2-coding/src/ldpc/qc.rs)) applies these same rules
+([`../../crates/gf2-coding/src/ldpc/qc.rs`](../../crates/gf2-coding/src/ldpc/qc.rs)) applies these same rules
 with lanes representing lifted checks within one frame. The outputs of the
 check rule do not depend on the order of a check's edges, since tied magnitudes
 are equal values; a masked circulant entry carries a $+\infty$ input, which the
@@ -233,11 +233,11 @@ batch assigns it no frame.
 ## Layered quantized decoder
 
 `gf2_coding::ldpc::LayeredDecoder`
-([`layered.rs`](../../crates/gf2-coding/src/ldpc/layered.rs)) is constructed
+([`../../crates/gf2-coding/src/ldpc/layered.rs`](../../crates/gf2-coding/src/ldpc/layered.rs)) is constructed
 explicitly; no route selects it. Its results are not the canonical decoder's
 frame for frame, and frame error rate is its quality measure. Its kernel,
 `gf2_kernels_simd::ldpc_layered`
-([`ldpc_layered.rs`](../../crates/gf2-kernels-simd/src/ldpc_layered.rs)),
+([`../../crates/gf2-kernels-simd/src/ldpc_layered.rs`](../../crates/gf2-kernels-simd/src/ldpc_layered.rs)),
 has a portable and an AVX2 backend, selected as for the QC kernels; both write
 the same bit patterns, so every rule below holds on either.
 

@@ -30,7 +30,7 @@ rebuilds with the same options.
 | Reference | Build options | Backend selection |
 |---|---|---|
 | AFF3CT v4.7.0 | CMake `Release`, `CMAKE_CXX_FLAGS="-O3 -march=native -funroll-loops"`, static library on, shared library, MPI and GSL off | Compile-time SIMD from `-march=native`; the harness requests scalar or inter-frame SIMD and the precision per run |
-| srsRAN Project 25.10 | [`build.rs`](../../experiments/encode-compare/external/build.rs) compiles `SRSRAN_SOURCES` and the adapter with `cc`, `-std=c++17 -O3 -march=native`, and `NDEBUG` | [`srsran_nr.cpp`](../../experiments/encode-compare/external/cpp/srsran_nr.cpp) constructs `ldpc_encoder_avx2` when `__builtin_cpu_supports("avx2")` is true and `ldpc_encoder_generic` otherwise, plus `ldpc_rate_matcher_impl`. srsRAN 25.10 has no AVX-512 LDPC encoder, so AVX2 is its fastest x86 encoder |
+| srsRAN Project 25.10 | [`../../experiments/encode-compare/external/build.rs`](../../experiments/encode-compare/external/build.rs) compiles `SRSRAN_SOURCES` and the adapter with `cc`, `-std=c++17 -O3 -march=native`, and `NDEBUG` | [`../../experiments/encode-compare/external/cpp/srsran_nr.cpp`](../../experiments/encode-compare/external/cpp/srsran_nr.cpp) constructs `ldpc_encoder_avx2` when `__builtin_cpu_supports("avx2")` is true and `ldpc_encoder_generic` otherwise, plus `ldpc_rate_matcher_impl`. srsRAN 25.10 has no AVX-512 LDPC encoder, so AVX2 is its fastest x86 encoder |
 | bchlib | Compiled by the comparison binary's build with `-O3 -march=native`, once with run-time parameters and once with `CONFIG_BCH_CONST_PARAMS` fixed to each cell's $(m, t)$ | The faster build per cell |
 | gf2x 1.3.0 | `./configure --disable-static --enable-shared` once per `prefix-*` install: `native` with `CFLAGS="-O3 -march=native"`, `tuned` with `CFLAGS="-O3 -march=x86-64-v3"`, `conservative` with `CFLAGS=-O2`; configure adds `-msse2 -msse3 -mssse3 -msse4.1 -mpclmul` to each | PCLMULQDQ low-level multiplication, detected by configure; the fastest prefix per size |
 | ISA-L | `./configure --disable-static CFLAGS="-O3 -march=native -fPIC"`, assembled with NASM 2.16.03 | The multibinary entry point `gf_vect_mad` selects among its SSE, AVX, AVX2 and AVX-512 variants, GFNI ones included, by CPUID at load |
@@ -98,7 +98,7 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
 - **gf2 path, `compare.sh bch`:** `DvbT2BchCode::encode_into` over the
   rate-$1/2$ outer codes $(7200, 7032)$ and $(32400, 32208)$
   (`@/citation/Etsi2015`), cycling a pool of $1$ or $256$ distinct messages.
-- **gf2 path, `cutover.sh`:** `BchCode::encode_batch` at batch $1$, $16$, $256$
+- **gf2 path, `../../experiments/encode-compare/cutover.sh`:** `BchCode::encode_batch` at batch $1$, $16$, $256$
   and $4096$ (workload W1) and `BchCode::generator_matrix` (W2), against the
   pre-cutover revision (`BchEncoder::encode_batch` and the legacy
   `generator_matrix`), over the five rows of `experiments/encode-compare/src/cutover/harness.rs`.
@@ -106,7 +106,7 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
   converted before timing, and reproduces gf2's codewords before it is timed.
   gf2 builds with `-C target-cpu=native`.
 - **Harness:** [`experiments/encode-compare`](../../experiments/encode-compare/README.md).
-- **Output:** `compare.sh` prints the SHA-256 of the binary and of AFF3CT's static
+- **Output:** `../../experiments/encode-compare/compare.sh` prints the SHA-256 of the binary and of AFF3CT's static
   library and writes `target/encode-compare/<suite>-<UTC>.md`; outside a window
   the wrapper refuses. `cutover.sh` prints the host and the SHA-256 of each
   measured binary and of the AFF3CT and M4RI libraries, writes the table and the
@@ -123,7 +123,7 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
       bash experiments/encode-compare/compare.sh bch
   ```
 
-  The cutover comparison runs `cutover.sh` with `GF2_M4RI_ROOT` naming the M4RI
+  The cutover comparison runs `../../experiments/encode-compare/cutover.sh` with `GF2_M4RI_ROOT` naming the M4RI
   prefix and `CUTOVER_ROUNDS=3` and `CUTOVER_CALL_BUDGET_S=2000` set:
 
   ```sh

@@ -5,10 +5,10 @@
 | Component | Requirement | Source |
 |---|---|---|
 | Rust | 1.95 or newer, edition 2021 | the workspace toolchain contract in [`AGENTS.md`](../../AGENTS.md); `rust-version` in every crate manifest except `gf2-kernels-simd`, which declares none |
-| CI compilers | stable Rust for the build, test, lint and doc battery; Rust 1.95.0 for the `gf2-sim` compile-fail guard | [`ci.yml`](../../.github/workflows/ci.yml) |
+| CI compilers | stable Rust for the build, test, lint and doc battery; Rust 1.95.0 for the `gf2-sim` compile-fail guard | [`../../.github/workflows/ci.yml`](../../.github/workflows/ci.yml) |
 | Lean proofs | the toolchain pinned in [`lean-toolchain`](../../proofs/lean-toolchain), installed through elan | [formal verification how-to](../how-to/formal-verification.md) |
 | Lean regeneration | patched Charon and Aeneas with a pinned Rust nightly | [formal verification how-to](../how-to/formal-verification.md) |
-| GPU build | ROCm `hipcc`, located through `ROCM_PATH` (default `/opt/rocm`); the tested ROCm version is stated in the crate documentation | [`build.rs`](../../crates/gf2-kernels-hip/build.rs), [`gf2-kernels-hip` crate documentation](../../crates/gf2-kernels-hip/src/lib.rs) |
+| GPU build | ROCm `hipcc`, located through `ROCM_PATH` (default `/opt/rocm`); the tested ROCm version is stated in the crate documentation | [`../../crates/gf2-kernels-hip/build.rs`](../../crates/gf2-kernels-hip/build.rs), [`gf2-kernels-hip` crate documentation](../../crates/gf2-kernels-hip/src/lib.rs) |
 
 ## Operating systems
 
@@ -39,7 +39,7 @@ states which detection the `simd` feature gates:
 ## GPU
 
 GPU acceleration targets AMD GPUs through HIP. The statically linked kernels
-are compiled for gfx1030 only. `build.rs` also compiles per-architecture code
+are compiled for gfx1030 only. `../../crates/gf2-kernels-hip/build.rs` also compiles per-architecture code
 objects for the targets listed in its `GFX_TARGETS`; gfx1030 is mandatory and
 the others are best-effort. `gf2_kernels_hip::host::GfxTarget::detect` returns
 `HipError::UnsupportedArch` for a device without a compiled object, and the

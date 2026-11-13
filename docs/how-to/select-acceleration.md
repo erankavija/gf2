@@ -244,7 +244,7 @@ on the routes of [Route LDPC batch decoding](#route-ldpc-batch-decoding).
 the calling thread.
 
 Construct the pool and decode inside the installed rayon pool
-([`ldpc_parallel_batch.rs`](../../crates/gf2-coding/examples/ldpc_parallel_batch.rs)
+([`../../crates/gf2-coding/examples/ldpc_parallel_batch.rs`](../../crates/gf2-coding/examples/ldpc_parallel_batch.rs)
 builds the code and frames and runs this under `cargo run -p gf2-coding
 --features parallel --example ldpc_parallel_batch`):
 

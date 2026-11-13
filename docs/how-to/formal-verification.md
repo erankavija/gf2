@@ -54,7 +54,7 @@ scripts' docstrings state why each pass exists. Charon compiles with `--cfg veri
 
 | File in `proofs/Gf2Core/`, `proofs/Gf2Algebra/` | Owner |
 |---|---|
-| `Types.lean`, `Funs.lean`, `*_Template.lean`, `TypesExternal.lean` | Regenerated on every run |
+| `proofs/<translated-crate>/Types.lean`, `proofs/<translated-crate>/Funs.lean`, `*_Template.lean`, `proofs/<translated-crate>/TypesExternal.lean` | Regenerated on every run |
 | `proofs/Gf2Algebra/FunsExternal.lean` | Copied from its template on every run |
 | `proofs/Gf2Core/FunsExternal.lean` | Hand-maintained; created from the template when the file is missing |
 | `Proofs/*.lean` | Hand-written |
@@ -69,7 +69,7 @@ CI reruns the pipeline and fails when `proofs/Gf2Core/Proofs/` or
    `scripts/verify-lean.sh`. An `--opaque` module hides its submodules, which is
    why `gf2_core::gf2m` is made opaque submodule by submodule to keep
    `gf2_core::gf2m::mul_raw` translated.
-2. Regenerate and find the definition in `Funs.lean`. Its doc comment names the
+2. Regenerate and find the definition in `proofs/<translated-crate>/Funs.lean`. Its doc comment names the
    Rust path; its Lean name is the crate-relative module path inside namespace
    `gf2_core` or `gf2_algebra`, and it returns `Result`, with a panic mapped to
    `fail`. `gf2_core::gf2m::mul_raw::gf2m_add_raw` translates to:
@@ -94,12 +94,12 @@ CI reruns the pipeline and fails when `proofs/Gf2Core/Proofs/` or
 
    A function that calls other extracted functions is proved with Aeneas's
    `progress` tactic over `@[progress]` lemmas for its callees, as in
-   `Progress.lean`, `ExtProgress.lean` and `Gf2mProgress.lean`. A translated
+   `../../proofs/Gf2Core/Proofs/Progress.lean`, `../../proofs/Gf2Core/Proofs/ExtProgress.lean` and `../../proofs/Gf2Core/Proofs/Gf2mProgress.lean`. A translated
    loop is proved with a termination measure and an invariant, as
-   `gf2m_mul_raw_loop_progress` in `Gf2mProgress.lean` does.
+   `gf2m_mul_raw_loop_progress` in `../../proofs/Gf2Core/Proofs/Gf2mProgress.lean` does.
 4. Import the module from `proofs/Gf2Core.lean` or `proofs/Gf2Algebra.lean`.
 5. A standard-library call that Aeneas cannot translate appears as an `axiom`
-   in `FunsExternal.lean`, and the proof trusts it. To prove through the call,
+   in `../../proofs/Gf2Core/FunsExternal.lean`, and the proof trusts it. To prove through the call,
    replace the axiom with a definition in `proofs/Gf2Core/FunsExternal.lean`;
    `proofs/Gf2Algebra/FunsExternal.lean` is regenerated and keeps its axioms.
 6. Run `./scripts/lake-build-strict.sh` and commit the proof with the
