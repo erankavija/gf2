@@ -4,9 +4,11 @@
 //!
 //! The file uses `std` alone, so the same source compiles against any gf2
 //! revision. An arm turns a cell into timed configurations; a round builds
-//! each configuration, encodes once outside the timed region to digest its
-//! output, then repeats the call for at least [`MIN_REP_SECONDS`] and prints
-//! one line per configuration. `cutover.sh` interleaves the rounds of all
+//! each configuration and digests the output of its first, timed call. A first
+//! call lasting at least [`MIN_REP_SECONDS`] is the repetition; otherwise the
+//! unit time is the smaller of the first call and the mean of the following
+//! calls, repeated for at least [`MIN_REP_SECONDS`]. It prints one line per
+//! configuration. `cutover.sh` interleaves the rounds of all
 //! arms and compares them.
 //!
 //! Codewords and generator matrices are digested in gf2's descending

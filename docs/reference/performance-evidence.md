@@ -103,7 +103,8 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
   pre-cutover revision (`BchEncoder::encode_batch` and the legacy
   `generator_matrix`), over the five rows of `experiments/encode-compare/src/cutover/harness.rs`.
 - **Both:** messages are seeded; each arm takes its library's native format,
-  converted before timing, and reproduces gf2's codewords before it is timed.
+  converted before timing, and the harness digests the output of its first,
+  timed call, which must equal gf2's.
   gf2 builds with `-C target-cpu=native`.
 - **Harness:** [`experiments/encode-compare`](../../experiments/encode-compare/README.md).
 - **Output:** `../../experiments/encode-compare/compare.sh` prints the SHA-256 of the binary and of AFF3CT's static
