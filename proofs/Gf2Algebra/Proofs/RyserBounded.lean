@@ -61,7 +61,7 @@ def decodeFp3 (x : Std.U64) : ZMod 3 :=
   -- and no value spec is available to reason about.  See the
   -- "Session 4 blocker" section of the file header for why this makes
   -- the value-level headline unprovable in-environment.  We keep the
-  -- raw read here so that the *structural* (Aeneas-`progress`-shape)
+  -- raw read here so that the *structural* (Aeneas-`step`-shape)
   -- lemmas this session DOES land remain well-typed and `sorry`-free.
   (UScalar.val x : ZMod 3)
 
@@ -567,7 +567,7 @@ theorem ryserRHS_eq_permanent_n_zero {R : Type*} [CommRing R]
 
 This is the algebra-heaviest lemma of the sketch (§3.3, estimated
 30–80 lines).  Per sketch §7.2 it is proved *before* the
-Aeneas-`progress` glue (L4–L6, L8) so that an algebraic dead-end is
+Aeneas-`step` glue (L4–L6, L8) so that an algebraic dead-end is
 discovered first.  It is a **pure-Mathlib** identity with no Rust
 content, stated over an arbitrary `CommRing R` (the `ZMod 3`
 instance the headline theorem uses is then free).
