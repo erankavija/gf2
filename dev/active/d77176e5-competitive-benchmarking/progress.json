@@ -1,7 +1,7 @@
 {
   "epic_id": "d77176e5-eff3-4212-b24d-d475328b1090",
   "epic_short_id": "d77176e5",
-  "current_wave": 1,
+  "current_wave": 2,
   "waves": [
     {
       "wave_number": 1,
@@ -22,7 +22,7 @@
         {
           "short_id": "259acf37",
           "title": "Layered quantized SIMD LDPC decoder",
-          "status": "REQ-05 reworded; night window FER curve then code-review",
+          "status": "window curve recorded 2026-11-13 (flooding unbracketed); comparator rework (Codex gpt-6-luna xhigh, narrow test change); closure waits for d5cd53e0",
           "branch": "worktree-agent-259acf37"
         },
         {
@@ -40,7 +40,7 @@
         {
           "short_id": "fd9d5416",
           "title": "BCH cutover: non-regression and external comparison",
-          "status": "code merged; night window 2026-11-13 then gates",
+          "status": "window table recorded 2026-11-13; REQ-02 met, REQ-03 falsified; doc-review and research-review rerun",
           "branch": "jit-fd9d5416-cutover"
         },
         {
@@ -77,38 +77,78 @@
         {
           "short_id": "a6039c72",
           "title": "Recover the GF(2^8) 4 KiB axpy and n=1024 byte product",
-          "status": "gates passed at a6b8921f0; REQ-03 window line after 2026-11-13; vendor Codex gpt-6.1-sol high",
+          "status": "gates passed at a6b8921f0; window line queued 2026-11-13",
           "branch": "worktree-agent-a6039c72"
         },
         {
           "short_id": "60c82c4c",
           "title": "Encode BCH row B2 in batches as fast as bchlib",
-          "status": "design 5f599c36d on worktree-agent-60c82c4c, unmerged until after the window; D-7 cited",
+          "status": "designs merged 75ea2c792 and linked; broken down into 6379e04e, 7fbd1042, 4443de83",
           "branch": "worktree-agent-60c82c4c"
         },
         {
           "short_id": "5e71e993",
           "title": "Encode BCH row B1 as fast as AFF3CT",
-          "status": "design 52ecb542d on worktree-agent-60c82c4c, unmerged until after the window; D-7 cited",
+          "status": "design merged and linked; depends on 60c82c4c (same changes); evidence from the window",
           "branch": "worktree-agent-60c82c4c"
         },
         {
           "short_id": "92ec2e2b",
           "title": "Materialize BCH generators as fast as M4RI and AFF3CT",
-          "status": "design 6f5b09e78 on worktree-agent-60c82c4c, unmerged until after the window; trait changes accepted by steward",
+          "status": "design merged and linked; sequenced after 7fbd1042 (shared codeword placement in bch/encode.rs)",
           "branch": "worktree-agent-60c82c4c"
         },
         {
           "short_id": "c6b20bec",
           "title": "Construct prime-field identities without allocating",
-          "status": "gates passed on branch worktree-agent-c6b20bec (78f2fd6bf); merge after the window; vendor Claude Sonnet (well-specified gf2-core change)",
+          "status": "done; merged ff3223f20",
           "branch": "worktree-agent-c6b20bec"
         },
         {
           "short_id": "2bca2b28",
           "title": "Restrict a shortened code's parity check without the mother matrix",
-          "status": "blocked by design; depends on 92ec2e2b; regression test b7e55b767 on branch; vendor Codex gpt-6.1-sol high",
+          "status": "depends on 92ec2e2b",
           "branch": "worktree-agent-2bca2b28"
+        }
+      ]
+    },
+    {
+      "wave_number": 2,
+      "note": "Session 5 (lead gf2-af, steward gf2-f3): night-window follow-up and BCH gap implementation.",
+      "issues": [
+        {
+          "short_id": "6379e04e",
+          "title": "Remove per-call and per-message overhead from short BCH batch encoding",
+          "status": "dispatched",
+          "vendor": "Claude Opus: gf2-core and gf2-coding perf change with conformance edges"
+        },
+        {
+          "short_id": "4443de83",
+          "title": "Time encode_batch_into in the BCH cutover harness",
+          "status": "dispatched",
+          "vendor": "Codex gpt-6-luna xhigh: narrow experiment change"
+        },
+        {
+          "short_id": "d5cd53e0",
+          "title": "Diagnose the flooding LDPC shortfall and layered i8 floor on DVB-T2 R1/2",
+          "status": "dispatched",
+          "vendor": "Claude Opus: open-ended diagnosis against AFF3CT"
+        },
+        {
+          "short_id": "259acf37",
+          "title": "Layered quantized SIMD LDPC decoder (comparator rework)",
+          "status": "dispatched",
+          "vendor": "Codex gpt-6-luna xhigh"
+        },
+        {
+          "short_id": "7fbd1042",
+          "title": "Fold short BCH messages in lockstep frame groups",
+          "status": "waits for 6379e04e"
+        },
+        {
+          "short_id": "92ec2e2b",
+          "title": "Materialize BCH generators as fast as M4RI and AFF3CT",
+          "status": "waits for 7fbd1042"
         }
       ]
     }
@@ -122,7 +162,11 @@
     "ebfaff31",
     "c6b20bec",
     "2bca2b28",
-    "243d1160"
+    "243d1160",
+    "d5cd53e0",
+    "6379e04e",
+    "7fbd1042",
+    "4443de83"
   ],
   "escalations": [],
   "rework_counts": {
@@ -134,7 +178,8 @@
   "surfaced_pitfalls": [
     "The window runner waits for a quiet host only before its first job; a single-core job queued after a multi-worker job starts in that job's load tail. Order single-core lines first or add a per-job quiet wait.",
     "Gate runs on the main checkout stall the other lead's merges; a fast-tier test timed out at 15 s under three concurrent worker builds. Run cargo-ci when worker builds are idle.",
-    "jit doc add scans linked documents for assets by default; use --skip-scan for pinned historical pages"
+    "jit doc add scans linked documents for assets by default; use --skip-scan for pinned historical pages",
+    "The window runs under the systemd user manager: PATH=/usr/local/bin:/usr/bin and no ROCM_PATH. hipcc then omits the ROCm include directory (93df507a fixes the build script)."
   ],
   "started_at": "2026-11-12T00:00:00Z",
   "decisions": [

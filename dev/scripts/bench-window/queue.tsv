@@ -1,4 +1,7 @@
 # issue	worktree	est_minutes	command
+# Single-core lines run first, before the multi-worker jobs leave a load tail.
+# a6039c72 REQ-03: GF(2^8) region axpy and square products against ISA-L and M4RIE on core 8 after the overlapping-edge axpy and aligned-operand product fixes; est_minutes is an estimate from the c9cb0dd2 line
+a6039c72	.agents/worktrees/jit-a6039c72-run	5	GF256_BASELINE_PREFIX="$GF2_EXT_ROOT/6c6b09b1/prefix" GF256_BASELINE_CORE=8 bash experiments/gf256-baselines/run.sh
 # 67194d70 new pre-draw validation; ROCM_PATH is set because the window's systemd environment lacks it and hipcc then omits the ROCm include directory; est_minutes is an estimate from the September run over the same anchors
 67194d70	.agents/worktrees/agent-67194d70	20	ROCM_PATH=/opt/rocm bash experiments/permanent-statistics/validation-window.sh
 # de311215 gf2 routes against AFF3CT NMS configurations on the recorded DVB-T2 and NR bundles; inputs and the AFF3CT tree are host-local under $GF2_EXT_ROOT; est_minutes is an estimate
@@ -18,5 +21,3 @@ fd9d5416	.agents/worktrees/agent-fd9d5416	180	CUTOVER_CALL_BUDGET_S=2000 CUTOVER
 # 259acf37 REQ-05 DVB-T2 normal R1/2 FER curves to 1e-3, flooding cap 50 and layered cap 25, on 1.0 to 2.0 dB (both crossings bracketed); libtest, since the slow nextest profile kills a test at 600 s; est_minutes is an estimate
 # 259acf37 waits for the comparator that admits an unbracketed flooding crossing; re-enable after it lands
 #259acf37	.agents/worktrees/jit-259acf37-run	180	flock="$(python3 "$(git ls-files -- ':(glob)**/repository_files.py')" file ccx1-bench-flock.sh)" && GF2_BENCH=1 GF2_LAYERED_FER_GRID=1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0 "./$flock" --full-host cargo test --release -p gf2-coding --test ldpc_layered_fer -- --ignored --exact dvb_t2_normal_r12_layered_is_within_a_tenth_of_a_db_of_flooding --nocapture
-# a6039c72 REQ-03: GF(2^8) region axpy and square products against ISA-L and M4RIE on core 8 after the overlapping-edge axpy and aligned-operand product fixes; est_minutes is an estimate from the c9cb0dd2 line
-a6039c72	.agents/worktrees/jit-a6039c72-run	5	GF256_BASELINE_PREFIX="$GF2_EXT_ROOT/6c6b09b1/prefix" GF256_BASELINE_CORE=8 bash experiments/gf256-baselines/run.sh

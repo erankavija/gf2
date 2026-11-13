@@ -50,8 +50,8 @@ pub use sparse::{
     RowPermutation, SpBitMatrix, SpBitMatrixBlockCsr, SpBitMatrixDual, SparseBitMatrix,
 };
 
-/// The GF(2^8) byte-region kernels: the fastest the host supports with the
-/// `simd` feature, the portable ones otherwise or on hosts without them.
+/// The GF(2^8) byte-region kernels: the AVX2 ones with the `simd` feature on
+/// an AVX2 host, the portable ones otherwise.
 pub(crate) fn gf256_region() -> &'static gf2_kernels_simd::gf256_region::Gf256RegionFns {
     #[cfg(feature = "simd")]
     {
