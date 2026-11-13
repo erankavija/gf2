@@ -34,6 +34,9 @@ In Markdown and issue prose the same holds for every
 backticked bare file name (`BARE_INLINE`), whatever its kind, and so it does
 in a JSON string under `dev/` or `experiments/` (`DATA_PROSE`), where a string
 that is one file name of a known kind counts as backticked.
+A bare file name used as a local Markdown link's label, with or without
+backticks, resolves through that target when their base names match. A
+mismatched file-name label faults; the target is checked independently.
 
 An invariant citation `@/inv/<id>` or `@/invariant/<id>` must name an
 invariant of `.jit/invariants.toml`.
@@ -104,6 +107,10 @@ FILE_EXTENSIONS = (
     "|npy|out|patch|pdf|png|py|rs|sage|sh|sql|stderr|stdout|svg|tar|tex|toml|tsv|txt|xml|yaml|yml|zst"
 )
 BARE_INLINE = re.compile(rf"`([\w+=-][\w.+=-]*\.(?:{FILE_EXTENSIONS}))`")
+MARKDOWN_FILE_LINK = re.compile(
+    rf"\[(`?)([\w+=-][\w.+=-]*\.(?:{FILE_EXTENSIONS}))\1\]"
+    r"\((?!https?:|mailto:|#)([^)#\s]+)"
+)
 # JSON strings under these roots carry prose and lists of file names.
 DATA_PROSE = re.compile(r"(?:dev|experiments)/.*\.json$")
 DATA_FILE_NAME = re.compile(rf"\.(?:{FILE_EXTENSIONS})$")
@@ -171,6 +178,17 @@ def evidence_faults(
     reads `line` as a data string: the Markdown names, and the whole string
     when it is one file name of a known kind (`DATA_FILE_NAME`).
     """
+    names = []
+    if markdown:
+        def label(match: re.Match) -> str:
+            name, target = match.group(2, 3)
+            if name != Path(target).name and name not in names:
+                names.append(name)
+            return match.group().replace(name, " " * len(name), 1)
+
+        # Only the label is covered by the link; a separate citation of the
+        # same name on this line still needs its own resolution.
+        line = MARKDOWN_FILE_LINK.sub(label, line)
     tokens = [(token, EVIDENCE_NAME) for token in FILE_TOKEN.findall(line)]
     if files and FILE_TOKEN.fullmatch(line.strip()):
         tokens.append((line.strip(), DATA_FILE_NAME))
@@ -181,7 +199,6 @@ def evidence_faults(
             for token in INLINE_PATH.findall(line)
             if ".." not in token
         ]
-    names = []
     for token, kind in tokens:
         name = token.removeprefix("./")
         # `RELATIVE_PATH` resolves a `../` name against its file.
@@ -962,6 +979,18 @@ def self_test() -> None:
         "docs/page.md:1: unique.rs"
     ], "a bare name must not resolve in an unrelated directory"
     assert not faults_in("docs/sub/page.md", "`local.rs` and `root.rs`", known)
+    for label in ("unique.rs", "`unique.rs`"):
+        assert not faults_in("docs/page.md", f"[{label}](../elsewhere/unique.rs)", known)
+    for label in ("different.rs", "`different.rs`"):
+        assert faults_in("docs/page.md", f"[{label}](../elsewhere/unique.rs)", known) == [
+            "docs/page.md:1: different.rs"
+        ]
+    assert faults_in("docs/page.md", "[`unique.rs`](../elsewhere/unique.rs) and `unique.rs`", known) == [
+        "docs/page.md:1: unique.rs"
+    ], "a link resolves only its own label"
+    assert faults_in("docs/page.md", "[`gone.rs`](../elsewhere/gone.rs)", known) == [
+        "docs/page.md:1: elsewhere/gone.rs", "docs/page.md:1: ../elsewhere/gone.rs"
+    ], "a matching label does not excuse an unresolved target"
     assert issue_faults(".jit/issues/test.json", json.dumps({
         "description": "`local.rs`", "state": "ready",
     }), known) == [".jit/issues/test.json:1: local.rs"]

@@ -44,7 +44,7 @@ max_frames = 2000
 frame errors or `max_frames` frames, whichever comes first. `type` selects the
 code family, and the keys each family accepts, including the optional
 `channel` table, are the fields of `CurveConfig` in
-[`../../crates/gf2-coding/src/bin/sim_runner.rs`](../../crates/gf2-coding/src/bin/sim_runner.rs). The
+[`sim_runner.rs`](../../crates/gf2-coding/src/bin/sim_runner.rs). The
 repository's own campaign files are in
 [`dev/campaigns/`](https://github.com/erankavija/gf2/tree/6776fe30ea9af85ad509ddca95926f051421676d/dev/campaigns).
 
@@ -118,7 +118,7 @@ over the run configuration and the link, and a resume whose identity differs
 fails with a configuration-hash mismatch. The identity excludes
 `--output-dir`. A run without `--resume` deletes existing checkpoints. The deterministic CSV columns of a resumed run equal, byte for
 byte, those of an uninterrupted run with that seed
-([`../../experiments/dvb-t2-awgn/tests/campaign_cli_flags.rs`](../../experiments/dvb-t2-awgn/tests/campaign_cli_flags.rs)).
+([`campaign_cli_flags.rs`](../../experiments/dvb-t2-awgn/tests/campaign_cli_flags.rs)).
 
 The output directory also holds `curve_<rate>_<modulation>.csv` with columns
 `es_n0_db`, `fer`, `ber`, `frames`, `errors`, `mean_iters` and `wall_seconds`,

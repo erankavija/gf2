@@ -84,9 +84,9 @@ repeat one operation width resolve the route once, as
 
 SIMD and scalar routes run shared behavioral suites, for example
 [`tests/simd_equiv/`](../../crates/gf2-core/tests/simd_equiv/mod.rs) and
-[`../../crates/gf2-core/tests/popcount_routes.rs`](../../crates/gf2-core/tests/popcount_routes.rs) in
+[`popcount_routes.rs`](../../crates/gf2-core/tests/popcount_routes.rs) in
 `gf2-core`. Test binaries compiled without `simd`, such as
-[`../../crates/gf2-core/tests/m4rm_tiled_effective_no_simd.rs`](../../crates/gf2-core/tests/m4rm_tiled_effective_no_simd.rs),
+[`m4rm_tiled_effective_no_simd.rs`](../../crates/gf2-core/tests/m4rm_tiled_effective_no_simd.rs),
 pin the scalar route's behavior.
 [`scripts/scalar-lane-tests.sh`](../../scripts/scalar-lane-tests.sh) runs the
 `gf2-algebra` and `gf2-coding` suites with their default features without
@@ -127,7 +127,7 @@ In `gf2-sim`, every stage declares an `ExecutionClass` (`CpuOnly`, `GpuOnly`,
 Each worker owns a strided partition of the frame indices and processes it in
 batches: it prepares batch `N+1` on the CPU while batch `N` runs on its own
 stream, synchronizing per stream rather than per device.
-[`../../crates/gf2-sim/examples/gpu_hybrid.rs`](../../crates/gf2-sim/examples/gpu_hybrid.rs) runs one chain
+[`gpu_hybrid.rs`](../../crates/gf2-sim/examples/gpu_hybrid.rs) runs one chain
 on both paths and compares the results.
 
 ## Parallelism
@@ -154,6 +154,6 @@ Results do not depend on worker count or scheduling
 The `gf2-sim` [crate documentation](../../crates/gf2-sim/src/lib.rs) states
 which result columns are byte-identical across worker counts, across
 checkpoint resume and between CPU and GPU runs.
-[`../../crates/gf2-sim/tests/determinism.rs`](../../crates/gf2-sim/tests/determinism.rs),
-[`../../crates/gf2-sim/tests/parallel_determinism.rs`](../../crates/gf2-sim/tests/parallel_determinism.rs)
+[`determinism.rs`](../../crates/gf2-sim/tests/determinism.rs),
+[`parallel_determinism.rs`](../../crates/gf2-sim/tests/parallel_determinism.rs)
 and the `gpu_*_byte_identity.rs` tests in the same directory check them.

@@ -5,7 +5,7 @@ This tutorial simulates the DVB-T2 bit-interleaved coded modulation link of
 with confidence intervals. The chain is the BCH and LDPC normal-frame code,
 bit interleaving, cell-word demultiplexing and 16-QAM cell mapping, AWGN, soft
 demapping and belief-propagation decoding. The program is the campaign binary
-[`../../experiments/dvb-t2-awgn/src/bin/dvb_t2_awgn_campaign.rs`](../../experiments/dvb-t2-awgn/src/bin/dvb_t2_awgn_campaign.rs),
+[`dvb_t2_awgn_campaign.rs`](../../experiments/dvb-t2-awgn/src/bin/dvb_t2_awgn_campaign.rs),
 which builds the chain with the `gf2-sim` DVB-T2 preset and checkpoints every
 point. Supported code configurations are in
 [Standards conformance](../reference/standards-conformance.md#dvb-t2);
@@ -15,7 +15,7 @@ interruption, resumption and the complete output layout are in
 ## Configure the preset pipeline
 
 `Pipeline::dvb_t2()` is a typestate builder whose call order is checked at
-compile time ([`../../crates/gf2-sim/examples/dvb_t2_typestate.rs`](../../crates/gf2-sim/examples/dvb_t2_typestate.rs)).
+compile time ([`dvb_t2_typestate.rs`](../../crates/gf2-sim/examples/dvb_t2_typestate.rs)).
 The binary builds the pipeline from its arguments and then sets the sweep on
 the pipeline's `PipelineConfig`:
 
@@ -68,9 +68,9 @@ Each point stops after the first 50-frame chunk that brings its frame-error
 count to at least 50, or at 300 frames, so the four points cost at most 1200
 frames. Every frame's outcome is a function of the seed, the point index and
 the frame index, so the deterministic CSV columns are identical across worker
-counts ([`../../crates/gf2-sim/tests/parallel_determinism.rs`](../../crates/gf2-sim/tests/parallel_determinism.rs))
+counts ([`parallel_determinism.rs`](../../crates/gf2-sim/tests/parallel_determinism.rs))
 and across repeated runs
-([`../../experiments/dvb-t2-awgn/tests/campaign_byte_identity.rs`](../../experiments/dvb-t2-awgn/tests/campaign_byte_identity.rs)).
+([`campaign_byte_identity.rs`](../../experiments/dvb-t2-awgn/tests/campaign_byte_identity.rs)).
 
 `<campaign-dir>/curve_1_2_16qam.csv` under `dvb_r12_16qam` holds one row per point under
 the header
@@ -140,5 +140,5 @@ describes the checkpoint identity.
 `--rate` and `--modulation` select the other preset MODCODs listed by `--help`.
 `Pipeline::nr_5g()` builds the 5G NR LDPC chain of `@/citation/ThreeGpp2017`
 without a sweep plan;
-[`../../crates/gf2-sim/examples/nr_5g_quickstart.rs`](../../crates/gf2-sim/examples/nr_5g_quickstart.rs)
+[`nr_5g_quickstart.rs`](../../crates/gf2-sim/examples/nr_5g_quickstart.rs)
 drives one frame of it through `TopologyExecutor::run`.

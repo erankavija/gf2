@@ -5,8 +5,8 @@ quadratic extension with `gf2-core`'s `FieldMatrix`: multiplication, PLE
 decomposition, solving, inversion and the characteristic polynomial. Each
 result is checked against an identity; the sections below state what each
 check establishes. The code is the example program
-[`../../crates/gf2-core/examples/field_linear_algebra.rs`](../../crates/gf2-core/examples/field_linear_algebra.rs);
-[`../../crates/gf2-core/tests/field_linear_algebra_example.rs`](../../crates/gf2-core/tests/field_linear_algebra_example.rs)
+[`field_linear_algebra.rs`](../../crates/gf2-core/examples/field_linear_algebra.rs);
+[`field_linear_algebra_example.rs`](../../crates/gf2-core/tests/field_linear_algebra_example.rs)
 runs it at small dimensions in the fast test tier.
 
 ## Run it
