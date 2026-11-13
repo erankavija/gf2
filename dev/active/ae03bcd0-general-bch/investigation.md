@@ -171,7 +171,7 @@ Verdicts use `already-done`, `valid-and-open`, and `invalid-as-stated`.
    `batch_operations` benchmarks BCH batch and sequential-vs-batch encoding
    (`crates/gf2-coding/benches/batch_operations.rs:57-75,120-162`). The open
    evidence gap is a field-generic/AVX2 encoder and generator-materialization
-   survey with external receipts held outside the tracked tree, not the absence of all Criterion
+   survey with external receipts written outside the tracked tree and recorded in the issue by location and digest, not the absence of all Criterion
    BCH throughput coverage.
 
 ## Prior art
