@@ -8,8 +8,10 @@ also parsed: a string under a path-named member (`DATA_PATH_MEMBER`) shaped
 like a relative path must resolve from the repository root or the file's
 directory, be ignored by git, or be a template. A Markdown link or `../` path
 resolves from its own file, a `./` path from its own file or the root, an
-inline file name with directories from its own directory or one enclosing it,
-and a bare file name by its path suffix. Host-local means a user's
+inline file name (bare or with directories) from its own directory or one
+enclosing it. Issue prose has no directory: bare names need repository paths.
+Every `/tmp` path in prose is host-local unless its own line writes or locks
+that path. Host-local also means a user's
 home or a host mount; the toolchain's own home directories and device paths
 such as `/dev/null` are neither host-local nor repository paths.
 
@@ -20,7 +22,11 @@ string, must name a tracked file or be written at run time: a name under
 `target/` passes when git ignores it, a bare name passes when its line or the
 line before names a `target/` location, the statement that the run writes the
 file there, and a name passes that tracked code (`WRITER_SUFFIXES`) writes
-(`written_names`). In Markdown and issue prose the same holds for every
+(`written_names`): the name must reach a write-mode open, file create/write,
+shell redirect, `tee` or `-o` in the same function or script, directly or through
+a local binding or named constant. Read-only joins excuse nothing.
+Helper-mediated writers are listed exceptions, without cross-function flow.
+In Markdown and issue prose the same holds for every
 backticked bare file name (`BARE_INLINE`), whatever its kind, and so it does
 in a JSON string under `dev/` or `experiments/` (`DATA_PROSE`), where a string
 that is one file name of a known kind counts as backticked.
@@ -42,9 +48,11 @@ evidence name, which has no location for the ignore rules to match.
 from __future__ import annotations
 
 import argparse
+import ast
 import fnmatch
 import json
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -54,15 +62,17 @@ from pathlib import Path
 EXCEPTIONS = "scripts/reference-exceptions.toml"
 MAX_TEXT_BYTES = 4 * 1024 * 1024
 HOST_LOCAL = re.compile(
-    r"(?<![\w.-])/home/[a-z_][\w-]*/|/Users/[A-Za-z]\w*/|/run/user/\d|/tmp/claude-"
+    r"(?<![\w.-])/home/[a-z_][\w-]*/|/Users/[A-Za-z]\w*/|/run/user/\d"
     r"|(?<![\w.-])/(?:mnt|root|data|scratch|var/tmp)/\w"
     # The toolchain's own directories exist wherever the toolchain does.
     r"|(?<![\w.])(?:~|\$HOME|\$\{HOME\})/(?!\.cargo\b|\.rustup\b|\.elan\b)[\w.]"
 )
-# A file under /tmp that prose cites is host-local evidence unless the same line
-# is the command that writes it there.
-TEMP_PATH = re.compile(r"(?<![\w.-])/tmp/([\w.+=-]+(?:/[\w.+=-]+)*)")
-TEMP_WRITER = re.compile(r">|\s-o\s|--(?:output|out|receipt|checkpoint|log)\b|\btee\b|\bmktemp\b")
+# Every /tmp citation needs a writer or lock on its own line.
+TEMP_PATH = re.compile(r"(?<![\w.-])/tmp(?![\w.-])(?:/[\w.+=-]+(?:/[\w.+=-]+)*)?/?")
+TEMP_WRITER = re.compile(
+    r"(?:>>?|\s-o\s+|--(?:output|out|receipt|checkpoint|log)[=\s]+"
+    r"|\b(?:tee|mktemp|flock|mkdir|touch)\s+(?:-[\w]+\s+)*)\s*[`\"']?$"
+)
 ROOTS = r"(?:\.agents|\.cargo|\.config|\.github|\.jit|benchmarks|contrib|crates|dev|docs|experiments|packages|proofs|scripts)"
 REPOSITORY_PATH = re.compile(rf"(?<![\w./+~}}-])/?({ROOTS}/[\w.+=-]+(?:/[\w.+=-]+)*)")
 RELATIVE_PATH = re.compile(r"(?<![\w./+-])((?:\.\./)+[\w.+=-]+(?:/[\w.+=-]+)*)")
@@ -98,17 +108,7 @@ INVARIANTS = ".jit/invariants.toml"
 TARGET_DIR = re.compile(r"(?<![\w.-])target/")
 WRITER_SUFFIXES = (".rs", ".py", ".sh", ".c", ".cpp", ".h", ".hip")
 # A string literal whose last path component is a file name.
-DOUBLE_QUOTED = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
-SINGLE_QUOTED = re.compile(r"'([^'\\\n]*)'")
 LITERAL_FILE = re.compile(r"(?:^|(?P<dir>.*)/)(?P<name>[\w+=-][\w.+=-]*\.[A-Za-z]\w*)$")
-# The literal's directory is interpolated: `{dir}/name`, `$DIR/name`.
-INTERPOLATED_DIR = re.compile(r"(?:\}|\$\w+|\$\{\w+\}|\))$")
-# Text before a bare literal that joins it to a directory or opens it.
-JOIN_BEFORE = re.compile(
-    r"(?:\.join\(\s*&?|\bjoin\([^()]*,\s*|[\w)\]]\s*/\s*"
-    r"|\b(?:open|File::create|fs::write|write_text|write_bytes)\(\s*&?)$"
-)
-NAME_CONSTANT = re.compile(r"\b([A-Z][A-Z0-9_]*)\s*(?::\s*&(?:'static\s+)?str\s*)?=\s*$")
 DEVICE = re.compile(r"dev/(?:null|zero|shm|stdin|stdout|stderr|fd|tty|kfd|dri|urandom|random|cpu|mem)\b")
 
 
@@ -130,6 +130,22 @@ def resolvable_set(tracked: list[str]) -> set[str]:
         parts = path.split("/")
         known.update("/".join(parts[:i]) for i in range(1, len(parts)))
     return known
+
+
+def _temp_written(line: str, match: re.Match) -> bool:
+    before, after = line[:match.start()], line[match.end():]
+    return bool(
+        TEMP_WRITER.search(before)
+        or re.search(r'''\b(?:File::create|fs::write)\(\s*&?["']$''', before)
+        or (
+            re.search(r'''\bopen\(\s*["']$''', before)
+            and re.match(r'''["']\s*,\s*(?:mode\s*=\s*)?["'][wax+][^"']*["']''', after)
+        )
+        or (
+            re.search(r'''\bPath\(\s*["']$''', before)
+            and re.match(r'''["']\)\.(?:write_text|write_bytes|touch)\(''', after)
+        )
+    )
 
 
 def evidence_faults(
@@ -195,7 +211,9 @@ def faults_in(
     """
     faults = []
     markdown = base is not None or path.endswith(".md")
-    prose = markdown or not path.endswith(CODE_SUFFIXES)
+    prose = markdown or not (
+        path.endswith(CODE_SUFFIXES) or Path(path).name in {"Dockerfile", "Containerfile"}
+    )
     base = str(Path(path).parent) if base is None else base
     before = ""
     for number, line in enumerate(text.splitlines(), 1):
@@ -213,8 +231,8 @@ def faults_in(
         before = line
         if HOST_LOCAL.search(line):
             faults.append(f"{path}:{number}: host-local path")
-        elif prose and not TEMP_WRITER.search(line) and any(
-            EVIDENCE_NAME.search(m.group(1)) for m in TEMP_PATH.finditer(line)
+        elif prose and any(
+            not _temp_written(line, m) for m in TEMP_PATH.finditer(line)
         ):
             faults.append(f"{path}:{number}: host-local path")
         for match in REPOSITORY_PATH.finditer(line):
@@ -369,58 +387,283 @@ def _resolves(name: str, base: str, known: set[str]) -> bool:
 
     A `./` name resolves from `base` or the root. Another name with
     directories resolves from `base` or a directory enclosing it, as a crate's
-    `src/lib.rs` or a skill's `references/x.md` does; a bare name resolves by
-    path suffix.
+    `src/lib.rs` or a skill's `references/x.md` does. Bare names use those
+    same directories; issue prose uses only the root.
     """
     if name.startswith("./"):
         name = name[2:]
         return name in known or "/".join(_normal(f"{base}/{name}")) in known
-    if "/" in name:
-        parts = _normal(base) if base else []
-        return any(
-            "/".join([*parts[:depth], *_normal(name)]) in known
-            for depth in range(len(parts), -1, -1)
-        )
-    return name in known or any(path.endswith("/" + name) for path in known)
+    parts = _normal(base) if base else []
+    return any(
+        "/".join([*parts[:depth], *_normal(name)]) in known
+        for depth in range(len(parts), -1, -1)
+    )
+
+
+def _literal_names(value: str) -> set[str]:
+    file = LITERAL_FILE.search(value)
+    return {file['name']} if file else set()
+
+
+def _python_written(text: str) -> set[str]:
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return set()
+    names = set()
+
+    def expression(node, bindings):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return _literal_names(node.value)
+        if isinstance(node, ast.Name):
+            return bindings.get(node.id, set())
+        if isinstance(node, ast.JoinedStr):
+            return expression(node.values[-1], bindings) if node.values else set()
+        if isinstance(node, ast.BinOp):
+            return expression(node.right, bindings)
+        if isinstance(node, ast.Call):
+            # Only path constructors and joins, never arbitrary helpers.
+            if isinstance(node.func, ast.Name) and node.func.id in {'Path', 'str'}:
+                return expression(node.args[-1], bindings) if node.args else set()
+            if isinstance(node.func, ast.Attribute) and node.func.attr in {'join', 'joinpath'}:
+                return expression(node.args[-1], bindings) if node.args else set()
+        return set()
+
+    constants = {}
+    for node in tree.body:
+        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in targets:
+                if isinstance(target, ast.Name) and target.id.isupper():
+                    constants[target.id] = expression(node.value, constants)
+
+    class Writes(ast.NodeVisitor):
+        def __init__(self):
+            self.bindings = dict(constants)
+
+        def visit_FunctionDef(self, node):
+            visitor = Writes()
+            for statement in node.body:
+                visitor.visit(statement)
+
+        visit_AsyncFunctionDef = visit_FunctionDef
+
+        def visit_Assign(self, node):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    self.bindings[target.id] = expression(node.value, self.bindings)
+            self.generic_visit(node)
+
+        def visit_AnnAssign(self, node):
+            if isinstance(node.target, ast.Name):
+                self.bindings[node.target.id] = expression(node.value, self.bindings)
+            self.generic_visit(node)
+
+        def visit_Call(self, node):
+            function = node.func
+            opened = isinstance(function, ast.Name) and function.id == 'open'
+            method = function.attr if isinstance(function, ast.Attribute) else ''
+            if opened or method == 'open':
+                offset = 1 if opened else 0
+                mode = next((kw.value for kw in node.keywords if kw.arg == 'mode'),
+                            node.args[offset] if len(node.args) > offset else None)
+                if isinstance(mode, ast.Constant) and isinstance(mode.value, str) and any(
+                    flag in mode.value for flag in 'wax+'
+                ):
+                    if opened and node.args:
+                        names.update(expression(node.args[0], self.bindings))
+                    elif not opened:
+                        names.update(expression(function.value, self.bindings))
+            elif method in {'write_text', 'write_bytes', 'touch'}:
+                names.update(expression(function.value, self.bindings))
+            self.generic_visit(node)
+
+    Writes().visit(tree)
+    return names
+
+
+# Tokenize strings and comments before looking for balanced calls and functions.
+SOURCE_TOKEN = re.compile(
+    r'//[^\n]*|/\*.*?\*/|r(?P<hashes>\#*)".*?"(?P=hashes)|"(?:[^"\\]|\\.)*"'
+    r"|'(?:[^'\\\n]|\\.)'|[A-Za-z_]\w*|::|[^\s]", re.DOTALL
+)
+
+
+def _matching(tokens, start):
+    pairs = {'(': ')', '[': ']', '{': '}'}
+    stack = []
+    for index in range(start, len(tokens)):
+        token = tokens[index]
+        if token in pairs:
+            stack.append(pairs[token])
+        elif stack and token == stack[-1]:
+            stack.pop()
+            if not stack:
+                return index
+    return len(tokens) - 1
+
+
+def _native_scopes(tokens):
+    """Function bodies, with nested functions removed from their parent scope."""
+    scopes = []
+    outside = []
+    i = 0
+    while i < len(tokens):
+        # Rust fn, or a C-style function declarator followed by a body.
+        start = i if tokens[i] == 'fn' else None
+        if (tokens[i] == '(' and i and re.fullmatch(r'\w+', tokens[i - 1])
+                and tokens[i - 1] not in {'if', 'for', 'while', 'switch', 'catch'}):
+            closing = _matching(tokens, i)
+            if closing + 1 < len(tokens) and tokens[closing + 1] == '{':
+                start = i
+        if start is not None:
+            opening = next((j for j in range(i, len(tokens)) if tokens[j] in {'{', ';'}), None)
+            if opening is not None and tokens[opening] == '{':
+                end = _matching(tokens, opening)
+                scopes.extend(_native_scopes(tokens[opening + 1:end]))
+                i = end + 1
+                continue
+        outside.append(tokens[i])
+        i += 1
+    return scopes + [outside]
+
+
+def _native_constants(tokens):
+    constants = {}
+    for i, token in enumerate(tokens):
+        if token != 'const' or i + 1 == len(tokens):
+            continue
+        end = next((j for j in range(i, len(tokens)) if tokens[j] == ';'), len(tokens))
+        if '=' not in tokens[i:end]:
+            continue
+        value = tokens[tokens.index('=', i, end) + 1:end]
+        if len(value) == 1 and re.fullmatch(r'r?\#*".*"\#*', value[0], re.DOTALL):
+            constants[tokens[i + 1]] = _literal_names(re.sub(r'^r?\#*"|"\#*$', '', value[0]))
+    return constants
+
+
+def _native_written(text: str, constants: dict[str, set[str]]) -> set[str]:
+    tokens = [m[0] for m in SOURCE_TOKEN.finditer(text) if not m[0].startswith(('//', '/*'))]
+    names = set()
+
+    def expression(parts, bindings):
+        found = set()
+        i = 0
+        while i < len(parts):
+            part = parts[i]
+            if part == '(' and i:
+                callee = parts[i - 1]
+                if callee == '!' and i > 1:
+                    callee = parts[i - 2]
+                if re.fullmatch(r'\w+', callee) and callee not in {
+                    'join', 'from', 'new', 'format', 'to_path_buf', 'as_path', 'clone',
+                }:
+                    i = _matching(parts, i) + 1
+                    continue
+            if part.startswith(('"', 'r"', 'r#"')):
+                value = re.sub(r'^r?\#*"|"\#*$', '', part)
+                found.update(_literal_names(value))
+            elif part in bindings:
+                found.update(bindings[part])
+            i += 1
+        return found
+
+    scopes = _native_scopes(tokens)
+    constants = {**constants, **_native_constants(scopes[-1])}
+    for scope in scopes:
+        bindings = {**constants, **_native_constants(scope)}
+        for i, token in enumerate(scope):
+            if token == '=' and i and re.fullmatch(r'\w+', scope[i - 1]):
+                end = next((j for j in range(i, len(scope)) if scope[j] == ';'), len(scope))
+                bindings[scope[i - 1]] = expression(scope[i + 1:end], bindings)
+            if token != '(' or not i:
+                continue
+            end = _matching(scope, i)
+            # The first argument ends at its first top-level comma.
+            arg_end = i + 1
+            while arg_end < end:
+                if scope[arg_end] == ',':
+                    break
+                arg_end = (_matching(scope, arg_end) + 1
+                           if scope[arg_end] in {'(', '[', '{'} else arg_end + 1)
+            callee = ''.join(scope[max(0, i - 4):i])
+            receiver = ''
+            if scope[i - 1] == 'open':
+                statement = next((j + 1 for j in range(i - 1, -1, -1) if scope[j] == ';'), 0)
+                receiver = ''.join(scope[statement:i])
+            write_open = (
+                receiver.endswith('.open')
+                and re.search(r'(?:OpenOptions::new|File::options)\(\)', receiver)
+                and re.search(r'\.(?:write|append|create|create_new|truncate)\(true\)', receiver)
+            )
+            if re.search(r'(?<!\w)(?:File::create|fs::write|fopen)$', callee) or write_open:
+                if not callee.endswith('fopen') or any(
+                    re.fullmatch(r'"(?:[wax][^"\n]*|r[^"\n]*\+[^"\n]*)"', part)
+                    for part in scope[arg_end + 1:end]
+                ):
+                    names.update(expression(scope[i + 1:arg_end], bindings))
+    return names
+
+
+def _shell_written(text: str) -> set[str]:
+    names = set()
+    bindings = {}
+    parents = []
+    for line in text.splitlines():
+        if re.match(r'\s*(?:function\s+\w+(?:\(\))?|\w+\s*\(\s*\))\s*\{', line):
+            parents.append(bindings)
+            bindings = {key: value for key, value in bindings.items() if key.isupper()}
+        try:
+            lexer = shlex.shlex(line, posix=True, punctuation_chars='><|;&')
+            lexer.whitespace_split = True
+            tokens = list(lexer)
+        except ValueError:
+            continue
+        for token in tokens:
+            if match := re.fullmatch(r'(\w+)=(.*)', token):
+                bindings[match[1]] = _literal_names(match[2])
+        for i, token in enumerate(tokens[:-1]):
+            if token not in {'>', '>>', '-o', 'tee'}:
+                continue
+            if token == 'tee' and i and tokens[i - 1] not in {'|', ';', '&&', '||'}:
+                continue
+            output = i + 1
+            while token == 'tee' and output < len(tokens) and tokens[output].startswith('-'):
+                output += 1
+            if output == len(tokens):
+                continue
+            value = tokens[output]
+            names.update(_literal_names(value))
+            variable = re.fullmatch(r'\$\{?(\w+)\}?', value)
+            if variable:
+                names.update(bindings.get(variable[1], set()))
+        if parents and re.search(r'(?:^|;)\s*}\s*;?\s*$', line):
+            bindings = parents.pop()
+    return names
 
 
 def written_names(texts: dict[str, str]) -> frozenset[str]:
-    """Base names tracked code writes.
+    """Names reaching a syntactic write in one function or script.
 
-    A string literal of a writer source counts when it names a file under
-    `target/`, interpolates its directory (`{dir}/name`, `$DIR/name`), is
-    joined to a directory or opened, or is a constant whose identifier some
-    writer source joins to a directory.
+    Only named constants enter function scopes. Python uses its AST;
+    native sources use balanced tokens; shell scripts use redirects, tee and
+    -o. Arbitrary helper calls never count as writes.
     """
-    names: set[str] = set()
-    constants: dict[str, set[str]] = {}
-    sources = {path: text for path, text in texts.items() if path.endswith(WRITER_SUFFIXES)}
-    for path, text in sources.items():
-        quoted = (DOUBLE_QUOTED, SINGLE_QUOTED) if path.endswith((".py", ".sh")) else (DOUBLE_QUOTED,)
-        for line in text.splitlines():
-            for pattern in quoted:
-                for literal in pattern.finditer(line):
-                    file = LITERAL_FILE.match(literal.group(1))
-                    if file is None:
-                        continue
-                    name, directory = file.group("name"), file.group("dir")
-                    prefix = line[: literal.start()]
-                    if TARGET_DIR.search(literal.group(1)):
-                        names.add(name)
-                    elif directory is not None:
-                        if INTERPOLATED_DIR.search(directory):
-                            names.add(name)
-                    elif JOIN_BEFORE.search(prefix):
-                        names.add(name)
-                    elif constant := NAME_CONSTANT.search(prefix):
-                        constants.setdefault(constant.group(1), set()).add(name)
-    if constants:
-        joined = re.compile(
-            rf"(?:\.join\(\s*&?|[\w)\]]\s*/\s*|/\{{)({'|'.join(map(re.escape, constants))})\b"
-        )
-        for text in sources.values():
-            for identifier in joined.findall(text):
-                names |= constants[identifier]
+    names = set()
+    candidates: dict[str, set[str]] = {}
+    for path, text in texts.items():
+        if path.endswith(WRITER_SUFFIXES) and not path.endswith(('.py', '.sh')):
+            tokens = [m[0] for m in SOURCE_TOKEN.finditer(text) if not m[0].startswith(('//', '/*'))]
+            for name, values in _native_constants(_native_scopes(tokens)[-1]).items():
+                candidates.setdefault(name, set()).update(values)
+    constants = {name: values for name, values in candidates.items() if len(values) == 1}
+    for path, text in texts.items():
+        if path.endswith('.py'):
+            names.update(_python_written(text))
+        elif path.endswith('.sh'):
+            names.update(_shell_written(text))
+        elif path.endswith(WRITER_SUFFIXES):
+            names.update(_native_written(text, constants))
     return frozenset(names)
 
 
@@ -573,6 +816,73 @@ def check(root: Path) -> list[str]:
 
 
 def self_test() -> None:
+    assert written_names({"src/write.py": (
+        'OUTPUT = "constant.log"\n'
+        'def write(out):\n'
+        '    path = out / "assigned.log"\n'
+        '    path.write_text("payload.log")\n'
+        '    open(out / OUTPUT, "a")\n'
+        '    (out / "created.log").touch()\n'
+        '    (out / "method.log").open(mode="w")\n'
+        'def read(out):\n'
+        '    path = out / "other-scope.log"\n'
+        '    open(path)\n'
+        '    helper(out / "helper.log")\n'
+    )}) == {"assigned.log", "constant.log", "created.log", "method.log"}
+    assert written_names({"src/write.rs": (
+        'const OUTPUT: &str = "constant.log";\n'
+        'fn write(out: &Path) {\n'
+        'let path = out.join("assigned.log"); File::create(&path);\n'
+        'fs::write(out.join(OUTPUT), "payload.log");\n'
+        'fs::write(helper("helper.log"), "data");\n'
+        '}\n'
+        'fn read(out: &Path) { let path = out.join("other-scope.log"); read(path); }\n'
+    )}) == {"assigned.log", "constant.log"}
+    assert not written_names({"src/nested.rs": (
+        'fn outer() { let path = dir.join("nested.log"); '
+        'fn inner() { File::create(path); } }'
+    )})
+    assert written_names({"src/open.rs": (
+        'fn f(dir: &Path) { '
+        'OpenOptions::new().write(true).open(dir.join("options.log")); '
+        'File::open(dir.join("read.log")); }'
+    )}) == {"options.log"}
+    assert written_names({"write.sh": (
+        'OUT="$dir/assigned.log"\n'
+        'cat "$dir/read.log" > "$OUT"\n'
+        'run | tee "$dir/tee.log"\n'
+        'run -o "$dir/output.log"\n'
+    )}) == {"assigned.log", "tee.log", "output.log"}
+    assert not written_names({"read.sh": (
+        'source_path() {\n  path="$dir/other-function.log"\n}\n'
+        'write_path() {\n  echo data > "$path"\n}\n'
+        'printf \'tee "quoted.log"\'\n'
+    )})
+    assert "read-only.log" not in written_names({
+        "src/read.rs": 'fn load(dir: &Path) { read(dir.join("read-only.log")); }',
+    }), "a read-only join must not excuse a citation"
+    assert "read-open.log" not in written_names({
+        "src/read.py": 'open(out / "read-open.log", "r")',
+    }), "a read-mode open must not excuse a citation"
+    assert faults_in("docs/page.md", "see /tmp/cache/config.json", set()) == [
+        "docs/page.md:1: host-local path"
+    ], "all cited /tmp paths are host-local"
+    assert faults_in("docs/page.md", "see /tmp/source", set())
+    assert faults_in("docs/page.md", "run > /tmp/out; see /tmp/input", set())
+    for line in ('run > /tmp/out', 'run | tee /tmp/out', 'run -o /tmp/out',
+                 'flock -n /tmp/lock run', 'open("/tmp/out", "w")',
+                 'Path("/tmp/out").write_text("data")', 'File::create("/tmp/out")'):
+        assert not faults_in("docs/page.md", line, set()), line
+    assert faults_in("docs/page.md", "see `/tmp`", set())
+    assert not faults_in("Containerfile", 'RUN cat /tmp/input', set())
+    known = resolvable_set(["elsewhere/unique.rs", "docs/local.rs", "root.rs"])
+    assert faults_in("docs/page.md", "`unique.rs`", known) == [
+        "docs/page.md:1: unique.rs"
+    ], "a bare name must not resolve in an unrelated directory"
+    assert not faults_in("docs/sub/page.md", "`local.rs` and `root.rs`", known)
+    assert issue_faults(".jit/issues/test.json", json.dumps({
+        "description": "`local.rs`", "state": "ready",
+    }), known) == [".jit/issues/test.json:1: local.rs"]
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         git(root, "init", "-q")
@@ -646,7 +956,7 @@ def self_test() -> None:
         (root / "src/writer.py").write_text('open(out / "written.log", "w")\n')
         (root / "src/writer.rs").write_text(
             'const RUN_LOG: &str = "const-run.log";\nconst READ_LOG: &str = "const-read.log";\n'
-            'fn f(dir: &Path) { write(dir.join(RUN_LOG)); read(dir.join("joined.log")); }\n'
+            'fn f(dir: &Path) { fs::write(dir.join(RUN_LOG), "data"); read(dir.join("joined.log")); }\n'
             'let a = format!("{dir}/interpolated.log"); let b = "target/run/targeted.log";\n'
             'let c = ("tuple.log", 3); let d = "fixed/dir/fixed.log";\n'
         )
@@ -702,9 +1012,10 @@ def self_test() -> None:
         faults = check(root)
     assert any("bad-link.md" in f for f in faults), faults
     assert not any(f.endswith((": docs", ": dev/$template", "x.pdf")) for f in faults), faults
-    assert sum("host-local" in f for f in faults) == 5, faults
+    assert sum("host-local" in f for f in faults) == 6, faults
     assert {f for f in faults if f.startswith("docs/temp.md")} == {
-        "docs/temp.md:1: host-local path", "docs/temp.md:2: host-local path"}, faults
+        "docs/temp.md:1: host-local path", "docs/temp.md:2: host-local path",
+        "docs/temp.md:5: host-local path"}, faults
     assert sum("tilde.md" in f for f in faults) == 1, faults
     assert [f for f in faults if "dot-root.md" in f] == ["docs/dot-root.md:1: .jit/absent.toml"], faults
     assert not any(f.startswith("docs/listed-") for f in faults), faults
@@ -726,7 +1037,8 @@ def self_test() -> None:
     archive = [f for f in faults if f.startswith(".jit/archive-evidence/")]
     assert archive == [".jit/archive-evidence/unlisted.json:1: dev/active/unlisted-away/plan.md"], archive
     unwritten = [f.split(": ", 1)[1] for f in faults if f.startswith("docs/written.md:")]
-    assert unwritten == ["const-read.log", "tuple.log", "fixed.log"], unwritten
+    assert unwritten == ["joined.log", "interpolated.log", "targeted.log",
+                         "const-read.log", "tuple.log", "fixed.log"], unwritten
     local = [f.split(": ", 1)[1] for f in faults if f.startswith("docs/sub/local.md:")]
     assert local == ["good.md", "./good.md"], local
     data = [f for f in faults if f.startswith("data/")]
@@ -748,6 +1060,7 @@ def self_test() -> None:
         "3: run.stdout",
         "4: make-receipt.py",
         "4: receipt-inventory.md",
+        "5: kept.log",
     ], evidence
     assert "data/evidence.json:1: gone-receipt.md" in faults, faults
     assert not any("kept-receipt" in f for f in faults), faults
@@ -766,7 +1079,7 @@ def self_test() -> None:
     assert "notes/suffix.md:1: sub/local.md" in faults, faults
     assert not any(f.startswith("docs/sub/deep.md") for f in faults), faults
     assert [f for f in faults if f.startswith("dev/plan.json")] == [
-        "dev/plan.json:1: absent_module.rs", "dev/plan.json:1: gone.rs",
+        "dev/plan.json:1: absent_module.rs", "dev/plan.json:1: kept.sh", "dev/plan.json:1: gone.rs",
     ], faults
     assert not any("absent_outside.rs" in f for f in faults), faults
 
