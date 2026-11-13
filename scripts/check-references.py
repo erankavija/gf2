@@ -69,8 +69,8 @@ from pathlib import Path
 EXCEPTIONS = "scripts/reference-exceptions.toml"
 MAX_TEXT_BYTES = 4 * 1024 * 1024
 HOST_LOCAL = re.compile(
-    r"(?<![\w.-])/home/[a-z_][\w-]*/|/Users/[A-Za-z]\w*/|/run/user/\d"
-    r"|(?<![\w.-])/(?:mnt|root|data|scratch|var/tmp)/\w"
+    r"(?<![\w.*?\]}>.-])(?:/home/[a-z_][\w-]*/|/Users/[A-Za-z]\w*/|/run/user/\d"
+    r"|/(?:mnt|root|data|scratch|var/tmp)/\w)"
     # The toolchain's own directories exist wherever the toolchain does.
     r"|(?<![\w.])(?:~|\$HOME|\$\{HOME\})/(?!\.cargo\b|\.rustup\b|\.elan\b)[\w.]"
 )
@@ -965,6 +965,12 @@ def self_test() -> None:
     assert faults_in("docs/page.md", "see /tmp/cache/config.json", set()) == [
         "docs/page.md:1: host-local path"
     ], "all cited /tmp paths are host-local"
+    for line in ("crates/*/data/tuning-profiles/", "experiments/<name>/data/x.json"):
+        assert not any("host-local path" in fault
+                       for fault in faults_in("docs/page.md", line, set())), line
+    for line in ("/data/run/x.log", "`/mnt/scratch/a`", "see /root/x"):
+        assert any("host-local path" in fault
+                   for fault in faults_in("docs/page.md", line, set())), line
     assert faults_in("docs/page.md", "see /tmp/source", set())
     assert faults_in("docs/page.md", "run > /tmp/out; see /tmp/input", set())
     for line in ('run > /tmp/out', 'run | tee /tmp/out', 'run -o /tmp/out',
