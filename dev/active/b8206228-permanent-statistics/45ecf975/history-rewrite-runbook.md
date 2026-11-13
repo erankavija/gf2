@@ -6,8 +6,8 @@ The force-push waits for the owner's confirmation in `@/issue/45ecf975`.
 ## Preconditions
 
 - The window has ended and no session or timer is active.
-- Epic `@/issue/55c3e433` has committed what it keeps from its pilots, and its
-  branches `worktree-agent-1d787ed3`, `worktree-agent-a72f2b3f` are final.
+- Every live branch of the leads is merged into `main` or abandoned.
+- Step 7 has passed on a fresh rehearsal from the current `main`.
 - All worktrees are clean or their untracked files are recorded below.
 - `pip install git-filter-repo` in a private virtual environment.
 
@@ -37,7 +37,8 @@ The force-push waits for the owner's confirmation in `@/issue/45ecf975`.
 8. Owner confirms with these numbers.
 9. Push with `--no-verify`, because the pre-push hook would inspect unrewritten
    ranges: `git push --force origin main` plus the existing remote branches and
-   tags. The `Main protected` ruleset denies non-fast-forward pushes unless the
+   tags. Remote branches deleted in step 2, `copilot/add-error-correcting-codes-module`
+   and `formal-verification`, are deleted on `origin` in the same push. The `Main protected` ruleset denies non-fast-forward pushes unless the
    account's repository role bypasses it.
 10. Reseat the local repository: move `.git` aside, clone the rewritten mirror, set
    `origin`, run `scripts/install-hooks.sh`, and recreate needed worktrees at the
