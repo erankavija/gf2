@@ -90,8 +90,8 @@ pub const fn portable() -> Gf256RegionFns {
     }
 }
 
-/// The fastest kernels the host supports, `None` when only the portable
-/// ones apply.
+/// The AVX2 kernels on an x86 host that supports AVX2, `None` when only the
+/// portable ones apply.
 #[must_use]
 pub fn detect() -> Option<Gf256RegionFns> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
