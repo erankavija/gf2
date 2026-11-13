@@ -8,7 +8,8 @@
 //! stops early (default 100), and `GF2_LAYERED_FER_GRID`, a comma-separated
 //! list of Eb/N0 values in dB, replaces a test's grid. A full curve takes
 //! hours, beyond the slow tier, so the curve tests run only under
-//! `GF2_BENCH=1`; the unit tests of the comparator run in the fast tier.
+//! `GF2_BENCH=1`; the unit tests of the comparator run in the fast tier. The
+//! comparator assumes FER is non-increasing with Eb/N0.
 
 mod common;
 
@@ -118,6 +119,7 @@ fn point(
 /// pair of adjacent grid points at and below it: the log-linear interpolation
 /// when both have errors, otherwise the pair itself. `None` unless grid points
 /// bracket the crossing on both sides.
+/// Assumes FER is non-increasing with Eb/N0.
 fn crossing(curve: &[(f64, f64)]) -> Option<(f64, f64)> {
     curve.windows(2).find_map(|pair| {
         let ((x0, f0), (x1, f1)) = (pair[0], pair[1]);
@@ -132,10 +134,28 @@ fn crossing(curve: &[(f64, f64)]) -> Option<(f64, f64)> {
     })
 }
 
+/// Lower bound on the flooding crossing if FER is non-increasing with Eb/N0.
+fn flooding_lower_bound(curve: &[(f64, f64)]) -> Result<f64, String> {
+    if let Some((low, _)) = crossing(curve) {
+        return Ok(low);
+    }
+    let (Some(first), Some(last)) = (curve.first(), curve.last()) else {
+        return Err("flooding curve is empty".into());
+    };
+    if first.1 < TARGET_FER {
+        return Err("flooding curve starts below target".into());
+    }
+    if last.1 >= TARGET_FER {
+        Ok(last.0)
+    } else {
+        Err("grid points do not bracket the flooding crossing".into())
+    }
+}
+
 /// The largest loss in dB of layered against flooding that the curves admit.
+/// Assumes FER is non-increasing with Eb/N0.
 fn loss_bound(flooding: &[(f64, f64)], layered: &[(f64, f64)]) -> Result<f64, String> {
-    let (flooding_low, _) =
-        crossing(flooding).ok_or("grid points do not bracket the flooding crossing")?;
+    let flooding_low = flooding_lower_bound(flooding)?;
     let (_, layered_high) =
         crossing(layered).ok_or("grid points do not bracket the layered crossing")?;
     Ok(layered_high - flooding_low)
@@ -168,9 +188,13 @@ fn compare(name: &str, code: &LdpcCode, layered: LayeredConfig, grid: &[f64]) {
     }
     let loss =
         loss_bound(&flooding_curve, &layered_curve).unwrap_or_else(|e| panic!("{name}: {e}"));
+    let flooding_crossing = crossing(&flooding_curve);
+    let flooding_at_target = match flooding_crossing {
+        Some(bounds) => format!("{bounds:?}"),
+        None => format!("> {:.3}", flooding_lower_bound(&flooding_curve).unwrap()),
+    };
     eprintln!(
-        "{name}: Eb/N0 at FER 1e-3, flooding {:?} dB, layered {:?} dB",
-        crossing(&flooding_curve),
+        "{name}: Eb/N0 at FER 1e-3, flooding {flooding_at_target} dB, layered {:?} dB",
         crossing(&layered_curve)
     );
     assert!(
@@ -217,8 +241,26 @@ fn an_unbracketed_crossing_fails_the_comparison() {
     assert_eq!(crossing(&below), None);
     assert_eq!(crossing(&above), None);
     let bracketed = [(0.9, 0.1), (1.0, 1e-2), (1.1, 1e-4)];
-    assert!(loss_bound(&below, &bracketed).is_err());
-    assert!(loss_bound(&bracketed, &above).is_err());
+    assert_eq!(
+        loss_bound(&below, &bracketed).unwrap_err(),
+        "flooding curve starts below target"
+    );
+    assert_eq!(
+        loss_bound(&bracketed, &above).unwrap_err(),
+        "grid points do not bracket the layered crossing"
+    );
+    assert_eq!(
+        loss_bound(&[], &bracketed).unwrap_err(),
+        "flooding curve is empty"
+    );
+}
+
+#[test]
+fn an_unbracketed_flooding_curve_uses_its_last_point_as_a_lower_bound() {
+    let flooding = [(0.9, 0.1), (1.0, 1e-2)];
+    let layered = [(0.9, 0.1), (1.0, 1e-2), (1.1, 1e-4)];
+    let loss = loss_bound(&flooding, &layered).unwrap();
+    assert!((loss - 0.05).abs() < 1e-12);
 }
 
 #[test]
