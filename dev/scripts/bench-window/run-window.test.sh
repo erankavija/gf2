@@ -99,6 +99,12 @@ printf '2026-01-01T00:00:00Z window start host=h\n2026-01-01T00:01:00Z window en
 status_of fw-ended ended
 printf '2026-01-01T00:00:00Z window start\n2026-01-01T00:01:00Z window end\n2026-01-02T00:00:00Z window start\n' >"$TMP/fw-second/window.log"
 status_of fw-second open
+# Command text in job records never counts as a lifecycle record.
+mkdir -p "$TMP/fw-cmd-open" "$TMP/fw-cmd-ended"
+printf '2026-01-01T00:00:00Z window start host=h\n2026-01-01T00:00:01Z job start issue=x key=k command=echo window end\n' >"$TMP/fw-cmd-open/window.log"
+status_of fw-cmd-open open
+printf '2026-01-01T00:00:00Z window start\n2026-01-01T00:01:00Z window end\n2026-01-01T00:01:01Z job start issue=x key=k command=echo window start\n' >"$TMP/fw-cmd-ended/window.log"
+status_of fw-cmd-ended ended
 # No default unit name remains in the follower.
 reject follower 'systemctl|GF2_WINDOW_UNIT|gf2-bench-window' "$(cat "$HERE/follow-window.sh")"
 

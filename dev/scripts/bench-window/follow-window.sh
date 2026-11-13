@@ -20,10 +20,10 @@ queue="$here/queue.tsv"
 # Status word of the latest window in the log.
 window_status() {
     local last
-    last=$(grep -E ' window (start|end)( |$)' "$log" 2>/dev/null | tail -1)
+    last=$(grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z window (start( |$)|end$)' "$log" 2>/dev/null | tail -1)
     case "$last" in
         '') echo idle ;;
-        *' window end'*) echo ended ;;
+        *' window end') echo ended ;;
         *) echo open ;;
     esac
 }
