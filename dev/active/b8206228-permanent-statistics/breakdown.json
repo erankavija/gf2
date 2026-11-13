@@ -126,7 +126,7 @@
   {
     "key": "stats-sampler",
     "title": "Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams",
-    "description": "A production sampler that draws uniform random matrices over $\\mathbb{F}_q$ for $q \\in \\{3,5,7\\}$ from a reproducible address space whose purposes and streams are injective by construction, hosted in a new narrow workspace crate.\n\n## Background\n\nA published sampling dataset must let any shard be regenerated from its address alone, so the random-matrix source has to be version-stable and partitioned by construction rather than by audit. Two in-tree generators fall short of that. `gf2_algebra::testutil::random_matrix` reduces an MMIX LCG output modulo $q$ and is a test helper. `FieldMatrix::random_seeded` (`crates/gf2-core/src/field/matrix.rs:617`) takes a single `u64` seed, draws through `StdRng` — whose algorithm carries no cross-version reproducibility guarantee, so a dataset seeded through it stops being regenerable after a dependency bump — offers no partition of the stream space, and produces `FieldMatrix<Fp<P>>`. The gap is therefore not the absence of a uniform sampler but the absence of one with domain-separated, reproducible stream addressing.\n\nRejection sampling is required rather than optional. The sampler consumes bytes and $256 \\bmod 7 = 4$, so reducing a byte without rejection would give four residues probability $37/256$ and three of them $36/256$ against a uniform $1/7$. In relative terms the worst class is off by $1.56\\%$, about $22$ times the $0.07\\%$ relative resolution a standard error of $10^{-4}$ on $\\Pr[\\mathrm{per}(A)=0] \\approx 1/7$ represents.\n\nA prototype carrying these properties, with entry-uniformity and stream-separation tests, is `sampler.rs`; it is the reference to lift from.\n\nThe ground this module stands on is laid by prerequisite leaves: `rand_chacha` and `rand_core` 0.9 are declared once at workspace level, and the `gf2-stats` member crate exists with `gf2-core` as its only in-workspace dependency. This leaf registers the sampler module in that crate and implements it.\n\n## Success Criteria\n\n- [hard] REQ-01: Matrix draws use ChaCha20 seeded from a 32-byte block of four little-endian `u64` words: campaign root, $q$, $n$, and a fourth word whose top $8$ bits hold the purpose tag and whose low $56$ bits hold the stream index.\n- [hard] REQ-02: Seed derivation asserts the stream index is below $2^{56}$ and refuses to derive otherwise, so the map from $(\\text{root}, q, n, \\text{purpose}, \\text{stream})$ to seed block is injective by construction rather than by convention.\n- [hard] REQ-03: Entries are exactly uniform over $\\mathbb{F}_q$: a test draws at least $3 \\times 10^5$ entries per field for $q \\in \\{3,5,7\\}$ and finds each residue class within six binomial standard errors of $1/q$.\n- [hard] REQ-04: Address separation is asserted at the address level: a test over a set of addresses differing in each component in turn finds every derived seed block distinct, and a further test finds two generators started from distinct addresses diverge in their raw output stream.\n- [hard] REQ-05: Committed golden vectors pin, for a fixed set of addresses spanning each field and each purpose tag, the derived 32-byte seed block and the first drawn matrix, and a test compares against them.\n- [hard] REQ-06: Two draws from one address tuple return identical matrices, demonstrated by test.\n- [hard] REQ-07: The draw-to-entry mapping is documented and tested as $A[k / n][k \\bmod n]$ row-major for draw index $k$, before any packed constructor reorders it into kernel storage.\n- [hard] REQ-08: A draw fills a caller-supplied row-major entry buffer without a per-draw heap allocation, so a caller can pack directly into the permanent kernels' matrix types.\n\n## Notes\n\nStream separation is a statement about addresses and generator state, not about output values: two disjoint streams may legitimately draw the same small matrix, and at $q = 3$, $n = 2$ there are only $81$ matrices in total. Tests therefore assert distinct derived seeds, distinct generator output, and golden-vector agreement, never that two streams share no matrix.\n\nThe crate carries no dependency on the algebra layer: packing into kernel matrix types is the caller's concern, which keeps the sampler usable from validation harnesses that never touch a permanent kernel.",
+    "description": "A production sampler that draws uniform random matrices over $\\mathbb{F}_q$ for $q \\in \\{3,5,7\\}$ from a reproducible address space whose purposes and streams are injective by construction, hosted in a new narrow workspace crate.\n\n## Background\n\nA published sampling dataset must let any shard be regenerated from its address alone, so the random-matrix source has to be version-stable and partitioned by construction rather than by audit. Two in-tree generators fall short of that. `gf2_algebra::testutil::random_matrix` reduces an MMIX LCG output modulo $q$ and is a test helper. `FieldMatrix::random_seeded` (`crates/gf2-core/src/field/matrix.rs:617`) takes a single `u64` seed, draws through `StdRng` — whose algorithm carries no cross-version reproducibility guarantee, so a dataset seeded through it stops being regenerable after a dependency bump — offers no partition of the stream space, and produces `FieldMatrix<Fp<P>>`. The gap is therefore not the absence of a uniform sampler but the absence of one with domain-separated, reproducible stream addressing.\n\nRejection sampling is required rather than optional. The sampler consumes bytes and $256 \\bmod 7 = 4$, so reducing a byte without rejection would give four residues probability $37/256$ and three of them $36/256$ against a uniform $1/7$. In relative terms the worst class is off by $1.56\\%$, about $22$ times the $0.07\\%$ relative resolution a standard error of $10^{-4}$ on $\\Pr[\\mathrm{per}(A)=0] \\approx 1/7$ represents.\n\nA prototype carrying these properties, with entry-uniformity and stream-separation tests, is `experiments/permanent-statistics/src/sampler.rs`; it is the reference to lift from.\n\nThe ground this module stands on is laid by prerequisite leaves: `rand_chacha` and `rand_core` 0.9 are declared once at workspace level, and the `gf2-stats` member crate exists with `gf2-core` as its only in-workspace dependency. This leaf registers the sampler module in that crate and implements it.\n\n## Success Criteria\n\n- [hard] REQ-01: Matrix draws use ChaCha20 seeded from a 32-byte block of four little-endian `u64` words: campaign root, $q$, $n$, and a fourth word whose top $8$ bits hold the purpose tag and whose low $56$ bits hold the stream index.\n- [hard] REQ-02: Seed derivation asserts the stream index is below $2^{56}$ and refuses to derive otherwise, so the map from $(\\text{root}, q, n, \\text{purpose}, \\text{stream})$ to seed block is injective by construction rather than by convention.\n- [hard] REQ-03: Entries are exactly uniform over $\\mathbb{F}_q$: a test draws at least $3 \\times 10^5$ entries per field for $q \\in \\{3,5,7\\}$ and finds each residue class within six binomial standard errors of $1/q$.\n- [hard] REQ-04: Address separation is asserted at the address level: a test over a set of addresses differing in each component in turn finds every derived seed block distinct, and a further test finds two generators started from distinct addresses diverge in their raw output stream.\n- [hard] REQ-05: Committed golden vectors pin, for a fixed set of addresses spanning each field and each purpose tag, the derived 32-byte seed block and the first drawn matrix, and a test compares against them.\n- [hard] REQ-06: Two draws from one address tuple return identical matrices, demonstrated by test.\n- [hard] REQ-07: The draw-to-entry mapping is documented and tested as $A[k / n][k \\bmod n]$ row-major for draw index $k$, before any packed constructor reorders it into kernel storage.\n- [hard] REQ-08: A draw fills a caller-supplied row-major entry buffer without a per-draw heap allocation, so a caller can pack directly into the permanent kernels' matrix types.\n\n## Notes\n\nStream separation is a statement about addresses and generator state, not about output values: two disjoint streams may legitimately draw the same small matrix, and at $q = 3$, $n = 2$ there are only $81$ matrices in total. Tests therefore assert distinct derived seeds, distinct generator output, and golden-vector agreement, never that two streams share no matrix.\n\nThe crate carries no dependency on the algebra layer: packing into kernel matrix types is the caller's concern, which keeps the sampler usable from validation harnesses that never touch a permanent kernel.",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -159,7 +159,7 @@
         "worker_sized_reason": "One module lifted from a tested prototype plus its golden-vector tests fits one focused cycle.",
         "footprint": {
           "creates": [
-            "sampler.rs",
+            "experiments/permanent-statistics/src/sampler.rs",
             "sampler golden-vector tests"
           ],
           "touches": [
@@ -408,7 +408,7 @@
         "worker_sized_reason": "One caller moved onto an already-generic API with two existing regression tests fits one focused cycle.",
         "footprint": {
           "touches": [
-            "dvb_t2_awgn_campaign.rs",
+            "experiments/dvb-t2-awgn/src/bin/dvb_t2_awgn_campaign.rs",
             "crates/gf2-sim/tests/determinism.rs"
           ]
         }
@@ -454,8 +454,8 @@
         "worker_sized_reason": "One layout with its record schemas and conformance check fits one focused cycle.",
         "footprint": {
           "creates": [
-            "mod.rs",
-            "schema.rs",
+            "<planned-permanent-campaign>/mod.rs",
+            "<planned-permanent-campaign>/schema.rs",
             "README.md"
           ],
           "touches": [
@@ -505,10 +505,10 @@
         "worker_sized_reason": "One guard with one integrity format fits one focused cycle.",
         "footprint": {
           "creates": [
-            "provenance.rs"
+            "<planned-permanent-campaign>/provenance.rs"
           ],
           "touches": [
-            "mod.rs",
+            "<planned-permanent-campaign>/mod.rs",
             "README.md"
           ]
         }
@@ -562,7 +562,7 @@
           ],
           "touches": [
             "crates/gf2-sim/Cargo.toml",
-            "mod.rs"
+            "<planned-permanent-campaign>/mod.rs"
           ]
         }
       }
@@ -698,7 +698,7 @@
             "the parallel batch evaluation loop"
           ],
           "touches": [
-            "mod.rs"
+            "<planned-permanent-campaign>/mod.rs"
           ]
         }
       }
@@ -741,7 +741,7 @@
         "worker_sized_reason": "One manifest-driven selection layer over four existing processor paths fits one focused cycle.",
         "footprint": {
           "creates": [
-            "backend.rs"
+            "<planned-permanent-campaign>/backend.rs"
           ],
           "touches": [
             "the campaign schedule module"
@@ -789,7 +789,7 @@
             "the GPU execution path"
           ],
           "touches": [
-            "backend.rs",
+            "<planned-permanent-campaign>/backend.rs",
             "crates/gf2-sim/Cargo.toml"
           ]
         }
@@ -875,7 +875,7 @@
             "the acceptance layer"
           ],
           "touches": [
-            "mod.rs"
+            "<planned-permanent-campaign>/mod.rs"
           ]
         }
       }
@@ -927,7 +927,7 @@
   {
     "key": "avx2-dispatch-migration",
     "title": "Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path",
-    "description": "Route single-matrix callers of the public $\\mathbb{F}_3$ permanent entry point to the measured-faster kernel, and correct in the same change every piece of prose, benchmark label and artefact that the old selection made true.\n\n## Background\n\n`permanent_bipedal3` prefers the AVX2 single-word kernel whenever AVX2 is detected (`crates/gf2-algebra/src/permanent/bipedal3.rs:190-193`), and the SIMD feature is on by default, so every default build on an AVX2 host takes a path measured slower than the scalar one. No production code calls the dispatcher today; the penalty is paid by benchmarks, examples and research prototypes, and the campaign harness bypasses it by calling the single-word kernels directly.\n\nThe module's own documentation describes the current preference as intended, and `@/inv/single-source-prose` puts that correction in the same change as the code it describes: a reader of `bipedal3.rs` must not find a rustdoc comment contradicting the selection three lines below it. Prose living in other files — examples, benchmark labels, crate-level status text — is a separate sweep, because it is a different set of files with a different reviewer and no risk of contradicting the code beside it.\n\n## Success Criteria\n\n- [hard] REQ-01: `permanent_bipedal3` selects the scalar single-word kernel for a single matrix, so a default build on an AVX2 host no longer pays the single-word SIMD penalty; the cross-CPU measurement recorded in the issue is what the selection rests on.\n- [hard] REQ-02: Existing callers keep their results: the crate's permanent conformance tests, computer-algebra vector tests, and accelerator-versus-processor equivalence tests pass with their assertions unchanged.\n- [hard] REQ-03: The rustdoc inside every file this change edits agrees with the selection it leaves in place, including the bipedal module documentation and the dispatcher's own documentation comment.\n- [hard] REQ-04: A doctest or unit test pins the selection, so a later change that reintroduces the SIMD preference for a single matrix fails rather than passing quietly.\n- [hard] REQ-05: Each modified SIMD source file has its sibling assembly artefact regenerated in the same change.\n\n## Notes\n\nThe sampling campaign does not depend on this change, since campaign code calls the single-word kernels directly. It closes a defect every other caller of the public entry point silently pays for.",
+    "description": "Route single-matrix callers of the public $\\mathbb{F}_3$ permanent entry point to the measured-faster kernel, and correct in the same change every piece of prose, benchmark label and artefact that the old selection made true.\n\n## Background\n\n`permanent_bipedal3` prefers the AVX2 single-word kernel whenever AVX2 is detected (`crates/gf2-algebra/src/permanent/bipedal3.rs:190-193`), and the SIMD feature is on by default, so every default build on an AVX2 host takes a path measured slower than the scalar one. No production code calls the dispatcher today; the penalty is paid by benchmarks, examples and research prototypes, and the campaign harness bypasses it by calling the single-word kernels directly.\n\nThe module's own documentation describes the current preference as intended, and `@/inv/single-source-prose` puts that correction in the same change as the code it describes: a reader of `crates/gf2-algebra/src/permanent/bipedal3.rs` must not find a rustdoc comment contradicting the selection three lines below it. Prose living in other files — examples, benchmark labels, crate-level status text — is a separate sweep, because it is a different set of files with a different reviewer and no risk of contradicting the code beside it.\n\n## Success Criteria\n\n- [hard] REQ-01: `permanent_bipedal3` selects the scalar single-word kernel for a single matrix, so a default build on an AVX2 host no longer pays the single-word SIMD penalty; the cross-CPU measurement recorded in the issue is what the selection rests on.\n- [hard] REQ-02: Existing callers keep their results: the crate's permanent conformance tests, computer-algebra vector tests, and accelerator-versus-processor equivalence tests pass with their assertions unchanged.\n- [hard] REQ-03: The rustdoc inside every file this change edits agrees with the selection it leaves in place, including the bipedal module documentation and the dispatcher's own documentation comment.\n- [hard] REQ-04: A doctest or unit test pins the selection, so a later change that reintroduces the SIMD preference for a single matrix fails rather than passing quietly.\n- [hard] REQ-05: Each modified SIMD source file has its sibling assembly artefact regenerated in the same change.\n\n## Notes\n\nThe sampling campaign does not depend on this change, since campaign code calls the single-word kernels directly. It closes a defect every other caller of the public entry point silently pays for.",
     "type": "enhancement",
     "priority": "normal",
     "labels": [
@@ -969,7 +969,7 @@
   {
     "key": "avx2-narrative-sweep",
     "title": "Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection",
-    "description": "The prose outside the changed source files that the new $\\mathbb{F}_3$ permanent selection makes wrong: the scalar-versus-AVX2 example header, the benchmark group labels naming the SIMD path, and the crate-level status text.\n\n## Background\n\nChanging which kernel the public $\\mathbb{F}_3$ permanent entry point selects invalidates statements spread across the crate that no longer describe it. The scalar-versus-AVX2 example exists to demonstrate that AVX2 single-word is slower than scalar, and its header frames that as a curiosity rather than as the reason for the current selection. A benchmark group is labelled as the SIMD path in `experiments/permanent-benchmarks/benches/s1_n36_speedup.rs`, and after the selection changes that label names something the group no longer measures — a stale label inside a benchmark that feeds committed receipts is precisely the failure mode an earlier review cycle in this repository spent rounds correcting. The crate README and crate-level status prose describe the entry point's behaviour to readers who never open the dispatcher.\n\n`@/inv/single-source-prose` requires each of these to say one thing. They are gathered here rather than in the code change because they are a different file set with no code beside them to contradict, and because a benchmark label change wants to be reviewed against the benchmark's output rather than against the dispatcher.\n\n## Success Criteria\n\n- [hard] REQ-01: The scalar-versus-AVX2 example header describes the measured relationship as the basis of the current selection rather than as an unexplained anomaly, and the example still builds and runs.\n- [hard] REQ-02: Benchmark group labels in `s1_n36_speedup.rs` name the paths those groups actually measure after the selection change.\n- [hard] REQ-03: The crate README and crate-level status prose describing the $\\mathbb{F}_3$ permanent entry point agree with the selection now in place.\n- [hard] REQ-04: The module prose that described the AVX2 single-word kernel as a dispatch-coverage kernel awaiting a batched performance user is corrected wherever it survives outside the dispatcher's own files, including the generic Ryser module's framing and the accelerator module's naming of the processor equivalent.\n- [hard] REQ-05: A repository search for the superseded framing returns no live occurrence outside archived material, and the search performed is recorded so a reviewer can repeat it.\n\n## Notes\n\nArchived material under the development archive is history and is left as written; only live prose is swept.",
+    "description": "The prose outside the changed source files that the new $\\mathbb{F}_3$ permanent selection makes wrong: the scalar-versus-AVX2 example header, the benchmark group labels naming the SIMD path, and the crate-level status text.\n\n## Background\n\nChanging which kernel the public $\\mathbb{F}_3$ permanent entry point selects invalidates statements spread across the crate that no longer describe it. The scalar-versus-AVX2 example exists to demonstrate that AVX2 single-word is slower than scalar, and its header frames that as a curiosity rather than as the reason for the current selection. A benchmark group is labelled as the SIMD path in `experiments/permanent-benchmarks/benches/s1_n36_speedup.rs`, and after the selection changes that label names something the group no longer measures — a stale label inside a benchmark that feeds committed receipts is precisely the failure mode an earlier review cycle in this repository spent rounds correcting. The crate README and crate-level status prose describe the entry point's behaviour to readers who never open the dispatcher.\n\n`@/inv/single-source-prose` requires each of these to say one thing. They are gathered here rather than in the code change because they are a different file set with no code beside them to contradict, and because a benchmark label change wants to be reviewed against the benchmark's output rather than against the dispatcher.\n\n## Success Criteria\n\n- [hard] REQ-01: The scalar-versus-AVX2 example header describes the measured relationship as the basis of the current selection rather than as an unexplained anomaly, and the example still builds and runs.\n- [hard] REQ-02: Benchmark group labels in `experiments/permanent-benchmarks/benches/s1_n36_speedup.rs` name the paths those groups actually measure after the selection change.\n- [hard] REQ-03: The crate README and crate-level status prose describing the $\\mathbb{F}_3$ permanent entry point agree with the selection now in place.\n- [hard] REQ-04: The module prose that described the AVX2 single-word kernel as a dispatch-coverage kernel awaiting a batched performance user is corrected wherever it survives outside the dispatcher's own files, including the generic Ryser module's framing and the accelerator module's naming of the processor equivalent.\n- [hard] REQ-05: A repository search for the superseded framing returns no live occurrence outside archived material, and the search performed is recorded so a reviewer can repeat it.\n\n## Notes\n\nArchived material under the development archive is history and is left as written; only live prose is swept.",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -999,8 +999,8 @@
         "worker_sized_reason": "One sweep over a bounded file set fits one focused cycle.",
         "footprint": {
           "touches": [
-            "s3_scalar_vs_avx2_sanity.rs",
-            "s1_n36_speedup.rs",
+            "experiments/permanent-benchmarks/examples/s3_scalar_vs_avx2_sanity.rs",
+            "experiments/permanent-benchmarks/benches/s1_n36_speedup.rs",
             "crates/gf2-algebra/README.md",
             "crates/gf2-algebra/src/lib.rs",
             "crates/gf2-algebra/src/permanent/ryser.rs",
@@ -1044,7 +1044,7 @@
         "footprint": {
           "creates": [],
           "touches": [
-            "s1_n36_speedup.rs"
+            "experiments/permanent-benchmarks/benches/s1_n36_speedup.rs"
           ]
         }
       }
@@ -1081,7 +1081,7 @@
         "worker_sized_reason": "One benchmark over two existing routines fits one focused cycle.",
         "footprint": {
           "creates": [
-            "determinant_companion.rs"
+            "experiments/permanent-benchmarks/benches/determinant_companion.rs"
           ],
           "touches": [
             "crates/gf2-algebra/Cargo.toml"
@@ -1554,7 +1554,7 @@
             "permanent-zero-fraction/<campaign-id>/checksums.sha256"
           ],
           "touches": [
-            "mod.rs"
+            "<planned-permanent-campaign>/mod.rs"
           ]
         }
       }
@@ -1858,7 +1858,7 @@
             "the rare-event estimator"
           ],
           "touches": [
-            "mod.rs"
+            "experiments/permanent-statistics/src/rare_event/mod.rs"
           ]
         }
       }

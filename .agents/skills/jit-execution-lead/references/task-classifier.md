@@ -42,7 +42,7 @@ The default category for leaf work items. Any issue that doesn't match the above
 - Description focuses on building, fixing, or changing something concrete
 - Has specific acceptance criteria about behavior or output
 
-**Agent prompt:** Use jit-parallel's `agent-prompt-template.md` (at `.agents/skills/jit-parallel/references/agent-prompt-template.md`)
+**Agent prompt:** Use jit-parallel's `.agents/skills/jit-parallel/references/agent-prompt-template.md` (at `.agents/skills/jit-parallel/references/agent-prompt-template.md`)
 
 ## Classification Priority
 

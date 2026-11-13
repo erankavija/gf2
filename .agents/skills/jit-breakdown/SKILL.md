@@ -21,9 +21,9 @@ the approved JSON manifest is authoritative; never reinterpret Markdown.
    namespaces, and finest-tier types; hardcode none.
 3. For bracketed work, locate scaffold nodes `P` and `B`, require P's plan gate
    passed, and resolve the artifact directory with `jit doc dir <C> dev/active`, then
-   locate `breakdown.json` in it. If the approved work has only Markdown, stop with:
+   locate `<artifact-dir>/breakdown.json` in it. If the approved work has only Markdown, stop with:
    “Missing authoritative breakdown manifest; rerun jit-planning-lead to author and
-   review `breakdown.json`.” There is no compatibility fallback or automated backfill.
+   review `<artifact-dir>/breakdown.json`.” There is no compatibility fallback or automated backfill.
 4. For plain work, dispatch the analyst with
    [analysis-prompt.md](references/analysis-prompt.md). It writes the same bare
    manifest format before anything is created.

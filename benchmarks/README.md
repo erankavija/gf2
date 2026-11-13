@@ -95,7 +95,7 @@ derive(master, tag, op_idx, size_idx, regime_idx):
 ```
 
 The exact tag strings used per row are listed in the harness sources
-(`fflas_bench.cpp` and `m4ri_bench.c`). For the gf2-side benches to
+(`benchmarks/reference/fflas_bench.cpp` and `benchmarks/reference/m4ri_bench.c`). For the gf2-side benches to
 produce the *same* matrix, they must use the same SplitMix64 seed
 followed by the same uniform-fill routine (one `splitmix64` call per
 field element, reduced mod `p`). The reduction-into-field step is
@@ -128,7 +128,7 @@ both sides.
                    to compute the inverse / solution.
 
 The harness applies a **per-cell wall-clock cap** of 30 s (configured
-in `fflas_bench.cpp` as `kCellBudgetNs`). Cells that exceed the cap
+in `benchmarks/reference/fflas_bench.cpp` as `kCellBudgetNs`). Cells that exceed the cap
 emit an `early_exit` warning on stderr and a CSV row with the
 measurements taken so far; downstream consumers can filter on the
 warning when comparing.

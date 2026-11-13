@@ -15,8 +15,8 @@ This runs automatically as Step 3 of `scripts/verify-lean.sh`.
 
 ## FunsExternal.lean hand-edited definitions
 
-`FunsExternal.lean` replaces Aeneas axioms with concrete definitions for
-`wrapping_neg` and U128 `add`/`add_assign`. The `verify-lean.sh` script only
+`Gf2Core/FunsExternal.lean` replaces Aeneas axioms with concrete definitions for
+`wrapping_neg` and U128 `add`/`add_assign`. The `scripts/verify-lean.sh` script only
 seeds from the template on first run; it never overwrites the hand-edited file.
 
 The file holds no `overflowing_sub` override: Aeneas provides it natively as a
@@ -74,7 +74,7 @@ normal associated const, minimizing extraction-only proof drift. Normal Rust
 builds keep the public associated const API.
 
 The same Charon version can overflow after the const workaround when starting
-from the whole crate. `verify-lean.sh` therefore starts extraction from the
+from the whole crate. `scripts/verify-lean.sh` therefore starts extraction from the
 proof-relevant modules (`gfp`, `gfpn`, and `gf2m::mul_raw`) instead of from
 `crate`. The `gfpn::batch`
 module remains opaque because it is a vectorized batching layer over the scalar
@@ -83,9 +83,9 @@ not provide. This keeps the intended production scalar field arithmetic
 transparent while avoiding unrelated public items.
 
 If Aeneas emits an opaque `Gf2mElement_` external signature that refers to the
-sealed `UintExt` trait, `verify-lean.sh` adds only that opaque trait axiom to
-`TypesExternal.lean` and removes any duplicate generated `UintExt` declaration
-from `Types.lean`. This is outside the `gfp/` and `gfpn/` proof target.
+sealed `UintExt` trait, `scripts/verify-lean.sh` adds only that opaque trait axiom to
+`Gf2Core/TypesExternal.lean` and removes any duplicate generated `UintExt` declaration
+from `Gf2Core/Types.lean`. This is outside the `gfp/` and `gfpn/` proof target.
 
 ## FiniteField default method projection extraction
 
@@ -154,7 +154,7 @@ duplicate, or unknown Fp `CoreOps` dictionaries stop post-processing so
 extraction drift cannot silently widen the workaround; the bipedal3 proofs
 never project the ten allowlisted dictionaries.
 
-The gf2-algebra `FunsExternal.lean` is always regenerated from the
+The gf2-algebra `Gf2Algebra/FunsExternal.lean` is always regenerated from the
 auto-generated template (no hand-edits are needed: bipedal3 uses only `&&&`,
 `|||`, `^^^` on `Std.U64`, never any wrapping arithmetic or U128 ops).
 

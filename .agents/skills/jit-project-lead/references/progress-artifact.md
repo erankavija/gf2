@@ -3,7 +3,7 @@
 The steward's resumable operational state for one strategic-tier container: the
 wave plan plus a per-sub-strategic-container status row, so a re-invoked steward
 resumes mid-drive without losing progress. This is the one-tier-up analogue of
-`jit-execution-lead`'s per-epic `progress.json`, which carries per-issue rows;
+`jit-execution-lead`'s per-epic `<artifact-dir>/progress.json`, which carries per-issue rows;
 here the rows are per sub-strategic container.
 
 Unlike the charter, the progress file is operational state meaningful only while
@@ -29,7 +29,7 @@ Read from `.jit/config.toml` `[documentation]`; never hardcode a directory.
 > Example: with `development_root = "notes"`, `jit doc dir <container-id>
 > notes/active` prints the directory the progress file for strategic container
 > `<container-id>` owns, a sibling of the execution lead's own progress
-> directory; `progress.json` lands inside it. Derive the root from
+> directory; `<artifact-dir>/progress.json` lands inside it. Derive the root from
 > configuration; a literal directory name from an example is wrong for every
 > other project.
 
@@ -117,7 +117,7 @@ Fields:
   wave's `coherence_review` (step 9), then advances
   `current_wave` and commits the file. One tier down, this mirrors the execution
   lead advancing `current_wave` and updating per-issue statuses in its own
-  `progress.json`.
+  `<artifact-dir>/progress.json`.
 
 ## Linkage to the strategic container (REQ-03)
 
