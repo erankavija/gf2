@@ -131,3 +131,19 @@ threads-required = 4
 [[profile.ci.overrides]]
 filter = 'package(tuning-calibration)'
 threads-required = 4
+
+# Tests outside the gf2-sim GPU binaries above that open the device. A test
+# process's HIP queues count against the device's hardware runlist; concurrent
+# HIP processes oversubscribe it, and under oversubscription the gfx1030 faults
+# a queue (gfxhub CPF page fault: the process aborts, and a concurrent GPU test
+# can stall until its timeout). @/issue/f21b25ac holds the reproduction.
+[[profile.ci.overrides]]
+filter = '''
+    (package(gf2-sim) and kind(lib) and test(/^gpu::/))
+    or (package(gf2-sim) and binary(dag_topology) and test(/^gpu::/))
+    or (package(gf2-coding) and kind(lib) and test(/::gpu::/))
+    or (package(permanent-statistics) and (
+        binary(campaign_bins) or binary(campaign_determinism) or binary(campaign_validation)
+    ))
+'''
+test-group = 'gpu-serial'
