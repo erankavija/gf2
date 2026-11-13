@@ -3,7 +3,7 @@
 Design for @/issue/5e71e993 (row B1, BCH(15, 5), $t = 3$, $m = 4$, against
 AFF3CT @/citation/Cassagne2019). Row B1 runs the encoder path of row B2, and
 the fix is the one in the design of @/issue/60c82c4c
-(`dev/active/60c82c4c/design.md`); this document holds the B1 profile, the
+(`dev/active/d77176e5-competitive-benchmarking/design-60c82c4c.md`); this document holds the B1 profile, the
 comparator analysis and the B1 estimate.
 
 ## Measurement basis
