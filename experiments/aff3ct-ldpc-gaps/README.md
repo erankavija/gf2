@@ -145,3 +145,13 @@ cargo run -p aff3ct-ldpc-gaps --release \
 cargo run -p aff3ct-ldpc-gaps --release \
     --bin export_alist -- --code dvb-t2-r12 --output dvb_t2_r12.alist
 ```
+
+`dvb_t2_fer_diag` counts frame errors of gf2's canonical flooding decoder and
+`LayeredDecoder` on DVB-T2 normal rate 1/2 over the frame model of
+`crates/gf2-coding/tests/ldpc_layered_fer.rs`, for @/issue/d5cd53e0. With
+`--failures <decoder>` it prints, per lost frame, the error weights, the column
+degrees of the wrong bits, the terminal syndrome weight, the layered frame
+scale and saturation counts, and the outcome of re-decoding under alternative
+normalizations, quantization scales, message limits and caps. Its header gives
+the arguments; AFF3CT's `--enc-type LDPC_DVBS2` with `-D BP_FLOODING
+--dec-implem NMS` decodes the same code from AFF3CT's own tables.
