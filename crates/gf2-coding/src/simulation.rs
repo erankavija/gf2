@@ -423,9 +423,7 @@ pub struct SimulationConfig {
     pub max_decoder_iterations: usize,
 
     /// RNG seed of the coded runners; the uncoded runners draw from the
-    /// caller's RNG. When `None`, the sequential runners seed from
-    /// `rand::thread_rng()` and the parallel runner uses the fixed seed
-    /// `0xDEAD_BEEF`.
+    /// caller's RNG. When `None`, coded runners seed from `rand::thread_rng()`.
     pub rng_seed: Option<u64>,
 
     /// Result file of the coded runners. A `.json` path is written once at
@@ -2512,6 +2510,7 @@ impl SimulationRunner {
         let n = encoder.n();
         let k = encoder.k();
         let rate = k as f64 / n as f64;
+        let base_seed = config.rng_seed.unwrap_or_else(rand::random);
 
         #[cfg(feature = "sim-observability")]
         let _tracing_guard = setup_tracing_guard(config);
@@ -2538,9 +2537,9 @@ impl SimulationRunner {
                     .duration_since(SystemTime::UNIX_EPOCH)
                     .map(|d| d.as_nanos())
                     .unwrap_or(0);
-                format!("{:032x}", t ^ (config.rng_seed.unwrap_or(0) as u128))
+                format!("{:032x}", t ^ (base_seed as u128))
             };
-            let seed_val = config.rng_seed.unwrap_or(0);
+            let seed_val = base_seed;
             let guard = tracing::info_span!(
                 "campaign",
                 config_hash = %config_hash,
@@ -2609,6 +2608,11 @@ impl SimulationRunner {
                             } else {
                                 None
                             };
+                            let avg_queries_per_bit = if ckpt.total_bits > 0 {
+                                Some(ckpt.total_queries as f64 / ckpt.total_bits as f64)
+                            } else {
+                                None
+                            };
                             eprintln!(
                                 "[{:.1} dB] CHECKPOINT RESUMED: skipping completed parallel point \
                                  ({} frame errors / {} frames)",
@@ -2619,7 +2623,7 @@ impl SimulationRunner {
                                 ber,
                                 bler,
                                 avg_iterations,
-                                avg_queries_per_bit: None,
+                                avg_queries_per_bit,
                                 num_bits: ckpt.total_bits,
                                 num_bit_errors: ckpt.total_bit_errors,
                                 num_frames: ckpt.frames_completed,
@@ -2704,10 +2708,7 @@ impl SimulationRunner {
 
             let mut decoder = make_decoder();
             // Each SNR point gets a unique sub-seed derived from the config seed.
-            let point_seed = config
-                .rng_seed
-                .unwrap_or(0xDEAD_BEEF)
-                .wrapping_add(idx as u64);
+            let point_seed = base_seed.wrapping_add(idx as u64);
             let mut rng = StdRng::seed_from_u64(point_seed);
 
             let ctx = SnrPointContext {
@@ -3249,6 +3250,49 @@ mod tests {
         for point in &results.points {
             assert!(point.num_frames > 0);
         }
+    }
+
+    #[test]
+    fn test_parallel_runner_without_seed_draws_fresh_rng_stream() {
+        struct RngProbeChannel(Mutex<Vec<[u64; 4]>>);
+
+        impl ChannelModel for RngProbeChannel {
+            fn transmit_and_demodulate<R: Rng>(
+                &self,
+                bits: &BitVec,
+                eb_n0_db: f64,
+                rate: f64,
+                rng: &mut R,
+            ) -> Vec<Llr> {
+                self.0.lock().unwrap().push(rng.gen());
+                DeterministicChannel {
+                    flip_positions: vec![],
+                }
+                .transmit_and_demodulate(bits, eb_n0_db, rate, rng)
+            }
+        }
+
+        let probe = |seed| {
+            let channel = RngProbeChannel(Mutex::new(Vec::new()));
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![0.0];
+            config.max_frames = 1;
+            config.rng_seed = seed;
+            SimulationRunner::run_coded_iterative_parallel(
+                &MockEncoder,
+                || MockIterativeDecoder { last_iterations: 0 },
+                &channel,
+                &config,
+            );
+            let words = channel.0.into_inner().unwrap();
+            assert_eq!(words.len(), 1);
+            words[0]
+        };
+        let fixed = probe(Some(0xDEAD_BEEF));
+        assert_eq!(fixed, probe(Some(0xDEAD_BEEF)));
+        let first = probe(None);
+        assert_ne!(first, fixed, "None must not select the fixed fallback seed");
+        assert_ne!(first, probe(None), "None must draw a fresh stream per run");
     }
 
     #[test]
@@ -4224,15 +4268,9 @@ mod tests {
                     )
                 })
         };
-        let key = |r: &SimulationResults| {
-            r.points
-                .iter()
-                .map(|p| (p.num_frames, p.num_frame_errors, p.num_bit_errors))
-                .collect::<Vec<_>>()
-        };
-        let reference = key(&run(1));
+        let reference = run(1).to_json();
         for threads in [2, 4] {
-            assert_eq!(reference, key(&run(threads)), "{threads} workers");
+            assert_eq!(reference, run(threads).to_json(), "{threads} workers");
         }
     }
 
@@ -4948,15 +4986,56 @@ mod tests {
             );
             assert_eq!(results2.points.len(), 2);
 
-            for i in 0..2 {
-                assert_eq!(
-                    results1.points[i].num_frames, results2.points[i].num_frames,
-                    "Parallel checkpoint resume: num_frames must match at SNR point {i}"
-                );
-                assert_eq!(
-                    results1.points[i].num_frame_errors, results2.points[i].num_frame_errors,
-                    "Parallel checkpoint resume: num_frame_errors must match at SNR point {i}"
-                );
+            assert_eq!(results1.to_json(), results2.to_json());
+        }
+
+        #[cfg(feature = "parallel")]
+        #[test]
+        fn test_parallel_checkpoint_results_match_across_resume_and_workers() {
+            for max_frames in [0, 20] {
+                for extension in ["csv", "json"] {
+                    let tmpdir = tempfile::tempdir().unwrap();
+                    let path = tmpdir.path().join(format!("results.{extension}"));
+                    let mut config = SimulationConfig::quick_test();
+                    config.eb_n0_range_db = vec![0.0, 1.0];
+                    config.min_errors = 3;
+                    config.max_frames = max_frames;
+                    config.rng_seed = Some(42);
+                    config.output_path = Some(path.clone());
+                    config.checkpoint_dir = Some(tmpdir.path().join("ckpts"));
+                    let run = |workers| {
+                        rayon::ThreadPoolBuilder::new()
+                            .num_threads(workers)
+                            .build()
+                            .unwrap()
+                            .install(|| {
+                                SimulationRunner::run_coded_iterative_parallel(
+                                    &MockEncoder,
+                                    || MockIterativeDecoder { last_iterations: 0 },
+                                    &BpskAwgnChannel,
+                                    &config,
+                                )
+                            })
+                    };
+                    let first = run(1);
+                    let original_output = std::fs::read(&path).unwrap();
+                    if max_frames > 0 {
+                        assert!(first.points.iter().all(|p| p.avg_queries_per_bit.is_some()));
+                    }
+                    for workers in [2, 4] {
+                        assert_eq!(first.to_json(), run(workers).to_json());
+                        assert_eq!(original_output, std::fs::read(&path).unwrap());
+                    }
+                    // Resume one point and recompute the other under a new worker count.
+                    std::fs::remove_file(checkpoint_path(
+                        config.checkpoint_dir.as_ref().unwrap(),
+                        1,
+                    ))
+                    .unwrap();
+                    std::fs::remove_file(&path).unwrap();
+                    assert_eq!(first.to_json(), run(4).to_json());
+                    assert_eq!(original_output, std::fs::read(&path).unwrap());
+                }
             }
         }
 
@@ -4987,6 +5066,7 @@ mod tests {
                 )
             };
             let first = run();
+            let original_csv = std::fs::read(config.output_path.as_ref().unwrap()).unwrap();
             let completions = |path: &Path| {
                 std::fs::read_to_string(path)
                     .unwrap()
@@ -5002,7 +5082,11 @@ mod tests {
                 2,
                 "checkpoint-resumed points must not be logged again"
             );
-            assert_eq!(first.points.len(), resumed.points.len());
+            assert_eq!(first.to_json(), resumed.to_json());
+            assert_eq!(
+                original_csv,
+                std::fs::read(config.output_path.as_ref().unwrap()).unwrap()
+            );
         }
     }
 }

@@ -4,6 +4,8 @@
 #![deny(unsafe_code)]
 
 use serde::Deserialize;
+#[cfg(feature = "parallel")]
+use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 
 use gf2_coding::crc::CrcCode;
@@ -190,6 +192,13 @@ impl SnrRange {
 /// Turbo decoder parameters embedded in a product-code curve.
 #[derive(Debug, Deserialize)]
 struct TurboConfig {
+    /// Frames per worker in a parallel product batch. By default, divide the
+    /// outstanding frame-error target among workers, rounding up with at least
+    /// one frame each: a frame can contribute at most one frame error. Batches
+    /// are capped by the remaining frame limit. Ordered folding keeps results
+    /// identical for every batch size and worker count.
+    #[cfg(feature = "parallel")]
+    frames_per_worker_chunk: Option<NonZeroUsize>,
     max_iterations: usize,
     alpha: f32,
     /// Final alpha for iteration-dependent schedule (Chase-Pyndiah style).
@@ -627,11 +636,6 @@ fn frame_seed(base_seed: u64, point_idx: usize, frame_idx: usize) -> u64 {
     splitmix64(point_seed ^ frame_idx as u64)
 }
 
-/// Frames per worker in one chunk of the frame-parallel runner; frames past
-/// the stopping frame of a chunk are discarded.
-#[cfg(feature = "parallel")]
-const FRAMES_PER_WORKER_CHUNK: usize = 16;
-
 /// Decoder statistics of one simulated frame.
 #[cfg(feature = "parallel")]
 struct FrameOutcome {
@@ -668,7 +672,7 @@ where
     let n = product.n();
     let k = product.k();
     let rate = k as f64 / n as f64;
-    let base_seed = config.rng_seed.unwrap_or(0xDEAD_BEEF);
+    let base_seed = config.rng_seed.unwrap_or_else(rand::random);
 
     let is_chase_pyndiah = turbo_cfg.chase_pyndiah.is_some();
     let cp_config = turbo_cfg
@@ -696,11 +700,22 @@ where
         let decoder_comp = decoder_component.clone();
         let cp_cfg = cp_config.clone();
         let turbo_cfg_inner = turbo_config.clone();
-        let chunk_len = rayon::current_num_threads() * FRAMES_PER_WORKER_CHUNK;
+        let workers = rayon::current_num_threads();
 
         let mut next_frame = 0usize;
         'point: while next_frame < config.max_frames {
-            let chunk_end = config.max_frames.min(next_frame + chunk_len);
+            let frames_per_worker = turbo_cfg.frames_per_worker_chunk.map_or_else(
+                || {
+                    config
+                        .min_errors
+                        .saturating_sub(frame_errors)
+                        .div_ceil(workers)
+                        .max(1)
+                },
+                NonZeroUsize::get,
+            );
+            let chunk_len = workers.saturating_mul(frames_per_worker);
+            let chunk_end = config.max_frames.min(next_frame.saturating_add(chunk_len));
             let outcomes: Vec<FrameOutcome> = (next_frame..chunk_end)
                 .into_par_iter()
                 .map_init(
@@ -1114,6 +1129,16 @@ max_frames = 1000
         assert_eq!(gldpc.variant.as_deref(), Some("lentmaier_1024"));
     }
 
+    #[cfg(feature = "parallel")]
+    #[test]
+    fn test_frame_chunk_override_must_be_nonzero() {
+        let config = SAMPLE_TOML.replace(
+            "max_iterations = 20, alpha = 0.5",
+            "max_iterations = 20, frames_per_worker_chunk = 0, alpha = 0.5",
+        );
+        assert!(toml::from_str::<CampaignConfig>(&config).is_err());
+    }
+
     #[test]
     fn test_snr_range_to_points() {
         let range = SnrRange {
@@ -1382,10 +1407,14 @@ taps = 4
     }
 
     #[cfg(feature = "parallel")]
-    fn frame_parallel_points(threads: usize) -> Vec<gf2_coding::simulation::SimulationResult> {
-        let turbo_cfg: TurboConfig =
+    fn frame_parallel_points(
+        threads: usize,
+        frames_per_worker_chunk: Option<NonZeroUsize>,
+    ) -> SimulationResults {
+        let mut turbo_cfg: TurboConfig =
             toml::from_str("max_iterations = 4\nalpha = 0.5\nlist_size = 4\nmax_queries = 1000")
                 .unwrap();
+        turbo_cfg.frames_per_worker_chunk = frames_per_worker_chunk;
         let config = SimulationConfig {
             eb_n0_range_db: vec![0.0, 1.0],
             min_errors: 5,
@@ -1409,23 +1438,66 @@ taps = 4
                 &BpskAwgnChannel,
                 &config,
             )
-            .points
         })
     }
 
     #[cfg(feature = "parallel")]
     #[test]
+    fn frame_parallel_without_seed_draws_fresh_rng_stream() {
+        struct RngProbeChannel(std::sync::Mutex<Vec<[u64; 4]>>);
+
+        impl ChannelModel for RngProbeChannel {
+            fn transmit_and_demodulate<R: rand::Rng>(
+                &self,
+                bits: &gf2_core::BitVec,
+                eb_n0_db: f64,
+                rate: f64,
+                rng: &mut R,
+            ) -> Vec<gf2_coding::llr::Llr> {
+                self.0.lock().unwrap().push(rng.gen());
+                BpskAwgnChannel.transmit_and_demodulate(bits, eb_n0_db, rate, rng)
+            }
+        }
+
+        let turbo_cfg: TurboConfig =
+            toml::from_str("max_iterations = 1\nalpha = 0.5\nlist_size = 1\nmax_queries = 100")
+                .unwrap();
+        let probe = |seed| {
+            let channel = RngProbeChannel(std::sync::Mutex::new(Vec::new()));
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![0.0];
+            config.max_frames = 1;
+            config.rng_seed = seed;
+            run_product_frame_parallel(
+                ProductCode::new(ExtendedBchComponent::ebch_16_11()),
+                ExtendedBchComponent::ebch_16_11(),
+                &turbo_cfg,
+                &channel,
+                &config,
+            );
+            let words = channel.0.into_inner().unwrap();
+            assert_eq!(words.len(), 1);
+            words[0]
+        };
+        let fixed = probe(Some(0xDEAD_BEEF));
+        assert_eq!(fixed, probe(Some(0xDEAD_BEEF)));
+        let first = probe(None);
+        assert_ne!(first, fixed, "None must not select the fixed fallback seed");
+        assert_ne!(first, probe(None), "None must draw a fresh stream per run");
+    }
+
+    #[cfg(feature = "parallel")]
+    #[test]
     fn frame_parallel_results_are_identical_across_worker_counts() {
-        let reference = frame_parallel_points(1);
-        assert!(reference.iter().all(|p| p.num_frame_errors >= 5));
-        for threads in [2, 4, 8] {
-            let points = frame_parallel_points(threads);
-            for (a, b) in reference.iter().zip(&points) {
+        let reference = frame_parallel_points(1, None);
+        assert!(reference.points.iter().all(|p| p.num_frame_errors >= 5));
+        for frames_per_worker in [None, NonZeroUsize::new(1), NonZeroUsize::new(7)] {
+            for threads in [1, 2, 4, 8] {
+                let results = frame_parallel_points(threads, frames_per_worker);
                 assert_eq!(
-                    (a.num_frames, a.num_frame_errors, a.num_bit_errors),
-                    (b.num_frames, b.num_frame_errors, b.num_bit_errors),
-                    "{threads} workers at {} dB",
-                    a.eb_n0_db
+                    reference.to_json(),
+                    results.to_json(),
+                    "{threads} workers, {frames_per_worker:?} frames per worker"
                 );
             }
         }
