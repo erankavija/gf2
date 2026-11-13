@@ -42,13 +42,12 @@ slow-timeout = { period = "20s", terminate-after = 1 }
 # it, and under oversubscription the gfx1030 faults a queue (gfxhub CPF page
 # fault: the process aborts, and a concurrent GPU test can stall until its
 # timeout). @/issue/f21b25ac holds the reproduction.
-# This group holds every device-opening test so at most
-# one GPU job runs at a time. Scheduling only — no per-test timeout changes.
+# Device-opening workspace tests, ignored tests included, join `gpu-serial`.
+# Scheduling only — no per-test timeout changes.
 #
-# The group serializes within one run. The `gpu-lock` wrapper below serializes
-# across runs: every `gpu-serial` test holds one host-wide flock while it runs,
-# so test runs from different sessions and worktrees never hold HIP queues at
-# once.
+# Every workspace profile inherits the group and `gpu-lock` wrapper below.
+# The standalone gf2-kernels-hip workspace has its own .config/nextest.toml
+# using the same wrapper and host-wide flock. `cargo test` takes no lock.
 #
 # `slow-serial` is the nightly analogue for CPU-bound heavy tests (see
 # [profile.slow] below): the sim MODCOD sweeps and the n=28/32 permanent
@@ -85,6 +84,7 @@ filter = '''
         or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
         or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
         or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
+        or binary(gpu_bch_syndrome_byte_identity)
     ))
     or (package(gf2-algebra) and binary(gpu_dispatcher))
     or (package(gf2-sim) and kind(lib) and test(/^gpu::/))
@@ -131,6 +131,7 @@ filter = '''
         or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
         or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
         or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
+        or binary(gpu_bch_syndrome_byte_identity)
     ))
     or (package(gf2-algebra) and binary(gpu_dispatcher))
     or (package(gf2-sim) and kind(lib) and test(/^gpu::/))

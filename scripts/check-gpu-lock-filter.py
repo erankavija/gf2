@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Check that the nextest GPU-lock wrapper applies to exactly the gpu-serial tests.
 
-nextest rejects `group()` in script filters, so `.config/nextest.toml` repeats
-the filter of the one override that sets `test-group = 'gpu-serial'` in the
-`[[profile.default.scripts]]` entry that runs the `gpu-lock` wrapper. This
-check fails unless there is exactly one such override and one such script
-entry, both on `profile.default`, with identical filter text.
+nextest rejects `group()` in script filters, so each workspace's config repeats
+the filter of the override that sets `test-group = 'gpu-serial'` in the script
+entry that runs the `gpu-lock` wrapper. Each config must have exactly one such
+override and script entry, both on `profile.default`, with identical filter text.
+By default, check the main workspace and standalone gf2-kernels-hip workspace.
 
-Usage: scripts/check-gpu-lock-filter.py [nextest.toml]
+Usage: scripts/check-gpu-lock-filter.py [nextest.toml ...]
 """
 
 import sys
@@ -18,10 +18,12 @@ GROUP = "gpu-serial"
 WRAPPER = "gpu-lock"
 
 
-def main() -> int:
-    root = Path(__file__).resolve().parent.parent
-    path = Path(sys.argv[1]) if len(sys.argv) > 1 else root / ".config" / "nextest.toml"
-    config = tomllib.loads(path.read_text())
+def check(path: Path) -> bool:
+    try:
+        config = tomllib.loads(path.read_text())
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        print(f"check-gpu-lock-filter: {path}: {e}", file=sys.stderr)
+        return False
     profiles = config.get("profile", {})
 
     groups = [
@@ -49,9 +51,19 @@ def main() -> int:
         )
     for e in errors:
         print(f"check-gpu-lock-filter: {path}: {e}", file=sys.stderr)
-    if errors:
+    return not errors
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parent.parent
+    paths = [Path(p) for p in sys.argv[1:]] if len(sys.argv) > 1 else [
+        root / ".config" / "nextest.toml",
+        root / "crates" / "gf2-kernels-hip" / ".config" / "nextest.toml",
+    ]
+    results = [check(path) for path in paths]
+    if not all(results):
         return 1
-    print("check-gpu-lock-filter: ok")
+    print(f"check-gpu-lock-filter: ok ({len(paths)} configs)")
     return 0
 
 

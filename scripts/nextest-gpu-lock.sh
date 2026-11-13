@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # nextest wrapper script: the test holds the host-wide GPU lock while it runs.
-# `.config/nextest.toml` applies it to the `gpu-serial` tests.
+# The main and standalone HIP workspaces' `.config/nextest.toml` files apply
+# it to their `gpu-serial` tests in every profile. `cargo test` takes no lock.
 #
 #   scripts/nextest-gpu-lock.sh <command> [args...]
 #
