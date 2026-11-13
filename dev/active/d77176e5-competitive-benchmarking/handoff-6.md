@@ -31,7 +31,21 @@ Chain order (one file at a time along `crates/gf2-coding/src/bch/encode.rs`, `cr
 
 ## Gate runs and worker outcomes at stop
 
-Filled at the stop; see the section appended below.
+- `fd9d5416` (branch `fd9d5416-docs`, `47c26bb6c` plus gate records `4c94c6686`): research-review PASSED; doc-review FAILED (second doc-review failure on this issue).
+  - F1: the harness rustdoc, and the earlier fd9d5416 timing note, call the first-call minimum the reported statistic; it feeds only the call-budget projection. The issue note is corrected on main; the rustdoc on the branch still needs the fix.
+  - F2: `docs/reference/performance-evidence.md`'s "Both:" bullet now applies the cutover digest rule to `compare.sh bch`, which validates before timing (`experiments/encode-compare/external/src/main.rs`, `reproduces`); the bullet needs one rule per harness.
+  - F3 (advisory): the "gf2 path" bullet's entry points; `4443de83` changes that bullet.
+  - Per the steward's rule, a second review failure goes to the steward before rework.
+- `259acf37` F2 (branch at `4dde2f74e`, Claude Opus, partial): `DEFAULT_GUARD_MULTIPLE = 2.0` with `with_guard_multiple` and `guard_multiple()`; a bit-exact test against the old formula passes on DVB-T2 short R1/2 and NR BG1 frames. The basis is the consistent-Gaussian LLR symmetry: the share above twice the mean equals the share below zero. No i8-alphabet ratio or degree gives 2 for both configurations. Not yet run: the full `crates/gf2-coding/tests/ldpc_layered_contract.rs` binary (the `test(/layered/)` filter matched 4 tests) and clippy. The 00:00 deadline was overtaken by the wind-down. The rerun lines stay commented out in the queue.
+- `d5cd53e0` rework 1 (branch `b966634b3`, then records `7cdf5e172`): all eight findings fixed.
+  - Wilson intervals on every FER; a typed recheck enum; a run header with the executable digest; a diagnosis-steps script that writes logs; citations.
+  - The REQ-03 "total dynamic range" claim is withdrawn. The `layered-range` step shows that the message bound, the v→c bound and the resolution all matter: scale 3 with message limit 40 lost 4 frames at 1.3 dB against 36 for the default.
+  - REQ-02's verdict (no flooding defect) stands.
+  - The corrected tables are recorded in the issue on the branch (commit after `7cdf5e172`); the step logs stayed outside the tree and are not preserved.
+  - Reviews are not rerun. The issue Background's "near 1 dB" sentence has no source: drop it or replace it with the measured 1.0 to 1.2 dB transition at NMS 0.875.
+- `6379e04e`: cargo-ci was stopped mid-run at the wind-down (load about 60); it has no verdict. Code-review has not run.
+- `7fbd1042` (`c97b4c3d0`), `243d1160` (`55ca8205c`, stacked on `b3224b9e6`, the pre-rebase 6379e04e head) and `3461a52a` (`cb96b9810`, a 272-line plan): WIP from stopped workers, untested and unreviewed. Not for main.
+- Load: 59.7 at 23:12, with no lead lock. The ps capture went to the steward. At that moment rustc builds of gf2-core in several worktrees, a HIP clang compile, a Kani cargo run, check-references and other leads' dispatch scripts dominated.
 
 ## Rulings that bind the next lead
 
@@ -62,9 +76,9 @@ Filled at the stop; see the section appended below.
 
 ## Next
 
-1. Read the outcomes section below. Rebase `worktree-agent-243d1160` onto the rebased `worktree-agent-6379e04e`, then land `6379e04e` once both its gates pass; rebase `7fbd1042` and finish it (WIP is untested).
-2. Close `fd9d5416` after its reviews pass and `fd9d5416-docs` is merged; record the `a6039c72` window table and close it.
-3. Finish the `259acf37` F2 rework (or apply the fallback ruling), gate the branch, enable the two `#PENDING-GATE 259acf37` queue lines; then dispatch `b8157e14`'s diagnosis and the `9a1b24fc` design (Codex next by alternation).
+1. Run `6379e04e`'s cargo-ci and code-review on its branch, land it, then rebase `worktree-agent-243d1160` and `worktree-agent-7fbd1042` onto it and finish both (WIP is untested).
+2. Rerun d5cd53e0's reviews on its branch (r1 tables are in its issue there), and bring fd9d5416's second doc-review failure to the steward. Record the `a6039c72` window table after the 2026-11-14 window and close it.
+3. Run the full layered contract binary and clippy on `259acf37`'s F2 commit, get the reviewer's verdict on the LLR-symmetry basis, gate the branch, and enable the two `#PENDING-GATE 259acf37` queue lines. Then dispatch `b8157e14`'s diagnosis and the `9a1b24fc` design (Codex next by alternation).
 
 ## Open questions for the invoker
 
