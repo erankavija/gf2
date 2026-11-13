@@ -147,11 +147,19 @@ cargo run -p aff3ct-ldpc-gaps --release \
 ```
 
 `dvb_t2_fer_diag` counts frame errors of gf2's canonical flooding decoder and
-`LayeredDecoder` on DVB-T2 normal rate 1/2 over the frame model of
-`crates/gf2-coding/tests/ldpc_layered_fer.rs`, for @/issue/d5cd53e0. With
-`--failures <decoder>` it prints, per lost frame, the error weights, the column
-degrees of the wrong bits, the terminal syndrome weight, the layered frame
-scale and saturation counts, and the outcome of re-decoding under alternative
-normalizations, quantization scales, message limits and caps. Its header gives
-the arguments; AFF3CT's `--enc-type LDPC_DVBS2` with `-D BP_FLOODING
---dec-implem NMS` decodes the same code from AFF3CT's own tables.
+`LayeredDecoder` on DVB-T2 normal rate 1/2 (`@/citation/Etsi2015`) over the
+frame model of `crates/gf2-coding/tests/ldpc_layered_fer.rs`, for
+@/issue/d5cd53e0, and reports each FER with its 95% Wilson score interval.
+With `--failures <decoder>` it prints, per lost frame, the error weights, the
+column degrees of the wrong bits, the terminal syndrome weight, the layered
+frame scale and saturation counts, and the outcome of re-decoding under
+alternative normalizations, quantization scales, message limits and caps. Its
+module documentation in
+[src/bin/dvb_t2_fer_diag.rs](src/bin/dvb_t2_fer_diag.rs) gives the arguments
+and output records; its first output line gives the executable's SHA-256 and
+the effective arguments, seed included.
+[dvb-t2-r12-diagnosis.sh](dvb-t2-r12-diagnosis.sh) holds every run of that
+issue, with its seeds and frame counts, as named steps; the AFF3CT 4.7.0
+(`@/citation/Cassagne2019`) steps decode the same code from AFF3CT's own
+DVB-S2 tables (`--enc-type LDPC_DVBS2`) or from the exported AList. Each step
+writes a log with host, CPU list, load and executable digests under `target/`.
