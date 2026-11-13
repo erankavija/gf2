@@ -1,5 +1,7 @@
 //! Frame error rate of the layered quantized decoder against the canonical
-//! flooding decoder over BPSK AWGN, on random codewords. A frame error is a
+//! flooding decoder over BPSK AWGN, on random codewords. The flooding
+//! reference follows the layered configuration's check rule, so the bound
+//! compares schedules. A frame error is a
 //! wrong decision among the first k positions, the information columns of
 //! both codes' standards and the window of the AFF3CT comparison harness.
 //!
@@ -15,8 +17,8 @@ mod common;
 
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::ldpc::{
-    DecoderAlgorithm, DecoderConfig, LayeredConfig, LayeredDecoder, LdpcCode, LdpcDecoder,
-    LdpcEncoder, QuasiCyclicLdpc,
+    DecoderAlgorithm, DecoderConfig, LayeredConfig, LayeredDecoder, LayeredRule, LdpcCode,
+    LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::BlockEncoder;
@@ -26,7 +28,6 @@ use rand::{rngs::StdRng, SeedableRng};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 const TARGET_FER: f64 = 1e-3;
-const FLOODING: DecoderAlgorithm = DecoderAlgorithm::NormalizedMinSum(0.75);
 const FLOODING_CAP: usize = 50;
 const LAYERED_CAP: usize = 25;
 const MARGIN_DB: f64 = 0.1;
@@ -42,7 +43,21 @@ fn setting(name: &str, fallback: usize) -> usize {
         .unwrap_or(fallback)
 }
 
+/// The flooding algorithm with the check rule of `layered`: normalized
+/// min-sum keeps its factor, offset min-sum its offset in LLR units.
+fn flooding_algorithm(layered: &LayeredConfig) -> DecoderAlgorithm {
+    match layered.rule() {
+        LayeredRule::Normalized { eighths } => {
+            DecoderAlgorithm::NormalizedMinSum(f32::from(eighths) / 8.0)
+        }
+        LayeredRule::Offset { beta } => {
+            DecoderAlgorithm::OffsetMinSum(f32::from(beta) / layered.channel_scale())
+        }
+    }
+}
+
 /// Frame errors of (flooding, layered) on the same frames, and frames run.
+/// The flooding decoder uses the check rule of `layered`.
 fn point(
     code: &LdpcCode,
     encoder: &LdpcEncoder,
@@ -52,6 +67,7 @@ fn point(
 ) -> (usize, usize, usize) {
     let max_frames = setting("GF2_LAYERED_FER_FRAMES", 200_000);
     let target_errors = setting("GF2_LAYERED_FER_ERRORS", 100);
+    let algorithm = flooding_algorithm(&layered);
     let k = encoder.k();
     let rate = k as f64 / code.n() as f64;
     let variance = 1.0 / (2.0 * rate * 10f64.powf(ebn0_db / 10.0));
@@ -69,7 +85,7 @@ fn point(
         std::thread::scope(|scope| {
             for _ in 0..workers {
                 scope.spawn(|| {
-                    let config = DecoderConfig::new(FLOODING, true);
+                    let config = DecoderConfig::new(algorithm, true);
                     let mut flooding = LdpcDecoder::with_config(code.clone(), config);
                     let mut layered = LayeredDecoder::new(code, layered).unwrap();
                     let channel = AwgnChannel::from_variance(variance);
@@ -176,8 +192,10 @@ fn compare(name: &str, code: &LdpcCode, layered: LayeredConfig, grid: &[f64]) {
         let (flooding, layered_errors, frames) = point(code, &encoder, layered, ebn0, index as u64);
         let rate = |e: usize| e as f64 / frames as f64;
         eprintln!(
-            "{name} Eb/N0 {ebn0:.2} dB: frames {frames}, flooding FER {:.3e}, layered FER {:.3e}",
+            "{name} Eb/N0 {ebn0:.2} dB: frames {frames}, flooding ({:?}) FER {:.3e}, layered ({:?}) FER {:.3e}",
+            flooding_algorithm(&layered),
             rate(flooding),
+            layered.rule(),
             rate(layered_errors)
         );
         flooding_curve.push((ebn0, rate(flooding)));
@@ -276,4 +294,16 @@ fn a_bracketed_crossing_interpolates_log_fer_or_bounds_by_the_pair() {
     assert!((loss - 0.05).abs() < 1e-12);
     let loss = loss_bound(&zero, &estimate).unwrap();
     assert!((loss - 0.05).abs() < 1e-12);
+}
+
+#[test]
+fn the_flooding_reference_follows_the_layered_check_rule() {
+    assert_eq!(
+        flooding_algorithm(&LayeredConfig::dvb_t2()),
+        DecoderAlgorithm::NormalizedMinSum(0.875)
+    );
+    assert_eq!(
+        flooding_algorithm(&LayeredConfig::nr_5g()),
+        DecoderAlgorithm::NormalizedMinSum(0.75)
+    );
 }
