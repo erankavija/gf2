@@ -21,7 +21,7 @@
 | `e29fd776` | rework 1 done (session 3); round-1 failures recorded | cargo-ci, code-review, doc-review |
 | `9ff05f12` | done by worker (session 3) | cargo-ci, code-review, doc-review |
 | `32a8bc0e` | rework 1 done; steward ruling below | indication, record gf2-af approval, gates |
-| `903dc74c` | worker installed Kani 0.68.0 (rustc 1.100 nightly); gate result pending at stop | read the worker's return; run `cargo-kani`, code-review |
+| `903dc74c` | Kani 0.68.0 (rustc 1.100 nightly) runs; first gate run verified 23 of 25 including the three named harnesses; the two shift harnesses failed on inline-asm cpuid and are fixed in `a6f3d0b48` (portable funnel under `cfg(kani)`); run recorded in the issue (`814bbca23`) | full `cargo-kani` gate run, gf2-core nextest and clippy, code-review |
 
 - Ready and unclaimed: `2e6e3557` (after `51f299d2`), `c34e8203` (commit-msg hook), `5c1c87b7` (existence-only test audit), `41517289` (owner files the upstream report), and the ready set `jit query available` lists.
 - Nothing pushed. No test, build or gate of this lead runs.
