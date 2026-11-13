@@ -61,7 +61,7 @@ use gf2_core::{packed_window, BitVec};
 use gf2_kernels_simd::bch_encode::{self, BchEncodeFns, BITSLICE_LANES};
 
 use crate::bch::error::BchError;
-use crate::bch::spec::BchCode;
+use crate::bch::spec::{BchCode, RootExponent};
 use crate::error::CodeError;
 use crate::traits::block::{BlockCode, BlockEncoder, SymbolMatrix, SymbolSequence};
 use crate::transform::CoordinateMap;
@@ -368,8 +368,9 @@ pub enum EncodeFamily {
     /// Barrett steps. The products of a chunk are independent, so $L$, which
     /// [`gf2_kernels_simd::bch_encode::fold_accumulators`] derives from the
     /// multiplier's latency and issue rate, keeps the multiplier busy. Wider
-    /// generators fold one block at a time, reducing $R x^{64} + B x^{r}$ by
-    /// one Barrett quotient and one product with the generator. Either way it
+    /// generators, and messages of fewer than $L$ blocks, fold one block at a
+    /// time, reducing $R x^{64} + B x^{r}$ by one Barrett quotient and one
+    /// product with the generator. Either way it
     /// is about $\lceil r/64 \rceil$ carry-less multiplies per 64 message
     /// coefficients, against one shift and one conditional generator
     /// exclusive-or per coefficient in the reference.
@@ -1289,8 +1290,11 @@ impl SystematicKernel<Fp<2>> for BitVec {
                     fold,
                     ..
                 } = registers;
-                let accumulators =
-                    fold_accumulators_for(redundancy, selectors.clmul_fold_accumulators());
+                let accumulators = fold_accumulators_for(
+                    redundancy,
+                    plan.dimension(),
+                    selectors.clmul_fold_accumulators(),
+                );
                 let run_blocks = selectors
                     .clmul_fold_run_blocks()
                     .unwrap_or(clmul_fold_run_blocks(plan.dimension()));
@@ -1708,26 +1712,41 @@ fn fold_body_words(accumulators: usize, words: usize, run: usize) -> usize {
 /// Words of [`EncodeRegisters::fold`] ahead of the chunk constants.
 const FOLD_HEADER_WORDS: usize = 3;
 
-/// The accumulator count [`EncodeFamily::ClmulFold`] folds chunks into by
-/// default at `redundancy` $r$, or `None` above the
-/// [`FOLD_UNROLLED_WORDS`](bch_encode::FOLD_UNROLLED_WORDS) remainder words
-/// the chunk fold unrolls, where the fold runs one block at a time.
+/// The accumulator count [`EncodeFamily::ClmulFold`] prepares by default for
+/// a code of redundancy $r$ and dimension $k$, zero where the fold runs one
+/// block at a time.
 ///
-/// The count is [`bch_encode::fold_accumulators`] for the kernel bundle this
-/// process encodes with: the larger of $W + 1$, the fewest accumulators that
-/// hold a chunk's products unreduced, and
-/// $\lceil \text{in\_flight} / W \rceil$, the fewest whose $L W$
-/// independent products per chunk cover the multiplier's latency, with
-/// $W = \lceil r/64 \rceil$ and `in_flight` the bundle's
+/// The chunk fold's accumulator count $L$ is
+/// [`bch_encode::fold_accumulators`] for the kernel bundle this process
+/// encodes with: the larger of $W + 1$, the fewest accumulators that hold a
+/// chunk's products unreduced, and $\lceil \text{in\_flight} / W \rceil$, the
+/// fewest whose $L W$ independent products per chunk cover the multiplier's
+/// latency, with $W = \lceil r/64 \rceil$ and `in_flight` the bundle's
 /// [`fold_in_flight`](bch_encode::BchEncodeFns::fold_in_flight), its
-/// multiply's latency times its issue rate.
+/// multiply's latency times its issue rate. The fold runs one block at a time
+/// above the [`FOLD_UNROLLED_WORDS`](bch_encode::FOLD_UNROLLED_WORDS)
+/// remainder words the chunk fold unrolls, and wherever a message has fewer
+/// blocks than accumulators, $\lceil k/64 \rceil < L$: such a message never
+/// fills one chunk, so the chunk fold would pad it with zero blocks and pay
+/// the accumulator's final reduction on top.
 /// [`EncodeSelectors::with_clmul_fold_accumulators`] overrides it.
 ///
 /// # Panics
 ///
 /// Panics when `redundancy` is zero.
 #[must_use]
-pub fn clmul_fold_accumulators(redundancy: usize) -> Option<NonZeroUsize> {
+pub fn clmul_fold_accumulators(redundancy: usize, dimension: usize) -> usize {
+    fold_accumulators_for(redundancy, dimension, None)
+}
+
+/// The chunk fold's accumulator count $L$ at `redundancy`, or `None` above
+/// the [`FOLD_UNROLLED_WORDS`](bch_encode::FOLD_UNROLLED_WORDS) remainder
+/// words it unrolls.
+///
+/// # Panics
+///
+/// Panics when `redundancy` is zero.
+fn fold_chunk_accumulators(redundancy: usize) -> Option<NonZeroUsize> {
     assert!(
         redundancy > 0,
         "a fold needs a generator of positive degree"
@@ -1743,21 +1762,29 @@ pub fn clmul_fold_accumulators(redundancy: usize) -> Option<NonZeroUsize> {
 }
 
 /// The accumulator count [`EncodeFamily::ClmulFold`] prepares at
-/// `redundancy` under the caller's `requested` count: `requested` clamped to
-/// the admissible $W + 1$ to
-/// [`FOLD_MAX_ACCUMULATORS`](bch_encode::FOLD_MAX_ACCUMULATORS), or
-/// [`clmul_fold_accumulators`] without one, and zero where the fold runs one
-/// block at a time.
-fn fold_accumulators_for(redundancy: usize, requested: Option<NonZeroUsize>) -> usize {
-    let Some(structural) = clmul_fold_accumulators(redundancy) else {
+/// `redundancy` and `dimension` under the caller's `requested` count: zero
+/// for a request of zero, a positive request clamped to the admissible
+/// $W + 1$ to [`FOLD_MAX_ACCUMULATORS`](bch_encode::FOLD_MAX_ACCUMULATORS),
+/// [`clmul_fold_accumulators`] without a request, and zero whatever the
+/// request above the widths the chunk fold unrolls. Zero is the fold that
+/// runs one block at a time.
+///
+/// # Panics
+///
+/// Panics when `redundancy` is zero.
+fn fold_accumulators_for(redundancy: usize, dimension: usize, requested: Option<usize>) -> usize {
+    let Some(chunk) = fold_chunk_accumulators(redundancy) else {
         return 0;
     };
-    requested.map_or(structural.get(), |count| {
-        count.get().clamp(
+    match requested {
+        None if dimension.div_ceil(64) < chunk.get() => 0,
+        None => chunk.get(),
+        Some(0) => 0,
+        Some(count) => count.clamp(
             redundancy.div_ceil(64) + 1,
             bch_encode::FOLD_MAX_ACCUMULATORS,
-        )
-    })
+        ),
+    }
 }
 
 /// Words a prepared buffer of `body` words holds with its [`prepared_for`]
@@ -2131,8 +2158,7 @@ where
     ///
     /// # Complexity
     ///
-    /// Two allocations, together $O(r)$ words, plus the $O(r)$ fingerprint of
-    /// [`code_stamp`](BchEncodeWorkspace::code_stamp).
+    /// Two allocations, together $O(r)$ words.
     pub fn encode_workspace(&self) -> BchEncodeWorkspace<S::Word> {
         BchEncodeWorkspace {
             stamp: self.encode_stamp(),
@@ -2183,9 +2209,8 @@ where
     /// That of [`encode_systematic_into`](Self::encode_systematic_into),
     /// without its $O(r)$ register reset, with a family preparation that
     /// finds the workspace prepared unless an installed fold override
-    /// reshapes it, plus $O(r)$ mixing steps to decide the workspace
-    /// fingerprint. A batch pays that
-    /// check once for the whole batch.
+    /// reshapes it, plus one word comparison against the code's stored
+    /// workspace fingerprint.
     pub fn encode_systematic_with(
         &self,
         message: &S,
@@ -2460,33 +2485,6 @@ where
         Ok(codewords)
     }
 
-    /// Fingerprints this code for an encode workspace: the dimensions, the
-    /// presentations of the base and splitting fields, and the defining set,
-    /// which together fix the generator the registers carry (FNV-1a).
-    ///
-    /// The field presentations have to be there. A defining set names root
-    /// exponents, not roots, so two presentations of one splitting field
-    /// carry the same exponents at the same dimensions while their generators
-    /// over the base field differ; the moduli are what separates them.
-    fn encode_stamp(&self) -> u64 {
-        const OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
-        const PRIME: u64 = 0x0000_0100_0000_01b3;
-        let mut hash = OFFSET;
-        let mut mix = |value: u64| {
-            hash ^= value;
-            hash = hash.wrapping_mul(PRIME);
-        };
-        mix(self.n() as u64);
-        mix(self.k() as u64);
-        mix_field_presentation(&mut mix, self.extension().base_id());
-        mix_field_presentation(&mut mix, self.extension().ext_id());
-        mix(self.defining_set().len() as u64);
-        for exponent in self.defining_set() {
-            mix(exponent.get());
-        }
-        hash
-    }
-
     fn validate_workspaces(
         &self,
         workspaces: &[BchEncodeWorkspace<S::Word>],
@@ -2545,6 +2543,45 @@ where
     }
 }
 
+/// Fingerprints a code for an encode workspace: the dimensions, the
+/// presentations of the base and splitting fields, and the defining set,
+/// which together fix the generator the registers carry (FNV-1a).
+///
+/// The field presentations have to be there. A defining set names root
+/// exponents, not roots, so two presentations of one splitting field
+/// carry the same exponents at the same dimensions while their generators
+/// over the base field differ; the moduli are what separates them. A code is
+/// immutable, so construction computes this once and every workspace check
+/// compares the stored value.
+///
+/// # Complexity
+///
+/// $O(|D|)$ mixing steps for the defining set $D$, plus the moduli of both
+/// field towers.
+pub(crate) fn encode_stamp<X: FieldExtension>(
+    length: usize,
+    dimension: usize,
+    extension: &X,
+    defining_set: &[RootExponent],
+) -> u64 {
+    const OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
+    const PRIME: u64 = 0x0000_0100_0000_01b3;
+    let mut hash = OFFSET;
+    let mut mix = |value: u64| {
+        hash ^= value;
+        hash = hash.wrapping_mul(PRIME);
+    };
+    mix(length as u64);
+    mix(dimension as u64);
+    mix_field_presentation(&mut mix, extension.base_id());
+    mix_field_presentation(&mut mix, extension.ext_id());
+    mix(defining_set.len() as u64);
+    for exponent in defining_set {
+        mix(exponent.get());
+    }
+    hash
+}
+
 /// Mixes a field presentation into a fingerprint: its characteristic and
 /// absolute degree, then every modulus of its tower, lowest coordinate first.
 ///
@@ -2573,7 +2610,8 @@ fn mix_field_presentation(mix: &mut impl FnMut(u64), id: &FieldId) {
 /// [`CodeError::BufferLengthMismatch`] when `codewords` does not have one
 /// entry per message, or when a message or codeword buffer has the wrong
 /// length, and [`CodeError::FieldMismatch`] for a message whose symbols carry
-/// a foreign field identity. The first rejected message decides.
+/// a foreign field identity. The first rejected message decides. Whether the
+/// symbol type carries its field identity is decided once for the batch.
 fn validate_batch<F, S>(
     plan: &SystematicPlan<'_, F>,
     messages: &[S],
@@ -2589,9 +2627,12 @@ where
             actual: codewords.len(),
         });
     }
+    let typed = F::field_id_hint().is_some();
     for (message, codeword) in messages.iter().zip(codewords) {
         plan.validate_lengths(message.len(), codeword.len())?;
-        validate_symbol_field(plan, message)?;
+        if !typed {
+            validate_runtime_symbol_field(plan, message)?;
+        }
     }
     Ok(())
 }
@@ -2773,6 +2814,19 @@ where
     if F::field_id_hint().is_some() {
         return Ok(());
     }
+    validate_runtime_symbol_field(plan, message)
+}
+
+/// The check [`validate_symbol_field`] runs for a symbol type whose identity
+/// is a runtime value.
+fn validate_runtime_symbol_field<F, S>(
+    plan: &SystematicPlan<'_, F>,
+    message: &S,
+) -> Result<(), CodeError>
+where
+    F: FieldIdentity,
+    S: SymbolSequence<F>,
+{
     let Some(symbol) = message.get(0) else {
         return Ok(());
     };
@@ -3914,8 +3968,12 @@ mod tests {
         for (code, shortened) in &codes {
             for &layout in LAYOUTS {
                 let plan = code.systematic_plan(layout);
-                let accumulators = fold_accumulators_for(plan.redundancy(), None);
-                assert_eq!(accumulators == 0, plan.redundancy() > 256);
+                let accumulators = fold_accumulators_for(plan.redundancy(), plan.dimension(), None);
+                assert_eq!(
+                    accumulators == 0,
+                    fold_chunk_accumulators(plan.redundancy())
+                        .is_none_or(|chunk| plan.dimension().div_ceil(64) < chunk.get())
+                );
                 let mut messages = seeded_bit_batch(code.k(), 3, plan.redundancy() as u64);
                 let mut frame = seeded_bits(code.k(), 0x5EED);
                 for user in 0..*shortened {
@@ -3995,7 +4053,7 @@ mod tests {
         for (code, words) in codes.iter().zip(widths) {
             for &layout in LAYOUTS {
                 let plan = code.systematic_plan(layout);
-                let structural = clmul_fold_accumulators(plan.redundancy())
+                let structural = fold_chunk_accumulators(plan.redundancy())
                     .expect("the chunk fold unrolls this width")
                     .get();
                 assert!(structural > words && structural <= bch_encode::FOLD_MAX_ACCUMULATORS);
@@ -4003,8 +4061,8 @@ mod tests {
                 let expected = bit_serial_batch(code, &messages, layout);
                 let run = clmul_fold_run_blocks(plan.dimension());
                 for count in words + 1..=bch_encode::FOLD_MAX_ACCUMULATORS {
-                    let requested = NonZeroUsize::new(count).expect("a positive count");
-                    let accumulators = fold_accumulators_for(plan.redundancy(), Some(requested));
+                    let accumulators =
+                        fold_accumulators_for(plan.redundancy(), plan.dimension(), Some(count));
                     assert_eq!(accumulators, count);
                     let mut registers = BitVec::registers(&plan);
                     {
@@ -4042,23 +4100,31 @@ mod tests {
                         );
                     }
                 }
-                // Counts outside the admissible range clamp onto it.
+                // Positive counts outside the admissible range clamp onto it,
+                // and zero selects the block fold.
                 assert_eq!(
-                    fold_accumulators_for(plan.redundancy(), Some(NonZeroUsize::MIN)),
+                    fold_accumulators_for(plan.redundancy(), plan.dimension(), Some(1)),
                     words + 1
                 );
                 assert_eq!(
-                    fold_accumulators_for(plan.redundancy(), Some(NonZeroUsize::MAX)),
+                    fold_accumulators_for(plan.redundancy(), plan.dimension(), Some(usize::MAX)),
                     bch_encode::FOLD_MAX_ACCUMULATORS
+                );
+                assert_eq!(
+                    fold_accumulators_for(plan.redundancy(), plan.dimension(), Some(0)),
+                    0
                 );
             }
         }
         // A width the chunk fold does not unroll folds one block at a time
         // whatever the request.
         let wide = binary_narrow_sense(10, 0b100_0000_1001, 61);
-        assert_eq!(clmul_fold_accumulators(BlockCode::redundancy(&wide)), None);
         assert_eq!(
-            fold_accumulators_for(BlockCode::redundancy(&wide), NonZeroUsize::new(8)),
+            clmul_fold_accumulators(BlockCode::redundancy(&wide), wide.k()),
+            0
+        );
+        assert_eq!(
+            fold_accumulators_for(BlockCode::redundancy(&wide), wide.k(), Some(8)),
             0
         );
     }
@@ -4071,7 +4137,7 @@ mod tests {
         let structural = fold_run_shape(&registers).expect("a prepared fold");
         let selectors = STRUCTURAL_SELECTORS
             .clone()
-            .with_clmul_fold_accumulators(NonZeroUsize::new(5).expect("positive"))
+            .with_clmul_fold_accumulators(5)
             .with_clmul_fold_run_blocks(NonZeroUsize::new(11).expect("positive"));
         BitVec::reset_family(EncodeFamily::ClmulFold, &plan, &selectors, &mut registers);
         assert_eq!(fold_run_shape(&registers), Some((5, 15)));
@@ -4084,13 +4150,91 @@ mod tests {
         assert_eq!(fold_run_shape(&registers), Some(structural));
     }
 
+    /// Codewords under `selectors`' fold preparation, with the accumulator
+    /// count it prepared.
+    fn fold_batch_under(
+        plan: &SystematicPlan<'_, Fp<2>>,
+        selectors: &EncodeSelectors,
+        messages: &[BitVec],
+    ) -> (usize, Vec<BitVec>) {
+        let mut registers = BitVec::registers(plan);
+        BitVec::reset_family(EncodeFamily::ClmulFold, plan, selectors, &mut registers);
+        let accumulators = fold_run_shape(&registers).expect("a prepared fold").0;
+        let codewords = messages
+            .iter()
+            .map(|message| {
+                let mut codeword = BitVec::ones(plan.length());
+                BitVec::encode_systematic_family(
+                    EncodeFamily::ClmulFold,
+                    plan,
+                    message,
+                    &mut registers,
+                    &mut codeword,
+                )
+                .expect("prepared registers encode a k-bit message");
+                codeword
+            })
+            .collect();
+        (accumulators, codewords)
+    }
+
+    #[test]
+    fn a_message_shorter_than_one_chunk_takes_the_block_fold() {
+        // B1, BCH(15, 5), and B2, BCH(127, 64): one message block each,
+        // fewer than the W + 1 accumulators any chunk holds.
+        let codes = [
+            binary_narrow_sense(4, 0b10011, 7),
+            binary_narrow_sense(7, 0b10000011, 21),
+        ];
+        for forced in [false, true] {
+            let restore = force_scalar_encode_kernels(forced);
+            for code in &codes {
+                for &layout in LAYOUTS {
+                    let plan = code.systematic_plan(layout);
+                    let chunk = fold_chunk_accumulators(plan.redundancy())
+                        .expect("the chunk fold unrolls this width")
+                        .get();
+                    assert!(plan.dimension().div_ceil(64) < chunk);
+                    let messages = seeded_bit_batch(code.k(), 65, plan.redundancy() as u64 + 11);
+                    let (structural, structural_bytes) =
+                        fold_batch_under(&plan, STRUCTURAL_SELECTORS, &messages);
+                    let zero = STRUCTURAL_SELECTORS.clone().with_clmul_fold_accumulators(0);
+                    let (zero_count, zero_bytes) = fold_batch_under(&plan, &zero, &messages);
+                    let forced_chunk = STRUCTURAL_SELECTORS
+                        .clone()
+                        .with_clmul_fold_accumulators(chunk);
+                    let (chunk_count, chunk_bytes) =
+                        fold_batch_under(&plan, &forced_chunk, &messages);
+                    let context = format!(
+                        "n = {}, {layout:?}, {} kernels",
+                        code.n(),
+                        selected_encode_kernels()
+                    );
+                    assert_eq!(
+                        (structural, zero_count, chunk_count),
+                        (0, 0, chunk),
+                        "{context}"
+                    );
+                    assert_eq!(structural_bytes, chunk_bytes, "{context}");
+                    assert_eq!(zero_bytes, chunk_bytes, "{context}");
+                    assert_eq!(
+                        chunk_bytes,
+                        bit_serial_batch(code, &messages, layout),
+                        "{context}"
+                    );
+                }
+            }
+            force_scalar_encode_kernels(restore);
+        }
+    }
+
     #[test]
     fn the_default_fold_run_is_the_whole_message() {
         let code = binary_narrow_sense(7, 0b10000011, 21);
         let layout = SystematicLayout::default();
         let plan = code.systematic_plan(layout);
         let registers = BitVec::registers(&plan);
-        let chunk = fold_accumulators_for(plan.redundancy(), None).max(1);
+        let chunk = fold_accumulators_for(plan.redundancy(), plan.dimension(), None).max(1);
         assert_eq!(
             registers.fold[2] as usize,
             plan.dimension().div_ceil(64).next_multiple_of(chunk)
