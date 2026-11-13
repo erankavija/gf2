@@ -214,7 +214,7 @@ impl Recheck {
 }
 
 enum Decoder {
-    Flooding(LdpcDecoder, usize),
+    Flooding(Box<LdpcDecoder>, usize),
     Layered(Box<LayeredDecoder>, usize),
 }
 
@@ -230,20 +230,23 @@ impl Decoder {
         match spec {
             Spec::Flooding { alpha, cap } => {
                 let config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(alpha), true);
-                Self::Flooding(LdpcDecoder::with_config(code.clone(), config), cap)
+                Self::Flooding(
+                    Box::new(LdpcDecoder::with_config(code.clone(), config)),
+                    cap,
+                )
             }
             Spec::FloodingSpa { cap } => {
                 let config = DecoderConfig::new(DecoderAlgorithm::SumProduct, true);
-                Self::Flooding(LdpcDecoder::with_config(code.clone(), config), cap)
+                Self::Flooding(
+                    Box::new(LdpcDecoder::with_config(code.clone(), config)),
+                    cap,
+                )
             }
             Spec::Layered { cap, .. } => {
                 let config = spec.layered_config().expect("a layered spec");
-                Self::Layered(
-                    Box::new(
-                        LayeredDecoder::new(code, config).expect("DVB-T2 retains QC structure"),
-                    ),
-                    cap,
-                )
+                let decoder =
+                    LayeredDecoder::new(code, config).expect("DVB-T2 retains QC structure");
+                Self::Layered(Box::new(decoder), cap)
             }
         }
     }
@@ -283,7 +286,9 @@ impl Decoder {
     }
 }
 
-/// The 95% Wilson score interval of `errors` successes in `frames` trials.
+/// The 95% Wilson score interval of `errors` successes in `frames` trials;
+/// its ends are exactly 0 at no errors and 1 at all errors, where rounding
+/// would leave them a few ulps off.
 fn wilson95(errors: usize, frames: usize) -> (f64, f64) {
     let n = frames as f64;
     let p = errors as f64 / n;
@@ -291,10 +296,17 @@ fn wilson95(errors: usize, frames: usize) -> (f64, f64) {
     let centre = p + z2 / (2.0 * n);
     let half = Z95 * (p * (1.0 - p) / n + z2 / (4.0 * n * n)).sqrt();
     let denominator = 1.0 + z2 / n;
-    (
-        ((centre - half) / denominator).max(0.0),
-        ((centre + half) / denominator).min(1.0),
-    )
+    let low = if errors == 0 {
+        0.0
+    } else {
+        (centre - half) / denominator
+    };
+    let high = if errors == frames {
+        1.0
+    } else {
+        (centre + half) / denominator
+    };
+    (low, high)
 }
 
 #[derive(Default, Clone, Copy)]
@@ -643,6 +655,8 @@ mod tests {
     fn wilson_interval_bounds_zero_and_matches_a_hand_value() {
         let (low, high) = wilson95(0, 5000);
         assert_eq!(low, 0.0);
+        assert_eq!(wilson95(0, 256_000).0, 0.0);
+        assert_eq!(wilson95(7, 7).1, 1.0);
         assert!((high - 7.677e-4).abs() < 1e-6, "{high}");
         // 10 of 100: (0.0552, 0.1744) to four places.
         let (low, high) = wilson95(10, 100);

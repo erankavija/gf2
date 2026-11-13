@@ -160,6 +160,9 @@ and output records; its first output line gives the executable's SHA-256 and
 the effective arguments, seed included.
 [dvb-t2-r12-diagnosis.sh](dvb-t2-r12-diagnosis.sh) holds every run of that
 issue, with its seeds and frame counts, as named steps; the AFF3CT 4.7.0
-(`@/citation/Cassagne2019`) steps decode the same code from AFF3CT's own
-DVB-S2 tables (`--enc-type LDPC_DVBS2`) or from the exported AList. Each step
-writes a log with host, CPU list, load and executable digests under `target/`.
+(`@/citation/Cassagne2019`) steps decode through the parity-check matrix
+AFF3CT builds from its own DVB-S2 tables (`--enc-type LDPC_DVBS2`) or
+through the exported AList. Each step
+writes a log with host, CPU list, load and executable digests under `target/`;
+[dvb-t2-r12-tables.py](dvb-t2-r12-tables.py) projects those logs into tables
+whose rows name their log lines, with 95% Wilson score intervals.
