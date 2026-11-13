@@ -66,10 +66,13 @@ aff() {
     shift 4
     local code=(--enc-type LDPC_DVBS2)
     [[ $enc == AZCW ]] && code=(--enc-type AZCW --dec-h-path "$out/dvb_t2_r12.alist")
-    run "$(aff3ct)" -C LDPC "${code[@]}" -N 64800 -K 32400 -E EBN0 \
-        -m "$ebn0" -M "$(python3 -c "print($ebn0 + 0.001)")" -s 1 -n "$frames" \
-        -e 100000000 -t "$workers" --sim-seed "$seed" --ter-freq 0 "$@" 2>&1 |
-        grep -v '^#' | grep -E '\|\||^\(EE\)|^\(WW\)'
+    local command=("$(aff3ct)" -C LDPC "${code[@]}" -N 64800 -K 32400 -E EBN0
+        -m "$ebn0" -M "$(python3 -c "print($ebn0 + 0.001)")" -s 1 -n "$frames"
+        -e 100000000 -t "$workers" --sim-seed "$seed" --ter-freq 0 "$@")
+    echo "COMMAND taskset -c $cpus ${command[*]}"
+    # The result row is the last row of the progress display.
+    taskset -c "$cpus" "${command[@]}" 2>&1 | tr '\r' '\n' |
+        grep -E '^\(EE\)|\|\|' | grep -v '^#' | tail -n 1
 }
 
 step() {
