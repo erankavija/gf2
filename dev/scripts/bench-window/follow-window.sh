@@ -17,7 +17,6 @@ repo=$(git -C "$here" rev-parse --show-toplevel) || exit 1
 state="${GF2_WINDOW_STATE:-$repo/.agents/bench-window}"
 log="$state/window.log"
 queue="$here/queue.tsv"
-# Status word of the latest window in the log.
 window_status() {
     local last
     last=$(grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z window (start( |$)|end$)' "$log" 2>/dev/null | tail -1)
