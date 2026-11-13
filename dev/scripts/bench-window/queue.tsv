@@ -2,8 +2,8 @@
 # Single-core lines run first, before the multi-worker jobs leave a load tail.
 # a6039c72 REQ-03: GF(2^8) region axpy and square products against ISA-L and M4RIE on core 8 after the overlapping-edge axpy and aligned-operand product fixes; est_minutes is an estimate from the c9cb0dd2 line
 a6039c72	.agents/worktrees/jit-a6039c72-run	5	GF256_BASELINE_PREFIX="$GF2_EXT_ROOT/6c6b09b1/prefix" GF256_BASELINE_CORE=8 bash experiments/gf256-baselines/run.sh
-# 67194d70 new pre-draw validation; ROCM_PATH is set because the window's systemd environment lacks it and hipcc then omits the ROCm include directory; est_minutes is an estimate from the September run over the same anchors
-67194d70	.agents/worktrees/agent-67194d70	20	ROCM_PATH=/opt/rocm bash experiments/permanent-statistics/validation-window.sh
+# 67194d70 new pre-draw validation; the run worktree carries the hipcc --rocm-path fix, so the line runs under the window's systemd environment; est_minutes is an estimate from the September run over the same anchors
+67194d70	.agents/worktrees/jit-67194d70-run	20	bash experiments/permanent-statistics/validation-window.sh
 # de311215 gf2 routes against AFF3CT NMS configurations on the recorded DVB-T2 and NR bundles; inputs and the AFF3CT tree are host-local under $GF2_EXT_ROOT; est_minutes is an estimate
 de311215	.agents/worktrees/agent-de311215	60	GF2_AFF3CT_ROOT="$GF2_EXT_ROOT/c077a88b/aff3ct" GF2_LDPC_BUNDLES="$GF2_EXT_ROOT/c077a88b/inputs" bash experiments/aff3ct-ldpc-gaps/quick-compare.sh
 # de311215 perf profiles of the gf2 QC and layered routes at w1-b1, w1-b16 and w12-b16; est_minutes is an estimate
