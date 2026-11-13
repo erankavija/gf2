@@ -60,7 +60,7 @@ Recorded commit IDs in receipts and tracker text are not rewritten. `@/inv/campa
 
 ## Phase C: separate experiments
 
-Create as tasks under `b8206228`, labelled `epic:permanent-statistics`, each with `cargo-ci` and `code-review`. Amend 45ecf975 to match, including REQ-04's "committed receipts keep verifying", and make it the umbrella.
+Create as tasks under `b8206228`, labelled `epic:permanent-statistics`, each with `cargo-ci` and `code-review`. Amend 45ecf975 to match, replacing REQ-04's "committed receipts keep verifying" with receipts written outside the tracked tree verifying from the location and digest the issue records, and make it the umbrella.
 
 | Task | Content | Worker |
 |---|---|---|
@@ -91,4 +91,4 @@ Review: alternate Claude and Codex, with `gpt-6-astra` read-only as independent 
 
 - A: `git ls-files | wc -l` and tracked size against recorded numbers. Fixture commits show each hook and CI check refusing oversized files, `inputs/producing/`, and a tree-budget overrun. Full `cargo-ci`, `jit validate`.
 - B: rehearsal checks repeated after the push. Fresh clone size reported. Backup bundle passes `git bundle verify`.
-- C: `git grep -n permanent_campaign -- crates` empty. No `experiments/` dependency in any `crates/*/Cargo.toml`. Library code count compared to the earlier 106,454. Full `cargo-ci`. New validation receipt verified by the new tool on a real run, with a test that verifies the committed receipt, a gap in today's suite.
+- C: `git grep -n permanent_campaign -- crates` empty. No `experiments/` dependency in any `crates/*/Cargo.toml`. Library code count compared to the earlier 106,454. Full `cargo-ci`. New validation receipt verified by the new tool on a real run, with a test that verifies a validation record generated at test time, the run record written outside the tracked tree and its location and digest recorded in the issue, a gap in today's suite.

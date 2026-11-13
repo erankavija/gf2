@@ -59,7 +59,7 @@ composes with, the AVX2-versus-scalar fallback REQ-13 covers.
   the shared BCH property suite with nonbinary construction coverage.
 - Prerequisite `88ca7d2f` (BCH throughput benchmarks) likewise expands to
   cover the external-baseline survey, large-batch encoding, generator-matrix
-  materialization, and SOTA comparison receipts held outside the tracked tree.
+  materialization, and SOTA comparison receipts written outside the tracked tree and recorded in the issue by location and digest.
 
 Neither prerequisite has been amended yet; the expansions land as issue
 updates during or after breakdown, once the canonical interfaces they target

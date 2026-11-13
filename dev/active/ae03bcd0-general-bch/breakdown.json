@@ -2256,7 +2256,7 @@
    "conformance-suites"
   ],
   "planning": {
-   "outcome": "Receipts held outside the tree show non-regression, determinism, fallback coverage, and the SOTA comparison",
+   "outcome": "Receipts, written outside the tracked tree and recorded in the issue by location and digest, show non-regression, determinism, fallback coverage, and the SOTA comparison",
    "contract_refs": [
     "evidence-protocol",
     "workload-selection"
