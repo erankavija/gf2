@@ -39,7 +39,29 @@ backticks, resolves through that target when their base names match. A
 mismatched file-name label faults; the target is checked independently.
 
 An invariant citation `@/inv/<id>` or `@/invariant/<id>` must name an
-invariant of `.jit/invariants.toml`.
+identifier of the projection between the `jit:invariants` markers of
+`AGENTS.md`, with or without the tracker store.
+
+A tracker reference is a path under `.jit/` named in text. The data root is
+`JIT_DATA_DIR` when set, otherwise `.jit` under the repository root, and the
+store is mounted when the data root holds `index.json`. The files of the store
+are the tracked and the untracked unignored files of the git repository that
+contains the data root, whether that is the code repository or the store's own.
+With the store mounted a tracker reference must name one of them or a path the
+ignore rules of the store's repository cover; the code repository's ignore
+rules excuse no tracker reference. Without a store, as on a fresh clone or a
+CI runner, tracker references pass and the checker prints how many it left
+unchecked; every other check runs.
+
+When the data root is `.jit` under the repository root, the files of the store
+are scanned as `.jit/` paths, so issue records and archive records are checked
+under their exception entries whichever repository tracks them. When the data
+root lies elsewhere, as for a linked worktree sharing the primary checkout's
+store, that prose is written against other branches: issue records and archive
+records are skipped with a printed count. In an issue record a document link
+pinned to a commit resolves in that commit's tree; an unpinned link, a
+document asset and a path of the prose resolve in the checkout or in the tree
+of a local branch head, which all checkouts of the host share.
 
 Every exception is an entry of `reference-exceptions.toml` beside this script,
 with its reason; `path` is a glob or a list of globs. An entry with `planned`
@@ -49,7 +71,8 @@ itself; it lets a closed issue's prose name evidence and invariants the tree no
 longer holds. The code holds two limits of its own. A file over
 `MAX_TEXT_BYTES` (4 MiB) is not read, since no tracked text file approaches
 it. A fault whose target git ignores is run output and passes, except a bare
-evidence name, which has no location for the ignore rules to match.
+evidence name, which has no location for the ignore rules to match; a tracker
+reference answers to the ignore rules of the store's repository.
 """
 
 from __future__ import annotations
@@ -58,6 +81,7 @@ import argparse
 import ast
 import fnmatch
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -115,7 +139,13 @@ MARKDOWN_FILE_LINK = re.compile(
 DATA_PROSE = re.compile(r"(?:dev|experiments)/.*\.json$")
 DATA_FILE_NAME = re.compile(rf"\.(?:{FILE_EXTENSIONS})$")
 INVARIANT = re.compile(r"@/(?:inv|invariant)/([\w-]+)")
-INVARIANTS = ".jit/invariants.toml"
+INVARIANT_PROJECTION = "AGENTS.md"
+PROJECTION = re.compile(r"<!-- jit:invariants:begin -->(.*?)<!-- jit:invariants:end -->", re.DOTALL)
+PROJECTED_ID = re.compile(r"^- \*\*([\w-]+)\*\*", re.MULTILINE)
+STORE = ".jit"
+STORE_INDEX = "index.json"
+# Issue records and archive records: the prose a shared store holds for every branch.
+STORE_RECORD = re.compile(r"\.jit/(?:issues/[^/]+\.json|archive-evidence/.+)$")
 TARGET_DIR = re.compile(r"(?<![\w.-])target/")
 WRITER_SUFFIXES = (".rs", ".py", ".sh", ".c", ".cpp", ".h", ".hip")
 # A string literal whose last path component is a file name.
@@ -368,24 +398,43 @@ def issue_faults(
     written: frozenset[str] = frozenset(),
     invariants: frozenset[str] | None = None,
     history: bool = False,
+    trees: Trees | None = None,
 ) -> list[str]:
     """An issue's references resolve from the repository root; its links must exist.
 
     A link is a document entry's `path` and the `resolved_path` of each of its
     non-external assets; git-ignored build output such as `target/doc` passes.
+    With `trees`, a link pinned to a commit resolves in that commit's tree, and
+    an unpinned link or a path of the prose also in a local branch head's tree.
 
     `history` skips the evidence-name and invariant checks of its prose.
     """
     issue = json.loads(text)
     prose = "\n".join(filter(None, [issue.get("description"), issue.get("context") if isinstance(issue.get("context"), str) else None]))
-    faults = faults_in(
-        path, prose, known, base="", evidence=not history, written=written, invariants=invariants
-    )
-    faults += [
-        f"{path}:0: {document['path']}"
-        for document in issue.get("documents", [])
-        if document["path"] not in known
+    faults = [
+        fault
+        for fault in faults_in(
+            path, prose, known, base="", evidence=not history, written=written, invariants=invariants
+        )
+        if trees is None
+        or (target := fault.rsplit(": ", 1)[1]).startswith("@/")
+        or target == "host-local path"
+        or not trees.on_branch(target)
     ]
+
+    def resolves(target: str, commit: str | None) -> bool:
+        if trees is None:
+            return target in known
+        return target in known or trees.on_branch(target) or bool(commit and trees.holds([commit], target))
+
+    for document in issue.get("documents", []):
+        commit = document.get("commit")
+        if trees is not None and commit:
+            linked = trees.holds([commit], document["path"])
+        else:
+            linked = resolves(document["path"], None)
+        if not linked:
+            faults.append(f"{path}:0: {document['path']}")
     # Every local link a document entry carries: its scanned assets, local,
     # directory or missing; an external asset is a URL.
     faults += [
@@ -395,9 +444,39 @@ def issue_faults(
         if asset.get("asset_type") != "external"
         and (target := str(asset.get("resolved_path", "")).rstrip("/"))
         and not TEMPLATE.search(target)
-        and target not in known
+        and not resolves(target, document.get("commit"))
     ]
     return faults
+
+
+class Trees:
+    """Path lookups in commit trees of the git objects every checkout shares."""
+
+    def __init__(self, root: Path):
+        self.root = root
+        self._heads: list[str] | None = None
+        self._branch: dict[str, bool] = {}
+
+    def holds(self, revisions: list[str], target: str) -> bool:
+        """Whether the tree of any of `revisions` holds `target`."""
+        target = "/".join(_normal(target))
+        if not revisions or target == ".":
+            return False
+        lines = subprocess.run(
+            ["git", "-C", str(self.root), "cat-file", "--batch-check"],
+            input="".join(f"{revision}:{target}\n" for revision in revisions),
+            check=True, capture_output=True, text=True,
+        ).stdout.splitlines()
+        # A present object prints its size last; a missing one `missing`.
+        return any(line.rsplit(" ", 1)[-1].isdigit() for line in lines)
+
+    def on_branch(self, target: str) -> bool:
+        if self._heads is None:
+            refs = git(self.root, "for-each-ref", "--format=%(objectname)", "refs/heads")
+            self._heads = sorted(set(refs.split()))
+        if target not in self._branch:
+            self._branch[target] = self.holds(self._heads, target)
+        return self._branch[target]
 
 
 def _evidence_kind(name: str) -> bool:
@@ -787,11 +866,69 @@ def removed_paths(root: Path) -> frozenset[str]:
     return frozenset(resolvable_set([path for path in deleted if path]))
 
 
-def invariant_ids(root: Path) -> frozenset[str] | None:
-    config = root / INVARIANTS
-    if not config.exists():
-        return None
-    return frozenset(entry["id"] for entry in tomllib.loads(config.read_text())["invariants"])
+def invariant_ids(root: Path) -> frozenset[str]:
+    """Identifiers of the invariant projection between the `jit:invariants` markers."""
+    file = root / INVARIANT_PROJECTION
+    text = file.read_text() if file.is_file() else ""
+    return frozenset(name for block in PROJECTION.findall(text) for name in PROJECTED_ID.findall(block))
+
+
+def data_root(root: Path, environ=os.environ) -> Path:
+    """`JIT_DATA_DIR` when set, otherwise `.jit` under the repository root."""
+    value = environ.get("JIT_DATA_DIR")
+    return Path(value).absolute() if value else root / STORE
+
+
+def _tracker(target: str) -> bool:
+    return target == STORE or target.startswith(STORE + "/")
+
+
+class Store:
+    """The files of the store at a data root and its repository's ignore rules.
+
+    Its files are the tracked and the untracked unignored files, under the data
+    root, of the git repository that contains it; outside any repository, every
+    file under the data root.
+    """
+
+    def __init__(self, data: Path):
+        self.mounted = (data / STORE_INDEX).is_file()
+        self.top: Path | None = None
+        self.prefix = ""
+        self.files: list[str] = []
+        if not self.mounted:
+            return
+        try:
+            self.top = Path(git(data, "rev-parse", "--show-toplevel").strip())
+        except subprocess.CalledProcessError:
+            self.files = sorted(str(p.relative_to(data)) for p in data.rglob("*") if p.is_file())
+            return
+        prefix = os.path.relpath(data.resolve(), self.top.resolve())
+        self.prefix = "" if prefix == "." else prefix + "/"
+        listed = git(
+            self.top, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", prefix
+        ).split("\0")[:-1]
+        self.files = [p[len(self.prefix):] for p in dict.fromkeys(listed) if p.startswith(self.prefix)]
+
+    def ignored(self, target: str) -> bool:
+        """Whether the store's repository ignores the tracker reference `target`."""
+        return self.top is not None and target != STORE and ignored(
+            self.top, self.prefix + target[len(STORE) + 1:]
+        )
+
+
+class Unchecked(set):
+    """Known paths with every tracker reference passing; `tracker` records them."""
+
+    def __init__(self, known: set[str]):
+        super().__init__(known)
+        self.tracker: set[str] = set()
+
+    def __contains__(self, target) -> bool:
+        if isinstance(target, str) and _tracker(target):
+            self.tracker.add(target)
+            return True
+        return super().__contains__(target)
 
 
 def history(root: Path, path: str, exceptions: list[dict[str, str]]) -> bool:
@@ -830,9 +967,10 @@ def scan(
     written: frozenset[str] = frozenset(),
     invariants: frozenset[str] | None = None,
     is_history: bool = False,
+    trees: Trees | None = None,
 ) -> list[str]:
     if fnmatch.fnmatch(path, ".jit/issues/*.json"):
-        return issue_faults(path, text, known, written, invariants, is_history)
+        return issue_faults(path, text, known, written, invariants, is_history, trees)
     faults = faults_in(path, text, known, written=written, invariants=invariants)
     if path.endswith(DATA_SUFFIXES):
         faults += [
@@ -841,16 +979,35 @@ def scan(
     return faults
 
 
-def check(root: Path) -> list[str]:
+def check(root: Path, data: Path | None = None, notes: list[str] | None = None) -> list[str]:
+    """Faults of the checkout at `root` with the store at the data root `data`.
+
+    `notes` receives the counts of what the checker left unchecked.
+    """
+    data = root / STORE if data is None else data
+    notes = [] if notes is None else notes
+    store = Store(data)
+    local = data.absolute() == (root / STORE).absolute()
     tracked = git(root, "ls-files", "-z").split("\0")[:-1]
-    known = resolvable_set(tracked)
+    files = {path: root / path for path in tracked}
+    if store.mounted:
+        known = resolvable_set([p for p in tracked if not _tracker(p)] + [f"{STORE}/{p}" for p in store.files])
+        known.add(STORE)
+    else:
+        known = Unchecked(resolvable_set(tracked))
+    skipped = set()
+    if local and store.mounted:
+        files = {path: file for path, file in files.items() if not _tracker(path)}
+        files.update({f"{STORE}/{path}": data / path for path in store.files})
+    elif not local:
+        skipped = {path for path in [*files, *(f"{STORE}/{p}" for p in store.files)] if STORE_RECORD.match(path)}
+        files = {path: file for path, file in files.items() if path not in skipped}
     config = root / EXCEPTIONS
     configuration = tomllib.loads(config.read_text()) if config.exists() else {}
     exceptions = configuration.get('exception', [])
     helpers = configuration.get('writer_helpers', {})
     texts = {}
-    for path in tracked:
-        file = root / path
+    for path, file in files.items():
         if file.is_symlink() or not file.is_file():
             continue
         if file.stat().st_size > MAX_TEXT_BYTES:
@@ -862,16 +1019,22 @@ def check(root: Path) -> list[str]:
     written = written_names(texts, helpers)
     invariants = invariant_ids(root)
     removed = removed_paths(root)
+    trees = Trees(root)
     faults = writer_helper_faults(texts, helpers)
+
+    def is_ignored(target: str) -> bool:
+        # The code repository's rules never excuse a tracker reference.
+        return store.ignored(target) if _tracker(target) else ignored(root, target)
     for path, text in texts.items():
         found = scan(
             path,
             text,
             known,
-            lambda target: ignored(root, target),
+            is_ignored,
             written,
             invariants,
             fnmatch.fnmatch(path, ".jit/issues/*.json") and history(root, path, exceptions),
+            trees,
         )
         # A bare evidence name has no location, so git's ignore rules do not
         # excuse it; any other bare name git ignores is run output.
@@ -881,9 +1044,19 @@ def check(root: Path) -> list[str]:
             and not (
                 not (target := fault.rsplit(": ", 1)[1]).startswith("@/")
                 and ("/" in target or not _evidence_kind(target))
-                and ignored(root, target)
+                and is_ignored(target)
             )
         ]
+    if not store.mounted:
+        notes.append(
+            f"check-references: {len(known.tracker)} tracker reference(s) left unchecked: "
+            "no store index at the data root"
+        )
+    if skipped:
+        notes.append(
+            f"check-references: skipped the prose of {len(skipped)} issue and archive record(s): "
+            "the data root lies outside the checkout"
+        )
     return faults
 
 
@@ -1089,7 +1262,8 @@ def self_test() -> None:
         (root / ".jit/issues/f.json").write_text(json.dumps({"state": "done", "description": "see `unlisted.out`"}))
         (root / "notes").mkdir()
         (root / "notes/kept-receipt.md").write_text("")
-        (root / ".jit/invariants.toml").write_text('[[invariants]]\nid = "kept-rule"\n')
+        (root / "AGENTS.md").write_text(PROJECTION_TEXT.format(ids="- **kept-rule** — kept\n"))
+        (root / ".jit/index.json").write_text("{}")
         (root / "docs/invariants.md").write_text("`@/inv/kept-rule`, @/invariant/kept-rule, @/inv/gone-rule\n")
         (root / ".jit/issues/d.json").write_text(json.dumps({"state": "ready", "description": "@/invariant/gone-open"}))
         (root / ".jit/issues/e.json").write_text(json.dumps({"state": "done", "description": "@/inv/gone-closed"}))
@@ -1126,7 +1300,9 @@ def self_test() -> None:
         }))
         git(root, "add", ".")
         git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", "b", "--no-verify")
-        faults = check(root)
+        notes = []
+        faults = check(root, root / ".jit", notes)
+    assert not notes, notes
     assert any("bad-link.md" in f for f in faults), faults
     assert not any(f.endswith((": docs", ": dev/$template", "x.pdf")) for f in faults), faults
     assert sum("host-local" in f for f in faults) == 6, faults
@@ -1199,6 +1375,105 @@ def self_test() -> None:
         "dev/plan.json:1: absent_module.rs", "dev/plan.json:1: kept.sh", "dev/plan.json:1: gone.rs",
     ], faults
     assert not any("absent_outside.rs" in f for f in faults), faults
+    layout_self_test()
+
+
+PROJECTION_TEXT = "# Agents\n<!-- jit:invariants:begin -->\n{ids}<!-- jit:invariants:end -->\n"
+
+
+def _commit(root: Path, message: str) -> str:
+    git(root, "add", "-A")
+    git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", message, "--no-verify")
+    return git(root, "rev-parse", "HEAD").strip()
+
+
+def layout_self_test() -> None:
+    """The store tracked by its own repository, outside the root, and absent."""
+    references = (
+        "see .jit/issues/kept.json, .jit/absent.json and .jit/tmp/run.txt\n"
+        "@/inv/kept-rule and @/invariant/gone-rule\n"
+    )
+
+    def code(root: Path, ignore: str = "") -> None:
+        git(root, "init", "-q", "-b", "main")
+        (root / "docs").mkdir()
+        (root / "docs/refs.md").write_text(references)
+        (root / "AGENTS.md").write_text(PROJECTION_TEXT.format(ids="- **kept-rule** — kept\n"))
+        (root / ".gitignore").write_text(ignore)
+
+    def store(data: Path, issues: dict[str, dict]) -> None:
+        data.mkdir(parents=True, exist_ok=True)
+        git(data, "init", "-q", "-b", "main")
+        (data / "index.json").write_text("{}")
+        (data / ".gitignore").write_text("/tmp/\n")
+        (data / "issues").mkdir()
+        for name, issue in issues.items():
+            (data / f"issues/{name}.json").write_text(json.dumps(issue))
+        (data / "archive-evidence").mkdir()
+        (data / "archive-evidence/c.json").write_text(json.dumps({"source": "dev/archived-away.md"}))
+        _commit(data, "store")
+        # Untracked and unignored, so a file of the store.
+        (data / "issues/untracked.json").write_text(json.dumps({"state": "done"}))
+
+    with tempfile.TemporaryDirectory() as directory:
+        # The store in its own repository, mounted where the code ignores it.
+        root = Path(directory) / "own"
+        root.mkdir()
+        code(root, "/.jit/\n")
+        main = _commit(root, "main")
+        git(root, "checkout", "-q", "-b", "feature")
+        (root / "dev").mkdir()
+        (root / "dev/branch-only.md").write_text("")
+        feature = _commit(root, "feature")
+        git(root, "checkout", "-q", "main")
+        document = "dev/branch-only.md"
+        store(root / ".jit", {
+            "kept": {"state": "ready", "description": "names docs/missing.md and dev/branch-only.md"},
+            "pinned": {"state": "done", "documents": [{"path": document, "commit": feature}]},
+            "unpinned": {"state": "done", "documents": [{"path": document, "commit": None}]},
+            "stale-pin": {"state": "done", "documents": [{"path": document, "commit": main}]},
+            "nowhere": {"state": "done", "documents": [{"path": "dev/nowhere.md", "commit": None}]},
+        })
+        notes = []
+        faults = check(root, root / ".jit", notes)
+        assert sorted(faults) == sorted([
+            "docs/refs.md:1: .jit/absent.json",
+            "docs/refs.md:2: @/inv/gone-rule",
+            ".jit/issues/kept.json:1: docs/missing.md",
+            ".jit/issues/stale-pin.json:0: dev/branch-only.md",
+            ".jit/issues/nowhere.json:0: dev/nowhere.md",
+            ".jit/archive-evidence/c.json:1: dev/archived-away.md",
+        ]), faults
+        assert not notes, notes
+
+        # The store outside the root, named by the data root.
+        root = Path(directory) / "outside"
+        root.mkdir()
+        code(root)
+        (root / ".jit/issues").mkdir(parents=True)
+        (root / ".jit/issues/tracked.json").write_text(json.dumps({"description": "dev/gone.md"}))
+        _commit(root, "main")
+        data = Path(directory) / "shared/.jit"
+        store(data, {"kept": {"state": "ready", "description": "names docs/missing.md"}})
+        notes = []
+        faults = check(root, data, notes)
+        assert sorted(faults) == ["docs/refs.md:1: .jit/absent.json", "docs/refs.md:2: @/inv/gone-rule"], faults
+        assert notes == ["check-references: skipped the prose of 4 issue and archive record(s): "
+                         "the data root lies outside the checkout"], notes
+
+        # No store: tracker references pass and are counted.
+        root = Path(directory) / "bare"
+        root.mkdir()
+        code(root)
+        _commit(root, "main")
+        notes = []
+        faults = check(root, root / ".jit", notes)
+        assert faults == ["docs/refs.md:2: @/inv/gone-rule"], faults
+        assert notes == ["check-references: 3 tracker reference(s) left unchecked: "
+                         "no store index at the data root"], notes
+    root = Path("/checkout")
+    assert data_root(root, {}) == root / ".jit"
+    assert data_root(root, {"JIT_DATA_DIR": "/shared/.jit"}) == Path("/shared/.jit")
 
 
 def main() -> int:
@@ -1209,9 +1484,12 @@ def main() -> int:
         print("check-references: self-test ok")
         return 0
     root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel").strip())
-    faults = check(root)
+    notes = []
+    faults = check(root, data_root(root), notes)
     for fault in faults:
         print(fault)
+    for note in notes:
+        print(note)
     print(f"check-references: {len(faults)} fault(s)" if faults else "check-references: ok")
     return 1 if faults else 0
 
