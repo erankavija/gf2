@@ -81,6 +81,11 @@ The slow tier uses
 `cargo nextest run --workspace --all-features --release --profile slow --run-ignored ignored-only`
 and has a 600-second budget. Tests too heavy for that tier must self-gate on
 required host data or benchmark mode, or use the configured `slow-serial` group.
+Every nextest profile in the workspace and standalone `gf2-kernels-hip` crate
+inherits the `gpu-serial` group and its `scripts/nextest-gpu-lock.sh` wrapper.
+Device-opening workspace tests, ignored tests included, join that group; all
+standalone HIP crate tests join it. Each holds a host-wide lock while running: the wrapper runs
+flock `/tmp/gf2-gpu.lock` unless `GF2_GPU_LOCK` names another file. `cargo test` takes no lock.
 Do not widen a wall-clock assertion to accommodate a busy runner.
 
 ## Performance and research evidence

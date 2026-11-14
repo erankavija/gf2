@@ -134,7 +134,7 @@ theorem tail_succ (m : B[X]) {k j : ℕ} (hj : j < k) :
 /-- The full suffix carries the message coefficients below `k`. -/
 theorem coeff_tail_zero (m : B[X]) (k d : ℕ) :
     (tail m k 0).coeff d = if d < k then m.coeff d else 0 := by
-  simp only [tail, Nat.sub_zero, zero_add, finset_sum_coeff, coeff_C_mul_X_pow]
+  simp only [tail, Nat.sub_zero, zero_add, finsetSum_coeff, coeff_C_mul_X_pow]
   rw [Finset.sum_ite_eq]
   simp [Finset.mem_range]
 
@@ -410,7 +410,7 @@ def msgPoly (L : Layout) (n k : ℕ) (msg : ℕ → B) : B[X] :=
 /-- The coefficients of the message polynomial. -/
 theorem coeff_msgPoly (L : Layout) (n k : ℕ) (msg : ℕ → B) (d : ℕ) :
     (msgPoly L n k msg).coeff d = if d < k then msg (messageAt L n k d) else 0 := by
-  simp only [msgPoly, finset_sum_coeff, coeff_C_mul_X_pow]
+  simp only [msgPoly, finsetSum_coeff, coeff_C_mul_X_pow]
   rw [Finset.sum_ite_eq]
   simp [Finset.mem_range]
 

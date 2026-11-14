@@ -1,7 +1,7 @@
 # Handoff: Competitive benchmarking against Magma/Sage/AFF3CT (d77176e5), session 4
 
 **Date:** 2026-11-12
-**Prior handoffs:** `dev/active/d77176e5-competitive-benchmarking/handoff.md`, `dev/active/d77176e5-competitive-benchmarking/handoff-2.md`, `dev/active/d77176e5-competitive-benchmarking/handoff-3.md`, `dev/active/d77176e5-competitive-benchmarking/handoff-4.md`
+**Prior handoffs:** `dev/active/d77176e5-competitive-benchmarking/handoff-2.md`, `dev/active/d77176e5-competitive-benchmarking/handoff-3.md`, `dev/active/d77176e5-competitive-benchmarking/handoff-4.md`
 
 ## Current state
 

@@ -267,8 +267,7 @@ theorem packed5_add_word (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
          let f0 := f.1; let f1 := f.2.1
          let f2 := f.2.2.1; let f3 := f.2.2.2.1; let f4 := f.2.2.2.2
          (e0&&f4)||(e1&&f3)||(e2&&f2)||(e3&&f1)||(e4&&f0)) := by
-  refine ⟨_, rfl, ?_, ?_, ?_⟩ <;>
-    simp [selBool]
+  simp [selBool, lift, bind_ok]
 
 /-- §3.3 L14 sub-word: analogous for `sub_inherent`. -/
 theorem packed5_sub_word (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
@@ -301,8 +300,7 @@ theorem packed5_sub_word (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
          let f0 := f.1; let f1 := f.2.1
          let f2 := f.2.2.1; let f3 := f.2.2.2.1; let f4 := f.2.2.2.2
          (e0&&f1)||(e1&&f2)||(e2&&f3)||(e3&&f4)||(e4&&f0)) := by
-  refine ⟨_, rfl, ?_, ?_, ?_⟩ <;>
-    simp [selBool]
+  simp [selBool, lift, bind_ok]
 
 /-- §3.3 L15 mul-word: analogous for `mul_inherent`. -/
 theorem packed5_mul_word (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
@@ -335,8 +333,7 @@ theorem packed5_mul_word (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
          let f1 := f.2.1
          let f2 := f.2.2.1; let f3 := f.2.2.2.1; let f4 := f.2.2.2.2
          (e1&&f4)||(e2&&f2)||(e3&&f3)||(e4&&f1)) := by
-  refine ⟨_, rfl, ?_, ?_, ?_⟩ <;>
-    simp [selBool]
+  simp [selBool, lift, bind_ok]
 
 /-- §3.3 L16 neg-word: the extracted `neg_inherent ⟨b0,b1,b2⟩` reduces to
 `ok` of the permuted-selector plane expressions, lifted lane-wise. -/
@@ -353,15 +350,14 @@ theorem packed5_neg_word (b0 b1 b2 : Std.U64) (i : Fin 64) :
       r.b2.bv.getLsbD i =
         (let e := selBool (b0.bv.getLsbD i) (b1.bv.getLsbD i) (b2.bv.getLsbD i)
          e.2.1) := by
-  refine ⟨_, rfl, ?_, ?_, ?_⟩ <;>
-    simp [selBool]
+  simp [selBool, lift, bind_ok]
 
 /-! ## §3.4 Per-op `*_correct` theorems (against the Aeneas-extracted fn)
 
 The bridge between the Result-monad inherent wrapper and the per-lane
 `dec5` spec: `obtain` the word lemma (lane-lift of the exact composed
 circuit), `rw` the three plane equalities, then `exact` the §3.2 truth
-table. No `progress`/Result-monad branching is needed — the `Packed5`
+table. No `step`/Result-monad branching is needed — the `Packed5`
 circuits are `Result`-pure (pure bitwise, no error path). -/
 
 /-- §3.4 L17 add-correct: per-lane add correctness on the inherent
