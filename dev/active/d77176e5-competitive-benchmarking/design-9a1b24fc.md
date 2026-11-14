@@ -313,7 +313,7 @@ revision identifier. Generated search: 81 matching lines across 32 files.
 | Hit file | Decision |
 |---|---|
 | `.jit/events.jsonl`, `.jit/archive-evidence/` and `.jit/issues/` (13 files) | Keep as record: tracker configuration/evidence; unchanged. |
-| `dev/active/2caf738d-1-0/handoff-3.md` | Keep as record: steward handoff; unchanged. |
+| `dev/active/2caf738d-1-0/handoff-4.md` | Keep as record: steward handoff; unchanged. |
 | `dev/active/ae03bcd0-general-bch/breakdown.json` | Keep as record: manifest of accepted work. |
 | `dev/active/ae03bcd0-general-bch/handoff-8.md` | Keep as record: lead handoff and evidence decisions. |
 | `dev/active/ae03bcd0-general-bch/oracle/run.sh` | Keep as record producer: oracle receipt metadata, no comparison arm. |
