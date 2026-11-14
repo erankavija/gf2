@@ -481,10 +481,16 @@ impl BitVec {
 
     /// Mutable access to the backing words; discards the rank/select index.
     ///
-    /// Every mutation of `data` goes through this accessor.
+    /// Every mutation of `data` goes through this accessor. The slot is
+    /// written only when it holds an index: an unconditional `None` store is
+    /// built narrow and reloaded wide, which stalls store forwarding on every
+    /// writer.
     #[inline]
     fn words_mut(&mut self) -> &mut Vec<u64> {
-        *self.rank_select_index.get_mut().unwrap() = None;
+        let index = self.rank_select_index.get_mut().unwrap();
+        if index.is_some() {
+            *index = None;
+        }
         &mut self.data
     }
 
