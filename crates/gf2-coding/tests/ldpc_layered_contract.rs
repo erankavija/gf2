@@ -332,9 +332,9 @@ fn the_frame_scale_follows_the_llr_scale_and_the_cap_guard() {
                     .collect();
                 let mean = reference_mean(&llrs);
                 let limit = f32::from(config.channel_limit());
-                let guarded = |base: f32| {
+                let guarded = |base: f32, multiple: f32| {
                     if mean > 0.0 {
-                        base.min(limit / (2.0 * mean))
+                        base.min(limit / (multiple * mean))
                             .max(base.min(limit / FILLER_LLR))
                     } else {
                         base
@@ -342,15 +342,71 @@ fn the_frame_scale_follows_the_llr_scale_and_the_cap_guard() {
                 };
                 let natural = config.channel_scale();
                 let context = format!("{config:?} {magnitude} {len}");
-                assert_eq!(config.frame_scale(&llrs), guarded(natural), "{context}");
+                assert_eq!(
+                    config.frame_scale(&llrs),
+                    guarded(natural, 2.0),
+                    "{context}"
+                );
                 assert_eq!(fixed.frame_scale(&llrs), natural, "{context}");
                 assert_eq!(
                     halved.frame_scale(&llrs),
-                    guarded(2.0 * natural),
+                    guarded(2.0 * natural, 2.0),
                     "{context}"
                 );
+                for multiple in [0.5, 1.0, 3.5] {
+                    assert_eq!(
+                        config.with_guard_multiple(multiple).frame_scale(&llrs),
+                        guarded(natural, multiple),
+                        "{context} multiple {multiple}"
+                    );
+                }
             }
         }
+    }
+}
+
+/// The default guard multiple is 2: on BPSK AWGN frames of DVB-T2 rate 1/2
+/// and NR base graph 1, below and above the guard's onset, the frame scales
+/// of `dvb_t2` and `nr_5g` equal the multiple-2 formula bit for bit.
+#[test]
+fn the_default_guard_multiple_reproduces_the_multiple_two_scale() {
+    let cases = [
+        (
+            LayeredConfig::dvb_t2(),
+            LdpcCode::dvb_t2_short(CodeRate::Rate1_2),
+        ),
+        (
+            LayeredConfig::nr_5g(),
+            LdpcCode::from_quasi_cyclic(&QuasiCyclicLdpc::nr_5g(1, 384)),
+        ),
+    ];
+    for (config, code) in cases {
+        assert_eq!(config.guard_multiple(), 2.0);
+        assert_eq!(config.with_guard_multiple(2.0), config);
+        let limit = f32::from(config.channel_limit());
+        let base = config.channel_scale();
+        let mut rng = StdRng::seed_from_u64(0x2a5e);
+        let (mut engaged, mut idle) = (0, 0);
+        // The all-zero codeword's LLRs `2y/σ²`, `y = 1 + noise`, have mean
+        // magnitude near `2/σ²`.
+        for sigma in [2.0f64, 1.2, 0.9, 0.7, 0.6, 0.5, 0.4, 0.3] {
+            let channel = AwgnChannel::from_variance(sigma * sigma);
+            let gain = 2.0 / channel.variance();
+            let llrs: Vec<Llr> = (0..code.n())
+                .map(|_| Llr::new((gain * channel.transmit(1.0, &mut rng)) as f32))
+                .collect();
+            let expected = base
+                .min(limit / (2.0 * reference_mean(&llrs)))
+                .max(base.min(limit / FILLER_LLR));
+            let scale = config.frame_scale(&llrs);
+            assert_eq!(scale.to_bits(), expected.to_bits(), "{config:?} σ {sigma}");
+            if scale < base {
+                engaged += 1;
+            } else {
+                idle += 1;
+            }
+        }
+        assert!(engaged > 0 && idle > 0, "{config:?} {engaged} {idle}");
     }
 }
 
