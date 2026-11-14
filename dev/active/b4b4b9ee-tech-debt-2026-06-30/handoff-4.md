@@ -1,7 +1,7 @@
 # Handoff: Technical debt assessment remediation (2026-06-30) (b4b4b9ee), session 4
 
 **Date:** 2026-11-13
-**Prior handoffs:** `dev/active/b4b4b9ee-tech-debt-2026-06-30/handoff.md`, `dev/active/b4b4b9ee-tech-debt-2026-06-30/handoff-2.md`, `dev/active/b4b4b9ee-tech-debt-2026-06-30/handoff-3.md`
+**Prior handoffs:** retired; superseded history is in Git history.
 
 ## Current state
 
@@ -64,7 +64,32 @@
 - zsh parses `$VAR:c...` as a history modifier: write `${B}:crates/...`.
 - The permission classifier refused an acceptance-criterion edit relayed from another session; the steward made it in their session.
 - A test that only pins a prose string is a literal inventory under `@/inv/shared-test-contracts`; the Codex `9c0568ee` worker added one and the lead removed it.
-- Earlier traps still hold: copy gate runs to the main checkout before `--state done`; run cargo-ci before code-review; `.agents/upstream/` is not ignored.
+- Gate runs live in each worktree's ignored `.jit/gate-runs/`: after a merge, copy `.agents/worktrees/agent-<id>/.jit/gate-runs/<id>-*` into the main checkout before `jit issue update --state done`, or jit fails with "Failed to load gate runs".
+- Run cargo-ci before code-review; a review of code that then fails CI is wasted.
+- Do not stage under `.agents/upstream/`: it is not ignored; stage temporary material under ignored `.agents/scratch/`.
+- Do not mistake every cold-build test failure for a code defect. `protocol_contracts::acceptance_rejects_unrecorded_restarts_double_completions_and_abandoned_samples` failed twice just after merges, then passed warm; retain the failure output and confirm on a warm run before reworking it. If a test is killed even under the busy profile, capture `ps` and send it to the steward as ruled above.
+- Do not change main while a main-checkout cargo-ci gate is running; it judges the current tree. Wait for the gate or run on an immutable branch.
+- Do not let disk fill: worktrees grew 4–11 GB and main's target reached 36 GB; ENOSPC corrupted rustdoc output. Keep the disk watchdog running and reclaim merged worktrees promptly.
+- Do not seed or recreate the cache pool from existing worktrees. A stale `gf2-kernels-simd` artifact caused "cannot find m4rm"; delete each worktree's `target/` before reclaim so stale artifacts are not harvested.
+- Do not delete committed artifacts without a pin search. `dfb8820b` profiles were pinned by path and digest in checksum manifests and zen3 inputs; search `git grep -n <filename> -- dev` and update pins before removal.
+- Verify an issue's behavior against current code before dispatch. Reports included fast tests, unreachable branches, and paths removed by a rewrite; reproduce the premise and reject it with evidence when it no longer holds.
+- Reuse canonical test mechanisms instead of adding private duplicates: `0657c9fa` failed review for a private primitivity helper beside `Gf2mField::verify_primitive`; call the shared verifier.
+- Test named public behavior directly. `9600eb56` failed review because no test called `decode_soft`; exercise the named method itself.
+- Do not hand-copy API inventories into docs. `33057520` failed doc review for listing hash inputs; cite the API that owns the inventory.
+- Preserve hot-kernel code shape unless a measured indication supports changing it. `b2520e0f` replaced an unrolled fold with a loop, but timing could not be measured in a working session.
+- Keep follow-ups below the number of issues closed and fold small findings into the next issue touching that file; this is the invoker's rule.
+- Do not add or remove gates without the invoker's approval. An unasked `doc-review` addition to `f0228940` had to be removed.
+- Stop finished workers after their branch commit; a live background command caused the worker to resend its report on every wake.
+- Do not use `pgrep -f` in a compound command; the harness blocks it. Use `ps -eo comm,etimes,args`.
+- Keep merge subjects at or below 71 characters; one merge was redone. Check the subject length before landing.
+- In zsh, do not pass optional `--gate` through `${6:+--gate $6}`; it becomes one word and `jit issue create` rejects it. Build the argument list conditionally.
+- Do not edit a benchmark-window run worktree while its queue line is active. Editing `quick-compare.sh` made a job exit 2 and the next job profile dirty code; use a separate detached run worktree.
+- Keep builds out of benchmark windows. A 40 s clippy run overlapped NR w24-b16 cells and disturbed them; schedule builds outside the measurement interval.
+- Do not transcribe standard tables from memory or trust `pdftotext -layout`; it garbles columns. Confirm each value against the relevant PDF page.
+- After merging one branch that regenerates a shared generated file, rebase the next branch on main before merging. The old listings are gone, but the shared-file conflict pattern remains.
+- Do not assume `git merge` runs the pre-commit hook. A merge bypassed it and put main 43 bytes over the tracked-tree budget; run `python3 scripts/check-tracked-budget.py` after each merge.
+- Workers do not run `jit issue claim`; the lead claims on main. A worker claim left tracker edits in main and blocked lead merges.
+- Do not kill unrelated processes by PID; the permission classifier refused it. Stop only tasks this session started and pause workers by message.
 
 ## Open questions for the invoker
 

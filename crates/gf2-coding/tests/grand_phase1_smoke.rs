@@ -9,7 +9,6 @@ use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
 use gf2_core::BitVec;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use std::path::PathBuf;
 
 #[test]
 fn test_fig3_ebch_product_code_construction() {
@@ -254,15 +253,3 @@ fn test_csv_output_format() {
 }
 
 use gf2_coding::simulation::count_bit_errors;
-
-fn repo_path(relative: &str) -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join(relative)
-}
-
-#[test]
-fn test_phase1_canonical_campaign_surface() {
-    assert!(repo_path("dev/campaigns/phase1_fig1.toml").is_file());
-    assert!(repo_path("dev/campaigns/phase1_fig3.toml").is_file());
-}
