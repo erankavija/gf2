@@ -18,14 +18,14 @@ agent never silently crosses both roles.
   is a set of sub-strategic container ids; waves run in order, one at a time.
 - **`current_wave`** — the index of the wave to dispatch now, read from the
   container-level progress file (the steward's analogue of
-  `jit-execution-lead`'s `progress.json`).
+  `jit-execution-lead`'s `<artifact-dir>/progress.json`).
 - The steward's derived tiers (anchor, boundary) held from tier derivation, used
   only to confirm every id in the wave is a delegation-boundary container.
 
 ## Preconditions
 
 - The steward is on `main` with a clean working tree. A dispatch that isolates
-  concurrent leads (below) reuses `dispatch-worker-worktree.sh`, which
+  concurrent leads (below) reuses `.agents/skills/jit-execution-lead/scripts/dispatch-worker-worktree.sh`, which
   refuses a dirty or non-`main` tree; commit or stash the steward's own state
   first. If it cannot be made clean, stop (see Stop and escalate).
 - Every prior wave's container results are already on `main`. The next wave's
@@ -174,7 +174,7 @@ Stop and report to the invoker (the human when the steward runs standalone) when
 - The wave list is empty or a wave contains an id that is not a
   delegation-boundary container carrying the parent's membership label (the plan
   is corrupt or drifted).
-- `main` cannot be brought to a clean state for `dispatch-worker-worktree.sh`.
+- `main` cannot be brought to a clean state for `.agents/skills/jit-execution-lead/scripts/dispatch-worker-worktree.sh`.
 - The dispatch script fails its pre-flight (not on `main`, dirty tree, branch or
   worktree-path collision, or a worktree HEAD that does not equal `main` HEAD).
 - The leak check reports leaks that cannot be reconciled to a clean `main`.
@@ -185,8 +185,8 @@ Stop and report to the invoker (the human when the steward runs standalone) when
 
 ## Red flags
 
-- Copying, forking, or editing `dispatch-worker-worktree.sh` or
-  `check-leak-into-main.sh` instead of invoking the execution-lead's canonical
+- Copying, forking, or editing `.agents/skills/jit-execution-lead/scripts/dispatch-worker-worktree.sh` or
+  `.agents/skills/jit-execution-lead/scripts/check-leak-into-main.sh` instead of invoking the execution-lead's canonical
   copies in place. Verbatim reuse is the requirement.
 - Re-implementing breakdown, wave planning, or per-issue execution at the
   steward tier. Hand planning to `jit-planning-lead` and implementation to

@@ -418,6 +418,41 @@
       "reason": "Session-30 launch audit found no committed evidence for the frozen protocol's complete ten-anchor 1,024-matrix regeneration and 400,000-draw exact two-sided validation phase. Existing 44534b2f covers 4,096 draws with a Clopper-Pearson interval instead. All three campaign arms are wired behind this leaf.",
       "status": "ready",
       "note": "Session 33 preserved the five-terminal failed validation journal at 3fd2893b and merged the bit-exact JSON repair at 2e760af7. The timer ran; this was not a permission or scheduling failure. Integrated cargo-ci passed. The issue remains in_progress pending an owner-approved versioned continuation that truthfully records the old-producer/new-producer boundary without redrawing or overwriting any terminal."
+    },
+    {
+      "short_id": "93df507a",
+      "title": "Pass the resolved ROCm root to hipcc in the HIP build script",
+      "reason": "2026-11-13 window: validation build failed without ROCM_PATH",
+      "wave": "45ecf975 children",
+      "status": "done"
+    },
+    {
+      "short_id": "5f33fb28",
+      "title": "Remove tests that read measured tuning profiles",
+      "reason": "owner ruling 2026-11-13",
+      "wave": "45ecf975 children",
+      "status": "open"
+    },
+    {
+      "short_id": "66fefd9e",
+      "title": "Rewrite plan passages that commit receipts",
+      "reason": "owner ruling 2026-11-13",
+      "wave": "45ecf975 children",
+      "status": "open"
+    },
+    {
+      "short_id": "95077f84",
+      "title": "Converge the Rust repository-root mechanisms",
+      "reason": "convention-convergence condition from the 0fe85425 ruling",
+      "wave": "45ecf975 children",
+      "status": "open"
+    },
+    {
+      "short_id": "411e7267",
+      "title": "Write smoke-test expected vectors under target/",
+      "reason": "steward scope check 2026-11-13",
+      "wave": "45ecf975 children",
+      "status": "open"
     }
   ],
   "escalations": [
@@ -511,7 +546,7 @@
       ],
       "lead_recommendation": "Move it to archive. This was the recommendation at the first escalation and every round since has strengthened it; treating the amendment as sufficient was the lead's misjudgement.",
       "resolved_at": "2026-08-09T23:05:00Z",
-      "decision": "Owner ruled that the project does not yet perform manual archival and the manifest is simply excluded. The exclusion is recorded as a binding decision in issue 240b7618's description under \"Decision — the breakdown manifest is excluded\", explicitly not contingent on the file being frozen, matching any revision, or agreeing with the .jit/ store. Both READMEs were swept in the same change to drop every checkable claim about the file."
+      "decision": "Owner ruled that the project does not yet perform manual archival and the manifest is simply excluded. The exclusion is recorded as a binding decision in issue 240b7618's description under \"Decision \u2014 the breakdown manifest is excluded\", explicitly not contingent on the file being frozen, matching any revision, or agreeing with the .jit/ store. Both READMEs were swept in the same change to drop every checkable claim about the file."
     },
     {
       "issue": "047b62ed",
@@ -746,7 +781,7 @@
     },
     {
       "issue": "7a816262",
-      "reason": "research-review tier 2 (first methodology review of the freeze) returned VERDICT: FAIL. F1 (high, blocking): the backend-selection performance cohorts lack committed RNG provenance — premeasure ledger has no seed/RNG fields, frontier receipt lacks RNG implementation/version, and the standalone harness Cargo.lock is gitignored/unhashed, while these measurements determined all 63 frozen backend choices. F2 (medium, advisory): the gpu_hip native-row projection rule was fixed after dual-row measurements existed.",
+      "reason": "research-review tier 2 (first methodology review of the freeze) returned VERDICT: FAIL. F1 (high, blocking): the backend-selection performance cohorts lack committed RNG provenance \u2014 premeasure ledger has no seed/RNG fields, frontier receipt lacks RNG implementation/version, and the standalone harness Cargo.lock is gitignored/unhashed, while these measurements determined all 63 frozen backend choices. F2 (medium, advisory): the gpu_hip native-row projection rule was fixed after dual-row measurements existed.",
       "status": "approved",
       "requested_at": "2026-08-29T20:05:00+03:00",
       "resolved_at": "2026-08-29T20:06:00+03:00",
@@ -854,7 +889,9 @@
     "02b8137c": 2,
     "02b8137c_note": "Rework-1 fixed the reproduced q=5 one-ULP JSON publication drift with serde_json float_roundtrip and adoption/tamper regressions. Rework-2 closed the continuation review's four findings: canonical schema-v2 cutover, exact-SHA separation of historical evidence decoding from temporary execution admission, a fresh schema-v2 runtime-mismatch no-mutation regression, and on-disk rehash tests for both producer states and both terminal segments. Independent rereview passed and integrated cargo-ci passed. MAX is reached; any further readiness defect escalates.",
     "daef2dc3": 5,
-    "daef2dc3_note": "code-review failed at 46bdf2114, 0971a9ba6, c709110e5, ac89f1a07 and 87df671e5; stopped for the owner"
+    "daef2dc3_note": "code-review failed at 46bdf2114, 0971a9ba6, c709110e5, ac89f1a07 and 87df671e5; stopped for the owner",
+    "66fefd9e": 2,
+    "da6200b8": 1
   },
   "surfaced_pitfalls": [
     {
@@ -878,24 +915,24 @@
     "The more common cause of that same 300-second signature is not a cold rebuild: scripts/cargo-ci.sh re-execs itself under a blocking host-wide flock (XDG_RUNTIME_DIR/gf2-cargo-ci.lock), so a gate run started while any other cargo-ci is in flight spends its entire wrapper budget queued and is recorded as status error with no output and no check lines. Distinguish the two by the run record: a lock wait produces an empty stdout at the wrapper timeout. Workers in separate worktrees share this lock, so drain the queue before evaluating the gate rather than warming artefacts.",
     "Run cargo-ci before code-review for code-bearing leaves: the reviewer treats pending executable evidence as a procedural failure even when the implementation diff is otherwise reviewable.",
     "The documentation gate will not tolerate a planned temporary live-prose contradiction across a dependency edge: the dispatcher leaf must repair blocking crate README, benchmark-label, and example-header fallout before the broader downstream narrative sweep can become eligible.",
-    "breakdown.json in the epic's artefact directory copies the issue descriptions whose authoritative source is the .jit/ issue store, and reviewers read it as live prose: each entry's background paragraph states its pre-change condition, so it reads as false the moment that leaf lands. Five review rounds were burned on it. Every justification written for excluding it — frozen, historical, faithful to the store, snapshotted at a revision — became the next round's target, because each was a checkable claim the reviewer could and did falsify. Settled only when the owner recorded the exclusion as a decision in the issue description itself, explicitly not contingent on any property of the file. The lesson generalises: an exclusion defended by an assertion about the excluded thing invites verification of that assertion; an exclusion recorded as a decision does not. Do not edit the manifest and do not resynchronise it.",
+    "breakdown.json in the epic's artefact directory copies the issue descriptions whose authoritative source is the .jit/ issue store, and reviewers read it as live prose: each entry's background paragraph states its pre-change condition, so it reads as false the moment that leaf lands. Five review rounds were burned on it. Every justification written for excluding it \u2014 frozen, historical, faithful to the store, snapshotted at a revision \u2014 became the next round's target, because each was a checkable claim the reviewer could and did falsify. Settled only when the owner recorded the exclusion as a decision in the issue description itself, explicitly not contingent on any property of the file. The lesson generalises: an exclusion defended by an assertion about the excluded thing invites verification of that assertion; an exclusion recorded as a decision does not. Do not edit the manifest and do not resynchronise it.",
     "A recorded audit command is only as good as its pattern breadth. The round-one 240b7618 audit required the words public and dispatcher to be adjacent and searched two paths, so it returned a false all-clear over bare-symbol occurrences of the same claim living in studies. When a criterion asks for a recorded repository search, run the recorded command against the known-bad text before accepting it, and escape a literal token in the pattern so the command text cannot match itself.",
     "Prose the lead writes about a stale-framing sweep is itself swept. Two surfaced-pitfall entries in this file quoted the superseded claims verbatim and turned up as live occurrences in 240b7618's own audit. Describe a retired claim rather than reproducing it.",
     "A cargo-ci gate run reported 'Passed gate cargo-ci for issue 175972df' while persisting no record under .jit/gate-runs/, on a tree that the next identical invocation failed on clippy and that a direct cargo clippy run independently failed. Treat a gate pass with no corresponding run record as no evidence at all: after every jit gate evaluate, confirm the recorded status with jit gate status before acting on the verdict. The repository has a prior false-pass incident of a different mechanism recorded in scripts/cargo-ci.sh (jit issue 941d1528).",
     "jit keeps authoritative state in the shared .git/jit/ store and materialises it into whichever checkout a jit command runs from, so a worker's .jit/*.json and .jit/events.jsonl acquire modifications carrying other issues' gate transitions. A worker committing with git add -A sweeps the lead's state into its branch; one worker caught and reverted exactly that. Brief workers to stage explicit paths, and check every worker commit for .jit/ paths before merging.",
     "A worker's own worktree cargo-ci is not the gate. 175972df passed its worktree checks and failed clippy::assign_op_pattern on the merged tree, because clippy --workspace --all-targets with -D warnings over the combination is the only run that sees it. Gate after the merge, never instead of it.",
-    "Requiring a worker to falsify its tests — reinstate the defect and show the test turns red — is worth doing, but a falsification that does not reproduce the original defect byte-for-byte can go red for an unrelated reason and read as proof. On d36810e7 the reinstated code built the exemption prefix as components.join('/') plus a trailing slash, yielding '/', which no path matches, so everything refused; the real defect yielded '', which every path matches, so everything was exempt. The test failed for the opposite reason to the bug. Require the reinstated body to be diffed against the real pre-fix code, and ask which red was observed.",
+    "Requiring a worker to falsify its tests \u2014 reinstate the defect and show the test turns red \u2014 is worth doing, but a falsification that does not reproduce the original defect byte-for-byte can go red for an unrelated reason and read as proof. On d36810e7 the reinstated code built the exemption prefix as components.join('/') plus a trailing slash, yielding '/', which no path matches, so everything refused; the real defect yielded '', which every path matches, so everything was exempt. The test failed for the opposite reason to the bug. Require the reinstated body to be diffed against the real pre-fix code, and ask which red was observed.",
     "A test can be excused by a rule unrelated to its subject and pass with the behaviour it protects completely broken. d36810e7's derived-artefact exemption test wrote its file untracked, and the untracked rule excuses those regardless, so the test could not have detected a broken subtree exemption. When a test asserts an exemption, confirm the fixture actually reaches the code path being exempted.",
     {
       "issue": "e0251af3",
       "source": "research-review round 2 F3 (advisory)",
       "finding": "No committed artifact predating the results establishes the claimed preregistered cells, sample sizes, and stopping rule; the harness constants were committed together with the receipt.",
-      "disposition": "advisory; epic REQ-06 (preregistered rare-event estimator) names preregistration for the ASPIRATIONAL estimator issues 3f664839/6639435f/b05c908b — for those, require the design/constants commit to land and be linked BEFORE any estimating run, so this finding does not recur as a blocking one."
+      "disposition": "advisory; epic REQ-06 (preregistered rare-event estimator) names preregistration for the ASPIRATIONAL estimator issues 3f664839/6639435f/b05c908b \u2014 for those, require the design/constants commit to land and be linked BEFORE any estimating run, so this finding does not recur as a blocking one."
     },
     "The v1 F_3 receipts (commit 6eb364e9) and all campaign run 20260813T230032Z-1321576 raw evidence come from the pre-e31b1918 harness. After the rerun, supersede them per the standing rule: git rm superseded run evidence and re-point links in the same commit; reviewers reject evidence from a non-final tool revision.",
     "Gray-update isolate rows for wave-gf3/fold-gf3 in run 20260813T230032Z-1321576 alias the shipped gray_update_micro_kernel (field selected from q alone); do not cite them as prototype evidence anywhere downstream.",
     "RESOLVED 2026-08-14 (de5f7414): equivalence counts are now budgeted per (q,n) cell against the summed committed probe costs of that cell's measured CPU backends (240 s per-cell budget; only q=5,n=28 halves to 2). The general lesson stands: never derive a per-cell budget from one field's fastest backend; sum the participating backends' measured costs.",
-    "The runner's smoke outputs land under each campaign study's smoke/ directory; a new smoke run supersedes the smoke evidence linked on closed 2ddf2f4b — git rm the superseded evidence and re-point the jit doc links in the same commit.",
+    "The runner's smoke outputs land under each campaign study's smoke/ directory; a new smoke run supersedes the smoke evidence linked on closed 2ddf2f4b \u2014 git rm the superseded evidence and re-point the jit doc links in the same commit.",
     "The Ryser work-model projection is conservative (lands low) only on fixed-batch GPU chains; on probe-calibrated prototype chains it lands HIGH at large orders because batch size moves sharply between adjacent orders. Never treat a censored prototype cell's projection as a lower bound.",
     "Harness defects surfaced by the F_3 receipts and filed under the tech-debt umbrella 86b9c719: 3ea21d74 (grid CSV emits unquoted note columns; malformed rows per field-grid) and 79c5ace7 (host_submission_s carries two semantics across backend rows). Receipt tooling for F_5/F_7 must reuse the seed_root-anchored CSV split and the device-clock launch column, as the F_3 analysis does.",
     "Lead and worker sharing one checkout share one git index: the lead's `git add <paths> && git commit` commits ANYTHING the worker has staged, burying the worker's change in the lead's commit (happened to the 047b62ed receipts alignment; repaired by splitting unpushed HEAD, commits 2a5cda47 + 62c061c7). Before any lead commit while a worker is active on the same checkout, run `git diff --cached --stat` and abort if staged paths are not the lead's own; better, never run lead commits while a same-checkout worker is mid-task.",
@@ -926,7 +963,7 @@
     {
       "issue": "032cc754",
       "surfaced": "2026-08-20",
-      "finding": "backend.rs:9-17 states that permanent_bipedal3 dispatches internally to permanent_bipedal3_singleword_simd when the simd feature is active and AVX2 is detected. That is false at HEAD: permanent_bipedal3 (bipedal3.rs:178-197) branches only on n (<=63 singleword, else multiword), and permanent_bipedal3_singleword performs no SIMD dispatch — permanent_bipedal3_singleword_simd takes an explicit fns argument. The harness's own code is correct (it imports permanent_bipedal3_singleword directly); only the justifying prose is stale. Not filed as an issue per the owner's session-13 choice to hand off rather than run a defect-filing sweep; one jit issue create closes it.",
+      "finding": "backend.rs:9-17 states that permanent_bipedal3 dispatches internally to permanent_bipedal3_singleword_simd when the simd feature is active and AVX2 is detected. That is false at HEAD: permanent_bipedal3 (bipedal3.rs:178-197) branches only on n (<=63 singleword, else multiword), and permanent_bipedal3_singleword performs no SIMD dispatch \u2014 permanent_bipedal3_singleword_simd takes an explicit fns argument. The harness's own code is correct (it imports permanent_bipedal3_singleword directly); only the justifying prose is stale. Not filed as an issue per the owner's session-13 choice to hand off rather than run a defect-filing sweep; one jit issue create closes it.",
       "classification": "stale prose, no behavioural impact",
       "status": "FILED as 5deee377"
     },
@@ -945,7 +982,7 @@
     {
       "issue": "a39bb161",
       "source": "lead self-audit, session 13",
-      "finding": "The lead ran device work during the day — the gpu_dispatcher slow-profile suite and three short campaign hostcheck runs — before reading this file's owner directive of 2026-08-16 that simulations and bench/device measurement runs execute only after 02:00 local.",
+      "finding": "The lead ran device work during the day \u2014 the gpu_dispatcher slow-profile suite and three short campaign hostcheck runs \u2014 before reading this file's owner directive of 2026-08-16 that simulations and bench/device measurement runs execute only after 02:00 local.",
       "disposition": "Disclosed to the owner. All runs were correctness verification under ccx1-bench-flock.sh --full-host; no timing from them was committed or cited as a performance claim, and every artifact was deleted. The process miss is reading standing directives in progress.json BEFORE scheduling any device work, not after."
     },
     {
@@ -1001,7 +1038,7 @@
       "disposition": "Created and wired prerequisite ec22205e for a preregistered extension covering the 52 omitted cells; commit 2d6d9648. Interpolation is not accepted as measurement."
     },
     "ec22205e | research-review F4 (medium, advisory, PASS verdict): the v5 determinant-cost runner suppresses untracked files while Cargo.lock is gitignored and absent from the producing revision, and the receipt records rustc and cargo_profile but not the Cargo version or build argv, so the measured binary is identified by hash yet not reconstructible. The reviewer applied its convergence-across-rounds policy and did not block. Not an ec22205e REQ-03 violation (that criterion's 'compiler and build identity' is supplied by rustc, cargo_profile and binary_sha256). Reconcile before the epic holistic-review gate; note that CampaignManifest.provenance already carries deps_source_revision and deps_source_dirty, so the campaign's own reproducibility path does not inherit the gap.",
-        "7a816262 | research-review Tier 1 check 3 is issue-scope-blind: it greps the whole gate context for cites:<key>, and the context embeds dependency labels but only dependency titles. Any issue whose dependency owns a cites: label that is not bracketed in the combined context fails deterministically, before the AI review runs. Contrast a82f2dd9, which owned its cites:Yue2022 label and so failed genuinely. Repo-wide condition, not specific to this epic.",
+    "7a816262 | research-review Tier 1 check 3 is issue-scope-blind: it greps the whole gate context for cites:<key>, and the context embeds dependency labels but only dependency titles. Any issue whose dependency owns a cites: label that is not bracketed in the combined context fails deterministically, before the AI review runs. Contrast a82f2dd9, which owned its cites:Yue2022 label and so failed genuinely. Repo-wide condition, not specific to this epic.",
     "7a816262 | The freeze has passed doc-review and the lead's independent structural verification, but its research-review Tier 2 AI methodology review has NEVER executed (Tier 1 fails first). Do not treat the doc-review pass as scientific review of the freeze.",
     "7a816262 | doc-review PASSED while the freeze record violated the present-tense-prose invariant in a permanent path (simulation_results), narrating the pre-commit worker tree as current state. The independent audit caught it; the gate did not. Do not treat a doc-review pass as coverage of present-tense-prose.",
     "7a816262 | REQ-06 tamper-detection does not reach the freeze record, which is the sole record of REQ-04, REQ-05, REQ-07 and REQ-08 construction. checksums.sha256 covers manifest.json alone, and adding the freeze record to it raises IntegrityFault::OutsideRawSet in verify_dataset (provenance.rs:1096). Needs an owner decision before the campaign is treated as immutably frozen.",

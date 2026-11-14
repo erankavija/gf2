@@ -10,6 +10,7 @@ import Mathlib.Algebra.Ring.TransferInstance
 import Mathlib.Algebra.Field.TransferInstance
 import Mathlib.Algebra.Field.ZMod
 import Aeneas
+import Gf2Core.Proofs.ResultSpec
 import Gf2Core.Funs
 import Gf2Core.Proofs.Defs
 import Gf2Core.Proofs.Progress
@@ -24,7 +25,7 @@ noncomputable section
 
 namespace FpField
 
-/-! ## Pure operations on FpVal, extracted from progress lemmas -/
+/-! ## Pure operations on FpVal, extracted from step lemmas -/
 
 /-- Zero element: Montgomery form of 0 is 0 -/
 def FpVal.zero {P : Std.U64} (hP : ValidPrime P) : FpVal P where
@@ -37,25 +38,25 @@ def FpVal.zero {P : Std.U64} (hP : ValidPrime P) : FpVal P where
 /-- One element: Montgomery form of 1 is R mod P -/
 noncomputable def FpVal.one {P : Std.U64} (hP : ValidPrime P)
     (hP2 : P.val ≠ 2) : FpVal P :=
-  have h := Aeneas.Std.WP.spec_imp_exists (FpProgress.to_mont_progress (a := ⟨1#64⟩) hP (by
+  have h := result_spec_exists (FpProgress.to_mont_progress (a := ⟨1#64⟩) hP (by
     have h0 : (⟨1#64⟩ : Std.U64).val = 1 := by decide
     have h1 := hP.2.1
     omega))
   ⟨h.choose, h.choose_spec.2⟩
 
-/-- Addition: extract from mont_add progress -/
+/-- Addition: extract from mont_add step -/
 noncomputable def FpVal.add' {P : Std.U64} (hP : ValidPrime P)
     (a b : FpVal P) : FpVal P :=
   have h := FpProgress.mont_add_progress hP a.h_lt b.h_lt
   ⟨h.choose, h.choose_spec.2⟩
 
-/-- Multiplication: extract from mul progress -/
+/-- Multiplication: extract from mul step -/
 noncomputable def FpVal.mul' {P : Std.U64} (hP : ValidPrime P) (hP2 : P.val ≠ 2)
     (a b : FpVal P) : FpVal P :=
   have h := FpProgress.mul_progress hP a.h_lt b.h_lt hP2
   ⟨h.choose, h.choose_spec.2⟩
 
-/-- Negation: extract from neg progress -/
+/-- Negation: extract from neg step -/
 noncomputable def FpVal.neg' {P : Std.U64} (hP : ValidPrime P)
     (a : FpVal P) : FpVal P :=
   have h := FpProgress.neg_progress hP a.h_lt
@@ -111,7 +112,7 @@ private noncomputable def fpEquiv {P : Std.U64} (hP : ValidPrime P) :
 
 /-- FpVal P forms a commutative ring (for valid odd primes P).
     Transferred from ZMod P.val via the bare equivalence. -/
-noncomputable instance FpVal.instCommRing {P : Std.U64}
+noncomputable def FpVal.instCommRing {P : Std.U64}
     (hP : ValidPrime P) (hP2 : P.val ≠ 2) : CommRing (FpVal P) :=
   (fpEquiv hP).commRing
 
@@ -120,7 +121,7 @@ noncomputable instance FpVal.instCommRing {P : Std.U64}
 /-- Map from FpVal to ZMod: extract canonical value via from_mont -/
 noncomputable def toZMod {P : Std.U64} (hP : ValidPrime P) (hP2 : P.val ≠ 2)
     (a : FpVal P) : ZMod P.val :=
-  let h := Aeneas.Std.WP.spec_imp_exists (FpProgress.from_mont_progress hP a.h_lt)
+  let h := result_spec_exists (FpProgress.from_mont_progress hP a.h_lt)
   (h.choose.val : ZMod P.val)
 
 /-- Map from ZMod to FpVal: use the bare equivalence inverse -/

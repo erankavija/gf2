@@ -1,100 +1,34 @@
 #!/usr/bin/env bash
-# Aeneas/Charon → Lean4 verification pipeline
-#
-# Extracts gf2-core field arithmetic (gfp/) to LLBC via Charon,
-# translates to Lean4 via Aeneas, and verifies with lake build.
-#
-# Prerequisites:
-#   - charon (upstream 487f0320 + 1 project-local patch; built with rustc
-#     nightly-2026-06-01 per charon/rust-toolchain)
-#   - aeneas (upstream 5220259c, unmodified; OCaml dep `ppx_deriving_yojson`
-#     newly required by src/dune — `opam install ppx_deriving_yojson`)
-#   - elan / lean / lake
-#
-# Usage: ./scripts/verify-lean.sh
-#
-# Toolchain (as of the 2026-06-30 Aeneas/Charon upgrade):
-#   * Charon: upstream `487f0320` (the commit pinned by Aeneas main via
-#     its `charon-pin`) + 1 project-local patch: implied-clause
-#     constraint propagation in `expand_associated_types.rs`
-#     `compute_trait_modifications` (propagates supertrait associated-type
-#     values; eliminates 86 "Could not compute the value of ...Output" warnings
-#     on gfpn quadratic/cubic arithmetic). The other three patches that were
-#     load-bearing at e069223a (HRTB-erase, SelfClause/Local(0,0) fallback,
-#     and the `pretty/fmt_with_ctx.rs` assert removal) are now OBSOLETE —
-#     upstream Charon handles those cases, and gfpn extraction is clean without
-#     them (2 residual `FiniteField::Wide` warnings on the opaque `field`
-#     trait are benign).
-#   * Aeneas: upstream HEAD `5220259c`, unmodified. Links charon-ml from the
-#     nested charon submodule, so that submodule must be at the same 487f0320
-#     pin before `dune build` (else `TTraitType` arity mismatch).
-#   * Lean: v4.30.0-rc2; Mathlib: v4.30.0-rc2 (see `proofs/lean-toolchain`,
-#     `proofs/lakefile.lean`) — unchanged across this upgrade.
-#
-# Workarounds in place (issue 9efd9c39):
-#   * `crates/gf2-core/src/gfp/mod.rs` — 11 SIMD-fast-path overrides on the
-#     `Fp::FiniteField` impl wrapped in `#[cfg(not(verify_lean))]` so the
-#     trait defaults are used during extraction. Same pattern as the
-#     existing `verify_lean` cfg for `ExtConfig::NON_RESIDUE`.
-#   * `--opaque 'gf2_core::gfp::simd_ops'` below: keeps the SIMD-ops
-#     module out of the LLBC.
-#   * `--opaque` on the three `gf2_core::gfp::specialized::batch_*_mersenne31`
-#     functions (added in 150d7d79): Aeneas 0f99a049 no longer ships the slice
-#     iterator `.zip` instances those functions extract to. They are batch SIMD
-#     helpers, not proof targets, so opaquing only those three (not the whole
-#     `specialized` module — its scalar reductions are called by transparent
-#     gfp code) keeps the extraction clean. Minor coverage delta vs the prior
-#     trio, which extracted them transparently.
-#   * `proofs/Gf2Core/FunsExternal.lean` (150d7d79): the hand-written
-#     `core.num.U64.overflowing_sub` override was REMOVED — Aeneas 0f99a049 now
-#     provides it natively as a pure `U64 → U64 → (U64 × Bool)` (consumed via
-#     `lift`); the old `Result`-returning override conflicted ("expected a
-#     product type"). `wrapping_neg` is still hand-provided (Std has no native).
-#   * `scripts/fix-aeneas-dupes.py` `inline_default_methods()` pass:
-#     post-processes Aeneas-generated `Funs.lean` files to inline trait
-#     defaults at instance-dictionary call sites (Aeneas at upstream HEAD
-#     does not emit sibling defs for default trait methods; tracked by
-#     9efd9c39's aspirational criterion for upstream resolution).
-#   * `scripts/fix-aeneas-dupes.py` `silence_extraction_sorry()` pass:
-#     injects `set_option warn.sorry false` into generated `Funs.lean`
-#     so Aeneas extraction-artefact sorrys do not trip the strict
-#     `lake-build` gate (added in issue 2e544a34).
-#   * `scripts/fix-aeneas-sorrys.py` `OPAQUE_DEFS` (2026-06-30 upgrade): added
-#     the non-Wide gfpn `CoreCmpEq`, the cubic `CoreFmtDisplay.fmt`, and the
-#     `ConstField for {Cubic,Quadratic}Ext` instance dictionaries. Aeneas
-#     5220259c + rustc nightly-2026-06-01 emit a broken `assert_fields_are_eq`
-#     projection for the parametrised derived `Eq`, a `?`-desugaring to the
-#     unprovided `CoreOpsTry_traitTry.branch` in Display, and a `sorry`
-#     `FiniteFieldInst` (trait-impl resolution gap). None are arithmetic proof
-#     targets — proofs use the separate `.order`/`.zero`/`.one` sub-defs — so
-#     they are opaqued.
-#   * `proofs/Gf2Core/Proofs/ExtProgress.lean` `qinv_progress` (2026-06-30):
-#     Aeneas 5220259c normalises the `c0 = 0 ∧ c1 = 0 → _` postcondition
-#     antecedent to its curried form `c0 = 0 → c1 = 0 → _`; the proof now binds
-#     two lambda args instead of destructuring one conjunction.
-#
-# This script runs end-to-end clean on the toolchain above. If a step
-# fails on `main`, file an issue rather than reverting the workarounds —
-# they are load-bearing for the current Charon/Aeneas/Lean trio.
+# Regenerate the selected Rust arithmetic and check its Lean proofs.
+# Install the pinned upstream pair with scripts/install-lean-tools.sh.
+# Extraction limits and post-processing are documented in proofs/WORKAROUNDS.md.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROOFS_DIR="$REPO_ROOT/proofs"
+TOOLS_DIR="${LEAN_TOOLS_DIR:-$REPO_ROOT/target/lean-tools}"
+for tool in charon charon-driver aeneas; do
+  if [ ! -x "$TOOLS_DIR/bin/$tool" ]; then
+    echo "ERROR: missing $TOOLS_DIR/bin/$tool; run scripts/install-lean-tools.sh"
+    exit 1
+  fi
+done
+export PATH="$TOOLS_DIR/bin:$PATH"
+# Generate into empty directories: a failed translator must not reuse committed output.
+GENERATED_DIR="$(mktemp -d)"
+trap 'rm -rf "$GENERATED_DIR"' EXIT
 LLBC_FILE="$REPO_ROOT/target/charon/gf2_core.llbc"
 LLBC_FILE_ALGEBRA="$REPO_ROOT/target/charon/gf2_algebra.llbc"
 
 echo "=== Step 1: Charon extraction (gf2-core) ==="
 mkdir -p "$(dirname "$LLBC_FILE")"
+rm -f "$LLBC_FILE" "$LLBC_FILE_ALGEBRA"
 
 # Extract gf2-core with gfp/ and gfpn/ transparent; everything else opaque or excluded.
 # Using --preset aeneas for Aeneas-compatible output.
 #
-# Narrow Charon workaround: enable cfg(verify_lean) so ExtConfig exposes
-# NON_RESIDUE() as a trait method instead of an associated const during extraction.
-# Charon (487f0320) rejects associated consts whose type is an associated type of
-# Self (Self::BaseField) before Aeneas sees the arithmetic. This keeps gfp/gfpn
-# production arithmetic transparent; only the config-level beta accessor shape is
-# changed for extraction and can be removed when Charon handles that pattern.
+# Preserve the proof-facing config accessor and scalar default-method path.
+# Normal Rust builds retain their associated constant and SIMD hooks.
 charon cargo \
   --preset aeneas \
   --rustc-arg=--cfg=verify_lean \
@@ -208,11 +142,11 @@ echo "Charon extraction succeeded: $LLBC_FILE_ALGEBRA"
 
 echo ""
 echo "=== Step 2: Aeneas translation (gf2-core) ==="
-LEAN_DIR="$PROOFS_DIR/Gf2Core"
+LEAN_DIR="$GENERATED_DIR/Gf2Core"
 mkdir -p "$LEAN_DIR"
 
 # Aeneas may exit 1 when it generates partial files for functions it cannot
-# fully translate (e.g. gfpn arithmetic with complex trait hierarchies).
+# fully translate (currently Debug::fmt implementations).
 # We capture the exit code and verify output files were generated.
 AENEAS_EXIT=0
 aeneas \
@@ -223,7 +157,7 @@ aeneas \
 
 # Verify that the key output files were actually generated.
 MISSING=0
-for f in Types.lean Funs.lean FunsExternal_Template.lean; do
+for f in Types.lean Funs.lean FunsExternal_Template.lean TypesExternal_Template.lean; do
   if [ ! -f "$LEAN_DIR/$f" ]; then
     echo "ERROR: Aeneas did not produce $LEAN_DIR/$f"
     MISSING=1
@@ -245,77 +179,16 @@ echo "=== Step 3: Post-processing ==="
 # See proofs/WORKAROUNDS.md for details.
 python3 "$REPO_ROOT/scripts/fix-aeneas-dupes.py" "$LEAN_DIR/Types.lean" "$LEAN_DIR/Funs.lean"
 
-# The narrowed extraction can leave an opaque gf2m external type in
-# TypesExternal.lean while also generating the out-of-scope UintExt trait in
-# Types.lean. Keep the opaque external axiom only; no verified gfp/gfpn code
-# projects fields from UintExt.
-python3 - "$LEAN_DIR/Types.lean" <<'PY'
-import re
-import sys
-from pathlib import Path
+cp "$LEAN_DIR/TypesExternal_Template.lean" "$LEAN_DIR/TypesExternal.lean"
 
-path = Path(sys.argv[1])
-text = path.read_text()
-text = re.sub(
-    r"/-- Trait declaration: \[gf2_core::gf2m::uint_ext::private::Sealed\][\s\S]*?"
-    r"structure gf2m\.uint_ext\.private\.Sealed \(Self : Type\) where\n\n",
-    "",
-    text,
-    count=1,
-)
-text = re.sub(
-    r"/-- Trait declaration: \[gf2_core::gf2m::uint_ext::UintExt\][\s\S]*?"
-    r"  from_u16 : Std\.U16 → Result Self\n\n",
-    "",
-    text,
-    count=1,
-)
-path.write_text(text)
-PY
-
-# Workaround: Aeneas (5220259c) cannot translate some gfpn function bodies from
-# Charon (487f0320) LLBC. Restore known-good implementations from previous
-# working extraction. See fix-aeneas-sorrys.py docstring for details.
-python3 "$REPO_ROOT/scripts/fix-aeneas-sorrys.py" "$LEAN_DIR/Funs.lean"
-
-# TypesExternal.lean contains auto-generated type axioms (no hand-editing needed).
-# Always regenerate from template when present.
-if [ -f "$LEAN_DIR/TypesExternal_Template.lean" ]; then
-  cp "$LEAN_DIR/TypesExternal_Template.lean" "$LEAN_DIR/TypesExternal.lean"
-  # The narrowed Charon start set can emit an opaque Gf2mElement_ external type
-  # whose signature mentions the sealed UintExt trait outside the extraction
-  # target. Add only that opaque external type dependency.
-  python3 - "$LEAN_DIR/TypesExternal.lean" <<'PY'
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-text = path.read_text()
-axiom = """\
-/-- Opaque declaration for the sealed GF(2^m) integer-width trait.
-    Added by scripts/verify-lean.sh for the narrowed Charon start-from set. -/
-axiom gf2m.uint_ext.UintExt (Self : Type) : Type
-
-"""
-marker = "/-- [gf2_core::gf2m::field::Gf2mElement_]"
-if "axiom gf2m.uint_ext.UintExt" not in text and marker in text:
-    path.write_text(text.replace(marker, axiom + marker, 1))
-PY
-fi
-
-# FunsExternal.lean contains hand-edited concrete definitions (wrapping_neg,
-# overflowing_sub, U128 add/add_assign) that replace Aeneas axioms.
-# Only seed from template on first run; never overwrite existing file.
-if [ ! -f "$LEAN_DIR/FunsExternal.lean" ]; then
-  cp "$LEAN_DIR/FunsExternal_Template.lean" "$LEAN_DIR/FunsExternal.lean"
-  echo "NOTE: FunsExternal.lean seeded from template — fill in concrete defs"
-fi
+# Preserve the concrete external models maintained with the proofs.
+cp "$PROOFS_DIR/Gf2Core/FunsExternal.lean" "$LEAN_DIR/FunsExternal.lean"
 
 echo "Post-processing done"
 
 echo ""
 echo "=== Step 2b: Aeneas translation (gf2-algebra) ==="
-LEAN_DIR_ALGEBRA="$PROOFS_DIR/Gf2Algebra"
+LEAN_DIR_ALGEBRA="$GENERATED_DIR/Gf2Algebra"
 mkdir -p "$LEAN_DIR_ALGEBRA"
 
 AENEAS_EXIT_ALGEBRA=0
@@ -357,15 +230,10 @@ python3 "$REPO_ROOT/scripts/fix-aeneas-dupes.py" \
 # See the script's docstring for the full reasoning.
 python3 "$REPO_ROOT/scripts/fix-aeneas-gf2algebra.py" "$LEAN_DIR_ALGEBRA/Funs.lean"
 
-# TypesExternal / FunsExternal seed (no hand-edits required for the
-# bipedal3 V1 — the four bitwise ops do not exercise any U128 /
-# wrapping_neg / overflowing_sub external).
+# Algebra external declarations have no hand-maintained definitions.
 if [ -f "$LEAN_DIR_ALGEBRA/TypesExternal_Template.lean" ]; then
   cp "$LEAN_DIR_ALGEBRA/TypesExternal_Template.lean" "$LEAN_DIR_ALGEBRA/TypesExternal.lean"
 fi
-# Unlike gf2-core, the gf2-algebra FunsExternal has no hand-edits (the
-# bipedal3 ops use only bitwise primitives, no wrapping arithmetic), so we
-# always regenerate from the template.
 cp "$LEAN_DIR_ALGEBRA/FunsExternal_Template.lean" "$LEAN_DIR_ALGEBRA/FunsExternal.lean"
 echo "Post-processing (gf2-algebra) done"
 
@@ -373,31 +241,11 @@ echo ""
 echo "=== Step 4: Lake build ==="
 cd "$PROOFS_DIR"
 
-# If AENEAS_LEAN_DIR is set (e.g. in CI), patch lakefile.lean and
-# lake-manifest.json to point there instead of the local dev path.
-if [ -n "${AENEAS_LEAN_DIR:-}" ]; then
-  echo "Patching aeneas path → $AENEAS_LEAN_DIR"
-  sed -i "s|require aeneas from .*|require aeneas from \"$AENEAS_LEAN_DIR\"|" lakefile.lean
-  python3 - "$AENEAS_LEAN_DIR" <<'PATCH'
-import json
-import sys
-
-with open("lake-manifest.json") as file:
-    manifest = json.load(file)
-for index, package in enumerate(manifest["packages"]):
-    if package["name"] == "aeneas":
-        manifest["packages"][index] = {
-            "type": "path", "scope": "", "name": "aeneas",
-            "manifestFile": "lake-manifest.json", "inherited": False,
-            "dir": sys.argv[1], "configFile": "lakefile.lean",
-        }
-with open("lake-manifest.json", "w") as file:
-    json.dump(manifest, file, indent=1)
-PATCH
-  rm -rf .lake/packages/aeneas
-fi
-
-lake build
+# The pinned Lake dependency is the same revision used by install-lean-tools.sh.
+# Publish only after both translations and post-processing have succeeded.
+cp "$LEAN_DIR/"*.lean "$PROOFS_DIR/Gf2Core/"
+cp "$LEAN_DIR_ALGEBRA/"*.lean "$PROOFS_DIR/Gf2Algebra/"
+"$REPO_ROOT/scripts/lake-build-strict.sh"
 
 echo ""
 echo "=== All steps passed ==="

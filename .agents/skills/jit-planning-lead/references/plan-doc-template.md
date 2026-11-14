@@ -4,7 +4,7 @@
 # Plan: <Container Title> (<C-short-id>)
 
 > Planning node: <P-short-id>. Authoritative graph:
-> `breakdown.json`.
+> `<artifact-dir>/breakdown.json`.
 
 ## Outcome and criterion approach
 
