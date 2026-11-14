@@ -1,5 +1,7 @@
 //! Frame error rate of the layered quantized decoder against the canonical
-//! flooding decoder over BPSK AWGN, on random codewords. A frame error is a
+//! flooding decoder over BPSK AWGN, on random codewords. The flooding
+//! reference follows the layered configuration's check rule, so the bound
+//! compares schedules. A frame error is a
 //! wrong decision among the first k positions, the information columns of
 //! both codes' standards and the window of the AFF3CT comparison harness.
 //!
@@ -8,14 +10,15 @@
 //! stops early (default 100), and `GF2_LAYERED_FER_GRID`, a comma-separated
 //! list of Eb/N0 values in dB, replaces a test's grid. A full curve takes
 //! hours, beyond the slow tier, so the curve tests run only under
-//! `GF2_BENCH=1`; the unit tests of the comparator run in the fast tier.
+//! `GF2_BENCH=1`; the unit tests of the comparator run in the fast tier. The
+//! comparator assumes FER is non-increasing with Eb/N0.
 
 mod common;
 
 use gf2_coding::channel::AwgnChannel;
 use gf2_coding::ldpc::{
-    DecoderAlgorithm, DecoderConfig, LayeredConfig, LayeredDecoder, LdpcCode, LdpcDecoder,
-    LdpcEncoder, QuasiCyclicLdpc,
+    DecoderAlgorithm, DecoderConfig, LayeredConfig, LayeredDecoder, LayeredRule, LdpcCode,
+    LdpcDecoder, LdpcEncoder, QuasiCyclicLdpc,
 };
 use gf2_coding::llr::Llr;
 use gf2_coding::traits::BlockEncoder;
@@ -25,7 +28,6 @@ use rand::{rngs::StdRng, SeedableRng};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 const TARGET_FER: f64 = 1e-3;
-const FLOODING: DecoderAlgorithm = DecoderAlgorithm::NormalizedMinSum(0.75);
 const FLOODING_CAP: usize = 50;
 const LAYERED_CAP: usize = 25;
 const MARGIN_DB: f64 = 0.1;
@@ -41,7 +43,21 @@ fn setting(name: &str, fallback: usize) -> usize {
         .unwrap_or(fallback)
 }
 
+/// The flooding algorithm with the check rule of `layered`: normalized
+/// min-sum keeps its factor, offset min-sum its offset in LLR units.
+fn flooding_algorithm(layered: &LayeredConfig) -> DecoderAlgorithm {
+    match layered.rule() {
+        LayeredRule::Normalized { eighths } => {
+            DecoderAlgorithm::NormalizedMinSum(f32::from(eighths) / 8.0)
+        }
+        LayeredRule::Offset { beta } => {
+            DecoderAlgorithm::OffsetMinSum(f32::from(beta) / layered.channel_scale())
+        }
+    }
+}
+
 /// Frame errors of (flooding, layered) on the same frames, and frames run.
+/// The flooding decoder uses the check rule of `layered`.
 fn point(
     code: &LdpcCode,
     encoder: &LdpcEncoder,
@@ -51,6 +67,7 @@ fn point(
 ) -> (usize, usize, usize) {
     let max_frames = setting("GF2_LAYERED_FER_FRAMES", 200_000);
     let target_errors = setting("GF2_LAYERED_FER_ERRORS", 100);
+    let algorithm = flooding_algorithm(&layered);
     let k = encoder.k();
     let rate = k as f64 / code.n() as f64;
     let variance = 1.0 / (2.0 * rate * 10f64.powf(ebn0_db / 10.0));
@@ -68,7 +85,7 @@ fn point(
         std::thread::scope(|scope| {
             for _ in 0..workers {
                 scope.spawn(|| {
-                    let config = DecoderConfig::new(FLOODING, true);
+                    let config = DecoderConfig::new(algorithm, true);
                     let mut flooding = LdpcDecoder::with_config(code.clone(), config);
                     let mut layered = LayeredDecoder::new(code, layered).unwrap();
                     let channel = AwgnChannel::from_variance(variance);
@@ -118,6 +135,7 @@ fn point(
 /// pair of adjacent grid points at and below it: the log-linear interpolation
 /// when both have errors, otherwise the pair itself. `None` unless grid points
 /// bracket the crossing on both sides.
+/// Assumes FER is non-increasing with Eb/N0.
 fn crossing(curve: &[(f64, f64)]) -> Option<(f64, f64)> {
     curve.windows(2).find_map(|pair| {
         let ((x0, f0), (x1, f1)) = (pair[0], pair[1]);
@@ -132,10 +150,28 @@ fn crossing(curve: &[(f64, f64)]) -> Option<(f64, f64)> {
     })
 }
 
+/// Lower bound on the flooding crossing if FER is non-increasing with Eb/N0.
+fn flooding_lower_bound(curve: &[(f64, f64)]) -> Result<f64, String> {
+    if let Some((low, _)) = crossing(curve) {
+        return Ok(low);
+    }
+    let (Some(first), Some(last)) = (curve.first(), curve.last()) else {
+        return Err("flooding curve is empty".into());
+    };
+    if first.1 < TARGET_FER {
+        return Err("flooding curve starts below target".into());
+    }
+    if last.1 >= TARGET_FER {
+        Ok(last.0)
+    } else {
+        Err("grid points do not bracket the flooding crossing".into())
+    }
+}
+
 /// The largest loss in dB of layered against flooding that the curves admit.
+/// Assumes FER is non-increasing with Eb/N0.
 fn loss_bound(flooding: &[(f64, f64)], layered: &[(f64, f64)]) -> Result<f64, String> {
-    let (flooding_low, _) =
-        crossing(flooding).ok_or("grid points do not bracket the flooding crossing")?;
+    let flooding_low = flooding_lower_bound(flooding)?;
     let (_, layered_high) =
         crossing(layered).ok_or("grid points do not bracket the layered crossing")?;
     Ok(layered_high - flooding_low)
@@ -156,8 +192,10 @@ fn compare(name: &str, code: &LdpcCode, layered: LayeredConfig, grid: &[f64]) {
         let (flooding, layered_errors, frames) = point(code, &encoder, layered, ebn0, index as u64);
         let rate = |e: usize| e as f64 / frames as f64;
         eprintln!(
-            "{name} Eb/N0 {ebn0:.2} dB: frames {frames}, flooding FER {:.3e}, layered FER {:.3e}",
+            "{name} Eb/N0 {ebn0:.2} dB: frames {frames}, flooding ({:?}) FER {:.3e}, layered ({:?}) FER {:.3e}",
+            flooding_algorithm(&layered),
             rate(flooding),
+            layered.rule(),
             rate(layered_errors)
         );
         flooding_curve.push((ebn0, rate(flooding)));
@@ -168,9 +206,13 @@ fn compare(name: &str, code: &LdpcCode, layered: LayeredConfig, grid: &[f64]) {
     }
     let loss =
         loss_bound(&flooding_curve, &layered_curve).unwrap_or_else(|e| panic!("{name}: {e}"));
+    let flooding_crossing = crossing(&flooding_curve);
+    let flooding_at_target = match flooding_crossing {
+        Some(bounds) => format!("{bounds:?}"),
+        None => format!("> {:.3}", flooding_lower_bound(&flooding_curve).unwrap()),
+    };
     eprintln!(
-        "{name}: Eb/N0 at FER 1e-3, flooding {:?} dB, layered {:?} dB",
-        crossing(&flooding_curve),
+        "{name}: Eb/N0 at FER 1e-3, flooding {flooding_at_target} dB, layered {:?} dB",
         crossing(&layered_curve)
     );
     assert!(
@@ -217,8 +259,26 @@ fn an_unbracketed_crossing_fails_the_comparison() {
     assert_eq!(crossing(&below), None);
     assert_eq!(crossing(&above), None);
     let bracketed = [(0.9, 0.1), (1.0, 1e-2), (1.1, 1e-4)];
-    assert!(loss_bound(&below, &bracketed).is_err());
-    assert!(loss_bound(&bracketed, &above).is_err());
+    assert_eq!(
+        loss_bound(&below, &bracketed).unwrap_err(),
+        "flooding curve starts below target"
+    );
+    assert_eq!(
+        loss_bound(&bracketed, &above).unwrap_err(),
+        "grid points do not bracket the layered crossing"
+    );
+    assert_eq!(
+        loss_bound(&[], &bracketed).unwrap_err(),
+        "flooding curve is empty"
+    );
+}
+
+#[test]
+fn an_unbracketed_flooding_curve_uses_its_last_point_as_a_lower_bound() {
+    let flooding = [(0.9, 0.1), (1.0, 1e-2)];
+    let layered = [(0.9, 0.1), (1.0, 1e-2), (1.1, 1e-4)];
+    let loss = loss_bound(&flooding, &layered).unwrap();
+    assert!((loss - 0.05).abs() < 1e-12);
 }
 
 #[test]
@@ -234,4 +294,16 @@ fn a_bracketed_crossing_interpolates_log_fer_or_bounds_by_the_pair() {
     assert!((loss - 0.05).abs() < 1e-12);
     let loss = loss_bound(&zero, &estimate).unwrap();
     assert!((loss - 0.05).abs() < 1e-12);
+}
+
+#[test]
+fn the_flooding_reference_follows_the_layered_check_rule() {
+    assert_eq!(
+        flooding_algorithm(&LayeredConfig::dvb_t2()),
+        DecoderAlgorithm::NormalizedMinSum(0.875)
+    );
+    assert_eq!(
+        flooding_algorithm(&LayeredConfig::nr_5g()),
+        DecoderAlgorithm::NormalizedMinSum(0.75)
+    );
 }

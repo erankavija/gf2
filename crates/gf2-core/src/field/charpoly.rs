@@ -743,7 +743,10 @@ fn keller_gehrig_charpoly<F: FiniteField>(
     base_seed: u64,
 ) -> Option<FieldPoly<F>> {
     let (m, n) = a.shape();
-    debug_assert_eq!(m, n);
+    assert_eq!(
+        m, n,
+        "FieldMatrix::charpoly_keller_gehrig: input must be square (got {m}×{n})",
+    );
 
     if n == 0 {
         // Empty product; `None` when the field has no static zero.
@@ -1007,13 +1010,11 @@ pub(crate) fn berlekamp_massey<F: FiniteField>(s: &[F]) -> FieldPoly<F> {
 ///
 /// Runs Berlekamp–Massey on `s_k = ⟨v, A^k · u⟩`, `k = 0..=2n`, for
 /// seeded `u`, `v`. The candidate is accepted only if it satisfies the
-/// recurrence on a second projection `⟨v', A^k · u'⟩` and annihilates
-/// the probe vectors: every `e_i` for
-/// `n ≤ WIEDEMANN_DETERMINISTIC_VERIFY_N`, otherwise `e_{n-1}` and one
-/// seeded vector. Returns `None` on any failure.
+/// recurrence on a second projection `⟨v', A^k · u'⟩` and passes
+/// [`poly_annihilates_a_lasvegas`]. Returns `None` on any failure.
 ///
-/// Above that threshold the `4n + 2` matvecs and the two probes cost
-/// `O(n³)` field operations.
+/// Costs `O(n³)` field operations, plus `O(d · n³)` for deterministic
+/// verification when the candidate has degree `d < n`.
 fn wiedemann_minpoly_attempt<F: FiniteField>(
     a: &FieldMatrix<F>,
     seed: u64,
@@ -1089,38 +1090,14 @@ fn wiedemann_minpoly_attempt<F: FiniteField>(
         }
     }
 
-    // Annihilation probes. Below the threshold every `e_i` is checked,
-    // which rejects every candidate with `p(A) ≠ 0`.
-    if n <= WIEDEMANN_DETERMINISTIC_VERIFY_N {
-        for i in 0..n {
-            let mut ei = FieldVec::<F>::zeros_from(n, &zero);
-            ei.set(i, one.clone());
-            let pe = poly_action_on_vector(&candidate, a, &ei);
-            if pe.iter().any(|c| !c.is_zero()) {
-                return None;
-            }
-        }
-    } else {
-        // Probabilistic: `e_(n-1)` and one seeded vector only.
-        let mut e_last = FieldVec::<F>::zeros_from(n, &zero);
-        e_last.set(n - 1, one.clone());
-        let pe = poly_action_on_vector(&candidate, a, &e_last);
-        if pe.iter().any(|c| !c.is_zero()) {
-            return None;
-        }
-        let u_check = gen_vec(&mut state);
-        let pu = poly_action_on_vector(&candidate, a, &u_check);
-        if pu.iter().any(|c| !c.is_zero()) {
-            return None;
-        }
+    // Berlekamp–Massey on at least 2n terms gives a divisor of minpoly(A),
+    // so the verifier's degree-n shortcut is sound here.
+    if !poly_annihilates_a_lasvegas(&candidate, a, seed) {
+        return None;
     }
 
     Some(candidate)
 }
-
-/// Largest `n` at which the Wiedemann verification checks every standard
-/// basis vector; above it, `e_{n-1}` and one seeded vector.
-const WIEDEMANN_DETERMINISTIC_VERIFY_N: usize = 32;
 
 /// Returns whether `p(A) = 0`, deterministically.
 ///
@@ -1487,14 +1464,14 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// 1. `2^h > n`: scalar Wiedemann. Berlekamp–Massey on
     ///    `s_k = ⟨v, A^k · u⟩` for seeded `u, v ∈ F^n`; a candidate is
-    ///    accepted after a recurrence check on a second projection and
-    ///    annihilation probes, which cover every standard basis vector
-    ///    only below a fixed small dimension.
+    ///    checked against a second projection before verification.
     /// 2. `2^h ≤ n`: the field's extension-field Wiedemann hook, when it
     ///    has one.
-    /// 3. Multi-seed Wiedemann and the Krylov cyclic decomposition; a
-    ///    candidate of degree below `n` is accepted only if it annihilates
-    ///    every standard basis vector.
+    /// 3. Multi-seed Wiedemann and the Krylov cyclic decomposition.
+    ///
+    /// Acceptance is deterministic: each candidate divides the minimal
+    /// polynomial, so degree `n` proves equality; a lower-degree candidate
+    /// must annihilate every standard basis vector.
     ///
     /// # Panics
     ///
@@ -1503,9 +1480,8 @@ impl<F: FiniteField> FieldMatrix<F> {
     ///
     /// # Complexity
     ///
-    /// Arm 1: `O(n³)` field operations per attempt. Arm 3: `O(n³)`, plus
-    /// `O(d · n³)` for each verification of a candidate of degree
-    /// `d < n`.
+    /// Arms 1 and 3: `O(n³)` field operations per attempt, plus
+    /// `O(d · n³)` for each verification of a candidate of degree `d < n`.
     pub fn minpoly(&self) -> FieldPoly<F> {
         let (m, n) = self.shape();
         assert_eq!(
@@ -1929,6 +1905,43 @@ mod tests {
         let expected = x_minus_lambda_pow::<7>(3, 2);
         assert_eq!(mp, expected);
         check_cayley_hamilton(&a);
+    }
+
+    #[test]
+    fn test_minpoly_large_diagonal_hidden_eigenvalue() {
+        let mut a = FieldMatrix::<Fp<MERSENNE_31>>::identity(33);
+        a.set(0, 0, Fp::<MERSENNE_31>::new(2));
+        // The default seed's projections miss the distinct eigenvalue at
+        // e_0; deterministic verification must still detect it.
+        let expected =
+            &x_minus_lambda_pow::<MERSENNE_31>(1, 1) * &x_minus_lambda_pow::<MERSENNE_31>(1, 2);
+        assert_eq!(a.minpoly(), expected);
+        check_cayley_hamilton(&a);
+    }
+
+    fn check_minpoly_two_eigenvalues<F: FiniteField>(zero: F) {
+        let one = zero.one_like();
+        let expected = FieldPoly::from_coeffs_trimmed(vec![
+            zero.clone(),
+            zero.clone() - one.clone(),
+            one.clone(),
+        ]);
+        for n in [32, 33] {
+            let mut a = FieldMatrix::new(n, n, zero.clone());
+            a.set(0, 0, one.clone());
+            assert_eq!(a.minpoly(), expected, "two eigenvalues at n={n}");
+        }
+    }
+
+    #[test]
+    fn test_minpoly_verification_conformance() {
+        check_minpoly_two_eigenvalues(Fp::<MERSENNE_31>::new(0));
+        check_minpoly_two_eigenvalues(Gf2m8::new([0]));
+        check_minpoly_two_eigenvalues(Fp::<7>::new(0));
+        check_minpoly_two_eigenvalues(Fp::<3>::new(0));
+
+        let a = jordan_block::<MERSENNE_31>(33, 0);
+        assert_eq!(a.minpoly(), x_minus_lambda_pow::<MERSENNE_31>(33, 0));
     }
 
     #[test]
@@ -2389,6 +2402,13 @@ mod tests {
             .expect("KG must succeed on n=0");
         assert_eq!(p.degree(), Some(0));
         assert!(p.leading_coeff().unwrap().is_one());
+    }
+
+    #[test]
+    #[should_panic(expected = "charpoly_keller_gehrig: input must be square")]
+    fn test_kg_rejects_non_square_empty_columns() {
+        let a = FieldMatrix::<Fp<MERSENNE_31>>::zeros(2, 0);
+        a.charpoly_keller_gehrig(0xC0FFEE);
     }
 
     #[test]
