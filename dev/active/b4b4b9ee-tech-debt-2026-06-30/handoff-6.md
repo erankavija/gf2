@@ -5,33 +5,28 @@
 
 ## Current state
 
-- Wound down (owner order, 2026-11-15 01:15, through the steward): the tech-debt epic takes no new dispatch. Its only remaining work is to land the implemented branches in gate slots that the live work leaves free. A branch whose gate or review fails is parked, not reworked, and reported to the steward. Stopped: `90cd64a9`, `d8aee1f4`, `6eb12747`, `85e7e4c0` and the ready set; nothing new is filed unless a `6ba9be17` task needs it.
-- The live container of this lead is `6ba9be17` (tracker repository). The steward classes `18276ff1` and `574ed420` as serving it, since without them gates time out and the pool leaks.
-- Lead `gf2-7d` under steward `gf2-96`; peer leads `gf2-f4` (d77176e5, ae03bcd0) and `gf2-00` (45ecf975 stream). The same lead also executes epic `6ba9be17` (tracker repository): its state is in the table below.
-- Stopped by 01:20 local for the 2026-11-15 02:00 benchmark window: no build, gate or worker of this lead runs.
-- Landed this session: `2e6e3557` (merge `9e5cbf7c8`, closed `a8711524a`), plus every row the table marks landed.
-- Filed: `d8aee1f4` (protocol tests with a fixed 6 s stall deadline), `18276ff1` (nextest test processes draw from the host cargo pool; design reviewed, owner decisions and criteria recorded, implementation approved after the window).
-- Branches, each `worktree-agent-<id>` in `.agents/worktrees/agent-<id>`, main merged in at about 00:02 (after `49c78483d`). The gate state is per head; every gate reruns on the head that lands.
+- Wound down by the owner's order of 2026-11-15 01:22, through the steward: everything except the carve-out `6ba9be17` stops. This epic takes no dispatch, gate or landing. Every open branch is parked as it stands and is carried through the history rewrite as a rewritten ref (owner). A parked branch resumes only on a new owner word.
+- Lead `gf2-7d` under steward `gf2-96`. `6ba9be17` was handed to `gf2-e3` at 01:18 with both wave-1 worktrees, heads, claims, gate state and the Claude review of `6d5ba9fb`. Its `6d5ba9fb` cargo-ci gate, run 65dc8131, timed out at 900 s on a cold worktree: an environment error, no verdict.
+- No build, gate, worker or Codex process of this lead runs. No `cargo-pool-run` process of this lead remains.
+- On main this session: `2e6e3557` (merge `9e5cbf7c8`, closed) and `c34e8203` (merge `100e5380a`, closed under the owner's scope ruling).
+- Filed this session: `d8aee1f4` (protocol tests with a fixed 6 s stall deadline) and `18276ff1` (nextest test processes draw from the host cargo pool).
+- Parked branches, each `worktree-agent-<id>` in `.agents/worktrees/agent-<id>`, with `target/` removed. Every gate reruns on the head that lands.
 
-| Issue | Head | Gate state | Next |
+| Issue | Head | Done | Missing |
 |---|---|---|---|
-| `574ed420` | `a1070b26f` | REQ-02 met (in the issue); REQ-03 two attempts failed only on `d8aee1f4`'s tests; REQ-04 attempt is no evidence | quiet-host slot after `window end`: REQ-04 pair back to back (before at main, after at the branch, cold and warm, all rc=0, start load below about 10), REQ-03 rerun; then merge main, cargo-ci, code-review (copy the main issue JSON to the branch first) |
-| `c34e8203` | landed | merged `100e5380a`, closed | — |
-| `697b9178` | `26a4d4d01` | code-review passed; cargo-ci failed on `tuning-calibration` calibration-harness tests all killed at 60 s under concurrent runs; a direct run passed (517 s) | rerun cargo-ci alone; then land, then `903dc74c` |
-| `9c0568ee` | `8b4a79e6b` | cargo-ci failed on one GPU test killed at 60 s (`gf2-sim` OOM fallback), GPU-lock contention; direct run passed (584 s); code-review failed only because cargo-ci had not passed | cargo-ci alone, then code-review |
-| `22bb2dcd` | `ca855d173` | code-review passed at this head (00:18); cargo-ci failed on one GPU test killed at 60 s; direct run passed (628 s) | cargo-ci alone; land; then dispatch `90cd64a9` |
-| `d73ac633` | `0ac0d915b` | code-review passed; blocking Claude review PASS (recorded below); cargo-ci timed out | cargo-ci alone |
-| `e29fd776` | `5520d7b03` | code-review passed; blocking Claude review PASS; cargo-ci timed out | cargo-ci alone, doc-review |
-| `9ff05f12` | `b9f2f9a42` | cargo-ci timed out | cargo-ci alone, code-review, doc-review |
-| `b5782224` | `75f70cab1` | cargo-ci timed out; implementation by Claude Sonnet 5.5 reviewed by the lead | the folded `test_interleaver_still_composes` finding needs a rework, and reworks are stopped: report it to the steward as parked, or land the branch as implemented if the steward rules the folded part out |
-| `903dc74c` | `22f57141d` | none | after `697b9178` lands: merge main, `cargo-kani` in a quiet slot, code-review |
-| `6d5ba9fb` (6ba9be17) | `43e85778e` | Codex gpt-6.1-sol; blocking Claude review PASS | merge main, cargo-ci, code-review |
-| `28aa2a9d` (6ba9be17) | `17da51131` | Claude Opus 5.5; cargo-ci was running at the stop | cargo-ci, code-review (Codex) |
-| `18276ff1` | `worktree-agent-18276ff1` at main | design only | implement after the window by the strongest non-Fable Claude tier, base main; evidence after `574ed420` merges; CI-contract change to the steward before merge; sequence with `7854cfad` (both touch `.jit/gates.toml` and `AGENTS.md`) |
+| `574ed420` | `4d3829b01` (main merged at 01:20) | REQ-01, REQ-02 met; design and implementation reviewed | REQ-04 pair back to back on a quiet host (before at main, after at the branch, cold and warm, all rc=0, start load stated); REQ-03 rerun; cargo-ci; code-review. Harness kept outside the tree. |
+| `18276ff1` | `945da678c` | design reviewed; owner decisions and REQ-01 to REQ-09 recorded; `649530477` (wrapper test) and `4c83737f3` (wrapper) committed by the worker | `945da678c` holds unverified work in progress from the stop: the budget gate script, filter checker, AGENTS.md, invariants, gates.toml and per-epic gate edits, gf2-sim width changes, other leads' handoff wording. Review or drop it before any merge. REQ-08 width-24 decision (A/B/C, in the issue); REQ-06 evidence after `574ed420`; Codex gate; steward approval. |
+| `697b9178` | `26a4d4d01` | code-review passed; Kani run of the bitvec harnesses recorded earlier | cargo-ci (killed tests under concurrency; a direct run passed in 517 s) |
+| `9c0568ee` | `8b4a79e6b` | Claude review PASS recorded earlier | cargo-ci (GPU-lock timeout; a direct run passed in 584 s), code-review |
+| `22bb2dcd` | `ca855d173` | code-review passed at this head | cargo-ci (GPU-lock timeout; a direct run passed in 628 s); afterwards `90cd64a9` |
+| `d73ac633` | `0ac0d915b` | code-review passed; blocking Claude review PASS at `593832a42` | cargo-ci |
+| `e29fd776` | `5520d7b03` | code-review passed; blocking Claude review PASS at `50b003164` | cargo-ci, doc-review |
+| `9ff05f12` | `b9f2f9a42` | — | cargo-ci, code-review, doc-review |
+| `b5782224` | `75f70cab1` | REQ-01 to REQ-03 implemented (Claude Sonnet 5.5); the folded interleaver finding is parked in the issue's Notes (owner, option 1) | cargo-ci, code-review |
+| `903dc74c` | `22f57141d` | — | after `697b9178`: merge main, `cargo-kani`, code-review |
 
-- Blocking Claude reviews beside the Codex gate (copy each into its issue at landing): `d73ac633` PASS at `593832a42` (Sonnet; F1-F3 of round 1 fixed); `e29fd776` PASS at `50b003164` (Opus; F1 fixed); `c34e8203` rework 1 PASS at `f1a36fab5` (Sonnet, real `git commit` matrix), rework 2 PASS at `74600e571` (Haiku); `6d5ba9fb` PASS at `43e85778e` (Sonnet). Only merges of main followed these heads.
-- Undispatched: `90cd64a9` (after `22bb2dcd`), `d8aee1f4`, `6eb12747`, `85e7e4c0`, `41517289` (owner action), the epic's ready set; `6ba9be17` waves 2 to 6 (`3fb4accb` after wave 1).
-- Nothing pushed.
+- Stopped without dispatch: `90cd64a9`, `d8aee1f4`, `6eb12747`, `85e7e4c0`, `41517289` (owner action) and the ready set.
+- Nothing is pushed.
 
 ## Dispatch record
 
@@ -67,10 +62,13 @@
 
 ## Next
 
-1. After `window end`, `6ba9be17` waves in order. Wave 1: merge main, cargo-ci and code-review for `6d5ba9fb` (Claude review passed; a cargo-ci gate ran at 01:13 on the steward's word, see its run record) and `28aa2a9d`; land; then wave 2 (`3fb4accb`, strongest non-Fable Claude tier, Codex gate).
-2. `18276ff1` implementation, at its full owner-decided scope, and `574ed420`'s quiet-slot REQ-04 and REQ-03, then its gates and landing. Agree the slot with `gf2-f4` and `gf2-00`.
-3. Only in gate slots left free by 1 and 2, gate two at a time and land: `697b9178`, `9c0568ee`, `22bb2dcd`, `d73ac633`, `e29fd776`, `9ff05f12`, then `903dc74c` after `697b9178`. Park and report any failure. The history rewrite requires every live branch to be merged or abandoned.
-4. Retire `handoff-5.md` (`git rm`) in the first tracker commit.
+Nothing, until the owner resumes this epic. On resumption: alternation continues with a Codex implementation dispatch (the last implementation dispatch was Claude Opus 5.5 on `18276ff1`); `18276ff1` first, since the pool leak and the per-test timer cost tonight's gates; then `574ed420`; then the parked branches two at a time.
+
+## Pool findings (2026-11-15)
+
+- The owner's cargo wrapper sets the target runner to `cargo-pool-run`, so each direct nextest test process holds one pool token. The wait for it runs on the per-test timer, and a killed runner leaks its token.
+- The daemon refills only when no client holds the lease, so leaked tokens drained the pool: about 01:04 to 01:10, 75 waiters at load 0.34. It refilled `0 -> 24` at 01:10:54 once the queued runs stopped.
+- With about two concurrent cargo-ci runs a gate fits 900 s. With more, GPU-lock waits and pool waits on the per-test timer kill tests at 60 s.
 
 ## Traps
 
