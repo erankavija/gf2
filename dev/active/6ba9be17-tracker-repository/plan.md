@@ -33,7 +33,8 @@ through it. The entry point sets `JIT_DATA_DIR` to `.jit` under the primary
 checkout, the parent of the absolute git common directory, and
 `JIT_WORKTREE_ROOT` to the top level of the invoking checkout. It keeps a
 `JIT_AGENT_ID` the caller set, and otherwise derives `agent:<directory name>`
-in a linked worktree. It refuses a linked worktree that holds a store of its
+from the name git registers a linked worktree under; the primary checkout
+uses jit's configured agent. It refuses a linked worktree that holds a store of its
 own: before the cutover that is the worktree's tracked store, used with plain
 jit, and after it a stale copy. The store's configuration sets
 `[worktree] root = ".."`, so plain jit is correct in the primary checkout. In
@@ -48,18 +49,21 @@ A gate-run record names the commit and branch its checker ran at (F-03); a
 reused verdict names the run that executed the checker (F-24). The landing
 check passes when each required automated gate passed and its executed run
 records the branch tip. A reused verdict whose executed run records another
-commit is refused, and the lead forces that gate at the tip. A branch lands
-in this order: gates evaluated at the tip through the entry point, the
-landing check, the merge, the merged-tree gate, the state transition, a
-snapshot. The rule binds from the cutover: while the code repository tracks
+commit is refused, and the lead forces that gate at the tip. A manual gate is
+judged by its attestation and a gate with a built-in checker by its pass:
+those judge the store and record no commit. A branch lands in this order:
+gates evaluated at the tip through the entry point, the landing check, the
+merge, the merged-tree gate, a snapshot. jit moves an issue to done when its
+last gate passes, so the lead lands at once after the check. The rule binds from the cutover: while the code repository tracks
 the store, recording a verdict moves the tip. Issue state and code are
 consistent at each landing and are no longer one atomic merge; between
 landings the store is ahead of `main` by the work in progress.
 
 ### `tracker-snapshot-discipline` [plan-fixed] — commits of the tracker repository
 
-jit commits nothing (F-10). The snapshot command validates the store, then
-stages and commits it under jit's write lock, and pushes. A lead runs it
+jit commits nothing (F-10). The snapshot command stages and commits the store
+under jit's write lock, and pushes; the lock is its consistency condition.
+Repository validation does not gate it (RISK-05). A lead runs it
 after each landing and the steward at the end of a session; it is a no-op on
 a clean store, so any agent may run it. Tracker commits are snapshots: the
 commit subject rule and the tree budget of the code repository do not bind
@@ -71,13 +75,16 @@ store's own ignore file names the machine-local files.
 
 `@/inv/<id>` resolves against the invariant projection in `AGENTS.md`, which
 the code repository tracks (F-18). A path under `.jit/` named in tracked text
-is a tracker reference. With the store mounted it must name an unignored file
-listed by the git repository that contains the store directory, or a path
+is a tracker reference. The checker finds the store through the data root.
+With the store mounted a tracker reference must name a tracked or untracked
+unignored file of the git repository that contains the data root, or a path
 that repository ignores; that rule is the same before and after the cutover.
 Without the store the checker reports the count it left unchecked.
 `@/issue/<id>` stays with the docs-mechanical gate, which needs jit (F-13).
-Issue prose is checked whenever the store is mounted, under the exception
-entries for issue prose and archive records. GitHub runners have no store and
+Issue prose is checked where the store sits under the checkout being checked,
+which after the cutover is the primary checkout, under the exception entries
+for issue prose and archive records; a linked worktree shares the store with
+other branches and skips it. GitHub runners have no store and
 check everything else.
 
 ### `cutover-sequence` [plan-fixed] — order of the cutover
@@ -92,8 +99,9 @@ check everything else.
 4. Mount: commit the code-side change, replace `.jit/` of the primary
    checkout with a clone of the new repository, restore the machine-local
    files.
-5. Harvest each worktree's gate-run records into the shared store; a record
-   present with different bytes stops the harvest.
+5. Harvest each worktree's run records into the shared store; a run record
+   present with different bytes stops the harvest, and a differing verdict
+   pointer keeps the store's.
 6. Verify: repository validation, issue count, a gate from a linked worktree
    created at the cutover commit, two agent identities, both checkers with
    and without the store, a fresh clone. Then snapshot and push.
@@ -111,8 +119,8 @@ check everything else.
 | gate-checkers-data-root | Resolve tracker files through the data root in the gate checkers | task | Gate checkers read the store through the data root and write nothing under a code checkout's store path | tracker-root-resolution | REQ-06, D-04, D-07, F-09, F-14, F-15, F-16, F-23 | touches 9 | — | — |
 | tracker-entry-point | Run jit against the shared store through one entry point | task | One script gives each checkout the shared store with its own code root | tracker-root-resolution | REQ-03, D-04, F-02, F-04, F-05, F-07, F-21, F-23 | creates 2, touches 2 | — | gate-checkers-data-root |
 | landing-check | Refuse a landing whose gate runs record another commit | task | A landing is refused unless each required gate passed at the branch tip | landing-link | REQ-04, D-05, F-03, F-04, F-08, F-24 | creates 1, touches 1 | — | tracker-entry-point |
-| reference-checker-tracker-references | Check tracker references against a mounted store | task | The reference checker passes without the tracker and checks tracker references when it is mounted | tracker-reference-resolution | REQ-05, D-03, F-11, F-12, F-17, F-18, F-22 | touches 1 | — | — |
-| tracker-lifecycle-commands | Mount and snapshot the tracker repository with one command each | task | A fresh clone mounts the tracker with one command and the store is snapshotted with another | tracker-root-resolution, tracker-snapshot-discipline | REQ-07, REQ-08, D-06, D-09, F-09, F-10 | creates 3, touches 2 | — | tracker-entry-point |
+| reference-checker-tracker-references | Check tracker references against a mounted store | task | The reference checker passes without the tracker and checks tracker references when it is mounted | tracker-reference-resolution, tracker-root-resolution | REQ-05, REQ-06, D-03, F-11, F-12, F-17, F-18, F-22 | touches 1 | — | — |
+| tracker-lifecycle-commands | Mount and snapshot the tracker repository with one command each | task | A fresh clone mounts the tracker with one command and the store is snapshotted with another | tracker-root-resolution, tracker-snapshot-discipline | REQ-07, REQ-08, D-06, D-09, F-09, F-10 | creates 2, touches 3 | — | tracker-entry-point |
 | cutover-rehearsal | Write the cutover runbook and rehearse it on a scratch copy | task | A rehearsed runbook with its tool carries the tracker through the cutover and back | cutover-sequence, tracker-root-resolution, tracker-reference-resolution | REQ-09, D-01, D-07, D-08, D-10, F-01, F-05, F-06, F-07, F-19, F-20 | creates 2 | — | landing-check, reference-checker-tracker-references, tracker-lifecycle-commands |
 | cutover-execution | Execute the tracker cutover | task | The live repository runs on the separate tracker with no tracked or stale store left | cutover-sequence, landing-link, tracker-snapshot-discipline, tracker-reference-resolution | REQ-01, REQ-02, REQ-03, REQ-07, REQ-08, REQ-09, REQ-10, D-01, D-02, D-03, D-05, D-06, D-08, D-09, D-10, F-01, F-16, F-19, F-20 | touches 9 | — | cutover-rehearsal |
 
@@ -152,6 +160,7 @@ flowchart LR
 | RISK-01 Shared identity | Checkouts sharing the store share one worktree identity (F-07); a lease is attributed by agent identity alone. The entry point derives a distinct identity per checkout; request U-4 removes the dependence. |
 | RISK-02 Unverified jit behaviour | F-04, F-05, F-07 and the resolution of the worktree root for a nested repository rest on documentation and one experiment. The rehearsal re-checks them and records any contradiction before the runbook changes. |
 | RISK-03 Vendored skills | The dispatch scripts and skill texts under `.agents/skills/` come from the jit project. They name jit without the entry point, and some read `.jit/config.toml` or require `.jit` under the checkout they run in. `AGENTS.md`, which every agent loads, carries the rule; in a linked worktree those scripts run through the entry point with the path under the data root as argument, or from the primary checkout. Request U-7 moves the rule upstream. |
+| RISK-05 Document links | Repository validation resolves an issue's linked documents in the code checkout it runs from. With one store, a document linked from an unmerged branch fails validation in every other checkout, and on a fresh clone until its commit is pushed. The snapshot therefore does not gate on validation, and the mount reports a failed validation and keeps the store. Whether a link pinned to its commit resolves from every checkout of the host is checked in the rehearsal; request U-8 removes the dependence. |
 | RISK-04 Concurrent store | All sessions now write one store. jit serializes writers with its store lock; a tracker change is visible to every lead at once, without review by merge. |
 
 ### Requests to the jit project
@@ -168,6 +177,8 @@ Separate from the plan; nothing above depends on them.
 - U-6: Commit the data repository after a mutation, or run a configured hook.
 - U-7: Have the dispatch scripts and the path-reading skill scripts take the
   tracker environment.
+- U-8: Validate the store without resolving document links, or resolve them
+  across the branches of the code repository.
 
 ## Investigation sources
 
