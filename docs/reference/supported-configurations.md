@@ -39,7 +39,7 @@ states which detection the `simd` feature gates:
 ## GPU
 
 GPU acceleration targets AMD GPUs through HIP. The statically linked kernels
-are compiled for gfx1030 only. `build.rs` also compiles per-architecture code
+are compiled for gfx1030 only. `../../crates/gf2-kernels-hip/build.rs` also compiles per-architecture code
 objects for the targets listed in its `GFX_TARGETS`; gfx1030 is mandatory and
 the others are best-effort. `gf2_kernels_hip::host::GfxTarget::detect` returns
 `HipError::UnsupportedArch` for a device without a compiled object, and the

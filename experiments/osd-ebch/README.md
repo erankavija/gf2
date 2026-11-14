@@ -10,6 +10,6 @@ cargo run -p osd-ebch --release --bin ebch_osd_awgn_campaign -- \
     --checkpoint /tmp/osd/checkpoint.json --receipt /tmp/osd/receipt.json
 ```
 
-`provenance.rs` defines the campaign serialization under @/issue/779d1926, using identity types from
+`experiments/osd-ebch/src/provenance.rs` defines the campaign serialization under @/issue/779d1926, using identity types from
 `experiments-common`. The invocation vector is non-identity metadata retained
 for every contributing invocation.

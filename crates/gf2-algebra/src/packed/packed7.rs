@@ -457,8 +457,8 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
             "Packed7Vec::add_assign: length mismatch ({} != {})",
             self.len_lanes, rhs.len_lanes
         );
-        for (wa, wb) in self.words.iter_mut().zip(rhs.words.iter()) {
-            *wa = binary_op_word(*wa, *wb, &ADD_LUT);
+        for i in 0..self.words.len() {
+            self.words[i] = binary_op_word(self.words[i], rhs.words[i], &ADD_LUT);
         }
         self.mask_tail();
     }
@@ -469,8 +469,8 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
             "Packed7Vec::sub_assign: length mismatch ({} != {})",
             self.len_lanes, rhs.len_lanes
         );
-        for (wa, wb) in self.words.iter_mut().zip(rhs.words.iter()) {
-            *wa = binary_op_word(*wa, *wb, &SUB_LUT);
+        for i in 0..self.words.len() {
+            self.words[i] = binary_op_word(self.words[i], rhs.words[i], &SUB_LUT);
         }
         self.mask_tail();
     }
@@ -481,8 +481,8 @@ impl PackedFieldVec<Fp<7>> for Packed7Vec {
             "Packed7Vec::mul_assign: length mismatch ({} != {})",
             self.len_lanes, rhs.len_lanes
         );
-        for (wa, wb) in self.words.iter_mut().zip(rhs.words.iter()) {
-            *wa = binary_op_word(*wa, *wb, &MUL_LUT);
+        for i in 0..self.words.len() {
+            self.words[i] = binary_op_word(self.words[i], rhs.words[i], &MUL_LUT);
         }
         self.mask_tail();
     }

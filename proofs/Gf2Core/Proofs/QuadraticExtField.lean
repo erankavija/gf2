@@ -7,6 +7,7 @@
 import Mathlib.Algebra.Ring.TransferInstance
 import Mathlib.Algebra.Field.TransferInstance
 import Aeneas
+import Gf2Core.Proofs.ResultSpec
 import Gf2Core.Types
 import Gf2Core.FunsExternal
 import Gf2Core.Funs
@@ -59,21 +60,21 @@ theorem karatsuba_correct (hv : ValidExtConfig inst)
     ∃ r, ExtAbbrev.QMul inst a b = ok r ∧
       r.c0 = a.c0 * b.c0 + hv.getNonResidue * (a.c1 * b.c1) ∧
       r.c1 = a.c0 * b.c1 + a.c1 * b.c0 :=
-  Aeneas.Std.WP.spec_imp_exists (QExtProgress.qmul_progress hv a b)
+  result_spec_exists (QExtProgress.qmul_progress hv a b)
 
 /-- Addition in the Rust code is component-wise. -/
 theorem add_correct (hv : ValidExtConfig inst)
     (a b : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ∃ r, ExtAbbrev.QAdd inst a b = ok r ∧
       r.c0 = a.c0 + b.c0 ∧ r.c1 = a.c1 + b.c1 :=
-  Aeneas.Std.WP.spec_imp_exists (QExtProgress.qadd_progress hv a b)
+  result_spec_exists (QExtProgress.qadd_progress hv a b)
 
 /-- Negation in the Rust code is component-wise. -/
 theorem neg_correct (hv : ValidExtConfig inst)
     (a : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ∃ r, ExtAbbrev.QNeg inst a = ok r ∧
       r.c0 = -a.c0 ∧ r.c1 = -a.c1 :=
-  Aeneas.Std.WP.spec_imp_exists (QExtProgress.qneg_progress hv a)
+  result_spec_exists (QExtProgress.qneg_progress hv a)
 
 /-- Inversion in the Rust code computes conjugate/norm. -/
 theorem inv_correct (hv : ValidExtConfig inst)
@@ -83,14 +84,14 @@ theorem inv_correct (hv : ValidExtConfig inst)
       (¬(self.c0 = 0 ∧ self.c1 = 0) → ∃ r, o = some r ∧
         r.c0 = self.c0 * (self.c0 ^ 2 - hv.getNonResidue * self.c1 ^ 2)⁻¹ ∧
         r.c1 = -(self.c1 * (self.c0 ^ 2 - hv.getNonResidue * self.c1 ^ 2)⁻¹)) :=
-  Aeneas.Std.WP.spec_imp_exists (QExtProgress.qinv_progress hv self)
+  result_spec_exists (QExtProgress.qinv_progress hv self)
 
 /-- The order of QuadraticExt equals base_order² (assuming no U128 overflow). -/
 theorem order_eq_base_squared (bo : Std.U128)
     (h_ord : inst.fieldtraitsConstFieldInst.order = ok bo)
     (h_max : bo.val * bo.val ≤ Std.U128.max) :
     ∃ r, ExtAbbrev.QOrder inst = ok r ∧ r.val = bo.val * bo.val :=
-  Aeneas.Std.WP.spec_imp_exists (QExtProgress.qorder_progress bo h_ord h_max)
+  result_spec_exists (QExtProgress.qorder_progress bo h_ord h_max)
 
 end QuadraticExtField
 
