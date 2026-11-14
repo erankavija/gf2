@@ -1,7 +1,7 @@
 # Handoff: Separate experiment code from the library crates (45ecf975), session 41
 
 **Date:** 2026-11-13
-**Prior handoffs:** [handoff-37.md](handoff-37.md) and its predecessors.
+**Prior handoffs:** retired by @/issue/d1c0e062. Their live traps are carried below.
 **Lead:** gf2-a6, successor of gf2-69. Steward: gf2-f3.
 
 Artifacts outside the tree are in `<gf2-share>/45ecf975-handoff-38/`, where
@@ -75,7 +75,7 @@ Artifacts outside the tree are in `<gf2-share>/45ecf975-handoff-38/`, where
 ## Next
 
 1. 66fefd9e rework 2, the last one allowed.
-   - Rewrite `dev/active/b8206228-permanent-statistics/45ecf975/plan.md:50` and `dev/active/b8206228-permanent-statistics/dispatch-7a816262-phase1.md:41,48`.
+   - Rewrite `dev/active/b8206228-permanent-statistics/45ecf975/plan.md:50`. The dispatch file `dispatch-7a816262-phase1.md` (retired by @/issue/d1c0e062) is no longer a rewrite target.
    - Widen the sweep to any wording that puts a measurement, pilot, evidence, run output, result or record into the tree, whatever the verb.
    - A worker of the other vendor builds an independent inventory, sliced by directory. Reconcile the two inventories and list every hit with its decision in the issue.
    - Gate on the branch, then merge.
@@ -104,7 +104,37 @@ Artifacts outside the tree are in `<gf2-share>/45ecf975-handoff-38/`, where
 - A codex worker given `flock -w` gives up on a busy lock. Give no timeout, or now no lock at all.
 - `git stash` is shared across worktrees and sessions; never use it in a brief.
 - `jit gate evaluate` records gates only in the main checkout; plan gate-on-branch with the steward's copy-records procedure.
-- The traps of handoff-37 still hold.
+
+## Traps carried from earlier handoffs
+
+- `breakdown.json` stays excluded from audit by recorded owner decision (`240b7618`, `679cf170`). Do not argue its properties, edit it, or resync it. Do not amend an issue description without checking that issue's copy in it.
+- A `jit gate evaluate` success line is not evidence. Confirm with `jit gate status <id> <gate>`. A stale `claims.lock` wedges evaluate; `jit recover` clears it once no jit process runs.
+- A cold `cargo-ci` exceeds the 900 s gate timeout, and an `error` at that limit is not a verdict. Warm the tree with a direct run, then rerun the gate.
+- Concurrent builds in other worktrees make fast-tier tests miss their 15 s kill. Check the gate record and rerun solo before reading a failure as a regression.
+- GPU-device tests fail under host contention. Rerun the single test alone before reading it as a regression.
+- Stage explicit paths and check `git diff --cached --stat`. `jit` materializes shared `.git/jit` state into the checkout that runs it, so a worker commit can carry other issues' `.jit/` changes.
+- Run `jit` and tracker commands from the repository root, not a worktree or subdirectory. Linked checkouts refuse tracker writes, and `jit issue show` fails there.
+- `jit doc add` is idempotent per path. Run `jit doc remove` on the old link first. An asset entry in a document link names the file too, so remove it with the link.
+- Before deleting a file, remove its `jit doc` links and asset entries, then run `jit validate`. Do not close an issue whose text names a deleted path; rewrite the text first.
+- Reference checks read tracked files only. A pass on an untracked file proves nothing.
+- Do not rewrite a removed path to its base name. Delete the citation or point it at an existing file, and audit the whole class, not only the cited file.
+- The history rewrite needs `map_pins.py`, because tracker documents pin commit IDs. Nothing is pushed before the owner's go; the pre-push hook refuses purged history.
+- `codex exec` workers cannot write `.git`. They leave files in the tree, and the lead commits. Start a background `codex exec` with `< /dev/null`.
+- Single-agent audits sample rather than read. Slice the tree by directory for full coverage.
+- Do not `git checkout --` or `git restore` a worker's uncommitted edits. Commit them as WIP first.
+- A commit that changes public rustdoc needs `cargo doc`. Verify a commit's check results before committing; do not commit in the same command as a check whose result is only printed.
+- Passing gates are stale once shared code changes, such as `experiments/common`. Re-gate.
+- The AFF3CT adapter has its own `Cargo.lock`, which `cargo-ci` does not build. After a dependency change, build it with `--locked`.
+- A reviewer re-run can surface new findings. Verify each one; read findings with `jit gate status <id> <gate> --findings`, not from reviewer rollouts.
+- Dispatch and rework prompts are ephemeral. Never commit them.
+- Do not edit `scripts/cargo-ci.sh` while an instance runs.
+- A falsification must reinstate the real pre-fix code byte-for-byte. Exemption tests must check that the fixture reaches the exempted path.
+- Host-wide process kills by command-line pattern can kill peer builds. Kill only PIDs from your own process tree.
+- The shell is zsh, where `status` is read-only. Do not use it as a variable name in scripts.
+- `git commit -F -` after an `&&` chain hangs. Write the message to a file.
+- Background Bash tasks die at the 10-minute cap. Do not sleep-then-run there.
+- `/usr/bin/time` is not installed. Time commands with shell `date` arithmetic.
+- Agent-tool sandboxed worktrees have vanished. Read the leak-check output and check peer sessions before reverting anything.
 
 ## Open questions for the invoker
 
@@ -112,4 +142,4 @@ Artifacts outside the tree are in `<gf2-share>/45ecf975-handoff-38/`, where
 
 ## References
 
-- [plan.md](45ecf975/plan.md), [history-rewrite-runbook.md](45ecf975/history-rewrite-runbook.md), [reword_subjects.py](45ecf975/reword_subjects.py), [handoff-37.md](handoff-37.md)
+- [plan.md](45ecf975/plan.md), [history-rewrite-runbook.md](45ecf975/history-rewrite-runbook.md), [reword_subjects.py](45ecf975/reword_subjects.py), handoff-37.md (retired by @/issue/d1c0e062)
