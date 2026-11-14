@@ -10,7 +10,7 @@
   cannot be proven from below, only modeled).
 
   Per issue 2e544a34's 2026-05-16 user-approved scope amendment, this file
-  introduces EXACTLY TWO documented `@[progress]` model-assumption specs for
+  introduces EXACTLY TWO documented `@[step]` model-assumption specs for
   those two intrinsics (the legitimate model-assumption boundary, analogous
   to the existing `wrapping_neg` / `overflowing_sub` external models in
   `FunsExternal.lean`). EVERYTHING downstream — `classify_spec`,
@@ -20,6 +20,7 @@
   the verification boundary is permitted.
 -/
 import Aeneas
+import Gf2Core.Proofs.ResultSpec
 import Gf2Core.Funs
 import Gf2Core.Proofs.Defs
 
@@ -57,7 +58,7 @@ the result `n` is the 2-adic valuation of `x`: `2^n ∣ x` and `2^(n+1) ∤ x`,
 with `n < 64`. This is a faithful model of the hardware `TZCNT`/`BSF`
 instruction semantics; it cannot be proved from below because the Aeneas
 extraction leaves the intrinsic uninterpreted. -/
-@[progress]
+@[step]
 axiom trailing_zeros_spec (x : Std.U64) :
     core.num.U64.trailing_zeros x ⦃ n =>
       (x.val = 0 → n.val = 64) ∧
@@ -73,7 +74,7 @@ i.e. `x = 2^k` for some `k` (note `0` is not a power of two). This is a
 faithful model of the `x != 0 && x & (x-1) == 0` lowering; it cannot be
 proved from below because the Aeneas extraction leaves the intrinsic
 uninterpreted. -/
-@[progress]
+@[step]
 axiom is_power_of_two_spec (x : Std.U64) :
     core.num.U64.is_power_of_two x ⦃ b =>
       (b = true ↔ ∃ k, k < 64 ∧ x.val = 2 ^ k) ⦄
@@ -156,7 +157,7 @@ private theorem proth_subtree_spec {P r : Std.U64}
     intro h; exact hrne (by rw [h]; rfl)
   simp only [bne_iff_ne, ne_eq, hr_ne_lit, not_false_eq_true, if_true]
   -- trailing_zeros r
-  progress as ⟨tz, htz_eq0, htz_ne0⟩
+  step as ⟨tz, htz_eq0, htz_ne0⟩
   obtain ⟨htz0, htz1a, htz1b⟩ := htz_ne0 hrne
   by_cases hn16 : tz ≥ 16#u32
   · simp only [hn16, if_true]
@@ -165,7 +166,7 @@ private theorem proth_subtree_spec {P r : Std.U64}
       have : (16#u32 : Std.U32).val ≤ tz.val := hn16
       omega
     -- k = r >>> tz
-    progress as ⟨k, hk_val, _⟩
+    step as ⟨k, hk_val, _⟩
     have hkval : k.val = r.val / 2 ^ tz.val := by
       rw [hk_val, Nat.shiftRight_eq_div_pow]
     obtain ⟨hr_decomp, _⟩ := shift_decomp htz1a htz1b
@@ -179,27 +180,27 @@ private theorem proth_subtree_spec {P r : Std.U64}
       have hProth : classifyPost P (gfp.specialized.PrimeShape.Proth k tz) := by
         refine ⟨hn16v, hk1v, ?_⟩; omega
       by_cases hn63 : tz ≥ 63#u32
-      · simp only [hn63, if_true, spec, theta, wp_return]
+      · simp only [hn63, if_true, spec_ok]
         exact hProth
       · simp only [hn63, if_false]
-        progress as ⟨i, _, _⟩
+        step as ⟨i, _, _⟩
         by_cases hki : k < i
-        · simp only [hki, if_true, spec, theta, wp_return]; exact hProth
-        · simp only [hki, if_false, spec, theta, wp_return]; trivial
-    · simp only [hk1, if_false, spec, theta, wp_return]; trivial
-  · simp only [hn16, if_false, spec, theta, wp_return]; trivial
+        · simp only [hki, if_true, spec_ok]; exact hProth
+        · simp only [hki, if_false, spec_ok]; trivial
+    · simp only [hk1, if_false, spec_ok]; trivial
+  · simp only [hn16, if_false, spec_ok]; trivial
 
 theorem classify_spec {P : Std.U64} (hP : 1 < P.val) :
     gfp.specialized.classify P ⦃ ps => classifyPost P ps ⦄ := by
   unfold gfp.specialized.classify
   have hPlt : P.val < 2 ^ 64 := P.hBounds
   by_cases hgold : P = gfp.specialized.GOLDILOCKS_PRIME
-  · simp only [hgold, if_true, spec, theta, wp_return]
+  · simp only [hgold, if_true, spec_ok]
     show classifyPost gfp.specialized.GOLDILOCKS_PRIME
       gfp.specialized.PrimeShape.Goldilocks
     show gfp.specialized.GOLDILOCKS_PRIME.val = 18446744069414584321
     native_decide
-  · simp only [hgold, if_false, lift, bind_tc_ok]
+  · simp only [hgold, if_false, lift, bind_ok]
     -- proth subtree precondition: r = wrapping_sub P 1, r.val = P.val - 1
     have hrval : (core.num.U64.wrapping_sub P 1#u64).val = P.val - 1 := by
       rw [core.num.U64.wrapping_sub_val_eq]
@@ -225,13 +226,13 @@ theorem classify_spec {P : Std.U64} (hP : 1 < P.val) :
       have hqne' : q.val ≠ 0 := by
         intro h; exact hqne (by apply UScalar.val_eq_imp; rw [h]; rfl)
       -- is_power_of_two q
-      progress as ⟨b, hb_iff⟩
+      step as ⟨b, hb_iff⟩
       by_cases hb : b = true
       · subst hb
         obtain ⟨kk, hkklt, hqpow⟩ := hb_iff.mp rfl
         simp only [if_true]
         -- trailing_zeros q
-        progress as ⟨n, hn_eq0, hn_ne0⟩
+        step as ⟨n, hn_eq0, hn_ne0⟩
         obtain ⟨hn0lt, hn0, hn1⟩ := hn_ne0 hqne'
         have hqn : q.val = 2 ^ n.val := pow_two_of_val_eq hqpow hn0 hn1
         have hPne : P.val + 1 ≠ 2 ^ 64 := by
@@ -245,7 +246,7 @@ theorem classify_spec {P : Std.U64} (hP : 1 < P.val) :
             have : (4#u32 : Std.U32).val ≤ n.val := hn4
             omega
           by_cases hn62 : n ≤ 62#u32
-          · simp only [hn62, if_true, spec, theta, wp_return]
+          · simp only [hn62, if_true, spec_ok]
             show classifyPost P (gfp.specialized.PrimeShape.Mersenne n)
             have hn62v : n.val ≤ 62 := by
               have he : (62#u32 : Std.U32).val = 62 := by native_decide
@@ -274,8 +275,8 @@ theorem use_specialized_storage_total (P : Std.U64) (hP : 1 < P.val) :
   by_cases h2 : P = 2#u64
   · exact ⟨false, by simp [h2]⟩
   · simp only [h2, if_false]
-    obtain ⟨ps, hps_eq, _⟩ := spec_imp_exists (classify_spec hP)
-    simp only [hps_eq, bind_tc_ok]
+    obtain ⟨ps, hps_eq, _⟩ := result_spec_exists (classify_spec hP)
+    simp only [hps_eq, bind_ok]
     cases ps with
     | Mersenne n => exact ⟨_, rfl⟩
     | Proth k n => exact ⟨_, rfl⟩
@@ -301,9 +302,9 @@ private theorem wide_mod_arm {P a b : Std.U64}
   have ha128 : (UScalar.cast .U128 a : Std.U128).val = a.val := U64.cast_U128_val_eq a
   have hb128 : (UScalar.cast .U128 b : Std.U128).val = b.val := U64.cast_U128_val_eq b
   have hP128 : (UScalar.cast .U128 P : Std.U128).val = P.val := U64.cast_U128_val_eq P
-  simp only [lift, bind_tc_ok]
-  progress as ⟨prod, hprod⟩
-  progress as ⟨rem, hrem⟩
+  simp only [lift, bind_ok]
+  step as ⟨prod, hprod⟩
+  step as ⟨rem, hrem⟩
   have hprod_val : prod.val = a.val * b.val := by rw [hprod, ha128, hb128]
   have hrem_val : rem.val = (a.val * b.val) % P.val := by
     rw [hrem, hprod_val, hP128]
@@ -367,7 +368,7 @@ theorem mersenne_reduce_u64_correct (N : Std.U32) (x : Std.U64)
   have h2N : (2 : ℕ) ^ N.val ≥ 16 := by
     calc (2:ℕ) ^ N.val ≥ 2 ^ 4 := Nat.pow_le_pow_right (by norm_num) hN4
       _ = 16 := by norm_num
-  apply spec_imp_exists
+  apply result_spec_exists
   unfold gfp.specialized.mersenne_reduce_u64
   -- massert (N ≤ 32)
   have hassert : (N ≤ 32#u32) := by
@@ -375,22 +376,22 @@ theorem mersenne_reduce_u64_correct (N : Std.U32) (x : Std.U64)
     have : (32#u32 : Std.U32).val = 32 := by native_decide
     omega
   rw [massert, if_pos hassert]
-  simp only [bind_tc_ok, lift]
+  simp only [bind_ok, lift]
   -- i = 1 <<< N  (value 2^N, fits since N < 64)
-  progress as ⟨pw, hpw_val, _⟩
+  step as ⟨pw, hpw_val, _⟩
   have hpw : pw.val = 2 ^ N.val := by
     rw [hpw_val, Nat.one_shiftLeft, U64.size_eq]
     exact Nat.mod_eq_of_lt (by
       have : 2 ^ N.val < 2 ^ 64 := Nat.pow_lt_pow_right (by norm_num) hNlt64
       omega)
   -- p = pw - 1 = 2^N - 1
-  progress as ⟨p, hp_eq⟩
+  step as ⟨p, hp_eq⟩
   have hp : p.val = 2 ^ N.val - 1 := by rw [hp_eq, hpw]
   -- i1 = x & p = x % 2^N
   have hi1 : (x &&& p).val = x.val % 2 ^ N.val := by
     rw [UScalar.val_and, hp, and_mask_mod]
   -- i2 = x >>> N = x / 2^N
-  progress as ⟨i2, hi2_val, _⟩
+  step as ⟨i2, hi2_val, _⟩
   have hi2 : i2.val = x.val / 2 ^ N.val := by
     rw [hi2_val, Nat.shiftRight_eq_div_pow]
   -- s1 = wrapping_add i1 i2
@@ -415,7 +416,7 @@ theorem mersenne_reduce_u64_correct (N : Std.U32) (x : Std.U64)
   -- i3 = s1 & p = s1 % 2^N ; i4 = s1 >>> N = s1 / 2^N
   have hi3 : (s1 &&& p).val = s1v % 2 ^ N.val := by
     rw [UScalar.val_and, hp, and_mask_mod, hs1]
-  progress as ⟨i4, hi4_val, _⟩
+  step as ⟨i4, hi4_val, _⟩
   have hi4 : i4.val = s1v / 2 ^ N.val := by
     rw [hi4_val, Nat.shiftRight_eq_div_pow, hs1]
   -- s1v < 2^(N+1) so s1v / 2^N ≤ 1
@@ -450,7 +451,7 @@ theorem mersenne_reduce_u64_correct (N : Std.U32) (x : Std.U64)
     rw [hrv_def]; omega
   have hr_val : r.val = rv := hr
   -- New Aeneas Std (0f99a049): `overflowing_sub` is now a PURE op consumed via
-  -- `lift`; the WP evaluates it to `(⟨r.bv - p.bv⟩, BitVec.usubOverflow r.bv p.bv)`
+  -- `lift`; the WP evaluates it to `(⟨BitVec.sub r.bv p.bv⟩, BitVec.usubOverflow r.bv p.bv)`
   -- bound by a `let (sub, borrow) := …`. That tail is *definitionally*
   -- `if (overflowing_sub r p).2 then ok r else ok (overflowing_sub r p).1`; `change`
   -- exposes it (avoiding the `let`-pair that `simp` will not iota-reduce here), the
@@ -471,9 +472,10 @@ theorem mersenne_reduce_u64_correct (N : Std.U32) (x : Std.U64)
     simp only [hb, if_false, spec_ok]
     push_neg at hb
     have hple : p.val ≤ r.val := hb
-    have hsub_val : (⟨r.bv - p.bv⟩ : Std.U64).val = r.val - p.val := by
-      show (r.bv - p.bv).toNat = r.val - p.val
+    have hsub_val : (⟨BitVec.sub r.bv p.bv⟩ : Std.U64).val = r.val - p.val := by
+      show (BitVec.sub r.bv p.bv).toNat = r.val - p.val
       exact BitVec.toNat_sub_of_le (show p.bv.toNat ≤ r.bv.toNat from hple)
+    change (⟨BitVec.sub r.bv p.bv⟩ : Std.U64).val = _
     rw [hsub_val, hr_val, hp]
     rw [hr_val, hp] at hb
     -- (rv - (2^N-1)) ≡ rv ≡ x (mod 2^N-1), and rv - p < p
@@ -540,7 +542,7 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
   have hp_pos : 0 < 2 ^ N.val - 1 := by
     have : 2 ^ 4 ≤ 2 ^ N.val := Nat.pow_le_pow_right (by norm_num) (by omega)
     omega
-  apply spec_imp_exists
+  apply result_spec_exists
   unfold gfp.specialized.mersenne_reduce
   -- debug_assert_n_in_range N : massert (4 ≤ N) ; massert (N ≤ 62)
   have ha1 : (N ≥ 4#u32) := by
@@ -553,11 +555,11 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
     omega
   have hdbg : gfp.specialized.debug_assert_n_in_range N = ok () := by
     simp only [gfp.specialized.debug_assert_n_in_range, massert,
-               if_pos ha1, if_pos ha2, bind_tc_ok]
+               if_pos ha1, if_pos ha2, bind_ok]
   rw [hdbg]
-  simp only [bind_tc_ok, lift]
+  simp only [bind_ok, lift]
   -- pw = 1 <<< N = 2^N
-  progress as ⟨pw, hpw_val, _⟩
+  step as ⟨pw, hpw_val, _⟩
   have hpw : pw.val = 2 ^ N.val := by
     rw [hpw_val, Nat.one_shiftLeft, U64.size_eq]
     exact Nat.mod_eq_of_lt (by
@@ -566,8 +568,8 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
   have hpw_ge1 : (1#u64 : Std.U64).val ≤ pw.val := by
     have h1 : (1#u64 : Std.U64).val = 1 := by native_decide
     rw [h1, hpw]; exact Nat.one_le_two_pow
-  obtain ⟨p, hp_eq, hp_val, _⟩ := spec_imp_exists (UScalar.sub_spec hpw_ge1)
-  simp only [hp_eq, bind_tc_ok]
+  obtain ⟨p, hp_eq, hp_val, _⟩ := result_spec_exists (UScalar.sub_spec hpw_ge1)
+  simp only [hp_eq, bind_ok]
   have hp : p.val = 2 ^ N.val - 1 := by
     rw [hp_val, hpw]
     have h1 : (1#u64 : Std.U64).val = 1 := by native_decide
@@ -585,7 +587,7 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
     rw [UScalar.val_and, hp, and_mask_mod, hcastx,
         Nat.mod_mod_of_dvd _ (pow_dvd_pow 2 (by omega : N.val ≤ 64))]
   -- i2 = x >>> N
-  progress as ⟨i2, hi2_val, _⟩
+  step as ⟨i2, hi2_val, _⟩
   have hi2 : i2.val = x.val / 2 ^ N.val := by
     rw [hi2_val, Nat.shiftRight_eq_div_pow]
   -- mid = (cast U64 i2) & p = (x / 2^N) % 2^N
@@ -596,12 +598,12 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
     have : (2:ℕ) ^ UScalarTy.U64.numBits = 2 ^ 64 := by norm_num
     rw [this, Nat.mod_mod_of_dvd _ hdvd]
   -- i4 = 2 * N (u32)
-  progress as ⟨tn, htn⟩
+  step as ⟨tn, htn⟩
   have htn_val : tn.val = 2 * N.val := by
     have h2 : (2#u32 : Std.U32).val = 2 := by native_decide
     omega
   -- i5 = x >>> (2N)
-  progress as ⟨i5, hi5_val, _⟩
+  step as ⟨i5, hi5_val, _⟩
   have hi5 : i5.val = x.val / 2 ^ (2 * N.val) := by
     rw [hi5_val, Nat.shiftRight_eq_div_pow, htn_val]
   -- hi = cast U64 i5 = x / 2^(2N) = 0  (x < 2^(2N))
@@ -619,18 +621,11 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
   have hi6_no_ovf : lo.val + mid.val < 2 ^ 64 := by
     have : 2 ^ N.val ≤ 2 ^ 62 := Nat.pow_le_pow_right (by norm_num) hN62
     omega
-  have hi6 : (core.num.U64.wrapping_add lo mid).val = lo.val + mid.val := by
-    rw [core.num.U64.wrapping_add_val_eq, UScalar.size_UScalarTyU64, U64.size_eq,
-        show (18446744073709551616 : ℕ) = 2 ^ 64 from by norm_num,
-        Nat.mod_eq_of_lt hi6_no_ovf]
-  set i6 := core.num.U64.wrapping_add lo mid with hi6_def
+  step as ⟨i6, hi6⟩
   have hs1_no_ovf : i6.val + hi.val < 2 ^ 64 := by
     rw [hi6, hhi]; omega
-  have hs1 : (core.num.U64.wrapping_add i6 hi).val = lo.val + mid.val + hi.val := by
-    rw [core.num.U64.wrapping_add_val_eq, UScalar.size_UScalarTyU64, U64.size_eq,
-        show (18446744073709551616 : ℕ) = 2 ^ 64 from by norm_num,
-        Nat.mod_eq_of_lt hs1_no_ovf, hi6]
-  set s1 := core.num.U64.wrapping_add i6 hi with hs1_def
+  step as ⟨s1, hs1_raw⟩
+  have hs1 : s1.val = lo.val + mid.val + hi.val := by omega
   set s1v := lo.val + mid.val + hi.val with hs1v_def
   -- s1v ≡ x (mod 2^N-1)
   have hs1_cong : s1v % (2 ^ N.val - 1) = x.val % (2 ^ N.val - 1) := by
@@ -656,7 +651,7 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
   -- i7 = s1 & p = s1v % 2^N ; i8 = s1 >>> N = s1v / 2^N
   have hi7 : (s1 &&& p).val = s1v % 2 ^ N.val := by
     rw [UScalar.val_and, hp, and_mask_mod, hs1]
-  progress as ⟨i8, hi8_val, _⟩
+  step as ⟨i8, hi8_val, _⟩
   have hi8 : i8.val = s1v / 2 ^ N.val := by
     rw [hi8_val, Nat.shiftRight_eq_div_pow, hs1]
   -- s1v < 3·2^N so s1v / 2^N ≤ 2
@@ -673,12 +668,8 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
     have : 2 ^ N.val ≤ 2 ^ 62 := Nat.pow_le_pow_right (by norm_num) hN62
     omega
   set rv := s1v % 2 ^ N.val + s1v / 2 ^ N.val with hrv_def
-  have hr : (core.num.U64.wrapping_add (s1 &&& p) i8).val = rv := by
-    rw [core.num.U64.wrapping_add_val_eq, hi7, hi8, ← hrv_def,
-        UScalar.size_UScalarTyU64, U64.size_eq,
-        show (18446744073709551616 : ℕ) = 2 ^ 64 from by norm_num,
-        Nat.mod_eq_of_lt hr_no_ovf]
-  set r := core.num.U64.wrapping_add (s1 &&& p) i8 with hr_def
+  step as ⟨r, hr_raw⟩
+  have hr : r.val = rv := by rw [hr_raw, hi7, hi8, hrv_def]
   have hrv_cong : rv % (2 ^ N.val - 1) = x.val % (2 ^ N.val - 1) := by
     rw [hrv_def]
     calc (s1v % 2 ^ N.val + s1v / 2 ^ N.val) % (2 ^ N.val - 1)
@@ -688,7 +679,7 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
     rw [hrv_def]; omega
   have hr_val : r.val = rv := hr
   -- New Aeneas Std (0f99a049): `overflowing_sub` is a PURE op evaluated by the WP
-  -- to `(⟨r.bv - p.bv⟩, BitVec.usubOverflow r.bv p.bv)` bound by a `let`. `change`
+  -- to `(⟨BitVec.sub r.bv p.bv⟩, BitVec.usubOverflow r.bv p.bv)` bound by a `let`. `change`
   -- exposes the definitionally-equal `if (overflowing_sub r p).2 then ok r else
   -- ok (overflowing_sub r p).1`; the borrow flag is `decide (r.val < p.val)`.
   change spec (if (core.num.U64.overflowing_sub r p).2 then ok r
@@ -704,9 +695,10 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
   · simp only [hb, if_false, spec_ok]
     push_neg at hb
     have hple : p.val ≤ r.val := hb
-    have hsub_val : (⟨r.bv - p.bv⟩ : Std.U64).val = r.val - p.val := by
-      show (r.bv - p.bv).toNat = r.val - p.val
+    have hsub_val : (⟨BitVec.sub r.bv p.bv⟩ : Std.U64).val = r.val - p.val := by
+      show (BitVec.sub r.bv p.bv).toNat = r.val - p.val
       exact BitVec.toNat_sub_of_le (show p.bv.toNat ≤ r.bv.toNat from hple)
+    change (⟨BitVec.sub r.bv p.bv⟩ : Std.U64).val = _
     rw [hsub_val, hr_val, hp]
     rw [hr_val, hp] at hb
     have h16 : (16 : ℕ) ≤ 2 ^ N.val := by
@@ -735,7 +727,7 @@ theorem proth_reduce_u64_correct (K : Std.U64) (N : Std.U32) (x : Std.U64)
     ∃ r, gfp.specialized.proth_reduce_u64 K N x = ok r ∧
       r.val = x.val % (K.val * 2 ^ N.val + 1) := by
   have hNlt64 : N.val < 64 := by omega
-  apply spec_imp_exists
+  apply result_spec_exists
   unfold gfp.specialized.proth_reduce_u64
   have ha1 : (K ≥ 1#u64) := by
     show (1#u64 : Std.U64).val ≤ K.val
@@ -750,13 +742,13 @@ theorem proth_reduce_u64_correct (K : Std.U64) (N : Std.U32) (x : Std.U64)
     have : (32#u32 : Std.U32).val = 32 := by native_decide
     omega
   rw [massert, if_pos ha1]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   rw [massert, if_pos ha2]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   rw [massert, if_pos ha3]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   -- pw = 1 <<< N = 2^N
-  progress as ⟨pw, hpw_val, _⟩
+  step as ⟨pw, hpw_val, _⟩
   have hpw : pw.val = 2 ^ N.val := by
     rw [hpw_val, Nat.one_shiftLeft, U64.size_eq]
     exact Nat.mod_eq_of_lt (by
@@ -766,21 +758,21 @@ theorem proth_reduce_u64_correct (K : Std.U64) (N : Std.U32) (x : Std.U64)
   have hmax64 : UScalar.max .U64 = 2 ^ 64 - 1 := by native_decide
   have hKpw_le : K.val * pw.val ≤ UScalar.max .U64 := by
     rw [hpw, hmax64]; omega
-  obtain ⟨i1, hi1_eq, hi1_val⟩ := spec_imp_exists (UScalar.mul_spec hKpw_le)
-  simp only [hi1_eq, bind_tc_ok]
+  obtain ⟨i1, hi1_eq, hi1_val⟩ := result_spec_exists (UScalar.mul_spec hKpw_le)
+  simp only [hi1_eq, bind_ok]
   have hi1 : i1.val = K.val * 2 ^ N.val := by rw [hi1_val, hpw]
   -- p = i1 + 1
   have h1v : (1#u64 : Std.U64).val = 1 := by native_decide
   have hi1_p1_le : i1.val + (1#u64 : Std.U64).val ≤ UScalar.max .U64 := by
     rw [hi1, h1v, hmax64]; omega
-  obtain ⟨pp, hpp_eq, hpp_val⟩ := spec_imp_exists (UScalar.add_spec hi1_p1_le)
-  simp only [hpp_eq, bind_tc_ok]
+  obtain ⟨pp, hpp_eq, hpp_val⟩ := result_spec_exists (UScalar.add_spec hi1_p1_le)
+  simp only [hpp_eq, bind_ok]
   have hpp : pp.val = K.val * 2 ^ N.val + 1 := by rw [hpp_val, hi1, h1v]
   -- x % pp
   have hpp_ne : pp.val ≠ 0 := by rw [hpp]; positivity
-  obtain ⟨r, hr_eq, hr_val⟩ := spec_imp_exists (UScalar.rem_spec x hpp_ne)
-  rw [show spec = theta from rfl, hr_eq]
-  simp only [theta, wp_return]
+  obtain ⟨r, hr_eq, hr_val⟩ := result_spec_exists (UScalar.rem_spec x hpp_ne)
+  rw [hr_eq]
+  simp only [spec_ok]
   rw [hr_val, hpp]
 
 /-! ## §9 — dispatch-match routing (clause-(c) axiom: pure structural routing) -/
@@ -926,9 +918,9 @@ private theorem u128_wide_mod {P a b : Std.U64}
   have hP_pos : 0 < P.val := by have := hP.2.1; omega
   have ha128 : (UScalar.cast .U128 a : Std.U128).val = a.val := U64.cast_U128_val_eq a
   have hb128 : (UScalar.cast .U128 b : Std.U128).val = b.val := U64.cast_U128_val_eq b
-  simp only [lift, bind_tc_ok]
-  progress as ⟨prod, hprod⟩
-  progress as ⟨rem, hrem⟩
+  simp only [lift, bind_ok]
+  step as ⟨prod, hprod⟩
+  step as ⟨rem, hrem⟩
   have hprod_val : prod.val = a.val * b.val := by rw [hprod, ha128, hb128]
   have hrem_val : rem.val = (a.val * b.val) % P.val := by
     rw [hrem, hprod_val, hm]
@@ -962,12 +954,12 @@ private theorem u64_wide_mod {P a b : Std.U64}
     rw [h]; exact Nat.mod_eq_of_lt (by
       have : (18446744073709551616 : ℕ) = 2 ^ 64 := by norm_num
       omega)
-  simp only [lift, bind_tc_ok]
+  simp only [lift, bind_ok]
   have hm_ne : m.val ≠ 0 := by rw [hm]; omega
   obtain ⟨r, hr_eq, hr_val⟩ :=
-    spec_imp_exists (UScalar.rem_spec (core.num.U64.wrapping_mul a b) hm_ne)
-  rw [show spec = theta from rfl, hr_eq]
-  simp only [theta, wp_return]
+    result_spec_exists (UScalar.rem_spec (core.num.U64.wrapping_mul a b) hm_ne)
+  rw [hr_eq]
+  simp only [spec_ok]
   rw [hr_val, hprod, hm]
   exact ⟨Nat.mod_lt _ hP_pos, rfl⟩
 
@@ -1000,7 +992,7 @@ private theorem mersenne31_arm {P a b : Std.U64}
       calc a.val * b.val ≤ (2 ^ 31 - 1) * (2 ^ 31 - 1) :=
             Nat.mul_le_mul (by omega) (by omega)
         _ < 18446744073709551616 := by norm_num)
-  simp only [lift, bind_tc_ok]
+  simp only [lift, bind_ok]
   obtain ⟨r, hr_eq, hr_val⟩ :=
     mersenne_reduce_u64_correct 31#u32 (core.num.U64.wrapping_mul a b)
       (by omega) (by omega) (by
@@ -1008,8 +1000,8 @@ private theorem mersenne31_arm {P a b : Std.U64}
         calc a.val * b.val ≤ (2 ^ 31 - 1) * (2 ^ 31 - 1) :=
               Nat.mul_le_mul (by omega) (by omega)
           _ < 2 ^ (2 * 31) := by norm_num)
-  rw [show spec = theta from rfl, hr_eq]
-  simp only [theta, wp_return]
+  rw [hr_eq]
+  simp only [spec_ok]
   rw [hr_val, h31v, hprod, ← hP31]
   exact ⟨Nat.mod_lt _ hP_pos, rfl⟩
 
@@ -1032,8 +1024,8 @@ private theorem mersenne61_arm {P a b : Std.U64}
     U64.cast_U128_val_eq a
   have hb128 : (UScalar.cast .U128 b : Std.U128).val = b.val :=
     U64.cast_U128_val_eq b
-  simp only [lift, bind_tc_ok]
-  progress as ⟨i2, hi2⟩
+  simp only [lift, bind_ok]
+  step as ⟨i2, hi2⟩
   have hi2_val : i2.val = a.val * b.val := by rw [hi2, ha128, hb128]
   obtain ⟨r, hr_eq, hr_val⟩ :=
     mersenne_reduce_correct 61#u32 i2 (by omega) (by omega) (by
@@ -1041,8 +1033,8 @@ private theorem mersenne61_arm {P a b : Std.U64}
       calc a.val * b.val ≤ (2 ^ 61 - 1) * (2 ^ 61 - 1) :=
             Nat.mul_le_mul (by omega) (by omega)
         _ < 2 ^ (2 * 61) := by norm_num)
-  rw [show spec = theta from rfl, hr_eq]
-  simp only [theta, wp_return]
+  rw [hr_eq]
+  simp only [spec_ok]
   rw [hr_val, h61v, hi2_val, ← hP61]
   exact ⟨Nat.mod_lt _ hP_pos, rfl⟩
 
@@ -1066,17 +1058,17 @@ private theorem mersenne_generic_arm {P a b : Std.U64} {n : Std.U32}
   have hb128 : (UScalar.cast .U128 b : Std.U128).val = b.val :=
     U64.cast_U128_val_eq b
   have h1v128 : (1#u128 : Std.U128).val = 1 := by native_decide
-  simp only [lift, bind_tc_ok]
-  progress as ⟨wide, hwide⟩
+  simp only [lift, bind_ok]
+  step as ⟨wide, hwide⟩
   have hwide_val : wide.val = a.val * b.val := by rw [hwide, ha128, hb128]
-  progress as ⟨pw, hpw_val, _⟩
+  step as ⟨pw, hpw_val, _⟩
   have hpw : pw.val = 2 ^ n.val := one_shl_u128_val pw hpw_val hnlt128
   have hpw_ge1 : (1#u128 : Std.U128).val ≤ pw.val := by
     rw [h1v128, hpw]; exact Nat.one_le_pow _ _ (by norm_num)
-  obtain ⟨md, hmd_eq, hmd_val0, _⟩ := spec_imp_exists (UScalar.sub_spec hpw_ge1)
-  simp only [hmd_eq, bind_tc_ok]
+  obtain ⟨md, hmd_eq, hmd_val0, _⟩ := result_spec_exists (UScalar.sub_spec hpw_ge1)
+  simp only [hmd_eq, bind_ok]
   have hmd_val : md.val = 2 ^ n.val - 1 := by rw [hmd_val0, hpw, h1v128]
-  progress as ⟨i4, hi4⟩
+  step as ⟨i4, hi4⟩
   have hi4_val : i4.val = (a.val * b.val) % P.val := by
     rw [hi4, hwide_val, hmd_val, ← hPeq]
   have hi4_lt : i4.val < P.val := by rw [hi4_val]; exact Nat.mod_lt _ hP_pos
@@ -1123,22 +1115,22 @@ private theorem proth_supported_arm {P k a b : Std.U64} {n : Std.U32}
     U64.cast_U128_val_eq k
   have hmax128 : UScalar.max .U128 = 2 ^ 128 - 1 := by native_decide
   have h1v128 : (1#u128 : Std.U128).val = 1 := by native_decide
-  simp only [lift, bind_tc_ok]
-  progress as ⟨i1, hi1v, _⟩
+  simp only [lift, bind_ok]
+  step as ⟨i1, hi1v, _⟩
   have hi1 : i1.val = 2 ^ n.val := one_shl_u128_val i1 hi1v hnlt128
   have hmul_le : (UScalar.cast .U128 k : Std.U128).val * i1.val
       ≤ UScalar.max .U128 := by
     rw [hk128, hi1, hmax128, hkK, hnN]; omega
-  obtain ⟨i2, hi2_eq, hi2_val0⟩ := spec_imp_exists (UScalar.mul_spec hmul_le)
-  simp only [hi2_eq, bind_tc_ok]
+  obtain ⟨i2, hi2_eq, hi2_val0⟩ := result_spec_exists (UScalar.mul_spec hmul_le)
+  simp only [hi2_eq, bind_ok]
   have hi2_val : i2.val = k.val * 2 ^ n.val := by rw [hi2_val0, hk128, hi1]
   have hadd_le : i2.val + (1#u128 : Std.U128).val ≤ UScalar.max .U128 := by
     rw [hi2_val, h1v128, hmax128, hkK, hnN]; omega
-  obtain ⟨p, hp_eq, hp_val0⟩ := spec_imp_exists (UScalar.add_spec hadd_le)
-  simp only [hp_eq, bind_tc_ok]
+  obtain ⟨p, hp_eq, hp_val0⟩ := result_spec_exists (UScalar.add_spec hadd_le)
+  simp only [hp_eq, bind_ok]
   have hp_val : p.val = P.val := by
     rw [hp_val0, hi2_val, h1v128, ← hPeq]
-  progress as ⟨i3, hi3v, _⟩
+  step as ⟨i3, hi3v, _⟩
   have hi3 : i3.val = 2 ^ 32 := by
     have : (32 : ℕ) < 128 := by norm_num
     rw [hi3v, Nat.one_shiftLeft, U128.size_eq]
@@ -1158,8 +1150,8 @@ private theorem proth_supported_arm {P k a b : Std.U64} {n : Std.U32}
   obtain ⟨r, hr_eq, hr_val⟩ :=
     proth_reduce_u64_correct K N (core.num.U64.wrapping_mul a b)
       hK1 hN16 hN32 (by omega)
-  rw [show spec = theta from rfl, hr_eq]
-  simp only [theta, wp_return]
+  rw [hr_eq]
+  simp only [spec_ok]
   rw [hr_val, hprod]
   have hPKNv : K.val * 2 ^ N.val + 1 = P.val := by
     rw [← hkK, ← hnN, ← hPeq]
@@ -1200,8 +1192,8 @@ private theorem proth_fallthrough_arm {P k a b : Std.U64} {n : Std.U32}
     U64.cast_U128_val_eq k
   have hmax128 : UScalar.max .U128 = 2 ^ 128 - 1 := by native_decide
   have h1v128 : (1#u128 : Std.U128).val = 1 := by native_decide
-  simp only [lift, bind_tc_ok]
-  progress as ⟨i1, hi1v, _⟩
+  simp only [lift, bind_ok]
+  step as ⟨i1, hi1v, _⟩
   have hi1 : i1.val = 2 ^ n.val := one_shl_u128_val i1 hi1v hnlt128
   have hmul_le : (UScalar.cast .U128 k : Std.U128).val * i1.val
       ≤ UScalar.max .U128 := by
@@ -1210,22 +1202,22 @@ private theorem proth_fallthrough_arm {P k a b : Std.U64} {n : Std.U32}
     have : k.val * 2 ^ n.val ≤ 2 ^ 63 := by omega
     calc k.val * 2 ^ n.val ≤ 2 ^ 63 := this
       _ ≤ 2 ^ 128 - 1 := by norm_num
-  obtain ⟨i2, hi2_eq, hi2_val0⟩ := spec_imp_exists (UScalar.mul_spec hmul_le)
-  simp only [hi2_eq, bind_tc_ok]
+  obtain ⟨i2, hi2_eq, hi2_val0⟩ := result_spec_exists (UScalar.mul_spec hmul_le)
+  simp only [hi2_eq, bind_ok]
   have hi2_val : i2.val = k.val * 2 ^ n.val := by rw [hi2_val0, hk128, hi1]
   have hadd_le : i2.val + (1#u128 : Std.U128).val ≤ UScalar.max .U128 := by
     rw [hi2_val, h1v128, hmax128]
     have hkn : k.val * 2 ^ n.val + 1 = P.val := hPeq.symm
     omega
-  obtain ⟨p, hp_eq, hp_val0⟩ := spec_imp_exists (UScalar.add_spec hadd_le)
-  simp only [hp_eq, bind_tc_ok]
+  obtain ⟨p, hp_eq, hp_val0⟩ := result_spec_exists (UScalar.add_spec hadd_le)
+  simp only [hp_eq, bind_ok]
   have hp_val : p.val = P.val := by
     rw [hp_val0, hi2_val, h1v128, ← hPeq]
   have hp32 : (UScalar.cast .U64 p : Std.U64).val = P.val := by
     rw [UScalar.cast_val_mod_pow_of_inBounds_eq .U64 p (by
       have : UScalarTy.U64.numBits = 64 := by decide
       rw [this, hp_val]; nlinarith [hP.2.2]), hp_val]
-  progress as ⟨i3, hi3v, _⟩
+  step as ⟨i3, hi3v, _⟩
   have hi3 : i3.val = 2 ^ 32 := by
     rw [hi3v, Nat.one_shiftLeft, U128.size_eq]
     exact Nat.mod_eq_of_lt (by norm_num)
@@ -1234,9 +1226,10 @@ private theorem proth_fallthrough_arm {P k a b : Std.U64} {n : Std.U32}
     have hP32 : P.val < 2 ^ 32 := by
       have hlt := (UScalar.lt_equiv p i3).mp hpfx
       rw [hp_val, hi3] at hlt; exact hlt
-    exact u64_wide_mod hP ha hb hP32 (UScalar.cast .U64 p) hp32
+    simpa only [Std.lift, bind_ok] using
+      u64_wide_mod hP ha hb hP32 (UScalar.cast .U64 p) hp32
   · rw [if_neg hpfx]
-    exact u128_wide_mod hP ha hb p hp_val
+    simpa only [Std.lift, bind_ok] using u128_wide_mod hP ha hb p hp_val
 
 /-- `specialized_mul P a b` returns `r` with `r.val < P.val` and
     `r.val = (a.val * b.val) % P.val`, for any valid prime `P` and
@@ -1254,22 +1247,22 @@ theorem specialized_mul_correct {P : Std.U64} {a b : Std.U64}
   have hPgt1 : 1 < P.val := hP.2.1
   have hPle : P.val ≤ 2 ^ 63 := hP.2.2
   unfold gfp.specialized_mul
-  obtain ⟨ps, hps_eq, hps_post⟩ := spec_imp_exists (classify_spec hPgt1)
-  simp only [hps_eq, bind_tc_ok]
+  obtain ⟨ps, hps_eq, hps_post⟩ := result_spec_exists (classify_spec hPgt1)
+  simp only [hps_eq, bind_ok]
   cases ps with
   | Mersenne n =>
     -- classifyPost: 4 ≤ n ≤ 62 ∧ P.val = 2^n - 1
     obtain ⟨hn4, hn62, hPeq⟩ := hps_post
     by_cases h31 : n.val = 31
     · simp only [dispatch_route.1 n a b h31]
-      exact spec_imp_exists
+      exact result_spec_exists
         (mersenne31_arm hP ha hb (by rw [hPeq, h31]))
     · by_cases h61 : n.val = 61
       · simp only [dispatch_route.2.1 n a b h61]
-        exact spec_imp_exists
+        exact result_spec_exists
           (mersenne61_arm hP ha hb (by rw [hPeq, h61]))
       · simp only [dispatch_route.2.2.1 n a b h31 h61]
-        exact spec_imp_exists
+        exact result_spec_exists
           (mersenne_generic_arm hP ha hb hn4 hn62 hPeq)
   | Proth k n =>
     -- classifyPost: 16 ≤ n ∧ 1 ≤ k ∧ P.val = k*2^n + 1
@@ -1286,7 +1279,7 @@ theorem specialized_mul_correct {P : Std.U64} {a b : Std.U64}
     by_cases hc1 : k.val = 15 ∧ n.val = 27
     · obtain ⟨hk15, hn27⟩ := hc1
       simp only [dispatch_route.2.2.2.1 k n a b hk15 hn27]
-      exact spec_imp_exists
+      exact result_spec_exists
         (proth_supported_arm 15#u64 27#u32 hP ha hb
           (by rw [hk15]; native_decide) (by rw [hn27]; native_decide)
           (by native_decide) (by native_decide) (by native_decide)
@@ -1294,21 +1287,21 @@ theorem specialized_mul_correct {P : Std.U64} {a b : Std.U64}
     · by_cases hc2 : k.val = 127 ∧ n.val = 24
       · obtain ⟨hk127, hn24⟩ := hc2
         simp only [dispatch_route.2.2.2.2.1 k n a b hk127 hn24]
-        exact spec_imp_exists
+        exact result_spec_exists
           (proth_supported_arm 127#u64 24#u32 hP ha hb
             (by rw [hk127]; native_decide) (by rw [hn24]; native_decide)
             (by native_decide) (by native_decide) (by native_decide)
             (by native_decide) hPeq)
       · simp only [dispatch_route.2.2.2.2.2 k n a b hc1 hc2]
-        exact spec_imp_exists
+        exact result_spec_exists
           (proth_fallthrough_arm hP ha hb hn16 hn62 hk1 hPeq)
   | Goldilocks =>
     -- classifyPost: P.val = GOLDILOCKS constant; specialized_mul body =
     -- the wide (a*b)%P arm
-    obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := spec_imp_exists (wide_mod_arm hP ha hb)
+    obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := result_spec_exists (wide_mod_arm hP ha hb)
     exact ⟨r, hr_eq, hr_lt, hr_val⟩
   | Generic =>
-    obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := spec_imp_exists (wide_mod_arm hP ha hb)
+    obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := result_spec_exists (wide_mod_arm hP ha hb)
     exact ⟨r, hr_eq, hr_lt, hr_val⟩
 
 /-! ## §11 — inv_loop result bound -/
@@ -1338,7 +1331,7 @@ theorem inv_loop_bound {P : Std.U64} (hP : ValidPrime P)
       by_cases he : e1 > 0#u64
       · simp only [he, if_true]
         -- i = e1 & 1
-        progress as ⟨i, _, _⟩
+        step as ⟨i, _, _⟩
         -- result1 = if i = 1 then specialized_mul P res1 bas1 else res1
         have hres1_step : ∃ res2, (if i = 1#u64
             then gfp.specialized_mul P res1 bas1 else ok res1) = ok res2
@@ -1350,9 +1343,9 @@ theorem inv_loop_bound {P : Std.U64} (hP : ValidPrime P)
           · simp only [hi1, if_false]
             exact ⟨res1, rfl, hres1⟩
         obtain ⟨res2, hres2_eq, hres2_lt⟩ := hres1_step
-        simp only [hres2_eq, bind_tc_ok]
+        simp only [hres2_eq, bind_ok]
         -- e_next = e1 >>> 1
-        progress as ⟨enext, henext_val, _⟩
+        step as ⟨enext, henext_val, _⟩
         have he1_pos : 0 < e1.val := by scalar_tac
         have henext_lt : enext.val < e1.val := by
           rw [henext_val, Nat.shiftRight_eq_div_pow, pow_one]
@@ -1361,18 +1354,18 @@ theorem inv_loop_bound {P : Std.U64} (hP : ValidPrime P)
         · simp only [he2, if_true]
           obtain ⟨bas2, hbas2_eq, hbas2_lt, _⟩ :=
             specialized_mul_correct hP hbas1 hbas1
-          simp only [hbas2_eq, bind_tc_ok, spec, theta, wp_return]
+          simp only [hbas2_eq, bind_ok, spec_ok]
           refine ⟨hres2_lt, hbas2_lt, ?_⟩
           show enext.val < e1.val
           exact henext_lt
-        · simp only [he2, if_false, spec, theta, wp_return]
+        · simp only [he2, if_false, spec_ok]
           refine ⟨hres2_lt, hbas1, ?_⟩
           show enext.val < e1.val
           exact henext_lt
-      · simp only [he, if_false, spec, theta, wp_return]
+      · simp only [he, if_false, spec_ok]
         exact hres1
     · exact ⟨hr, hb⟩
-  obtain ⟨r, hr_eq, hr_lt⟩ := spec_imp_exists hspec
+  obtain ⟨r, hr_eq, hr_lt⟩ := result_spec_exists hspec
   exact ⟨r, hr_eq, hr_lt⟩
 
 /-! ## §12 — inv_loop value correctness (Fermat square-and-multiply) -/
@@ -1477,7 +1470,7 @@ theorem inv_loop_value {P : Std.U64} (hP : ValidPrime P)
       by_cases he : e1 > 0#u64
       · simp only [he, if_true]
         have he1_pos : 0 < e1.val := by scalar_tac
-        progress as ⟨i, hi_val, _⟩
+        step as ⟨i, hi_val, _⟩
         -- i = e1 & 1 ; i.val = e1.val % 2  (low bit)
         have hi_bit : i.val = e1.val % 2 := by
           rw [hi_val, UScalar.val_and]
@@ -1511,8 +1504,8 @@ theorem inv_loop_value {P : Std.U64} (hP : ValidPrime P)
               rw [h1v]; omega
             exact ⟨res1, rfl, hres1, by simp only [he1even, if_false]⟩
         obtain ⟨res2, hres2_eq, hres2_lt, hres2_val⟩ := hres_step
-        simp only [hres2_eq, bind_tc_ok]
-        progress as ⟨enext, henext_val, _⟩
+        simp only [hres2_eq, bind_ok]
+        step as ⟨enext, henext_val, _⟩
         have henext_eq : enext.val = e1.val / 2 := by
           rw [henext_val, Nat.shiftRight_eq_div_pow, pow_one]
         have henext_lt : enext.val < e1.val := by rw [henext_eq]; omega
@@ -1521,7 +1514,7 @@ theorem inv_loop_value {P : Std.U64} (hP : ValidPrime P)
           have henext_pos : 0 < enext.val := by scalar_tac
           obtain ⟨bas2, hbas2_eq, hbas2_lt, hbas2_val⟩ :=
             specialized_mul_correct hP hbas1 hbas1
-          simp only [hbas2_eq, bind_tc_ok, spec, theta, wp_return]
+          simp only [hbas2_eq, bind_ok, spec_ok]
           refine ⟨hres2_lt, hbas2_lt, ?_, ?_⟩
           · -- invPowSpec preserved
             rw [← hinv1]
@@ -1533,7 +1526,7 @@ theorem inv_loop_value {P : Std.U64} (hP : ValidPrime P)
             rw [hres2_val, hb2, henext_eq]
           · show enext.val < e1.val
             exact henext_lt
-        · simp only [he2, if_false, spec, theta, wp_return]
+        · simp only [he2, if_false, spec_ok]
           have henext0 : enext.val = 0 := by
             have : ¬ (0#u64 : Std.U64).val < enext.val := by
               simpa using he2
@@ -1546,7 +1539,7 @@ theorem inv_loop_value {P : Std.U64} (hP : ValidPrime P)
             simp only [hd, if_false]
           · show enext.val < e1.val
             exact henext_lt
-      · simp only [he, if_false, spec, theta, wp_return]
+      · simp only [he, if_false, spec_ok]
         have he0 : e1.val = 0 := by
           have : ¬ (0#u64 : Std.U64).val < e1.val := by simpa using he
           have h0 : (0#u64 : Std.U64).val = 0 := by native_decide
@@ -1555,7 +1548,7 @@ theorem inv_loop_value {P : Std.U64} (hP : ValidPrime P)
         rw [← hinv1, he0, invPowSpec_zero]
         rw [Nat.mod_eq_of_lt hres1]
     · exact ⟨hr, hb, rfl⟩
-  obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := spec_imp_exists hspec
+  obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := result_spec_exists hspec
   refine ⟨r, hr_eq, hr_lt, ?_⟩
   rw [hr_val, invPowSpec_correct P.val hP_pos e.val result.val base.val]
 

@@ -130,8 +130,9 @@ workload. The baseline is the pre-cutover receipt at its pinned revision
 (D-11). Exact benchmark codes, batch sizes, matrix dimensions, cache state,
 and worker counts are fixed by the survey's `workload-selection` contract
 before optimization work begins. Hosts follow the receipt conventions of the
-SOTA target matrix (uncontended, pinned toolchain, committed
-seeds/revision/host).
+SOTA target matrix (uncontended, pinned toolchain, seeds/revision/host
+recorded in a run record written outside the tracked tree, its location
+and digest recorded in the issue).
 
 #### Amendment 1 (2026-09-02, `3f7edef1`) — sampling rule
 
@@ -252,7 +253,7 @@ no untracked assumptions.
 | oracle-agreement | External oracle and standards-vector agreement | task | Corpus results agree with both named external oracles and standards vectors | evidence-protocol | REQ-11, D-07, INV-UNKNOWNS | creates 2 | verification | bch-convenience-ctors, systematic-encode |
 | baseline-survey | Reproducible external-baseline survey and workload selection | task | The strongest external baselines and exact workloads are pinned reproducibly | evidence-protocol | REQ-13, REQ-14, D-04, D-07, INV-PRIORART, INV-UNKNOWNS | creates 1 | performance | — |
 | bench-extension | Extend Criterion benchmarks to the selected workloads | task | Criterion benches cover both selected workloads on the canonical model | workload-selection | REQ-13, D-02, INV-CLAIMS | touches 1 | performance | avx2-batch-kernels, genmatrix-perf, cutover-benches |
-| perf-receipts | Committed performance receipts: non-regression, determinism, SOTA comparison | task | Committed receipts show non-regression, determinism, fallback coverage, and the SOTA comparison | evidence-protocol, workload-selection | REQ-13, REQ-14, D-07, D-11 | creates 1 | performance | bench-extension, conformance-suites |
+| perf-receipts | Performance receipts: non-regression, determinism, SOTA comparison | task | Receipts, written outside the tracked tree and recorded in the issue by location and digest, show non-regression, determinism, fallback coverage, and the SOTA comparison | evidence-protocol, workload-selection | REQ-13, REQ-14, D-07, D-11 | creates 1 | performance | bench-extension, conformance-suites |
 | researcher-docs | Researcher-oriented rustdoc and runnable examples | task | Researchers have runnable examples and rustdoc for the full canonical surface | systematic-layout, matrix-serialization-format | REQ-15, BRIEF-TERMINOLOGY | touches 2 | docs | legacy-reference-sweep, fieldmatrix-serialization, avx2-batch-kernels, genmatrix-perf |
 | followup-tracking | Create the tracked follow-up issues against the canonical interfaces | task | The three follow-up issues exist against the canonical interfaces | bchspec-model | REQ-16, BRIEF-API | uncertain | docs | bch-api-design |
 
@@ -309,7 +310,7 @@ flowchart LR
     N48["oracle-agreement: External oracle and standards-vector agreement"]
     N49["baseline-survey: Reproducible external-baseline survey and workload selection"]
     N50["bench-extension: Extend Criterion benchmarks to the selected workloads"]
-    N51["perf-receipts: Committed performance receipts: non-regression, determinism, SOTA comparison"]
+    N51["perf-receipts: Performance receipts: non-regression, determinism, SOTA comparison"]
     N52["researcher-docs: Researcher-oriented rustdoc and runnable examples"]
     N53["followup-tracking: Create the tracked follow-up issues against the canonical interfaces"]
     N0 --> N1

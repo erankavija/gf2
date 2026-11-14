@@ -57,7 +57,7 @@ at depth 1.)
 
 An ordered wave list. Each wave is a set of sub-strategic container ids; the
 waves run in order. Every direct sub-strategic child appears in exactly one
-wave. Shape (one tier up from `jit-execution-lead`'s `progress.json` `waves`,
+wave. Shape (one tier up from `jit-execution-lead`'s `<artifact-dir>/progress.json` `waves`,
 containers in place of issues):
 
 ```json

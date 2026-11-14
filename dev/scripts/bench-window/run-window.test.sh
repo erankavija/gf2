@@ -82,5 +82,31 @@ ext=$(GF2_EXT_ROOT="$TMP/ext" "$HERE/run-window.sh" --print-ext-root)
 }
 reject queue '^[^#].*\.\./' "$(cat "$HERE/queue.tsv")"
 
+# The follower's status word comes from the runner's window.log alone.
+status_of() {
+  local name=$1 want=$2 got
+  got=$(GF2_WINDOW_STATE="$TMP/$name" "$HERE/follow-window.sh" --print-status)
+  if [[ $got != "$want" ]]; then
+    printf 'run-window.test: follower status for %s: %s, expected %s\n' "$name" "$got" "$want" >&2
+    exit 1
+  fi
+}
+mkdir -p "$TMP/fw-none" "$TMP/fw-open" "$TMP/fw-ended" "$TMP/fw-second"
+status_of fw-none idle
+printf '2026-01-01T00:00:00Z window start host=h\n' >"$TMP/fw-open/window.log"
+status_of fw-open open
+printf '2026-01-01T00:00:00Z window start host=h\n2026-01-01T00:01:00Z window end\n' >"$TMP/fw-ended/window.log"
+status_of fw-ended ended
+printf '2026-01-01T00:00:00Z window start\n2026-01-01T00:01:00Z window end\n2026-01-02T00:00:00Z window start\n' >"$TMP/fw-second/window.log"
+status_of fw-second open
+# Command text in job records never counts as a lifecycle record.
+mkdir -p "$TMP/fw-cmd-open" "$TMP/fw-cmd-ended"
+printf '2026-01-01T00:00:00Z window start host=h\n2026-01-01T00:00:01Z job start issue=x key=k command=echo window end\n' >"$TMP/fw-cmd-open/window.log"
+status_of fw-cmd-open open
+printf '2026-01-01T00:00:00Z window start\n2026-01-01T00:01:00Z window end\n2026-01-01T00:01:01Z job start issue=x key=k command=echo window start\n' >"$TMP/fw-cmd-ended/window.log"
+status_of fw-cmd-ended ended
+# No default unit name remains in the follower.
+reject follower 'systemctl|GF2_WINDOW_UNIT|gf2-bench-window' "$(cat "$HERE/follow-window.sh")"
+
 printf '%s\n' "$quiet" "$loaded" "$capped"
 echo "run-window.test: ok"

@@ -150,7 +150,7 @@ theorem inv_mul_cancel
     ring
 
 /-- QExt F β is a field when β makes the norm anisotropic -/
-noncomputable instance instField
+noncomputable def instField
     (hirr : ∀ a b : F, a ^ 2 - β * b ^ 2 = 0 → a = 0 ∧ b = 0) :
     Field (QExt F β) where
   inv a := a.inv'
@@ -365,7 +365,7 @@ theorem inv_mul_cancel
     rw [h2, zero_mul]
 
 /-- CExt F β is a field when the cubic norm is anisotropic -/
-noncomputable instance instField
+noncomputable def instField
     (hirr : ∀ a b c : F,
       a ^ 3 + β * b ^ 3 + β ^ 2 * c ^ 3 - 3 * β * a * b * c = 0 →
       a = 0 ∧ b = 0 ∧ c = 0) :

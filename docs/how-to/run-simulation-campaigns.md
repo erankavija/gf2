@@ -127,5 +127,5 @@ byte, those of an uninterrupted run with that seed
 
 The output directory also holds `curve_<rate>_<modulation>.csv` with columns
 `es_n0_db`, `fer`, `ber`, `frames`, `errors`, `mean_iters` and `wall_seconds`,
-a `tracing.jsonl` event log, and a `README.md` recording the invocation, seed
+a `<campaign-dir>/tracing.jsonl` event log, and a `README.md` recording the invocation, seed
 and host. `--help` lists the decoder, demapper, calibration and GPU options.

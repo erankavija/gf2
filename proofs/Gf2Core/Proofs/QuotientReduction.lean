@@ -75,7 +75,7 @@ def ofCoeffs (n : ℕ) (g : ℕ → B) : B[X] :=
 theorem coeff_ofCoeffs (n : ℕ) (g : ℕ → B) (j : ℕ) :
     (ofCoeffs n g).coeff j = if j < n then g j else 0 := by
   classical
-  simp only [ofCoeffs, finset_sum_coeff, coeff_monomial]
+  simp only [ofCoeffs, finsetSum_coeff, coeff_monomial]
   rw [Finset.sum_ite_eq' (Finset.range n) j g]
   simp [Finset.mem_range]
 

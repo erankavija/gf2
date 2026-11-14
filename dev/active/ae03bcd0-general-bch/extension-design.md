@@ -543,7 +543,7 @@ pub fn prove_irreducible<F: FieldIdentity>(
 
 `extension_certificate` calls `ExtensionCertificate::from_parts` with
 `CertificateBasis::Proved`. `from_parts` is public precisely so that
-`irreducibility.rs`, which lands after `extension.rs`, needs no
+`crates/gf2-core/src/field/irreducibility.rs`, which lands after `crates/gf2-core/src/field/extension.rs`, needs no
 `pub(crate)` hook planted in advance — a hook nothing calls would trip
 `clippy -D warnings` in the interval.
 
@@ -952,7 +952,7 @@ Placement rules that keep the waves disjoint:
   `crates/gf2-core/src/gf2m/wide.rs`, `crates/gf2-core/src/gfpn/quadratic.rs`, or `crates/gf2-core/src/gfpn/cubic.rs`. This keeps
   `extension-trait`'s footprint exactly as recorded and leaves those files
   free for unrelated work.
-- `extension.rs` accumulates four tasks in one dependency chain
+- `crates/gf2-core/src/field/extension.rs` accumulates four tasks in one dependency chain
   (`extension-trait` → `exact-order` → `minpoly-subfield` →
   `cyclotomic-closure`), so it is written serially, never concurrently. It
   ends up comparable in size to `crates/gf2-core/src/field/poly.rs` and `crates/gf2-core/src/field/charpoly.rs`,
