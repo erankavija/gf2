@@ -3296,13 +3296,16 @@ mod tests {
         config.output_path = Some(path.clone());
         config.rng_seed = Some(99);
 
-        let _results = SimulationRunner::run_coded_iterative_parallel(
+        let results = SimulationRunner::run_coded_iterative_parallel(
             &encoder,
             || MockIterativeDecoder { last_iterations: 0 },
             &channel,
             &config,
         );
-        assert!(path.exists(), "Output file must be created");
+
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(content.lines().count(), 1 + results.points.len());
+        assert!(content.starts_with("eb_n0_db"));
     }
 
     /// Returns LLR +10 for bit 0 and -10 for bit 1, sign-flipped at `flip_positions`.

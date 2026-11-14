@@ -1112,8 +1112,8 @@ pub fn accepts_published_value(
 /// * `max_samples` — this invocation's per-cell sample bound. It is consulted
 ///   without reference to any outcome, so censoring stays independent of the
 ///   sampled values.
-/// * `make_evaluator` — per-worker evaluator factory, called once per worker
-///   per dispatched wave. Every evaluator it produces must return the same
+/// * `make_evaluator` — per-worker evaluator factory, called at most once per
+///   worker per dispatched wave. Every evaluator it produces must return the same
 ///   outcome for the same block, so a block's result stays a pure function of
 ///   its cell, seed, and index; [`OsdBlockStream`] is the seek that delivers
 ///   that for a random block process.
