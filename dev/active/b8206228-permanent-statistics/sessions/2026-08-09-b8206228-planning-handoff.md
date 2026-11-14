@@ -38,7 +38,7 @@ session end:
 **Resume step 1:** `git status` — if the manifests carry uncommitted round-4
 edits, verify them; if not, apply the fix lists above by hand. Then rerun the
 canonical loop for each container (helper:
-`.agents/skills/jit-planning-lead/scripts/breakdown_manifest.py validate/render`,
+the installed jit-planning-lead manifest validator and renderer,
 `jit issue batch-create --dry-run`; known-source universes are listed in each
 plan's "Investigation sources" tail) and rerun
 `jit gate evaluate <P> plan-review` (serialize; ~3–4 min each). On PASS: mark
