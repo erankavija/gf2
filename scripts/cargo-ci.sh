@@ -12,7 +12,9 @@ set -euo pipefail
 #   1 — one or more steps failed
 #   2 — environment problem: no real cargo available on PATH
 
-# Every step runs its command directly and takes no host lock. Compile
+# Every step runs its command directly. The only host lock a step takes is the
+# GPU lock that nextest holds for each `gpu-serial` test
+# (`scripts/nextest-gpu-lock.sh`). Compile
 # parallelism is cargo's own: its default job count, or the jobserver it
 # inherits. `RAYON_NUM_THREADS` from `.cargo/config.toml` bounds each test
 # process's pool and pairs with `threads-required` in `.config/nextest.toml`.
@@ -280,6 +282,8 @@ run_step tracked-budget-self-test python3 -B scripts/check-tracked-budget.py --s
 run_step tracked-budget python3 -B scripts/check-tracked-budget.py
 run_step docs-mechanical-self-test python3 contrib/gates/tests/docs-mechanical-test.py
 run_step tuning-campaign-launcher-syntax bash -n dev/scripts/tuning-extent-campaign.sh
+run_step gpu-lock-wrapper bash scripts/nextest-gpu-lock.test.sh
+run_step gpu-lock-filter python3 -B scripts/check-gpu-lock-filter.py .config/nextest.toml crates/gf2-kernels-hip/.config/nextest.toml
 run_step tuning-lifecycle-cargo cargo test -p gf2-core --profile ci-test --no-default-features --test tuning_process_lifecycle
 
 # Add profile I/O to the same host-appropriate feature selection used by the
