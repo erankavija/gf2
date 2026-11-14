@@ -38,7 +38,8 @@ def load_allowed_types(root: Path = ROOT) -> tuple[str, ...]:
 
 
 def first_subject(message: str) -> str | None:
-    return next(iter(message.splitlines()), None)
+    # Git ends a line only at "\n"; its default cleanup drops trailing "\r".
+    return message.split("\n", 1)[0].rstrip("\r") if message else None
 
 
 def allowed_subject_pattern(allowed_types: tuple[str, ...]) -> re.Pattern[str]:
@@ -113,6 +114,8 @@ def self_test() -> int:
             False,
         ),
         ("72-character subject", subject_71 + "x\n", False),
+        ("overlength subject with a Unicode line separator", subject_71[:40] + "\u2028" + subject_71[40:] + "\n", False),
+        ("CRLF line ending", subject_71 + "\r\n", True),
         ("unknown type", "wip(jit:abcd1234): x\n", False),
         ("default merge subject", "Merge branch 'feature' into main\n", False),
         ("missing scope", "fix: missing scope\n", False),
