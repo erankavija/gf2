@@ -1,7 +1,7 @@
 # Handoff — Competitive benchmarking against Magma/Sage/AFF3CT (d77176e5) — session 2
 
 **Date:** 2026-11-10
-**Prior handoffs:** `dev/active/d77176e5-competitive-benchmarking/handoff.md`. Related: `dev/active/b4b4b9ee-tech-debt-2026-06-30/handoff-2.md`.
+**Prior handoffs:** none in the tree (session 1's is in Git history). Related: `dev/active/b4b4b9ee-tech-debt-2026-06-30/handoff-2.md`.
 
 ## Current state
 

@@ -1,7 +1,7 @@
 # Handoff: Competitive benchmarking against Magma/Sage/AFF3CT (d77176e5), session 5
 
 **Date:** 2026-11-13
-**Prior handoffs:** `dev/active/d77176e5-competitive-benchmarking/handoff.md`, `dev/active/d77176e5-competitive-benchmarking/handoff-2.md` to `dev/active/d77176e5-competitive-benchmarking/handoff-5.md`
+**Prior handoffs:** `dev/active/d77176e5-competitive-benchmarking/handoff-2.md` to `dev/active/d77176e5-competitive-benchmarking/handoff-5.md`
 
 ## Current state
 
@@ -63,6 +63,14 @@ Chain order (one file at a time along `crates/gf2-coding/src/bch/encode.rs`, `cr
 ## Traps
 
 - The traps of handoff-2 to handoff-5 stay in force.
+- Session 1 traps still in force:
+  - Edit nothing in a queue worktree or in `dev/scripts/bench-window/run-window.sh` while a window runs: bash reads the script as it executes.
+  - A queue line repeats only after its `.agents/bench-window/<key>.done` marker is removed; the key is sha256 over issue, worktree and command joined by tabs, first 16 hex digits.
+  - `systemd-run --user` needs `XDG_RUNTIME_DIR=/run/user/$(id -u)` and `DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus`.
+  - A merge committed without a hook run can exceed the tree budget; merge with `--no-commit`, then commit, or run `python3 scripts/check-tracked-budget.py`.
+  - `git add -A dev` stages host-local data under `dev/`; add named paths. `cmd | tail && git commit` commits after a failed `cmd`.
+  - Frames/s indications at host load above about 20 swing by 2x; use instruction counts or interleaved runs there. Run a control before a cache-capacity explanation.
+  - The recorded LDPC bundles carry $y/\sigma^2$, half the natural-log LLR scale.
 - `echo =====` in zsh expands `=word` as a command path and fails; quote it.
 - The window runs under the systemd user manager: `PATH=/usr/local/bin:/usr/bin`, no `ROCM_PATH`. Without `ROCM_PATH`, hipcc's clang adds `-isystem /include`; `93df507a` makes the build script pass `--rocm-path`.
 - The arming command, not `dev/scripts/bench-window/run-window.sh`, detaches run worktrees at main. Never list a worktree pinned to a branch head (`jit-259acf37-run`).
