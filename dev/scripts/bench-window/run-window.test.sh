@@ -52,6 +52,57 @@ reject loaded 'load wait quiet|window start' "$loaded"
 capped=$(run_wait capped 3.50 1 5)
 expect capped 'load wait bound passed after_s=1 load=3\.50 2\.00 3\.00; starting anyway$' "$capped"
 
+# Runs the window over queue $2 (tab-separated lines) with fake load $3 and prints
+# its log. Stub sccache and pgrep keep the host's compiler-cache servers untouched.
+run_window() {
+  local name=$1 queue=$2 one=$3 bound=${4:-10}
+  mkdir -p "$TMP/$name" "$TMP/stub"
+  printf '#!/bin/sh\nexit 0\n' >"$TMP/stub/sccache"
+  printf '#!/bin/sh\nexit 0\n' >"$TMP/stub/pgrep"
+  chmod +x "$TMP/stub/sccache" "$TMP/stub/pgrep"
+  printf '%s 2.00 3.00 1/100 4242\n' "$one" >"$TMP/$name.loadavg"
+  printf '%b' "$queue" >"$TMP/$name.queue"
+  PATH="$TMP/stub:$PATH" GF2_WINDOW_STATE="$TMP/$name" GF2_WINDOW_LOADAVG="$TMP/$name.loadavg" \
+    GF2_WINDOW_QUEUE="$TMP/$name.queue" GF2_WINDOW_LOAD_MAX=1.0 \
+    GF2_WINDOW_LOAD_WAIT_MAX_S=$bound GF2_WINDOW_LOAD_POLL_S=1 \
+    "$HERE/run-window.sh"
+  cat "$TMP/$name/window.log"
+}
+# The load-wait and job lifecycle records of a log, in order, as one line.
+lifecycle() {
+  grep -oE 'job (start|exit) issue=[a-z]+|load wait (start|quiet|bound passed)|skip issue=[a-z]+' <<<"$1" | tr '\n' ',' || true
+}
+equals() {
+  local name=$1 want=$2 got=$3
+  if [[ $got != "$want" ]]; then
+    printf 'run-window.test: %s: got %s, expected %s\n' "$name" "$got" "$want" >&2
+    exit 1
+  fi
+}
+
+# Job a leaves the host loaded and quiets it two seconds after it exits; the
+# runner waits for that before job b starts.
+# shellcheck disable=SC2016 # the script body expands $1 when it runs
+printf '%s\n' '#!/usr/bin/env bash' \
+  'printf "3.50 2.00 3.00 1/100 4242\n" >"$1"' \
+  '(sleep 2; printf "0.40 2.00 3.00 1/100 4242\n" >"$1") >/dev/null 2>&1 &' >"$TMP/settle.sh"
+between=$(run_window between "a\t.\t1\tbash $TMP/settle.sh $TMP/between.loadavg\nb\t.\t1\ttrue\n" 0.40)
+equals between 'load wait start,load wait quiet,job start issue=a,job exit issue=a,load wait start,load wait quiet,job start issue=b,job exit issue=b,' "$(lifecycle "$between")"
+expect between 'load wait start max=1\.0 bound_s=10 load=3\.50 2\.00 3\.00$' "$between"
+expect between 'load wait quiet after_s=[1-9] load=0\.40 2\.00 3\.00$' "$between"
+reject between 'bound passed|load_bound_passed' "$between"
+
+# A job that starts after the bound passed says so in its start line, before the command.
+stuck=$(run_window stuck "a\t.\t1\ttrue\n" 3.50 1)
+expect stuck 'load wait bound passed after_s=1 load=3\.50 2\.00 3\.00; starting anyway$' "$stuck"
+expect stuck 'job start issue=a key=[0-9a-f]{16} est_min=1 worktree=\. load=3\.50 2\.00 3\.00 load_bound_passed=1 command=true$' "$stuck"
+
+# A skipped job triggers no wait; the next job waits once.
+key=$(printf '%s\t%s\t%s' a . true | sha256sum | cut -c1-16)
+mkdir -p "$TMP/skipped" && : >"$TMP/skipped/$key.done"
+skipped=$(run_window skipped "a\t.\t1\ttrue\nb\t.\t1\ttrue\n" 0.40)
+equals skipped 'skip issue=a,load wait start,load wait quiet,job start issue=b,job exit issue=b,' "$(lifecycle "$skipped")"
+
 # The estimate cap admits jobs up to its value; 0 lifts it.
 cap_check() {
   local want=$1 cap=$2 minutes=$3 got=runs
@@ -108,5 +159,5 @@ status_of fw-cmd-ended ended
 # No default unit name remains in the follower.
 reject follower 'systemctl|GF2_WINDOW_UNIT|gf2-bench-window' "$(cat "$HERE/follow-window.sh")"
 
-printf '%s\n' "$quiet" "$loaded" "$capped"
+printf '%s\n' "$quiet" "$loaded" "$capped" "$between"
 echo "run-window.test: ok"
