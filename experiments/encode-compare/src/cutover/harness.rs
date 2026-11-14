@@ -4,12 +4,12 @@
 //!
 //! The file uses `std` alone, so the same source compiles against any gf2
 //! revision. An arm turns a cell into timed configurations; a round builds
-//! each configuration and digests the output of its first, timed call. A first
-//! call lasting at least [`MIN_REP_SECONDS`] is the repetition; otherwise the
-//! unit time is the smaller of the first call and the mean of the following
-//! calls, repeated for at least [`MIN_REP_SECONDS`]. It prints one line per
-//! configuration. `cutover.sh` interleaves the rounds of all
-//! arms and compares them.
+//! each configuration and digests its first timed call. If that call lasts at
+//! least [`MIN_REP_SECONDS`], it is the reported repetition; otherwise later
+//! calls run for at least that long and supply the reported timing. The smaller
+//! of the first-call time and later-call mean is used only for call-budget
+//! projections. It prints one line per configuration. `cutover.sh` interleaves
+//! the rounds of all arms and compares them.
 //!
 //! Codewords and generator matrices are digested in gf2's descending
 //! `[message | parity]` layout, the legacy encoder's only layout (bit 0 holds
