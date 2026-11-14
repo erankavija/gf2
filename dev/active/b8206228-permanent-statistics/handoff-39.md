@@ -222,6 +222,25 @@ The code-review gate's reviewer is Codex gpt-6.1-sol, so every implementation we
   - The harness `equivalence` subcommand is global (no `q` filter); only `grid` parses `--execution-id` and `--skip-machine-warmup`. Gray-update `wave-gf3`/`fold-gf3` rows of run `20260813T230032Z-1321576` alias the shipped kernel and are not prototype evidence.
   - The 63-cell selection is reproducible from the committed CSVs; do not re-derive it to review it. In cell $(3,27)$ the rule-3-ineligible accelerator arm has the higher finite-only mean, and it stays unselected.
   - The dataset home `permanent-zero-fraction/<campaign-id>/` is a path in the tree (`@/issue/5758790d`).
+- Run jit and git state commands from the repository root, never with the shell parked in a worker worktree or a subdirectory: jit materializes state into the checkout that runs it, and diagnosed from a subdirectory it reports passed gates as never run.
+- Merge from the repository root: `git merge <branch>` while on that branch is a silent no-op, and `git worktree remove` of the shell's own directory strands it.
+- A codex worker's `ps -o etime` resets when `codex` re-execs; judge liveness by its growing session file instead.
+- A failed gate verdict is reused by input digest until an input changes; rerun with `jit gate evaluate --force` after a load failure.
+- Do not file an issue with `--orphan`: it fails repository validation until wired. Wire it to its epic in the same step.
+- Write success criteria as `[hard] REQ-nn:` or `[aspirational] REQ-nn:` the first time; other shapes warn on every item.
+- Every `cites:` key in an issue's gate context appears as a `[Key]` token in its text, or the research-review checker fails.
+- Merging main into a branch that rewrote issue descriptions conflicts on every issue another lead edited: resolve field by field and reapply the edit to their newer text.
+- Removing ignore lines exposes old run output in the main checkout as untracked files; move it under `target/` before landing.
+- The hooks are local: GitHub refuses push rulesets on this public user-owned repository, so `--no-verify` bypasses them and CI reports only afterwards.
+- Do not widen a wall-clock assertion for a busy runner, and do not run ignored campaign or slow tests during ordinary work.
+- Do not commit measured output; the issue records its location and digest.
+- Old tuning protocol receipts cannot be re-evaluated (`ConfigurationUnavailable`); their input bytes come from git history until the rewrite and from the backup after it.
+- `rank_event_rates` was moved without rerunning its ignored receipt test; its stream equality rests on code reading until that test runs.
+- A required validation backend that is unavailable fails the validation; it is never skipped.
+- Measurements taken with different binaries are different cohorts; never rank across cohorts.
+- GPU launch overhead is host-submission duration plus the device-only event span; never subtract across host and device clocks.
+- On gfx1030 the permanent kernels avoid batch size M=4096: one attempt faulted the device with cause unestablished.
+- `refdb add item --arxiv` does not deduplicate against manual entries that lack `arxiv_id`; enrich those with notes instead.
 
 ## References
 
