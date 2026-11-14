@@ -3,7 +3,7 @@
 **Date:** 2026-11-12
 **Prior handoffs:** none for the steward. Lead handoffs: the d77176e5 lead
 handoffs are retired; its latest is `dev/active/d77176e5-competitive-benchmarking/handoff-6.md`. Also
-`dev/active/b8206228-permanent-statistics/handoff-35.md` (lead `gf2-79`).
+`dev/active/b8206228-permanent-statistics/handoff-35.md` (lead `gf2-79`; retired by @/issue/d1c0e062).
 
 ## Current state
 
