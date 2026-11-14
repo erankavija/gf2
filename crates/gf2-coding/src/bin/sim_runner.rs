@@ -1281,7 +1281,9 @@ max_frames = 1
         assert_eq!(results.points.len(), 1);
         assert!(results.points[0].ber.is_finite());
         assert!(results.points[0].bler.is_finite());
-        assert!(output_dir.join("crc_25_15_smoke.csv").is_file());
+        let csv = std::fs::read_to_string(output_dir.join("crc_25_15_smoke.csv")).unwrap();
+        assert_eq!(csv.lines().count(), 1 + results.points.len());
+        assert!(csv.starts_with("eb_n0_db"));
     }
 
     #[test]

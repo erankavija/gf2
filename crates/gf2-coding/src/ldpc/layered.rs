@@ -10,11 +10,6 @@ pub use gf2_kernels_simd::ldpc_layered::LayeredRule;
 use gf2_kernels_simd::ldpc_layered::{LayerKernel, LayerParams, LAYER_LANES, LAYER_SATURATION};
 use gf2_kernels_simd::ldpc_signs::{pack_signs_portable, PackSignsFn};
 
-/// The cap guard keeps the channel limit at this multiple of a frame's mean
-/// channel magnitude. The value is an observation from the frame error rates
-/// of DVB-T2 rates 3/4 to 5/6 at their waterfalls, not a derived quantity.
-const GUARD_MEAN_MULTIPLE: f32 = 2.0;
-
 /// Quantization and update rules of a [`LayeredDecoder`].
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LayeredConfig {
@@ -24,14 +19,27 @@ pub struct LayeredConfig {
     early_termination: bool,
     llr_scale: f32,
     cap_guard: bool,
+    guard_multiple: f32,
 }
 
 impl LayeredConfig {
+    /// The default multiple of the frame's mean channel magnitude that the
+    /// cap guard of [`Self::frame_scale`] keeps the channel limit at. A
+    /// consistent Gaussian LLR, mean `μ` and variance `2μ` as BPSK over AWGN
+    /// gives, is symmetric about `μ`, so its share above `2μ` equals its
+    /// share below 0: at a limit of twice the mean magnitude, which is near
+    /// `μ` where sign errors are rare, the guard saturates about as many
+    /// inputs as the channel flips. The DVB-T2 rate 3/4 to 5/6 waterfalls,
+    /// where the fixed scale saturates most inputs, are an example.
+    pub const DEFAULT_GUARD_MULTIPLE: f32 = 2.0;
+
     /// A channel LLR `x` quantizes to `round(x * s)` bounded by
     /// ±`channel_limit`, where the frame scale `s` of
     /// [`Self::frame_scale`] is `channel_scale` for natural-log LLRs, lowered
     /// by the cap guard on frames of large mean magnitude; check messages are
-    /// bounded by ±`message_limit`.
+    /// bounded by ±`message_limit`. The guard multiple is
+    /// [`Self::DEFAULT_GUARD_MULTIPLE`]; [`Self::with_guard_multiple`] sets
+    /// another.
     ///
     /// # Panics
     ///
@@ -61,6 +69,7 @@ impl LayeredConfig {
             early_termination,
             llr_scale: 1.0,
             cap_guard: true,
+            guard_multiple: Self::DEFAULT_GUARD_MULTIPLE,
         }
     }
 
@@ -80,6 +89,24 @@ impl LayeredConfig {
         Self { llr_scale, ..self }
     }
 
+    /// Sets the multiple of a frame's mean channel magnitude that the cap
+    /// guard of [`Self::frame_scale`] keeps the channel limit at.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `multiple` is not finite and positive.
+    #[must_use]
+    pub fn with_guard_multiple(self, multiple: f32) -> Self {
+        assert!(
+            multiple.is_finite() && multiple > 0.0,
+            "guard multiple must be finite and positive"
+        );
+        Self {
+            guard_multiple: multiple,
+            ..self
+        }
+    }
+
     /// Turns the cap guard off: every frame quantizes at the base scale.
     #[must_use]
     pub fn with_fixed_scale(self) -> Self {
@@ -90,7 +117,8 @@ impl LayeredConfig {
     }
 
     /// The 5G NR setting: normalized min-sum at 6/8, scale 4, channel limit
-    /// 23, message limit 24, early termination.
+    /// 23, message limit 24, early termination, and the cap guard at
+    /// [`Self::DEFAULT_GUARD_MULTIPLE`].
     ///
     /// The normalization factor is tuned per code family; this one and
     /// [`Self::dvb_t2`]'s were chosen on frame error rate under
@@ -111,8 +139,9 @@ impl LayeredConfig {
     }
 
     /// The DVB-T2 setting: normalized min-sum at 7/8, scale 4, channel
-    /// limit 31, message limit 40, early termination, for natural-log channel
-    /// LLRs as in [`Self::nr_5g`]. DVB-T2 columns have degree at most 13,
+    /// limit 31, message limit 40, early termination, and the cap guard at
+    /// [`Self::DEFAULT_GUARD_MULTIPLE`], for natural-log channel LLRs as in
+    /// [`Self::nr_5g`]. DVB-T2 columns have degree at most 13,
     /// which leaves this message limit stable. At the waterfalls of rates 3/4
     /// to 5/6 the mean channel magnitude nears the cap of 7.75 this scale
     /// gives, where the cap guard of [`Self::frame_scale`] lowers the scale.
@@ -145,12 +174,19 @@ impl LayeredConfig {
         self.cap_guard
     }
 
+    /// The cap guard's multiple of the mean channel magnitude.
+    #[must_use]
+    pub fn guard_multiple(&self) -> f32 {
+        self.guard_multiple
+    }
+
     /// The quantizer scale of a frame. The base scale is
     /// `b = channel_scale / llr_scale`; without the cap guard the result is
     /// `b`. With it, `m` is the mean magnitude of the frame's finite nonzero
-    /// LLRs, and the result is `max(min(b, C / (2m)), min(b, C / FILLER_LLR))`
-    /// for channel limit `C`, or `b` when no LLR counts: the channel limit
-    /// stays at least twice the mean magnitude, and fillers stay saturated.
+    /// LLRs, and the result is `max(min(b, C / (g m)), min(b, C / FILLER_LLR))`
+    /// for channel limit `C` and guard multiple `g`, or `b` when no LLR
+    /// counts: the channel limit stays at least `g` times the mean magnitude,
+    /// and fillers stay saturated.
     /// `m` is the `f32` sum of the magnitudes over 16 partial sums by index
     /// modulo 16, added in partial-sum order, divided by their count, so the
     /// scale is one function of the frame. Takes O(`llrs.len()`) time.
@@ -192,7 +228,7 @@ impl LayeredConfig {
         }
         let mean = sums.iter().fold(0.0, |total, &sum| total + sum) / count as f32;
         let limit = f32::from(self.channel_limit);
-        base.min(limit / (GUARD_MEAN_MULTIPLE * mean))
+        base.min(limit / (self.guard_multiple * mean))
             .max(base.min(limit / FILLER_LLR))
     }
 

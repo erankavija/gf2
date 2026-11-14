@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# nextest wrapper script: the test holds the host-wide GPU lock while it runs.
+# The main and standalone HIP workspaces' `.config/nextest.toml` files apply
+# it to their `gpu-serial` tests in every profile. `cargo test` takes no lock.
+#
+#   scripts/nextest-gpu-lock.sh <command> [args...]
+#
+# Takes an exclusive flock on GF2_GPU_LOCK (default /tmp/gf2-gpu.lock; $TMPDIR
+# differs between sessions) and execs the command, whose inherited descriptor
+# holds the lock until it and its children exit. Concurrent HIP processes
+# oversubscribe the device runlist and the driver then faults a queue
+# (@/issue/f21b25ac).
+#
+# Waiting counts toward the test's budget. On expiry nextest sends SIGTERM to
+# the process group, and a test still waiting fails naming the lock.
+set -euo pipefail
+
+if (($# < 1)); then
+  echo "usage: $0 <command> [args...]" >&2
+  exit 2
+fi
+
+LOCK_FILE="${GF2_GPU_LOCK:-/tmp/gf2-gpu.lock}"
+exec {LOCK_FD}>>"$LOCK_FILE" || {
+  echo "nextest-gpu-lock: cannot open the host-wide GPU lock $LOCK_FILE (set GF2_GPU_LOCK)" >&2
+  exit 1
+}
+
+if ! flock -n -x "$LOCK_FD"; then
+  echo "nextest-gpu-lock: waiting for the host-wide GPU lock $LOCK_FILE, held by another test run" >&2
+  # `wait` returns as soon as a trapped signal arrives; a foreground flock
+  # would defer the trap until it returned.
+  trap 'echo "nextest-gpu-lock: timed out waiting for the host-wide GPU lock $LOCK_FILE, held by another test run" >&2; exit 1' HUP INT TERM
+  flock -x "$LOCK_FD" &
+  wait "$!"
+  trap - HUP INT TERM
+fi
+
+exec "$@"

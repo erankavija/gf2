@@ -1,16 +1,17 @@
 # Link-label qualification record (`f023b88b`, `0dc52df8`)
 
-Planner: `dev/scripts/migrate-link-labels.py` (read-only over `.jit/`).
-[`migrate-labels.sh`](migrate-labels.sh) is generated at `95c60ccf`;
-[`migrate-labels-2.sh`](migrate-labels-2.sh) is generated at `358b19f0`, after
-the first script, with `--drop-orphans`. The table below covers both scripts
-together, planned from the `95c60ccf` labels; `--verify` checks coverage on a
-migrated copy.
+Planner: `dev/scripts/migrate-link-labels.py` (read-only over `.jit/`). Both
+migration scripts are executed and retired; the planner regenerates each from a
+checkout of the commit it was planned at, `95c60ccf` for the first and
+`358b19f0` (with `--drop-orphans`) for the second. The table below covers both
+scripts together, planned from the `95c60ccf` labels; `--verify` checks coverage
+on a migrated copy.
 
 ```sh
-python3 dev/scripts/migrate-link-labels.py --drop-orphans \
-  --script dev/active/86b9c719-quality-documentation-tech-debt/migrate-labels-2.sh
-bash dev/active/86b9c719-quality-documentation-tech-debt/migrate-labels-2.sh
+python3 dev/scripts/migrate-link-labels.py --root <checkout-at-95c60ccf> \
+  --script <first-script>
+python3 dev/scripts/migrate-link-labels.py --root <checkout-at-358b19f0> \
+  --drop-orphans --script <second-script>
 python3 dev/scripts/migrate-link-labels.py --root <pre-migration-copy> \
   --items-from <migrated-copy> --verify <migrated-copy>  # coverage tables
 ```
@@ -131,9 +132,9 @@ None.
 
 None.
 
-## Labels requalified by `migrate-labels-2.sh`
+## Labels requalified by the second script
 
-Qualified by `migrate-labels.sh` to the plain nearest owner; moved to the membership owner. The same script qualifies `d45aff82 satisfies:REQ-01`, tied at distance 2 between `1a379447` and `ed3d490e`, to its membership owner `1a379447`, and removes the 89 labels listed above.
+Qualified by the first script to the plain nearest owner; moved to the membership owner. The same script qualifies `d45aff82 satisfies:REQ-01`, tied at distance 2 between `1a379447` and `ed3d490e`, to its membership owner `1a379447`, and removes the 89 labels listed above.
 
 | Issue | Label | Membership owner | Declaring containers @distance |
 |---|---|---|---|

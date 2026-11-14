@@ -12,7 +12,9 @@ set -euo pipefail
 #   1 — one or more steps failed
 #   2 — environment problem: no real cargo available on PATH
 
-# Every step runs its command directly and takes no host lock. Compile
+# Every step runs its command directly. The only host lock a step takes is the
+# GPU lock that nextest holds for each `gpu-serial` test
+# (`scripts/nextest-gpu-lock.sh`). Compile
 # parallelism is cargo's own: its default job count, or the jobserver it
 # inherits. `RAYON_NUM_THREADS` from `.cargo/config.toml` bounds each test
 # process's pool and pairs with `threads-required` in `.config/nextest.toml`.
@@ -213,12 +215,9 @@ summarize_fail() {
   esac
 }
 
-# Determine feature flags: include 'hip' only when hipcc is available.
-if command -v hipcc &>/dev/null || [ -x /opt/rocm/bin/hipcc ]; then
-  FEAT_FLAGS="--all-features"
-else
-  FEAT_FLAGS="--features simd,parallel,visualization"
-fi
+# The host's workspace feature selection: `hip` only where hipcc exists.
+CARGO_FEATURES="$(dirname "$0")/cargo-features.sh"
+FEAT_FLAGS=$("$CARGO_FEATURES")
 
 # Run all steps in order; continue through failures to report all of them.
 run_step check  cargo check --workspace $FEAT_FLAGS
@@ -280,6 +279,8 @@ run_step tracked-budget-self-test python3 -B scripts/check-tracked-budget.py --s
 run_step tracked-budget python3 -B scripts/check-tracked-budget.py
 run_step docs-mechanical-self-test python3 contrib/gates/tests/docs-mechanical-test.py
 run_step tuning-campaign-launcher-syntax bash -n dev/scripts/tuning-extent-campaign.sh
+run_step gpu-lock-wrapper bash scripts/nextest-gpu-lock.test.sh
+run_step gpu-lock-filter python3 -B scripts/check-gpu-lock-filter.py .config/nextest.toml crates/gf2-kernels-hip/.config/nextest.toml
 run_step tuning-lifecycle-cargo cargo test -p gf2-core --profile ci-test --no-default-features --test tuning_process_lifecycle
 
 # Add profile I/O to the same host-appropriate feature selection used by the
@@ -297,11 +298,7 @@ run_step doctest cargo test --doc --workspace --release $DOC_FEAT_FLAGS
 # Documents every gf2-coding item the workspace feature selection above leaves
 # out. The `hip` feature compiles only where hipcc exists, so hosts without it
 # document the remaining features.
-if command -v hipcc &>/dev/null || [ -x /opt/rocm/bin/hipcc ]; then
-  CODING_DOC_FEAT_FLAGS="--all-features"
-else
-  CODING_DOC_FEAT_FLAGS="--features simd,parallel,visualization,bench-csv,sim-observability,tuning-profile,test-support"
-fi
+CODING_DOC_FEAT_FLAGS=$("$CARGO_FEATURES" simd,parallel,visualization,bench-csv,sim-observability,tuning-profile,test-support)
 run_step doc-coding env RUSTDOCFLAGS="-D warnings" cargo doc -p gf2-coding --release --no-deps $CODING_DOC_FEAT_FLAGS
 
 # The gf2_tuning_baked cfg is not a Cargo feature, so --all-features never
