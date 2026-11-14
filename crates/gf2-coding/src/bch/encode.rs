@@ -54,6 +54,7 @@ use std::num::NonZeroUsize;
 use std::slice;
 use std::sync::OnceLock;
 
+use gf2_core::compute::{for_each_partition, PartitionDispatch};
 use gf2_core::field::extension::{FieldExtension, FieldId, FieldIdentity};
 use gf2_core::field::{FieldPoly, FieldVec, FiniteField};
 use gf2_core::gfp::Fp;
@@ -2623,115 +2624,15 @@ fn encode_partition<F, S>(
         .expect("a validated batch encodes under its own plan");
 }
 
-/// The first message index of partition `index` when `messages` messages are
-/// split over `workers` contiguous partitions.
-///
-/// The split is balanced: each partition holds $\lfloor m/w \rfloor$
-/// messages and the first $m \bmod w$ hold one more, so no two partitions
-/// differ by more than one message and none is empty for $w \le m$. The
-/// offset is a function of the two counts alone, which is what makes a
-/// partition the same messages however the recursion below reaches it: a
-/// sub-range of $w'$ workers holding the messages this rule gives them
-/// re-derives exactly the same boundaries inside itself.
-fn partition_offset(messages: usize, workers: usize, index: usize) -> usize {
-    index * (messages / workers) + index.min(messages % workers)
-}
-
-/// Encodes `messages` into `codewords` across exactly one contiguous
-/// partition per workspace of `workspaces`, splitting the workspaces in half
-/// until each half holds one.
-///
-/// Partition boundaries come from [`partition_offset`] and so depend only on
-/// the message and workspace counts, never on which thread reaches a half
-/// first. A workspace encodes only the messages of its own partition and
-/// writes only their positions of `codewords`, so the output is in input
-/// order whatever the worker count is. With the `parallel` feature the two
-/// halves go to [`rayon::join`], which runs both however many threads it has;
-/// without it they run left before right on the calling thread. One workspace
-/// runs its partition directly, so a one-worker dispatch reaches no pool.
-fn encode_partitions_over<F, S>(
-    family: EncodeFamily,
-    selectors: &EncodeSelectors,
-    plan: &SystematicPlan<'_, F>,
-    messages: &[S],
-    workspaces: &mut [BchEncodeWorkspace<S::Word>],
-    codewords: &mut [S],
-) where
-    F: FieldIdentity + Send + Sync,
-    S: SystematicKernel<F> + Send + Sync,
-    S::Word: Send,
-{
-    if workspaces.len() < 2 {
-        encode_partition(
-            family,
-            selectors,
-            plan,
-            messages,
-            &mut workspaces[0].registers,
-            codewords,
-        );
-        return;
-    }
-
-    let left_workers = workspaces.len() / 2;
-    let at = partition_offset(messages.len(), workspaces.len(), left_workers);
-    let (left_messages, right_messages) = messages.split_at(at);
-    let (left_codewords, right_codewords) = codewords.split_at_mut(at);
-    let (left_workspaces, right_workspaces) = workspaces.split_at_mut(left_workers);
-
-    #[cfg(feature = "parallel")]
-    rayon::join(
-        || {
-            encode_partitions_over(
-                family,
-                selectors,
-                plan,
-                left_messages,
-                left_workspaces,
-                left_codewords,
-            )
-        },
-        || {
-            encode_partitions_over(
-                family,
-                selectors,
-                plan,
-                right_messages,
-                right_workspaces,
-                right_codewords,
-            )
-        },
-    );
-    #[cfg(not(feature = "parallel"))]
-    {
-        encode_partitions_over(
-            family,
-            selectors,
-            plan,
-            left_messages,
-            left_workspaces,
-            left_codewords,
-        );
-        encode_partitions_over(
-            family,
-            selectors,
-            plan,
-            right_messages,
-            right_workspaces,
-            right_codewords,
-        );
-    }
-}
-
 /// Encodes `messages` into `codewords` across one contiguous partition per
 /// workspace, every partition running the family the seam selected for the
 /// whole batch.
 ///
-/// Every workspace up to the batch length receives a partition, balanced to
-/// within one message by [`partition_offset`]; workspaces beyond the batch
-/// length go unused, because a partition of no messages is not work. The
-/// output is in input order and independent of both the workspace count and
-/// the order the partitions happen to run in.
+/// [`for_each_partition`] places the partitions, so the output is in input
+/// order and independent of both the workspace count and the order the
+/// partitions happen to run in; workspaces beyond the batch length go unused.
+/// The partitions reach the rayon pool only under this crate's `parallel`
+/// feature, whatever features gf2-core carries.
 fn encode_partitions<F, S>(
     family: EncodeFamily,
     selectors: &EncodeSelectors,
@@ -2744,17 +2645,25 @@ fn encode_partitions<F, S>(
     S: SystematicKernel<F> + Send + Sync,
     S::Word: Send,
 {
-    let workers = workspaces.len().min(messages.len());
-    if workers == 0 {
-        return;
-    }
-    encode_partitions_over(
-        family,
-        selectors,
-        plan,
-        messages,
-        &mut workspaces[..workers],
+    let dispatch = if cfg!(feature = "parallel") {
+        PartitionDispatch::Pool
+    } else {
+        PartitionDispatch::CallingThread
+    };
+    for_each_partition(
+        dispatch,
         codewords,
+        workspaces,
+        |workspace, items, codewords| {
+            encode_partition(
+                family,
+                selectors,
+                plan,
+                &messages[items],
+                &mut workspace.registers,
+                codewords,
+            );
+        },
     );
 }
 

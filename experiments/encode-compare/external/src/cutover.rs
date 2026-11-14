@@ -2,7 +2,12 @@
 //! M4RI and AFF3CT on W2, the baselines the epic's survey selected, each in
 //! every configuration its build offers so the comparison can take the
 //! fastest. Every configuration writes gf2's descending layout for the
-//! harness's digest, converting outside the timed call.
+//! harness's digest and converts outside the timed call, except the AFF3CT W2
+//! arm. AFF3CT 4.7.0 has no generator-matrix entry point, so
+//! `experiments/encode-compare/external/cpp/aff3ct_bch.cpp` (`generator`)
+//! composes it: inside the timed call it allocates a zeroed packed matrix,
+//! encodes the unit messages in waves and packs each codeword into rows. The
+//! packed matrix is the W2 output contract gf2's timed `generator_matrix` meets.
 
 use super::{from_msb_first, BchlibBuild, BCHLIB_BUILDS};
 use encode_compare::cutover::harness::{self, digest, Arm, Cell, Config, Prepared, Workload};

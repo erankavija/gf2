@@ -255,16 +255,21 @@ the same bit patterns, so every rule below holds on either.
   $y/\sigma^2$ input bundles of the AFF3CT comparison are with $r = 1/2$.
   The base scale is $b = s/r$. Under `with_fixed_scale`, $s_f = b$.
   Otherwise a cap guard applies: with $m$ the mean magnitude of the frame's
-  finite nonzero LLRs,
-  $s_f = \max(\min(b, C/(2m)), \min(b, C / \texttt{FILLER\_LLR}))$, and
+  finite nonzero LLRs and $g$ the guard multiple,
+  $s_f = \max(\min(b, C/(g m)), \min(b, C / \texttt{FILLER\_LLR}))$, and
   $s_f = b$ when no LLR is finite and nonzero. $m$ is the `f32` sum of those
   magnitudes, accumulated into 16 partial sums by index modulo 16 and then
   added in partial-sum order, divided by their count, so $s_f$ is one
   function of the frame on every backend and worker count. The guard keeps
-  the channel limit at least twice the mean magnitude: at the waterfall of
-  high-rate codes the mean approaches or exceeds the cap $C/b$, and a fixed
-  scale saturates a large share of the inputs. The multiple 2 is an observation from the DVB-T2 rate 3/4 to 5/6
-  waterfalls, not a derived value; the floor keeps fillers saturated.
+  the channel limit at least $g$ times the mean magnitude: at the waterfall
+  of high-rate codes, the DVB-T2 rates 3/4 to 5/6 for example, the mean
+  approaches or exceeds the cap $C/b$, and a fixed scale saturates a large
+  share of the inputs. `LayeredConfig::DEFAULT_GUARD_MULTIPLE` sets $g = 2$
+  and `with_guard_multiple` another value. A consistent Gaussian LLR, mean
+  $\mu$ and variance $2\mu$, is symmetric about $\mu$, so its share above
+  $2\mu$ equals its share below 0: with $m \approx \mu$ where sign errors are
+  rare, $g = 2$ saturates about as many inputs as the channel flips. The
+  floor keeps fillers saturated.
 - **State.** Each variable holds an `i8` belief $A_v$, initially $q_v$; each
   edge holds an `i8` check-to-variable message $\lambda_e$, initially 0.
 - **Layers.** A layer is a set of checks sharing no variable, updated at

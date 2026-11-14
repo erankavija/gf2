@@ -1,0 +1,38 @@
+# This standalone workspace uses the repository's host-wide GPU lock wrapper.
+# All its tests join gpu-serial, including ignored and device-opening unit and
+# integration tests. Every profile inherits the wrapper; cargo test takes no lock.
+experimental = ["wrapper-scripts"]
+
+[profile.default]
+slow-timeout = { period = "10s", terminate-after = 1 }
+
+[profile.ci]
+slow-timeout = { period = "15s", terminate-after = 1 }
+fail-fast = false
+
+[profile.ci-busy]
+inherits = "ci"
+slow-timeout = { period = "60s", terminate-after = 1 }
+
+[profile.slow]
+slow-timeout = { period = "600s", terminate-after = 1 }
+fail-fast = false
+
+[test-groups]
+gpu-serial = { max-threads = 1 }
+
+[scripts.wrapper.gpu-lock]
+command = { command-line = "../../scripts/nextest-gpu-lock.sh", relative-to = "workspace-root" }
+target-runner = "within-wrapper"
+
+# Script filters reject group(); repeat the gpu-serial override below verbatim.
+# scripts/check-gpu-lock-filter.py checks equality in both workspace configs.
+[[profile.default.scripts]]
+filter = 'package(gf2-kernels-hip)'
+run-wrapper = 'gpu-lock'
+
+# Every profile inherits this group and the matching gpu-lock script above.
+# scripts/check-gpu-lock-filter.py fails if the two filters differ.
+[[profile.default.overrides]]
+filter = 'package(gf2-kernels-hip)'
+test-group = 'gpu-serial'

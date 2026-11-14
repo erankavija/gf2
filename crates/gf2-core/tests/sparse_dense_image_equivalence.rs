@@ -1,45 +1,31 @@
 #![cfg(feature = "visualization")]
 
+mod matrix_image;
+
 use gf2_core::matrix::BitMatrix;
 use gf2_core::sparse::SpBitMatrix;
+use gf2_core::test_scratch::scratch;
 use image::ImageReader;
-use std::fs;
+use matrix_image::assert_image_matches;
 
 #[test]
 fn test_sparse_and_dense_produce_identical_images() {
     let mut m = BitMatrix::zeros(5, 7);
-    m.set(0, 0, true);
-    m.set(0, 6, true);
-    m.set(2, 3, true);
-    m.set(4, 1, true);
-    m.set(4, 5, true);
-
+    for (r, c) in [(0, 0), (0, 6), (2, 3), (4, 1), (4, 5)] {
+        m.set(r, c, true);
+    }
     let s = SpBitMatrix::from_dense(&m);
 
-    let dense_path = "test_dense_image.png";
-    let sparse_path = "test_sparse_image.png";
+    let dir = scratch("image-equivalence");
+    let dense_path = dir.join("dense.png");
+    let sparse_path = dir.join("sparse.png");
+    m.save_image(&dense_path).unwrap();
+    s.save_image(&sparse_path).unwrap();
 
-    m.save_image(dense_path).unwrap();
-    s.save_image(sparse_path).unwrap();
+    assert_image_matches(&dense_path, &m);
+    assert_image_matches(&sparse_path, &m);
 
-    assert!(std::path::Path::new(dense_path).exists());
-    assert!(std::path::Path::new(sparse_path).exists());
-
-    let img_dense = ImageReader::open(dense_path).unwrap().decode().unwrap();
-    let img_sparse = ImageReader::open(sparse_path).unwrap().decode().unwrap();
-
-    assert_eq!(img_dense.width(), img_sparse.width());
-    assert_eq!(img_dense.height(), img_sparse.height());
-    assert_eq!(img_dense.width(), 7);
-    assert_eq!(img_dense.height(), 5);
-
-    let dense_bytes = img_dense.as_bytes();
-    let sparse_bytes = img_sparse.as_bytes();
-    assert_eq!(
-        dense_bytes, sparse_bytes,
-        "Dense and sparse images should be pixel-identical"
-    );
-
-    fs::remove_file(dense_path).ok();
-    fs::remove_file(sparse_path).ok();
+    let dense = ImageReader::open(&dense_path).unwrap().decode().unwrap();
+    let sparse = ImageReader::open(&sparse_path).unwrap().decode().unwrap();
+    assert_eq!(dense.as_bytes(), sparse.as_bytes());
 }
