@@ -289,9 +289,8 @@ run_step tuning-lifecycle-cargo cargo test -p gf2-core --profile ci-test --no-de
 run_step clippy cargo clippy --workspace --all-targets $FEAT_FLAGS --features tuning-profile -- -D warnings
 run_step fmt    cargo fmt --all -- --check
 
-# Fixed rather than host-dependent: matches the doc and doctest steps of
-# .github/workflows/ci.yml.
-DOC_FEAT_FLAGS="--features simd,parallel,visualization,io,rand"
+# The shared doc mode keeps doc and doctest features independent of the host.
+DOC_FEAT_FLAGS=$("$CARGO_FEATURES" doc)
 run_step doc     env RUSTDOCFLAGS="-D warnings" cargo doc --workspace --release --no-deps $DOC_FEAT_FLAGS
 run_step doctest cargo test --doc --workspace --release $DOC_FEAT_FLAGS
 
