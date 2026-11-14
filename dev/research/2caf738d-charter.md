@@ -22,6 +22,8 @@ Optimization never relaxes mathematical or standards conformance.
 - D-5: A ratio is recorded against the reference's fastest build configuration.
 - D-6: Permanent documentation carries harness and method; measured ratios live in issue history.
 - D-7: A cell is measured at the output contract its reference is timed at.
+- D-8: The tracker lives in its own repository, mounted at `.jit/`, and cuts over inside the history rewrite.
+- D-9: Fast-tier time budgets are enforced by an epic gate on a quiet host.
 
 ## Decision Details
 
@@ -117,3 +119,39 @@ Optimization never relaxes mathematical or standards conformance.
   harness timing `BchCode::encode_batch` against comparators that write into
   preallocated buffers; D-5 asks for the fair comparison in both directions.
 - **Date:** 2026-11-12
+
+### D-8: The tracker has its own repository
+
+- **Chosen:** The tracker store is a separate Git repository mounted as an
+  independent, ignored checkout at `.jit/` of the primary checkout. The cutover
+  of `@/issue/6ba9be17` runs inside the quiet window of the history rewrite of
+  `@/issue/45ecf975`, before its extraction step, so the rewrite drops the
+  tracker paths from history. A required `landed` gate holds an issue's
+  dependents until its code is on `main`. A gate verdict counts for another
+  commit when the gate's declared inputs are identical. No criterion orders a
+  push; the tracker repository is local and publication is an owner action.
+- **Rejected:** A submodule, an orphan branch, a subtree, and staying in the
+  tree with the tracker excluded from the budget (`@/issue/fe2221d5`).
+- **Rejected:** Cutting over before or after the rewrite: either keeps tracker
+  history in the code repository or needs a second quiet window.
+- **Reasoning:** Tracker writes from several leads contend on one tracked file
+  and consume the tree budget; a shared store outside the code history removes
+  both, and one quiet window serves the rewrite and the cutover.
+- **Date:** 2026-11-14
+
+### D-9: Time budgets are an epic gate
+
+- **Chosen:** Task-level test runs report a fast-tier test past its limit as
+  slow and never kill it. The epic gate `test-budgets` enforces the per-test
+  and suite budgets of `@/inv/test-tier-budgets` on a quiet host. Test
+  processes hold host pool tokens equal to the threads they run
+  (`@/issue/18276ff1`).
+- **Rejected:** A per-test kill at task level: a test waiting for the host
+  pool is killed on a loaded host, and a busy-host override then widens the
+  limit it was meant to enforce.
+- **Rejected:** No kill at any level: the budgets exist to catch a test that
+  does too much.
+- **Reasoning:** A budget is meaningful only on a quiet host; unit tests run in
+  a fraction of a second, so a breach is a property of the test and is found
+  once per epic.
+- **Date:** 2026-11-15
