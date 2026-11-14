@@ -5,7 +5,11 @@
 # An exit code does not establish measurement completion; consult the campaign's
 # own execution log.
 #
-# Usage: follow-window.sh [interval-seconds | --print-root]
+# The status word is read from the same log: idle (no window recorded), open
+# (the latest window has started and not ended) or ended. A runner killed
+# mid-window leaves its window open.
+#
+# Usage: follow-window.sh [interval-seconds | --print-root | --print-status]
 set -uo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,7 +17,19 @@ repo=$(git -C "$here" rev-parse --show-toplevel) || exit 1
 state="${GF2_WINDOW_STATE:-$repo/.agents/bench-window}"
 log="$state/window.log"
 queue="$here/queue.tsv"
-unit="${GF2_WINDOW_UNIT:-gf2-bench-window-20260912b}"
+window_status() {
+    local last
+    last=$(grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z window (start( |$)|end$)' "$log" 2>/dev/null | tail -1)
+    case "$last" in
+        '') echo idle ;;
+        *' window end') echo ended ;;
+        *) echo open ;;
+    esac
+}
+if [[ "${1:-}" == --print-status ]]; then
+    window_status
+    exit 0
+fi
 if [[ "${1:-}" == --print-root ]]; then
     printf '%s\n' "$repo"
     exit 0
@@ -22,15 +38,12 @@ interval="${1:-10}"
 ndone_prev=0
 nfail_prev=0
 
-export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"
-
 key_of() { printf '%s\t%s\t%s' "$1" "$2" "$3" | sha256sum | cut -c1-16; }
 
 while :; do
     cols=$(tput cols 2>/dev/null || echo 80)
     rows=$(tput lines 2>/dev/null || echo 24)
-    # Rows the fixed chrome costs: title, unit, load, blank, header, blank,
+    # Rows the fixed chrome costs: title, status, load, blank, header, blank,
     # log heading, blank, footer.
     spare=$(( rows - 9 - $(grep -cvE '^\s*(#|$)' "$queue") ))
     (( spare < 2 )) && spare=2
@@ -47,14 +60,14 @@ while :; do
     clear
     if (( compact )); then
         printf '1a379447 %s %s done %d/%d%s la %s\n' \
-            "$(systemctl --user is-active "$unit" 2>/dev/null || echo '?')" \
+            "$(window_status)" \
             "$(date -u +%H:%MZ)" "$ndone_prev" "$njobs" \
             "$( (( nfail_prev )) && printf ' FAIL:%d' "$nfail_prev" )" \
             "$(cut -d' ' -f1 /proc/loadavg)"
     else
         printf 'gf2 benchmark window — 1a379447\n'
         printf '%s  %s  load%s  free %s\n' \
-            "$(systemctl --user is-active "$unit" 2>/dev/null || echo '?')" \
+            "$(window_status)" \
             "$(date -u +%H:%M:%SZ)" \
             "$(cut -d' ' -f1-3 /proc/loadavg | sed 's/^/ /')" \
             "$(df -h "$repo" | awk 'NR==2{print $4}')"

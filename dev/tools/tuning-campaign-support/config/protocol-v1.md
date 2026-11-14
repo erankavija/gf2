@@ -145,7 +145,7 @@ $B$ times, recompute $\hat{s}$ on each draw, sort the replicates and take the
 nearest-rank quantiles at $\alpha_c/2$ and $1 - \alpha_c/2$, where $\alpha_c$
 is the per-comparison error rate below. Resampling whole pairs keeps the
 pairing intact. The generator is xoshiro256** seeded through SplitMix64
-[BlackmanVigna2021] [Steele2014], implemented in `abtest.rs` without an external
+[BlackmanVigna2021] [Steele2014], implemented in `dev/tools/tuning-campaign-support/src/abtest.rs` without an external
 dependency, so the interval is bit-reproducible from the raw samples and the
 seed (P-20).
 

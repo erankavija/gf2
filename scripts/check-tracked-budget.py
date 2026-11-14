@@ -2,8 +2,8 @@
 """Refuses copied inputs, raw single-host output and oversized files in git.
 
 Enforces `@/inv/committed-evidence-budget`. Limits and exceptions live in
-`tracked-budget.toml`; limits may only fall. A JSON document the path rules
-admit under `record_documents` is also read, and refused when any member name
+`tracked-budget.toml`; limits may only fall. A JSON, TOML or YAML document
+the path rules admit under `record_documents` is also read, and refused when any member name
 matches `record_members`, the vocabulary of an execution record, or, under
 `workflow_documents`, `workflow_record_members`. A Markdown document under
 `markdown_documents` is refused when its title declares a receipt, when a
@@ -11,6 +11,12 @@ matches `record_members`, the vocabulary of an execution record, or, under
 `measurement_columns` header over numeric body cells. A CSV or TSV
 table under `table_documents` is refused when a header cell names one of
 `measurement_columns`.
+
+TOML uses `tomllib`. YAML's line grammar reads block mapping keys (word/dot/
+hyphen names or unescaped quoted keys), including nested and sequence mappings, with scalar or
+collection values; it skips block scalar contents. Flow mappings, complex
+keys and alias expansion are outside the grammar. All three formats use the
+same record-member, path and exception rules.
 
   check-tracked-budget.py                 check the tree at HEAD
   check-tracked-budget.py --staged        check the index and staged additions
@@ -73,7 +79,7 @@ def path_faults(paths, config):
 
 
 def record_faults(paths, config, read):
-    """Admitted workflow documents that carry an execution record.
+    """Admitted data documents that carry an execution record.
 
     `read(path)` returns the document's text at the revision being checked.
     """
@@ -84,9 +90,15 @@ def record_faults(paths, config, read):
             continue
         members = _record_members(path, config)
         try:
-            names = set(_member_names(json.loads(read(path))))
-        except json.JSONDecodeError:
-            faults.append(f"{path}: not JSON, so its members cannot be checked")
+            text = read(path)
+            if path.endswith((".yaml", ".yml")):
+                names = set(_yaml_member_names(text))
+            else:
+                document = tomllib.loads(text) if path.endswith(".toml") else json.loads(text)
+                names = set(_member_names(document))
+        except (json.JSONDecodeError, tomllib.TOMLDecodeError):
+            kind = "TOML" if path.endswith(".toml") else "JSON"
+            faults.append(f"{path}: not {kind}, so its members cannot be checked")
             continue
         found = sorted(n for n in names if any(m.fullmatch(n) for m in members))
         if found:
@@ -208,6 +220,27 @@ def _member_names(value):
     elif isinstance(value, list):
         for member in value:
             yield from _member_names(member)
+
+
+YAML_KEY = re.compile(
+    r'''^(\s*)(?:-\s+)?(?:"([^"\\]+)"|'([^']+)'|([\w.-]+))\s*:\s*(.*)$'''
+)
+
+
+def _yaml_member_names(text):
+    """Block mapping keys, excluding text inside literal and folded scalars."""
+    scalar_indent = None
+    for line in text.splitlines():
+        indent = len(line) - len(line.lstrip())
+        if scalar_indent is not None:
+            if not line.strip() or indent > scalar_indent:
+                continue
+            scalar_indent = None
+        match = YAML_KEY.fullmatch(line)
+        if match:
+            yield next(key for key in match.group(2, 3, 4) if key is not None)
+            if re.fullmatch(r"[|>][1-9+-]*\s*(?:#.*)?", match[5]):
+                scalar_indent = indent + (2 if line.lstrip().startswith('- ') else 0)
 
 
 def reader(revision, cwd):
@@ -399,6 +432,21 @@ def head_faults(cwd):
 
 
 def self_test():
+    policy = tomllib.loads(Path(CONFIG).read_text())
+    for path, text in (
+        ("scripts/config.toml", '[run]\nmeasured_at = "t"\n'),
+        ("scripts/config.yaml", 'runs:\n  - measured_at: "t"\n'),
+        ("scripts/config.yml", "measured_at:\n  nested: value\n"),
+        ("scripts/config.yaml", 'runs:\n  - notes: |\n      prose\n    "measured_at": t\n'),
+    ):
+        assert_faults(record_faults([path], policy, lambda _: text),
+                      ["execution record members measured_at"], path)
+    for path, text in (
+        ("scripts/config.toml", '[run]\nstarted_at = "t"\n'),
+        ("scripts/config.yaml", "notes: |\n  measured_at: only prose\n"),
+        ("scripts/config.yml", "# measured_at: comment\nnotes: measured_at\n"),
+    ):
+        assert_faults(record_faults([path], policy, lambda _: text), [], path)
     config = """
 max_file_bytes = 1000
 max_commit_added_bytes = 2500

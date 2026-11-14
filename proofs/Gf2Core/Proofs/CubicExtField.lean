@@ -7,6 +7,7 @@
 import Mathlib.Algebra.Ring.TransferInstance
 import Mathlib.Algebra.Field.TransferInstance
 import Aeneas
+import Gf2Core.Proofs.ResultSpec
 import Gf2Core.Types
 import Gf2Core.FunsExternal
 import Gf2Core.Funs
@@ -62,21 +63,21 @@ theorem karatsuba_correct (hv : ValidCubicExtConfig inst)
       r.c0 = a.c0 * b.c0 + β * (a.c1 * b.c2 + a.c2 * b.c1) ∧
       r.c1 = a.c0 * b.c1 + a.c1 * b.c0 + β * (a.c2 * b.c2) ∧
       r.c2 = a.c0 * b.c2 + a.c1 * b.c1 + a.c2 * b.c0 :=
-  Aeneas.Std.WP.spec_imp_exists (CExtProgress.cmul_progress hv.toValidExtConfig a b)
+  result_spec_exists (CExtProgress.cmul_progress hv.toValidExtConfig a b)
 
 /-- Addition in the Rust code is component-wise. -/
 theorem add_correct (hv : ValidCubicExtConfig inst)
     (a b : gfpn.cubic.CubicExt C BF Char Wide) :
     ∃ r, ExtAbbrev.CAdd inst a b = ok r ∧
       r.c0 = a.c0 + b.c0 ∧ r.c1 = a.c1 + b.c1 ∧ r.c2 = a.c2 + b.c2 :=
-  Aeneas.Std.WP.spec_imp_exists (CExtProgress.cadd_progress hv.toValidExtConfig a b)
+  result_spec_exists (CExtProgress.cadd_progress hv.toValidExtConfig a b)
 
 /-- Negation in the Rust code is component-wise. -/
 theorem neg_correct (hv : ValidCubicExtConfig inst)
     (a : gfpn.cubic.CubicExt C BF Char Wide) :
     ∃ r, ExtAbbrev.CNeg inst a = ok r ∧
       r.c0 = -a.c0 ∧ r.c1 = -a.c1 ∧ r.c2 = -a.c2 :=
-  Aeneas.Std.WP.spec_imp_exists (CExtProgress.cneg_progress hv.toValidExtConfig a)
+  result_spec_exists (CExtProgress.cneg_progress hv.toValidExtConfig a)
 
 /-- Inversion in the Rust code computes cofactors/norm correctly. -/
 theorem inv_correct (hv : ValidCubicExtConfig inst)
@@ -92,7 +93,7 @@ theorem inv_correct (hv : ValidCubicExtConfig inst)
         r.c0 = s0 * norm_val⁻¹ ∧
         r.c1 = s1 * norm_val⁻¹ ∧
         r.c2 = s2 * norm_val⁻¹) :=
-  Aeneas.Std.WP.spec_imp_exists (CExtProgress.cinv_progress hv.toValidExtConfig self)
+  result_spec_exists (CExtProgress.cinv_progress hv.toValidExtConfig self)
 
 /-- The order of CubicExt equals base_order³ (assuming no U128 overflow). -/
 theorem order_eq_base_cubed (bo : Std.U128)
@@ -100,7 +101,7 @@ theorem order_eq_base_cubed (bo : Std.U128)
     (h_sq : bo.val * bo.val ≤ Std.U128.max)
     (h_cube : bo.val * bo.val * bo.val ≤ Std.U128.max) :
     ∃ r, ExtAbbrev.COrder inst = ok r ∧ r.val = bo.val * bo.val * bo.val :=
-  Aeneas.Std.WP.spec_imp_exists (CExtProgress.corder_progress bo h_ord h_sq h_cube)
+  result_spec_exists (CExtProgress.corder_progress bo h_ord h_sq h_cube)
 
 end CubicExtField
 

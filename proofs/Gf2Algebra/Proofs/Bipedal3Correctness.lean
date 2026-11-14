@@ -199,6 +199,7 @@ theorem bipedal3_mul_correct (m1 s1 m2 s2 : Std.U64) (i : Fin 64) :
           * psi (m2.bv.getLsbD i) (s2.bv.getLsbD i) := by
   unfold packed.bipedal3.Bipedal3.mul_inherent
   unfold packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.mul
+  simp only [lift, bind_ok]
   refine ⟨_, rfl, ?_⟩
   -- Bring the Result-monad body into normal form (the result struct has
   -- `mag = m1 &&& m2` and `sgn = s1 ^^^ s2`).
@@ -221,6 +222,7 @@ theorem bipedal3_add_correct (m1 s1 m2 s2 : Std.U64) (i : Fin 64) :
           + psi (m2.bv.getLsbD i) (s2.bv.getLsbD i) := by
   unfold packed.bipedal3.Bipedal3.add_inherent
   unfold packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.add
+  simp only [lift, bind_ok]
   refine ⟨_, rfl, ?_⟩
   show psi
         (((m2.bv &&& (m1.bv ^^^ s1.bv ^^^ s2.bv)) ||| (m1.bv ^^^ m2.bv)).getLsbD i)
@@ -243,6 +245,7 @@ theorem bipedal3_sub_correct (m1 s1 m2 s2 : Std.U64) (i : Fin 64) :
           - psi (m2.bv.getLsbD i) (s2.bv.getLsbD i) := by
   unfold packed.bipedal3.Bipedal3.sub_inherent
   unfold packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.sub
+  simp only [lift, bind_ok]
   refine ⟨_, rfl, ?_⟩
   show psi
         (((m1.bv &&& (s1.bv ^^^ s2.bv)) ||| (m1.bv ^^^ m2.bv)).getLsbD i)
@@ -263,6 +266,7 @@ theorem bipedal3_neg_correct (m s : Std.U64) (i : Fin 64) :
         = -(psi (m.bv.getLsbD i) (s.bv.getLsbD i)) := by
   unfold packed.bipedal3.Bipedal3.neg_inherent
   unfold packed.bipedal3.Bipedal3.Insts.Gf2_algebraPackedPackedFieldFp3U64U128.neg
+  simp only [lift, bind_ok]
   refine ⟨_, rfl, ?_⟩
   show psi (m.bv.getLsbD i) ((s.bv ^^^ m.bv).getLsbD i)
     = -(psi (m.bv.getLsbD i) (s.bv.getLsbD i))

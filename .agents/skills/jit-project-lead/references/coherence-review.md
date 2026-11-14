@@ -109,7 +109,7 @@ Run these concrete checks, `K` against each `Ci` in `A`:
    ```
 
    FAIL if `K` calls a thing `X` and an accepted `Ci` calls the same thing `Y`
-   (the `user_profile` vs `account_data` split in `lead-review-protocol.md` Tier
+   (the `user_profile` vs `account_data` split in `.agents/skills/jit-execution-lead/references/lead-review-protocol.md` Tier
    3, one tier up). Also compare label namespaces and values, container and
    document titles, and command/flag names for the same drift.
 
@@ -143,7 +143,7 @@ every check above cleared against every `Ci` in `A`.
 
 ## Tier C3: Cross-container stale forward-reference sweep (REQ-02)
 
-The one-tier-up analogue of `lead-review-protocol.md` Tier 2.5. When `K` lands,
+The one-tier-up analogue of `.agents/skills/jit-execution-lead/references/lead-review-protocol.md` Tier 2.5. When `K` lands,
 forward-looking narrative in the **already-accepted** containers' artifacts that
 pointed at `K`'s work ("planned", "future work", "once `K` lands") becomes false.
 Reviewers surface these one per cycle unless swept proactively.
@@ -192,7 +192,7 @@ never downgrades a FAIL to a pass:
 - The steward may not soften a finding by argument. Wording such as "cosmetic
   naming difference", "the sibling can adapt", "the stale note is only
   documentation", or "close enough across containers" is argue-mode and is
-  forbidden here exactly as in `lead-review-protocol.md`'s no-argue discipline.
+  forbidden here exactly as in `.agents/skills/jit-execution-lead/references/lead-review-protocol.md`'s no-argue discipline.
   Either fix the artifact so the finding is literally resolved, or, if the
   finding is genuinely wrong, escalate; there is no soft middle.
 - On FAIL, hand the full verdict back to `K`'s dispatched execution lead for
@@ -203,7 +203,7 @@ never downgrades a FAIL to a pass:
 ## Recording the verdict
 
 Record a structured verdict, the one-tier-up analogue of
-`lead-review-protocol.md`'s "Recording the Verdict":
+`.agents/skills/jit-execution-lead/references/lead-review-protocol.md`'s "Recording the Verdict":
 
 ```
 ## Cross-container coherence review: [CONTAINER_TITLE] ([K_SHORT_ID])

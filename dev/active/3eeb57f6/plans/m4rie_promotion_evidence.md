@@ -131,7 +131,7 @@ M4RI covers only GF(2)).
 **Future work (not in scope for jit:507b0036).**
 A scalar GF(2^m) RREF reference — analogous to `ref_gf2m_mul`
 already used for matmul — can be added as a future task. Concretely,
-this would be a Gauss-Jordan implementation in `m4rie_bench.c` (or a
+this would be a Gauss-Jordan implementation in `benchmarks/reference/m4rie_bench.c` (or a
 shared helper) using `ref_gf2m_mul` for products and a Fermat-little-
 theorem-based scalar inverse (`a^(2^m − 2) = a^{−1}` in GF(2^m)).
 Once that reference exists, `smoke_echelon_one_cell` can be
@@ -240,7 +240,7 @@ the decision compares matmul GF(2^16) at n=1024 against gf2-core's
 what makes M4RIE performance-relevant.
 
 The full side-by-side rendering will populate when `gf2-core` adds a
-`matmul`-named GF(2^m) row at the same sizes; the `analyze.py`
+`matmul`-named GF(2^m) row at the same sizes; the `benchmarks/analyze.py`
 `reference_lib_for(field)` change required for the side-by-side
 columns to read `m4rie` for GF(2^m) **landed in commit `e3592fe`**
 (see § 8 item 2 below).
@@ -248,7 +248,7 @@ columns to read `m4rie` for GF(2^m) **landed in commit `e3592fe`**
 ## Cross-cutting findings flagged for the lead
 
 These were out of scope for `jit:507b0036` per the dispatch contract
-("**No `analyze.py` mods.** Even if you discover `FIELD_FAMILY` needs a
+("**No `benchmarks/analyze.py` mods.** Even if you discover `FIELD_FAMILY` needs a
 new entry — stop and flag.") and were recorded here so the lead could
 dispatch the follow-up. **Items 1 and 2 below were completed by the
 lead in commit `e3592fe`** (chore(jit:97bf0879): wire wave 2 secondary
@@ -274,19 +274,19 @@ historical record of the cross-cutting flag and its disposition.
 
 3. **`run.sh verify_sha M4RIE_SHA256 libs.m4rie` — added by lead in
    commit `e3592fe`.** The dispatch contract for `507b0036` was
-   read-only on `run.sh`; the lead consolidated the cross-cutting
+   read-only on `benchmarks/run.sh`; the lead consolidated the cross-cutting
    plumbing for all four wave-2 secondary references (linbox, m4rie,
    ntl, flint) into a single follow-up commit. M4RIE pin drift is now
    caught both by `sha256sum -c` inside the `RUN curl …` step and by
    the explicit `verify_sha M4RIE_SHA256 libs.m4rie` Containerfile-
    vs-image.lock cross-check (`benchmarks/run.sh:163`).
 
-4. **`run.sh` does not invoke `m4rie_bench` in the timing path.** The
-   dispatch contract was read-only on `run.sh`, so the M4RIE timing
+4. **`benchmarks/run.sh` does not invoke `m4rie_bench` in the timing path.** The
+   dispatch contract was read-only on `benchmarks/run.sh`, so the M4RIE timing
    sweep is currently triggered manually (see § *Build evidence*
    above) or via the additional invocation in `benchmarks/smoke.sh`.
    Suggested follow-up: add a `--skip-m4rie` / `RUN_M4RIE_E` flag to
-   `run.sh` mirroring the existing `RUN_M4RI` plumbing.
+   `benchmarks/run.sh` mirroring the existing `RUN_M4RI` plumbing.
 
 ## Files modified or created
 
@@ -306,7 +306,7 @@ historical record of the cross-cutting flag and its disposition.
 * gf2-core changing its primitive polynomial choice for any of m ∈
   {4, 8, 16} in `crates/gf2-core/src/primitive_polys.rs` — the
   hard-coded constants `kGf2corePoly_m04 / m08 / m16` in
-  `m4rie_bench.c` will fail the smoke check at runtime, but a
+  `benchmarks/reference/m4rie_bench.c` will fail the smoke check at runtime, but a
   defensive compile-time `static_assert` against `gf2-core`'s
   polynomial values would be preferable. Tracked as a non-blocking
   follow-up because the C-side harness has no FFI access to gf2-core

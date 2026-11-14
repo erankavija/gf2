@@ -98,7 +98,7 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
 - **gf2 path, `compare.sh bch`:** `DvbT2BchCode::encode_into` over the
   rate-$1/2$ outer codes $(7200, 7032)$ and $(32400, 32208)$
   (`@/citation/Etsi2015`), cycling a pool of $1$ or $256$ distinct messages.
-- **gf2 path, `cutover.sh`:** `BchCode::encode_batch` at batch $1$, $16$, $256$
+- **gf2 path, `../../experiments/encode-compare/cutover.sh`:** `BchCode::encode_batch` at batch $1$, $16$, $256$
   and $4096$ (workload W1) and `BchCode::generator_matrix` (W2), against the
   pre-cutover revision (`BchEncoder::encode_batch` and the legacy
   `generator_matrix`), over the five rows of `experiments/encode-compare/src/cutover/harness.rs`.
@@ -106,7 +106,7 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
   converted before timing, and reproduces gf2's codewords before it is timed.
   gf2 builds with `-C target-cpu=native`.
 - **Harness:** [`experiments/encode-compare`](../../experiments/encode-compare/README.md).
-- **Output:** `compare.sh` prints the SHA-256 of the binary and of AFF3CT's static
+- **Output:** `../../experiments/encode-compare/compare.sh` prints the SHA-256 of the binary and of AFF3CT's static
   library and writes `target/encode-compare/<suite>-<UTC>.md`; outside a window
   the wrapper refuses. `cutover.sh` prints the host and the SHA-256 of each
   measured binary and of the AFF3CT and M4RI libraries, writes the table and the
@@ -123,7 +123,7 @@ ISA-L, M4RI and M4RIE install into one prefix, `$GF2_EXT_ROOT/6c6b09b1/prefix`.
       bash experiments/encode-compare/compare.sh bch
   ```
 
-  The cutover comparison runs `cutover.sh` with `GF2_M4RI_ROOT` naming the M4RI
+  The cutover comparison runs `../../experiments/encode-compare/cutover.sh` with `GF2_M4RI_ROOT` naming the M4RI
   prefix and `CUTOVER_ROUNDS=3` and `CUTOVER_CALL_BUDGET_S=2000` set:
 
   ```sh

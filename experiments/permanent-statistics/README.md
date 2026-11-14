@@ -14,7 +14,7 @@ is a small invocation example. From the repository root:
 ```sh
 CARGO_NET_OFFLINE=true cargo run \
   --release -p permanent-statistics --bin permanent_rare_event -- \
-  experiments/permanent-statistics/config/small.json /tmp/permanent-example 3
+  experiments/permanent-statistics/config/small.json <scratch>/permanent-example 3
 ```
 
 The optional final argument bounds the invocation to that many prefix
@@ -35,7 +35,7 @@ its digest, so JSON whitespace and key order are immaterial. Source revision
 is recorded as a rebuild pointer. The binary observes the checkout containing
 its working directory through `experiments_common::RepositoryRoot`.
 
-On completion, `result.json` contains the run record, configuration, sample
+On completion, `<run-dir>/result.json` contains the run record, configuration, sample
 and independent-run counts, exact decimal ratios, and interval endpoints.
 The execution log records each invocation's terminal status. The sampler and
 runner belong to `@/issue/e3370140`.

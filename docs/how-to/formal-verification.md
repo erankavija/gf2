@@ -11,15 +11,23 @@ invocations.
 
 - Lean and Mathlib: [elan](https://github.com/leanprover/elan) selects the
   toolchain in `proofs/lean-toolchain`; `proofs/lakefile.lean` pins Mathlib.
-- Charon, Aeneas and the Rust nightly Charon compiles with: follow the
-  `lean-verify` job in `.github/workflows/ci.yml`. It pins each commit and
-  toolchain, applies `patches/charon-487f0320-implied-clause.patch` to Charon,
-  and installs the OCaml packages Aeneas builds with.
-- The Aeneas Lean library: `proofs/lakefile.lean` requires it from a fixed
-  local Aeneas checkout path. Either place the checkout there or set
-  `AENEAS_LEAN_DIR` to its `backends/lean` directory when running
-  `scripts/verify-lean.sh`. That variable rewrites `proofs/lakefile.lean` and
-  `proofs/lake-manifest.json` in place; keep those edits out of commits.
+- Charon and Aeneas: initialize an [opam](https://opam.ocaml.org/) switch
+  using the OCaml version selected by the `lean-verify` job in
+  `.github/workflows/ci.yml`, then run:
+
+  ```bash
+  ./scripts/install-lean-tools.sh
+  ```
+
+  The installer reads Aeneas's commit from `proofs/lakefile.lean`, reads
+  Charon's revision from that checkout's `charon-pin`, and installs Charon's
+  required Rust nightly. Both tools build from unmodified upstream sources.
+  Their binaries live in `target/lean-tools/bin`, which the verification script
+  selects automatically. Set `LEAN_TOOLS_DIR` for both scripts to use another
+  installation directory. The installer uses the selected opam switch and its
+  upstream package constraints.
+- The Aeneas Lean library is a pinned Git dependency in `proofs/lakefile.lean`.
+  Lake fetches it automatically; regeneration does not rewrite dependency paths.
 
 ## Build the committed proofs
 
@@ -45,22 +53,23 @@ Run the pipeline after changing Rust code that extraction reaches:
 git add proofs/Gf2Core/ proofs/Gf2Algebra/
 ```
 
-The script runs Charon into `target/charon/`, Aeneas into `proofs/Gf2Core/` and
-`proofs/Gf2Algebra/`, the post-processing passes `scripts/fix-aeneas-dupes.py`,
-`scripts/fix-aeneas-sorrys.py` and `scripts/fix-aeneas-gf2algebra.py`, and
-`lake build`. [`proofs/WORKAROUNDS.md`](../../proofs/WORKAROUNDS.md) and the
+The script runs Charon into `target/charon/` and Aeneas into fresh temporary
+directories, applies `scripts/fix-aeneas-dupes.py` and
+`scripts/fix-aeneas-gf2algebra.py`, then publishes the generated files to
+`proofs/Gf2Core/` and `proofs/Gf2Algebra/` and runs the strict Lake build.
+Missing extraction output fails the run instead of reusing committed files. [`proofs/WORKAROUNDS.md`](../../proofs/WORKAROUNDS.md) and the
 scripts' docstrings state why each pass exists. Charon compiles with `--cfg verify_lean`, so items under
 `#[cfg(not(verify_lean))]` are absent from the extraction.
 
 | File in `proofs/Gf2Core/`, `proofs/Gf2Algebra/` | Owner |
 |---|---|
-| `Types.lean`, `Funs.lean`, `*_Template.lean`, `TypesExternal.lean` | Regenerated on every run |
+| `proofs/<translated-crate>/Types.lean`, `proofs/<translated-crate>/Funs.lean`, `*_Template.lean`, `proofs/<translated-crate>/TypesExternal.lean` | Regenerated on every run |
 | `proofs/Gf2Algebra/FunsExternal.lean` | Copied from its template on every run |
-| `proofs/Gf2Core/FunsExternal.lean` | Hand-maintained; created from the template when the file is missing |
+| `proofs/Gf2Core/FunsExternal.lean` | Hand-maintained; preserved during regeneration |
 | `Proofs/*.lean` | Hand-written |
 
-CI reruns the pipeline and fails when `proofs/Gf2Core/Proofs/` or
-`proofs/Gf2Core/FunsExternal.lean` differ from the committed files afterwards.
+CI reruns the pipeline and fails when either hand-written `Proofs/` directory
+or `proofs/Gf2Core/FunsExternal.lean` differs from the committed files afterwards.
 
 ## Add a proof for an extracted function
 
@@ -69,7 +78,7 @@ CI reruns the pipeline and fails when `proofs/Gf2Core/Proofs/` or
    `scripts/verify-lean.sh`. An `--opaque` module hides its submodules, which is
    why `gf2_core::gf2m` is made opaque submodule by submodule to keep
    `gf2_core::gf2m::mul_raw` translated.
-2. Regenerate and find the definition in `Funs.lean`. Its doc comment names the
+2. Regenerate and find the definition in `proofs/<translated-crate>/Funs.lean`. Its doc comment names the
    Rust path; its Lean name is the crate-relative module path inside namespace
    `gf2_core` or `gf2_algebra`, and it returns `Result`, with a panic mapped to
    `fail`. `gf2_core::gf2m::mul_raw::gf2m_add_raw` translates to:
@@ -93,13 +102,13 @@ CI reruns the pipeline and fails when `proofs/Gf2Core/Proofs/` or
    ```
 
    A function that calls other extracted functions is proved with Aeneas's
-   `progress` tactic over `@[progress]` lemmas for its callees, as in
-   `Progress.lean`, `ExtProgress.lean` and `Gf2mProgress.lean`. A translated
+   `step` tactic over `@[step]` lemmas for its callees, as in
+   `../../proofs/Gf2Core/Proofs/Progress.lean`, `../../proofs/Gf2Core/Proofs/ExtProgress.lean` and `../../proofs/Gf2Core/Proofs/Gf2mProgress.lean`. A translated
    loop is proved with a termination measure and an invariant, as
-   `gf2m_mul_raw_loop_progress` in `Gf2mProgress.lean` does.
+   `gf2m_mul_raw_loop_progress` in `../../proofs/Gf2Core/Proofs/Gf2mProgress.lean` does.
 4. Import the module from `proofs/Gf2Core.lean` or `proofs/Gf2Algebra.lean`.
 5. A standard-library call that Aeneas cannot translate appears as an `axiom`
-   in `FunsExternal.lean`, and the proof trusts it. To prove through the call,
+   in `../../proofs/Gf2Core/FunsExternal.lean`, and the proof trusts it. To prove through the call,
    replace the axiom with a definition in `proofs/Gf2Core/FunsExternal.lean`;
    `proofs/Gf2Algebra/FunsExternal.lean` is regenerated and keeps its axioms.
 6. Run `./scripts/lake-build-strict.sh` and commit the proof with the

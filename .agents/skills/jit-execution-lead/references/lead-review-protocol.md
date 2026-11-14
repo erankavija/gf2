@@ -30,7 +30,7 @@ for path in sys.argv[2:]:
   <issue-id> .jit/gate-runs/*/result.json
 ```
 
-The gate-run envelope is `{"count": N, "results": [...]}`, and each `result.json`
+The gate-run envelope is `{"count": N, "results": [...]}`, and each `<artifact-dir>/result.json`
 carries the reviewer's structured findings under `.findings.findings[]`. A run's
 `stdout` holds the same findings as prose; the structured block is the one to
 parse.
