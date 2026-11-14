@@ -88,7 +88,7 @@ BCH/view set $G$ to the largest available encode-family structural frame group:
 `gf2_kernels_simd::bch_encode::BITSLICE_LANES` when bitslicing is available, otherwise one.
 Lockstep integration contributes its structural frame group and active caller override to the same maximum.
 Under @/inv/structural-performance-defaults, the cap is $K=\max(G,\lfloor(C/2)/\max(1,B)\rfloor)$: one structural group is the minimum; the cache budget leaves half for mother scratch and kernel data.
-Here $B$ is the word-rounded staging bytes per mother-message/codeword pair, from the $T(k_m+n_m)$ symbol footprint;
+Here $B$ is the word-rounded bytes of one mother message plus one mother codeword ($k_m+n_m$ symbols), so staging for $T$ pairs is $TB$;
 $C$ is the CPU backend's per-core L2 bytes from `HostCaches::detect` in
 `crates/gf2-core/src/gf2m/byte_table.rs`; share its private detection and fallback through gf2-core.
 The active `encode.bitslice_interleaved_min_batch` contributes to the maximum only when bitslicing is available,
@@ -369,7 +369,7 @@ Restore kernel settings; cover zero/ones/seeded/single-set-bit messages at
 0, 1, 63, 64 and the final bit. Assert default mother group sizes, capacities one
 and larger overrides, partial tiles, nesting and default owning/worker staging.
 Conformance cases: closed-family bounded default workspace (`usize::MAX`), open threshold at the cap honoured,
-and open threshold one above the cap ignored. Run each on fresh-profile table and fold paths for REQ-02/REQ-03, using sub-threshold batches to keep each selected,
+and open threshold one above the cap ignored. Run each on fresh-profile table and fold paths for REQ-02/REQ-03, using sub-threshold batches to keep each selected.
 Assert successful bounded default/worker construction, scalar equality and zero `_into` allocations as below.
 At-cap full tiles meet the threshold and match whole-batch family selection when eligible.
 In `crates/gf2-coding/tests/bch_encode_dispatch_allocation.rs`, count only `_into`
