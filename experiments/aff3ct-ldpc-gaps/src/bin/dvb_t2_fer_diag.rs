@@ -45,13 +45,11 @@ use gf2_coding::llr::Llr;
 use gf2_coding::traits::BlockEncoder;
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
+use gf2_stats::intervals::{wilson_interval, Z_95};
 use rand::{rngs::StdRng, SeedableRng};
 use sha2::{Digest, Sha256};
 
 const CHUNK: usize = 64;
-
-/// The standard normal quantile of the two-sided 95% interval.
-const Z95: f64 = 1.959_963_984_540_054;
 
 /// A decoder under test, in the vocabulary of `--decoder`.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -284,29 +282,6 @@ impl Decoder {
             .count();
         Some((clipped, saturated))
     }
-}
-
-/// The 95% Wilson score interval of `errors` successes in `frames` trials;
-/// its ends are exactly 0 at no errors and 1 at all errors, where rounding
-/// would leave them a few ulps off.
-fn wilson95(errors: usize, frames: usize) -> (f64, f64) {
-    let n = frames as f64;
-    let p = errors as f64 / n;
-    let z2 = Z95 * Z95;
-    let centre = p + z2 / (2.0 * n);
-    let half = Z95 * (p * (1.0 - p) / n + z2 / (4.0 * n * n)).sqrt();
-    let denominator = 1.0 + z2 / n;
-    let low = if errors == 0 {
-        0.0
-    } else {
-        (centre - half) / denominator
-    };
-    let high = if errors == frames {
-        1.0
-    } else {
-        (centre + half) / denominator
-    };
-    (low, high)
 }
 
 #[derive(Default, Clone, Copy)]
@@ -582,7 +557,7 @@ fn main() {
                 ));
             }
             let frames = tally.frames as f64;
-            let (low, high) = wilson95(tally.errors, tally.frames);
+            let (low, high) = wilson_interval(tally.errors as u64, tally.frames as u64, Z_95);
             let mut line = format!(
                 "POINT ebn0={ebn0:.2} sigma2={variance:.6} seed={} decoder={} frames={} \
                  errors={} fer={:.3e} fer_wilson95=[{low:.3e},{high:.3e}] undetected={} \
@@ -649,17 +624,5 @@ mod tests {
     fn layered_shorthand_is_the_dvb_t2_setting() {
         let spec = Spec::parse("layered:25").unwrap();
         assert_eq!(spec.layered_config(), Some(LayeredConfig::dvb_t2()));
-    }
-
-    #[test]
-    fn wilson_interval_bounds_zero_and_matches_a_hand_value() {
-        let (low, high) = wilson95(0, 5000);
-        assert_eq!(low, 0.0);
-        assert_eq!(wilson95(0, 256_000).0, 0.0);
-        assert_eq!(wilson95(7, 7).1, 1.0);
-        assert!((high - 7.677e-4).abs() < 1e-6, "{high}");
-        // 10 of 100: (0.0552, 0.1744) to four places.
-        let (low, high) = wilson95(10, 100);
-        assert!((low - 0.0552).abs() < 1e-4 && (high - 0.1744).abs() < 1e-4);
     }
 }

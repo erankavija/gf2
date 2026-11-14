@@ -18,6 +18,9 @@ import statistics
 import subprocess
 import sys
 
+# AFF3CT rows carry counts only, so this mirrors
+# gf2_stats::intervals::wilson_interval until @/issue/7f9751af moves it to the
+# Rust side.
 Z95 = 1.959963984540054
 
 
