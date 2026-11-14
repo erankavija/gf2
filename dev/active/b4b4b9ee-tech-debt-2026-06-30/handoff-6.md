@@ -1,10 +1,12 @@
 # Handoff: Technical debt assessment remediation (2026-06-30) (b4b4b9ee), session 6
 
 **Date:** 2026-11-15
-**Prior handoffs:** `handoff-5.md` stays until `dev/active/d77176e5-competitive-benchmarking/design-9a1b24fc.md` stops citing it (owned by the `d77176e5` lead); then it is retired. Its traps that still bind are repeated below.
+**Prior handoffs:** `handoff-5.md` is no longer cited (the `d77176e5` lead dropped the citation in `d75b874e9`) and is retired in the next tracker commit. Its traps that still bind are repeated below.
 
 ## Current state
 
+- Wound down (owner order, 2026-11-15 01:15, through the steward): the tech-debt epic takes no new dispatch. Its only remaining work is to land the implemented branches in gate slots that the live work leaves free. A branch whose gate or review fails is parked, not reworked, and reported to the steward. Stopped: `90cd64a9`, `d8aee1f4`, `6eb12747`, `85e7e4c0` and the ready set; nothing new is filed unless a `6ba9be17` task needs it.
+- The live container of this lead is `6ba9be17` (tracker repository). The steward classes `18276ff1` and `574ed420` as serving it, since without them gates time out and the pool leaks.
 - Lead `gf2-7d` under steward `gf2-96`; peer leads `gf2-f4` (d77176e5, ae03bcd0) and `gf2-00` (45ecf975 stream). The same lead also executes epic `6ba9be17` (tracker repository): its state is in the table below.
 - Stopped by 01:20 local for the 2026-11-15 02:00 benchmark window: no build, gate or worker of this lead runs.
 - Landed this session: `2e6e3557` (merge `9e5cbf7c8`, closed `a8711524a`), plus every row the table marks landed.
@@ -21,7 +23,7 @@
 | `d73ac633` | `0ac0d915b` | code-review passed; blocking Claude review PASS (recorded below); cargo-ci timed out | cargo-ci alone |
 | `e29fd776` | `5520d7b03` | code-review passed; blocking Claude review PASS; cargo-ci timed out | cargo-ci alone, doc-review |
 | `9ff05f12` | `b9f2f9a42` | cargo-ci timed out | cargo-ci alone, code-review, doc-review |
-| `b5782224` | `75f70cab1` | cargo-ci timed out; implementation by Claude Sonnet 5.5 reviewed by the lead | rework first: the folded `test_interleaver_still_composes` finding and every unseeded `quick_test()` assertion (recorded in the issue); then gates |
+| `b5782224` | `75f70cab1` | cargo-ci timed out; implementation by Claude Sonnet 5.5 reviewed by the lead | the folded `test_interleaver_still_composes` finding needs a rework, and reworks are stopped: report it to the steward as parked, or land the branch as implemented if the steward rules the folded part out |
 | `903dc74c` | `22f57141d` | none | after `697b9178` lands: merge main, `cargo-kani` in a quiet slot, code-review |
 | `6d5ba9fb` (6ba9be17) | `43e85778e` | Codex gpt-6.1-sol; blocking Claude review PASS | merge main, cargo-ci, code-review |
 | `28aa2a9d` (6ba9be17) | `17da51131` | Claude Opus 5.5; cargo-ci was running at the stop | cargo-ci, code-review (Codex) |
@@ -65,10 +67,10 @@
 
 ## Next
 
-1. After `window end`: `574ed420` quiet-slot REQ-04 and REQ-03 (agree the slot with `gf2-f4` and `gf2-00`), then its gates and landing; report to the steward.
-2. Gate the open branches one or two at a time and land on a pass, in the order of the table; `903dc74c` after `697b9178`.
-3. `6ba9be17` wave 1 gates and landings, then wave 2 (`3fb4accb`, strongest non-Fable Claude tier).
-4. `18276ff1` implementation; `b5782224` rework; then `90cd64a9`, `d8aee1f4` and the ready set.
+1. After `window end`, `6ba9be17` waves in order. Wave 1: merge main, cargo-ci and code-review for `6d5ba9fb` (Claude review passed; a cargo-ci gate ran at 01:13 on the steward's word, see its run record) and `28aa2a9d`; land; then wave 2 (`3fb4accb`, strongest non-Fable Claude tier, Codex gate).
+2. `18276ff1` implementation, at its full owner-decided scope, and `574ed420`'s quiet-slot REQ-04 and REQ-03, then its gates and landing. Agree the slot with `gf2-f4` and `gf2-00`.
+3. Only in gate slots left free by 1 and 2, gate two at a time and land: `697b9178`, `9c0568ee`, `22bb2dcd`, `d73ac633`, `e29fd776`, `9ff05f12`, then `903dc74c` after `697b9178`. Park and report any failure. The history rewrite requires every live branch to be merged or abandoned.
+4. Retire `handoff-5.md` (`git rm`) in the first tracker commit.
 
 ## Traps
 
