@@ -31,6 +31,8 @@ stable identifier the manifest cites.
 | F-20 | The history rewrite requires every live branch merged or abandoned and no active session, and checks `jit validate` on the rewritten tree | valid-and-open | [history-rewrite-runbook.md](../b8206228-permanent-statistics/45ecf975/history-rewrite-runbook.md), Preconditions and step 7 |
 | F-21 | The worker dispatch script creates linked worktrees and prints a prompt header; it sets no jit environment | valid-and-open | [dispatch-worker-worktree.sh](../../../.agents/skills/jit-execution-lead/scripts/dispatch-worker-worktree.sh) lines 100 and 133 to 153 |
 | F-22 | The pre-commit hook and `scripts/cargo-ci.sh` run the budget and reference checkers | valid-and-open | [pre-commit](../../../.githooks/pre-commit); [cargo-ci.sh](../../../scripts/cargo-ci.sh) lines 279 to 283 |
+| F-23 | jit passes its own environment to a gate checker and removes only an unset `JIT_CONTEXT_FILE`, so `JIT_DATA_DIR` and `JIT_WORKTREE_ROOT` reach the checker | valid-and-open, read from source only | jit gate execution module, where the checker command is built |
+| F-24 | A run that reused a verdict launched no checker: its `commit` is unset and its `origin` names the run that executed the checker | valid-and-open | jit storage record reference, gate run fields `commit` and `origin` |
 
 ## Not verified
 
@@ -40,6 +42,8 @@ stable identifier the manifest cites.
   The rehearsal in the plan re-checks all three before the cutover.
 - Whether `jit validate` reads the 46 MB of gate-run records within the
   rehearsal's time bound on a store shared by all worktrees.
+- How `[worktree] root` resolves for a store that is its own git repository
+  nested in the checkout; the rehearsal checks it.
 - The contents of the interim budget exclusion that lead gf2-e9 implements;
   it was not on `main` at the commit read.
 
