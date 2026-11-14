@@ -2162,6 +2162,7 @@ mod kani_proofs {
     }
 
     #[kani::proof]
+    #[kani::unwind(3)]
     fn mask_tail_zeros_padding() {
         let len: usize = kani::any();
         kani::assume(len >= 1 && len <= 128);
@@ -2177,6 +2178,7 @@ mod kani_proofs {
     }
 
     #[kani::proof]
+    #[kani::unwind(3)]
     fn mask_tail_preserves_valid_bits() {
         let len: usize = kani::any();
         kani::assume(len >= 1 && len <= 128);
@@ -2195,6 +2197,7 @@ mod kani_proofs {
     }
 
     #[kani::proof]
+    #[kani::unwind(3)]
     fn ones_constructor_tail_clean() {
         let len: usize = kani::any();
         kani::assume(len >= 1 && len <= 128);
