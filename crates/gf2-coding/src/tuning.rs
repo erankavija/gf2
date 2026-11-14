@@ -48,8 +48,8 @@ pub const GRANULES_PER_TASK: NonZeroUsize = NonZeroUsize::MIN;
 /// [`clmul_fold_run_blocks`](crate::bch::encode::clmul_fold_run_blocks) of the
 /// code's dimension and
 /// [`clmul_fold_accumulators`](crate::bch::encode::clmul_fold_accumulators) of
-/// its redundancy. An encode entry point reads them with the family it
-/// selects, so building a workspace resolves no profile.
+/// its redundancy and dimension. An encode entry point reads them with the
+/// family it selects, so building a workspace resolves no profile.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EncodeSelectors {
     table_remainder_min_redundancy: usize,
@@ -57,7 +57,7 @@ pub struct EncodeSelectors {
     bitslice_interleaved_min_batch: usize,
     clmul_fold_min_batch: usize,
     clmul_fold_run_blocks: Option<NonZeroUsize>,
-    clmul_fold_accumulators: Option<NonZeroUsize>,
+    clmul_fold_accumulators: Option<usize>,
 }
 
 impl EncodeSelectors {
@@ -103,15 +103,17 @@ impl EncodeSelectors {
     /// into in place of the structural
     /// [`clmul_fold_accumulators`](crate::bch::encode::clmul_fold_accumulators),
     /// for equivalence tests, benchmarks and multipliers whose latency or
-    /// issue rate differs. At a redundancy of $W = \lceil r/64 \rceil$ words
-    /// the count is clamped to the admissible $W + 1$ to
+    /// issue rate differs. Zero selects the fold that runs one block at a
+    /// time. At a redundancy of $W = \lceil r/64 \rceil$ words a positive
+    /// count is clamped to the admissible $W + 1$ to
     /// [`FOLD_MAX_ACCUMULATORS`](gf2_kernels_simd::bch_encode::FOLD_MAX_ACCUMULATORS),
-    /// and a redundancy that folds one block at a time ignores it; the
-    /// codewords are the same at every count.
+    /// and a redundancy above the widths the chunk fold unrolls folds one
+    /// block at a time whatever the count; the codewords are the same at
+    /// every count.
     ///
     /// [`EncodeFamily::ClmulFold`]: crate::bch::encode::EncodeFamily::ClmulFold
     #[must_use]
-    pub const fn with_clmul_fold_accumulators(mut self, accumulators: NonZeroUsize) -> Self {
+    pub const fn with_clmul_fold_accumulators(mut self, accumulators: usize) -> Self {
         self.clmul_fold_accumulators = Some(accumulators);
         self
     }
@@ -150,10 +152,11 @@ impl EncodeSelectors {
         self.clmul_fold_run_blocks
     }
 
-    /// Returns the caller's fold accumulator count, `None` for the structural
+    /// Returns the caller's fold accumulator count, zero for the fold that
+    /// runs one block at a time and `None` for the structural
     /// [`clmul_fold_accumulators`](crate::bch::encode::clmul_fold_accumulators).
     #[must_use]
-    pub const fn clmul_fold_accumulators(&self) -> Option<NonZeroUsize> {
+    pub const fn clmul_fold_accumulators(&self) -> Option<usize> {
         self.clmul_fold_accumulators
     }
 }
