@@ -1,0 +1,686 @@
+[
+  {
+    "key": "flooding-profile-universe",
+    "title": "Flooding normalization profile identity and its enumerable universe",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:gf2-coding",
+      "satisfies:3461a52a/REQ-02",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [],
+    "description": "Standard LDPC codes in `gf2-coding` carry a canonical flooding-profile identity, and one library function enumerates the finite universe of profiles and default iteration caps that table generation, validation and default lookup share.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\nTable generation, window validation and the constructor defaults must agree on which profiles exist, or a table entry can be generated that no constructor resolves, or a constructor can resolve a profile the table never covered. `@/inv/semantic-types` asks for one canonical identity, and `@/inv/single-source-prose` asks that the universe be derived from the code tables rather than copied into a second inventory.\n\nA flooding profile is the semantic identity `FloodingProfile` in `gf2-coding`: a DVB-T2 profile is a (frame size, code rate) pair that `LdpcCode::dvb_t2_short` or `LdpcCode::dvb_t2_normal` in `crates/gf2-coding/src/ldpc/core.rs` builds from the tables in `crates/gf2-coding/src/ldpc/dvb_t2/dvb_t2_matrices.rs`; an NR profile is a base graph with either the full mother code or a rate-matched transmission pattern of filler and kept-parity base columns derived from `NrRateMatchParams` in `crates/gf2-coding/src/ldpc/nr_5g/mod.rs`. Lifting size does not enter the profile, since protograph DE is asymptotic in it. The NR rate-matched universe is every pattern `QuasiCyclicLdpc::nr_5g_rate_matched` reaches over the base-graph dimensions in `crates/gf2-coding/src/ldpc/nr_5g/bg1.rs` and `crates/gf2-coding/src/ldpc/nr_5g/bg2.rs`, `kb_for_z_selection` and the lifting sets in `crates/gf2-coding/src/ldpc/nr_5g/lifting.rs`. The iteration-cap universe is the library's flooding default caps: `SOFT_DECODE_MAX_ITERATIONS` in `crates/gf2-coding/src/ldpc/nr_5g/mod.rs` and the DVB-T2 concatenated decoder's default LDPC cap, which `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs` holds as an unnamed literal today.\n\n## Success Criteria\n\n- [hard] REQ-01: `FloodingProfile` identifies DVB-T2 (frame size, rate) profiles and NR mother and rate-matched profiles; the standard DVB-T2 and NR constructors attach their profile to the `LdpcCode` they build, and a code built from a raw parity-check matrix carries none.\n- [hard] REQ-02: A rate-matched NR code maps to the profile of its filler and kept-parity base-column pattern, and two codes with the same base graph and pattern at different lifting sizes map to the same profile.\n- [hard] REQ-03: One function enumerates the profile universe from the code tables, the base-graph dimensions, `kb_for_z_selection` and the lifting sets; a test checks that every profile a standard constructor attaches over the lifting sets and accepted rates is in the enumeration, and the enumeration contains no profile a constructor cannot produce.\n- [hard] REQ-04: The DVB-T2 concatenated decoder's default LDPC cap is a named public constant, and one function returns the default-cap universe from that constant and `SOFT_DECODE_MAX_ITERATIONS`.\n\n## Notes\n\nDecoding behaviour is unchanged: no factor is read from a profile here.\n",
+    "planning": {
+      "outcome": "Standard LDPC codes carry a canonical flooding profile drawn from one enumerated universe",
+      "contract_refs": [],
+      "produces_contracts": [
+        "flooding-profile"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "D-RULE"
+      ],
+      "terminal": {
+        "consumer_family": "standard LDPC code constructors in gf2-coding",
+        "test_boundary": "gf2-coding unit tests of profile attachment",
+        "worker_sized_reason": "One identity type plus its enumeration and constructor attachment is one module-sized change.",
+        "footprint": {
+          "creates": [
+            "flooding_profile module in crates/gf2-coding/src/ldpc/"
+          ],
+          "touches": [
+            "crates/gf2-coding/src/ldpc/mod.rs",
+            "crates/gf2-coding/src/ldpc/core.rs",
+            "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+            "crates/gf2-coding/src/ldpc/dvb_t2/concat.rs"
+          ]
+        }
+      },
+      "landing_group": "density-evolution"
+    }
+  },
+  {
+    "key": "de-edge-perspective",
+    "title": "Density evolution of flooding normalized min-sum on degree distributions",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:gf2-coding",
+      "satisfies:3461a52a/REQ-02",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "flooding-profile-universe"
+    ],
+    "description": "`gf2-coding` computes sample-based density evolution of flooding normalized min-sum on an edge-perspective degree distribution, and finds the threshold-optimal factor at a given iteration cap, so a DVB-T2 profile's factor derives from its degree structure.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\nZhang, Fossorier, Gu and Zhang (GLOBECOM 2005, doi:10.1109/glocom.2005.1577841) choose the factor that minimizes the DE threshold; Emran and Elsabrouty (arXiv:1501.07336) apply it to DVB codes; Chen and Fossorier (IEEE Commun. Lett. 2002, doi:10.1109/4234.1001666) originate the method. DVB-T2 needs only its edge-perspective degree distribution, read from the code tables in `crates/gf2-coding/src/ldpc/dvb_t2/`. Under `@/inv/library-first-generality` the DE mathematics is a library API; search orchestration and generation stay in a tool.\n\nEvery DE computation declares its seed, sample count, factor grid, threshold precision, stopping rule and iteration cap. The fixed configuration uses seed 3461, a factor grid no coarser than 0.025 over $[0.5, 1.0]$, threshold bisection that stops at 0.05 dB for DVB-T2 and 0.1 dB for NR, over BPSK AWGN with the all-zero codeword. \n\n## Success Criteria\n\n- [hard] REQ-01: For a declared configuration, the API returns the DE threshold of a degree distribution at a factor and cap, and the threshold-optimal factor over the factor grid; identical inputs produce identical output.\n- [hard] REQ-02: The edge-perspective degree distribution of a DVB-T2 profile derives from its code table, and its node and edge counts match the built `LdpcCode`.\n- [hard] REQ-03: The DE reproduces at least one published threshold within declared precision under its published configuration; the Zhang et al. figure of 0.75 and 0.90 dB for the (16200, 7200) code, against the estimate of at least 0.95 and 2.72 dB at 0.75 and the 0.9375 of Emran et al., is recomputed and the outcome is recorded in @/issue/3461a52a with source and configuration.\n- [hard] REQ-04: Fast-tier tests use small sample counts within the per-test budget; the published-threshold reproduction runs as a descriptive slow-tier test.\n",
+    "planning": {
+      "outcome": "Flooding NMS density evolution on degree distributions is a deterministic gf2-coding API",
+      "contract_refs": [
+        "flooding-profile",
+        "de-configuration"
+      ],
+      "produces_contracts": [
+        "density-evolution-api"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "D-RULE",
+        "D-ORDER",
+        "DE-EST",
+        "F-ZHANG"
+      ],
+      "terminal": {
+        "consumer_family": "DVB-T2 degree distributions",
+        "test_boundary": "gf2-coding density-evolution tests",
+        "worker_sized_reason": "One numerical module with its degree extraction and threshold search fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "density_evolution module root in crates/gf2-coding/src/ldpc/",
+            "density_evolution edge submodule in crates/gf2-coding/src/ldpc/"
+          ]
+        },
+        "warning_overrides": {
+          "chain-link": "Edge-perspective and protograph DE are separate numerical methods with separate conformance evidence; splitting them keeps each to one focused cycle."
+        }
+      },
+      "landing_group": "density-evolution"
+    }
+  },
+  {
+    "key": "de-protograph",
+    "title": "Protograph density evolution with punctured and shortened columns",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:gf2-coding",
+      "satisfies:3461a52a/REQ-02",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "de-edge-perspective"
+    ],
+    "description": "`gf2-coding` computes protograph density evolution of flooding normalized min-sum with punctured and shortened base columns, so an NR mother or rate-matched profile's factor derives from its base graph and transmission pattern.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\nNR rate matching in `crates/gf2-coding/src/ldpc/nr_5g/mod.rs` punctures the first two systematic base columns, removes parity from the end and shortens filler bits; an edge-perspective distribution loses that structure, so NR needs protograph DE on the base graphs in `crates/gf2-coding/src/ldpc/nr_5g/bg1.rs` and `crates/gf2-coding/src/ldpc/nr_5g/bg2.rs`. The optimum depends on rate and iteration cap.\n\nEvery DE computation declares its seed, sample count, factor grid, threshold precision, stopping rule and iteration cap. The fixed configuration uses seed 3461, a factor grid no coarser than 0.025 over $[0.5, 1.0]$, threshold bisection that stops at 0.05 dB for DVB-T2 and 0.1 dB for NR, over BPSK AWGN with the all-zero codeword. \n\n## Success Criteria\n\n- [hard] REQ-01: For an NR profile and cap, the API returns the protograph DE threshold at a factor and the threshold-optimal factor over the factor grid, with punctured columns entering at zero channel information and filler columns as known bits; identical inputs produce identical output.\n- [hard] REQ-02: A regular protograph whose lifted ensemble equals an unstructured degree distribution gives the same threshold as the edge-perspective DE within declared precision.\n- [hard] REQ-03: Fast-tier tests stay within the per-test budget; full base-graph runs are slow-tier tests with a descriptive ignore.\n",
+    "planning": {
+      "outcome": "Flooding NMS protograph density evolution covers NR mother and rate-matched profiles",
+      "contract_refs": [
+        "flooding-profile",
+        "density-evolution-api",
+        "de-configuration"
+      ],
+      "produces_contracts": [
+        "protograph-de"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "D-RULE",
+        "DE-EST"
+      ],
+      "terminal": {
+        "consumer_family": "NR base-graph profiles",
+        "test_boundary": "gf2-coding protograph density-evolution tests",
+        "worker_sized_reason": "One protograph extension of an existing DE module is a single focused change.",
+        "footprint": {
+          "creates": [
+            "density_evolution protograph submodule in crates/gf2-coding/src/ldpc/"
+          ],
+          "touches": [
+            "density_evolution module root in crates/gf2-coding/src/ldpc/"
+          ]
+        },
+        "warning_overrides": {
+          "chain-link": "Edge-perspective and protograph DE are separate numerical methods with separate conformance evidence; splitting them keeps each to one focused cycle."
+        }
+      },
+      "landing_group": "density-evolution"
+    }
+  },
+  {
+    "key": "de-tool",
+    "title": "Offline density-evolution tool and the committed flooding factor table",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:gf2-coding",
+      "satisfies:3461a52a/REQ-02",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "de-protograph"
+    ],
+    "description": "An offline executable `ldpc-density-evolution` computes the DE-optimal flooding factor for one profile and cap and regenerates the committed `FLOODING_NMS_FACTORS` table in `gf2-coding` over the library's enumerated (profile, cap) universe, so the table is reproducible from one command and one fixed configuration.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\nThe tool is a workspace member under `dev/tools/`, like `dev/tools/tuning-campaign-support`. It depends on `gf2-coding` for the profile universe and the DE APIs and holds only CLI, search orchestration and source generation, under `@/inv/library-first-generality` and `@/inv/crate-dependency-direction`; no production crate depends on it. The generated table is a Rust source file in `crates/gf2-coding/src/ldpc/`, keyed by `FloodingProfile` and iteration cap. It is derived library configuration under `@/inv/structural-performance-defaults`: each entry follows from a code's structure and cap, not from a host measurement. Raw DE samples stay outside the tree under `@/inv/committed-evidence-budget`.\n\nEvery DE computation declares its seed, sample count, factor grid, threshold precision, stopping rule and iteration cap. The fixed configuration uses seed 3461, a factor grid no coarser than 0.025 over $[0.5, 1.0]$, threshold bisection that stops at 0.05 dB for DVB-T2 and 0.1 dB for NR, over BPSK AWGN with the all-zero codeword. \n\n## Success Criteria\n\n- [hard] REQ-01: A `compute` command prints the threshold-optimal factor and its threshold for one named profile and cap under the fixed configuration.\n- [hard] REQ-02: A `regenerate` command writes the table source for each (profile, cap) pair the library enumerates, takes the universe from the library rather than a list of its own, and records the configuration in the generated file's header; two runs with the same configuration write byte-identical output, checked on a reduced universe in a fast-tier test.\n- [hard] REQ-03: The committed table has exactly one entry per enumerated (profile, cap) pair, checked by a fast-tier test against the enumeration, and no decoder default reads it.\n- [hard] REQ-04: Each committed entry that departs from the recorded DE estimate ranges, and the outcome for the DVB-T2 short rate 1/2 falsification candidate, is recorded in @/issue/3461a52a with the configuration.\n",
+    "planning": {
+      "outcome": "One offline command regenerates the committed flooding factor table from the universe",
+      "contract_refs": [
+        "flooding-profile",
+        "density-evolution-api",
+        "protograph-de",
+        "de-configuration"
+      ],
+      "produces_contracts": [
+        "flooding-nms-table"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "D-RULE",
+        "DE-EST",
+        "F-ZHANG"
+      ],
+      "terminal": {
+        "consumer_family": "flooding table regeneration",
+        "test_boundary": "fast-tier universe coverage test",
+        "worker_sized_reason": "A thin CLI over existing library APIs, run once to commit its output, is one focused cycle.",
+        "footprint": {
+          "creates": [
+            "ldpc-density-evolution crate manifest in dev/tools/",
+            "ldpc-density-evolution main source in dev/tools/",
+            "generated flooding_nms_factors module in crates/gf2-coding/src/ldpc/"
+          ],
+          "touches": [
+            "Cargo.toml",
+            "crates/gf2-coding/src/ldpc/mod.rs"
+          ]
+        }
+      },
+      "landing_group": "density-evolution"
+    }
+  },
+  {
+    "key": "validation-harness",
+    "title": "Window-curve harness for the flooding normalization table",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:experiments",
+      "satisfies:3461a52a/REQ-02",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "de-tool"
+    ],
+    "description": "An experiment harness measures FER curves for sampled flooding profiles at the pre-registered candidate factors and applies the pre-registered decision rule, so the window campaigns confirm or falsify table entries mechanically.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\nThe pre-registered decision rule is fixed before any measurement. Sample: every DVB-T2 (frame size, rate) profile, and per NR base graph the mother code plus the rate-matched profiles at the lowest, median and highest rate of the enumerated universe, each at its library default cap. Candidates per entry: the table factor $\\alpha^*$, $\\alpha^* \\pm 0.05$, 0.75, plain min-sum where it is the current default and, for DVB-T2, the layered configuration's 0.875. Each FER point runs until 100 frame errors or 200 000 frames over BPSK AWGN with seed 3461, random codewords and syndrome stopping; the FER $10^{-3}$ crossing is log-linear interpolation between the bracketing points of a 0.05 dB grid, with an interval from 95% Wilson bounds on those points. An entry is confirmed when the crossing of $\\alpha^*$ lies within 0.05 dB of the best candidate's crossing; falsified when a candidate's crossing is better by more than 0.05 dB with non-overlapping intervals; otherwise unconfirmed. The rule stands for a family when every sampled entry is confirmed. A falsified entry is recorded, regenerated with its DE configuration corrected and measured once more; a second falsification rejects the rule for that family. \n\nThe harness lives under `experiments/` and consumes `gf2-coding` and `experiments/common` for run identity and durable publication, under `@/inv/convention-convergence`. It is a campaign under `@/inv/campaign-evidence`: resumable bounded runs, one append-only execution log outside the tracked tree, and a record pinning executable digest, configuration, seed and observed host facts.\n\n## Success Criteria\n\n- [hard] REQ-01: The committed configuration states the sample, candidates, stopping rule, seed, grid, crossing estimator, interval and tolerance of the rule above, and the harness takes the sample from the library's profile enumeration.\n- [hard] REQ-02: For each sampled entry the harness reports per-candidate crossings with intervals and the entry verdict (confirmed, falsified or unconfirmed); a fast-tier test checks the verdict logic on synthetic curves at the tolerance boundary.\n- [hard] REQ-03: A run resumes from its execution log without repeating completed points, and identical seed and configuration give identical counts across worker counts.\n- [hard] REQ-04: Each run names harness, configuration, iteration cap and host, and labels runs outside the benchmark window as indications.\n",
+    "planning": {
+      "outcome": "A resumable harness applies the pre-registered rule to sampled flooding profiles",
+      "contract_refs": [
+        "flooding-profile",
+        "flooding-nms-table",
+        "validation-decision-rule"
+      ],
+      "produces_contracts": [],
+      "source_refs": [
+        "REQ-02",
+        "D-RULE",
+        "D-ORDER"
+      ],
+      "terminal": {
+        "consumer_family": "flooding table validation campaigns",
+        "test_boundary": "harness unit tests on synthetic curves",
+        "worker_sized_reason": "One experiment crate reusing the shared run mechanics fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "flooding-nms-validation crate manifest in experiments/",
+            "flooding-nms-validation main source in experiments/",
+            "flooding-nms-validation campaign configuration in experiments/"
+          ]
+        }
+      },
+      "landing_group": "validation"
+    }
+  },
+  {
+    "key": "validate-dvb-t2",
+    "title": "Validate the DVB-T2 flooding normalization entries",
+    "type": "simulation",
+    "priority": "normal",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:experiments",
+      "satisfies:3461a52a/REQ-02",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "validation-harness"
+    ],
+    "description": "Benchmark-window curves decide whether the flooding normalization table stands for DVB-T2: every DVB-T2 (frame size, rate) profile at its default cap is measured under the pre-registered rule, and the verdict is recorded in @/issue/3461a52a.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\nThe pre-registered decision rule is fixed before any measurement. Sample: every DVB-T2 (frame size, rate) profile, and per NR base graph the mother code plus the rate-matched profiles at the lowest, median and highest rate of the enumerated universe, each at its library default cap. Candidates per entry: the table factor $\\alpha^*$, $\\alpha^* \\pm 0.05$, 0.75, plain min-sum where it is the current default and, for DVB-T2, the layered configuration's 0.875. Each FER point runs until 100 frame errors or 200 000 frames over BPSK AWGN with seed 3461, random codewords and syndrome stopping; the FER $10^{-3}$ crossing is log-linear interpolation between the bracketing points of a 0.05 dB grid, with an interval from 95% Wilson bounds on those points. An entry is confirmed when the crossing of $\\alpha^*$ lies within 0.05 dB of the best candidate's crossing; falsified when a candidate's crossing is better by more than 0.05 dB with non-overlapping intervals; otherwise unconfirmed. The rule stands for a family when every sampled entry is confirmed. A falsified entry is recorded, regenerated with its DE configuration corrected and measured once more; a second falsification rejects the rule for that family. \n\nThe campaign runs as queue lines of the benchmark window on the full host; it may span several windows. The DVB-T2 normal rate 1/2 lines already queued for @/issue/3461a52a count toward this campaign only if their configuration matches the rule.\n\n## Success Criteria\n\n- [hard] REQ-01: Each sampled DVB-T2 entry has a verdict under the pre-registered rule, with harness, configuration, iteration cap, seed and host named.\n- [hard] REQ-02: @/issue/3461a52a records whether the rule stands or is rejected for DVB-T2; contrary data and falsified entries are recorded with the contradiction, and revised entries are regenerated and remeasured as the rule states.\n- [hard] REQ-03: Raw evidence stays outside the tracked tree; the recorded values are the crossings and verdicts the rule decides on, labelled with the host.\n",
+    "planning": {
+      "outcome": "Window curves decide whether the flooding table stands for DVB-T2",
+      "contract_refs": [
+        "validation-decision-rule",
+        "flooding-nms-table"
+      ],
+      "produces_contracts": [],
+      "source_refs": [
+        "REQ-02",
+        "D-RULE",
+        "D-ORDER",
+        "W-259",
+        "IND-D5"
+      ],
+      "terminal": {
+        "consumer_family": "DVB-T2 flooding table entries",
+        "test_boundary": "benchmark-window FER curves",
+        "worker_sized_reason": "One family's campaign under a fixed rule is one bounded measurement sequence.",
+        "footprint": {
+          "touches": [
+            "dev/scripts/bench-window/queue.tsv"
+          ]
+        }
+      },
+      "landing_group": "validation"
+    }
+  },
+  {
+    "key": "validate-nr",
+    "title": "Validate the NR flooding normalization entries",
+    "type": "simulation",
+    "priority": "normal",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:experiments",
+      "satisfies:3461a52a/REQ-02",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "validation-harness"
+    ],
+    "description": "Benchmark-window curves decide whether the flooding normalization table stands for NR: the NR BG1 and BG2 mother codes and the sampled rate-matched profiles at its default cap is measured under the pre-registered rule, and the verdict is recorded in @/issue/3461a52a.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\nThe pre-registered decision rule is fixed before any measurement. Sample: every DVB-T2 (frame size, rate) profile, and per NR base graph the mother code plus the rate-matched profiles at the lowest, median and highest rate of the enumerated universe, each at its library default cap. Candidates per entry: the table factor $\\alpha^*$, $\\alpha^* \\pm 0.05$, 0.75, plain min-sum where it is the current default and, for DVB-T2, the layered configuration's 0.875. Each FER point runs until 100 frame errors or 200 000 frames over BPSK AWGN with seed 3461, random codewords and syndrome stopping; the FER $10^{-3}$ crossing is log-linear interpolation between the bracketing points of a 0.05 dB grid, with an interval from 95% Wilson bounds on those points. An entry is confirmed when the crossing of $\\alpha^*$ lies within 0.05 dB of the best candidate's crossing; falsified when a candidate's crossing is better by more than 0.05 dB with non-overlapping intervals; otherwise unconfirmed. The rule stands for a family when every sampled entry is confirmed. A falsified entry is recorded, regenerated with its DE configuration corrected and measured once more; a second falsification rejects the rule for that family. \n\nThe campaign runs as queue lines of the benchmark window on the full host; it may span several windows.\n\n## Success Criteria\n\n- [hard] REQ-01: Each sampled NR entry has a verdict under the pre-registered rule, with harness, configuration, iteration cap, seed and host named.\n- [hard] REQ-02: @/issue/3461a52a records whether the rule stands or is rejected for NR; contrary data and falsified entries are recorded with the contradiction, and revised entries are regenerated and remeasured as the rule states.\n- [hard] REQ-03: Raw evidence stays outside the tracked tree; the recorded values are the crossings and verdicts the rule decides on, labelled with the host.\n",
+    "planning": {
+      "outcome": "Window curves decide whether the flooding table stands for NR",
+      "contract_refs": [
+        "validation-decision-rule",
+        "flooding-nms-table"
+      ],
+      "produces_contracts": [],
+      "source_refs": [
+        "REQ-02",
+        "D-RULE",
+        "D-ORDER",
+        "W-259",
+        "IND-D5"
+      ],
+      "terminal": {
+        "consumer_family": "NR flooding table entries",
+        "test_boundary": "benchmark-window FER curves",
+        "worker_sized_reason": "One family's campaign under a fixed rule is one bounded measurement sequence.",
+        "footprint": {
+          "touches": [
+            "dev/scripts/bench-window/queue.tsv"
+          ]
+        }
+      },
+      "landing_group": "validation"
+    }
+  },
+  {
+    "key": "flooding-policy",
+    "title": "Shared flooding normalization policy over the factor table",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:gf2-coding",
+      "satisfies:3461a52a/REQ-02",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "de-tool"
+    ],
+    "description": "One caller-overridable `gf2-coding` policy resolves the flooding normalization of a decode from the code's flooding profile and the actual iteration cap through `FLOODING_NMS_FACTORS`, so constructors, wrappers and routes share one lookup.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\nThe cap is known only when decoding starts (`decode_iterative(llrs, max_iterations)` in `crates/gf2-coding/src/ldpc/core.rs`), so the policy resolves at that point from the profile the code carries. An explicitly selected algorithm or factor always wins. A (profile, cap) pair with no entry resolves to the current behaviour of the decision. This change adds the policy and its contracts; no constructor default switches to it here.\n\n## Success Criteria\n\n- [hard] REQ-01: Failing behavioural tests precede the implementation and cover table selection, the actual cap, explicit overrides, absent entries and NR puncture and filler handling.\n- [hard] REQ-02: A policy-selected decode produces the same decisions and iteration counts as the same decode with the factor passed explicitly, across the scalar, SIMD, batch and GPU flooding backends' shared conformance suite.\n- [hard] REQ-03: The policy's rustdoc states the precedence and the absent-entry behaviour and cites the table as the single source of factors.\n",
+    "planning": {
+      "outcome": "One caller-overridable policy resolves the flooding factor from profile and actual cap",
+      "contract_refs": [
+        "flooding-profile",
+        "flooding-nms-table"
+      ],
+      "produces_contracts": [
+        "flooding-nms-policy"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "D-RULE"
+      ],
+      "terminal": {
+        "consumer_family": "flooding LDPC decoder backends",
+        "test_boundary": "shared flooding decoder conformance suite",
+        "worker_sized_reason": "A lookup policy with its conformance tests in one module is one cycle.",
+        "footprint": {
+          "creates": [
+            "flooding_policy module in crates/gf2-coding/src/ldpc/"
+          ],
+          "touches": [
+            "crates/gf2-coding/src/ldpc/core.rs",
+            "crates/gf2-coding/src/ldpc/mod.rs"
+          ],
+          "uncertainty": "The shared backend conformance suite that the policy joins is located by the worker among the existing LDPC contract tests."
+        }
+      },
+      "landing_group": "adoption"
+    }
+  },
+  {
+    "key": "adopt-dvb-t2-defaults",
+    "title": "Switch DVB-T2 flooding defaults to the shared policy",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:gf2-coding",
+      "satisfies:3461a52a/REQ-01",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "flooding-policy",
+      "validate-dvb-t2"
+    ],
+    "description": "Flooding decoders built with defaults for DVB-T2 codes take their normalization from the shared flooding policy, once window curves have confirmed the DVB-T2 table entries.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\n`LdpcDecoder::new` in `crates/gf2-coding/src/ldpc/core.rs` and the concatenated decoder in `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs` decode DVB-T2 codes with plain min-sum today. If the DVB-T2 validation rejects the rule, this change does not proceed and the rejection stands in @/issue/3461a52a. Tests that pin a factor for historical comparison keep it explicit.\n\n## Success Criteria\n\n- [hard] REQ-01: A default-constructed flooding decode of a DVB-T2 profile uses the table factor at its actual cap; an explicit algorithm or factor still wins, and codes without a profile keep plain min-sum.\n- [hard] REQ-02: Tests that relied on the old DVB-T2 default either assert the new default or pass their former factor explicitly, and rustdoc of the changed constructors cites the policy.\n",
+    "planning": {
+      "outcome": "Default DVB-T2 flooding decodes take the validated table factor",
+      "contract_refs": [
+        "flooding-nms-policy",
+        "inventory-classification"
+      ],
+      "produces_contracts": [],
+      "source_refs": [
+        "REQ-01",
+        "INVENTORY",
+        "D-RULE"
+      ],
+      "terminal": {
+        "consumer_family": "DVB-T2 flooding constructors",
+        "test_boundary": "gf2-coding DVB-T2 decoder tests",
+        "worker_sized_reason": "Switching one family's constructors to an existing policy is one focused cycle.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-coding/src/ldpc/core.rs",
+            "crates/gf2-coding/src/ldpc/dvb_t2/concat.rs"
+          ],
+          "uncertainty": "Tests that depend on the DVB-T2 default rather than an explicit factor are found by running the suite."
+        },
+        "warning_overrides": {
+          "chain-link": "The owner decision of 3461a52a lets defaults read the table only after window curves confirm it, so this switch waits on the DVB-T2 validation and cannot merge with the policy or profile change that precede it."
+        }
+      },
+      "landing_group": "adoption"
+    }
+  },
+  {
+    "key": "adopt-nr-defaults",
+    "title": "Switch NR flooding defaults in gf2-coding to the shared policy",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:gf2-coding",
+      "satisfies:3461a52a/REQ-01",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "flooding-policy",
+      "validate-nr"
+    ],
+    "description": "`Nr5gRateMatchedDecoder::new`, the NR batch decoder and the `sim_runner` CLI default take the flooding normalization from the shared flooding policy, once window curves have confirmed the NR table entries.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\nThe NR default is the private `DEFAULT_NMS_SCALE` in `crates/gf2-coding/src/ldpc/nr_5g/mod.rs`, also documented in `crates/gf2-coding/src/ldpc/nr_5g/batch.rs` and selected by `resolve_algorithm` in `crates/gf2-coding/src/bin/sim_runner.rs`. If the NR validation rejects the rule, this change does not proceed and the rejection stands in @/issue/3461a52a.\n\n## Success Criteria\n\n- [hard] REQ-01: A default-constructed NR rate-matched or batch flooding decode uses the table factor for its profile at the actual cap, and `with_scale` and `with_algorithm` still win.\n- [hard] REQ-02: `DEFAULT_NMS_SCALE` is removed, the `sim_runner` default resolves through the policy and reports the factor it used, and rustdoc that stated 0.75 cites the policy.\n- [hard] REQ-03: Tests that relied on 0.75 as the NR default either assert the new default or pass 0.75 explicitly.\n",
+    "planning": {
+      "outcome": "Default NR flooding decodes in gf2-coding take the validated table factor",
+      "contract_refs": [
+        "flooding-nms-policy",
+        "inventory-classification"
+      ],
+      "produces_contracts": [],
+      "source_refs": [
+        "REQ-01",
+        "INVENTORY",
+        "D-RULE"
+      ],
+      "terminal": {
+        "consumer_family": "NR flooding constructors in gf2-coding",
+        "test_boundary": "gf2-coding NR decoder tests",
+        "worker_sized_reason": "Replacing one private default constant at its three call sites is one cycle.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-coding/src/ldpc/nr_5g/mod.rs",
+            "crates/gf2-coding/src/ldpc/nr_5g/batch.rs",
+            "crates/gf2-coding/src/bin/sim_runner.rs"
+          ]
+        }
+      },
+      "landing_group": "adoption"
+    }
+  },
+  {
+    "key": "adopt-sim-nr",
+    "title": "Switch the gf2-sim NR flooding presets to the shared policy",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:gf2-sim",
+      "satisfies:3461a52a/REQ-01",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "adopt-nr-defaults"
+    ],
+    "description": "The `gf2-sim` NR preset and decode stage take the flooding normalization from the shared flooding policy instead of a local 0.75, so simulations decode with the same default as the library.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\n`normalized_min_sum` in `crates/gf2-sim/src/presets/nr_5g.rs` and `Nr5gDecode::new` in `crates/gf2-sim/src/stages/nr_5g.rs` set 0.75 themselves. Checkpoint, determinism and byte-identity tests in `crates/gf2-sim/tests/` pin factors as fixtures and keep them explicit.\n\n## Success Criteria\n\n- [hard] REQ-01: The NR preset and decode stage resolve their default factor through the policy and accept an explicit factor that wins.\n- [hard] REQ-02: Checkpoint and byte-identity fixtures still pass with their explicit factors, and the stage's recorded configuration names the factor it used.\n",
+    "planning": {
+      "outcome": "gf2-sim NR presets decode with the library's flooding default",
+      "contract_refs": [
+        "flooding-nms-policy",
+        "inventory-classification"
+      ],
+      "produces_contracts": [],
+      "source_refs": [
+        "REQ-01",
+        "INVENTORY"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-sim NR pipeline stages",
+        "test_boundary": "gf2-sim NR stage tests",
+        "worker_sized_reason": "Two constructor sites in one crate plus fixture checks fit one cycle.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-sim/src/presets/nr_5g.rs",
+            "crates/gf2-sim/src/stages/nr_5g.rs"
+          ]
+        }
+      },
+      "landing_group": "adoption"
+    }
+  },
+  {
+    "key": "align-comparison-harnesses",
+    "title": "Align the AFF3CT comparison harness with the flooding policy",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:experiments",
+      "satisfies:3461a52a/REQ-01",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "adopt-dvb-t2-defaults",
+      "adopt-nr-defaults"
+    ],
+    "description": "The AFF3CT comparison harness in `experiments/aff3ct-ldpc-gaps/` takes gf2's flooding factor from the shared policy and reports the factor each side actually used, so comparisons stay matched when the default changes.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\n`NORMALIZATION` in `experiments/aff3ct-ldpc-gaps/src/fast.rs` sets 0.75, and `experiments/aff3ct-ldpc-gaps/src/bin/gf2-fast-bench.rs` and `experiments/aff3ct-ldpc-gaps/aff3ct/src/fast_bench.rs` carry it through `fast::NORMALIZATION`; `experiments/aff3ct-ldpc-gaps/src/bler_sweep.rs`, `experiments/aff3ct-ldpc-gaps/src/route_sweep.rs`, `experiments/aff3ct-ldpc-gaps/quick-compare.sh` and `experiments/aff3ct-ldpc-gaps/contracts.md` set or document it. The DVB-T2 diagnosis pair and the fixed family and plan entries are explicit experiments and keep their factors. Under `@/inv/performance-deliverable` a comparison uses the reference's fastest configuration at matched error rate.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness's gf2 flooding factor resolves through the policy unless a run names one, and AFF3CT runs at the same factor.\n- [hard] REQ-02: Every harness report records the gf2 and AFF3CT factors actually used, including overrides.\n- [hard] REQ-03: The harness contract document states the policy as the factor source and keeps historical factors where its recorded results cite them.\n",
+    "planning": {
+      "outcome": "The AFF3CT comparison harness runs and reports the policy's flooding factor",
+      "contract_refs": [
+        "flooding-nms-policy",
+        "inventory-classification"
+      ],
+      "produces_contracts": [],
+      "source_refs": [
+        "REQ-01",
+        "INVENTORY"
+      ],
+      "terminal": {
+        "consumer_family": "AFF3CT comparison harness",
+        "test_boundary": "aff3ct-ldpc-gaps harness tests",
+        "worker_sized_reason": "One experiment's factor source and reports change together in one cycle.",
+        "footprint": {
+          "touches": [
+            "experiments/aff3ct-ldpc-gaps/src/fast.rs",
+            "experiments/aff3ct-ldpc-gaps/src/bin/gf2-fast-bench.rs",
+            "experiments/aff3ct-ldpc-gaps/aff3ct/src/fast_bench.rs",
+            "experiments/aff3ct-ldpc-gaps/src/bler_sweep.rs",
+            "experiments/aff3ct-ldpc-gaps/src/route_sweep.rs",
+            "experiments/aff3ct-ldpc-gaps/quick-compare.sh",
+            "experiments/aff3ct-ldpc-gaps/contracts.md"
+          ]
+        }
+      },
+      "landing_group": "alignment"
+    }
+  },
+  {
+    "key": "align-bench-harnesses",
+    "title": "Align the in-tree throughput and FER harnesses with the flooding policy",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:gf2-coding",
+      "satisfies:3461a52a/REQ-01",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "adopt-dvb-t2-defaults",
+      "adopt-nr-defaults"
+    ],
+    "description": "The DVB-T2 QC throughput bench, the NR real-time bench and the layered-versus-flooding FER harness take their flooding factor from the shared policy, so their measurements follow the library default.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\n`crates/gf2-coding/benches/ldpc_dvb_t2_qc.rs` and `experiments/nr-5g-realtime/benches/nr_5g_realtime.rs` set 0.75, and `flooding_algorithm` in `crates/gf2-coding/tests/ldpc_layered_fer.rs` sets 0.875 for DVB-T2 and 0.75 for NR.\n\n## Success Criteria\n\n- [hard] REQ-01: Each harness resolves its flooding factor through the policy for the code it measures and names the factor in its output.\n- [hard] REQ-02: The FER harness still compares layered and flooding decoders under the rule each one uses, and states both factors.\n",
+    "planning": {
+      "outcome": "In-tree throughput and FER harnesses measure at the policy's flooding factor",
+      "contract_refs": [
+        "flooding-nms-policy",
+        "inventory-classification"
+      ],
+      "produces_contracts": [],
+      "source_refs": [
+        "REQ-01",
+        "INVENTORY"
+      ],
+      "terminal": {
+        "consumer_family": "in-tree LDPC measurement harnesses",
+        "test_boundary": "harness builds under release",
+        "worker_sized_reason": "Three harness sites with one factor source each fit one cycle.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-coding/benches/ldpc_dvb_t2_qc.rs",
+            "experiments/nr-5g-realtime/benches/nr_5g_realtime.rs",
+            "crates/gf2-coding/tests/ldpc_layered_fer.rs"
+          ]
+        }
+      },
+      "landing_group": "alignment"
+    }
+  },
+  {
+    "key": "align-docs-examples",
+    "title": "Document the flooding normalization policy in examples and docs",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:competitive-benchmarking",
+      "component:gf2-coding",
+      "component:gf2-sim",
+      "satisfies:3461a52a/REQ-01",
+      "satisfies:3461a52a/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "adopt-sim-nr",
+      "align-comparison-harnesses",
+      "align-bench-harnesses"
+    ],
+    "description": "Examples and documentation pages state the flooding normalization as the table-backed policy, and cite it as the single source of the factor.\n\n## Background\n\ngf2's flooding LDPC decoders use normalized min-sum (NMS) with a family-wide factor of 0.75 for NR (5G) and plain min-sum for generic codes. An indication on DVB-T2 normal rate 1/2 at an iteration cap of 50 shows 0.75 losing more than 0.3 dB to 0.875, with AFF3CT 4.7.0 reproducing both figures, and a sample-based density-evolution (DE) estimate puts the threshold-optimal factor near 0.90 for that code, at least 0.95 for DVB-T2 short rate 1/2, 0.6 to 0.7 for NR at low and middle rates and 0.75 to 0.80 for NR at rates 0.77 to 0.88. The owner decision of @/issue/3461a52a makes the default a table of the DE-optimal factor per code profile and iteration cap, produced by an in-tree offline tool, caller-overridable, and standing only if benchmark-window curves confirm it. A profile with no table entry keeps its current behaviour: generic `LdpcDecoder::new` uses plain min-sum, and NR rate-matched constructors and explicitly selected NMS defaults keep 0.75.\n\n`crates/gf2-coding/examples/ldpc_bler_check.rs` and `crates/gf2-sim/examples/gpu_hybrid.rs` construct decoders at 0.75; `docs/how-to/run-simulation-campaigns.md` shows 0.75 in an example, and `docs/reference/performance-evidence.md` describes harnesses at 0.75. Under `@/inv/single-source-prose` the factor reaches prose by citation of the policy, and results measured at 0.75 stay attributed to 0.75.\n\n## Success Criteria\n\n- [hard] REQ-01: The two examples construct decoders with the default and print the factor the policy selected.\n- [hard] REQ-02: The how-to page and the performance-evidence reference describe the policy and its absent-entry behaviour, state no hand-copied factor values, and keep each recorded result labelled with the factor it was measured at.\n",
+    "planning": {
+      "outcome": "Examples and docs cite the flooding policy as the factor source",
+      "contract_refs": [
+        "flooding-nms-policy",
+        "inventory-classification"
+      ],
+      "produces_contracts": [],
+      "source_refs": [
+        "REQ-01",
+        "INVENTORY"
+      ],
+      "terminal": {
+        "consumer_family": "researcher-facing flooding documentation",
+        "test_boundary": "documentation review with example builds",
+        "worker_sized_reason": "Two examples and two pages on one topic are one documentation cycle.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-coding/examples/ldpc_bler_check.rs",
+            "crates/gf2-sim/examples/gpu_hybrid.rs",
+            "docs/how-to/run-simulation-campaigns.md",
+            "docs/reference/performance-evidence.md"
+          ]
+        }
+      },
+      "landing_group": "alignment"
+    }
+  }
+]
