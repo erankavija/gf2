@@ -17,7 +17,10 @@ A row is an explicit fixture, and keeps its named factor, when its role is
 test or fixed harness data, when it lies under `dev/campaigns/` or
 `dev/research/`, or when it is the DVB-T2 diagnosis pair
 (`experiments/aff3ct-ldpc-gaps/src/bin/dvb_t2_fer_diag.rs` and
-`experiments/aff3ct-ldpc-gaps/dvb-t2-r12-diagnosis.sh`). The layered
+`experiments/aff3ct-ldpc-gaps/dvb-t2-r12-diagnosis.sh`), or the
+layered-versus-flooding FER harness `crates/gf2-coding/tests/ldpc_layered_fer.rs`,
+whose flooding reference follows the layered check rule by the @/issue/259acf37
+ruling. The layered
 configuration row belongs to @/issue/b8157e14. Every other row is a consumer of
 the shared flooding normalization policy.
 
