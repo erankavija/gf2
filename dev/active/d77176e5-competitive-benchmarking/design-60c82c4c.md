@@ -85,22 +85,22 @@ codeword from `vec![S::zeroed(..); len]`, freed when the caller drops it.
 
 Six changes, none altering any codeword.
 
-1. **Hoist the field-identity check** (gf2-coding, `encode.rs`).
+1. **Hoist the field-identity check** (gf2-coding, `crates/gf2-coding/src/bch/encode.rs`).
    `validate_batch` decides `F::field_id_hint().is_some()` once per batch and
    skips the per-message `validate_symbol_field` when the type carries the
    identity. `FieldId::prime` allocating an `Arc` per call is the gf2-core
    defect behind this cost; @/issue/c6b20bec removes it at its source, after
    which the per-message check costs no allocation on any path and the hoist
    saves only a branch per message.
-2. **Guarded index invalidation** (gf2-core, `bitvec.rs`). `words_mut` clears
+2. **Guarded index invalidation** (gf2-core, `crates/gf2-core/src/bitvec.rs`). `words_mut` clears
    the rank/select slot only when it holds an index:
    `let slot = ..get_mut()..; if slot.is_some() { *slot = None; }`. This takes
    the store-forwarding stall off every `BitVec` writer in the workspace, safe
    code, no API change.
-3. **Cached encode stamp** (gf2-coding, `spec.rs`/`encode.rs`). `BchCode`
+3. **Cached encode stamp** (gf2-coding, `crates/gf2-coding/src/bch/spec.rs`/`crates/gf2-coding/src/bch/encode.rs`). `BchCode`
    computes its stamp once at construction (the code is immutable) and
    `validate_workspaces` compares one word.
-4. **Block fold when a chunk cannot fill** (gf2-coding, `encode.rs`).
+4. **Block fold when a chunk cannot fill** (gf2-coding, `crates/gf2-coding/src/bch/encode.rs`).
    `fold_accumulators_for` takes the dimension and returns zero, selecting the
    existing `fold_blocks` path, when the message has fewer than $L$ blocks:
    $\lceil k/64 \rceil < L$. The rule derives from the structure already used
@@ -234,7 +234,7 @@ rather than adding a parallel one (@/inv/shared-test-contracts).
   set coefficient is degree 0, 1, 63, 64 and $k - 1$ where those exist.
 - A test that a selector of zero accumulators and the structural rule select
   the same bytes as a forced chunk fold.
-- `bch_encode_dispatch_allocation.rs`: the fold family over a workspace still
+- `crates/gf2-coding/tests/bch_encode_dispatch_allocation.rs`: the fold family over a workspace still
   allocates nothing (guards change 1's removal of the per-message `Arc`).
 - gf2-core: a `BitVec` test that a rank query after `write_bits` still sees
   the written bits (the index invalidation of change 2 stays correct).

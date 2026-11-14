@@ -94,7 +94,7 @@ Two causes:
      overrides that step with row swaps (`FieldMatrix::swap_rows`) and
      in-place reversal of the two contiguous column blocks of each row slice,
      the shape every `SystematicLayout` variant's correspondence has.
-2. **Restriction without the mother** (gf2-coding, `traits.rs` and
+2. **Restriction without the mother** (gf2-coding, `crates/gf2-coding/src/traits.rs` and
    `crates/gf2-coding/src/transform/mod.rs`). `GeneratorMatrixAccess` gains the provided method
    `systematic_restriction_into(&self, kept_rows: &[usize], kept_columns: &[usize], out)`,
    whose default body is today's materialize-and-copy, so every existing
@@ -142,14 +142,14 @@ states the old behavior.
 - Forward to the wrapped code, so a wrapped BCH mother keeps the override:
   `CachedMatrices<C>` (`crates/gf2-coding/src/bch/matrix.rs`), the `CountingCode<C>` test wrapper
   (`crates/gf2-coding/src/bch/matrix.rs`).
-- Default body, no edit: `DrmCode` (`drm.rs`), `QcGldpcCode` (`crates/gf2-coding/src/gldpc/mod.rs`),
-  `LinearBlockCode` (`linear.rs`), `CrcCode` (`crc.rs`), `LdpcCode`
+- Default body, no edit: `DrmCode` (`crates/gf2-coding/src/drm.rs`), `QcGldpcCode` (`crates/gf2-coding/src/gldpc/mod.rs`),
+  `LinearBlockCode` (`crates/gf2-coding/src/linear.rs`), `CrcCode` (`crates/gf2-coding/src/crc.rs`), `LdpcCode`
   (`crates/gf2-coding/src/ldpc/core.rs`), `Extended<C>`, `Shortened<C>`, `Punctured<C>` and the
   `DenseTestCode<F>` test code (`crates/gf2-coding/src/transform/mod.rs`), `RankDerivedMother<C>`
-  (`test_support.rs`, which exists to force the rank-derived path),
-  `RepetitionCode<F>` and `MockLinearCode` (`traits.rs` tests) and the
+  (`crates/gf2-coding/src/test_support.rs`, which exists to force the rank-derived path),
+  `RepetitionCode<F>` and `MockLinearCode` (`crates/gf2-coding/src/traits.rs` tests) and the
   `FixtureCode` test code (`crates/gf2-coding/src/osd/generator.rs`). The blanket
-  `compat::binary_v1::GeneratorMatrixAccess` impl in `traits.rs` reaches only
+  `compat::binary_v1::GeneratorMatrixAccess` impl in `crates/gf2-coding/src/traits.rs` reaches only
   `generator_matrix` and needs no edit.
 
 `ParityCheckMatrixAccess` (no trait change; the `LayoutView` and `BchCode`

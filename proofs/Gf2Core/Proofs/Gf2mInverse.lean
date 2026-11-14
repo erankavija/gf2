@@ -10,6 +10,7 @@
   All proofs are complete with zero sorrys and zero axioms.
 -/
 import Aeneas
+import Gf2Core.Proofs.ResultSpec
 import Gf2Core.Funs
 import Gf2Core.Proofs.Gf2mDefs
 import Gf2Core.Proofs.Gf2mProgress
@@ -67,7 +68,7 @@ theorem pow_loop_correct
     dsimp only
     simp only [gf2m.mul_raw.gf2m_pow_raw_loop.body]
     by_cases hgt : exp1 > 0#u64
-    · simp only [hgt, ite_true, Std.lift, bind_tc_ok]
+    · simp only [hgt, ite_true, Std.lift, bind_ok]
       have hexp1_pos : 0 < exp1.val := by scalar_tac
       -- Split on if (exp & 1) != 0: result conditional
       split
@@ -79,8 +80,8 @@ theorem pow_loop_correct
           omega
         have hmul := Gf2mMulRaw.gf2m_mul_raw_correct result1 base1 m poly hparams hr1 hb1
         obtain ⟨r, hr_eq, hr_val, hr_lt⟩ := hmul
-        simp only [hr_eq, bind_tc_ok]
-        progress as ⟨exp2, hexp2_val, _⟩
+        simp only [hr_eq, bind_ok]
+        step as ⟨exp2, hexp2_val, _⟩
         have hexp2_eq : exp2.val = exp1.val / 2 := by
           simp [hexp2_val, Nat.shiftRight_eq_div_pow]
         have hexp2_lt : exp2.val < exp1.val := by
@@ -89,12 +90,14 @@ theorem pow_loop_correct
         · -- exp2 > 0: square base
           have hsq := Gf2mMulRaw.gf2m_mul_raw_correct base1 base1 m poly hparams hb1 hb1
           obtain ⟨r2, hr2_eq, hr2_val, hr2_lt⟩ := hsq
-          simp only [hr2_eq, bind_tc_ok]
+          simp only [hr2_eq, bind_ok]
+          simp only [spec_ok]
           refine And.intro ⟨hr_lt, hr2_lt, ?_⟩ hexp2_lt
           rw [← hst1, pow_loop_spec_step _ _ _ _ _ hexp1_pos]
           simp only [h_bit_mod, ite_true, hexp2_eq, show exp1.val / 2 > 0 from by scalar_tac, ite_true]
           congr 1 <;> assumption
         · -- exp2 = 0
+          simp only [spec_ok]
           refine And.intro ⟨hr_lt, hb1, ?_⟩ hexp2_lt
           rw [← hst1, pow_loop_spec_step _ _ _ _ _ hexp1_pos]
           simp only [h_bit_mod, ite_true, hexp2_eq, show ¬(exp1.val / 2 > 0) from by scalar_tac, ite_false, hr_val]
@@ -104,7 +107,7 @@ theorem pow_loop_correct
           have : (exp1 &&& 1#u64).val = exp1.val % 2 := by
             rw [UScalar.val_and]; simp [Nat.and_one_is_mod]
           omega
-        progress as ⟨exp2, hexp2_val, _⟩
+        step as ⟨exp2, hexp2_val, _⟩
         have hexp2_eq : exp2.val = exp1.val / 2 := by
           simp [hexp2_val, Nat.shiftRight_eq_div_pow]
         have hexp2_lt : exp2.val < exp1.val := by
@@ -113,16 +116,18 @@ theorem pow_loop_correct
         · -- exp2 > 0: square base
           have hsq := Gf2mMulRaw.gf2m_mul_raw_correct base1 base1 m poly hparams hb1 hb1
           obtain ⟨r2, hr2_eq, hr2_val, hr2_lt⟩ := hsq
-          simp only [hr2_eq, bind_tc_ok]
+          simp only [hr2_eq, bind_ok]
+          simp only [spec_ok]
           refine And.intro ⟨hr1, hr2_lt, ?_⟩ hexp2_lt
           rw [← hst1, pow_loop_spec_step _ _ _ _ _ hexp1_pos]
           simp only [h_bit_mod, ite_false, hexp2_eq, show exp1.val / 2 > 0 from by scalar_tac, ite_true, hr2_val]
         · -- exp2 = 0
+          simp only [spec_ok]
           refine And.intro ⟨hr1, hb1, ?_⟩ hexp2_lt
           rw [← hst1, pow_loop_spec_step _ _ _ _ _ hexp1_pos]
           simp only [h_bit_mod, ite_false, hexp2_eq, show ¬(exp1.val / 2 > 0) from by scalar_tac, ite_false]
     · -- exp = 0: done
-      simp only [hgt, ite_false, spec, theta, wp_return]
+      simp only [hgt, ite_false, spec_ok]
       have hexp0 : exp1.val = 0 := by scalar_tac
       constructor
       · rw [← hst1, hexp0, pow_loop_spec_zero]
@@ -145,7 +150,7 @@ theorem gf2m_pow_raw_correct
   have hinv : PowLoopInv base.val exp.val m.val poly.val (base, exp, 1#u64) :=
     ⟨h1_lt, hb, rfl⟩
   have h := pow_loop_correct base base exp m poly 1#u64 hparams hinv
-  obtain ⟨r, hr_eq, hr_val, hr_lt⟩ := spec_imp_exists h
+  obtain ⟨r, hr_eq, hr_val, hr_lt⟩ := result_spec_exists h
   exact ⟨r, hr_eq, hr_val, hr_lt⟩
 
 /-- gf2m_inverse_raw correctly computes inverse_raw_spec. -/
@@ -165,24 +170,24 @@ theorem gf2m_inverse_raw_correct
     have hm_pos := hparams.m_pos
     -- 1 <<< m → 2^m
     have h_shl : (1#u64 <<< m) ⦃ r => r.val = 2 ^ m.val ⦄ := by
-      progress as ⟨r, hr_val, _⟩
+      step as ⟨r, hr_val, _⟩
       simp only [Nat.shiftLeft_eq, one_mul] at hr_val
       have h_lt : 2 ^ m.val < Std.U64.size := by
         calc 2 ^ m.val ≤ 2 ^ 63 := Nat.pow_le_pow_right (by norm_num) hparams.m_le
           _ < Std.U64.size := by native_decide
       rw [Nat.mod_eq_of_lt h_lt] at hr_val; exact hr_val
-    obtain ⟨shl_r, hshl_eq, hshl_val⟩ := spec_imp_exists h_shl
-    simp only [hshl_eq, bind_tc_ok]
+    obtain ⟨shl_r, hshl_eq, hshl_val⟩ := result_spec_exists h_shl
+    simp only [hshl_eq, bind_ok]
     -- shl_r - 2 → 2^m - 2
     have hshl_ge2 : (2#u64 : Std.U64).val ≤ shl_r.val := by
       rw [hshl_val]
       calc 2 = 2 ^ 1 := by norm_num
         _ ≤ 2 ^ m.val := Nat.pow_le_pow_right (by norm_num) hm_pos
     have h_sub : (shl_r - 2#u64) ⦃ r => r.val = 2 ^ m.val - 2 ⦄ := by
-      progress as ⟨r, hr⟩
+      step as ⟨r, hr⟩
       rw [hshl_val] at hr; linarith
-    obtain ⟨exp, hexp_eq, hexp_val⟩ := spec_imp_exists h_sub
-    simp only [hexp_eq, bind_tc_ok]
+    obtain ⟨exp, hexp_eq, hexp_val⟩ := result_spec_exists h_sub
+    simp only [hexp_eq, bind_ok]
     -- pow_raw
     have hpow := gf2m_pow_raw_correct a exp m poly hparams ha
     obtain ⟨r, hr_eq, hr_val, hr_lt⟩ := hpow

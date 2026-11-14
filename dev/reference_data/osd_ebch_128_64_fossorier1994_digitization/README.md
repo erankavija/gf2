@@ -12,15 +12,16 @@ by-eye reads used for the qualitative Yue2022 cross-check.
 Download the open-access dissertation and run:
 
 ```console
-curl -fL -o /tmp/uhm_phd_9519442_r.pdf \
+scratch="$(mktemp -d)"
+curl -fL -o "$scratch/uhm_phd_9519442_r.pdf" \
   https://scholarspace.manoa.hawaii.edu/bitstreams/3a655537-c031-436f-ac2d-61d2516aa046/download
-python3 extract.py /tmp/uhm_phd_9519442_r.pdf > /tmp/calibration.json
-diff -u calibration.json /tmp/calibration.json
+python3 extract.py "$scratch/uhm_phd_9519442_r.pdf" > "$scratch/calibration.json"
+diff -u calibration.json "$scratch/calibration.json"
 
-curl -fL -o /tmp/2206.09572v2.pdf https://arxiv.org/pdf/2206.09572v2
-python3 extract.py --receipt yue2022 /tmp/2206.09572v2.pdf \
-  > /tmp/yue2022_fig1_digitization.json
-diff -u yue2022_fig1_digitization.json /tmp/yue2022_fig1_digitization.json
+curl -fL -o "$scratch/2206.09572v2.pdf" https://arxiv.org/pdf/2206.09572v2
+python3 extract.py --receipt yue2022 "$scratch/2206.09572v2.pdf" \
+  > "$scratch/yue2022_fig1_digitization.json"
+diff -u yue2022_fig1_digitization.json "$scratch/yue2022_fig1_digitization.json"
 ```
 
 The script requires `pdftoppm`. It aborts unless the PDF SHA-256 is

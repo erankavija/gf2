@@ -1666,11 +1666,11 @@
     "worker_sized_reason": "One simulation-crate migration from a cited inventory",
     "footprint": {
      "touches": [
-      "ebch_osd_awgn_campaign.rs",
+      "experiments/osd-ebch/src/bin/ebch_osd_awgn_campaign.rs",
       "the GPU BCH syndrome throughput binary",
-      "ebch_osd_campaign_cli.rs",
+      "experiments/osd-ebch/tests/ebch_osd_campaign_cli.rs",
       "crates/gf2-sim/tests/gpu_byte_identity.rs",
-      "osd_campaign_protocol.rs"
+      "experiments/osd-ebch/tests/osd_campaign_protocol.rs"
      ]
     }
    },
@@ -2256,7 +2256,7 @@
    "conformance-suites"
   ],
   "planning": {
-   "outcome": "Receipts held outside the tree show non-regression, determinism, fallback coverage, and the SOTA comparison",
+   "outcome": "Receipts, written outside the tracked tree and recorded in the issue by location and digest, show non-regression, determinism, fallback coverage, and the SOTA comparison",
    "contract_refs": [
     "evidence-protocol",
     "workload-selection"

@@ -11,8 +11,8 @@ description: >
 Deliver two linked artifacts for each breakable container `C`, inside the
 directory `jit doc dir <C> dev/active` resolves:
 
-- `plan.md`: shared design, decisions, risks, and a generated overview.
-- `breakdown.json`: the complete authoritative issue graph, directly consumable by `jit issue batch-create`.
+- `<artifact-dir>/plan.md`: shared design, decisions, risks, and a generated overview.
+- `<artifact-dir>/breakdown.json`: the complete authoritative issue graph, directly consumable by `jit issue batch-create`.
 
 Planning is complete only when `P` and `B` are done, both artifacts are linked,
 every manifest issue/edge was created exactly, and every finest-tier issue is
@@ -41,7 +41,7 @@ End every dispatch prompt, including rework and ad-hoc prompts, with the return 
 
 Dispatch the investigator with
 [investigator-prompt.md](references/investigator-prompt.md). It writes and links
-`investigation.md`, inside the directory `jit doc dir <C> dev/active` resolves, to
+`<artifact-dir>/investigation.md`, inside the directory `jit doc dir <C> dev/active` resolves, to
 `P`. Consumer and file inventories live there; the plan only cites them. Dispatch
 [researcher-prompt.md](references/researcher-prompt.md) only for external
 dependencies, real option selection, or unfamiliar architectural work.

@@ -72,7 +72,7 @@ counts ([`parallel_determinism.rs`](../../crates/gf2-sim/tests/parallel_determin
 and across repeated runs
 ([`campaign_byte_identity.rs`](../../experiments/dvb-t2-awgn/tests/campaign_byte_identity.rs)).
 
-`curve_1_2_16qam.csv` under `dvb_r12_16qam` holds one row per point under
+`<campaign-dir>/curve_1_2_16qam.csv` under `dvb_r12_16qam` holds one row per point under
 the header
 
 ```text

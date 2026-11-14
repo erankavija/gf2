@@ -83,7 +83,7 @@ via `jit doc` and both read back on re-invocation:
 - **Progress artifact** (`references/progress-artifact.md`) — the resumable wave
   plan with a per-sub-strategic-container status row, under
   `<development_root>/active/`. It is the one-tier-up analogue of the execution
-  lead's per-epic `progress.json` (containers in place of issues) and feeds
+  lead's per-epic `<artifact-dir>/progress.json` (containers in place of issues) and feeds
   `current_wave` to sub-strategic dispatch.
 
 Read each reference **in full** before creating or updating its artifact. Derive

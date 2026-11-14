@@ -300,8 +300,8 @@ theorem fixedPoints_eq_range :
   have hq1 : 1 < Nat.card B := one_lt_baseCard B E
   set q := Nat.card B with hq
   set P : Polynomial E := Polynomial.X ^ q - Polynomial.X with hP
-  have hP0 : P ≠ 0 := FiniteField.X_pow_card_sub_X_ne_zero E hq1
-  have hdeg : P.natDegree = q := FiniteField.X_pow_card_sub_X_natDegree_eq E hq1
+  have hP0 : P ≠ 0 := Polynomial.X_pow_sub_X_ne_zero hq1
+  have hdeg : P.natDegree = q := Polynomial.natDegree_X_pow_sub_X hq1
   have hmem : ∀ x : E, x ∈ P.roots.toFinset ↔ x ^ q = x := by
     intro x
     rw [Multiset.mem_toFinset, Polynomial.mem_roots hP0]
