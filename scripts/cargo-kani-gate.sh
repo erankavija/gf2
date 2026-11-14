@@ -2,15 +2,15 @@
 set -euo pipefail
 
 # Keep JIT gate records compact while retaining the complete cargo-kani log as
-# a compressed, machine-local audit artifact.
+# a compressed, machine-local audit artifact under the checkout's target/.
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-artifact_dir="$repo_root/.jit/gate-artifacts/cargo-kani"
+artifact_dir="$repo_root/target/gate-artifacts/cargo-kani"
 mkdir -p "$artifact_dir"
 
 issue_id=${JIT_ISSUE_ID:-unknown-issue}
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
-artifact_rel=".jit/gate-artifacts/cargo-kani/${issue_id}-${stamp}-$$.log.gz"
+artifact_rel="target/gate-artifacts/cargo-kani/${issue_id}-${stamp}-$$.log.gz"
 artifact="$repo_root/$artifact_rel"
 raw_log=$(mktemp)
 excerpt=$(mktemp)
