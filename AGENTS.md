@@ -28,7 +28,8 @@ results. Optimization never relaxes mathematical or standards conformance.
 - Build benchmarks under `--release`; `ci-test` drops LTO.
 - Check formatting with `cargo fmt --all -- --check` and lint with
   `cargo clippy --workspace --all-targets $(./scripts/cargo-features.sh) --features tuning-profile -- -D warnings`.
-- Build API documentation with `cargo doc --workspace $(./scripts/cargo-features.sh) --no-deps`.
+- Build API documentation with `cargo doc --workspace $(./scripts/cargo-features.sh doc) --no-deps`;
+  `doc` selects the one host-independent set both CI entry points document.
 - Run Lean regeneration with `./scripts/verify-lean.sh`; build committed proof
   sources with `(cd proofs && lake build)`.
 - Build the ROCm-only crate explicitly with
