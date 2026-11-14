@@ -150,7 +150,8 @@ def main() -> int:
         print(f"check-commit-subject: cannot load allowed types: {error}", file=sys.stderr)
         return 2
     try:
-        message = Path(args.message_file).read_text(encoding="utf-8")
+        # Bytes first: text mode would turn a lone "\r" into a line break.
+        message = Path(args.message_file).read_bytes().decode("utf-8")
     except (OSError, UnicodeError) as error:
         print(f"check-commit-subject: cannot read {args.message_file}: {error}", file=sys.stderr)
         return 2
