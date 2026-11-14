@@ -1,53 +1,364 @@
 {
  "epic_id": "d77176e5-eff3-4212-b24d-d475328b1090",
  "epic_short_id": "d77176e5",
- "current_wave": 3,
+ "current_wave": 4,
  "waves": [
-  {"wave_number": 1, "note": "Session 3: review follow-up of merged work (handoff-2 items 1-8) plus fd9d5416 by owner scope addition.", "issues": [
-   {"short_id": "c9cb0dd2", "status": "done", "branch": "worktree-agent-c9cb0dd2"},
-   {"short_id": "040bc2b8", "status": "done", "branch": "worktree-agent-040bc2b8"},
-   {"short_id": "259acf37", "status": "window curve recorded 2026-11-13 (flooding unbracketed); comparator rework (Codex gpt-6-luna xhigh, narrow test change); closure waits for d5cd53e0", "branch": "worktree-agent-259acf37"},
-   {"short_id": "069e3c33", "status": "done", "branch": "worktree-agent-069e3c33"},
-   {"short_id": "8a8a3bc9", "status": "done", "branch": "worktree-agent-8a8a3bc9"},
-   {"short_id": "fd9d5416", "status": "window table recorded 2026-11-13; REQ-02 met, REQ-03 falsified; doc-review and research-review rerun", "branch": "jit-fd9d5416-cutover"},
-   {"short_id": "befccab3", "status": "done"},
-   {"short_id": "de311215", "status": "done"},
-   {"short_id": "07a1813a", "status": "done"},
-   {"short_id": "1ce7e8a5", "status": "done"},
-   {"short_id": "cbd1eb28", "status": "done"},
-   {"short_id": "ebfaff31", "status": "done; doc-review passed at 8f30ed4f0 after reworks 2 (Claude Sonnet) and 3 (Codex gpt-6-luna xhigh: narrow doc fixes)", "branch": "worktree-agent-ebfaff31"},
-   {"short_id": "a6039c72", "status": "gates passed at a6b8921f0; window line queued 2026-11-13", "branch": "worktree-agent-a6039c72"},
-   {"short_id": "60c82c4c", "status": "designs merged 75ea2c792 and linked; broken down into 6379e04e, 7fbd1042, 4443de83", "branch": "worktree-agent-60c82c4c"},
-   {"short_id": "5e71e993", "status": "design merged and linked; depends on 60c82c4c (same changes); evidence from the window", "branch": "worktree-agent-60c82c4c"},
-   {"short_id": "92ec2e2b", "status": "design merged and linked; sequenced after 7fbd1042 (shared codeword placement in bch/encode.rs)", "branch": "worktree-agent-60c82c4c"},
-   {"short_id": "c6b20bec", "status": "done; merged ff3223f20", "branch": "worktree-agent-c6b20bec"},
-   {"short_id": "2bca2b28", "status": "depends on 92ec2e2b", "branch": "worktree-agent-2bca2b28"}
-  ]},
-  {"wave_number": 2, "note": "Session 5 (lead gf2-af, steward gf2-f3): night-window follow-up and BCH gap implementation. Stopped at owner wind-down 2026-11-13 23:15; see handoff-6.", "issues": [
-   {"short_id": "6379e04e", "status": "dispatched", "vendor": "Claude Opus: gf2-core and gf2-coding perf change with conformance edges"},
-   {"short_id": "4443de83", "status": "dispatched", "vendor": "Codex gpt-6-luna xhigh: narrow experiment change"},
-   {"short_id": "d5cd53e0", "status": "dispatched", "vendor": "Claude Opus: open-ended diagnosis against AFF3CT"},
-   {"short_id": "259acf37", "status": "dispatched", "vendor": "Codex gpt-6-luna xhigh"},
-   {"short_id": "7fbd1042", "status": "waits for 6379e04e"},
-   {"short_id": "92ec2e2b", "status": "waits for 7fbd1042"}
-  ]},
-  {"wave_number": 3, "note": "Session 6 (lead gf2-d7, steward gf2-42).", "issues": [
-   {"short_id": "a6039c72", "status": "done; 2026-11-14 window table, REQ-03 met"},
-   {"short_id": "259acf37", "status": "2026-11-14 curves recorded; code-review on F2 running", "branch": "worktree-agent-259acf37", "dispatches": []},
-   {"short_id": "d5cd53e0", "status": "code-review and research-review rerun", "branch": "worktree-agent-d5cd53e0"},
-   {"short_id": "9a1b24fc", "status": "design dispatched", "branch": "worktree-agent-9a1b24fc", "dispatches": [{"vendor": "codex", "model": "gpt-6.1-sol", "effort": "high", "task": "design"}]},
-   {"short_id": "bb28cf4f", "status": "implementation dispatched", "branch": "worktree-agent-bb28cf4f", "dispatches": [{"vendor": "claude", "model": "sonnet", "task": "implement"}]},
-   {"short_id": "6379e04e", "status": "waits for 32a8bc0e on main, then rebase, cargo-ci, code-review", "branch": "worktree-agent-6379e04e"},
-   {"short_id": "243d1160", "status": "waits for 6379e04e and 697b9178", "branch": "worktree-agent-243d1160"},
-   {"short_id": "7fbd1042", "status": "WIP untested; after 6379e04e", "branch": "worktree-agent-7fbd1042"},
-   {"short_id": "3461a52a", "status": "WIP plan; after d5cd53e0 reviews", "branch": "worktree-agent-3461a52a"},
-   {"short_id": "b8157e14", "status": "after 259acf37 lands"}
-  ]}
+  {
+   "wave_number": 1,
+   "note": "Session 3: review follow-up of merged work (handoff-2 items 1-8) plus fd9d5416 by owner scope addition.",
+   "issues": [
+    {
+     "short_id": "c9cb0dd2",
+     "status": "done",
+     "branch": "worktree-agent-c9cb0dd2"
+    },
+    {
+     "short_id": "040bc2b8",
+     "status": "done",
+     "branch": "worktree-agent-040bc2b8"
+    },
+    {
+     "short_id": "259acf37",
+     "status": "window curve recorded 2026-11-13 (flooding unbracketed); comparator rework (Codex gpt-6-luna xhigh, narrow test change); closure waits for d5cd53e0",
+     "branch": "worktree-agent-259acf37"
+    },
+    {
+     "short_id": "069e3c33",
+     "status": "done",
+     "branch": "worktree-agent-069e3c33"
+    },
+    {
+     "short_id": "8a8a3bc9",
+     "status": "done",
+     "branch": "worktree-agent-8a8a3bc9"
+    },
+    {
+     "short_id": "fd9d5416",
+     "status": "window table recorded 2026-11-13; REQ-02 met, REQ-03 falsified; doc-review and research-review rerun",
+     "branch": "jit-fd9d5416-cutover"
+    },
+    {
+     "short_id": "befccab3",
+     "status": "done"
+    },
+    {
+     "short_id": "de311215",
+     "status": "done"
+    },
+    {
+     "short_id": "07a1813a",
+     "status": "done"
+    },
+    {
+     "short_id": "1ce7e8a5",
+     "status": "done"
+    },
+    {
+     "short_id": "cbd1eb28",
+     "status": "done"
+    },
+    {
+     "short_id": "ebfaff31",
+     "status": "done; doc-review passed at 8f30ed4f0 after reworks 2 (Claude Sonnet) and 3 (Codex gpt-6-luna xhigh: narrow doc fixes)",
+     "branch": "worktree-agent-ebfaff31"
+    },
+    {
+     "short_id": "a6039c72",
+     "status": "gates passed at a6b8921f0; window line queued 2026-11-13",
+     "branch": "worktree-agent-a6039c72"
+    },
+    {
+     "short_id": "60c82c4c",
+     "status": "designs merged 75ea2c792 and linked; broken down into 6379e04e, 7fbd1042, 4443de83",
+     "branch": "worktree-agent-60c82c4c"
+    },
+    {
+     "short_id": "5e71e993",
+     "status": "design merged and linked; depends on 60c82c4c (same changes); evidence from the window",
+     "branch": "worktree-agent-60c82c4c"
+    },
+    {
+     "short_id": "92ec2e2b",
+     "status": "design merged and linked; sequenced after 7fbd1042 (shared codeword placement in bch/encode.rs)",
+     "branch": "worktree-agent-60c82c4c"
+    },
+    {
+     "short_id": "c6b20bec",
+     "status": "done; merged ff3223f20",
+     "branch": "worktree-agent-c6b20bec"
+    },
+    {
+     "short_id": "2bca2b28",
+     "status": "depends on 92ec2e2b",
+     "branch": "worktree-agent-2bca2b28"
+    }
+   ]
+  },
+  {
+   "wave_number": 2,
+   "note": "Session 5 (lead gf2-af, steward gf2-f3): night-window follow-up and BCH gap implementation. Stopped at owner wind-down 2026-11-13 23:15; see handoff-6.",
+   "issues": [
+    {
+     "short_id": "6379e04e",
+     "status": "dispatched",
+     "vendor": "Claude Opus: gf2-core and gf2-coding perf change with conformance edges"
+    },
+    {
+     "short_id": "4443de83",
+     "status": "dispatched",
+     "vendor": "Codex gpt-6-luna xhigh: narrow experiment change"
+    },
+    {
+     "short_id": "d5cd53e0",
+     "status": "dispatched",
+     "vendor": "Claude Opus: open-ended diagnosis against AFF3CT"
+    },
+    {
+     "short_id": "259acf37",
+     "status": "dispatched",
+     "vendor": "Codex gpt-6-luna xhigh"
+    },
+    {
+     "short_id": "7fbd1042",
+     "status": "waits for 6379e04e"
+    },
+    {
+     "short_id": "92ec2e2b",
+     "status": "waits for 7fbd1042"
+    }
+   ]
+  },
+  {
+   "wave_number": 3,
+   "note": "Session 6 (lead gf2-d7, steward gf2-42).",
+   "issues": [
+    {
+     "short_id": "a6039c72",
+     "status": "done; 2026-11-14 window table, REQ-03 met"
+    },
+    {
+     "short_id": "259acf37",
+     "status": "2026-11-14 curves recorded; code-review on F2 running",
+     "branch": "worktree-agent-259acf37",
+     "dispatches": []
+    },
+    {
+     "short_id": "d5cd53e0",
+     "status": "code-review and research-review rerun",
+     "branch": "worktree-agent-d5cd53e0"
+    },
+    {
+     "short_id": "9a1b24fc",
+     "status": "design dispatched",
+     "branch": "worktree-agent-9a1b24fc",
+     "dispatches": [
+      {
+       "vendor": "codex",
+       "model": "gpt-6.1-sol",
+       "effort": "high",
+       "task": "design"
+      }
+     ]
+    },
+    {
+     "short_id": "bb28cf4f",
+     "status": "implementation dispatched",
+     "branch": "worktree-agent-bb28cf4f",
+     "dispatches": [
+      {
+       "vendor": "claude",
+       "model": "sonnet",
+       "task": "implement"
+      }
+     ]
+    },
+    {
+     "short_id": "6379e04e",
+     "status": "waits for 32a8bc0e on main, then rebase, cargo-ci, code-review",
+     "branch": "worktree-agent-6379e04e"
+    },
+    {
+     "short_id": "243d1160",
+     "status": "waits for 6379e04e and 697b9178",
+     "branch": "worktree-agent-243d1160"
+    },
+    {
+     "short_id": "7fbd1042",
+     "status": "WIP untested; after 6379e04e",
+     "branch": "worktree-agent-7fbd1042"
+    },
+    {
+     "short_id": "3461a52a",
+     "status": "WIP plan; after d5cd53e0 reviews",
+     "branch": "worktree-agent-3461a52a"
+    },
+    {
+     "short_id": "b8157e14",
+     "status": "after 259acf37 lands"
+    }
+   ]
+  },
+  {
+   "wave_number": 4,
+   "note": "Session 7 (lead gf2-f4 succeeds gf2-d7, steward gf2-96, peer gf2-7d).",
+   "issues": [
+    {
+     "short_id": "6379e04e",
+     "status": "done; merged dc1b537f4, code-review passed (Codex)"
+    },
+    {
+     "short_id": "9a1b24fc",
+     "status": "design approved at round 4 and merged; branch A dispatched on worktree-agent-9a1b24fc-a",
+     "branch": "worktree-agent-9a1b24fc",
+     "dispatches": [
+      {
+       "vendor": "claude",
+       "model": "opus",
+       "task": "design review round 3"
+      },
+      {
+       "vendor": "codex",
+       "model": "gpt-6.1-sol",
+       "effort": "high",
+       "task": "design rework 3"
+      },
+      {
+       "vendor": "claude",
+       "model": "opus",
+       "task": "design review round 4"
+      },
+      {
+       "vendor": "codex",
+       "model": "gpt-6.1-sol",
+       "effort": "high",
+       "task": "branch A implementation"
+      }
+     ]
+    },
+    {
+     "short_id": "3461a52a",
+     "status": "plan-review passed at 844492b60 (attempt 4); planning merged; 15 issues filed; stays open for the window curves and validation",
+     "branch": "worktree-agent-3461a52a",
+     "dispatches": [
+      {
+       "vendor": "codex",
+       "model": "gpt-6.1-sol",
+       "effort": "high",
+       "task": "plan rework 2"
+      },
+      {
+       "vendor": "claude",
+       "model": "sonnet",
+       "task": "plan review"
+      },
+      {
+       "vendor": "claude",
+       "model": "opus",
+       "task": "plan rework 3 (manifest)"
+      },
+      {
+       "vendor": "claude",
+       "model": "opus",
+       "task": "planning attempt 4"
+      },
+      {
+       "vendor": "codex",
+       "model": "gpt-6.1-sol",
+       "effort": "high",
+       "task": "adversarial pre-review"
+      },
+      {
+       "vendor": "codex",
+       "model": "gpt-6-luna",
+       "effort": "xhigh",
+       "task": "pre-review fixes"
+      }
+     ]
+    },
+    {
+     "short_id": "b8157e14",
+     "status": "density-evolution step for REQ-03 dispatched",
+     "branch": "worktree-agent-b8157e14",
+     "dispatches": [
+      {
+       "vendor": "claude",
+       "model": "opus",
+       "task": "quantized DE and scale rule"
+      }
+     ]
+    },
+    {
+     "short_id": "2275f760",
+     "status": "filed: converge code fingerprints, after 9a1b24fc"
+    }
+   ]
+  }
  ],
- "created_during_execution": ["9d1c580c", "a6039c72", "60c82c4c", "5e71e993", "92ec2e2b", "ebfaff31", "c6b20bec", "2bca2b28", "243d1160", "d5cd53e0", "6379e04e", "7fbd1042", "4443de83", "bb28cf4f"],
+ "created_during_execution": [
+  "9d1c580c",
+  "a6039c72",
+  "60c82c4c",
+  "5e71e993",
+  "92ec2e2b",
+  "ebfaff31",
+  "c6b20bec",
+  "2bca2b28",
+  "243d1160",
+  "d5cd53e0",
+  "6379e04e",
+  "7fbd1042",
+  "4443de83",
+  "bb28cf4f",
+  "2275f760",
+  "645a3563",
+  "bd567da6",
+  "33e1a98f",
+  "646542d8",
+  "21e3a6a4",
+  "1aa884e7",
+  "52a71049",
+  "b88f2240",
+  "bfe6faa5",
+  "e6304988",
+  "fb72de95",
+  "f970febd",
+  "0e84343d",
+  "5abf489d",
+  "3ee0df72"
+ ],
  "escalations": [],
- "rework_counts": {"040bc2b8": 1, "8a8a3bc9": 1, "c9cb0dd2": 1, "ebfaff31": 3},
- "surfaced_pitfalls": ["The window runner waits for a quiet host only before its first job; a single-core job queued after a multi-worker job starts in that job's load tail. Order single-core lines first or add a per-job quiet wait. Tracked as bb28cf4f.", "Gate runs on the main checkout stall the other lead's merges; a fast-tier test timed out at 15 s under three concurrent worker builds. Run cargo-ci when worker builds are idle.", "jit doc add scans linked documents for assets by default; use --skip-scan for pinned historical pages", "The window runs under the systemd user manager: PATH=/usr/local/bin:/usr/bin and no ROCM_PATH. hipcc then omits the ROCm include directory (93df507a fixes the build script)."],
+ "rework_counts": {
+  "040bc2b8": 1,
+  "8a8a3bc9": 1,
+  "c9cb0dd2": 1,
+  "ebfaff31": 3,
+  "9a1b24fc": 3,
+  "3461a52a": 3
+ },
+ "surfaced_pitfalls": [
+  "The window runner waits for a quiet host only before its first job; a single-core job queued after a multi-worker job starts in that job's load tail. Order single-core lines first or add a per-job quiet wait. Tracked as bb28cf4f.",
+  "Gate runs on the main checkout stall the other lead's merges; a fast-tier test timed out at 15 s under three concurrent worker builds. Run cargo-ci when worker builds are idle.",
+  "jit doc add scans linked documents for assets by default; use --skip-scan for pinned historical pages",
+  "The window runs under the systemd user manager: PATH=/usr/local/bin:/usr/bin and no ROCM_PATH. hipcc then omits the ROCm include directory (93df507a fixes the build script).",
+  "6379e04e code-review F1 (advisory, pre-existing): the allocation witness in crates/gf2-coding/tests/support/fresh_tuning_process.rs checks buffer shape only; 9a1b24fc branch A replaces it with the counting allocator."
+ ],
  "started_at": "2026-11-12T00:00:00Z",
- "decisions": ["07a1813a REQ-01 amended (owner, 2026-11-12)", "BCH reflected-domain fold filed as 9d1c580c, low priority (owner)", "No push; every push is the owner's", "A lead may arm a short window once its queue lines are merged and the host is quiet, after both leads' workers confirm idle; one window at a time", "4f21da96 goes to gf2-79", "Session 4 lead gf2-3d succeeds gf2-7b (steward gf2-08); night window 2026-11-13 02:00 armed by owner; workers idle by 01:45", "Charter D-7 (owner): the counted BCH cell is encode_batch_into with a reused workspace; encode_batch is reported beside it", "92ec2e2b trait changes accepted (steward): MatrixFill::fill_generator signature, GeneratorMatrixAccess provided method, parity-check fix in the same change", "Session 6 lead gf2-d7 succeeds gf2-af (steward gf2-42); 45ecf975 stream under gf2-e9, tech debt under gf2-5b", "259acf37 2026-11-14 curves accepted as stated window results (steward gf2-42)", "697b9178 bitvec.rs hunks approved by gf2-d7 on a Kani-run condition; 697b9178 lands before 243d1160 rebases (steward)", "32a8bc0e lands before the encode.rs chain (6379e04e first) (steward)"]
+ "decisions": [
+  "07a1813a REQ-01 amended (owner, 2026-11-12)",
+  "BCH reflected-domain fold filed as 9d1c580c, low priority (owner)",
+  "No push; every push is the owner's",
+  "A lead may arm a short window once its queue lines are merged and the host is quiet, after both leads' workers confirm idle; one window at a time",
+  "4f21da96 goes to gf2-79",
+  "Session 4 lead gf2-3d succeeds gf2-7b (steward gf2-08); night window 2026-11-13 02:00 armed by owner; workers idle by 01:45",
+  "Charter D-7 (owner): the counted BCH cell is encode_batch_into with a reused workspace; encode_batch is reported beside it",
+  "92ec2e2b trait changes accepted (steward): MatrixFill::fill_generator signature, GeneratorMatrixAccess provided method, parity-check fix in the same change",
+  "Session 6 lead gf2-d7 succeeds gf2-af (steward gf2-42); 45ecf975 stream under gf2-e9, tech debt under gf2-5b",
+  "259acf37 2026-11-14 curves accepted as stated window results (steward gf2-42)",
+  "697b9178 bitvec.rs hunks approved by gf2-d7 on a Kani-run condition; 697b9178 lands before 243d1160 rebases (steward)",
+  "32a8bc0e lands before the encode.rs chain (6379e04e first) (steward)",
+  "Session 7 lead gf2-f4 succeeds gf2-d7 (steward gf2-96); cargo-ci cap lifted by the owner",
+  "9a1b24fc F1 option (a) approved by the steward as rework 3, structural cache-derived cap, overflow-safe; round-4 failure goes to the owner",
+  "3461a52a NR key resolution Q = 4 (lead, routine planning default)",
+  "3461a52a fourth attempt in place (owner); plan-review passed"
+ ]
 }
