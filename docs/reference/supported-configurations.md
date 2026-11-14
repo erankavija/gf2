@@ -138,7 +138,8 @@ by path, so `cargo build --workspace --all-features`
 also requires ROCm.
 [`scripts/cargo-features.sh`](../../scripts/cargo-features.sh) prints the
 host's workspace feature flags, `--all-features` with ROCm and a set without
-the `hip` features otherwise.
+the `hip` features otherwise; its `doc` argument prints the host-independent
+set that the doc and doctest steps of both CI entry points use.
 
 ## Limitations
 

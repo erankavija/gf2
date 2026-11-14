@@ -237,7 +237,7 @@
     },
     {
      "short_id": "3461a52a",
-     "status": "plan-review failed (manifest form); steward approved rework 3, the last",
+     "status": "plan-review passed at 844492b60 (attempt 4); planning merged; 15 issues filed; stays open for the window curves and validation",
      "branch": "worktree-agent-3461a52a",
      "dispatches": [
       {
@@ -255,6 +255,23 @@
        "vendor": "claude",
        "model": "opus",
        "task": "plan rework 3 (manifest)"
+      },
+      {
+       "vendor": "claude",
+       "model": "opus",
+       "task": "planning attempt 4"
+      },
+      {
+       "vendor": "codex",
+       "model": "gpt-6.1-sol",
+       "effort": "high",
+       "task": "adversarial pre-review"
+      },
+      {
+       "vendor": "codex",
+       "model": "gpt-6-luna",
+       "effort": "xhigh",
+       "task": "pre-review fixes"
       }
      ]
     },
@@ -292,7 +309,22 @@
   "7fbd1042",
   "4443de83",
   "bb28cf4f",
-  "2275f760"
+  "2275f760",
+  "645a3563",
+  "bd567da6",
+  "33e1a98f",
+  "646542d8",
+  "21e3a6a4",
+  "1aa884e7",
+  "52a71049",
+  "b88f2240",
+  "bfe6faa5",
+  "e6304988",
+  "fb72de95",
+  "f970febd",
+  "0e84343d",
+  "5abf489d",
+  "3ee0df72"
  ],
  "escalations": [],
  "rework_counts": {
@@ -325,6 +357,8 @@
   "697b9178 bitvec.rs hunks approved by gf2-d7 on a Kani-run condition; 697b9178 lands before 243d1160 rebases (steward)",
   "32a8bc0e lands before the encode.rs chain (6379e04e first) (steward)",
   "Session 7 lead gf2-f4 succeeds gf2-d7 (steward gf2-96); cargo-ci cap lifted by the owner",
-  "9a1b24fc F1 option (a) approved by the steward as rework 3, structural cache-derived cap, overflow-safe; round-4 failure goes to the owner"
+  "9a1b24fc F1 option (a) approved by the steward as rework 3, structural cache-derived cap, overflow-safe; round-4 failure goes to the owner",
+  "3461a52a NR key resolution Q = 4 (lead, routine planning default)",
+  "3461a52a fourth attempt in place (owner); plan-review passed"
  ]
 }
