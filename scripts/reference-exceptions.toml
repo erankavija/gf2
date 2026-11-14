@@ -1,5 +1,11 @@
 # Exceptions for scripts/check-references.py. Each entry needs a reason.
 # `path` is a glob or a list of globs.
+# Zero-based path argument for each writer helper.
+writer_helpers = { publish_atomic = 0, atomic_replace = 0, write_csv = 1, write_plot = 1, write_campaign_csv = 0 }
+
+[[exception]]
+path = "experiments/dvb-t2-awgn/src/bin/dvb_t2_awgn_campaign.rs"
+reason = "<campaign-dir>/tracing.jsonl is written by the tracing subscriber installed through pipeline configuration, beyond local writer-helper flow"
 
 [[exception]]
 path = ".jit/events.jsonl"
@@ -124,3 +130,7 @@ path = [
   "dev/tools/tuning-campaign-support/config/dbd8787d/premeasurement-protocol.md",
 ]
 reason = "pre-registered protocols of finished campaigns; the campaign identity pins each by digest, so they keep the paths and commands of their run"
+
+[[exception]]
+path = ".jit/issues/7cc591a0-86e2-4d3c-837b-604cb9dda162.json"
+reason = "its criterion forbids hardcoding the host's /tmp directory and must name that directory as written"

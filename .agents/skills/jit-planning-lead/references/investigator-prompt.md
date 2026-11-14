@@ -29,7 +29,7 @@ Cited concrete qualified addresses are resolvable project knowledge, not opaque 
 
 Read the actual code, config, and docs. Use search aggressively. Write a structured
 findings report to the **repo-resident path the dispatch names**
-(`investigation.md`, inside the directory `jit doc dir <C-id> dev/active` resolves).
+(`<artifact-dir>/investigation.md`, inside the directory `jit doc dir <C-id> dev/active` resolves).
 The plan cites this report as grounding, so it is repo-resident. The report contains:
 
 1. **Claim classification.** For every input claim, classify it against the code and cite

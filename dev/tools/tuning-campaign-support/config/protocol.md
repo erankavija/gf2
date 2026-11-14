@@ -217,7 +217,7 @@ is the declared corrected per-comparison error rate below. The runner and
 evaluator pass that alpha directly to rank selection; they do not reconstruct
 it from a displayed confidence. Resampling whole pairs keeps the
 pairing intact. The generator is xoshiro256** seeded through SplitMix64
-[BlackmanVigna2021] [Steele2014], implemented in `abtest.rs` without an external
+[BlackmanVigna2021] [Steele2014], implemented in `dev/tools/tuning-campaign-support/src/abtest.rs` without an external
 dependency, so the interval is bit-reproducible from the raw samples and the
 seed (P-20).
 

@@ -43,8 +43,8 @@ theorem validPrime_le_bound {P : Std.U64} (hP : ValidPrime P) : P.val ≤ 2 ^ 63
 theorem validPrime_pos {P : Std.U64} (hP : ValidPrime P) : 0 < P.val := by
   have := hP.2.1; omega
 
-/-- ValidPrime implies VALIDATED succeeds (spec form for @[progress]) -/
-@[progress]
+/-- ValidPrime implies VALIDATED succeeds (spec form for @[step]) -/
+@[step]
 theorem validated_progress {P : Std.U64} (hP : ValidPrime P) :
     gfp.Fp.VALIDATED P ⦃ fun _ => True ⦄ := by
   simp only [gfp.Fp.VALIDATED]
