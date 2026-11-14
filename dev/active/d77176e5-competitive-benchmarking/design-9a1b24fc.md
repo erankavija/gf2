@@ -248,3 +248,52 @@ The interface decision above is the only lead escalation. Matrix traits,
 available to @/issue/92ec2e2b and @/issue/2bca2b28.
 `experiments/encode-compare/src/cutover/current.rs` changes only under
 @/issue/4443de83, with library scratch constructed outside its timed call.
+
+## Cost of the single-form alternative
+
+The alternative to the inherent-plus-trait form above is one batch form: the
+`BatchEncoder` methods replace `BchCode`'s layout-taking batch methods, and a
+non-default layout is reached through `LayoutView::new(code, layout)`, which
+already implements `BlockEncoder` in its declared layout. Inventory at the
+`worktree-agent-7fbd1042` head `c97b4c3d0`:
+
+- `BchCode` loses the `layout` parameter, or the method, on `encode_batch`,
+  `encode_batch_into`, `encode_batch_parallel`, `encode_batch_parallel_into`,
+  `encode_batch_family_into`, `encode_family_available` and
+  `selected_encode_family`; the last four move to `LayoutView` or take the
+  declared layout. `LayoutView::new` takes the code by value, so a caller
+  holding a `BchCode` in one layout and batching in another clones it once.
+- @/issue/6379e04e adds `clmul_fold_accumulators` and a selector override; its
+  public additions are unaffected. Its test changes in
+  `crates/gf2-coding/tests/bch_encode_dispatch.rs` and
+  `crates/gf2-coding/tests/support/fresh_tuning_process.rs` call the
+  layout-taking methods and change with them. @/issue/7fbd1042 adds no public
+  item yet; its lockstep tests change the same way.
+- Callers in the library tree: `crates/gf2-coding/src/test_support.rs`, the
+  benches `crates/gf2-coding/benches/batch_operations.rs` and
+  `crates/gf2-coding/benches/bch_encode_w1.rs`, the example
+  `crates/gf2-coding/examples/bch_binary_quickstart.rs`, and the tests
+  `crates/gf2-coding/tests/backend_integration.rs`,
+  `crates/gf2-coding/tests/bch_encode_dispatch.rs`,
+  `crates/gf2-coding/tests/bch_encode_dispatch_allocation.rs` and
+  `crates/gf2-coding/tests/support/fresh_tuning_process.rs`. Each call either
+  drops a default layout argument or wraps the code in a `LayoutView`.
+- Experiments: `experiments/encode-compare/src/cutover/current.rs` batches in a
+  non-default layout and moves to a `LayoutView` built outside the timed call.
+  `experiments/encode-compare/cutover/pre.rs` builds the pre-cutover revision
+  and is unaffected.
+- Documentation: `docs/how-to/select-acceleration.md` names
+  `BchCode::encode_batch_family_into`, and
+  `docs/reference/performance-evidence.md` names `BchCode::encode_batch` as the
+  timed gf2 path.
+- `LdpcCode::encode_batch` (`crates/gf2-coding/src/ldpc/core.rs`) and the
+  Richardson-Urbanke `encode_batch`
+  (`crates/gf2-coding/src/ldpc/encoding/richardson_urbanke.rs`) are a third
+  batch form: owned output without a workspace or `Result`, the latter taking a
+  compute backend. Neither form implements the capability here; under a strict
+  reading of @/inv/convention-convergence they become implementors or carry a
+  tracked convergence condition.
+
+Landing the single form before @/issue/6379e04e and @/issue/7fbd1042 rewrites
+their tests once; landing it after rewrites the merged tests and the cutover
+harness again.
