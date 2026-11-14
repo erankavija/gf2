@@ -33,6 +33,11 @@ stable identifier the manifest cites.
 | F-22 | The pre-commit hook and `scripts/cargo-ci.sh` run the budget and reference checkers | valid-and-open | [pre-commit](../../../.githooks/pre-commit); [cargo-ci.sh](../../../scripts/cargo-ci.sh) lines 279 to 283 |
 | F-23 | jit passes its own environment to a gate checker and removes only an unset `JIT_CONTEXT_FILE`, so `JIT_DATA_DIR` and `JIT_WORKTREE_ROOT` reach the checker | valid-and-open, read from source only | jit gate execution module, where the checker command is built |
 | F-24 | A run that reused a verdict launched no checker: its `commit` is unset and its `origin` names the run that executed the checker | valid-and-open | jit storage record reference, gate run fields `commit` and `origin` |
+| F-25 | The vendored standards scanner and fixer take the project root as argument, exit 2 unless `.jit` exists under it, read `.jit/config.toml` and the document directories from it and run jit there; neither reads `JIT_DATA_DIR` | valid-and-open | [standards-scan.sh](../../../.agents/skills/jit-project-lead/scripts/standards-scan.sh) lines 48 to 63, 86 and 116; [standards-fix.sh](../../../.agents/skills/jit-project-lead/scripts/standards-fix.sh) lines 56 to 90 |
+| F-26 | The rewrite's path filter considers only paths under the bench results directory and `dev/active/`, and keeps every other path; its pin mapper rewrites `.jit/issues/*.json` of the checkout it runs in; the runbook validates and reseats without a separate tracker | valid-and-open | [rewrite_paths.py](../b8206228-permanent-statistics/45ecf975/rewrite_paths.py) line 4; [map_pins.py](../b8206228-permanent-statistics/45ecf975/map_pins.py) line 14; [history-rewrite-runbook.md](../b8206228-permanent-statistics/45ecf975/history-rewrite-runbook.md) steps 5 to 10 |
+| F-27 | jit resolves an unpinned document link in the code checkout's working tree and a pinned one at its commit in the code checkout's git objects, which linked worktrees share; the reference checker resolves both against the current checkout's files | valid-and-open, read from source only | jit document reference module, `DocumentReferenceRequests::for_reference`; jit storage format reference, section "Data and Worktree Roots"; [check-references.py](../../../scripts/check-references.py) lines 384 to 387 |
+| F-28 | A gate pass that clears an issue's last unpassed gate moves it to done and promotes its dependents | valid-and-open | `jit gate evaluate --help` |
+| F-29 | A gate definition declares its inputs as roots and exclusions, reported by jit's machine-readable gate output | valid-and-open | `jit gate show cargo-ci --json`, field `inputs` |
 
 ## Not verified
 
@@ -44,6 +49,10 @@ stable identifier the manifest cites.
   rehearsal's time bound on a store shared by all worktrees.
 - How `[worktree] root` resolves for a store that is its own git repository
   nested in the checkout; the rehearsal checks it.
+- F-27 for a nested independent store: that a pinned link resolves from the
+  code repository's objects rests on the jit source and its test of pinned
+  reads in the selected code subdirectory; the rehearsal checks it from a
+  second checkout.
 - The contents of the interim budget exclusion that lead gf2-e9 implements;
   it was not on `main` at the commit read.
 
