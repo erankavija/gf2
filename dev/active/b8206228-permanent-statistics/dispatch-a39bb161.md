@@ -129,7 +129,7 @@ do not acquire the flock inside the Rust binary.
    configuration (D1); give the campaign binary a flag for the cap with a
    documented default, and a way to supply the measured per-matrix cost.
    Document in the binary's usage text that the cost is derived from the cell's
-   committed measurement receipt.
+   measurement receipt (written outside the tracked tree; the issue records its location and digest).
 
 5. **REQ-04.** Before dispatching any launch for an accelerator cell, probe. If
    no device: return the new error naming the cell `(q, n)` and the missing

@@ -1316,7 +1316,7 @@
  {
   "key": "hip-equivalence",
   "title": "Migrate HIP syndrome/decode support behaviorally intact",
-  "description": "Migrate the HIP GPU syndrome path and batch decode integration to the canonical construction model and typed decoder outcomes, preserving behavioral equivalence with the CPU path, with a committed HIP-host receipt.\n\n## Background\n\nThe HIP path computes syndromes on device with BM/Chien/correction on CPU; existing byte-identity simulation tests pin CPU-versus-GPU agreement for the current status-less behavior and are the equivalence baseline for the migration. Self-gated tests that never ran cannot establish the equivalence criterion, so a committed receipt from a HIP-capable host is required.\n\n## Success Criteria\n\n- [hard] REQ-01: GPU-assisted decoding consumes the canonical model, returns the same typed outcomes as the CPU decoder, and the existing byte-identity suites pass updated to the new result type.\n- [hard] REQ-02: A committed receipt records the CPU-versus-GPU outcome-identity suite passing on a named HIP-capable host at a pinned revision.\n",
+  "description": "Migrate the HIP GPU syndrome path and batch decode integration to the canonical construction model and typed decoder outcomes, preserving behavioral equivalence with the CPU path, with a HIP-host receipt written outside the tracked tree and recorded in the issue by location and digest.\n\n## Background\n\nThe HIP path computes syndromes on device with BM/Chien/correction on CPU; existing byte-identity simulation tests pin CPU-versus-GPU agreement for the current status-less behavior and are the equivalence baseline for the migration. Self-gated tests that never ran cannot establish the equivalence criterion, so a receipt from a HIP-capable host is required, written outside the tracked tree and recorded in the issue by location and digest.\n\n## Success Criteria\n\n- [hard] REQ-01: GPU-assisted decoding consumes the canonical model, returns the same typed outcomes as the CPU decoder, and the existing byte-identity suites pass updated to the new result type.\n- [hard] REQ-02: A receipt, written outside the tracked tree and recorded in the issue by location and digest, records the CPU-versus-GPU outcome-identity suite passing on a named HIP-capable host at a pinned revision.\n",
   "type": "task",
   "priority": "high",
   "labels": [
@@ -1666,11 +1666,11 @@
     "worker_sized_reason": "One simulation-crate migration from a cited inventory",
     "footprint": {
      "touches": [
-      "ebch_osd_awgn_campaign.rs",
+      "experiments/osd-ebch/src/bin/ebch_osd_awgn_campaign.rs",
       "the GPU BCH syndrome throughput binary",
-      "ebch_osd_campaign_cli.rs",
+      "experiments/osd-ebch/tests/ebch_osd_campaign_cli.rs",
       "crates/gf2-sim/tests/gpu_byte_identity.rs",
-      "osd_campaign_protocol.rs"
+      "experiments/osd-ebch/tests/osd_campaign_protocol.rs"
      ]
     }
    },
@@ -2150,7 +2150,7 @@
  {
   "key": "baseline-survey",
   "title": "Reproducible external-baseline survey and workload selection",
-  "description": "Survey external implementations of large-batch BCH encoding and generator-matrix materialization, select the strongest available baselines reproducibly, and fix the exact workload-selection contract the encoding and benchmark tasks consume.\n\n## Background\n\nThe SOTA target-matrix conventions supply the pinning and receipt format; its coverage is linear-algebra-centric and records GF(2^m) gaps, so BCH-encoder baselines must be established. The survey fixes, before any optimization work: the exact benchmark codes, batch sizes, matrix dimensions, cache state, worker counts, the encoding algorithm families to register, and the baseline library versions and build flags — completing the plan's evidence-protocol skeleton into the concrete workload-selection contract.\n\n## Success Criteria\n\n- [hard] REQ-01: A survey document pins candidate libraries with versions and build configuration, measures the two workloads under a stated protocol, and selects the strongest baseline per workload with committed receipts.\n- [hard] REQ-02: The workload-selection contract is fixed: exact codes, batch sizes, matrix dimensions, cache state, worker counts, and algorithm families, predeclared before optimization tasks consume them.\n",
+  "description": "Survey external implementations of large-batch BCH encoding and generator-matrix materialization, select the strongest available baselines reproducibly, and fix the exact workload-selection contract the encoding and benchmark tasks consume.\n\n## Background\n\nThe SOTA target-matrix conventions supply the pinning and receipt format; its coverage is linear-algebra-centric and records GF(2^m) gaps, so BCH-encoder baselines must be established. The survey fixes, before any optimization work: the exact benchmark codes, batch sizes, matrix dimensions, cache state, worker counts, the encoding algorithm families to register, and the baseline library versions and build flags — completing the plan's evidence-protocol skeleton into the concrete workload-selection contract.\n\n## Success Criteria\n\n- [hard] REQ-01: A survey document pins candidate libraries with versions and build configuration, measures the two workloads under a stated protocol, and selects the strongest baseline per workload with receipts written outside the tracked tree and recorded in the issue by location and digest.\n- [hard] REQ-02: The workload-selection contract is fixed: exact codes, batch sizes, matrix dimensions, cache state, worker counts, and algorithm families, predeclared before optimization tasks consume them.\n",
   "type": "task",
   "priority": "high",
   "labels": [
@@ -2237,8 +2237,8 @@
  },
  {
   "key": "perf-receipts",
-  "title": "Committed performance receipts: non-regression, determinism, SOTA comparison",
-  "description": "Produce the committed benchmark receipts on suitable uncontended hosts: no statistically measurable throughput regression against the pinned pre-cutover baseline, deterministic results across supported worker counts, tested scalar fallback for AVX2 dispatch, and the comparison rows against the survey's selected external baselines.\n\n## Background\n\nThe regression comparison uses the pre-cutover baseline receipt pinned by its dedicated issue, under the evidence protocol's statistical rule. The comparison against the strongest external baseline is the epic's aspirational target; the receipts report it either way.\n\n## Success Criteria\n\n- [hard] REQ-01: Committed receipts demonstrate non-regression versus the pinned pre-cutover baseline under the protocol's one-sided bound, determinism across worker counts, and scalar-fallback coverage, with host, seed, revision, and toolchain recorded.\n- [hard] REQ-02: Receipts include the external-baseline comparison rows for both workloads with the survey's protocol, reporting the aspirational outcome explicitly.\n",
+  "title": "Performance receipts: non-regression, determinism, SOTA comparison",
+  "description": "Produce the benchmark receipts on suitable uncontended hosts, written outside the tracked tree and recorded in the issue by location and digest: no statistically measurable throughput regression against the pinned pre-cutover baseline, deterministic results across supported worker counts, tested scalar fallback for AVX2 dispatch, and the comparison rows against the survey's selected external baselines.\n\n## Background\n\nThe regression comparison uses the pre-cutover baseline receipt pinned by its dedicated issue, under the evidence protocol's statistical rule. The comparison against the strongest external baseline is the epic's aspirational target; the receipts report it either way.\n\n## Success Criteria\n\n- [hard] REQ-01: Receipts, written outside the tracked tree and recorded in the issue by location and digest, demonstrate non-regression versus the pinned pre-cutover baseline under the protocol's one-sided bound, determinism across worker counts, and scalar-fallback coverage, with host, seed, revision, and toolchain recorded.\n- [hard] REQ-02: Receipts include the external-baseline comparison rows for both workloads with the survey's protocol, reporting the aspirational outcome explicitly.\n",
   "type": "task",
   "priority": "high",
   "labels": [
@@ -2256,7 +2256,7 @@
    "conformance-suites"
   ],
   "planning": {
-   "outcome": "Committed receipts show non-regression, determinism, fallback coverage, and the SOTA comparison",
+   "outcome": "Receipts, written outside the tracked tree and recorded in the issue by location and digest, show non-regression, determinism, fallback coverage, and the SOTA comparison",
    "contract_refs": [
     "evidence-protocol",
     "workload-selection"

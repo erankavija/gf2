@@ -1,7 +1,7 @@
 {
  "epic_id": "b4b4b9ee-7a92-4c6f-84fd-b7caf3a46a8e",
  "epic_short_id": "b4b4b9ee",
- "current_wave": 4,
+ "current_wave": 5,
  "waves": [
   {
    "wave_number": 1,
@@ -284,7 +284,7 @@
      "title": "Field charpoly and minpoly contract gaps reported by the comment sweep",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "in_progress: gates due"
     },
     {
      "id": "174295c9-674a-426a-90ce-96f34eee2bf1",
@@ -580,7 +580,7 @@
      "title": "Reconcile the --all-features commands of AGENTS.md with hipcc",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "in_progress: gates due; 2e6e3557 waits on it"
     },
     {
      "id": "954537d9-7009-4b15-9aec-0016d580ff6f",
@@ -780,7 +780,7 @@
      "title": "Strengthen vacuous and weak tests reported by the comment sweep",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "in_progress: rework 1 done; gates due"
     },
     {
      "id": "54a483a3-220e-42e7-b2af-440eaed04a8a",
@@ -916,7 +916,7 @@
      "title": "gf2-coding constructor-bound and simulation-runner defects reported by the comment sweep",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "in_progress: rework 1 done; gates due"
     },
     {
      "id": "ee3bf65e-c23e-4fab-ba12-651058d94e8e",
@@ -932,7 +932,7 @@
      "title": "gf2-core loader, seed-stream and field-kernel defects reported by the comment sweep",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "in_progress: rework 1 done; gates due"
     },
     {
      "id": "b2520e0f-76b1-4cfa-b9ce-0859c0823eb7",
@@ -1412,31 +1412,68 @@
     },
     {
      "short_id": "1b7228b9",
-     "status": "in_progress: owner decision recorded; lands after f21b25ac"
+     "status": "in_progress: reviews passed after rework 1; merged-tree cargo-ci and HIP-crate nextest due before landing"
     },
     {
      "short_id": "22bb2dcd",
-     "status": "in_progress: code-review failed round 1, rework due"
+     "status": "in_progress: rework 1 done; gates due"
     },
     {
      "short_id": "697b9178",
-     "status": "in_progress: code-review failed round 1, rework due"
+     "status": "in_progress: rework 1 done; gates due"
     },
     {
      "short_id": "d73ac633",
-     "status": "in_progress: code-review failed round 1, rework due"
+     "status": "in_progress: rework 1 done; gates due"
     },
     {
      "short_id": "f21b25ac",
-     "status": "in_progress: REQ-04/REQ-05 open by steward ruling"
+     "status": "done: merged ace3b37b9, closed 8a3daec11; REQ-04 amended by owner 2026-11-13, filing tracked in 41517289"
     },
     {
      "short_id": "5a3abee1",
-     "status": "in_progress: committed, gates due"
+     "status": "in_progress: gates due"
     },
     {
      "short_id": "51f299d2",
-     "status": "in_progress: checks finishing, gates due"
+     "status": "in_progress: gates due; 2e6e3557 waits on it"
+    }
+   ]
+  },
+  {
+   "wave_number": 5,
+   "issues": [
+    {
+     "id": "0afbd34a-17c3-4f9a-9871-27a6aa7a3f96",
+     "short_id": "0afbd34a",
+     "title": "Window follower defaults to a host-specific systemd unit",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "done: merged b697da248 (claude sonnet worker; doc-review needed 2 reworks)"
+    },
+    {
+     "id": "9c0568ee-32cc-4755-9aa1-dfee8e40018e",
+     "short_id": "9c0568ee",
+     "title": "Rename standard_u128_irreducibility_note to a primitivity name",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "in_progress: rename committed 7b2166aae; gates due"
+    },
+    {
+     "id": "903dc74c-56d4-4853-ae9a-cdcceb7b03fc",
+     "short_id": "903dc74c",
+     "title": "Run the bitvec Kani harnesses against the MSRV toolchain",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "in_progress: kani 0.68.0 installed; gate result pending"
+    },
+    {
+     "id": "2e6e3557-a14f-49a4-9432-93006413c086",
+     "short_id": "2e6e3557",
+     "title": "GitHub CI workflow selects a different feature set from cargo-ci.sh",
+     "classification": "implementation",
+     "priority": "normal",
+     "status": "pending: owner approved option A 2026-11-13 (cargo-features.sh in workflow; tuning-profile kept in clippy); starts after 51f299d2 lands"
     }
    ]
   }
@@ -1492,7 +1529,11 @@
   "f2c15867",
   "1b7228b9",
   "903dc74c",
-  "2e6e3557"
+  "2e6e3557",
+  "9c0568ee",
+  "41517289",
+  "c34e8203",
+  "5c1c87b7"
  ],
  "escalations": [
   {
@@ -1538,9 +1579,12 @@
   "dfb8820b": 0,
   "32a8bc0e": 1,
   "e29fd776": 1,
-  "22bb2dcd": 0,
-  "697b9178": 0,
-  "d73ac633": 0
+  "22bb2dcd": 1,
+  "697b9178": 1,
+  "d73ac633": 1,
+  "0afbd34a": 2,
+  "f21b25ac": 0,
+  "1b7228b9": 1
  },
  "surfaced_pitfalls": [
   {

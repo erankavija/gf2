@@ -100,7 +100,7 @@ layer of safe wrappers: `HipStreamPool`, `DeviceBuffer`, `PinnedHostBuffer`,
 `LaunchDims` and `GfxTarget`. `LaunchDims` derives grid and block dimensions
 from the problem size alone, so launch geometry is independent of device
 occupancy. `GfxTarget::detect`
-matches the device's `gcnArchName` against the code objects `build.rs`
+matches the device's `gcnArchName` against the code objects `../../crates/gf2-kernels-hip/build.rs`
 compiled.
 
 A GPU path runs only when the caller or the pipeline configuration selects it.

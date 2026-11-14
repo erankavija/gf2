@@ -12,7 +12,7 @@ are in the issue description; the controlling contract is
 `protocol.md` — read it IN FULL,
 especially "Frozen cell universe and sample sizes" (63 cells, two N tiers),
 "Global error budget" (1/2520 per-cell levels), "Backend freeze" (per-cell
-`backend_receipt` = ArtifactIdentity of a committed selection receipt binding
+`backend_receipt` = ArtifactIdentity of a selection receipt (written outside the tracked tree; the issue records its location and digest) binding
 hashed raw timing receipts, cohort comparability rules, and the three-step
 selection order), "Reproducibility identity", and "Shard validity".
 
@@ -30,7 +30,7 @@ inventing a new one.
 final freeze)
 
 1. **Receipt inventory against the protocol's cohort rules.** Enumerate every
-   committed measurement receipt relevant to backend selection:
+   recorded measurement receipt relevant to backend selection:
    `backend-ordering{md,csv}` (296a41c9;
    four configurations, twelve processes each),
    `envelope-2026-08-07.csv` and the other b488f02c
@@ -46,7 +46,7 @@ final freeze)
    what the protocol's cohort discipline does NOT allow you to compare.
 2. **Gap list.** Cells (if any) where no backend can be selected from
    committed evidence — i.e. where the protocol's "cannot freeze until a
-   same-cohort remeasurement is committed" clause bites. For each, state the
+   same-cohort remeasurement is recorded" clause bites; a remeasurement is written outside the tracked tree and the issue records its location and digest. For each, state the
    minimal premeasurement that would close it (configurations, process
    counts, stopping rule) in the 296a41c9 pattern. Do NOT run any
    measurement: bench execution is lead-scheduled after 02:00 local.
@@ -68,8 +68,9 @@ final freeze)
    or the campaign home as the issue's linked artifact: the selection
    receipt(s) drafted per the protocol's required per-candidate provenance
    fields, the exclusion records, the inventory, and the gap list. Cite every
-   number to its committed source (path + section); external claims cite
-   registry keys.
+   number to its recorded source (path + section); external claims cite
+   registry keys. Selection receipts are written outside the tracked tree and
+   the issue records their location and digest.
 
 Write everything in present tense; a draft is labelled a draft. Report: the
 inventory summary (how many of 63 cells are dischargeable now, per field),

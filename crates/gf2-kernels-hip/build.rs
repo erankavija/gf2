@@ -36,6 +36,7 @@ fn main() {
     }
 
     build
+        .flag(format!("--rocm-path={rocm_path}"))
         .flag("--offload-arch=gfx1030")
         .flag("-fPIC")
         .flag("-O3")
@@ -46,7 +47,7 @@ fn main() {
     // reported through `cargo:warning` and that arch is skipped.
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let kernels_root = manifest_dir.join("kernels");
-    let compiled = compile_arch_blobs(&hipcc, &kernels_root);
+    let compiled = compile_arch_blobs(&hipcc, &rocm_path, &kernels_root);
 
     // `GfxTarget::has_compiled_blob` reads this manifest instead of scanning
     // the gitignored `kernels/` output directory, where residue of another
@@ -86,7 +87,7 @@ fn main() {
 
 /// Returns the targets for which every source compiled in this build, in
 /// `as_str()` form. A gfx1030 failure panics.
-fn compile_arch_blobs(hipcc: &str, kernels_root: &Path) -> Vec<String> {
+fn compile_arch_blobs(hipcc: &str, rocm_path: &str, kernels_root: &Path) -> Vec<String> {
     let mut compiled: Vec<String> = Vec::new();
     for (idx, target) in GFX_TARGETS.iter().enumerate() {
         let mandatory = idx == 0; // gfx1030 is the first entry
@@ -115,6 +116,7 @@ fn compile_arch_blobs(hipcc: &str, kernels_root: &Path) -> Vec<String> {
             println!("cargo:rerun-if-changed={}", src.display());
 
             let status = Command::new(hipcc)
+                .arg(format!("--rocm-path={rocm_path}"))
                 .arg(format!("--offload-arch={target}"))
                 .arg("--genco") // emit a code-object (.co) blob
                 .arg("-O3")

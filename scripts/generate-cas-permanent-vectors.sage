@@ -46,9 +46,7 @@ per_cell = 100
 
 # Output path: always relative to the current working directory (the repo root).
 # The script must be run from the repo root (the default for the Sage invocation).
-out_path = os.path.join(
-    "crates", "gf2-algebra", "tests", "data", "cas_permanent_f5_f7.csv"
-)
+out_path = "crates/gf2-algebra/tests/data/cas_permanent_f5_f7.csv"
 
 os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
