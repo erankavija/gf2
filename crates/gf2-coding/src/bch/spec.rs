@@ -332,6 +332,9 @@ where
     /// coefficient is nonzero, packed little-endian; the packed encoder's
     /// register words, derived once rather than per encode.
     packed_low: Box<[u64]>,
+    /// The [`encode_stamp`](crate::bch::encode::encode_stamp) every encode
+    /// workspace of this code carries.
+    encode_stamp: u64,
     defining_set: Box<[RootExponent]>,
     distance_bound: BchDistanceBound,
     correction_radius: usize,
@@ -641,6 +644,11 @@ where
     /// The generator's low coefficients packed one bit per degree.
     pub(crate) fn packed_low(&self) -> &[u64] {
         &self.packed_low
+    }
+
+    /// The fingerprint an encode workspace of this code carries.
+    pub(crate) fn encode_stamp(&self) -> u64 {
+        self.encode_stamp
     }
 
     /// Returns the closed defining set in ascending exponent order.
@@ -1173,6 +1181,8 @@ where
     let correction_radius = distance_bound.consecutive_root_count / 2;
 
     let packed_low = crate::bch::encode::packed_low_words(&generator, degree);
+    let encode_stamp =
+        crate::bch::encode::encode_stamp(length, dimension, &derived.extension, &defining_set);
     Ok(BchCode {
         extension: derived.extension,
         root: derived.root,
@@ -1180,6 +1190,7 @@ where
         dimension,
         generator,
         packed_low,
+        encode_stamp,
         defining_set,
         distance_bound,
         correction_radius,

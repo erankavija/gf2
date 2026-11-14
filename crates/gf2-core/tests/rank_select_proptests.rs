@@ -174,6 +174,7 @@ enum Mutation {
     BitSliceMutFill(usize, usize),
     BitReverse,
     Polar,
+    WriteBits(usize, Vec<bool>),
 }
 
 fn mutation_strategy() -> impl Strategy<Value = Mutation> {
@@ -193,6 +194,8 @@ fn mutation_strategy() -> impl Strategy<Value = Mutation> {
         (0usize..200, 0usize..200).prop_map(|(a, b)| Mutation::BitSliceMutFill(a, b)),
         Just(Mutation::BitReverse),
         Just(Mutation::Polar),
+        (0usize..200, prop::collection::vec(any::<bool>(), 0..130))
+            .prop_map(|(offset, bits)| Mutation::WriteBits(offset, bits)),
     ]
 }
 
@@ -301,6 +304,12 @@ fn apply(bv: &mut BitVec, reference: &mut Vec<bool>, m: &Mutation) {
                 }
             }
         }
+        Mutation::WriteBits(offset, bits) => {
+            let offset = offset % (n + 1);
+            let len = bits.len().min(n - offset);
+            bv.write_bits(offset, to_bitvec(&bits[..len]).words(), len);
+            reference[offset..offset + len].copy_from_slice(&bits[..len]);
+        }
     }
 }
 
@@ -337,6 +346,25 @@ proptest! {
         for m in &mutations {
             apply(&mut bv, &mut reference, m);
             check_queries(&bv, &reference)?;
+        }
+    }
+}
+
+#[test]
+fn rank_after_write_bits_sees_the_written_bits_at_the_word_boundaries() {
+    let boundaries = [0usize, 1, 63, 64, 65];
+    for &len in &boundaries {
+        for &offset in boundaries.iter().filter(|&&offset| offset <= len) {
+            let mut reference = vec![false; len];
+            let mut bv = BitVec::zeros(len);
+            // The query builds the index the write must then discard.
+            check_queries(&bv, &reference).expect("queries before the write");
+            let run = len - offset;
+            let source = BitVec::ones(run);
+            bv.write_bits(offset, source.words(), run);
+            reference[offset..].fill(true);
+            check_queries(&bv, &reference)
+                .unwrap_or_else(|error| panic!("length {len}, offset {offset}: {error}"));
         }
     }
 }
