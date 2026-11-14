@@ -2,8 +2,9 @@
 # RUSTC_WRAPPER for cargo-ci.sh: the sccache daemon a compile may spawn outlives
 # the run, so it must not inherit the run's private TMPDIR, which the run deletes.
 #
-# The daemon starts each rustc without cargo's CARGO_MAKEFLAGS and with a
-# jobserver of its own, so rustc's codegen threads would escape cargo's pool.
+# sccache starts each rustc, in its daemon or (for a non-cacheable compile) in
+# the client, without cargo's CARGO_MAKEFLAGS and with a jobserver of its own,
+# so rustc's codegen threads would escape cargo's pool.
 # When that pool is a named fifo, sccache is handed a generated `rustc` script
 # that restores the pool's auth from GF2_CI_JOBSERVER (a variable sccache neither
 # strips nor hashes) and execs the real rustc. The script's path is keyed by the
