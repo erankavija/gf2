@@ -510,7 +510,7 @@ fn execute_fold_overrides_child() -> serde_json::Value {
     let mut selectors = selectors_admitting_the_clmul_family();
     selectors.encode = selectors
         .encode
-        .with_clmul_fold_accumulators(NonZeroUsize::new(FOLD_ACCUMULATORS).unwrap())
+        .with_clmul_fold_accumulators(FOLD_ACCUMULATORS)
         .with_clmul_fold_run_blocks(NonZeroUsize::new(FOLD_RUN_BLOCKS).unwrap());
     gf2_core::tuning::install(compiled_envelope(selectors)).unwrap();
 
@@ -541,8 +541,7 @@ fn execute_fold_overrides_child() -> serde_json::Value {
         "family": selected.name(),
         "agrees_with_reference": agrees && codewords == reference,
         "built": [built.0, built.1],
-        "structural_accumulators": clmul_fold_accumulators(code.n() - code.k())
-            .map_or(0, NonZeroUsize::get),
+        "structural_accumulators": clmul_fold_accumulators(code.n() - code.k(), code.k()),
         "structural_run_blocks": clmul_fold_run_blocks(code.k()).get(),
         "overridden": [encoded.0, encoded.1],
         "resolution": "installed",

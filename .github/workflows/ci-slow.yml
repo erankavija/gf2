@@ -53,7 +53,7 @@ jobs:
       # A name-based filter here would rot as tests are added; the gates live
       # with the tests. See crates/gf2-coding/tests/common/mod.rs.
       run: >
-        cargo nextest run --workspace --features simd,parallel,visualization,io,rand
+        cargo nextest run --workspace $(./scripts/cargo-features.sh)
         --release --profile slow --run-ignored ignored-only
 
   kani-heavy:

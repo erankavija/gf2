@@ -75,7 +75,7 @@ The benchmark window is armed for 2026-11-15 02:00 local; the host is idle by th
 - The versioned commit-msg hook is active in a worktree that contains it: it rejected a 72-character subject in `agent-c34e8203`.
 - `/usr/bin/time` does not exist on this host; time with `date +%s`.
 - A fresh worktree without seeded caches runs cargo-ci past the 900 s timeout; `git worktree add` instead of the dispatch script skips cache seeding.
-- `.agents/skills/jit-execution-lead/scripts/land.sh` commits every pending tracker file on main under a nonconforming subject; merge by hand. Before a merge, save the other sessions' uncommitted lines of `.jit/events.jsonl`, check the file out, merge, and append them back. Stage only your own issue files and event lines.
+- The installed jit-execution-lead landing script commits every pending tracker file on main under a nonconforming subject; merge by hand. Before a merge, save the other sessions' uncommitted lines of `.jit/events.jsonl`, check the file out, merge, and append them back. Stage only your own issue files and event lines.
 - Two tracker commits made in sequence duplicated one event line (`a1f08b3d`); `jit validate` reports it. Build the staged `events.jsonl` from HEAD plus lines absent from HEAD.
 - Kani harnesses that allocate need `#[kani::unwind]`; without it `mask_tail_zeros_padding` unwound `Vec::extend_with` past 6000 iterations in 27 minutes.
 - The HIP crate's standalone nextest config applies a 15 s kill; run it with `--release`, or the debug CPU BCJR reference in its benchmark-shaped tests times out (`3ea744cf`).

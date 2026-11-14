@@ -39,8 +39,7 @@ where the title is fully self-explanatory.]
 - `## Success Criteria` is **mandatory** on every issue. Items must be verifiable — prefer
   outcomes ("function returns X for input Y") over actions ("implement X").
 - **Criticality markers.** Where the project distinguishes criterion maturity (the
-  planning-bracket / coverage model — see
-  `.agents/skills/jit-manage/references/issue-extraction-prompt.md`), prefix **every**
+  planning-bracket / coverage model), prefix **every**
   criterion with `[hard]` or `[aspirational]` and a stable zero-padded `REQ-NN` id.
   A marked criterion is a plain bullet whose text opens with the marker — that exact
   shape is what registers the row as an addressable requirement item. A leading
