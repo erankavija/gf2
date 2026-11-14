@@ -6,6 +6,13 @@
 #
 # Usage, output expanded unquoted:
 #   cargo build --workspace $(./scripts/cargo-features.sh [FEATURES])
+#   cargo doc --workspace $(./scripts/cargo-features.sh doc)
+# Doc mode fixes one feature set for both CI entry points.
+if [ "${1:-}" = doc ]; then
+  echo "--features simd,parallel,visualization,io,rand"
+  exit 0
+fi
+
 if command -v hipcc >/dev/null 2>&1 || [ -x /opt/rocm/bin/hipcc ]; then
   echo "--all-features"
 else
