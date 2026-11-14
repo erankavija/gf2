@@ -65,19 +65,6 @@ path = "crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md"
 reason = "cites files of the upstream Sionna repository"
 
 [[exception]]
-path = [
-  ".agents/skills/jit-execution-lead/references/architect-agent-prompt.md",
-  ".agents/skills/jit-execution-lead/references/explorer-agent-prompt.md",
-  ".agents/skills/jit-manage/SKILL.md",
-  ".agents/skills/jit-migrate/SKILL.md",
-  ".agents/skills/jit-parallel/SKILL.md",
-  ".agents/skills/jit-parallel/references/worktree-mode.md",
-  ".agents/skills/jit-planning-lead/references/researcher-prompt.md",
-  ".agents/skills/jit-project-lead/references/standards-*.md",
-]
-reason = "skill text gives illustrative paths: documents a worker writes, files of other projects, and jit's control plane under .git"
-
-[[exception]]
 path = "scripts/tracked-budget.toml"
 reason = "names the locations it forbids"
 
