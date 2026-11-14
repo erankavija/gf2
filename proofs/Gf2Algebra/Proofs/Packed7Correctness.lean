@@ -1,5 +1,6 @@
 /- Correctness of the extracted Packed7 element arithmetic with axiomatized lookup tables (@/issue/30e98ef1). -/
 import Aeneas
+import Gf2Core.Proofs.ResultSpec
 import Mathlib.Data.ZMod.Basic
 import Mathlib.Data.Nat.Bitwise
 import Mathlib.Tactic.IntervalCases
@@ -181,7 +182,7 @@ axiom mul_lut_spec :
 `bi` reads byte `bi` of `a`/`b`, indexes `lut` at the 16-bit key, and
 ORs the LUT result byte into output bit position `8*bi`. We
 characterise the loop result byte-by-byte via the in-repo
-`apply spec_imp_exists; apply loop.spec` idiom
+`apply result_spec_exists; apply loop.spec` idiom
 (`MontgomeryRoundtrip.lean` precedent referenced by D6 §4.1). -/
 
 /-- The LUT key for byte index `bi` as the `Nat`
@@ -301,7 +302,7 @@ theorem byteN_lutSum (a b : Nat) (L : Array Std.U8 65536#usize)
 /-- §3.3 L9-core. The Aeneas-extracted `binary_op_word a b L`
 (`@[reducible]` over `binary_op_word_loop a b L 0 0`) terminates with a
 word whose byte `bi` (`bi < 8`) equals `(L.val[keyByte a b bi]!).val`.
-Proved by `apply spec_imp_exists; apply loop.spec`
+Proved by `apply result_spec_exists; apply loop.spec`
 (`MontgomeryRoundtrip.lean` precedent) with measure `8 - i` and
 the closed-form `lutSum` invariant; the body is one `Array.index_usize`
 (closed by `keyByte_lt`) plus concrete `i32`/`u64` shift/mask. -/
@@ -311,7 +312,7 @@ theorem binary_op_word_spec
       ∀ bi : Nat, bi < 8 →
         byteN r.val bi = (L.val[keyByte a.val b.val bi]!).val := by
   unfold packed.packed7.binary_op_word packed.packed7.binary_op_word_loop
-  apply spec_imp_exists
+  apply result_spec_exists
   apply loop.spec
     (measure := fun ((_, i) : Std.U64 × Std.I32) => (8 - i.val).toNat)
     (inv := fun ((r, i) : Std.U64 × Std.I32) =>
@@ -324,9 +325,9 @@ theorem binary_op_word_spec
     · -- Collapse the pure `lift` binds (the `&&&`/`|||`/`cast` ops are not
       -- `Result`-fallible; only `*`, `>>>`, `<<<`, `index_usize`, `+` are
       -- genuine `Result` ops needing `step`). Mirrors the
-      -- `simp only [..., Std.lift, bind_tc_ok]` precedent in
+      -- `simp only [..., Std.lift, bind_ok]` precedent in
       -- `MontgomeryRoundtrip.lean`.
-      simp only [hlt, ite_true, Std.lift, bind_tc_ok]
+      simp only [hlt, ite_true, Std.lift, bind_ok]
       have hival : i.val < 8 := by scalar_tac
       have hivalN : i.val.toNat < 8 := by omega
       -- i1 = 8 * i, with 0 ≤ i1 < 64.
@@ -443,7 +444,7 @@ theorem binary_op_word_spec
       · -- measure decreases: (8 - i10) < (8 - i), with i10 = i + 1, i < 8
         show (8 - i10.val).toNat < (8 - i.val).toNat
         omega
-    · simp only [hlt, ite_false, spec, theta, wp_return]
+    · simp only [hlt, ite_false, spec_ok]
       have hieq : i.val = 8 := by scalar_tac
       have hieqN : i.val.toNat = 8 := by omega
       intro bi hbi
@@ -591,11 +592,11 @@ theorem packed7_add_correct (a b : Std.U64) (i : Fin 16)
     packed.packed7.Packed7.Insts.Gf2_algebraPackedPackedFieldFp7U64U128.add
   obtain ⟨L, hL, hcL⟩ := add_lut_spec
   rw [hL]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   obtain ⟨r, hr, hdec⟩ := lane_correct_of_lut a b L i (· + ·)
     (fun a0 a1 b0 b1 h0 h1 h2 h3 => hcL a0 a1 b0 b1 h0 h1 h2 h3) ha hb
   refine ⟨⟨r⟩, ?_, ?_⟩
-  · simp only [hr, bind_tc_ok]
+  · simp only [hr, bind_ok]
   · simpa using hdec.trans (dec7_add_contract _ _ (ha i) (hb i))
 
 /-- §3.4 L11 sub-correct: analogous, canonical `ZMod 7` subtraction. -/
@@ -608,11 +609,11 @@ theorem packed7_sub_correct (a b : Std.U64) (i : Fin 16)
     packed.packed7.Packed7.Insts.Gf2_algebraPackedPackedFieldFp7U64U128.sub
   obtain ⟨L, hL, hcL⟩ := sub_lut_spec
   rw [hL]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   obtain ⟨r, hr, hdec⟩ := lane_correct_of_lut a b L i (fun x y => x + 7 - y)
     (fun a0 a1 b0 b1 h0 h1 h2 h3 => hcL a0 a1 b0 b1 h0 h1 h2 h3) ha hb
   refine ⟨⟨r⟩, ?_, ?_⟩
-  · simp only [hr, bind_tc_ok]
+  · simp only [hr, bind_ok]
   · simpa using hdec.trans (dec7_sub_contract _ _ (ha i) (hb i))
 
 /-- §3.4 L12 mul-correct: analogous, canonical `ZMod 7` multiplication. -/
@@ -625,11 +626,11 @@ theorem packed7_mul_correct (a b : Std.U64) (i : Fin 16)
     packed.packed7.Packed7.Insts.Gf2_algebraPackedPackedFieldFp7U64U128.mul
   obtain ⟨L, hL, hcL⟩ := mul_lut_spec
   rw [hL]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   obtain ⟨r, hr, hdec⟩ := lane_correct_of_lut a b L i (· * ·)
     (fun a0 a1 b0 b1 h0 h1 h2 h3 => hcL a0 a1 b0 b1 h0 h1 h2 h3) ha hb
   refine ⟨⟨r⟩, ?_, ?_⟩
-  · simp only [hr, bind_tc_ok]
+  · simp only [hr, bind_ok]
   · simpa using hdec.trans (dec7_mul_contract _ _ (ha i) (hb i))
 
 /-- §3.4 L13 neg-correct: per-lane neg on the inherent wrapper, against
@@ -644,7 +645,7 @@ theorem packed7_neg_correct (a : Std.U64) (i : Fin 16)
     packed.packed7.Packed7.Insts.Gf2_algebraPackedPackedFieldFp7U64U128.neg
   obtain ⟨L, hL, hcL⟩ := sub_lut_spec
   rw [hL]
-  simp only [bind_tc_ok]
+  simp only [bind_ok]
   have h0val : (0#u64 : Std.U64).val = 0 := by native_decide
   have hzero : Canon7Word (0#u64 : Std.U64).val := by
     intro j; simp only [nib, h0val, Nat.zero_div, Nat.zero_mod]; decide
@@ -656,7 +657,7 @@ theorem packed7_neg_correct (a : Std.U64) (i : Fin 16)
     simp only [nib, h0val, Nat.zero_div, Nat.zero_mod]
   rw [hz] at hdec
   refine ⟨⟨r⟩, ?_, ?_⟩
-  · simp only [hr, bind_tc_ok]
+  · simp only [hr, bind_ok]
   · exact hdec.trans (dec7_neg_contract (nib a.val i.val) (ha i))
 
 /-! ## §3.5 Headline corollary + `Fp<7>` bridge note -/

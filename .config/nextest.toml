@@ -1,3 +1,6 @@
+# A wrapper script holds the host-wide GPU lock (scripts/nextest-gpu-lock.sh).
+experimental = ["wrapper-scripts"]
+
 [profile.default]
 slow-timeout = { period = "10s", terminate-after = 1 }
 
@@ -34,17 +37,23 @@ slow-timeout = { period = "90s", terminate-after = 1 }
 filter = 'package(gf2-sim) and (binary(dvb_t2_regression) or binary(pipeline_run_cpu) or binary(preset_vs_graph_byte_identity) or binary(stage_driven_byte_identity))'
 slow-timeout = { period = "20s", terminate-after = 1 }
 
-# GPU-gated tests share one physical gfx1030. nextest runs test binaries in
-# parallel, so concurrent GPU tests contend for the device.
-# This group serializes the GPU-exercising gf2-sim test binaries so at most
-# one GPU job runs at a time. Scheduling only — no per-test timeout changes.
+# GPU-gated tests share one physical gfx1030. A test process's HIP queues count
+# against the device's hardware runlist; concurrent HIP processes oversubscribe
+# it, and under oversubscription the gfx1030 faults a queue (gfxhub CPF page
+# fault: the process aborts, and a concurrent GPU test can stall until its
+# timeout). @/issue/f21b25ac holds the reproduction.
+# Device-opening workspace tests, ignored tests included, join `gpu-serial`.
+# Scheduling only — no per-test timeout changes.
+#
+# Every workspace profile inherits the group and `gpu-lock` wrapper below.
+# The standalone gf2-kernels-hip workspace has its own .config/nextest.toml
+# using the same wrapper and host-wide flock. `cargo test` takes no lock.
 #
 # `slow-serial` is the nightly analogue for CPU-bound heavy tests (see
 # [profile.slow] below): the sim MODCOD sweeps and the n=28/32 permanent
 # cross-checks each want the whole machine, and nextest's default parallelism
-# can make them contend with each other and their own rayon pools. Serializing them
-# subsumes the GPU constraint for the slow profile, so `gpu-serial` is only used
-# by [profile.ci] and the two groups never overlap on a single test.
+# can make them contend with each other and their own rayon pools. The two
+# groups never overlap on a single test.
 # `scripts/cargo-ci.sh` runs this profile when BUSY_HOST_OVERRIDE is set: a
 # host shared with other sessions' builds and tests kills fast-tier tests at
 # the `ci` cap while they pass in isolation. The catch-all override outranks
@@ -59,6 +68,33 @@ slow-timeout = { period = "60s", terminate-after = 1 }
 [test-groups]
 gpu-serial = { max-threads = 1 }
 slow-serial = { max-threads = 1 }
+
+[scripts.wrapper.gpu-lock]
+command = { command-line = "scripts/nextest-gpu-lock.sh", relative-to = "workspace-root" }
+# The lock is taken before a target runner, such as a jobserver token pool, runs.
+target-runner = "within-wrapper"
+
+# Script filters reject `group()`, so this filter repeats the `gpu-serial`
+# override's filter below verbatim; scripts/check-gpu-lock-filter.py fails when
+# they differ.
+[[profile.default.scripts]]
+filter = '''
+    (package(gf2-sim) and (
+        binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler)
+        or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
+        or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
+        or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
+        or binary(gpu_bch_syndrome_byte_identity)
+    ))
+    or (package(gf2-algebra) and binary(gpu_dispatcher))
+    or (package(gf2-sim) and kind(lib) and test(/^gpu::/))
+    or (package(gf2-sim) and binary(dag_topology) and test(/^gpu::/))
+    or (package(gf2-coding) and kind(lib) and test(/::gpu::/))
+    or (package(permanent-statistics) and (
+        binary(campaign_bins) or binary(campaign_determinism) or binary(campaign_validation)
+    ))
+'''
+run-wrapper = 'gpu-lock'
 
 # Thread budget for the fast tier. `.cargo/config.toml` sets RAYON_NUM_THREADS
 # to 4 to bound each test process's pool, and the override below reserves the
@@ -85,8 +121,26 @@ filter = '''
 '''
 threads-required = 4
 
-[[profile.ci.overrides]]
-filter = 'package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))'
+# Defined on `default` so every profile, `slow` included, inherits it. The
+# `gpu-lock` script entry above repeats this filter verbatim;
+# scripts/check-gpu-lock-filter.py fails when they differ.
+[[profile.default.overrides]]
+filter = '''
+    (package(gf2-sim) and (
+        binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler)
+        or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
+        or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
+        or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
+        or binary(gpu_bch_syndrome_byte_identity)
+    ))
+    or (package(gf2-algebra) and binary(gpu_dispatcher))
+    or (package(gf2-sim) and kind(lib) and test(/^gpu::/))
+    or (package(gf2-sim) and binary(dag_topology) and test(/^gpu::/))
+    or (package(gf2-coding) and kind(lib) and test(/::gpu::/))
+    or (package(permanent-statistics) and (
+        binary(campaign_bins) or binary(campaign_determinism) or binary(campaign_validation)
+    ))
+'''
 test-group = 'gpu-serial'
 
 [profile.slow]
@@ -96,20 +150,15 @@ test-group = 'gpu-serial'
 slow-timeout = { period = "600s", terminate-after = 1 }
 fail-fast = false
 
-# Everything that wants the whole machine for the duration of one test:
-#   * GPU legs — they share ONE physical device, so concurrent long-running legs
-#     would bust the cap exactly as they do in the fast tier.
-#   * CPU-bound sim sweeps and permanent cross-checks — each drives its own
-#     rayon pool (up to 24 workers), so running several at once oversubscribes
-#     the runner several times over.
+# CPU-bound sim sweeps and permanent cross-checks want the whole machine for
+# the duration of one test: each drives its own rayon pool (up to 24 workers),
+# so running several at once oversubscribes the runner several times over.
+# GPU legs stay in the inherited `gpu-serial` group, which holds the host-wide
+# GPU lock; a GPU leg can run beside one of these sweeps.
 [[profile.slow.overrides]]
 filter = '''
     (package(gf2-sim) and (
-        binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler)
-        or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
-        or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
-        or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
-        or binary(determinism) or binary(parallel_determinism)
+        binary(determinism) or binary(parallel_determinism)
         or binary(preset_vs_graph_byte_identity)
     ))
     or (package(dvb-t2-awgn) and (binary(campaign_byte_identity) or binary(campaign_cli_flags)))
@@ -132,18 +181,3 @@ threads-required = 4
 filter = 'package(tuning-calibration)'
 threads-required = 4
 
-# Tests outside the gf2-sim GPU binaries above that open the device. A test
-# process's HIP queues count against the device's hardware runlist; concurrent
-# HIP processes oversubscribe it, and under oversubscription the gfx1030 faults
-# a queue (gfxhub CPF page fault: the process aborts, and a concurrent GPU test
-# can stall until its timeout). @/issue/f21b25ac holds the reproduction.
-[[profile.ci.overrides]]
-filter = '''
-    (package(gf2-sim) and kind(lib) and test(/^gpu::/))
-    or (package(gf2-sim) and binary(dag_topology) and test(/^gpu::/))
-    or (package(gf2-coding) and kind(lib) and test(/::gpu::/))
-    or (package(permanent-statistics) and (
-        binary(campaign_bins) or binary(campaign_determinism) or binary(campaign_validation)
-    ))
-'''
-test-group = 'gpu-serial'

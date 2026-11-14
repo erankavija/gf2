@@ -1,8 +1,8 @@
 # Handoff — gf2 1.0 release (2caf738d) — steward session 1
 
 **Date:** 2026-11-12
-**Prior handoffs:** none for the steward. Lead handoffs:
-`dev/active/d77176e5-competitive-benchmarking/handoff-4.md` (lead `gf2-7b`) and
+**Prior handoffs:** none for the steward. Lead handoffs: the d77176e5 lead
+handoffs are retired; its latest is `dev/active/d77176e5-competitive-benchmarking/handoff-6.md`. Also
 `dev/active/b8206228-permanent-statistics/handoff-35.md` (lead `gf2-79`).
 
 ## Current state
