@@ -303,29 +303,19 @@ git grep -n -i -E 'pre\.rs|pre-cutover|CUTOVER_PRE_REVISION|legacy encoder|gf2 r
 ```
 
 The revision-name expression covers the pinned gf2 name without embedding a
-revision identifier. Generated search: 78 matching lines across 30 files.
+revision identifier. Generated search: 81 matching lines across 32 files.
 
 | Hit file | Decision |
 |---|---|
-| `.jit/archive-evidence/container/6dc81018-9a8e-4318-9572-148670d1c272.json` | Keep as record: tracker configuration/evidence; unchanged. |
-| `.jit/events.jsonl` | Keep as record: tracker configuration/evidence; unchanged. |
-| `.jit/issues/0d819b62-f6ad-49e0-add7-fd9f3486fe42.json` | Keep as record: tracker configuration/evidence; unchanged. |
-| `.jit/issues/1d4fd63d-c522-47cb-9448-fe8f5220f0ed.json` | Keep as record: tracker configuration/evidence; unchanged. |
-| `.jit/issues/278acf3a-3a49-4c79-8d54-8eb6c934c834.json` | Keep as record: tracker configuration/evidence; unchanged. |
-| `.jit/issues/4443de83-4498-4100-8549-52b6c03f8007.json` | Keep as record: tracker configuration/evidence; unchanged. |
-| `.jit/issues/51058f8e-6bad-443c-aa5b-14d430bcd0c7.json` | Keep as record: tracker configuration/evidence; unchanged. |
-| `.jit/issues/697fc55b-4b36-4cb5-8106-a811b1772e44.json` | Keep as record: tracker configuration/evidence; unchanged. |
-| `.jit/issues/6fb89a3c-f1a7-439d-a397-add1782afe2b.json` | Keep as record: tracker configuration/evidence; unchanged. |
-| `.jit/issues/88ca7d2f-5045-4356-8ee3-e4e26876847d.json` | Keep as record: tracker configuration/evidence; unchanged. |
-| `.jit/issues/e1e0e7ff-36f3-46e4-8bcb-db406c526bcb.json` | Keep as record: tracker configuration/evidence; unchanged. |
-| `.jit/issues/fd9d5416-d529-427d-a273-10e6468b9a19.json` | Keep as record: tracker configuration/evidence; unchanged. |
-| `dev/active/2caf738d-1-0/handoff.md` | Keep as record: owner handoff; unchanged. |
+| `.jit/events.jsonl`, `.jit/archive-evidence/` and `.jit/issues/` (13 files) | Keep as record: tracker configuration/evidence; unchanged. |
+| `dev/active/2caf738d-1-0/handoff-3.md` | Keep as record: steward handoff; unchanged. |
 | `dev/active/ae03bcd0-general-bch/breakdown.json` | Keep as record: manifest of accepted work. |
 | `dev/active/ae03bcd0-general-bch/handoff-8.md` | Keep as record: lead handoff and evidence decisions. |
 | `dev/active/ae03bcd0-general-bch/oracle/run.sh` | Keep as record producer: oracle receipt metadata, no comparison arm. |
 | `dev/active/ae03bcd0-general-bch/plan.md` | Keep as record: accepted plan and decisions; unchanged. |
 | `dev/active/ae03bcd0-general-bch/progress.json` | Keep as record: decisions and evidence; unchanged. |
 | `dev/active/d77176e5-competitive-benchmarking/design-60c82c4c.md` | Sweep A: remove comparison-against-`encode_batch` clause; use trait rows. |
+| `dev/active/d77176e5-competitive-benchmarking/handoff-7.md` | Keep as record: lead handoff; unchanged. |
 | `dev/active/d77176e5-competitive-benchmarking/design-9a1b24fc.md` | Sweep A: this prescription governs all arm references here. |
 | `dev/scripts/bench-window/queue.tsv` | Sweep A: remove `fd9d5416` command and comment; preserve done-marker keys. |
 | `docs/reference/performance-evidence.md` | Sweep A: current trait entry points versus external arms only. |
@@ -342,8 +332,7 @@ Recorded results stay in their issues. Other interface-audit matches need no edi
 `crates/gf2-coding/benches/linear_codes.rs` contains benchmark names;
 `crates/gf2-core/src/compute/mod.rs`, `crates/gf2-core/src/compute/partition.rs`
 and `crates/gf2-sim/src/parallel/mod.rs` supply/use the shared partition primitive.
-`dev/active/b4b4b9ee-tech-debt-2026-06-30/handoff-4.md`,
-`dev/active/d77176e5-competitive-benchmarking/handoff-6.md`,
+`dev/active/b4b4b9ee-tech-debt-2026-06-30/handoff-5.md`,
 `dev/active/d77176e5-competitive-benchmarking/progress.json` and the charter
 remain records of decisions/evidence.
 
