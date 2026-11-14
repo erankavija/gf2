@@ -1,0 +1,357 @@
+[
+  {
+    "key": "tracker-entry-point",
+    "title": "Run jit from any checkout through one entry point",
+    "description": "Adds one tracked entry point that runs jit, or any command, with the tracker environment of the invoking checkout, so that a linked worktree reaches the shared store and gates run in the checkout that started them.\n\n## Background\n\njit selects its store through `JIT_DATA_DIR` and the code checkout through `JIT_WORKTREE_ROOT`. With only the first set, a gate started from a linked worktree runs in the primary checkout and records the primary's commit. Leases taken from checkouts that share one store differ only by `JIT_AGENT_ID`. Once the tracker is its own repository mounted at `.jit/` of the primary checkout, a linked worktree holds no store and plain jit finds none there.\n\nThe entry point is a shell script named `tracker-env` in the scripts directory. It resolves three values and exports them:\n\n- `JIT_DATA_DIR`: `.jit` under the invoking checkout's top level when that directory holds a store index, otherwise `.jit` under the primary checkout, which is the parent of the absolute git common directory.\n- `JIT_WORKTREE_ROOT`: the invoking checkout's top level.\n- `JIT_AGENT_ID`: the value already set, otherwise `agent:` followed by the checkout directory's name in a linked worktree; in the primary checkout it stays unset.\n\nCalled with a command it executes that command in this environment; called without one it prints the three assignments for a shell to evaluate.\n\n## Success Criteria\n\n- [hard] REQ-01: Run from a linked worktree whose checkout holds no store, the entry point selects the primary checkout's store and names the linked worktree as code root.\n- [hard] REQ-02: Run from a checkout that holds its own store, the entry point selects that store and that checkout.\n- [hard] REQ-03: A `JIT_AGENT_ID` set by the caller is passed through unchanged, and two linked worktrees without one get different identities.\n- [hard] REQ-04: The entry point exits non-zero with a message naming the missing store when neither location holds one, and runs nothing.\n- [hard] REQ-05: The entry point returns the exit status of the command it runs and works when invoked from any directory of the checkout, under `sh`, `bash` and `zsh`.\n- [hard] REQ-06: A self-test builds scratch repositories with a primary checkout, a linked worktree and a nested store, covers REQ-01 to REQ-05 without calling jit, and runs as a step of `scripts/cargo-ci.sh`.\n- [hard] REQ-07: `AGENTS.md` states that jit runs through the entry point from a linked worktree, within the 200-line limit, and its projected regions match their sources.\n\n## Notes\n\nThe JIT workflow section of `AGENTS.md` is projected from `packages/sim-research/assets/regions/agents-profile-guidance.md`; edit the source and re-project. The entry point holds no host path: it derives every location from git.\n",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:tracker-repository",
+      "component:tooling",
+      "satisfies:6ba9be17/REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "One script gives each checkout the shared store with its own code root",
+      "contract_refs": [
+        "tracker-root-resolution"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "D-04",
+        "F-02",
+        "F-04",
+        "F-05",
+        "F-07",
+        "F-16",
+        "F-21"
+      ],
+      "terminal": {
+        "consumer_family": "agents invoking jit from a checkout",
+        "test_boundary": "self-test over scratch repositories run by the CI script",
+        "worker_sized_reason": "One shell script, its self-test and three guidance lines; no caller changes",
+        "footprint": {
+          "creates": [
+            "shell script tracker-env in the scripts directory",
+            "its self-test in the scripts tests directory"
+          ],
+          "touches": [
+            "scripts/cargo-ci.sh",
+            "AGENTS.md",
+            "packages/sim-research/assets/regions/agents-profile-guidance.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "landing-check",
+    "title": "Refuse a landing whose gate runs record another commit",
+    "description": "Adds a check that a lead runs before merging a worker branch: every required gate of the issue must have passed at the tip of that branch. It turns a gate that ran in the wrong checkout from a silent error into a refused landing.\n\n## Background\n\nA gate-run record stores the commit and branch its checker ran at. When jit is started from a linked worktree without the code root set, the checker runs in the primary checkout and the record names the primary's commit; nothing reports this. With the tracker in its own repository, issue state and code no longer merge together, so the recorded commit is also what ties an issue's gate verdicts to the change that lands. The issue record itself stores only a gate's status and run identifier.\n\nThe check is a Python script named `check-landing` in the scripts directory. It takes an issue and a git revision, reads the issue's required gates and the latest run of each through jit's machine-readable output, and compares.\n\n## Success Criteria\n\n- [hard] REQ-01: The check exits zero when every required gate's latest run passed and records the commit the given revision resolves to.\n- [hard] REQ-02: The check exits non-zero and names the gate, the recorded commit and the expected commit when a run records a different commit, records none, or did not pass.\n- [hard] REQ-03: A gate whose verdict was reused from an earlier run is judged by the run that executed the checker.\n- [hard] REQ-04: The check exits with a distinct status and a message when jit is unavailable or the issue does not exist, and never reports success in that case.\n- [hard] REQ-05: A self-test covers REQ-01 to REQ-04 against recorded jit output without calling jit, and runs as a step of `scripts/cargo-ci.sh`.\n- [hard] REQ-06: `AGENTS.md` states that a branch lands only after this check passes, within the 200-line limit.\n\n## Notes\n\nThe check reads the store only through jit, never through the record files. A reused verdict names its origin run in the gate-run record.\n",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:tracker-repository",
+      "component:tooling",
+      "satisfies:6ba9be17/REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "tracker-entry-point"
+    ],
+    "planning": {
+      "outcome": "A landing is refused unless each required gate passed at the branch tip",
+      "contract_refs": [
+        "landing-link"
+      ],
+      "source_refs": [
+        "REQ-04",
+        "D-05",
+        "F-03",
+        "F-04",
+        "F-08"
+      ],
+      "terminal": {
+        "consumer_family": "leads landing worker branches",
+        "test_boundary": "self-test against recorded gate-status output run by the CI script",
+        "worker_sized_reason": "One Python script with an embedded self-test and one guidance line",
+        "footprint": {
+          "creates": [
+            "Python script check-landing in the scripts directory"
+          ],
+          "touches": [
+            "scripts/cargo-ci.sh",
+            "AGENTS.md",
+            "packages/sim-research/assets/regions/agents-profile-guidance.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "gate-checkers-data-root",
+    "title": "Resolve tracker files through the data root in the gate checkers",
+    "description": "Makes the gate checkers find tracker files through the data root and keeps their output out of the code checkout's `.jit/`, so that they work from a linked worktree that holds no store.\n\n## Background\n\nThree checkers assume the store sits at `.jit/` under the code checkout they run in. The docs-mechanical gate reads `.jit/config.toml` there and copies the code repository's unignored `.jit` files to render projections. The research-review gate reads `.jit/references.toml` relative to its working directory. The kani gate writes compressed logs under `.jit/gate-artifacts/`. Two review prompts tell the reviewer to read tracker files at paths relative to the code checkout. Once the tracker is its own repository mounted at the primary checkout, a gate that runs in a linked worktree finds none of these.\n\nThe data root is `JIT_DATA_DIR` when set, otherwise `.jit` under the top level of the checkout the checker runs in.\n\n## Success Criteria\n\n- [hard] REQ-01: The docs-mechanical gate reads the tracker configuration and renders projections from the data root, and gives the same findings for a store under the code checkout and for a store named by `JIT_DATA_DIR` elsewhere.\n- [hard] REQ-02: The research-review gate reads the citation registry from the data root.\n- [hard] REQ-03: The kani gate writes its compressed log under the ignored `target/` directory of the checkout it runs in and reports that path; no checker creates `.jit/` in a code checkout.\n- [hard] REQ-04: The holistic-review and plan-review prompts name tracker files through the data root.\n- [hard] REQ-05: Each changed file under `contrib/gates/` is identical to its package source under `packages/sim-research/assets/live/`.\n- [hard] REQ-06: The docs-mechanical self-test covers a store outside the code root, and the ignore rule for `.jit/gate-artifacts/` is removed.\n\n## Notes\n\n`contrib/gates/ai-review.sh` reads only the context file jit passes and needs no change beyond its comment on gate-run size.\n",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:tracker-repository",
+      "component:tooling",
+      "satisfies:6ba9be17/REQ-06"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Gate checkers read the store through the data root and write nothing under a code checkout's store path",
+      "contract_refs": [
+        "tracker-root-resolution"
+      ],
+      "source_refs": [
+        "REQ-06",
+        "D-04",
+        "D-07",
+        "F-09",
+        "F-14",
+        "F-15",
+        "F-16"
+      ],
+      "terminal": {
+        "consumer_family": "gate checkers with their review prompts",
+        "test_boundary": "docs-mechanical self-test with a store outside the code root",
+        "worker_sized_reason": "Path resolution in three checkers and two prompts, one existing self-test extended",
+        "footprint": {
+          "touches": [
+            "contrib/gates/docs-mechanical.py",
+            "contrib/gates/tests/docs-mechanical-test.py",
+            "contrib/gates/research-review.sh",
+            "contrib/gates/holistic-review-prompt.md",
+            "contrib/gates/plan-review-prompt.md",
+            "packages/sim-research/assets/live/contrib/gates/holistic-review-prompt.md",
+            "packages/sim-research/assets/live/contrib/gates/plan-review-prompt.md",
+            "scripts/cargo-kani-gate.sh",
+            ".gitignore"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "reference-checker-tracker-references",
+    "title": "Check tracker references against a mounted store",
+    "description": "Makes the reference checker work in both layouts: on a clone without the tracker it passes and still checks invariant citations, and with the tracker mounted it checks tracker paths and issue prose as it does today.\n\n## Background\n\n`scripts/check-references.py` treats `.jit/` as a root of the code repository. It reads invariant identifiers from `.jit/invariants.toml` and skips that check when the file is absent, scans issue records because git tracks them, and passes any fault whose target git ignores. Once the tracker is its own repository mounted at an ignored `.jit/`, a GitHub runner has no store: every tracker path named in tracked text would fault, the invariant check would stop silently, and on a host with the store a path to a missing tracker file would pass because `.jit/` is ignored. The invariant projection between the `jit:invariants` markers of `AGENTS.md` lists every invariant identifier and stays in the code repository.\n\nA tracker reference is a path under `.jit/` named in tracked text. The store is mounted when `.jit` under the repository root holds a store index.\n\n## Success Criteria\n\n- [hard] REQ-01: An `@/inv/` or `@/invariant/` citation resolves against the identifiers projected into `AGENTS.md`, with or without a mounted store, and a citation of an unknown identifier faults in both cases.\n- [hard] REQ-02: With a mounted store, a tracker reference resolves against the files of the store, whether the code repository or the store's own repository tracks them, and a reference to a missing tracker file faults even though git ignores `.jit/`.\n- [hard] REQ-03: Without a mounted store, tracker references do not fault, and the checker prints how many it left unchecked.\n- [hard] REQ-04: With a mounted store, the prose of issue records and the archive records are checked under the existing exception rules, whichever repository tracks them.\n- [hard] REQ-05: The checker's verdict on the current tree is unchanged, and its self-test covers a tree with the store tracked by the code repository, a tree with the store in its own repository, and a tree without a store.\n- [hard] REQ-06: The module documentation states the three cases.\n\n## Notes\n\nThe exception entries for tracker paths in `scripts/reference-exceptions.toml` keep their meaning. Removing the entries the separate layout makes unnecessary belongs to the cutover.\n",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:tracker-repository",
+      "component:tooling",
+      "satisfies:6ba9be17/REQ-05"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "The reference checker passes without the tracker and checks tracker references when it is mounted",
+      "contract_refs": [
+        "tracker-reference-resolution"
+      ],
+      "source_refs": [
+        "REQ-05",
+        "D-03",
+        "F-11",
+        "F-12",
+        "F-17",
+        "F-18",
+        "F-22"
+      ],
+      "terminal": {
+        "consumer_family": "callers of the reference checker",
+        "test_boundary": "the checker's self-test over three tree layouts",
+        "worker_sized_reason": "One checker module: three resolution rules and their self-test cases",
+        "footprint": {
+          "touches": [
+            "scripts/check-references.py"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "tracker-lifecycle-commands",
+    "title": "Mount and snapshot the tracker repository with one command each",
+    "description": "Adds the two commands the separate tracker repository needs: one mounts it on a fresh clone of the code repository, one commits a consistent snapshot of the store and pushes it.\n\n## Background\n\njit commits nothing to git. With the tracker in its own repository at `.jit/` of the primary checkout, a new clone of the code repository has no store until the tracker is cloned into place, and tracker changes reach the remote only when someone commits and pushes them. Agents write to the store concurrently, so a commit taken between two related writes would record a state jit never published; jit can run a command while it holds the store's write lock. Lock files, the worktree identity, server files and gate-run records are machine-local and stay uncommitted.\n\nThe mount command is a shell script named `tracker-bootstrap` and the snapshot command one named `tracker-snapshot`, both in the scripts directory.\n\n## Success Criteria\n\n- [hard] REQ-01: The mount command clones the tracker repository into `.jit` of the primary checkout, from the URL given as its argument or, without one, from the code repository's `origin` URL with `-tracker` appended to the repository name, and exits zero only when repository validation passes on the mounted store.\n- [hard] REQ-02: The mount command refuses, without changing anything, when `.jit` already exists or when it is run from a linked worktree.\n- [hard] REQ-03: The snapshot command stages every unignored change of the store, commits it with a subject that states the UTC time and the code repository's `main` commit, and pushes; it holds the store's write lock from staging to commit.\n- [hard] REQ-04: The snapshot command exits zero without a commit when the store has no change, refuses a store that fails repository validation, and reports a failed push with a non-zero status while keeping the local commit.\n- [hard] REQ-05: The snapshot command refuses a store that the code repository tracks.\n- [hard] REQ-06: A self-test builds a scratch code repository and a scratch tracker repository with a local remote, covers REQ-01 to REQ-05 with a stand-in for jit, and runs as a step of `scripts/cargo-ci.sh`.\n\n## Notes\n\nBoth commands reach jit and the store through the tracker entry point. Neither holds a host path or a fixed remote URL.\n",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:tracker-repository",
+      "component:tooling",
+      "satisfies:6ba9be17/REQ-07",
+      "satisfies:6ba9be17/REQ-08"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "tracker-entry-point"
+    ],
+    "planning": {
+      "outcome": "A fresh clone mounts the tracker with one command and the store is snapshotted with another",
+      "contract_refs": [
+        "tracker-root-resolution",
+        "tracker-snapshot-discipline"
+      ],
+      "source_refs": [
+        "REQ-07",
+        "REQ-08",
+        "D-06",
+        "D-09",
+        "F-10"
+      ],
+      "terminal": {
+        "consumer_family": "leads mounting or snapshotting the store",
+        "test_boundary": "self-test over scratch repositories with a local remote",
+        "worker_sized_reason": "Two short scripts share one scratch fixture of a code repository, a tracker repository and a local remote; each is a clone or a commit plus refusals",
+        "footprint": {
+          "creates": [
+            "shell scripts tracker-bootstrap and tracker-snapshot in the scripts directory",
+            "their shared self-test in the scripts tests directory"
+          ],
+          "touches": [
+            "scripts/cargo-ci.sh"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "cutover-rehearsal",
+    "title": "Write the cutover runbook and rehearse it on a scratch copy",
+    "description": "Produces the runbook and the tool that move the tracker out of the code repository, and proves both on a scratch copy before the live cutover.\n\n## Background\n\nThe cutover turns `.jit/` of the code repository into an independent tracker repository mounted at the same path. It must carry the history of the tracker paths, lose no tracker state held on a live branch or in a worktree's ignored gate-run records, and leave no checkout with a stale copy of the store. The repository has dozens of linked worktrees, each with its own copy of the store today. Leases live in the git common directory of the repository that holds the store, so they move from the code repository to the tracker repository. A history rewrite of `main` is planned under its own runbook and needs the same quiet repository; the cutover precedes it so the rewrite can drop the tracker paths.\n\nThe runbook is a Markdown document named `cutover-runbook` in this epic's directory under `dev/active`, and the tool is a Python script named `cutover` beside it. The linked plan fixes the sequence: quiesce, back up, extract, mount, verify, clean the worktrees, and roll back on a failed verification.\n\n## Success Criteria\n\n- [hard] REQ-01: The runbook states preconditions, numbered steps, a verification step with pass conditions, and a rollback that restores the tracked store with every tracker change made since the cutover began.\n- [hard] REQ-02: The tool lists every branch and worktree whose tracker files differ from `main` and every worktree that holds gate-run records, and the runbook states how each is merged, harvested or abandoned before extraction.\n- [hard] REQ-03: The tool extracts the history of the tracker paths into a new repository whose head tree equals the `.jit` tree of the cutover commit's parent, and fails when the two tree identifiers differ.\n- [hard] REQ-04: The tool applies the code-side change in one commit: the tracker paths leave the index, `/.jit/` is ignored, the union-merge attribute and the tracker exceptions of both checkers are removed, tracked paths under `.jit/` become forbidden, and the tree-size limit falls to the measured tree size rounded up to the next 10 kB.\n- [hard] REQ-05: The tool writes the tracker repository's own ignore rules for the machine-local files and its union-merge attribute for the event log, and sets the store's worktree root to the enclosing checkout.\n- [hard] REQ-06: The tool merges `main` into a surviving branch with tracker conflicts resolved by deletion, copies a worktree's gate-run records into the shared store, and removes the worktree's local store.\n- [hard] REQ-07: A rehearsal on a scratch clone with at least two linked worktrees runs every step and the rollback, and its results are reported in this issue: repository validation, issue count before and after, tree identifiers, a gate evaluated from a linked worktree recording that worktree's commit, plain jit failing in a linked worktree, two agent identities holding separate leases, and both checkers passing on the code tree with and without the store.\n- [hard] REQ-08: The rehearsal's outputs stay outside the tracked tree.\n\n## Notes\n\nThe rehearsal re-checks three facts the plan takes from the jit documentation: discovery stops at a linked worktree's boundary, a gate records the code root's commit, and checkouts sharing the store share one worktree identity. A fact that fails is recorded with the contradiction in this issue before the runbook changes.\n",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:tracker-repository",
+      "component:tooling",
+      "satisfies:6ba9be17/REQ-09"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "landing-check",
+      "gate-checkers-data-root",
+      "reference-checker-tracker-references",
+      "tracker-lifecycle-commands"
+    ],
+    "planning": {
+      "outcome": "A rehearsed runbook with its tool carries the tracker through the cutover and back",
+      "contract_refs": [
+        "cutover-sequence",
+        "tracker-root-resolution",
+        "tracker-reference-resolution"
+      ],
+      "source_refs": [
+        "REQ-09",
+        "D-01",
+        "D-07",
+        "D-08",
+        "D-10",
+        "F-01",
+        "F-05",
+        "F-06",
+        "F-07",
+        "F-19",
+        "F-20"
+      ],
+      "terminal": {
+        "consumer_family": "the steward executing the cutover",
+        "test_boundary": "rehearsal with rollback on a scratch clone holding two linked worktrees",
+        "worker_sized_reason": "One runbook and one tool exercised end to end by a single rehearsal; the steps hand over to each other, so a step tested alone proves nothing, and the scripts it calls already exist",
+        "footprint": {
+          "creates": [
+            "runbook cutover-runbook in dev/active/6ba9be17-tracker-repository",
+            "Python tool cutover beside the runbook"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "cutover-execution",
+    "title": "Execute the tracker cutover",
+    "description": "Runs the rehearsed cutover on the live repository: the tracker becomes its own repository mounted at `.jit/` of the primary checkout, and the code repository stops tracking it.\n\n## Background\n\nThe runbook and its tool were rehearsed on a scratch copy. The live run needs a quiet repository: no session writes to the tracker, every lease is released, and each live branch is merged or its tracker changes are harvested. The owner provides the remote for the tracker repository and confirms the start. The planned history rewrite of `main` uses the same quiet window after this cutover and drops the tracker paths from history.\n\n## Success Criteria\n\n- [hard] REQ-01: `git ls-files .jit` prints nothing on `main`, `/.jit/` is ignored, and the budget checker refuses a tracked path under `.jit/`.\n- [hard] REQ-02: The tracker repository's first head tree equals the `.jit` tree of the cutover commit's parent, its history holds the commits of the tracker paths, it is pushed to the owner's remote, and repository validation passes on the mounted store.\n- [hard] REQ-03: No worktree holds a local store, no surviving branch tracks a path under `.jit/`, and every gate-run record found in a worktree is in the shared store.\n- [hard] REQ-04: A gate evaluated from a linked worktree after the cutover records that worktree's commit and branch.\n- [hard] REQ-05: `scripts/tracked-budget.toml` and `scripts/reference-exceptions.toml` hold no tracker exception and no interim exclusion of the tracker, `.gitattributes` holds no tracker rule, and the tree-size limit equals the measured tree size rounded up to the next 10 kB.\n- [hard] REQ-06: `AGENTS.md` and `dev/index.md` state that `.jit/` is the checkout of the tracker repository, how a fresh clone mounts it, and that a lead snapshots the store after each landing and the steward at the end of a session.\n- [hard] REQ-07: The statement of the `resolvable-references` invariant covers tracker references in the wording the owner approved, and its projection in `AGENTS.md` matches.\n- [hard] REQ-08: The reference and budget checkers pass on `main` with the store mounted and on a fresh clone without it.\n- [hard] REQ-09: The history rewrite runbook lists the tracker paths among the paths it drops.\n\n## Notes\n\nThe cutover commit and the unmount are one step under the canonical-cutover invariant: no commit of `main` tracks the store and ignores it at once. On a failed verification the runbook's rollback applies before any further work.\n",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:tracker-repository",
+      "component:tooling",
+      "satisfies:6ba9be17/REQ-01",
+      "satisfies:6ba9be17/REQ-02",
+      "satisfies:6ba9be17/REQ-07",
+      "satisfies:6ba9be17/REQ-09",
+      "satisfies:6ba9be17/REQ-10"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "cutover-rehearsal"
+    ],
+    "planning": {
+      "outcome": "The live repository runs on the separate tracker with no tracked or stale store left",
+      "contract_refs": [
+        "cutover-sequence",
+        "tracker-snapshot-discipline",
+        "tracker-reference-resolution"
+      ],
+      "source_refs": [
+        "REQ-01",
+        "REQ-02",
+        "REQ-07",
+        "REQ-09",
+        "REQ-10",
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-06",
+        "D-08",
+        "D-10",
+        "F-01",
+        "F-19",
+        "F-20"
+      ],
+      "terminal": {
+        "consumer_family": "leads working in checkouts of the repository",
+        "test_boundary": "the verification step of the runbook on the live repository plus a fresh clone",
+        "worker_sized_reason": "Execution of a rehearsed runbook whose tool applies the change; the commit and the unmount are atomic under the canonical-cutover invariant, each criterion is a pass condition of the one closing verification, and the hand-written part is a few guidance lines",
+        "footprint": {
+          "touches": [
+            ".gitignore",
+            ".gitattributes",
+            "scripts/tracked-budget.toml",
+            "scripts/reference-exceptions.toml",
+            "AGENTS.md",
+            "packages/sim-research/assets/regions/agents-profile-guidance.md",
+            "dev/index.md",
+            "dev/active/b8206228-permanent-statistics/45ecf975/rewrite_paths.py",
+            "dev/active/b8206228-permanent-statistics/45ecf975/history-rewrite-runbook.md"
+          ]
+        }
+      }
+    }
+  }
+]
