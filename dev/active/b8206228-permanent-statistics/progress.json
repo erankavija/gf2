@@ -840,7 +840,7 @@
       "kind": "rework past limit",
       "raised": "2026-11-12",
       "status": "open",
-      "summary": "code-review failed a fifth time at 87df671e5: F1 receipts and result tables in dev/research/permanent_wave_gpu; F2 base-name citations of deleted files evade the reference check. See handoff-34.md (retired by @/issue/d1c0e062)."
+      "summary": "code-review failed a fifth time at 87df671e5: F1 receipts and result tables in dev/research/permanent_wave_gpu; F2 base-name citations of deleted files evade the reference check. The findings are recorded in the gate runs of @/issue/daef2dc3."
     }
   ],
   "standing_rules": [

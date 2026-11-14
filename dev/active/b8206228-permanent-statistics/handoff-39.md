@@ -45,7 +45,7 @@ Every issue below is assigned to `agent:gf2-e9`; the successor reassigns them. E
   - It was the last rework. A third code-review failure goes to the owner with option B: close on the round-1 fixes under `@/inv/caller-trusted-fast-paths`. Before gating, merge main after 506f76d4 lands and recheck the `dev/tools/tuning-campaign-support/config/protocol.md` exception, whose `freeze` writer 506f76d4 may remove.
 - **66fefd9e retired rows:** inventory rows and history entries in files retired by `@/issue/d1c0e062` are marked "retired by owner decision" and drop out.
   - Rework 2 rewrites 4 passages, 68 in total.
-  - The branch no longer touches `dispatch-7a816262-phase1.md` and must not bring it back on merge.
+  - The branch no longer touches `dispatch-7a816262-phase1.md` (removed by @/issue/d1c0e062) and must not bring it back on merge.
   - Line numbers in the inventory are at `96fc9b751`.
 - **History retirement:** old history files are retired, not edited.
   - This directory keeps one current handoff.
@@ -96,7 +96,7 @@ Unchanged since rehearsal 3, apart from the reword decision above.
    - The fix passes the protocol version into the validation.
    Once it passes its gates, land it. It frees about 804 kB, unblocks 5f33fb28 and fe2221d5, and must land before da6200b8 and 0fe85425 are gated.
 2. **d1c0e062:** gate it (cargo-ci, then code-review) and land it. It conflicts with nothing in flight.
-3. **66fefd9e:** merge main into the branch, keeping `dispatch-7a816262-phase1.md` deleted, then gate and land.
+3. **66fefd9e:** merge main into the branch, keeping `dispatch-7a816262-phase1.md` (removed by @/issue/d1c0e062) deleted, then gate and land.
 4. **da6200b8:** after 506f76d4, as above.
 5. **0fe85425:**
    - Merge main.
@@ -135,6 +135,7 @@ The code-review gate's reviewer is Codex gpt-6.1-sol, so every implementation we
 - Sweeps by one agent miss wording forms. Slice by directory and reconcile two independent inventories by different vendors.
 - Commit subjects from `wip(...)` commits and default merge messages reach main. Squash or reword on the branch, and count every subject with `${#s}`.
 - Deleting machinery that validates committed artifacts can take live run-time checks with it (506f76d4, round 1). List what the deleted code checked on fresh results before deleting it.
+- Dispatch and rework prompts are ephemeral coordination material and are never committed (owner directive 2026-08-24). Briefs live in `<gf2-share>/45ecf975-handoff-38/`.
 - `git stash` is shared across worktrees and sessions. Never use it, and never put it in a brief.
 - `rm -rf` outside the scratchpad is refused by the session's permission classifier unless the owner approves it in that session.
 - `breakdown.json` stays excluded from audit by recorded owner decision (`240b7618`, `679cf170`). Do not argue its properties, edit it, or resync it. Do not amend an issue description without checking that issue's copy in it.
