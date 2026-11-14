@@ -20,10 +20,11 @@ BCH consumes it; the trait defaults use it directly.
 and chooses IRA or `RuEncodingMatrices`. `LdpcCode` supplies code data.
 RU's inherent scalar `encode` supplies its oracle. Batch capability does not
 require cutting over the bit-only scalar compatibility trait.
-The approved landing order is @/issue/6379e04e, branch A, then
+The lead sequences @/issue/6379e04e, branch A, then
 @/issue/243d1160 and @/issue/7fbd1042 rebased onto A. Branch B proceeds in
 parallel with those two issues after A; @/issue/9a1b24fc closes after B.
-The lead removes the dependency edge from @/issue/9a1b24fc to @/issue/7fbd1042.
+This is lead sequencing, not graph order: only @/issue/6379e04e is a graph
+dependency of @/issue/243d1160 and @/issue/7fbd1042.
 A owns the trait, BCH/view/shortening and their callers; B owns LDPC/RU and theirs.
 The stored BCH content stamp and hoisted typed-field check supplied by
 @/issue/6379e04e are A's basis. @/issue/243d1160's allocating-batch witness
@@ -85,10 +86,11 @@ Output reuse alone does not promise allocation freedom.
 Granularity defaults to one and means the preferred bounded staging tile.
 BCH/view override it with the largest structural frame group among available
 encode families: `gf2_kernels_simd::bch_encode::BITSLICE_LANES` when bitslicing
-is available, otherwise one. Lockstep integration contributes its structural
-frame group and active caller override to this maximum. This is a kernel-group
-rule, independent of host measurements. Shortening consumes it as its default
-capacity and forwards it for nested shortening; LDPC/RU retain one.
+is available, otherwise one. Take the maximum with the active profile
+`encode.bitslice_interleaved_min_batch` when bitslicing is available. Lockstep
+integration contributes its structural frame group and active caller override
+to the same maximum. Defaults derive from kernel groups; installed selectors
+can enlarge them. Shortening uses and forwards this capacity; LDPC/RU retain one.
 
 Common validation in `crates/gf2-coding/src/traits.rs` checks equal slice counts,
 message length `k()`, output length `n()` and symbol field identity. Move BCH's
@@ -146,8 +148,8 @@ and implement `BatchEncoder` for `Shortened<C>` where
 `C: BatchEncoder + BlockEncoder`, with error `C::EncodeError`.
 For `SystematicRestriction`, scratch holds the mother workspace, preallocated
 mother-message/codeword vectors and an immutable zero message. Default capacity
-is the mother's `encode_batch_granularity()`, so default trait calls reach
-multi-frame kernels. Add `encode_workspace_with_batch_capacity(NonZeroUsize)`
+is the mother's `encode_batch_granularity()`, including active admission
+thresholds, so a full tile reaches eligible multi-frame kernels. Add `encode_workspace_with_batch_capacity(NonZeroUsize)`
 as a caller override returning `Result<ShortenedEncodeWorkspace<C>, C::EncodeError>`.
 The default worker constructor gives each worker that structural capacity.
 
@@ -191,10 +193,16 @@ Add `BlockCode` and `BatchEncoder` impls for `LdpcCode`, `LdpcEncoder` and
 `RuEncodingMatrices`, with `Fp<2>` and `BitVec`. `LdpcCode` uses its encoder as
 scalar oracle; RU uses its `systematic_cols`/`parity_cols` layout. Remove both
 inherent batch methods, including RU's backend-taking form.
+Keep `LdpcEncoder`'s compatibility `crate::traits::BlockEncoder` impl. For every
+concrete encoder dimension call, including scalar-impl calls, use only
+`crate::traits::BlockEncoder::k(encoder)` and
+`crate::traits::BlockEncoder::n(encoder)` with `encoder: &LdpcEncoder`.
+The added `block::BlockCode` impl delegates to these; the compatibility impl
+reads `self.code`. No bare `encoder.k()`/`encoder.n()` call relies on imports.
 Add `LdpcEncodeError` in `crates/gf2-coding/src/ldpc/core.rs`, wrapping
 `CodeError`, `PreprocessError` and incompatible-workspace errors.
 
-Use one content-stamp compatibility convention. Add private semantic
+Batch-workspace compatibility uses one content-stamp convention. Add private semantic
 `EncodeStamp` and common FNV fingerprint mixing in `crates/gf2-coding/src/traits.rs`.
 BCH stores that type internally; `BchEncodeWorkspace::code_stamp` and existing
 error diagnostics expose its numeric value at the reporting boundary.
@@ -204,6 +212,12 @@ Equal codes built independently accept compatible prepared scratch; equal
 sizes with different content do not. RU stores a stamp over dimensions, parity
 matrix and column maps, computed by both preprocessing and `from_components`.
 Its workspace compares that stamp too. These catch mistakes; no code fingerprint is recomputed per batch.
+The partial `CacheKey` hash in `crates/gf2-coding/src/ldpc/encoding/cache.rs`
+and decoder `code_stamp: u64` in `crates/gf2-coding/src/bch/core.rs` remain
+distinct. Under @/inv/convention-convergence, the lead files an issue to converge
+`CacheKey` and `code_stamp`, titled “Converge code fingerprints across caches and
+workspaces”, before completion. Cache-file identity and decoder compatibility
+extend beyond batch encoding; this issue makes no repository-wide convergence claim.
 
 Add `LdpcEncoder::try_new(code: LdpcCode) -> Result<Self, LdpcEncodeError>`.
 A shared fallible builder chooses IRA or `RuEncodingMatrices::preprocess`.
@@ -229,8 +243,9 @@ Add `RuEncodeWorkspace` in
 `crates/gf2-coding/src/ldpc/encoding/richardson_urbanke.rs`, re-exported by
 `crates/gf2-coding/src/ldpc/encoding/mod.rs`. It holds its stamp, dimensions and
 `Arc<dyn ComputeBackend>`, initially `CpuBackend::new()`. Add
-`RuEncodeWorkspace::set_backend(Arc<dyn ComputeBackend>)`; LDPC exposes its RU
-scratch for configuration. Workers share the backend Arc. RU returns `CodeError`
+`RuEncodeWorkspace::set_backend(Arc<dyn ComputeBackend>)` and
+`LdpcEncodeWorkspace::ru_workspace_mut(&mut self) -> Option<&mut RuEncodeWorkspace>`
+(`None` for IRA) for configuration. Workers share the backend Arc. RU returns `CodeError`
 (`ShapeMismatch` on incompatible scratch); LDPC wraps it.
 
 RU dispatches `ComputeBackend::batch_matvec_transpose` and scatters parities.
@@ -277,30 +292,60 @@ Imports, Result handling, constructor calls and timed labels use `BatchEncoder`.
 `docs/reference/performance-evidence.md` names `BatchEncoder::encode_batch_into`
 on `LayoutView`/`DvbT2BchCode` for D-7 and `BatchEncoder::encode_batch` for owning
 output. Preparation, view cloning and profile installation stay outside timing.
-REQ-06 has no exemption (owner decision). Branch A deletes the pre-cutover arm,
-`experiments/encode-compare/cutover/pre.rs`, and with it the comparison against
-the pinned pre-cutover revision. The same branch removes `CUTOVER_PRE_REVISION`
-and the pre-cutover build from `experiments/encode-compare/cutover.sh`, the
-pre-cutover reference verdicts from `experiments/encode-compare/cutover/summarize.py`
-(rows compare the current revision with the external arms), the arm from the
-module docs of `experiments/encode-compare/cutover/main.rs` and
-`experiments/encode-compare/src/cutover/mod.rs`, the pre-cutover wording in
-`experiments/encode-compare/src/cutover/current.rs` and
-`experiments/encode-compare/README.md`, and the pre-cutover clause of the cutover
-bullet in `docs/reference/performance-evidence.md`. The `fd9d5416` queue line and its comment in
-`dev/scripts/bench-window/queue.tsv` run the pre-cutover arm and are removed;
-editing the command instead would change its done-marker key and rerun it. Every swept text states current behaviour only; results
-recorded from the arm stay in their issues.
+REQ-06 sweeps every tracked file that names or describes the pre-cutover arm,
+except the named records below. Branch A removes the arm and its `pre` role;
+all swept prose describes current behaviour. Re-run this tracked-content search
+at A's integration and classify every hit; the generated inventory below is its
+file-level projection, including record-only and unrelated receipt matches:
 
-Other audit matches need no interface edit: `crates/gf2-coding/benches/linear_codes.rs`
-contains benchmark names only; `crates/gf2-core/src/compute/mod.rs`,
-`crates/gf2-core/src/compute/partition.rs` and `crates/gf2-sim/src/parallel/mod.rs`
-expose/consume the shared partition primitive. Tracker records in `.jit/`,
+```sh
+git grep -n -i -E 'pre\.rs|pre-cutover|CUTOVER_PRE_REVISION|legacy encoder|gf2 revision|each revision|any gf2|git archive|gf2 [[:xdigit:]]{8}|cutover::pre|mod[[:space:]]+pre([[:space:]]|;)|arms=\(pre|^[[:space:]]*pre\)|"pre"|`pre`'
+```
+
+The revision-name expression covers the pinned gf2 name without embedding a
+revision identifier. Generated search: 78 matching lines across 30 files.
+
+| Hit file | Decision |
+|---|---|
+| `.jit/archive-evidence/container/6dc81018-9a8e-4318-9572-148670d1c272.json` | Keep as record: tracker configuration/evidence; unchanged. |
+| `.jit/events.jsonl` | Keep as record: tracker configuration/evidence; unchanged. |
+| `.jit/issues/0d819b62-f6ad-49e0-add7-fd9f3486fe42.json` | Keep as record: tracker configuration/evidence; unchanged. |
+| `.jit/issues/1d4fd63d-c522-47cb-9448-fe8f5220f0ed.json` | Keep as record: tracker configuration/evidence; unchanged. |
+| `.jit/issues/278acf3a-3a49-4c79-8d54-8eb6c934c834.json` | Keep as record: tracker configuration/evidence; unchanged. |
+| `.jit/issues/4443de83-4498-4100-8549-52b6c03f8007.json` | Keep as record: tracker configuration/evidence; unchanged. |
+| `.jit/issues/51058f8e-6bad-443c-aa5b-14d430bcd0c7.json` | Keep as record: tracker configuration/evidence; unchanged. |
+| `.jit/issues/697fc55b-4b36-4cb5-8106-a811b1772e44.json` | Keep as record: tracker configuration/evidence; unchanged. |
+| `.jit/issues/6fb89a3c-f1a7-439d-a397-add1782afe2b.json` | Keep as record: tracker configuration/evidence; unchanged. |
+| `.jit/issues/88ca7d2f-5045-4356-8ee3-e4e26876847d.json` | Keep as record: tracker configuration/evidence; unchanged. |
+| `.jit/issues/e1e0e7ff-36f3-46e4-8bcb-db406c526bcb.json` | Keep as record: tracker configuration/evidence; unchanged. |
+| `.jit/issues/fd9d5416-d529-427d-a273-10e6468b9a19.json` | Keep as record: tracker configuration/evidence; unchanged. |
+| `dev/active/2caf738d-1-0/handoff.md` | Keep as record: owner handoff; unchanged. |
+| `dev/active/ae03bcd0-general-bch/breakdown.json` | Keep as record: manifest of accepted work. |
+| `dev/active/ae03bcd0-general-bch/handoff-8.md` | Keep as record: lead handoff and evidence decisions. |
+| `dev/active/ae03bcd0-general-bch/oracle/run.sh` | Keep as record producer: oracle receipt metadata, no comparison arm. |
+| `dev/active/ae03bcd0-general-bch/plan.md` | Keep as record: accepted plan and decisions; unchanged. |
+| `dev/active/ae03bcd0-general-bch/progress.json` | Keep as record: decisions and evidence; unchanged. |
+| `dev/active/d77176e5-competitive-benchmarking/design-60c82c4c.md` | Sweep A: remove comparison-against-`encode_batch` clause; use trait rows. |
+| `dev/active/d77176e5-competitive-benchmarking/design-9a1b24fc.md` | Sweep A: this prescription governs all arm references here. |
+| `dev/scripts/bench-window/queue.tsv` | Sweep A: remove `fd9d5416` command and comment; preserve done-marker keys. |
+| `docs/reference/performance-evidence.md` | Sweep A: current trait entry points versus external arms only. |
+| `experiments/encode-compare/README.md` | Sweep A: single current adapter/build; remove per-revision extraction and layout rationale. |
+| `experiments/encode-compare/cutover.sh` | Sweep A: remove `CUTOVER_PRE_REVISION`, its build/run/digest and role; document current-only extraction. |
+| `experiments/encode-compare/cutover/main.rs` | Sweep A: document only the current adapter. |
+| `experiments/encode-compare/cutover/pre.rs` | Sweep A: delete the arm. |
+| `experiments/encode-compare/cutover/summarize.py` | Sweep A: current/external rows and verdicts only. |
+| `experiments/encode-compare/src/cutover/current.rs` | Sweep A: declare layout directly; use the trait. |
+| `experiments/encode-compare/src/cutover/harness.rs` | Sweep A: current/external roles only; remove cross-revision claims, layout rationale and pinned-name example. |
+| `experiments/encode-compare/src/cutover/mod.rs` | Sweep A: current adapter and external arms only. |
+
+Recorded results stay in their issues. Other interface-audit matches need no edit:
+`crates/gf2-coding/benches/linear_codes.rs` contains benchmark names;
+`crates/gf2-core/src/compute/mod.rs`, `crates/gf2-core/src/compute/partition.rs`
+and `crates/gf2-sim/src/parallel/mod.rs` supply/use the shared partition primitive.
 `dev/active/b4b4b9ee-tech-debt-2026-06-30/handoff-4.md`,
 `dev/active/d77176e5-competitive-benchmarking/handoff-6.md`,
-`dev/active/d77176e5-competitive-benchmarking/progress.json` and the charter record
-decisions/evidence, rather than prescribe executable interfaces. This design
-supplies the trait prescription for its own keyword matches.
+`dev/active/d77176e5-competitive-benchmarking/progress.json` and the charter
+remain records of decisions/evidence.
 
 A also changes `crates/gf2-coding/src/traits.rs`, `crates/gf2-coding/src/bch/spec.rs`,
 `crates/gf2-coding/src/transform/mod.rs`, `crates/gf2-coding/src/bch/dvb_t2/mod.rs`
@@ -329,6 +374,8 @@ BCH/view tests cover both layouts and no inherent batch aliases. Extend
 Restore kernel settings; cover zero/ones/seeded/single-set-bit messages at
 0, 1, 63, 64 and the final bit. Assert default mother group sizes, capacities one
 and larger overrides, partial tiles, nesting and default owning/worker staging.
+Install a bitslice threshold above `BITSLICE_LANES`; assert default full tiles
+meet that threshold and match whole-batch family selection when eligible.
 In `crates/gf2-coding/tests/bch_encode_dispatch_allocation.rs`, count only `_into`
 after construction using `thread_allocations::CountingAllocator` and `count` in
 `dev/tools/thread-allocations/src/lib.rs`. Require zero allocations on structural
