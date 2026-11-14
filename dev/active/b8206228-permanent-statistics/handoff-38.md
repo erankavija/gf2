@@ -103,7 +103,7 @@ Artifacts outside the tree are in `<gf2-share>/45ecf975-handoff-38/`, where
 - Commit subjects from `wip(...)` worker commits and `git merge --no-edit` reach main. Squash or reword on the branch. A subject that looks short can still exceed 71: count it.
 - A codex worker given `flock -w` gives up on a busy lock. Give no timeout, or now no lock at all.
 - `git stash` is shared across worktrees and sessions; never use it in a brief.
-- `jit gate evaluate` records gates only in the main checkout; plan gate-on-branch with the steward's copy-records procedure.
+- `jit gate evaluate` and `jit issue update` in a worktree record on that branch's `.jit`. After merging a gated branch, copy its `.jit/gate-runs/<issue-uuid>/` records into main's ignored `.jit/gate-runs/`.
 
 ## Traps carried from earlier handoffs
 
@@ -113,11 +113,11 @@ Artifacts outside the tree are in `<gf2-share>/45ecf975-handoff-38/`, where
 - Concurrent builds in other worktrees make fast-tier tests miss their 15 s kill. Check the gate record and rerun solo before reading a failure as a regression.
 - GPU-device tests fail under host contention. Rerun the single test alone before reading it as a regression.
 - Stage explicit paths and check `git diff --cached --stat`. `jit` materializes shared `.git/jit` state into the checkout that runs it, so a worker commit can carry other issues' `.jit/` changes.
-- Run `jit` and tracker commands from the repository root, not a worktree or subdirectory. Linked checkouts refuse tracker writes, and `jit issue show` fails there.
+- Run `jit` from a checkout's root, not a subdirectory. A tracker write in a worktree lands on that branch and conflicts on `updated_at` when merged.
 - `jit doc add` is idempotent per path. Run `jit doc remove` on the old link first. An asset entry in a document link names the file too, so remove it with the link.
 - Before deleting a file, remove its `jit doc` links and asset entries, then run `jit validate`. Do not close an issue whose text names a deleted path; rewrite the text first.
 - Reference checks read tracked files only. A pass on an untracked file proves nothing.
-- Do not rewrite a removed path to its base name. Delete the citation or point it at an existing file, and audit the whole class, not only the cited file.
+- Do not rewrite a removed path to a bare base name. Point the citation at an existing file or follow the name with "(removed by @/issue/<id>)", and audit the whole class, not only the cited file.
 - The history rewrite needs `map_pins.py`, because tracker documents pin commit IDs. Nothing is pushed before the owner's go; the pre-push hook refuses purged history.
 - `codex exec` workers cannot write `.git`. They leave files in the tree, and the lead commits. Start a background `codex exec` with `< /dev/null`.
 - Single-agent audits sample rather than read. Slice the tree by directory for full coverage.
@@ -132,7 +132,6 @@ Artifacts outside the tree are in `<gf2-share>/45ecf975-handoff-38/`, where
 - Host-wide process kills by command-line pattern can kill peer builds. Kill only PIDs from your own process tree.
 - The shell is zsh, where `status` is read-only. Do not use it as a variable name in scripts.
 - `git commit -F -` after an `&&` chain hangs. Write the message to a file.
-- Background Bash tasks die at the 10-minute cap. Do not sleep-then-run there.
 - `/usr/bin/time` is not installed. Time commands with shell `date` arithmetic.
 - Agent-tool sandboxed worktrees have vanished. Read the leak-check output and check peer sessions before reverting anything.
 
