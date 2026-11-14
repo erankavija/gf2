@@ -2,6 +2,7 @@
 """Check commit subjects against the convention documented in AGENTS.md."""
 # Check the first line verbatim; commit-msg cannot see CLI --cleanup overrides.
 # Leading comments/blank lines are rejected even when Git cleanup would strip them.
+# Scope: mistakes in ordinary `git commit` use, not crafted message bytes.
 
 from __future__ import annotations
 
