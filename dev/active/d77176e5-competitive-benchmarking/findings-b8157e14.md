@@ -332,6 +332,16 @@ wrong bits per frame by 3 to 18 times.
     $M$ 20 at scale 4 also collapses, but through the DE side: $r$ = 1.7.
   - This bound comes from the saturation argument and the measured splits, not
     from DE.
+- **Earlier reading: the rule keeps NR BG1 unchanged to its $10^{-3}$
+  crossing.** The partial diagnosis computed $E/(\kappa m) = 103/(10 \times
+  1.84) = 5.6$ at the 0.559 dB crossing, above the base scale 4, and concluded
+  that NR keeps scale 4 there.
+  - Contradicted by the density evolution above (estimate). The floor is
+    governed by $r = M/(s\,m)$, not by $E$. At scale 4, $r$ = 3.3 against
+    $\kappa_M \approx 4.6$, so DE predicts a saturation floor at the default
+    scale and a rule scale of about 2.8 at the crossing.
+  - Neither statement is measured. The NR BG1 floor run in the next steps
+    decides between them.
 - **@/issue/3461a52a's DVB-T2 cap-200 threshold of 0.96 dB.** Its
   $(\lambda,\rho)$ model is contradicted by the staircase structure, as stated
   under Validation. The NMS-factor conclusion of that issue is not re-tested
