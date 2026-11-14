@@ -1,0 +1,2 @@
+#!/bin/sh
+exec python3 -B "$(git rev-parse --show-toplevel)/scripts/check-commit-subject.py" "$1"
