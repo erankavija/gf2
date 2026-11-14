@@ -336,7 +336,7 @@
       "terminal": {
         "consumer_family": "the executor of the cutover runbook",
         "test_boundary": "embedded self-test over a scratch code repository with tracker history",
-        "worker_sized_reason": "One script whose eight subcommands share one scratch fixture. Inventory, archive, extract, code-side commit and mount each wrap one git operation; harvest is a file copy with collision checks. Branch reconciliation, a merge with conflict resolution plus removal and verification of the remaining tracker entries per branch, and rollback, which undoes the code-side commit, the mount and a clean, are the larger parts. A split at a step boundary leaves a chain link the validator rejects, and rollback can only be tested against the steps it undoes, so the tool stays one leaf; the runbook and the end-to-end rehearsal are a separate task.",
+        "worker_sized_reason": "One script whose eight subcommands share one scratch fixture and the state each step leaves for the next. Inventory, archive, extract, code-side commit and mount each wrap one git operation; harvest is a file copy with collision checks. Branch reconciliation, a merge with conflict resolution plus removal and verification of the remaining tracker entries per branch, and rollback, which undoes the code-side commit, the mount and a clean, are the larger parts. Rollback is testable only against the steps it undoes, so the tool stays one leaf; the runbook and the end-to-end rehearsal are a separate task.",
         "footprint": {
           "creates": [
             "Python tool cutover in dev/active/6ba9be17-tracker-repository"
