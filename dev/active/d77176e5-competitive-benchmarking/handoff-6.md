@@ -1,7 +1,7 @@
 # Handoff: Competitive benchmarking against Magma/Sage/AFF3CT (d77176e5), session 5
 
 **Date:** 2026-11-13
-**Prior handoffs:** `dev/active/d77176e5-competitive-benchmarking/handoff-2.md` to `dev/active/d77176e5-competitive-benchmarking/handoff-5.md`
+**Prior handoffs:** none in the tree; the live traps of the retired handoffs are condensed under Traps.
 
 ## Current state
 
@@ -62,7 +62,32 @@ Chain order (one file at a time along `crates/gf2-coding/src/bch/encode.rs`, `cr
 
 ## Traps
 
-- The traps of handoff-2 to handoff-5 stay in force.
+- `grep -c 'window end'` on the window log counts earlier windows too; wait on the last `window start` or `window end` line.
+- Run `df` before blaming code: per-worktree `target/debug` directories filled the disk, and two cargo-ci runs failed with "No space left on device".
+- A pause request does not stop a build a worker already started; ask workers to confirm idle before a window.
+- `evaluate-many` prints verdicts only at the end; read `jit gate status <id> <gate>` for progress.
+- A merge that touches a tracker file a gate run modified conflicts; take gate state from main and title and description from the branch.
+- `! command` under `set -e` asserts nothing in a shell test.
+- A comparison library's default build is not its fastest configuration (bchlib needed `CONFIG_BCH_CONST_PARAMS`); read its build options before recording a ratio.
+- A criterion that asks for a table can be met by a test; read the criterion before generating inputs (`de311215` REQ-04).
+- The orphan rule blocks `std::ops` impls in `gf2-core` for types defined in a kernel crate; put an element type with operators where its operators are implemented.
+- Appending a bullet to a description that ends with criteria lands it inside `## Success Criteria`; add a `## Notes` heading first.
+- Count a commit subject before committing; the limit is 71 characters (`aa98b11f2` was 72).
+- `cd` into a worktree in a Bash call moves the session's working directory; use `git -C` and absolute paths.
+- `jit gate evaluate` on a leased issue needs `JIT_AGENT_ID=lead:<id>`; without it the gate refuses to write and the run looks like a failure.
+- A gate that declares its inputs returns a cached verdict, including a cached failure; use `--force` to rerun.
+- cargo-ci has a 900 s timeout and the fast tier kills tests at 15 s; on a cold main build after a merge, run `./scripts/cargo-ci.sh` in the main checkout first, with worker builds idle.
+- Gate runs read the main checkout; agree a hold on main with the other lead before a run and before a merge.
+- `systemd-run --user` is refused by the permission classifier; a short window then runs as a background command of the session.
+- Worktree checkouts carry their own `.jit`; `jit gate status --all` there shows no runs.
+- Tracked issue text must not carry host-local or `.agents/` paths; name digest files by basename.
+- Chain checks with `&&`: `;` runs the next command after a failure. `set -- ${=p}` splits words only in zsh.
+- `jit doc add` scans assets by default and copied 22 dead external receipt URLs into each issue; pass `--skip-scan`.
+- The execution-lead skill's scripts include no landing script; merge with `git merge --no-ff` and a conforming `chore(jit:<id>): merge ...` subject.
+- `progress.json` files hold no measured values (owner ruling C2).
+- `scripts/check-tracked-budget.py` refuses result tables and run records under `experiments/`, `dev/`, `benchmarks/` and `crates/`.
+- The FER curve runs under libtest (`cargo test --release`), not nextest: the slow profile kills any test at 600 s.
+- `GF2_LAYERED_FER_GRID` replaces the grid of both decoders; the comparator fails unless each crossing is bracketed, so a grid starting above the layered crossing near 1.13 dB fails by construction.
 - Session 1 traps still in force:
   - Edit nothing in a queue worktree or in `dev/scripts/bench-window/run-window.sh` while a window runs: bash reads the script as it executes.
   - A queue line repeats only after its `.agents/bench-window/<key>.done` marker is removed; the key is sha256 over issue, worktree and command joined by tabs, first 16 hex digits.

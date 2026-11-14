@@ -5,6 +5,7 @@
 
 use std::num::NonZeroUsize;
 
+use gf2_core::compute::{for_each_partition, PartitionDispatch};
 use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
 use rayon::prelude::*;
@@ -68,14 +69,17 @@ pub fn worker_index_partition(
     (start..indices.end).step_by(num_workers.get())
 }
 
-/// Evaluates every global index of `indices` across `parallelism` rayon
-/// workers and returns the outcomes in global index order.
+/// Evaluates every global index of `indices` across `parallelism` workers and
+/// returns the outcomes in global index order.
 ///
-/// The result depends on `indices` and `evaluate`, not on `parallelism`
+/// The range is split into contiguous partitions by
+/// [`gf2_core::compute::for_each_partition`]. The result depends on `indices`
+/// and `evaluate`, not on `parallelism`
 /// (`tests::test_map_indices_in_order_is_byte_identical_across_worker_counts`),
-/// provided `make_state`, called once per worker, produces equivalent state on
-/// every call and no index's outcome depends on the state left by another. A
-/// single worker runs the range on the calling thread.
+/// provided `make_state`, called once per non-empty partition on the worker
+/// that runs it, produces equivalent state on every call and no index's
+/// outcome depends on the state left by another. A single worker runs the
+/// range on the calling thread.
 ///
 /// # Panics
 ///
@@ -83,8 +87,8 @@ pub fn worker_index_partition(
 ///
 /// # Complexity
 ///
-/// `O(indices.len())` `evaluate` calls plus one `make_state` call per worker;
-/// all outcomes are held in memory at once.
+/// `O(indices.len())` `evaluate` calls plus at most `parallelism`
+/// `make_state` calls; all outcomes are held in memory at once.
 pub fn map_indices_in_order<S, T, M, F>(
     indices: std::ops::Range<u64>,
     parallelism: NonZeroUsize,
@@ -96,37 +100,26 @@ where
     F: Fn(u64, &mut S) -> T + Sync,
     T: Send,
 {
-    let num_workers = parallelism.get();
     let len = usize::try_from(indices.end.saturating_sub(indices.start))
         .expect("dispatched index range must fit the host word size");
-    if num_workers == 1 {
-        let mut state = make_state();
-        return indices.map(|index| evaluate(index, &mut state)).collect();
-    }
-
-    let per_worker: Vec<Vec<T>> = (0..num_workers)
-        .into_par_iter()
-        .map(|worker_idx| {
+    let mut slots: Vec<Option<T>> = std::iter::repeat_with(|| None).take(len).collect();
+    // The state stays on its worker's stack, so `S` need not be `Send`.
+    let mut workers = vec![(); parallelism.get()];
+    for_each_partition(
+        PartitionDispatch::Pool,
+        &mut slots,
+        &mut workers,
+        |(), items, slots| {
             let mut state = make_state();
-            worker_index_partition(indices.clone(), worker_idx, parallelism)
-                .map(|index| evaluate(index, &mut state))
-                .collect()
-        })
-        .collect();
-
-    // Reassemble the strided subsequences into index order: the outcome for
-    // `indices.start + offset` sits at position `offset / num_workers` of
-    // worker `offset % num_workers`.
-    let mut cursors: Vec<_> = per_worker.into_iter().map(Vec::into_iter).collect();
-    let mut ordered = Vec::with_capacity(len);
-    for offset in 0..len {
-        ordered.push(
-            cursors[offset % num_workers]
-                .next()
-                .expect("the strided partition covers every dispatched index"),
-        );
-    }
-    ordered
+            for (offset, slot) in items.zip(slots) {
+                *slot = Some(evaluate(indices.start + offset as u64, &mut state));
+            }
+        },
+    );
+    slots
+        .into_iter()
+        .map(|slot| slot.expect("the partitions cover every dispatched index"))
+        .collect()
 }
 
 /// Per-worker simulation counters, summed across workers by
@@ -631,7 +624,7 @@ mod tests {
     fn test_map_indices_in_order_is_byte_identical_across_worker_counts() {
         let evaluate = |index: u64, _state: &mut ()| index.wrapping_mul(0x9E37_79B9);
         let reference = map_indices_in_order(0..97, NonZeroUsize::new(1).unwrap(), || (), evaluate);
-        for workers in [2_usize, 3, 8, 24] {
+        for workers in [2_usize, 3, 8, 24, 64, 128] {
             let observed =
                 map_indices_in_order(0..97, NonZeroUsize::new(workers).unwrap(), || (), evaluate);
             assert_eq!(observed, reference, "{workers} workers must agree");
@@ -659,6 +652,23 @@ mod tests {
         );
         assert_eq!(outcomes, (0..20).collect::<Vec<_>>());
         assert_eq!(factory_calls.load(Ordering::Relaxed), 4);
+    }
+
+    #[test]
+    fn test_map_indices_in_order_builds_no_state_beyond_the_range() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        for (indices, expected_states) in [(10_u64..13, 3), (5_u64..5, 0)] {
+            let factory_calls = AtomicUsize::new(0);
+            let outcomes = map_indices_in_order(
+                indices.clone(),
+                NonZeroUsize::new(8).unwrap(),
+                || factory_calls.fetch_add(1, Ordering::Relaxed),
+                |index, _| index,
+            );
+            assert_eq!(outcomes, indices.collect::<Vec<_>>());
+            assert_eq!(factory_calls.load(Ordering::Relaxed), expected_states);
+        }
     }
 
     #[test]
