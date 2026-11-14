@@ -38,11 +38,15 @@ adapter: [`cutover/pre.rs`](cutover/pre.rs) over the legacy
 [`src/cutover/current.rs`](src/cutover/current.rs) over `BchCode::encode_batch`,
 the shipped DVB-T2 encoder and `generator_matrix`. Both write the descending
 `[message | parity]` layout, the legacy encoder's only one. The external arms
-are bchlib (runtime and const-parameter builds) and AFF3CT `Encoder_BCH` and
-`Encoder_BCH_inter` at int8 and int32 on W1, and M4RI (`mzd_echelonize_m4ri`
-and `mzd_echelonize_pluq` of the cyclic generator matrix, `GF2_M4RI_ROOT`
-naming its install prefix) and AFF3CT's basis-vector encoding on W2; the table
-reports each library's fastest configuration per cell. Every configuration's
+are bchlib (`@/citation/Bchlib2026`; runtime and const-parameter builds) and
+AFF3CT (`@/citation/Cassagne2019`) `Encoder_BCH` and `Encoder_BCH_inter` at
+int8 and int32 on W1, and M4RI version 20260122 (`@/citation/AlbrechtBard2026`;
+`mzd_echelonize_m4ri` and `mzd_echelonize_pluq` of the cyclic generator matrix,
+`GF2_M4RI_ROOT` naming its install prefix) and AFF3CT's basis-vector encoding
+on W2. AFF3CT 4.7.0 has no generator-matrix entry point, so the AFF3CT W2 arm
+is harness-composed: it encodes the unit messages in waves and packs each
+codeword into the zeroed packed matrix inside the timed call, the output
+contract gf2's timed `generator_matrix` meets. The table reports each library's fastest configuration per cell. Every configuration's
 output digest must equal the current revision's. Rounds of all arms
 interleave, and a row gives the median and range over rounds; a configuration
 whose projected call exceeds `CUTOVER_CALL_BUDGET_S` is reported as a
