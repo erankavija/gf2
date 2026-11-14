@@ -84,13 +84,18 @@ construct sized outputs and scratch, propagate construction errors, and call
 Output reuse alone does not promise allocation freedom.
 
 Granularity defaults to one and means the preferred bounded staging tile.
-BCH/view override it with the largest structural frame group among available
-encode families: `gf2_kernels_simd::bch_encode::BITSLICE_LANES` when bitslicing
-is available, otherwise one. Take the maximum with the active profile
-`encode.bitslice_interleaved_min_batch` when bitslicing is available. Lockstep
-integration contributes its structural frame group and active caller override
-to the same maximum. Defaults derive from kernel groups; installed selectors
-can enlarge them. Shortening uses and forwards this capacity; LDPC/RU retain one.
+BCH/view set $G$ to the largest available encode-family structural frame group:
+`gf2_kernels_simd::bch_encode::BITSLICE_LANES` when bitslicing is available, otherwise one.
+Lockstep integration contributes its structural frame group and active caller override to the same maximum.
+Under @/inv/structural-performance-defaults, the cap is $K=\max(G,\lfloor(C/2)/\max(1,B)\rfloor)$: one structural group is the minimum; the cache budget leaves half for mother scratch and kernel data.
+Here $B$ is the word-rounded staging bytes per mother-message/codeword pair, from the $T(k_m+n_m)$ symbol footprint;
+$C$ is the CPU backend's per-core L2 bytes from `HostCaches::detect` in
+`crates/gf2-core/src/gf2m/byte_table.rs`; share its private detection and fallback through gf2-core.
+The active `encode.bitslice_interleaved_min_batch` contributes to the maximum only when bitslicing is available,
+the family is open (threshold differs from `usize::MAX`) and the threshold is at most $K$.
+Closed or above-cap thresholds contribute nothing: the default tile is $G$, plus any explicit lockstep capacity override.
+Compare the threshold with $K$ before any multiplication by it; checked, allocator-representable size arithmetic returns `CodeError::ShapeMismatch` for unrepresentable capacities, avoiding capacity-overflow panics.
+Shortening forwards this capacity; LDPC/RU retain one. Under @/inv/ergonomic-defaults, dispatch selects the fastest conforming path the workspace can hold.
 
 Common validation in `crates/gf2-coding/src/traits.rs` checks equal slice counts,
 message length `k()`, output length `n()` and symbol field identity. Move BCH's
@@ -148,9 +153,9 @@ and implement `BatchEncoder` for `Shortened<C>` where
 `C: BatchEncoder + BlockEncoder`, with error `C::EncodeError`.
 For `SystematicRestriction`, scratch holds the mother workspace, preallocated
 mother-message/codeword vectors and an immutable zero message. Default capacity
-is the mother's `encode_batch_granularity()`, including active admission
-thresholds, so a full tile reaches eligible multi-frame kernels. Add `encode_workspace_with_batch_capacity(NonZeroUsize)`
-as a caller override returning `Result<ShortenedEncodeWorkspace<C>, C::EncodeError>`.
+is the mother's bounded `encode_batch_granularity()`, including only open, at-or-below-cap
+admission thresholds. `encode_workspace_with_batch_capacity(NonZeroUsize)` is the caller
+override returning `Result<ShortenedEncodeWorkspace<C>, C::EncodeError>`.
 The default worker constructor gives each worker that structural capacity.
 
 Shortening overrides owning serial and parallel calls to size each active
@@ -363,8 +368,10 @@ BCH/view tests cover both layouts and no inherent batch aliases. Extend
 Restore kernel settings; cover zero/ones/seeded/single-set-bit messages at
 0, 1, 63, 64 and the final bit. Assert default mother group sizes, capacities one
 and larger overrides, partial tiles, nesting and default owning/worker staging.
-Install a bitslice threshold above `BITSLICE_LANES`; assert default full tiles
-meet that threshold and match whole-batch family selection when eligible.
+Conformance cases: closed-family bounded default workspace (`usize::MAX`), open threshold at the cap honoured,
+and open threshold one above the cap ignored. Run each on fresh-profile table and fold paths for REQ-02/REQ-03, using sub-threshold batches to keep each selected,
+Assert successful bounded default/worker construction, scalar equality and zero `_into` allocations as below.
+At-cap full tiles meet the threshold and match whole-batch family selection when eligible.
 In `crates/gf2-coding/tests/bch_encode_dispatch_allocation.rs`, count only `_into`
 after construction using `thread_allocations::CountingAllocator` and `count` in
 `dev/tools/thread-allocations/src/lib.rs`. Require zero allocations on structural
