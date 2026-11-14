@@ -27,13 +27,16 @@
 # window exports to every job; a queue command names an input as
 # "$GF2_EXT_ROOT/<id>/...", independent of its worktree's depth.
 #
-# Before its first job the window waits until the one-minute load average is
-# below LOAD_MAX, polling every LOAD_POLL_S seconds for at most LOAD_WAIT_MAX_S
-# seconds. When the bound passes with the host still loaded, it logs that and
+# Before every job that will run, the window waits until the one-minute load
+# average is below LOAD_MAX, polling every LOAD_POLL_S seconds for at most
+# LOAD_WAIT_MAX_S seconds, so a job never starts in the previous job's load
+# tail. When the bound passes with the host still loaded, it logs that and
 # starts the job anyway, so a window is never lost to a busy host; the job's
-# own start line records the load it ran under. GF2_WINDOW_LOAD_MAX,
-# GF2_WINDOW_LOAD_WAIT_MAX_S, GF2_WINDOW_LOAD_POLL_S and GF2_WINDOW_LOADAVG (a
-# file in /proc/loadavg format) override these for testing.
+# own start line records the load it ran under and, when the bound passed,
+# carries load_bound_passed=1 before command=. GF2_WINDOW_LOAD_MAX,
+# GF2_WINDOW_LOAD_WAIT_MAX_S, GF2_WINDOW_LOAD_POLL_S, GF2_WINDOW_LOADAVG (a
+# file in /proc/loadavg format) and GF2_WINDOW_QUEUE (the queue file) override
+# these for testing.
 #
 # A window runs the jobs whose estimated minutes are at most MAX_EST_MIN and
 # logs every longer job as deferred. The default, 5, is the longest pause a
@@ -52,6 +55,7 @@ LOAD_WAIT_MAX_S="${GF2_WINDOW_LOAD_WAIT_MAX_S:-1800}"
 LOAD_POLL_S="${GF2_WINDOW_LOAD_POLL_S:-30}"
 LOADAVG="${GF2_WINDOW_LOADAVG:-/proc/loadavg}"
 MAX_EST_MIN="${GF2_WINDOW_MAX_EST_MIN:-5}"
+bound_passed=0
 
 under_cap() { ((MAX_EST_MIN == 0 || $1 <= MAX_EST_MIN)); }
 if [[ "${1:-}" == --cap-check ]]; then
@@ -73,12 +77,14 @@ if [[ "${1:-}" == --print-ext-root ]]; then
 fi
 mkdir -p "$state"
 log="$state/window.log"
+queue="${GF2_WINDOW_QUEUE:-$here/queue.tsv}"
 
 say() { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >> "$log"; }
 load() { cut -d' ' -f1-3 "$LOADAVG"; }
 
 wait_for_quiet_host() {
     local start=$SECONDS one left
+    bound_passed=0
     say "load wait start max=$LOAD_MAX bound_s=$LOAD_WAIT_MAX_S load=$(load)"
     while true; do
         one=$(cut -d' ' -f1 "$LOADAVG")
@@ -87,6 +93,7 @@ wait_for_quiet_host() {
             return
         fi
         if ((SECONDS - start >= LOAD_WAIT_MAX_S)); then
+            bound_passed=1
             say "load wait bound passed after_s=$((SECONDS - start)) load=$(load); starting anyway"
             return
         fi
@@ -101,7 +108,7 @@ if [[ "${1:-}" == --load-wait-only ]]; then
 fi
 export GF2_BENCH_WINDOW=1
 
-say "window start host=$(hostname) load=$(load) queue_sha256=$(sha256sum "$here/queue.tsv" | cut -d' ' -f1)"
+say "window start host=$(hostname) load=$(load) queue_sha256=$(sha256sum "$queue" | cut -d' ' -f1)"
 
 # The lock wrappers on main release the CCX1 locks when the wrapped command
 # exits (jit:a387825e), so a compiler-cache server they spawned no longer keeps
@@ -128,7 +135,6 @@ if command -v sccache > /dev/null; then
     SCCACHE_IDLE_TIMEOUT=0 sccache --start-server > /dev/null 2>&1 || true
     say "sccache servers: $(pgrep -x sccache | tr '\n' ' ')"
 fi
-waited=0
 while IFS=$'\t' read -r issue worktree minutes command; do
     [[ -z "${issue// /}" || "$issue" == \#* ]] && continue
     key="$(printf '%s\t%s\t%s' "$issue" "$worktree" "$command" | sha256sum | cut -c1-16)"
@@ -144,16 +150,15 @@ while IFS=$'\t' read -r issue worktree minutes command; do
         say "defer issue=$issue key=$key est_min=$minutes (cap $MAX_EST_MIN)"
         continue
     fi
-    if [[ $waited -eq 0 ]]; then
-        wait_for_quiet_host
-        waited=1
-    fi
-    say "job start issue=$issue key=$key est_min=$minutes worktree=$worktree load=$(load) command=$command"
+    wait_for_quiet_host
+    marker=""
+    [[ $bound_passed -eq 1 ]] && marker="load_bound_passed=1 "
+    say "job start issue=$issue key=$key est_min=$minutes worktree=$worktree load=$(load) ${marker}command=$command"
     (cd "$repo/$worktree" && bash -c "$command") >> "$state/$key.out" 2>&1 < /dev/null
     rc=$?
     say "job exit issue=$issue key=$key rc=$rc"
     if [[ $rc -eq 0 ]]; then
         : > "$state/$key.done"
     fi
-done < "$here/queue.tsv"
+done < "$queue"
 say "window end"
