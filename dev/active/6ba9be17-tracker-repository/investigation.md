@@ -29,15 +29,16 @@ stable identifier the manifest cites.
 | F-18 | The invariant projection in `AGENTS.md` lists every invariant identifier between the `jit:invariants` markers | valid-and-open | [AGENTS.md](../../../AGENTS.md) lines 131 to 162; `[projection.invariants]` in the tracker configuration |
 | F-19 | The repository has 67 worktrees, each with its own copy of the store; this repository allows tracker writes from linked checkouts | valid-and-open | `git worktree list`; `[worktree] write_policy = "allow"` in the tracker configuration |
 | F-20 | The history rewrite requires every live branch merged or abandoned and no active session, and checks `jit validate` on the rewritten tree | valid-and-open | [history-rewrite-runbook.md](../b8206228-permanent-statistics/45ecf975/history-rewrite-runbook.md), Preconditions and step 7 |
-| F-21 | The worker dispatch script creates linked worktrees and prints a prompt header; it sets no jit environment | valid-and-open | [dispatch-worker-worktree.sh](../../../.agents/skills/jit-execution-lead/scripts/dispatch-worker-worktree.sh) lines 100 and 133 to 153 |
+| F-21 | The worker dispatch script of the execution-lead skill creates linked worktrees and resolves the store with `jit worktree info --field data_root`; it sets no jit environment | valid-and-open | the worker dispatch script of the execution-lead skill in the user-level skill directory, lines 74 to 77 |
 | F-22 | The pre-commit hook and `scripts/cargo-ci.sh` run the budget and reference checkers | valid-and-open | [pre-commit](../../../.githooks/pre-commit); [cargo-ci.sh](../../../scripts/cargo-ci.sh) lines 279 to 283 |
 | F-23 | jit passes its own environment to a gate checker and removes only an unset `JIT_CONTEXT_FILE`, so `JIT_DATA_DIR` and `JIT_WORKTREE_ROOT` reach the checker | valid-and-open, read from source only | jit gate execution module, where the checker command is built |
 | F-24 | A run that reused a verdict launched no checker: its `commit` is unset and its `origin` names the run that executed the checker | valid-and-open | jit storage record reference, gate run fields `commit` and `origin` |
-| F-25 | The vendored standards scanner and fixer take the project root as argument, exit 2 unless `.jit` exists under it, read `.jit/config.toml` and the document directories from it and run jit there; neither reads `JIT_DATA_DIR` | valid-and-open | [standards-scan.sh](../../../.agents/skills/jit-project-lead/scripts/standards-scan.sh) lines 48 to 63, 86 and 116; [standards-fix.sh](../../../.agents/skills/jit-project-lead/scripts/standards-fix.sh) lines 56 to 90 |
+| F-25 | The jit skills and their scripts live in the user-level skill directory, outside the repository. The standards scanner and fixer of the project-lead skill take the project root as argument, exit 2 unless `.jit` exists under it, read `.jit/config.toml` and the document directories from it and run jit there; neither reads `JIT_DATA_DIR` | valid-and-open | `git show --stat 49c78483d`; the standards scanner of the project-lead skill, lines 73 to 82 and 141; its standards fixer, lines 64 and 95 to 96 |
 | F-26 | The rewrite's path filter considers only paths under the bench results directory and `dev/active/`, and keeps every other path; its pin mapper rewrites `.jit/issues/*.json` of the checkout it runs in; the runbook validates and reseats without a separate tracker | valid-and-open | [rewrite_paths.py](../b8206228-permanent-statistics/45ecf975/rewrite_paths.py) line 4; [map_pins.py](../b8206228-permanent-statistics/45ecf975/map_pins.py) line 14; [history-rewrite-runbook.md](../b8206228-permanent-statistics/45ecf975/history-rewrite-runbook.md) steps 5 to 10 |
 | F-27 | jit resolves an unpinned document link in the code checkout's working tree and a pinned one at its commit in the code checkout's git objects, which linked worktrees share; the reference checker resolves both against the current checkout's files | valid-and-open, read from source only | jit document reference module, `DocumentReferenceRequests::for_reference`; jit storage format reference, section "Data and Worktree Roots"; [check-references.py](../../../scripts/check-references.py) lines 384 to 387 |
 | F-28 | A gate pass that clears an issue's last unpassed gate moves it to done and promotes its dependents | valid-and-open | `jit gate evaluate --help` |
 | F-29 | A gate definition declares its inputs as roots and exclusions, reported by jit's machine-readable gate output | valid-and-open | `jit gate show cargo-ci --json`, field `inputs` |
+| F-30 | The landing script of the execution-lead skill commits `.jit` in the code repository under `jit worktree exec` and refuses a set `JIT_DATA_DIR` | valid-and-open | the landing script of the execution-lead skill in the user-level skill directory, lines 17 to 37 |
 
 ## Not verified
 
@@ -61,7 +62,7 @@ stable identifier the manifest cites.
 `git grep -l -F '.jit/' -- ':!.jit'` lists them. By family: the checkers and
 their configuration under `scripts/`; the gate checkers, prompts and their
 package sources (F-14 to F-16); `AGENTS.md` and `dev/index.md`; the vendored
-jit skills under `.agents/skills/`, which name the data root generically; the
+jit skills in the user-level skill directory, outside the repository (F-25); the
 one-shot `dev/scripts/migrate-link-labels.py`; and dated documents under
 `dev/active/`.
 
