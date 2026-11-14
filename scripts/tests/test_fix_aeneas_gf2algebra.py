@@ -96,5 +96,34 @@ class OpaqueFpWrapperTests(unittest.TestCase):
             MODULE.axiomatize_opaque_fp_wrappers(source)
 
 
+class IteratorModelTests(unittest.TestCase):
+    def source(self):
+        return "\n".join(
+            f'''@[reducible, rust_trait_impl "fixture::{name}"]
+impl_def {name} (T : Type _) : Iterator T T := {{
+  next := {name}.next T
+  zip := unsupported_zip
+  map := unsupported_map
+}}
+'''
+            for name in MODULE.ITERATOR_NAMES
+        )
+
+    def test_map_and_zip_keep_concrete_next_with_model_defaults(self):
+        result = MODULE.normalize_iterator_wrappers(self.source())
+        for name in MODULE.ITERATOR_NAMES:
+            self.assertIn(f"def {name}", result)
+            self.assertIn(f"next := {name}.next T", result)
+            self.assertNotIn(f"axiom {name}", result)
+        self.assertNotIn("unsupported_", result)
+        self.assertNotIn("axiom ", result)
+
+    def test_missing_or_duplicate_dictionary_fails(self):
+        with self.assertRaisesRegex(SystemExit, "expected one"):
+            MODULE.normalize_iterator_wrappers("")
+        with self.assertRaisesRegex(SystemExit, "expected one"):
+            MODULE.normalize_iterator_wrappers(self.source() * 2)
+
+
 if __name__ == "__main__":
     unittest.main()

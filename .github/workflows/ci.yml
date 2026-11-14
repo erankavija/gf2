@@ -216,57 +216,31 @@ jobs:
         curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
         echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
-    - name: Install Rust nightly (for Charon)
-      uses: dtolnay/rust-toolchain@master
+    - name: Install OCaml
+      uses: ocaml/setup-ocaml@v3
       with:
-        toolchain: nightly-2026-06-01
-        components: rustc-dev, llvm-tools-preview, rust-src, miri
+        ocaml-compiler: '5.5.0'
 
-    - name: Cache Charon binary
-      id: cache-charon
-      uses: actions/cache@v4
-      with:
-        path: ~/.cargo/bin/charon*
-        key: charon-patched-487f0320-${{ hashFiles('patches/charon-487f0320-implied-clause.patch') }}
+    - name: Build pinned Charon and Aeneas
+      run: ./scripts/install-lean-tools.sh
 
-    - name: Install Charon (patched)
-      if: steps.cache-charon.outputs.cache-hit != 'true'
+    - name: Test extraction failure handling and post-processing
       run: |
-        git clone https://github.com/AeneasVerif/charon.git /tmp/charon
-        cd /tmp/charon
-        git checkout 487f0320
-        git apply $GITHUB_WORKSPACE/patches/charon-487f0320-implied-clause.patch
-        cd charon
-        cargo +nightly-2026-06-01 install --path . --locked
-
-    - name: Install OCaml and Aeneas
-      run: |
-        sudo apt-get update && sudo apt-get install -y opam
-        opam init --disable-sandboxing --no-setup --auto-setup --yes
-        opam switch create 5.2.1
-        eval $(opam env)
-        opam install ppx_deriving ppx_deriving_yojson visitors easy_logging zarith yojson core_unix \
-          odoc ocamlgraph menhir unionFind zarith progress domainslib dune --yes
-        git clone https://github.com/AeneasVerif/aeneas.git /tmp/aeneas
-        cd /tmp/aeneas
-        git checkout 5220259c
-        make setup-charon && make build-dev
-        cp /tmp/aeneas/bin/aeneas ~/.cargo/bin/
+        python3 -m unittest discover -s scripts/tests -p 'test_*aeneas*.py'
+        python3 -m unittest discover -s scripts/tests -p test_verify_lean.py
 
     - name: Cache Lake build
       uses: actions/cache@v4
       with:
         path: proofs/.lake
-        key: lean-lake-${{ hashFiles('proofs/lean-toolchain', 'proofs/lakefile.lean') }}
+        key: lean-lake-${{ hashFiles('proofs/lean-toolchain', 'proofs/lakefile.lean', 'proofs/lake-manifest.json') }}
 
     - name: Run verification pipeline
-      run: |
-        eval $(opam env)
-        AENEAS_LEAN_DIR=/tmp/aeneas/backends/lean ./scripts/verify-lean.sh
+      run: ./scripts/verify-lean.sh
 
     - name: Verify hand-written proof files are up to date
       run: |
-        git diff --exit-code proofs/Gf2Core/Proofs/ proofs/Gf2Core/FunsExternal.lean || {
+        git diff --exit-code proofs/Gf2Core/Proofs/ proofs/Gf2Algebra/Proofs/ proofs/Gf2Core/FunsExternal.lean || {
           echo "ERROR: Hand-written proof files were modified by the pipeline."
           echo "This means committed proofs don't match the generated code."
           echo "Run ./scripts/verify-lean.sh locally and commit the updated files."
