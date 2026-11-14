@@ -5,6 +5,7 @@
   element (< 2^m) and matches the mathematical specification mul_raw_spec.
 -/
 import Aeneas
+import Gf2Core.Proofs.ResultSpec
 import Gf2Core.Funs
 import Gf2Core.Proofs.Gf2mDefs
 import Gf2Core.Proofs.Gf2mProgress
@@ -140,25 +141,25 @@ theorem gf2m_mul_raw_bound (a b : Std.U64) (m : Std.Usize) (poly : Std.U64)
     · simp only [hb0, ite_false]
       have hloop_wp := Gf2mProgress.gf2m_mul_raw_loop_progress
         b m poly 0#u64 a 0#usize hparams (Nat.zero_le _)
-      obtain ⟨loop_result, hloop_eq, _⟩ := spec_imp_exists hloop_wp
-      simp only [hloop_eq, bind_tc_ok]
+      obtain ⟨loop_result, hloop_eq, _⟩ := result_spec_exists hloop_wp
+      simp only [hloop_eq, bind_ok]
       have hm_lt_64 : m.val < 64 := by have := hparams.m_le; omega
       have h_shl : (1#u64 <<< m) ⦃ r => r.val = 2 ^ m.val ⦄ := by
-        progress as ⟨r, hr_val, _⟩
+        step as ⟨r, hr_val, _⟩
         simp only [Nat.shiftLeft_eq, one_mul] at hr_val
         have h_lt : 2 ^ m.val < Std.U64.size := by
           calc 2 ^ m.val ≤ 2 ^ 63 := Nat.pow_le_pow_right (by norm_num) hparams.m_le
             _ < Std.U64.size := by native_decide
         rw [Nat.mod_eq_of_lt h_lt] at hr_val; exact hr_val
-      obtain ⟨mask_base, hmb_eq, hmb_val⟩ := spec_imp_exists h_shl
-      simp only [hmb_eq, bind_tc_ok]
+      obtain ⟨mask_base, hmb_eq, hmb_val⟩ := result_spec_exists h_shl
+      simp only [hmb_eq, bind_ok]
       have hmb_ge : (1#u64 : Std.U64).val ≤ mask_base.val := by
         rw [hmb_val]; exact Nat.one_le_two_pow
       have h_sub : (mask_base - 1#u64) ⦃ r => r.val = 2 ^ m.val - 1 ⦄ := by
-        progress as ⟨r, hr⟩
+        step as ⟨r, hr⟩
         rw [hmb_val] at hr; linarith
-      obtain ⟨mask, hmask_eq, hmask_val⟩ := spec_imp_exists h_sub
-      simp only [hmask_eq, bind_tc_ok]
+      obtain ⟨mask, hmask_eq, hmask_val⟩ := result_spec_exists h_sub
+      simp only [hmask_eq, bind_ok]
       refine ⟨_, rfl, ?_⟩
       rw [UScalar.val_and]
       apply Nat.and_lt_two_pow
@@ -217,8 +218,8 @@ theorem loop_correct
       have hm_le := hparams.m_le
       have hi1_lt_64 : i1.val < 64 := by scalar_tac
       -- b >>> i1
-      progress as ⟨shifted_b, hshb_val, _⟩
-      simp only [Std.lift, bind_tc_ok]
+      step as ⟨shifted_b, hshb_val, _⟩
+      simp only [Std.lift, bind_ok]
       -- Get val
       have hshb : shifted_b.val = b.val / 2 ^ i1.val := by
         rw [hshb_val, Nat.shiftRight_eq_div_pow]
@@ -228,15 +229,15 @@ theorem loop_correct
       <;> (
         rename_i h_bit
         -- m - 1
-        progress as ⟨m1, hm1_val, _⟩
+        step as ⟨m1, hm1_val, _⟩
         -- temp1 >>> m1
         have hm1_lt : m1.val < 64 := by omega
-        progress as ⟨shifted_temp, hst_val, _⟩
+        step as ⟨shifted_temp, hst_val, _⟩
         have hm1_eq : m1.val = m.val - 1 := by scalar_tac
         have hst : shifted_temp.val = temp1.val / 2 ^ (m.val - 1) := by
           rw [hst_val, Nat.shiftRight_eq_div_pow, hm1_eq]
         -- temp1 <<< 1
-        progress as ⟨temp_shifted, hts_val, _⟩
+        step as ⟨temp_shifted, hts_val, _⟩
         have hts : temp_shifted.val = temp1.val * 2 := by
           rw [hts_val]; simp [Nat.shiftLeft_eq]
           rw [Nat.mod_eq_of_lt]
@@ -247,7 +248,7 @@ theorem loop_correct
         -- Temp conditional + i+1
         split <;> (
           rename_i h_temp
-          progress as ⟨i_next, hi_next⟩
+          step as ⟨i_next, hi_next⟩
           -- Extract bit test results from Aeneas conditions
           simp [bne_iff_ne] at h_bit h_temp
           -- h_bit: either shifted_b.val % 2 = 1 or = 0 (result branch)
@@ -333,7 +334,7 @@ theorem loop_correct
             have : i1.val < m.val := by scalar_tac
             omega))
     · -- Loop exits: i1 ≥ m
-      simp only [hlt, ite_false, spec, theta, wp_return]
+      simp only [hlt, ite_false, spec_ok]
       have hi1_ge : i1.val ≥ m.val := by scalar_tac
       -- specLoop at i1 ≥ m returns (result1, temp1)
       rw [specLoop_done _ _ _ _ _ _ (by omega)] at hinv_state
@@ -382,27 +383,27 @@ theorem gf2m_mul_raw_correct (a b : Std.U64) (m : Std.Usize) (poly : Std.U64)
         rfl
       have h_loop := loop_correct a b m poly 0#u64 a 0#usize hparams ha h_loop_inv
       -- Get existential
-      obtain ⟨loop_result, hloop_eq, hloop_val, hloop_bound⟩ := spec_imp_exists h_loop
-      simp only [hloop_eq, bind_tc_ok]
+      obtain ⟨loop_result, hloop_eq, hloop_val, hloop_bound⟩ := result_spec_exists h_loop
+      simp only [hloop_eq, bind_ok]
       -- 1 <<< m
       have hm_lt_64 : m.val < 64 := by have := hparams.m_le; omega
       have h_shl : (1#u64 <<< m) ⦃ r => r.val = 2 ^ m.val ⦄ := by
-        progress as ⟨r, hr_val, _⟩
+        step as ⟨r, hr_val, _⟩
         simp only [Nat.shiftLeft_eq, one_mul] at hr_val
         have h_lt : 2 ^ m.val < Std.U64.size := by
           calc 2 ^ m.val ≤ 2 ^ 63 := Nat.pow_le_pow_right (by norm_num) hparams.m_le
             _ < Std.U64.size := by native_decide
         rw [Nat.mod_eq_of_lt h_lt] at hr_val; exact hr_val
-      obtain ⟨mask_base, hmb_eq, hmb_val⟩ := spec_imp_exists h_shl
-      simp only [hmb_eq, bind_tc_ok]
+      obtain ⟨mask_base, hmb_eq, hmb_val⟩ := result_spec_exists h_shl
+      simp only [hmb_eq, bind_ok]
       -- mask_base - 1
       have hmb_ge : (1#u64 : Std.U64).val ≤ mask_base.val := by
         rw [hmb_val]; exact Nat.one_le_two_pow
       have h_sub : (mask_base - 1#u64) ⦃ r => r.val = 2 ^ m.val - 1 ⦄ := by
-        progress as ⟨r, hr⟩
+        step as ⟨r, hr⟩
         rw [hmb_val] at hr; linarith
-      obtain ⟨mask, hmask_eq, hmask_val⟩ := spec_imp_exists h_sub
-      simp only [hmask_eq, bind_tc_ok]
+      obtain ⟨mask, hmask_eq, hmask_val⟩ := result_spec_exists h_sub
+      simp only [hmask_eq, bind_ok]
       -- Final: loop_result &&& mask
       refine ⟨_, rfl, ?_, ?_⟩
       · -- Correctness: (loop_result &&& mask).val = mul_raw_spec

@@ -130,3 +130,7 @@ path = [
   "dev/tools/tuning-campaign-support/config/dbd8787d/premeasurement-protocol.md",
 ]
 reason = "pre-registered protocols of finished campaigns; the campaign identity pins each by digest, so they keep the paths and commands of their run"
+
+[[exception]]
+path = ".jit/issues/7cc591a0-86e2-4d3c-837b-604cb9dda162.json"
+reason = "its criterion forbids hardcoding the host's /tmp directory and must name that directory as written"

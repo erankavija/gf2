@@ -2,11 +2,11 @@ import Lake
 open Lake DSL
 
 -- Aeneas standard library (provides `Aeneas`, `Aeneas.Std`, etc.)
-require aeneas from git "https://github.com/AeneasVerif/aeneas.git" @ "5220259c236e10b7abadc086fdd1b2c507f9e6bb" / "backends" / "lean"
+require aeneas from git "https://github.com/AeneasVerif/aeneas.git" @ "0d21a9ec7bbbb110110cacc14464a47fd71c8705" / "backends" / "lean"
 
 -- Mathlib (also a transitive dep via Aeneas, declared explicitly for clarity)
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.30.0-rc2"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.36.0-rc2"
 
 package gf2core where
   leanOptions := #[

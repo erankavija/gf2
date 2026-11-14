@@ -1,183 +1,78 @@
-# Aeneas/Charon Workarounds
+# Rust-to-Lean extraction boundaries
 
-Known issues and workarounds for the Rust→Lean4 translation pipeline.
+The installation uses unmodified upstream Charon and Aeneas. The Aeneas
+revision in `proofs/lakefile.lean` is authoritative; its `charon-pin` selects
+Charon. `scripts/install-lean-tools.sh` reads both pins and Charon's Rust
+nightly requirement. Lean and Mathlib follow the selected Aeneas backend.
 
-## Duplicate field names in FiniteField struct
+## Duplicate trait fields
 
-**Issue**: Aeneas generates duplicate field names when a trait has supertype
-bounds on multiple associated types. The `FiniteField` trait requires `Clone`,
-`Eq`, etc. on `Self`, `Self::Characteristic`, and `Self::Wide`, producing three
-fields all named `corecloneCloneInst`, etc.
+Aeneas gives identically named fields to bounds on `FiniteField::Self`,
+`Characteristic`, and `Wide`. `scripts/fix-aeneas-dupes.py` disambiguates these
+fields and their projections with `Characteristic` and `Wide` suffixes.
+It does not replace function bodies or synthesize default methods.
 
-**Fix**: `scripts/fix-aeneas-dupes.py` renames the duplicates with
-`Characteristic` and `Wide` suffixes (e.g., `corecloneCloneCharacteristicInst`).
-This runs automatically as Step 3 of `scripts/verify-lean.sh`.
+## External models
 
-## FunsExternal.lean hand-edited definitions
+`Gf2Core/FunsExternal.lean` is hand-maintained. It provides concrete definitions
+for wrapping negation and checked U128 addition/add-assignment. The default
+`FiniteField::theorem_4_operand_bound` returns `u128::MAX`, matching
+`crates/gf2-core/src/field/traits.rs`. Making this default concrete lets
+Aeneas's `impl_def` resolve the extension-field dictionaries without a
+recursive reference through an opaque default.
 
-`Gf2Core/FunsExternal.lean` replaces Aeneas axioms with concrete definitions for
-`wrapping_neg` and U128 `add`/`add_assign`. The `scripts/verify-lean.sh` script only
-seeds from the template on first run; it never overwrites the hand-edited file.
+Other external declarations are trusted axioms. They include formatting,
+hashing, scalar queries, opaque trait defaults, and batch helpers outside the
+proved scalar arithmetic. Aeneas's unsuccessful `Debug::fmt` translations
+also appear as external axioms. The generated templates list the current
+external signatures. Regeneration preserves the hand-maintained core file
+and regenerates the algebra external file from its template.
 
-The file holds no `overflowing_sub` override: Aeneas provides it natively as a
-pure `U64 → U64 → (U64 × Bool)` (consumed via `lift`), and a `Result`-returning
-override conflicts with it.
+## Algebra iterator dictionaries
 
-## Opaque modules
+Aeneas emits Rust iterator dictionary fields that its Lean `Iterator` model
+does not contain. `scripts/fix-aeneas-gf2algebra.py` keeps the concrete `next`
+implementations for `Map` and `Zip`; the remaining modeled fields use
+upstream's defaults. These dictionaries introduce no additional axioms.
 
-The following modules are marked `--opaque` during Charon extraction because
-they are outside the verification scope or cause extraction issues:
+Packed7Vec arithmetic uses indexed loops, which Aeneas translates without
+a mutable-iterator backward function. The postprocessor checks the expected
+dictionary shapes and fails on drift.
 
-| Module | Reason |
-|--------|--------|
-| `gf2_core::field` | HRTB `for<'a>` bounds on `FiniteField` trait |
-| `gf2_core::gf2m::field` | Runtime field parameters, `Arc<FieldParams>`, `Vec<u64>` storage |
-| `gf2_core::gf2m::generation` | Uses `gf2m::field` types |
-| `gf2_core::gf2m::uint_ext` | Sealed trait, out of scope |
-| `gf2_core::gf2m::thread_safety_tests` | Test module |
-| `gf2_core::bitvec` | Out of scope (bit manipulation, not field arithmetic) |
-| `gf2_core::bitslice` | Out of scope |
-| `gf2_core::matrix` | Out of scope |
-| `gf2_core::sparse` | Out of scope |
-| `gf2_core::alg` | Out of scope |
-| `gf2_core::compute` | Rayon parallelism, not supported by Aeneas |
-| `gf2_core::kernels` | SIMD dispatch, not supported by Aeneas |
-| `gf2_core::primitive_polys` | Static data, not needed |
-| `gf2_core::io` | Serde, not supported by Aeneas |
-| `gf2_core::macros` | Proc macros, not relevant |
+The same pass retains the explicit allowlist of opaque `Fp` operator
+wrappers reached through the `PackedField<Fp<P>>` bound. Their bodies are
+outside the algebra extraction. The generated `FiniteField` dictionary and
+usable Neg wrapper remain concrete. The packed-element proofs operate on
+words and never project the opaque operator wrappers.
 
-The `field::traits::FiniteField` and `ConstField` trait *declarations* are
-extracted (needed for the `Fp` impl), but their bodies are opaque.
+## Extraction scope
 
-## gfpn/ extraction and verification
+The two Charon invocations in `scripts/verify-lean.sh` define the authoritative
+`--start-from` and `--opaque` sets. The core targets include scalar prime and
+extension-field arithmetic and the free `gf2m::mul_raw` functions. Runtime
+field containers, SIMD dispatch, and unrelated modules stay opaque.
 
-The `gfpn/` module (`QuadraticExt`, `CubicExt`) is fully extracted and
-verified. It needs the implied-clause Charon patch of the tool-version table
-and the post-processing workarounds described above. See
-[`docs/how-to/formal-verification.md`](../docs/how-to/formal-verification.md) for the workflow.
+`cfg(verify_lean)` preserves the extraction interface: `ExtConfig` exposes
+`NON_RESIDUE()` as a method, and `Fp` uses scalar trait defaults instead of
+SIMD hooks. Ordinary Rust builds retain their public associated constant and
+runtime dispatch. These extraction-specific Rust branches remain in use.
 
-Charon emits 13 benign "Type error after transformations" warnings about
-mismatched generic arg counts for `CubicExt`/`QuadraticExt` (expected 4, got 7).
-These are harmless — Aeneas handles them correctly via Lean4 implicit argument
-inference.
+The algebra arithmetic proofs target the inherent `add`, `sub`, `mul`, and
+`neg` wrappers of the packed field elements. The Packed7 lookup tables are
+opaque constants with source-faithful characterizations, cross-checked by
+the exhaustive Rust LUT contract tests (@/issue/30e98ef1). Their initializers
+are outside extraction. The bipedal proof covers `neg`, rather than the
+original sketch's `div`, because the production `PackedField` interface
+provides `neg` and has no division method (@/issue/f05ffbe1).
 
-## ExtConfig associated const extraction
+## Proof API
 
-Charon (487f0320) rejects `ExtConfig::NON_RESIDUE` during trait
-declaration checking because the associated const's type is the associated type
-`Self::BaseField`; the diagnostic is "Found incorrect clause var" followed by a
-Charon stack overflow. During `scripts/verify-lean.sh` only, the script passes
-`--cfg=verify_lean`, and `ExtConfig` exposes the same β accessor as a trait
-method (`NON_RESIDUE()`) rather than that associated const. The uppercase method
-name is deliberate: it preserves the generated Lean trait-field name used by the
-normal associated const, minimizing extraction-only proof drift. Normal Rust
-builds keep the public associated const API.
+The proofs use Aeneas's `step` tactic and `spec_ok`/`bind_ok` laws for its
+coinductive `Result`. `Gf2Core/Proofs/ResultSpec.lean` proves that a total
+Rust specification yields a return value and an equality to `ok`; failure
+and divergence contradict total correctness. Field models use that result
+to recover pure operations. It introduces no axiom.
 
-The same Charon version can overflow after the const workaround when starting
-from the whole crate. `scripts/verify-lean.sh` therefore starts extraction from the
-proof-relevant modules (`gfp`, `gfpn`, and `gf2m::mul_raw`) instead of from
-`crate`. The `gfpn::batch`
-module remains opaque because it is a vectorized batching layer over the scalar
-quadratic/cubic arithmetic and pulls iterator models that this Aeneas pin does
-not provide. This keeps the intended production scalar field arithmetic
-transparent while avoiding unrelated public items.
-
-If Aeneas emits an opaque `Gf2mElement_` external signature that refers to the
-sealed `UintExt` trait, `scripts/verify-lean.sh` adds only that opaque trait axiom to
-`Gf2Core/TypesExternal.lean` and removes any duplicate generated `UintExt` declaration
-from `Gf2Core/Types.lean`. This is outside the `gfp/` and `gfpn/` proof target.
-
-## FiniteField default method projection extraction
-
-Aeneas 5220259c can generate `FiniteField` implementation records that project
-default trait methods from impl-specific constants it never emitted. The
-delayed product-sum hooks `mul_product_sum_wide`/`reduce_product_sum_wide` of
-`GoldilocksFp`, `QuadraticExt`, and `CubicExt` are the affected definitions.
-
-The production Rust impls for those three field families explicitly forward
-the hooks to the same canonical wide path used by the trait defaults:
-`mul_product_sum_wide` calls `mul_to_wide`, and `reduce_product_sum_wide` calls
-`reduce_wide`. This is intentionally narrow: `gfp/` and scalar `gfpn/`
-arithmetic remain transparent to Charon/Aeneas, and the specialized
-storage-domain product-sum override for generic `Fp<P>` is unaffected.
-
-## gf2m/ selective extraction
-
-`Gf2mField_<V>` holds `Arc<FieldParams>` and `Option<Vec<u16>>`, which keep
-`gf2m::field` opaque. The proof target for `mul_raw` (schoolbook GF(2^m)
-multiplication) is the monomorphized u64 free function `gf2m_mul_raw` in
-`crates/gf2-core/src/gf2m/mul_raw.rs`.
-
-**Key**: Charon's `--opaque gf2_core::gf2m` prevents exploring the module
-entirely, so `--include gf2_core::gf2m::mul_raw` within it has no effect.
-The solution is to make individual submodules opaque (`gf2m::field`,
-`gf2m::generation`, `gf2m::uint_ext`, `gf2m::thread_safety_tests`) while
-leaving `gf2m::mul_raw` transparent.
-
-The extracted loop uses Aeneas's `loop` combinator with `(result, temp, i)`
-state. The Rust loop is `while i < m`, in place of a `for i in 0..m` over a
-runtime bound, and extracts cleanly.
-
-## Const generics work
-
-`Fp<const P: u64>` extracts correctly — Charon handles const generics and
-Aeneas translates `P` as a Lean4 parameter `(P : Std.U64)`. `Fp` needs no
-monomorphization wrapper.
-
-## gf2-algebra bipedal F_3 extraction
-
-The `Gf2Algebra/` Lean library is a second Aeneas extraction covering only the
-bipedal F_3 packed arithmetic at `gf2_algebra::packed::bipedal3::Bipedal3`,
-needed for the D2 V1 correctness proof. It is verified in lock-step with the
-existing `Gf2Core/` extraction via the same `scripts/verify-lean.sh`. The
-Bipedal3 V1 proofs (`proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean`)
-target the four inherent wrappers
-`Bipedal3::{add,sub,mul,neg}_inherent` defined in
-`crates/gf2-algebra/src/packed/bipedal3.rs`. Each wrapper is a single tail-call
-into the corresponding `PackedField<Fp<3>>` trait method on `Bipedal3`; the
-arithmetic formula lives in the trait impl. Targeting the inherent wrappers
-gives a stable, non-dispatch-indirected proof target (D2 sketch §5, Option A).
-
-`scripts/fix-aeneas-gf2algebra.py` rewrites the transitively-extracted
-`gf2_core::gfp::Fp` operator wrappers as `axiom`s. These impls are pulled in by
-Charon because `PackedField<Fp<3>>` has `Fp<3> : FiniteField` as a parent bound,
-but they are never elaborated at runtime by the bipedal3 ops (which are pure
-bitwise on `Std.U64`). Their bodies reference definitions such as
-`gf2_core.gfp.Fp.Insts.CoreOpsArithAddFpFp.add` that are opaque in the narrow
-extraction and would otherwise surface as `Unknown constant`.
-
-The `FiniteField` dictionary itself is a non-recursive generated `def` and is
-left intact. An explicit allowlist axiomatizes the ten wrappers whose method
-bodies are opaque: owned and shared add/sub/mul/div, plus owned and shared
-add-assign. The generated Neg wrapper remains a transparent `def`. Missing,
-duplicate, or unknown Fp `CoreOps` dictionaries stop post-processing so
-extraction drift cannot silently widen the workaround; the bipedal3 proofs
-never project the ten allowlisted dictionaries.
-
-The gf2-algebra `Gf2Algebra/FunsExternal.lean` is always regenerated from the
-auto-generated template (no hand-edits are needed: bipedal3 uses only `&&&`,
-`|||`, `^^^` on `Std.U64`, never any wrapping arithmetic or U128 ops).
-
-### V1 Proof divergence: `neg` in place of `div`
-
-The D2 sketch §1 states the V1 contract over `{add, sub, mul, div}`. The
-production code at `crates/gf2-algebra/src/packed/bipedal3.rs` exposes
-`{add, sub, mul, neg}` — the trait surface
-(`PackedField` in `crates/gf2-algebra/src/packed/mod.rs`) has no `div` method, so there is no production
-function to verify against for `div`. Per the verification-work convention
-(sketch supersedes the JIT description, but production code supersedes both
-when the sketch names a function that does not exist), V1 proves `neg`
-instead. The substitution is benign: the sketch §3.4 already factors `div` as
-"the easy op, dispatched by the same `decide` truth table" — `neg` plays the
-same role (one truth table, no Result-monad branching). The four `*_correct`
-theorems plus the headline `bipedal3_correct_vs_canonical_F3` corollary cover
-the same four ops as the production trait surface.
-
-## Tool versions
-
-| Tool | Version | Pin |
-|------|---------|-----|
-| Charon | v0.1.217 | local patched build, base `487f0320` + 1 implied-clause fix |
-| Aeneas | 5220259c | git rev `5220259c`; declares Charon `487f0320` via `charon-pin`; needs OCaml dep `ppx_deriving_yojson` |
-| Lean4 | v4.30.0-rc2 | via `proofs/lean-toolchain` |
-| Rust nightly | nightly-2026-06-01 | required by Charon for rustc internals (components incl. `miri`) |
+The [formal-verification guide](../docs/how-to/formal-verification.md)
+describes installation, regeneration, and the strict hand-written-proof
+build gate.
