@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Check commit subjects against the convention documented in AGENTS.md."""
+# Check the first line verbatim; commit-msg cannot see CLI --cleanup overrides.
+# Leading comments/blank lines are rejected even when Git cleanup would strip them.
 
 from __future__ import annotations
 
@@ -36,10 +38,7 @@ def load_allowed_types(root: Path = ROOT) -> tuple[str, ...]:
 
 
 def first_subject(message: str) -> str | None:
-    for line in message.splitlines():
-        if not line.startswith("#"):
-            return line
-    return None
+    return next(iter(message.splitlines()), None)
 
 
 def allowed_subject_pattern(allowed_types: tuple[str, ...]) -> re.Pattern[str]:
@@ -89,9 +88,29 @@ def self_test() -> int:
         ),
         ("71-character subject", subject_71 + "\n", True),
         (
-            "commented template",
-            "# commit message template\n# another comment\nfix(jit:c34e8203): subject after comments\n",
+            "editor template with trailing comments",
+            "fix(jit:c34e8203): subject before comments\n\n# commit message template\n# another comment\n",
             True,
+        ),
+        (
+            "-m leading comment retained by default cleanup",
+            "# x\nfeat(jit:abc): y\n",
+            False,
+        ),
+        (
+            "-m leading comment paragraph retained by default cleanup",
+            "# x\n\nfeat(jit:abc): y\n",
+            False,
+        ),
+        (
+            "-F leading comments retained by default cleanup",
+            "# commit message template\n# another comment\nfix(jit:c34e8203): subject after comments\n",
+            False,
+        ),
+        (
+            "custom comment character on first line",
+            "; comment\nfix(jit:c34e8203): subject after comments\n",
+            False,
         ),
         ("72-character subject", subject_71 + "x\n", False),
         ("unknown type", "wip(jit:abcd1234): x\n", False),
@@ -104,7 +123,7 @@ def self_test() -> int:
     for name, message, accepted in cases:
         faults = subject_faults(message, hook_types)
         if bool(faults) == accepted:
-            expectation = "rejection" if accepted else "acceptance"
+            expectation = "acceptance" if accepted else "rejection"
             raise SystemExit(
                 f"check-commit-subject: self-test: {name}: expected {expectation}, got {faults}"
             )
