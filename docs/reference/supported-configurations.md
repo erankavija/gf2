@@ -135,8 +135,10 @@ script requires `hipcc`. Build it directly with
 `cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml`.
 The `hip` features of `gf2-coding`, `gf2-algebra` and `gf2-sim` depend on it
 by path, so `cargo build --workspace --all-features`
-also requires ROCm; without ROCm, select features explicitly, as
-[`scripts/cargo-ci.sh`](../../scripts/cargo-ci.sh) does.
+also requires ROCm.
+[`scripts/cargo-features.sh`](../../scripts/cargo-features.sh) prints the
+host's workspace feature flags, `--all-features` with ROCm and a set without
+the `hip` features otherwise.
 
 ## Limitations
 
