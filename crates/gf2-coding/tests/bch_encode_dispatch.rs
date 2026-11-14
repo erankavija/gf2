@@ -195,6 +195,7 @@ fn registered_families_agree_on_the_corpus_rows() {
     for row in ROWS {
         check_families_agree(row);
     }
+    with_scalar_kernels(|| ROWS.iter().for_each(check_families_agree));
 }
 
 #[test]
@@ -202,6 +203,121 @@ fn registered_families_agree_at_packed_word_boundaries() {
     for row in WORD_BOUNDARY_ROWS {
         check_families_agree(row);
     }
+    with_scalar_kernels(|| WORD_BOUNDARY_ROWS.iter().for_each(check_families_agree));
+}
+
+/// Batch lengths at the packed word boundaries, on the two short rows whose
+/// messages fit in one 64-coefficient block.
+#[test]
+fn registered_families_agree_at_word_boundary_batch_lengths_on_the_short_rows() {
+    const BATCHES: &[usize] = &[0, 1, 63, 64, 65];
+    for row in &ROWS[..2] {
+        check_families_agree_at(row, BATCHES);
+    }
+    with_scalar_kernels(|| {
+        ROWS[..2]
+            .iter()
+            .for_each(|row| check_families_agree_at(row, BATCHES))
+    });
+}
+
+/// Narrow-sense codes either side of one and several message blocks:
+/// $k = 1$ ($m = 7$, $t = 32$), $k = 63$ ($m = 8$, $t = 30$), $k = 64$ (B2)
+/// and $k = 193 = 3 \cdot 64 + 1$ ($m = 9$, $t = 43$).
+const DIMENSION_BOUNDARY_ROWS: &[(Row, usize)] = &[
+    (
+        Row {
+            name: "k1",
+            degree: 7,
+            modulus: 0b1000_0011,
+            designed_distance: 65,
+            batches: &[],
+        },
+        1,
+    ),
+    (
+        Row {
+            name: "k63",
+            degree: 8,
+            modulus: 0b1_0001_1101,
+            designed_distance: 61,
+            batches: &[],
+        },
+        63,
+    ),
+    (
+        Row {
+            name: "k64",
+            degree: 7,
+            modulus: 0b1000_0011,
+            designed_distance: 21,
+            batches: &[],
+        },
+        64,
+    ),
+    (
+        Row {
+            name: "k193",
+            degree: 9,
+            modulus: 0b10_0001_0001,
+            designed_distance: 87,
+            batches: &[],
+        },
+        193,
+    ),
+];
+
+/// Every family writes the reference codeword of a message whose only set
+/// coefficient has degree 0, 1, 63, 64 or $k - 1$, where that degree exists,
+/// so the top partial block, a lone block and the first whole block below it
+/// are each the one the fold starts from.
+fn check_single_coefficient_messages() {
+    for (row, dimension) in DIMENSION_BOUNDARY_ROWS {
+        let code = build(row);
+        assert_eq!(code.k(), *dimension, "{}", row.name);
+        let k = code.k();
+        let mut degrees: Vec<usize> = [0, 1, 63, 64, k - 1]
+            .into_iter()
+            .filter(|&degree| degree < k)
+            .collect();
+        degrees.dedup();
+        for &layout in LAYOUTS {
+            // Ascending places degree d at user coordinate d, descending at
+            // k - 1 - d.
+            let batch_messages: Vec<BitVec> = degrees
+                .iter()
+                .map(|&degree| {
+                    let mut message = BitVec::zeros(k);
+                    let user = match layout {
+                        SystematicLayout::MessageParityAscending => degree,
+                        SystematicLayout::MessageParityDescending => k - 1 - degree,
+                        other => panic!("no degree placement for {other:?}"),
+                    };
+                    message.set(user, true);
+                    message
+                })
+                .collect();
+            let reference = encode_under(&code, EncodeFamily::REFERENCE, &batch_messages, layout);
+            for &family in EncodeFamily::REGISTERED {
+                if !code.encode_family_available(family, layout) {
+                    continue;
+                }
+                assert_eq!(
+                    encode_under(&code, family, &batch_messages, layout),
+                    reference,
+                    "{} under {family}, {layout:?}, degrees {degrees:?}, {} kernels",
+                    row.name,
+                    test_support::selected_encode_kernel()
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn registered_families_agree_on_single_coefficient_messages_at_dimension_boundaries() {
+    check_single_coefficient_messages();
+    with_scalar_kernels(check_single_coefficient_messages);
 }
 
 #[test]

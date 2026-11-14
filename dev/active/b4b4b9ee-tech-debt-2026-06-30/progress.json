@@ -1,7 +1,7 @@
 {
  "epic_id": "b4b4b9ee-7a92-4c6f-84fd-b7caf3a46a8e",
  "epic_short_id": "b4b4b9ee",
- "current_wave": 5,
+ "current_wave": 6,
  "waves": [
   {
    "wave_number": 1,
@@ -284,7 +284,7 @@
      "title": "Field charpoly and minpoly contract gaps reported by the comment sweep",
      "classification": "implementation",
      "priority": "normal",
-     "status": "in_progress: gates due"
+     "status": "done"
     },
     {
      "id": "174295c9-674a-426a-90ce-96f34eee2bf1",
@@ -404,7 +404,7 @@
      "title": "Lift the index-ordered parallel dispatch primitive from gf2-sim into gf2-core compute",
      "classification": "implementation",
      "priority": "normal",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "299132b7-aee0-4828-afc4-aa9de39388a0",
@@ -580,7 +580,7 @@
      "title": "Reconcile the --all-features commands of AGENTS.md with hipcc",
      "classification": "implementation",
      "priority": "normal",
-     "status": "in_progress: gates due; 2e6e3557 waits on it"
+     "status": "done"
     },
     {
      "id": "954537d9-7009-4b15-9aec-0016d580ff6f",
@@ -1400,7 +1400,7 @@
     },
     {
      "short_id": "32a8bc0e",
-     "status": "in_progress: rework 1 done, re-gate due; gated branch"
+     "status": "done"
     },
     {
      "short_id": "e29fd776",
@@ -1412,7 +1412,7 @@
     },
     {
      "short_id": "1b7228b9",
-     "status": "in_progress: reviews passed after rework 1; merged-tree cargo-ci and HIP-crate nextest due before landing"
+     "status": "done"
     },
     {
      "short_id": "22bb2dcd",
@@ -1432,11 +1432,11 @@
     },
     {
      "short_id": "5a3abee1",
-     "status": "in_progress: gates due"
+     "status": "done"
     },
     {
      "short_id": "51f299d2",
-     "status": "in_progress: gates due; 2e6e3557 waits on it"
+     "status": "done"
     }
    ]
   },
@@ -1474,6 +1474,46 @@
      "classification": "implementation",
      "priority": "normal",
      "status": "pending: owner approved option A 2026-11-13 (cargo-features.sh in workflow; tuning-profile kept in clippy); starts after 51f299d2 lands"
+    }
+   ]
+  },
+  {
+   "wave_number": 6,
+   "issues": [
+    {
+     "short_id": "5c1c87b7",
+     "title": "Tests that assert only that an output file exists",
+     "status": "done"
+    },
+    {
+     "short_id": "c34e8203",
+     "title": "Versioned commit-msg hook for the subject convention",
+     "status": "in_progress: cargo-ci timed out, code-review pending"
+    },
+    {
+     "short_id": "574ed420",
+     "title": "Make rustc under cargo-ci draw from the host cargo pool",
+     "status": "in_progress: evidence partial, see issue"
+    },
+    {
+     "short_id": "b5782224",
+     "title": "Rician SimulationRunner test fails intermittently under load",
+     "status": "pending"
+    },
+    {
+     "short_id": "90cd64a9",
+     "title": "Simulation runner resume, seed-log and config gaps after 22bb2dcd",
+     "status": "pending: after 22bb2dcd"
+    },
+    {
+     "short_id": "6eb12747",
+     "title": "ROCm detection in cargo-features.sh ignores ROCM_PATH",
+     "status": "pending"
+    },
+    {
+     "short_id": "85e7e4c0",
+     "title": "Supported-configurations Lean regeneration row contradicts the how-to",
+     "status": "pending"
     }
    ]
   }
@@ -1533,7 +1573,12 @@
   "9c0568ee",
   "41517289",
   "c34e8203",
-  "5c1c87b7"
+  "5c1c87b7",
+  "574ed420",
+  "b5782224",
+  "90cd64a9",
+  "6eb12747",
+  "85e7e4c0"
  ],
  "escalations": [
   {
@@ -1584,7 +1629,8 @@
   "d73ac633": 1,
   "0afbd34a": 2,
   "f21b25ac": 0,
-  "1b7228b9": 1
+  "1b7228b9": 1,
+  "5c1c87b7": 1
  },
  "surfaced_pitfalls": [
   {
@@ -1630,6 +1676,16 @@
   {
    "session": 3,
    "note": "standard_u128_irreducibility_note names irreducibility but states primitivity after 8178ef79"
+  },
+  {
+   "source": "22bb2dcd other-vendor review",
+   "finding": "six advisories",
+   "disposition": "filed as 90cd64a9"
+  },
+  {
+   "source": "51f299d2 reviews",
+   "finding": "two pre-existing advisories",
+   "disposition": "filed as 6eb12747 and 85e7e4c0"
   }
  ],
  "notes": [
