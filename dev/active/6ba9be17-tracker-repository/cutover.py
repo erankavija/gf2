@@ -69,41 +69,31 @@ location comes from git.
       hold a pointer with different bytes it keeps SHARED's. Stops, copying
       nothing, on a run record SHARED holds with different bytes or on a
       pointer whose run SHARED would not hold; then verifies the harvest.
-  cutover.py clean --repo CODE --worktree WT --store SHARED
-                --merge-message MSG --message MSG [--main BRANCH]
-      Verifies the harvest of `WT/.jit` into SHARED, merges the main branch
-      into the branch of the linked worktree WT with tracker conflicts
-      resolved by deletion, removes every path still tracked under `.jit/`
-      and commits, then deletes `WT/.jit`, also when the branch was already
-      clean and nothing is committed. Fails unless `git ls-files .jit` is
-      empty on the main branch and on the branch. Refuses an unverified
-      harvest, uncommitted tracked changes, a detached WT and a conflict
-      outside `.jit/` (the merge is aborted). Verifies that the cleaned
-      commit's tree outside `.jit` equals the merge result. Any failure
-      after the merge starts (a mismatch, a rejected or empty commit
-      message, a failing `git rm`) restores the branch ref and checkout to
-      the pre-clean head and says so; so does a failing deletion of the
-      local store, whose message says part of it may be gone. When that
-      restore fails, the message names the commit the ref is left at.
   cutover.py clean --repo CODE (--branch B | --branches FILE)
-                --merge-message MSG --message MSG [--main BRANCH]
-      Cleans a parked branch without a shared store or harvest, in a temporary
-      linked worktree under TMPDIR outside every tracked tree, removed on
-      success or failure. FILE lists one branch per line with optional `#`
-      comments. Prints one line per branch: `cleaned; tree outside .jit equals
-      the merge result`, `already clean` when
-      main is already merged and no tracker paths remain (nothing committed),
-      `conflict outside .jit: not forced: <paths>` (merge aborted, ref
-      unchanged), `refused: <reason>` or `failed: <reason>`, the reason
-      saying whether the ref was restored. Refuses a branch already checked
-      out; use the worktree form for a linked checkout. A batch continues
-      after failures. Both `--branch` and `--branches` exit 1 when any
-      branch is neither cleaned nor already clean, and 2 only for a usage
-      error or an unreadable FILE. Both forms require main and every
-      cleaned branch to track no path under `.jit/`. A failing removal of
-      the temporary worktree after a clean restores the branch ref and
-      prunes the registration; an error removing it after another failure
-      is reported together with that failure.
+                --message MSG [--main BRANCH]
+      Gives each parked branch one commit whose tree is the tip's tree
+      without `.jit`, built from the tip's tree object alone (`git ls-tree`
+      without the `.jit` entry, `git mktree`, `git commit-tree`), and moves
+      the branch ref to it by compare-and-swap from the tip. It merges
+      nothing and reads or writes no index or working tree. FILE lists one
+      branch per line with optional `#` comments. Prints one line per branch:
+      `cleaned; tree outside .jit equals the tip`, `already clean` when the
+      tip tracks no `.jit` (nothing committed), `refused: <reason>` or
+      `failed: <reason>`. Refuses a branch checked out in any worktree; use
+      the worktree form for it. A batch continues after failures and exits 1
+      when any branch is neither cleaned nor already clean.
+  cutover.py clean --repo CODE --worktree WT --store SHARED
+                --message MSG [--main BRANCH]
+      Verifies the harvest of `WT/.jit` into SHARED, makes the same commit
+      for the branch of the linked worktree WT, then removes the index
+      entries under `.jit` of WT and deletes `WT/.jit`, also when the branch
+      was already clean. Refuses an unverified harvest, uncommitted tracked
+      changes outside `.jit` and a detached WT. Untracked and ignored files
+      of WT outside `.jit` are left as they are.
+      Both forms refuse an empty MSG, fail unless `git ls-files .jit` is
+      empty on the main branch and on the cleaned commit, and check that
+      the cleaned commit's tree outside `.jit` equals the tip's before the
+      ref moves.
   cutover.py --self-test
       Runs every subcommand on scratch repositories under a new directory
       in TMPDIR and refuses a scratch path inside the invoking checkout. The
@@ -139,7 +129,6 @@ REFERENCES = "scripts/reference-exceptions.toml"
 EVENTS = ".jit/events.jsonl"
 CITATIONS = ".jit/references.toml"
 FORBID_STORE = r"^\.jit/"
-CONFLICT_OUTSIDE = f"conflict outside {STORE}: not forced"
 TREE_STEP = 10_000
 MARKER_BEGIN = "# jit:data-root-ignore:begin"
 MARKER_END = "# jit:data-root-ignore:end"
@@ -193,17 +182,15 @@ def main(argv, *, hooks=None):
     p = sub.add_parser("harvest")
     p.add_argument("--store", required=True)
     p.add_argument("--from", dest="source", required=True)
-    p = sub.add_parser("clean", description="Merge main and remove every tracked tracker path.",
-                       epilog="Parked branches use temporary worktrees under TMPDIR; --branches lists "
-                       "one branch per line with # comments. Each branch prints its outcome; "
-                       "any branch not cleaned makes the exit status 1.")
+    p = sub.add_parser("clean", description="Commit each branch tip's tree without .jit, merging nothing.",
+                       epilog="--branches lists one branch per line with # comments. Each branch prints "
+                       "its outcome; any branch neither cleaned nor already clean makes the exit status 1.")
     p.add_argument("--repo", required=True)
     target = p.add_mutually_exclusive_group(required=True)
     target.add_argument("--worktree", help="linked worktree whose harvest must be verified")
     target.add_argument("--branch", help="parked local branch without a worktree")
     target.add_argument("--branches", help="file listing parked local branches")
     p.add_argument("--store", help="shared store; required with --worktree only")
-    p.add_argument("--merge-message", required=True)
     p.add_argument("--message", required=True)
     p.add_argument("--main", default="main")
     try:
@@ -811,17 +798,11 @@ def harvest(args):
 # clean ----------------------------------------------------------------------
 
 
-def clean(args):
-    if args.worktree:
-        if not args.store:
-            raise Refusal("--worktree requires --store")
-        return clean_linked(args)
-    if args.store:
-        raise Refusal("--store applies only to --worktree")
+def batch(args, one):
+    """Runs `one(args, branch)` for each branch of `--branch` or `--branches`, one line each."""
     if args.branches:
         try:
-            branches = [line.partition("#")[0].strip()
-                        for line in Path(args.branches).read_text().splitlines()]
+            branches = [line.partition("#")[0].strip() for line in Path(args.branches).read_text().splitlines()]
         except (OSError, ValueError) as error:
             raise Refusal(f"cannot read branches: {error}")
         branches = [branch for branch in branches if branch]
@@ -830,159 +811,110 @@ def clean(args):
     failed = False
     for branch in branches:
         try:
-            outcome = clean_parked(args, branch)
+            outcome = one(args, branch)
         except (Refusal, Failure, OSError) as error:
-            outcome = " ".join(str(error).splitlines())
-            if not outcome.startswith(CONFLICT_OUTSIDE):
-                outcome = f"{'refused' if isinstance(error, Refusal) else 'failed'}: {outcome}"
+            reason = " ".join(str(error).splitlines())
+            outcome = f"{'refused' if isinstance(error, Refusal) else 'failed'}: {reason}"
             failed = True
         print(f"{branch}: {outcome}")
     return 1 if failed else 0
 
 
+def rev(ref, repo):
+    return git("rev-parse", "-q", "--verify", f"{ref}^{{commit}}", cwd=repo, check=False).strip() or None
+
+
+def refuse_checked_out(repo, branch):
+    holder = next((c for c in checkouts(repo) if c["branch"] == branch), None)
+    if holder:
+        raise Refusal(f"{branch} is checked out in {holder['path']}")
+
+
+def local_tip(repo, branch):
+    if git_rc("check-ref-format", "--branch", branch, cwd=repo) != 0:
+        raise Refusal(f"not a branch name: {branch}")
+    tip = rev(f"refs/heads/{branch}", repo)
+    if tip is None:
+        raise Refusal(f"not a local branch: {branch}")
+    return tip
+
+
+def clean(args):
+    if not args.message.strip():
+        raise Refusal("the commit message is empty")
+    if tracked_under(args.main, STORE, args.repo):
+        raise Failure(f"{args.main} still tracks paths under {STORE}")
+    if args.worktree:
+        if not args.store:
+            raise Refusal("--worktree requires --store")
+        return clean_linked(args)
+    if args.store:
+        raise Refusal("--store applies only to --worktree")
+    return batch(args, clean_parked)
+
+
+def cleaned_commit(repo, branch, tip, message):
+    """Moves `branch` from `tip` to a child whose tree is the tip's without `.jit`; None when already clean.
+
+    The tree is built from the tip's tree object alone; no index or working
+    tree is read or written. The ref moves by compare-and-swap from `tip`.
+    """
+    if not tracked_under(tip, STORE, repo):
+        return None
+    entries = [e for e in git("ls-tree", "-z", tip, cwd=repo).split("\0") if e and e.split("\t", 1)[1] != STORE]
+    tree = git("mktree", "-z", cwd=repo, input="".join(f"{e}\0" for e in entries)).strip()
+    new = git("commit-tree", tree, "-p", tip, "-m", message, cwd=repo).strip()
+    if tracked_under(new, STORE, repo):
+        raise Failure(f"the cleaned commit {new} still tracks paths under {STORE}")
+    if git_rc("diff", "--quiet", tip, new, "--", ".", f":(exclude){STORE}", cwd=repo) != 0:
+        raise Failure(f"the tree of {new} outside {STORE} differs from the tip {tip}")
+    git("update-ref", "-m", "cutover.py clean", f"refs/heads/{branch}", new, tip, cwd=repo)
+    return new
+
+
+def clean_parked(args, branch):
+    repo = args.repo
+    tip = local_tip(repo, branch)
+    refuse_checked_out(repo, branch)
+    if cleaned_commit(repo, branch, tip, args.message) is None:
+        return "already clean"
+    return f"cleaned; tree outside {STORE} equals the tip"
+
+
 def clean_linked(args):
-    found = checkouts(args.repo)
     worktree = physical(args.worktree)
-    checkout = next((c for c in found if c["path"] == worktree), None)
+    checkout = next((c for c in checkouts(args.repo) if c["path"] == worktree), None)
     if checkout is None or checkout["primary"]:
         raise Refusal(f"{worktree} is not a linked worktree of {args.repo}")
     branch = checkout["branch"]
     if branch is None:
         raise Refusal(f"{worktree} has a detached HEAD")
-    if tracked_under(args.main, STORE, worktree):
-        raise Failure(f"{args.main} still tracks paths under {STORE}")
     store, shared = worktree / STORE, physical(args.store)
+    if store.is_symlink():
+        raise Refusal(f"{store} is a symbolic link")
     if store.is_dir():
         runs, pointers, _, faults = harvest_plan(shared, store)
         if runs or pointers or faults:
             raise Refusal(f"the harvest of {store} into {shared} is not verified")
-    def remove_store():
+    if git("status", "--porcelain", "--untracked-files=no", "--", ".", f":(exclude){STORE}", cwd=worktree).strip():
+        raise Refusal(f"{worktree} has uncommitted tracked changes outside {STORE}")
+    tip = local_tip(args.repo, branch)
+    if git("rev-parse", "HEAD", cwd=worktree).strip() != tip:
+        raise Refusal(f"HEAD of {worktree} is not the tip of {branch}")
+    new = cleaned_commit(args.repo, branch, tip, args.message)
+    # HEAD names the cleaned commit; --cached changes index entries under .jit only, no working-tree file.
+    try:
+        git("rm", "-r", "-q", "-f", "--cached", "--ignore-unmatch", "--", STORE, cwd=worktree)
+    except Failure as error:
+        raise Failure(f"{branch} is at {new or tip}, but the index of {worktree} still lists {STORE}: {error}")
+    if store.is_dir():
         try:
-            step(args, "store-removal")
-            if store.is_dir():
-                shutil.rmtree(store)
+            shutil.rmtree(store)
         except OSError as error:
             raise Failure(f"deleting the local store {store} failed and may have removed part of it; "
                           f"its run records are harvested into {shared}: {error}")
         print(f"deleted the local store {store}")
-
-    try:
-        outcome = clean_checkout(args, worktree, branch, finish=remove_store)
-    except Refusal as error:
-        print(f"{branch}: refused: {error}")
-        return 2
-    print(f"{branch}: {outcome}")
-
-
-def clean_parked(args, branch):
-    repo = physical(args.repo)
-    if (git_rc("check-ref-format", "--branch", branch, cwd=repo) != 0
-            or git_rc("rev-parse", "--verify", f"refs/heads/{branch}^{{commit}}", cwd=repo) != 0):
-        raise Refusal(f"not a local branch: {branch}")
-    found = checkouts(repo)
-    if any(c["branch"] == branch for c in found):
-        raise Refusal(f"{branch} is already checked out; use --worktree and --store for a linked checkout")
-    if tracked_under(args.main, STORE, repo):
-        raise Failure(f"{args.main} still tracks paths under {STORE}")
-    with tempfile.TemporaryDirectory(prefix="cutover-clean-") as directory:
-        root = physical(directory)
-        refuse_archive_dest(root, found, repo)
-        if git("rev-parse", "--show-toplevel", cwd=root, check=False).strip():
-            raise Refusal("TMPDIR places the temporary worktree inside a tracked tree")
-        worktree = root / "worktree"
-        error = None
-        def remove_worktree():
-            step(args, "worktree-removal")
-            git("worktree", "remove", "--force", str(worktree), cwd=repo)
-
-        try:
-            git("worktree", "add", "-q", "--", str(worktree), branch, cwd=repo)
-            return clean_checkout(args, worktree, branch, finish=remove_worktree, repo=repo)
-        except (Refusal, Failure, OSError) as raised:
-            error = raised
-            raise
-        finally:
-            try:
-                if any(c["path"] == worktree for c in checkouts(repo)):
-                    git("worktree", "remove", "--force", str(worktree), cwd=repo)
-            except (Failure, OSError) as cleanup:
-                prior = f"{error}; and " if error else ""
-                raise Failure(f"{prior}removing the temporary worktree {worktree} failed: {cleanup}") from error
-
-
-def clean_checkout(args, worktree, branch, finish=None, repo=None):
-    """Cleans the branch checked out at `worktree`, then runs `finish`.
-
-    Any failure, `finish` included, restores the branch ref and checkout; `repo`
-    restores the ref when `finish` removed the checkout.
-    """
-    if git("status", "--porcelain", "--untracked-files=no", cwd=worktree).strip():
-        raise Refusal(f"{worktree} has uncommitted tracked changes")
-    head = git("rev-parse", "HEAD", cwd=worktree).strip()
-    try:
-        outcome = merge_and_remove(args, worktree, branch, head)
-        if finish:
-            finish()
-        return outcome
-    except (Refusal, Failure, OSError) as error:
-        raise restored(error, worktree, branch, head, repo) from error
-
-
-def restored(error, worktree, branch, head, repo=None):
-    """`error` after putting `branch` back at `head`, or a Failure naming the unrestored ref."""
-    kind = type(error) if isinstance(error, (Refusal, Failure)) else Failure
-    if not (Path(worktree) / ".git").exists() and repo is not None:
-        ref = f"refs/heads/{branch}"
-        current = git("rev-parse", "-q", "--verify", ref, cwd=repo, check=False).strip()
-        try:
-            if current != head:
-                git("update-ref", ref, head, cwd=repo)
-            git("worktree", "prune", cwd=repo)
-        except Failure as update:
-            return Failure(f"{error}; {branch} is left at {current or 'an unknown commit'}, "
-                           f"not restored to {head}: {update}")
-        return kind(f"{error}; {branch} restored to {head}" if current != head else str(error))
-    if git_rc("rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=worktree) == 0:
-        git("merge", "--abort", cwd=worktree, check=False)
-    current = git("rev-parse", "HEAD", cwd=worktree, check=False).strip()
-    dirty = git("status", "--porcelain", "--untracked-files=no", cwd=worktree, check=False).strip()
-    if current == head and not dirty:
-        return kind(str(error))
-    try:
-        git("reset", "-q", "--hard", head, cwd=worktree)
-    except Failure as reset:
-        return Failure(f"{error}; {branch} is left at {current or 'an unknown commit'}, "
-                       f"not restored to {head}: {reset}")
-    return kind(f"{error}; {branch} restored to {head}")
-
-
-def merge_and_remove(args, worktree, branch, head):
-    merged = subprocess.run(["git", "merge", "-q", "--no-edit", "-m", args.merge_message, args.main],
-                            cwd=worktree, capture_output=True, text=True)
-    if merged.returncode != 0:
-        conflicts = [p for p in git("diff", "-z", "--name-only", "--diff-filter=U", cwd=worktree).split("\0") if p]
-        outside = [p for p in conflicts if not p.startswith(f"{STORE}/")]
-        if outside or not conflicts:
-            git("merge", "--abort", cwd=worktree, check=False)
-            if outside:
-                raise Refusal(f"{CONFLICT_OUTSIDE}: {', '.join(outside)}")
-            raise Failure(f"merging {args.main} into {branch}: {merged.stderr.strip()}")
-        git("rm", "-q", "--cached", "--", *conflicts, cwd=worktree)
-        git("commit", "-q", "--no-edit", cwd=worktree)
-    merge_result = git("rev-parse", "HEAD", cwd=worktree).strip()
-    if worktree_listing(worktree, "--", STORE):
-        git("rm", "-r", "-q", "--cached", "--", STORE, cwd=worktree)
-        git("commit", "-q", "-m", args.message, cwd=worktree)
-    for rev in (args.main, branch):
-        if tracked_under(rev, STORE, worktree):
-            raise Failure(f"{rev} still tracks paths under {STORE}")
-    if git("rev-parse", "HEAD", cwd=worktree).strip() == head:
-        return "already clean"
-    if "after_clean" in args.hooks:
-        args.hooks["after_clean"](worktree)
-    if git_rc("diff", "--quiet", merge_result, "HEAD", "--", ".", ":(exclude).jit", cwd=worktree) != 0:
-        raise Refusal("tree outside .jit mismatch with the merge result")
-    return "cleaned; tree outside .jit equals the merge result"
+    print(f"{branch}: {'already clean' if new is None else f'cleaned; tree outside {STORE} equals the tip'}")
 
 
 COMMANDS = {
