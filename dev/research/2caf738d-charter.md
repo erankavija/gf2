@@ -24,6 +24,8 @@ Optimization never relaxes mathematical or standards conformance.
 - D-7: A cell is measured at the output contract its reference is timed at.
 - D-8: The tracker lives in its own repository, mounted at `.jit/`, and cuts over inside the history rewrite.
 - D-9: Fast-tier time budgets are enforced by an epic gate on a quiet host.
+- D-10: The tracker cutover runs alone, before the history rewrite; supersedes the timing of D-8.
+- D-11: A commit for work with no JIT issue carries the scope `jit:none`.
 
 ## Decision Details
 
@@ -154,4 +156,35 @@ Optimization never relaxes mathematical or standards conformance.
 - **Reasoning:** A budget is meaningful only on a quiet host; unit tests run in
   a fraction of a second, so a breach is a property of the test and is found
   once per epic.
+- **Date:** 2026-11-15
+
+### D-10: The cutover runs before the rewrite
+
+- **Chosen:** The cutover of `@/issue/6ba9be17` runs alone in a quiet window of
+  its own, before the history rewrite of `@/issue/45ecf975`. The rewrite runs
+  later against the separated tracker and drops the tracker paths from
+  history. The cutover is rehearsed alone; the rewrite is rehearsed on a
+  scratch clone taken after a rehearsed cutover. The cutover cleans every
+  parked branch: `main` merged in, tracker conflicts resolved by deletion. The
+  rest of D-8 stands. All pushes are held until the rewrite, and the rewrite
+  deletes the branches that belong to no issue.
+- **Rejected:** One shared window (the timing of D-8): the cutover would wait
+  for a paused rewrite.
+- **Rejected:** Parked branches keep tracked `.jit/` until they resume: it
+  narrows the criterion that no branch carries tracker files.
+- **Reasoning:** The carve-out removes tracker contention between leads now;
+  the accepted cost is that branches settle twice.
+- **Date:** 2026-11-15
+
+### D-11: Work without an issue uses `jit:none`
+
+- **Chosen:** A commit for work with no JIT issue carries the scope
+  `jit:none`. The rewrite rewords earlier subjects of that kind to it,
+  `49c78483d` included.
+- **Rejected:** Free-form scopes such as `skills`: a reader cannot tell a
+  missing issue from an intended one.
+- **Rejected:** Attaching such commits to the nearest epic: the commit then
+  claims an issue it does not serve.
+- **Reasoning:** Every subject on `main` states its issue or states that it
+  has none.
 - **Date:** 2026-11-15
