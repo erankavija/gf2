@@ -282,6 +282,8 @@ run_step aff3ct-ldpc-gaps-python python3 -m pytest -q experiments/aff3ct-ldpc-ga
 run_step repository-files-self-test python3 dev/scripts/repository_files_test.py
 run_step commit-subject-self-test python3 -B scripts/check-commit-subject.py --self-test
 run_step landing-check-self-test python3 -B scripts/check-landing.test.py
+run_step landed-check-self-test python3 -B scripts/check-landed.test.py
+run_step landed-gate-integration sh scripts/check-landed.test.sh
 run_step reference-check-self-test python3 -B scripts/check-references.py --self-test
 run_step reference-check python3 -B scripts/check-references.py
 run_step tracked-budget-self-test python3 -B scripts/check-tracked-budget.py --self-test
