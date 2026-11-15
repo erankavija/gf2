@@ -313,14 +313,13 @@ revision identifier. Generated search: 81 matching lines across 32 files.
 | Hit file | Decision |
 |---|---|
 | `.jit/events.jsonl`, `.jit/archive-evidence/` and `.jit/issues/` (13 files) | Keep as record: tracker configuration/evidence; unchanged. |
-| `dev/active/2caf738d-1-0/handoff-3.md` | Keep as record: steward handoff; unchanged. |
+| `dev/active/2caf738d-1-0/handoff-4.md` | Keep as record: steward handoff; unchanged. |
 | `dev/active/ae03bcd0-general-bch/breakdown.json` | Keep as record: manifest of accepted work. |
 | `dev/active/ae03bcd0-general-bch/handoff-8.md` | Keep as record: lead handoff and evidence decisions. |
 | `dev/active/ae03bcd0-general-bch/oracle/run.sh` | Keep as record producer: oracle receipt metadata, no comparison arm. |
 | `dev/active/ae03bcd0-general-bch/plan.md` | Keep as record: accepted plan and decisions; unchanged. |
 | `dev/active/ae03bcd0-general-bch/progress.json` | Keep as record: decisions and evidence; unchanged. |
 | `dev/active/d77176e5-competitive-benchmarking/design-60c82c4c.md` | Sweep A: remove comparison-against-`encode_batch` clause; use trait rows. |
-| `dev/active/d77176e5-competitive-benchmarking/handoff-7.md` | Keep as record: lead handoff; unchanged. |
 | `dev/active/d77176e5-competitive-benchmarking/design-9a1b24fc.md` | Sweep A: this prescription governs all arm references here. |
 | `dev/scripts/bench-window/queue.tsv` | Sweep A: remove `fd9d5416` command and comment; preserve done-marker keys. |
 | `docs/reference/performance-evidence.md` | Sweep A: current trait entry points versus external arms only. |
@@ -337,7 +336,6 @@ Recorded results stay in their issues. Other interface-audit matches need no edi
 `crates/gf2-coding/benches/linear_codes.rs` contains benchmark names;
 `crates/gf2-core/src/compute/mod.rs`, `crates/gf2-core/src/compute/partition.rs`
 and `crates/gf2-sim/src/parallel/mod.rs` supply/use the shared partition primitive.
-`dev/active/b4b4b9ee-tech-debt-2026-06-30/handoff-5.md`,
 `dev/active/d77176e5-competitive-benchmarking/progress.json` and the charter
 remain records of decisions/evidence.
 

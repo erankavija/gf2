@@ -2,8 +2,9 @@
 
 Adversarially review the planning issue, its container criteria, linked concise
 plan, linked authoritative breakdown JSON, investigation sources, dependencies,
-and `run_history`. Read actual code and `.jit/reference/content-standards.md`.
-This is read-only.
+and `run_history`. Resolve `$data_root` from `JIT_DATA_DIR` when set,
+otherwise `.jit/` under the top level of the current checkout. Read actual code
+and `$data_root/reference/content-standards.md` under that data root. This is read-only.
 
 Fail if either artifact is missing, empty, or unlinked. A Markdown-only plan is
 not decomposable. Run the manifest helper's validation with warnings denied and

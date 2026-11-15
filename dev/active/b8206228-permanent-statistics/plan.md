@@ -331,8 +331,8 @@ superseded text are named, so the rationale remains reviewable.
 - The planning investigation of `@/issue/912f1008` — claim-by-claim verdicts.
 - Design basis: the selected envelope and frontier, sampling plan, seeding,
   storage, analysis, and prior-art comparison.
-- Review cost analysis: `dev/active/b8206228-permanent-statistics/sessions/2026-08-08-b488f02c-review-rca.md`.
-- Standing decisions: `dev/active/b8206228-permanent-statistics/sessions/2026-08-07-research-frontier-handoff.md`.
+- Review cost analysis: the b488f02c review cost session note (retired by @/issue/d1c0e062).
+- Standing decisions: the research frontier session note (retired by @/issue/d1c0e062).
 
 Source identifiers used in `planning.source_refs`: `REQ-01`–`REQ-06` are the
 epic's success criteria; `G1`–`G8` are the identified gaps;
