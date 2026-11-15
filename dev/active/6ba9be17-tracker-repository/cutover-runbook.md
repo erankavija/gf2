@@ -69,7 +69,7 @@ Arguments the executor fixes before the window and records in the window log:
 | `<tracker-repo>` | The path the new tracker repository is created at, outside every checkout; it does not exist yet. |
 | `<abandon-list>` | A file of branch names, one per line, `#` comments allowed: the "Abandon" section of the steward's final lists, rechecked right before the window. |
 | `<survivor-list>` | A file of branch names in the same form: the branches the steward's final lists keep. |
-| `<bundle>` | An existing all-refs bundle the steward names, used only when the archive fails. |
+| `<bundle>` | An existing all-refs bundle the steward names, the fallback when the archive fails, and the source of the branches the steward deleted before the window. |
 | `<executor>` | The executor's agent identity, `agent:<name>`. |
 
 `TMPDIR` is exported as `<backup>/tmp`, so the temporary worktrees of the
@@ -92,8 +92,8 @@ subcommand or starts the [rollback](#rollback).
 - The port of branch-only tracker edits is on `main` (gf2-f6, `97b8e84a9`).
 - `<abandon-list>` (rechecked by gf2-f6 right before the window) and
   `<survivor-list>` exist as files.
-- `.jit/references.toml` names the upstream Sionna files as full URLs (a
-  tracker commit on `main`), so the reference checker passes once step 6's
+- `.jit/references.toml` names the upstream Sionna files as full URLs (on
+  `main` at `d378754e3`), so the reference checker passes after step 6's
   code-side commit drops its exception.
 - The steward's "go" message has arrived and the owner has confirmed.
 - The quiet window is announced to every active session through the steward,
@@ -132,6 +132,7 @@ arguments and `P`.
 
 ```sh
 git for-each-ref > "<backup>/refs-before.txt"
+git worktree list --porcelain > "<backup>/worktrees-before.txt"
 cutover archive --repo . --dest "<backup>/stores"
 ```
 
@@ -154,30 +155,6 @@ cutover abandon --repo . --branches "<abandon-list>"
 whose tracker store and working tree are clean is harvested in step 7 and
 removed with `git worktree remove` in step 9. A dirty one stays detached with
 its store, is never removed, and is listed for the steward.
-
-Then the branches already merged into `main` are abandoned as a batch,
-generated at this moment and never built by hand. An entry that is not an
-ancestor of `main` is a survivor and is appended to `<survivor-list>` for
-step 9; so is any entry already on `<survivor-list>`, which is not abandoned.
-
-```sh
-: > "<backup>/merged-abandon.txt"
-sed 's/#.*//' "<survivor-list>" | sed '/^[[:space:]]*$/d' > "<backup>/survivors-before-merged.txt"
-git branch --merged main --format='%(refname:short)' | while IFS= read -r b; do
-  [ "$b" = main ] && continue
-  if grep -qxF -- "$b" "<backup>/survivors-before-merged.txt"; then continue
-  elif git merge-base --is-ancestor "$b" main; then printf '%s\n' "$b" >> "<backup>/merged-abandon.txt"
-  else printf '%s\n' "$b" >> "<survivor-list>"; fi
-done
-git worktree list --porcelain | awk '/^worktree /{w=substr($0,10)} /^branch refs\/heads\//{print substr($0,19) "\t" w}' |
-  while IFS="$(printf '\t')" read -r b w; do
-    grep -qxF -- "$b" "<backup>/merged-abandon.txt" && git -C "$w" switch --detach
-  done
-cutover abandon --repo . --branches "<backup>/merged-abandon.txt"
-```
-
-The detached worktrees follow the same rule as above: clean ones are
-harvested and removed, dirty ones stay and are listed for the steward.
 
 ### 4. Inventory
 
@@ -250,6 +227,26 @@ After the harvests, `load_check strict` runs in the primary checkout. The
 step passes when every harvest exits 0 or is listed and the check passes; a
 failure stops the cutover.
 
+Then the branches merged into `main` are deleted, not archived. The batch is
+taken at this moment, excluding `main`, and written with each head to
+`<backup>/merged-deleted.txt`. A branch checked out in a linked worktree has
+that worktree detached first; the worktree is removed when clean, and a dirty
+one stays detached with its store and is listed for the steward:
+
+```sh
+git branch --merged main --format='%(refname:short) %(objectname)' |
+  grep -v '^main ' > "<backup>/merged-deleted.txt"
+git worktree list --porcelain | awk '/^worktree /{w=substr($0,10)} /^branch refs\/heads\//{print substr($0,19) "\t" w}' |
+  while IFS="$(printf '\t')" read -r b w; do
+    grep -q "^$b " "<backup>/merged-deleted.txt" && git -C "$w" switch --detach
+  done
+cut -d' ' -f1 "<backup>/merged-deleted.txt" | while IFS= read -r b; do git branch -d "$b"; done
+```
+
+Then `git worktree remove "<worktree>"` for each clean detached worktree of a
+deleted branch. The `<abandon-list>` branches keep `cutover abandon` and their
+`refs/archive/` refs.
+
 ### 8. Verify
 
 Create two probe worktrees at the cutover commit and a fresh clone:
@@ -314,14 +311,18 @@ A removal-only branch checked out in the primary checkout shows the mounted
 tracker as untracked until it merges `main`; the branch merges `main` when it
 resumes.
 
-The step passes when every local branch is `main`, archived under
-`refs/archive/` or cleaned, and both commands below print no branch other
-than those listed for the steward. The first lists a branch that is neither
-`main` nor on `<survivor-list>`, the second a branch that tracks `.jit`:
+The step passes when every local branch is `main` or cleaned, every abandoned
+branch is under `refs/archive/`, and the commands below print nothing other
+than branches listed for the steward. The first lists a branch that is neither
+`main` nor on `<survivor-list>`, the second an abandoned branch with no
+`refs/archive/` ref, the third a branch that tracks `.jit`:
 
 ```sh
 { echo main; sed 's/#.*//' "<survivor-list>" | sed '/^[[:space:]]*$/d'; } > "<backup>/live.txt"
 git for-each-ref --format='%(refname:short)' refs/heads/ | grep -vxF -f "<backup>/live.txt"
+sed 's/#.*//' "<abandon-list>" | sed '/^[[:space:]]*$/d' | while IFS= read -r b; do
+  git show-ref --verify --quiet "refs/archive/$b" || printf '%s\n' "$b"
+done
 git for-each-ref --format='%(refname:short)' refs/heads/ | while IFS= read -r b; do
   [ -z "$(git ls-tree -r --name-only "$b" -- .jit)" ] || printf '%s\n' "$b"
 done
@@ -348,7 +349,8 @@ further work, from the primary checkout:
    invariant amendment `A`, so `resolvable-references` and its projection in
    `AGENTS.md` read as before.
 3. Put every ref back to the listing. Refs that differ are set, which
-   restores the branches step 3 abandoned, and refs created
+   restores the branches the window deleted (step 3's abandoned branches and
+   step 7's merged ones), and refs created
    since (`refs/archive/*`, the probe branches) are deleted:
 
    ```sh
@@ -361,19 +363,24 @@ further work, from the primary checkout:
    git switch main
    ```
 
-4. `git checkout -- .jit`.
-5. In each linked worktree whose branch step 9 cleaned, put the tracked store
+4. Re-add each worktree step 7 removed, from `<backup>/worktrees-before.txt`:
+   `git worktree add "<wt>" <b>`.
+5. `git checkout -- .jit`.
+6. In each linked worktree whose branch step 9 cleaned, put the tracked store
    back into its index and files with `git -C "<worktree>" checkout HEAD -- .jit`;
    nothing outside `.jit` changes.
-6. Re-attach each worktree step 3 detached, to the same commit so no file
+7. Re-attach each worktree step 3 or step 7 detached and left in place, to the same commit so no file
    changes: `git -C "<worktree>" switch <branch>`.
-7. Restore each worktree store a clean deleted from its archive, adding the
-   ignored files:
+8. Restore each worktree store a clean deleted or step 7 removed with its
+   worktree, from its archive, adding the ignored files:
    `tar -C "<worktree>/.jit" -xf "<backup>/stores/worktree-<name>.tar"`, the
    members checked against `<backup>/stores/manifest.json`.
-8. Run `jit validate`, which exits 0, and `load_check strict`, which exits 0,
+9. Run `jit validate`, which exits 0, and `load_check strict`, which exits 0,
    and compare `git for-each-ref` with
    the saved listing, which are equal.
+
+The branches the steward deleted before the window are not in the listing;
+they are restored from `<bundle>`, not by the rollback.
 
 Tracker writes made after the listing live in the mounted clone and are lost
 with it unless the executor copies them from `<backup>/aside-rollback`. Leases
