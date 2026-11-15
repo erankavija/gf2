@@ -10,18 +10,22 @@ set -euo pipefail
 # Tier 1 parses the gate context JSON with jq and reads the citation registry.
 # It scopes inline citekeys and cites:@/citation/<key> labels to the issue under
 # review:
-#   1. Every inline citekey token [AuthorYYYY] resolves in .jit/references.toml.
+#   1. Every inline citekey token [AuthorYYYY] resolves in the citation registry.
 #   2. Every issue-owned cites:@/citation/<key> label resolves in the registry.
 #   3. Every issue-owned cites:@/citation/<key> label's key is also mentioned in the issue
 #      text (label/text drift check).
 # Any tier-1 finding fails the gate without spending an AI review.
+# The registry lives under JIT_DATA_DIR, or .jit/ at the checkout's top level;
+# RESEARCH_REVIEW_REFS_FILE overrides that location for a fixture or caller.
 
 if [ -z "${JIT_CONTEXT_FILE:-}" ] || [ ! -f "${JIT_CONTEXT_FILE:-}" ]; then
   echo "ERROR: JIT_CONTEXT_FILE not set or missing. This gate requires --pass-context." >&2
   exit 1
 fi
 
-REFS_FILE="${RESEARCH_REVIEW_REFS_FILE:-.jit/references.toml}"
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+data_root="${JIT_DATA_DIR:-$repo_root/.jit}"
+REFS_FILE="${RESEARCH_REVIEW_REFS_FILE:-$data_root/references.toml}"
 if [ ! -f "$REFS_FILE" ]; then
   echo "ERROR: $REFS_FILE not found; the research-review gate requires the citation registry." >&2
   exit 1

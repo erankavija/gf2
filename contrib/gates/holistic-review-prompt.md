@@ -8,7 +8,7 @@ Do not edit files, mutate issues, pass gates, or request wider permissions. Use 
 
 ## Resolve the configured hierarchy
 
-Read `.jit/config.toml`; do not assume hard-coded container or leaf type names. Read the context container, every hard criterion, relationship label, linked document, required-gate projection, and latest prior structured findings. Traverse the authoritative dependency DAG through all descendants. Use membership labels as consistency claims, not as a substitute for graph containment.
+Resolve `$data_root` from `JIT_DATA_DIR` when set, otherwise `.jit/` under the top level of the current checkout. Read `$data_root/config.toml`; do not assume hard-coded container or leaf type names. Read the context container, every hard criterion, relationship label, linked document, required-gate projection, and latest prior structured findings. Traverse the authoritative dependency DAG through all descendants. Use membership labels as consistency claims, not as a substitute for graph containment.
 
 Read every applicable `AGENTS.md` for descendant impact paths. Resolve governing JIT item addresses with `jit item show`; registry-first sources govern rendered projections.
 
