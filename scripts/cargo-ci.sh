@@ -11,6 +11,9 @@ set -euo pipefail
 #   0 — all steps passed
 #   1 — one or more steps failed
 #   2 — environment problem: no real cargo available on PATH
+#
+# A failed step prints its cause (per-test results, else nextest error lines,
+# else the log tail) and the path of its full log under `target/cargo-ci-logs/`.
 
 # Every step runs its command directly. The only host lock a step takes is the
 # GPU lock that nextest holds for each `gpu-serial` test
@@ -76,6 +79,9 @@ SYSTEM_TMPDIR=${TMPDIR:-/tmp}
 RUN_ROOT=$(mktemp -d)
 trap 'rm -rf "$RUN_ROOT"' EXIT
 LOGDIR="$RUN_ROOT/logs"
+# A failed step's full log is copied to `target/cargo-ci-logs/<run stamp>/`
+# (untracked) before the trap removes `LOGDIR`.
+CARGO_CI_LOG_DIR="$(cd "$(dirname "$0")/.." && pwd)/target/cargo-ci-logs/$(date +%Y%m%dT%H%M%S)-$$"
 SCRATCH="$RUN_ROOT/scratch"
 mkdir -p "$LOGDIR" "$SCRATCH"
 export TMPDIR="$SCRATCH"
@@ -184,20 +190,16 @@ summarize_pass() {
   esac
 }
 
+# shellcheck source=cargo-ci-failure.sh
+source "$(dirname "$0")/cargo-ci-failure.sh"
+
 summarize_fail() {
   local name="$1"
   case "$name" in
-    test|scalar-lane-nextest)
-      # Show failure details from nextest output.
-      #
-      # These patterns must not anchor at column zero: nextest indents its
-      # per-test result lines ("        FAIL [   0.005s] ..."), so an `^FAIL`
-      # anchor matches nothing and a failing gate records an exit code with no
-      # diagnostic at all. Observed on a run whose seven TIMEOUT lines were
-      # invisible in the gate record.
-      echo "--- $name failures ---"
-      plain "$LOGDIR/$name.out" | grep -E "^[[:space:]]*(FAIL|TIMEOUT|SIGSEGV|SIGABRT|LEAK|×)" || true
-      plain "$LOGDIR/$name.out" | grep -A 20 -E "^[[:space:]]*--- (STDOUT|STDERR):" | head -60 || true
+    test|test-build|*-nextest|*-build)
+      # nextest indents its result lines, so no pattern anchors at column zero;
+      # see scripts/cargo-ci-failure.sh for the cause extraction.
+      report_failed_step "$name" "$LOGDIR/$name.out"
       ;;
     clippy|doc|doc-coding)
       echo "--- $name diagnostics ---"
@@ -281,6 +283,7 @@ run_step tracked-budget python3 -B scripts/check-tracked-budget.py
 run_step docs-mechanical-self-test python3 contrib/gates/tests/docs-mechanical-test.py
 run_step tuning-campaign-launcher-syntax bash -n dev/scripts/tuning-extent-campaign.sh
 run_step gpu-lock-wrapper bash scripts/nextest-gpu-lock.test.sh
+run_step failure-report-self-test bash scripts/cargo-ci-failure.test.sh
 run_step tracker-env-self-test sh scripts/tracker-env.test.sh
 run_step gpu-lock-filter python3 -B scripts/check-gpu-lock-filter.py .config/nextest.toml crates/gf2-kernels-hip/.config/nextest.toml
 run_step tuning-lifecycle-cargo cargo test -p gf2-core --profile ci-test --no-default-features --test tuning_process_lifecycle
