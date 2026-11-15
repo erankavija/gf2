@@ -1,0 +1,60 @@
+#!/bin/sh
+# Runs a command, typically jit, with the tracker environment of the invoking
+# checkout, so a linked worktree reaches the primary checkout's store.
+#
+#   JIT_DATA_DIR       .jit under the primary checkout, the parent of the git
+#                      common directory
+#   JIT_WORKTREE_ROOT  the invoking checkout's top level
+#   JIT_AGENT_ID       kept when set; in a linked worktree otherwise
+#                      agent:<name git registers the worktree under>; in the
+#                      primary checkout otherwise unset, so jit uses its
+#                      configured agent
+#
+#   tracker-env <command> [args...]   exec the command in that environment
+#   tracker-env                       print export lines for `eval`
+#
+# It refuses, running nothing, when the primary checkout holds no store
+# (no index.json under its .jit) and when a linked worktree holds a .jit of
+# its own, which is a stale or worktree-local store.
+set -eu
+
+die() {
+  printf 'tracker-env: %s\n' "$*" >&2
+  exit 1
+}
+
+physical() { (cd "$1" && pwd -P); }
+
+top=$(git rev-parse --show-toplevel) || die "not inside a git checkout"
+common=$(physical "$(git rev-parse --git-common-dir)") ||
+  die "cannot resolve the git common directory"
+gitdir=$(physical "$(git rev-parse --absolute-git-dir)") ||
+  die "cannot resolve the git directory"
+primary=$(dirname "$common")
+store="$primary/.jit"
+
+if [ "$gitdir" != "$common" ]; then
+  if [ -e "$top/.jit" ] || [ -L "$top/.jit" ]; then
+    die "linked worktree holds a store of its own: $top/.jit"
+  fi
+  if [ -z "${JIT_AGENT_ID:-}" ]; then
+    JIT_AGENT_ID="agent:$(basename "$gitdir")"
+    export JIT_AGENT_ID
+  fi
+fi
+[ -f "$store/index.json" ] || die "no tracker store at $store (missing index.json)"
+
+JIT_DATA_DIR=$store
+JIT_WORKTREE_ROOT=$top
+export JIT_DATA_DIR JIT_WORKTREE_ROOT
+
+if [ "$#" -gt 0 ]; then
+  exec "$@"
+fi
+
+quote() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
+printf 'export JIT_DATA_DIR=%s\n' "$(quote "$JIT_DATA_DIR")"
+printf 'export JIT_WORKTREE_ROOT=%s\n' "$(quote "$JIT_WORKTREE_ROOT")"
+if [ -n "${JIT_AGENT_ID+set}" ]; then
+  printf 'export JIT_AGENT_ID=%s\n' "$(quote "$JIT_AGENT_ID")"
+fi
