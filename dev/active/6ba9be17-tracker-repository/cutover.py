@@ -17,9 +17,11 @@ location comes from git.
       differs from the main branch's, each checkout whose unignored `.jit`
       files differ from it, each checkout that holds gate-run records, and
       each store with an unreleased lease (`<git common dir>/jit/leases/`) or
-      a pending redo record (`<store>/tmp/redo.record`). A line starting
-      `action:` needs action before the cutover: a branch whose merge into
-      the main branch would change its `.jit` tree, a checkout with
+      a pending redo record (`<store>/tmp/redo.record`). A branch is judged by
+      the `.jit` part of its merge result with the main branch, whatever its
+      conflicts outside `.jit`. A line starting `action:` needs action before
+      the cutover: a branch whose `.jit` conflicts with the main branch or
+      whose merge would change the main branch's `.jit` tree, a checkout with
       uncommitted tracker changes, a lease or a redo record. Other lines
       start `info:`.
   cutover.py archive --repo CODE --dest DIR [--verify]
@@ -325,6 +327,16 @@ def worktree_listing(checkout, *args):
 # inventory ------------------------------------------------------------------
 
 
+def merge_result(repo, main_branch, rev):
+    """The tree `git merge-tree` writes for merging `rev` into the main branch, and its conflicted paths."""
+    merged = subprocess.run(["git", "merge-tree", "--write-tree", "--no-messages", "--name-only", "-z",
+                             main_branch, rev], cwd=repo, capture_output=True, text=True)
+    if merged.returncode not in (0, 1):
+        raise Failure(f"git merge-tree {main_branch} {rev}: {merged.stderr.strip()}")
+    tree, *conflicts = merged.stdout.split("\0")
+    return tree.strip(), sorted({p for p in conflicts if p})
+
+
 def inventory(args):
     repo = args.repo
     if git_rc("rev-parse", "-q", "--verify", f"refs/heads/{args.main}", cwd=repo) != 0:
@@ -338,10 +350,12 @@ def inventory(args):
     for rev, label in heads:
         if tree_of(rev, STORE, repo) == main_tree:
             continue
-        merged = subprocess.run(["git", "merge-tree", "--write-tree", "--no-messages", args.main, rev],
-                                cwd=repo, capture_output=True, text=True)
-        result = merged.stdout.split("\n", 1)[0].strip()
-        if merged.returncode != 0 or tree_of(result, STORE, repo) != main_tree:
+        tree, conflicts = merge_result(repo, args.main, rev)
+        tracker = [p for p in conflicts if p == STORE or p.startswith(f"{STORE}/")]
+        if tracker:
+            lines.append(("action", f"branch {label}: its tracker files conflict with {args.main}: "
+                                    f"{', '.join(tracker)}"))
+        elif tree_of(tree, STORE, repo) != main_tree:
             lines.append(("action", f"branch {label}: holds tracker changes {args.main} lacks"))
         else:
             lines.append(("info", f"branch {label}: tracker files differ from {args.main}, "
@@ -1200,6 +1214,7 @@ class SelfTest:
         rc, out = self.run("inventory", "--repo", code)
         self.check(rc == 1 and "redo record" in out, "REQ-01 a pending redo record alone needs action")
         redo.unlink()
+        self.inventory_conflicts(code)
         if not self.jit:
             print("  skip REQ-01 lease case: jit is not on PATH")
             return
@@ -1215,6 +1230,34 @@ class SelfTest:
             self.commit_all(code, "chore: tracker state of the claim")
         rc, out = self.run("inventory", "--repo", code)
         self.check(rc == 0, "REQ-01 inventory exits 0 once the lease is released")
+
+    def inventory_conflicts(self, code):
+        """A conflict outside .jit leaves the judgement to the .jit part of the merge result."""
+        for name in ("outside-conflict", "tracker-conflict"):
+            self.sh("git", "branch", name, "main", cwd=code)
+        side = self.path("conflict-fixture")
+        self.sh("git", "worktree", "add", "-q", side, "outside-conflict", cwd=code)
+        (Path(side) / "src" / "lib.rs").write_text("pub fn outside() {}\n")
+        self.commit_all(side, "test: a code change that conflicts with main")
+        self.sh("git", "switch", "-q", "tracker-conflict", cwd=side)
+        (Path(side) / "src" / "lib.rs").write_text("pub fn outside() {}\n")
+        (Path(side) / STORE / "config.toml").open("a").write("# branch side of a tracker conflict\n")
+        self.commit_all(side, "test: code and tracker changes that conflict with main")
+        self.sh("git", "worktree", "remove", side, cwd=code)
+        (Path(code) / "src" / "lib.rs").write_text("pub fn inside() {}\n")
+        (Path(code) / STORE / "config.toml").open("a").write("# main side of a tracker conflict\n")
+        self.commit_all(code, "test: main changes code and tracker")
+        rc, out = self.run("inventory", "--repo", code)
+        lines = out.splitlines()
+        self.check(merge_result(code, "main", "outside-conflict")[1] == ["src/lib.rs"],
+                   "REQ-09 the fixture branch outside-conflict conflicts with main outside .jit only")
+        self.check(any(l.startswith("info:") and "branch outside-conflict:" in l for l in lines)
+                   and not any(l.startswith("action:") and "branch outside-conflict:" in l for l in lines),
+                   "REQ-01 a branch that conflicts outside .jit and whose .jit merges cleanly is judged info")
+        self.check(any(l.startswith("action:") and "branch tracker-conflict:" in l and f"{STORE}/config.toml" in l
+                       for l in lines) and rc == 1,
+                   "REQ-01 a branch whose .jit conflicts with main needs action and names the conflict")
+        self.sh("git", "branch", "-D", "tracker-conflict", cwd=code)
 
     def archive(self, code):
         inside_dest = str(Path(code) / "docs" / "archives")
