@@ -317,7 +317,7 @@ further work, from the primary checkout:
    invariant amendment `A`, so `resolvable-references` and its projection in
    `AGENTS.md` read as before.
 3. Put every ref back to the listing. Refs that differ are set, refs created
-   since (`refs/archive/*`, the probe branches, clean's retained archives) are
+   since (`refs/archive/*`, the probe branches) are
    deleted:
 
    ```sh
@@ -331,10 +331,16 @@ further work, from the primary checkout:
    ```
 
 4. `git checkout -- .jit`.
-5. Restore each worktree store a clean deleted from its archive:
+5. In each linked worktree whose branch step 9 cleaned, put the tracked store
+   back into its index and files with `git -C "<worktree>" checkout HEAD -- .jit`;
+   nothing outside `.jit` changes.
+6. Re-attach each worktree step 3 detached, to the same commit so no file
+   changes: `git -C "<worktree>" switch <branch>`.
+7. Restore each worktree store a clean deleted from its archive, adding the
+   ignored files:
    `tar -C "<worktree>/.jit" -xf "<backup>/stores/worktree-<name>.tar"`, the
    members checked against `<backup>/stores/manifest.json`.
-6. Run `jit validate`, which exits 0, and `load_check strict`, which exits 0,
+8. Run `jit validate`, which exits 0, and `load_check strict`, which exits 0,
    and compare `git for-each-ref` with
    the saved listing, which are equal.
 
