@@ -15,6 +15,25 @@ The `[documentation]` table of [`.jit/config.toml`](../.jit/config.toml)
 declares the development root, the issue-scoped area and the permanent paths.
 `jit config get documentation` prints it.
 
+## Tracker checkout
+
+The workflow rules are in the JIT workflow section of
+[`AGENTS.md`](../AGENTS.md). In short:
+
+- `.jit/` is the checkout of the tracker repository, ignored by the code
+  repository. A fresh clone mounts it with `scripts/tracker-bootstrap <path-or-url>`.
+- A linked worktree runs jit as `scripts/tracker-env jit ...` and finds the
+  store's files under the primary checkout's `.jit/`.
+- Skill scripts that require `.jit` under their root run against the primary
+  checkout.
+- A document existing only on a branch is linked with `jit doc add --commit
+  <branch-commit>` and re-linked unpinned when it lands.
+- A branch lands after `scripts/check-landing <issue> <tip>` passes. A
+  code-producing issue carries the `landed` gate (`code-task` preset), which
+  the lead evaluates after the merged-tree gate.
+- A lead runs `scripts/tracker-snapshot` after each landing, the steward at the
+  end of a session.
+
 ## Epic documents: `active/`
 
 `active/<epic-short-id>-<slug>/` holds the prose and code of one open epic, per
