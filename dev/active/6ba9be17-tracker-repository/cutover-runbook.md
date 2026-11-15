@@ -24,6 +24,43 @@ epic=dev/active/6ba9be17-tracker-repository
 cutover() { python3 -B "$epic/cutover.py" "$@"; }
 ```
 
+The issue-load check runs in the checkout whose `.jit/` it reads. It runs
+`jit issue show` for every id of `jit query all --json`, and scans every
+`gates_status` entry that names a run for its file
+`.jit/gate-runs/<issue>/<run>.json`. `jit validate` passes while an issue whose
+entry names a missing run fails to load ("Failed to load gate runs"). With
+`strict` the check passes on zero load failures and zero missing run files.
+With `report` it prints both lists and passes when every load failure is an
+issue that names a run, as `gate-runs/` is ignored by the store's
+`.gitignore` and absent in a fresh clone.
+
+```sh
+load_check() { python3 -I - "$1" <<'EOF'
+import json, subprocess, sys
+from pathlib import Path
+mode = sys.argv[1]
+ids = [i["id"] for i in json.loads(subprocess.run(
+    ["jit", "query", "all", "--json"], capture_output=True, text=True,
+    check=True).stdout)["issues"]]
+fail = [i for i in ids if subprocess.run(
+    ["jit", "issue", "show", i], capture_output=True).returncode]
+named, missing = set(), []
+for i in ids:
+    gates = json.loads(Path(".jit/issues/%s.json" % i).read_text()).get("gates_status", {})
+    for g in gates.values():
+        if g.get("run_id"):
+            named.add(i)
+            if not Path(".jit/gate-runs/%s/%s.json" % (i, g["run_id"])).is_file():
+                missing.append(i)
+print("load failures:", len(fail), "missing run files:", len(missing))
+for i in fail:
+    print("load failure", i)
+bad = fail + missing if mode == "strict" else [i for i in fail if i not in named]
+sys.exit(1 if bad else 0)
+EOF
+}
+```
+
 Arguments the executor fixes before the window and records in the window log:
 
 | Argument | Meaning |
@@ -182,7 +219,9 @@ pointer whose run the store would not hold, stops that harvest with nothing
 copied. The executor records the two records' paths and leaves that
 worktree's store in place; step 9 cannot clean the worktree, which is then
 listed for the steward. A differing verdict pointer keeps the store's copy.
-The step passes when every harvest exits 0 or is listed.
+After the harvests, `load_check strict` runs in the primary checkout. The
+step passes when every harvest exits 0 or is listed and the check passes; a
+failure stops the cutover.
 
 ### 8. Verify
 
@@ -195,11 +234,14 @@ git clone . "<backup>/fresh"
 ```
 
 Each check below passes on the stated condition only. A failed check starts
-the [rollback](#rollback) before any further work.
+the [rollback](#rollback) before any further work. `load_check strict` also
+runs before step 5, in the primary checkout, and its result is recorded as the
+baseline.
 
 | Check | Command | Pass condition |
 |---|---|---|
 | Repository validation | `jit validate` | exits 0 (TBD-rehearsal: duration with the harvested gate-run records) |
+| Issue load | `load_check strict` in the primary checkout | exits 0: every issue loads and every named run file exists |
 | Issue count | `jit query all --json`, field `count` | equals `count_before` |
 | Tree identity | `git rev-parse "$C^:.jit"` and `git -C .jit rev-parse 'HEAD^{tree}'` | equal, and equal to the identifiers step 5 recorded |
 | Code side | `git ls-files .jit` on `main`; `git check-ignore -q .jit/`; `git status --porcelain` | prints nothing; exits 0; lists no path under `.jit/` |
@@ -207,6 +249,7 @@ the [rollback](#rollback) before any further work.
 | Plain jit in a linked worktree | in `<backup>/probe-1`: `jit status` | fails, finding no store |
 | Checkers with the store | `python3 -B scripts/check-references.py` and `python3 scripts/check-tracked-budget.py` in the primary checkout | both exit 0 |
 | Checkers without the store | the same two commands in `<backup>/fresh` | both exit 0; the reference checker reports the count of tracker references it left unchecked |
+| Issue load without the store's runs | `load_check report` in `<backup>/fresh` after its mount | exits 0: the only load failures are issues whose gate records name runs; the listing is recorded |
 | Fresh-clone mount | in `<backup>/fresh`: `scripts/tracker-bootstrap "<the primary checkout>/.jit"`, then the two checkers | the mount exits 0, which includes `jit validate`; both checkers exit 0 |
 
 When every check passes, the executor re-acquires its own lease from the
@@ -291,7 +334,8 @@ further work, from the primary checkout:
 5. Restore each worktree store a clean deleted from its archive:
    `tar -C "<worktree>/.jit" -xf "<backup>/stores/worktree-<name>.tar"`, the
    members checked against `<backup>/stores/manifest.json`.
-6. Run `jit validate`, which exits 0, and compare `git for-each-ref` with
+6. Run `jit validate`, which exits 0, and `load_check strict`, which exits 0,
+   and compare `git for-each-ref` with
    the saved listing, which are equal.
 
 Tracker writes made after the listing live in the mounted clone and are lost
