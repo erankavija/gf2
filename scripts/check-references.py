@@ -6,18 +6,21 @@ paths under the repository's top-level directories, relative and inline paths,
 links, Cargo path dependencies and Rust includes. A JSON, TOML or YAML file is
 also parsed: a string under a path-named member (`DATA_PATH_MEMBER`) shaped
 like a relative path must resolve from the repository root or the file's
-directory, be ignored by git, or be a template. A path under a top-level
+directory, be ignored by git, or be a template (`TEMPLATE`, which includes an
+elided `...` directory). A path under a top-level
 directory, a leading-`/` link and a `./dir/name` path resolve from the root,
 the last as a command spelling run there. A Markdown link, a `../` path, a
 Cargo path and a Rust include resolve from their own file. An inline file
 name (bare or with directories) resolves from its own directory or one
 enclosing it, a `./name` from its own directory or the root. Issue prose has
 no directory: its references resolve from the root, and bare names need
-repository paths. A spelling inside a Markdown link target, a Cargo path, a
-Rust include or a path-named data member belongs to that extractor alone, and
-a manifest's Cargo paths are not data members. Each reference is normalized
-once, from its extractor's base, into a repository path; its membership, store and branch lookups, ignore rules,
-exception match and fault text all use that path, and an inline name's fault
+repository paths. A match inside the character span of a Markdown link
+target, a Cargo path (a TOML basic or literal string), a Rust include or a
+path-named data member's string belongs to that extractor alone; the data
+check leaves to `CARGO_PATH` exactly the strings it extracts. Each reference
+is normalized once, from its extractor's base, into a repository path; its
+membership, store and branch lookups, ignore rules, exception match and
+fault text all use that path, and an inline name's fault
 names its own-directory reading. A `..` that climbs above the root resolves
 nowhere: it faults as written and no ignore rule or planned path excuses it.
 Every `/tmp` path in prose is host-local unless its own line writes or locks
@@ -102,6 +105,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+from collections import Counter
 from pathlib import Path
 
 EXCEPTIONS = "scripts/reference-exceptions.toml"
@@ -123,12 +127,17 @@ REPOSITORY_PATH = re.compile(rf"(?<![\w./+~}}-])/?({ROOTS}/[\w.+=-]+(?:/[\w.+=-]
 RELATIVE_PATH = re.compile(r"(?<![\w./+-])((?:\.\./)+[\w.+=-]+(?:/[\w.+=-]+)*)")
 INLINE_PATH = re.compile(r"`((?!10\.\d)[\w.+=-]+(?:/[\w.+=-]+)*/[\w+=-]+\.\w+)`")
 MARKDOWN_LINK = re.compile(r"\]\((?!https?:|mailto:|#)([^)#\s]+)")
-CARGO_PATH = re.compile(r"""\bpath\s*=\s*"([^"]+)\"""")
-# The data members of a manifest whose values `CARGO_PATH` reads.
-CARGO_MEMBER = re.compile(r"(?:.*\W)?path")
+# A TOML basic or literal string; the path is the group its quote opens.
+CARGO_PATH = re.compile(r"""\bpath\s*=\s*(?:"([^"\n]+)"|'([^'\n]+)')""")
+JSON_TOKEN = re.compile(r'"(?:[^"\\\n]|\\.)*"|[{}\[\]:]')
+TOML_TOKEN = re.compile(
+    r'#[^\n]*|"""[\s\S]*?"""|' r"'''[\s\S]*?'''" r'|"(?:[^"\\\n]|\\.)*"' r"|'[^'\n]*'"
+    r'|[\[\]{}=,.\n]|[^\s\[\]{}=,.#"' r"']+"
+)
 RUST_INCLUDE = re.compile(r"""include(?:_str|_bytes)?!\(\s*"([^"]+)"\s*\)""")
 DOT_PATH = re.compile(r"(?<![\w./+-])\./([\w.+=-]+(?:/[\w.+=-]+)+)")
-TEMPLATE = re.compile(r"[<>{}*$]")
+# A placeholder: a template character or an elided `...` directory.
+TEMPLATE = re.compile(r"[<>{}*$]|(?:^|/)\.{3,}(?:/|$)")
 DATA_SUFFIXES = (".json", ".toml", ".yaml", ".yml")
 DATA_PATH_MEMBER = re.compile(
     r"(?i:(?:^|[_-])(?:path|dir|directory|directories|file|root|location)s?)$"
@@ -225,7 +234,7 @@ def evidence_faults(
     backticked bare file name and the backticked-only evidence kinds. `files`
     reads `line` as a data string: the Markdown names, and the whole string
     when it is one file name of a known kind (`DATA_FILE_NAME`). A name
-    starting in an `owned` span belongs to another extractor.
+    inside an `owned` span of `line` belongs to another extractor.
     """
     names = []
     if markdown:
@@ -241,16 +250,14 @@ def evidence_faults(
     matches = [(match, EVIDENCE_NAME) for match in FILE_TOKEN.finditer(line)]
     if markdown or files:
         matches += [(match, None) for match in BARE_INLINE.finditer(line)]
-        matches += [
-            (match, INLINE_EVIDENCE_NAME) for match in INLINE_PATH.finditer(line) if ".." not in match.group(1)
-        ]
-    tokens = [(match.group(1), kind) for match, kind in matches if not _within(match.start(1), owned)]
+        matches += [(match, INLINE_EVIDENCE_NAME) for match in INLINE_PATH.finditer(line)]
+    tokens = [(match.group(1), kind) for match, kind in matches if not _within(match.span(1), owned)]
     if files and FILE_TOKEN.fullmatch(line.strip()):
         tokens.append((line.strip(), DATA_FILE_NAME))
     for token, kind in tokens:
         name = token.removeprefix("./")
         # `RELATIVE_PATH` resolves a `../` name against its file.
-        if ".." in name.split("/"):
+        if RELATIVE_PATH.fullmatch(token) or TEMPLATE.search(token):
             continue
         if kind is not None and not kind.search(Path(name).name):
             continue
@@ -272,18 +279,18 @@ def faults_in(
     evidence: bool = True,
     written: frozenset[str] = frozenset(),
     invariants: frozenset[str] | None = None,
-    owned: frozenset[str] = frozenset(),
+    owned: dict[int, list[tuple[int, int]]] | None = None,
 ) -> list[str]:
     """`base` is the directory relative references resolve against.
 
     Passing it marks `text` as Markdown prose whatever the file's suffix.
     `evidence` false skips `evidence_faults` and the invariant check.
-    `invariants` None skips the invariant check. `owned` holds the values
-    `data_faults` resolves.
+    `invariants` None skips the invariant check. `owned` maps a line to the
+    spans of the values `data_faults` resolves there (`data_ownership`).
 
-    A spelling inside a Markdown link target, a Cargo path, a Rust include or
-    an `owned` value belongs to that extractor alone, so each reference
-    resolves once from the base its own syntax names.
+    A match inside the span of a Markdown link target, a Cargo path, a Rust
+    include or an `owned` value belongs to that extractor alone, so each
+    reference resolves once from the base its own syntax names.
     """
     faults = []
     markdown = base is not None or path.endswith(".md")
@@ -299,22 +306,15 @@ def faults_in(
             return []
         return [f"{path}:{number}: {spelling if target is None else target}"]
 
-    values = owned and re.compile(
-        r"(?<![\w./+-])(?:"
-        + "|".join(map(re.escape, sorted(owned, key=len, reverse=True)))
-        + r")(?![\w/+=-])"
-    )
+    owned = owned or {}
     for number, line in enumerate(text.splitlines(), 1):
+        cargo = _cargo_paths(line) if path.endswith("Cargo.toml") else []
         spans = [
             match.span(1)
-            for pattern, applies in (
-                (MARKDOWN_LINK, markdown),
-                (CARGO_PATH, path.endswith("Cargo.toml")),
-                (RUST_INCLUDE, path.endswith(".rs")),
-            )
+            for pattern, applies in ((MARKDOWN_LINK, markdown), (RUST_INCLUDE, path.endswith(".rs")))
             if applies
             for match in pattern.finditer(line)
-        ] + ([match.span() for match in values.finditer(line)] if values else [])
+        ] + [span for span, _ in cargo] + owned.get(number, [])
         if prose and evidence:
             faults += [
                 f"{path}:{number}: {name}"
@@ -334,7 +334,7 @@ def faults_in(
         ):
             faults.append(f"{path}:{number}: host-local path")
         for match in REPOSITORY_PATH.finditer(line):
-            if _within(match.start(), spans):
+            if _within(match.span(1), spans):
                 continue
             end = match.end()
             if line[end : end + 1] in ("*", "{", "<", "$"):
@@ -347,7 +347,7 @@ def faults_in(
             if not TEMPLATE.search(spelling):
                 faults += unresolved(spelling, target)
         if path.endswith("Cargo.toml"):
-            for dependency in CARGO_PATH.findall(line):
+            for _, dependency in cargo:
                 faults += unresolved(dependency, _reference(base, dependency))
         if path.endswith(".rs"):
             for included in RUST_INCLUDE.findall(line):
@@ -355,24 +355,25 @@ def faults_in(
         if prose:
             # A `./` path in prose is a command spelling run from the root.
             for match in DOT_PATH.finditer(line):
-                if not _within(match.start(), spans):
+                if not _within(match.span(), spans):
                     faults += unresolved(match.group(), _reference("", match.group(1)))
             for match in RELATIVE_PATH.finditer(line):
-                if not _within(match.start(), spans):
+                if not _within(match.span(1), spans):
                     faults += unresolved(match.group(1), _reference(base, match.group(1)))
         if markdown:
             for match in INLINE_PATH.finditer(line):
                 inline = match.group(1)
-                # `REPOSITORY_PATH` and `DOT_PATH` own their spellings.
+                # `REPOSITORY_PATH`, `DOT_PATH` and `RELATIVE_PATH` own their spellings.
                 if (
-                    ".." in inline
-                    or REPOSITORY_PATH.fullmatch(inline)
+                    REPOSITORY_PATH.fullmatch(inline)
                     or DOT_PATH.fullmatch(inline)
-                    or _within(match.start(1), spans)
+                    or RELATIVE_PATH.fullmatch(inline)
+                    or TEMPLATE.search(inline)
+                    or _within(match.span(1), spans)
                 ):
                     continue
                 if not _resolves(inline, base, known):
-                    faults.append(f"{path}:{number}: {_reference(base, inline)}")
+                    faults += unresolved(inline, _reference(base, inline))
             for link in MARKDOWN_LINK.findall(line):
                 if not TEMPLATE.search(link):
                     faults += unresolved(link, _reference("" if link.startswith("/") else base, link))
@@ -386,6 +387,7 @@ def data_faults(
     known: set[str],
     is_ignored=lambda target: False,
     written: frozenset[str] = frozenset(),
+    deferred: Counter | None = None,
 ) -> list[str]:
     """Path-named members of a structured data file that resolve nowhere.
 
@@ -393,8 +395,8 @@ def data_faults(
     directory, so either reading resolves it, and so does a reading git
     ignores. The fault names the file-relative reading of a `../` value and
     the root-relative reading of any other, or the value as written when a
-    `..` climbs above the root in both. A manifest member `CARGO_PATH` reads
-    is left to it.
+    `..` climbs above the root in both. `deferred` counts the members whose
+    string `CARGO_PATH` extracts (`data_ownership`); they are left to it.
     """
     try:
         members = list(_data_members(path, text))
@@ -404,10 +406,12 @@ def data_faults(
     lines = text.splitlines()
     faults = []
     files = bool(DATA_PROSE.match(path))
+    deferred = Counter(data_ownership(path, text)[1] if deferred is None else deferred)
     for number, member, value in members:
-        if _cargo_member(path, member):
+        if deferred[member, value]:
+            deferred[member, value] -= 1
             continue
-        if not _data_path(path, member, value):
+        if not _data_path(member, value):
             for name in evidence_faults(value, "", known, written, base=base, files=files):
                 line = number or next((i for i, text in enumerate(lines, 1) if name in text), 0)
                 faults.append(f"{path}:{line}: {name}")
@@ -424,33 +428,146 @@ def data_faults(
     return faults
 
 
-def _cargo_member(path: str, member: str) -> bool:
-    return path.endswith("Cargo.toml") and bool(CARGO_MEMBER.fullmatch(member))
+def _cargo_paths(line: str) -> list[tuple[tuple[int, int], str]]:
+    """The span and value of each `CARGO_PATH` path on `line`."""
+    return [
+        (match.span(group), match.group(group))
+        for match in CARGO_PATH.finditer(line)
+        for group in (1, 2)
+        if match.group(group) is not None
+    ]
 
 
-def _data_path(path: str, member: str, value: str) -> bool:
+def _data_path(member: str, value: str) -> bool:
     """Whether `data_faults` resolves the value of `member` as a path."""
     return bool(
         DATA_PATH_MEMBER.search(member)
         and "/" in value
         and DATA_PATH_VALUE.fullmatch(value)
         and not TEMPLATE.search(value)
-        and not _cargo_member(path, member)
     )
 
 
-def data_paths(path: str, text: str) -> frozenset[str]:
-    """The values of a data file that `data_faults` resolves as paths."""
+def _within(span: tuple[int, int], spans) -> bool:
+    return any(begin <= span[0] and span[1] <= end for begin, end in spans)
+
+
+def data_ownership(path: str, text: str) -> tuple[dict[int, list[tuple[int, int]]], Counter]:
+    """The spans a data file's values own, and the members `CARGO_PATH` extracts.
+
+    Returns the spans by line of the strings `data_faults` resolves as paths,
+    and the count of each `(member, value)` whose string is a `CARGO_PATH`
+    path. A string counts only when the parsed file holds its member and value.
+    """
     try:
-        return frozenset(
-            value for _, member, value in _data_members(path, text) if _data_path(path, member, value)
-        )
+        parsed = {(member, value) for _, member, value in _data_members(path, text)}
     except (ValueError, tomllib.TOMLDecodeError):
-        return frozenset()
+        return {}, Counter()
+    lines = text.splitlines()
+    owned: dict[int, list[tuple[int, int]]] = {}
+    deferred: Counter = Counter()
+    for number, span, member, value in _literals(path, text):
+        if (member, value) not in parsed:
+            continue
+        if path.endswith("Cargo.toml") and (span, value) in _cargo_paths(lines[number - 1]):
+            deferred[member, value] += 1
+        elif _data_path(member, value):
+            owned.setdefault(number, []).append(span)
+    return owned, deferred
 
 
-def _within(start: int, spans) -> bool:
-    return any(begin <= start < end for begin, end in spans)
+def _literals(path: str, text: str):
+    """Yields `(line, span, member, value)` of each one-line string of a data file.
+
+    `member` is the name `_data_members` gives the string's value.
+    """
+    if path.endswith((".yaml", ".yml")):
+        owner = None
+        for number, line in enumerate(text.splitlines(), 1):
+            if member := YAML_MEMBER.match(line):
+                owner = member.group(1) if not member.group(3) else None
+                yield number, member.span(3), member.group(1), member.group(3)
+            elif (item := YAML_ITEM.match(line)) and owner is not None:
+                yield number, item.span(2), owner, item.group(2)
+        return
+    starts = [0]
+    for line in text.splitlines(keepends=True):
+        starts.append(starts[-1] + len(line))
+    scanned = _json_strings(text) if path.endswith(".json") else _toml_strings(text)
+    number = 0
+    for start, end, member, value in scanned:
+        while number + 1 < len(starts) and starts[number + 1] <= start:
+            number += 1
+        yield number + 1, (start - starts[number], end - starts[number]), member, value
+
+
+def _decoded(token: str) -> str:
+    if token.startswith("'"):
+        return token[1:-1]
+    try:
+        return json.loads(token)
+    except ValueError:
+        return token[1:-1]
+
+
+def _json_strings(text: str):
+    """`(start, end, member, value)` of each JSON string value, in text order."""
+    tokens = list(JSON_TOKEN.finditer(text))
+    # A frame is an object with its current key, or an array with its name.
+    frames: list[list] = []
+    for index, token in enumerate(tokens):
+        kind = token.group()
+        if kind == "{":
+            frames.append(["{", None])
+        elif kind == "[":
+            frames.append(["[", frames[-1][1] if frames else None])
+        elif kind in ("}", "]"):
+            if frames:
+                frames.pop()
+        elif kind != ":" and frames:
+            if index + 1 < len(tokens) and tokens[index + 1].group() == ":":
+                frames[-1][1] = _decoded(kind)
+            elif frames[-1][1] is not None:
+                yield token.start() + 1, token.end() - 1, frames[-1][1], _decoded(kind)
+
+
+def _toml_strings(text: str):
+    """`(start, end, member, value)` of each one-line TOML string value, in text order."""
+    frames: list[list] = [["{", None]]
+    key, header, parts = True, False, []
+    for token in TOML_TOKEN.finditer(text):
+        kind = token.group()
+        if kind.startswith("#"):
+            continue
+        if kind == "\n":
+            if len(frames) == 1:
+                key, header, parts = True, False, []
+            continue
+        if header:
+            continue
+        string = kind[0] in "\"'"
+        if key:
+            if kind == "[" and len(frames) == 1 and not parts:
+                header = True
+            elif kind == "=":
+                frames[-1][1] = parts[-1] if parts else None
+                key, parts = False, []
+            elif kind == "}":
+                frames.pop()
+                key = False
+            elif kind not in (".", ","):
+                parts.append(_decoded(kind) if string else kind)
+        elif kind == "[":
+            frames.append(["[", frames[-1][1]])
+        elif kind == "{":
+            frames.append(["{", None])
+            key = True
+        elif kind in ("]", "}") and len(frames) > 1:
+            frames.pop()
+        elif kind == ",":
+            key = frames[-1][0] == "{"
+        elif string and kind[:3] not in ('"""', "'''") and frames[-1][1] is not None:
+            yield token.start() + 1, token.end() - 1, frames[-1][1], _decoded(kind)
 
 
 def _data_members(path: str, text: str):
@@ -1081,11 +1198,13 @@ def scan(
 ) -> list[str]:
     if fnmatch.fnmatch(path, ".jit/issues/*.json"):
         return issue_faults(path, text, known, written, invariants, is_history, trees)
-    owned = data_paths(path, text) if path.endswith(DATA_SUFFIXES) else frozenset()
+    owned, deferred = data_ownership(path, text) if path.endswith(DATA_SUFFIXES) else ({}, Counter())
     faults = faults_in(path, text, known, written=written, invariants=invariants, owned=owned)
     if path.endswith(DATA_SUFFIXES):
         faults += [
-            fault for fault in data_faults(path, text, known, is_ignored, written) if fault not in faults
+            fault
+            for fault in data_faults(path, text, known, is_ignored, written, deferred)
+            if fault not in faults
         ]
     return faults
 
@@ -1592,6 +1711,20 @@ ROUTE_CASES = {
     "scripts/data-repo.json": ('{"path": "docs/x-data"}', []),
     "scripts/data-ev.json": ('{"log_path": "results/run-data.log"}', ["1: results/run-data.log"]),
     "scripts/data.yaml": ("path: ./docs/x-yaml\n", []),
+    "scripts/store.yaml": (
+        "path: .jit/reference/missing.md\n# See .jit/reference/missing.md\n",
+        ["2: .jit/reference/missing.md"],
+    ),
+    "scripts/guide.toml": ('path = "docs/guide"\n# See docs/guide.md\n', ["2: docs/guide.md"]),
+    "scripts/data-note.json": ('{"path": "docs/x-data", "note": "docs/x-data"}', ["1: docs/x-data"]),
+    "crates/d/Cargo.toml": (
+        "[dependencies]\nmissing = { path = '../absent' }\npresent = { path = '../a' }\n",
+        ["2: crates/absent"],
+    ),
+    "README.md": ("`notes/../.jit/missing.md` and `notes/../docs/present.md`", ["1: .jit/missing.md"]),
+    "docs/inline-above.md": ("`a/../../../x.md`", ["1: a/../../../x.md"]),
+    "docs/ev-dotdot.md": ("wrote results/../run-dd.log", ["1: docs/run-dd.log"]),
+    "docs/elided.md": ("`derived/.../claim.json` and derived/.../run.log", []),
     # RUST_INCLUDE
     "crates/a/src/lib.rs": (
         'include_str!("missing.txt");\ninclude_str!("./present.txt");\n'
@@ -1646,6 +1779,7 @@ def route_faults() -> dict[str, list[str]]:
         for name in (
             "docs/present.md", "scripts/x.sh", "crates/a/src/present.txt", ".jit/reference/present.md",
             "crates/c/present-x/lib.rs", "scripts/docs/x-data", "scripts/docs/x-yaml",
+            "scripts/.jit/reference/missing.md", "scripts/docs/guide",
         ):
             (root / name).parent.mkdir(parents=True, exist_ok=True)
             (root / name).write_text("")
