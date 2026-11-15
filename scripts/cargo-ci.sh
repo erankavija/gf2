@@ -286,6 +286,7 @@ run_step reference-check python3 -B scripts/check-references.py
 run_step tracked-budget-self-test python3 -B scripts/check-tracked-budget.py --self-test
 run_step tracked-budget python3 -B scripts/check-tracked-budget.py
 run_step docs-mechanical-self-test python3 contrib/gates/tests/docs-mechanical-test.py
+run_step tracker-lifecycle-self-test sh scripts/tracker-lifecycle.test.sh
 run_step tuning-campaign-launcher-syntax bash -n dev/scripts/tuning-extent-campaign.sh
 run_step gpu-lock-wrapper bash scripts/nextest-gpu-lock.test.sh
 run_step failure-report-self-test bash scripts/cargo-ci-failure.test.sh
