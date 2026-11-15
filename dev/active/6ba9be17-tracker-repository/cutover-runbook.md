@@ -92,6 +92,9 @@ subcommand or starts the [rollback](#rollback).
 - The port of branch-only tracker edits is on `main` (gf2-f6, `97b8e84a9`).
 - `<abandon-list>` (rechecked by gf2-f6 right before the window) and
   `<survivor-list>` exist as files.
+- `.jit/references.toml` names the upstream Sionna files as full URLs (a
+  tracker commit on `main`), so the reference checker passes once step 6's
+  code-side commit drops its exception.
 - The steward's "go" message has arrived and the owner has confirmed.
 - The quiet window is announced to every active session through the steward,
   with its start and expected length (TBD-rehearsal: wall time of the steps on
@@ -151,6 +154,30 @@ cutover abandon --repo . --branches "<abandon-list>"
 whose tracker store and working tree are clean is harvested in step 7 and
 removed with `git worktree remove` in step 9. A dirty one stays detached with
 its store, is never removed, and is listed for the steward.
+
+Then the branches already merged into `main` are abandoned as a batch,
+generated at this moment and never built by hand. An entry that is not an
+ancestor of `main` is a survivor and is appended to `<survivor-list>` for
+step 9; so is any entry already on `<survivor-list>`, which is not abandoned.
+
+```sh
+: > "<backup>/merged-abandon.txt"
+sed 's/#.*//' "<survivor-list>" | sed '/^[[:space:]]*$/d' > "<backup>/survivors-before-merged.txt"
+git branch --merged main --format='%(refname:short)' | while IFS= read -r b; do
+  [ "$b" = main ] && continue
+  if grep -qxF -- "$b" "<backup>/survivors-before-merged.txt"; then continue
+  elif git merge-base --is-ancestor "$b" main; then printf '%s\n' "$b" >> "<backup>/merged-abandon.txt"
+  else printf '%s\n' "$b" >> "<survivor-list>"; fi
+done
+git worktree list --porcelain | awk '/^worktree /{w=substr($0,10)} /^branch refs\/heads\//{print substr($0,19) "\t" w}' |
+  while IFS="$(printf '\t')" read -r b w; do
+    grep -qxF -- "$b" "<backup>/merged-abandon.txt" && git -C "$w" switch --detach
+  done
+cutover abandon --repo . --branches "<backup>/merged-abandon.txt"
+```
+
+The detached worktrees follow the same rule as above: clean ones are
+harvested and removed, dirty ones stay and are listed for the steward.
 
 ### 4. Inventory
 
@@ -287,10 +314,14 @@ A removal-only branch checked out in the primary checkout shows the mounted
 tracker as untracked until it merges `main`; the branch merges `main` when it
 resumes.
 
-The step passes when this prints no branch other than those listed for the
-steward:
+The step passes when every local branch is `main`, archived under
+`refs/archive/` or cleaned, and both commands below print no branch other
+than those listed for the steward. The first lists a branch that is neither
+`main` nor on `<survivor-list>`, the second a branch that tracks `.jit`:
 
 ```sh
+{ echo main; sed 's/#.*//' "<survivor-list>" | sed '/^[[:space:]]*$/d'; } > "<backup>/live.txt"
+git for-each-ref --format='%(refname:short)' refs/heads/ | grep -vxF -f "<backup>/live.txt"
 git for-each-ref --format='%(refname:short)' refs/heads/ | while IFS= read -r b; do
   [ -z "$(git ls-tree -r --name-only "$b" -- .jit)" ] || printf '%s\n' "$b"
 done
@@ -316,9 +347,9 @@ further work, from the primary checkout:
 2. `git checkout -f "$P"`. This drops the cutover commit `C` and the
    invariant amendment `A`, so `resolvable-references` and its projection in
    `AGENTS.md` read as before.
-3. Put every ref back to the listing. Refs that differ are set, refs created
-   since (`refs/archive/*`, the probe branches) are
-   deleted:
+3. Put every ref back to the listing. Refs that differ are set, which
+   restores the branches step 3 abandoned, and refs created
+   since (`refs/archive/*`, the probe branches) are deleted:
 
    ```sh
    while read -r sha _ ref; do
