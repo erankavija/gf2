@@ -58,10 +58,12 @@ are scanned as `.jit/` paths, so issue records and archive records are checked
 under their exception entries whichever repository tracks them. When the data
 root lies elsewhere, as for a linked worktree sharing the primary checkout's
 store, that prose is written against other branches: issue records and archive
-records are skipped with a printed count. In an issue record a document link
-pinned to a commit resolves in that commit's tree; an unpinned link, a
-document asset and a path of the prose resolve in the checkout or in the tree
-of a local branch head, which all checkouts of the host share.
+records are skipped with a printed count. In an issue record, a tracker path
+in prose or a document entry resolves only against the mounted store's files
+or its ignore rules. A pinned document link to a repository path resolves in
+that commit's tree; an unpinned repository link, a document asset and a
+repository path of the prose resolve in the checkout or in the tree of a local
+branch head, which all checkouts of the host share.
 
 Every exception is an entry of `reference-exceptions.toml` beside this script,
 with its reason; `path` is a glob or a list of globs. An entry with `planned`
@@ -419,17 +421,20 @@ def issue_faults(
         if trees is None
         or (target := fault.rsplit(": ", 1)[1]).startswith("@/")
         or target == "host-local path"
+        or _tracker(target)
         or not trees.on_branch(target)
     ]
 
     def resolves(target: str, commit: str | None) -> bool:
+        if _tracker(target):
+            return target in known
         if trees is None:
             return target in known
         return target in known or trees.on_branch(target) or bool(commit and trees.holds([commit], target))
 
     for document in issue.get("documents", []):
         commit = document.get("commit")
-        if trees is not None and commit:
+        if trees is not None and commit and not _tracker(document["path"]):
             linked = trees.holds([commit], document["path"])
         else:
             linked = resolves(document["path"], None)
@@ -987,7 +992,7 @@ def check(root: Path, data: Path | None = None, notes: list[str] | None = None) 
     data = root / STORE if data is None else data
     notes = [] if notes is None else notes
     store = Store(data)
-    local = data.absolute() == (root / STORE).absolute()
+    local = data.resolve() == (root / STORE).resolve()
     tracked = git(root, "ls-files", "-z").split("\0")[:-1]
     files = {path: root / path for path in tracked}
     if store.mounted:
@@ -1424,11 +1429,25 @@ def layout_self_test() -> None:
         git(root, "checkout", "-q", "-b", "feature")
         (root / "dev").mkdir()
         (root / "dev/branch-only.md").write_text("")
+        (root / ".jit").mkdir()
+        (root / ".jit/branch-only.toml").write_text("code branch tracker path\n")
+        (root / ".jit/pinned-only.toml").write_text("code branch tracker path\n")
+        git(root, "add", "dev/branch-only.md")
+        git(root, "add", "-f", ".jit/branch-only.toml", ".jit/pinned-only.toml")
         feature = _commit(root, "feature")
         git(root, "checkout", "-q", "main")
         document = "dev/branch-only.md"
         store(root / ".jit", {
             "kept": {"state": "ready", "description": "names docs/missing.md and dev/branch-only.md"},
+            "missing-tracker": {
+                "state": "done",
+                "description": "names .jit/branch-only.toml",
+                "documents": [{"path": ".jit/branch-only.toml"}],
+            },
+            "pinned-tracker": {
+                "state": "done",
+                "documents": [{"path": ".jit/pinned-only.toml", "commit": feature}],
+            },
             "pinned": {"state": "done", "documents": [{"path": document, "commit": feature}]},
             "unpinned": {"state": "done", "documents": [{"path": document, "commit": None}]},
             "stale-pin": {"state": "done", "documents": [{"path": document, "commit": main}]},
@@ -1440,11 +1459,27 @@ def layout_self_test() -> None:
             "docs/refs.md:1: .jit/absent.json",
             "docs/refs.md:2: @/inv/gone-rule",
             ".jit/issues/kept.json:1: docs/missing.md",
+            ".jit/issues/missing-tracker.json:1: .jit/branch-only.toml",
+            ".jit/issues/missing-tracker.json:0: .jit/branch-only.toml",
+            ".jit/issues/pinned-tracker.json:0: .jit/pinned-only.toml",
             ".jit/issues/stale-pin.json:0: dev/branch-only.md",
             ".jit/issues/nowhere.json:0: dev/nowhere.md",
             ".jit/archive-evidence/c.json:1: dev/archived-away.md",
         ]), faults
         assert not notes, notes
+
+        aliases = Path(directory) / "aliases"
+        aliases.mkdir()
+        dotdot = aliases / "../own/.jit"
+        symlink = Path(directory) / "shared-store"
+        symlink.symlink_to(root / ".jit", target_is_directory=True)
+        for spelling in (dotdot, symlink):
+            data = data_root(root, {"JIT_DATA_DIR": str(spelling)})
+            notes = []
+            faults = check(root, data, notes)
+            assert ".jit/issues/kept.json:1: docs/missing.md" in faults, faults
+            assert ".jit/archive-evidence/c.json:1: dev/archived-away.md" in faults, faults
+            assert not notes, notes
 
         # The store outside the root, named by the data root.
         root = Path(directory) / "outside"
