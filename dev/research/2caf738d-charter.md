@@ -26,6 +26,7 @@ Optimization never relaxes mathematical or standards conformance.
 - D-9: Fast-tier time budgets are enforced by an epic gate on a quiet host.
 - D-10: The tracker cutover runs alone, before the history rewrite; supersedes the timing of D-8.
 - D-11: A commit for work with no JIT issue carries the scope `jit:none`.
+- D-12: The cutover abandons stale branches and cleans the rest with a removal-only commit; supersedes the cleaning rule of D-10.
 
 ## Decision Details
 
@@ -187,4 +188,24 @@ Optimization never relaxes mathematical or standards conformance.
   claims an issue it does not serve.
 - **Reasoning:** Every subject on `main` states its issue or states that it
   has none.
+- **Date:** 2026-11-15
+
+### D-12: Stale branches are abandoned, the rest cleaned without a merge
+
+- **Chosen:** Before the cutover's quiet window, a branch of a done issue
+  whose content is on `main` is abandoned: its ref moves to an archive
+  namespace and the pre-cutover bundle keeps it. The owner reviews the list.
+  Every surviving branch, the branches without an issue included, is cleaned
+  by one commit that only removes its tracked `.jit/` paths; it merges `main`
+  when it resumes. Branch-only tracker edits are ported into the store or
+  recorded as abandoned before extraction. The rewrite deletes the branches
+  without an issue, as D-10 states.
+- **Rejected:** Cleaning by merging `main` (D-10): most unmerged branches
+  conflict with `main` outside `.jit/`, and a forced resolution would alter
+  their code.
+- **Rejected:** Named exceptions that keep tracked `.jit/`: it narrows the
+  criterion that no surviving branch tracks the store.
+- **Reasoning:** A removal-only commit cannot conflict and leaves the code
+  tree of a branch unchanged; abandoning landed branches removes refs nobody
+  resumes.
 - **Date:** 2026-11-15
