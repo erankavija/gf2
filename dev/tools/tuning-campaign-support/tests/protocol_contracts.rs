@@ -8,7 +8,7 @@ use std::fs;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use tuning_campaign_support::abtest::{
     bonferroni_confidence, bootstrap_seed, decide, median, pair_orders, paired_bootstrap_speedup,
     wilson_interval_95, ArmOrder, BootstrapInterval, Decision, Margins, PairedObservation,
@@ -76,10 +76,15 @@ impl Reaped {
         let mut reaper = Command::new("sh")
             .args([
                 "-c",
-                r#"IFS= read -r tree; cat >/dev/null; rm -rf -- "$tree""#,
+                r#"IFS= read -r tree; cat >/dev/null; rm -rf -- "$tree" && printf 'REMOVED %s\n' "$tree""#,
             ])
             .stdin(Stdio::piped())
-            .stdout(Stdio::null())
+            // The kill probe's parent waits for this reaper's notification.
+            .stdout(if std::env::var_os(KILL_PROBE_VAR).is_some() {
+                Stdio::inherit()
+            } else {
+                Stdio::null()
+            })
             .stderr(Stdio::null())
             .process_group(0)
             .spawn()
@@ -1862,10 +1867,13 @@ fn a_fixture_is_removed_when_its_test_process_is_killed() {
     )
     .unwrap();
     child.wait().unwrap();
-    let deadline = Instant::now() + Duration::from_secs(5);
-    while tree.exists() && Instant::now() < deadline {
-        std::thread::sleep(Duration::from_millis(20));
-    }
+    assert_eq!(
+        lines
+            .next()
+            .expect("fixture reaper exited without notifying cleanup")
+            .unwrap(),
+        format!("REMOVED {}", tree.display())
+    );
     assert!(
         !tree.exists(),
         "fixture survived SIGKILL: {}",
@@ -4286,20 +4294,28 @@ fn interrupted_campaign(name: &str) -> InterruptedCampaign {
                     && record.details["pid"].as_u64() == Some(u64::from(pid))
             })
     };
-    let deadline = Instant::now() + Duration::from_secs(6);
+    // Nextest bounds the wait if the runner never journals the spawn.
     let stalled_child = loop {
-        if let Some(pid) = fs::read_to_string(&stalled)
+        let pid = fs::read_to_string(&stalled)
             .ok()
-            .and_then(|text| text.trim().parse::<u32>().ok())
-            .filter(|pid| spawn_journaled(*pid))
-        {
-            break pid;
+            .and_then(|text| text.trim().parse::<u32>().ok());
+        if let Some(pid) = pid {
+            if spawn_journaled(pid) {
+                break pid;
+            }
+            rustix::process::test_kill_process(rustix::process::Pid::from_raw(pid as i32).unwrap())
+                .expect("the stalled candidate exited before the runner journaled its spawn");
         }
-        assert!(
-            first.try_wait().unwrap().is_none(),
-            "the first session ended before the candidate stalled"
-        );
-        assert!(Instant::now() < deadline, "the candidate never stalled");
+        if let Some(status) = first.try_wait().unwrap() {
+            panic!(
+                "the first session exited ({status}) before {}",
+                if pid.is_some() {
+                    "the runner journaled the stalled candidate's spawn"
+                } else {
+                    "the candidate wrote its stalled PID"
+                }
+            );
+        }
         std::thread::sleep(Duration::from_millis(5));
     };
     kill_group(first.id());
