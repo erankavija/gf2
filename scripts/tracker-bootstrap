@@ -1,0 +1,26 @@
+#!/bin/sh
+# Mounts a tracker repository and validates it through tracker-env.
+# Usage: tracker-bootstrap <path-or-url>; exits 0 on a valid mount, nonzero otherwise.
+# Refuses missing/extra arguments, linked worktrees, and an existing .jit.
+# Failed validation leaves the mounted store in place and prints its findings.
+set -eu
+
+die() { printf 'tracker-bootstrap: %s\n' "$*" >&2; exit 1; }
+physical() { (cd "$1" && pwd -P); }
+
+[ "$#" -eq 1 ] || die 'usage: tracker-bootstrap <path-or-url>'
+git rev-parse --show-toplevel >/dev/null || die 'not inside a git checkout'
+common=$(physical "$(git rev-parse --git-common-dir)") ||
+  die 'cannot resolve the git common directory'
+gitdir=$(physical "$(git rev-parse --absolute-git-dir)") ||
+  die 'cannot resolve the git directory'
+[ "$gitdir" = "$common" ] || die 'cannot mount from a linked worktree'
+primary=$(dirname "$common")
+store="$primary/.jit"
+if [ -e "$store" ] || [ -L "$store" ]; then
+  die "tracker store already exists: $store"
+fi
+
+git clone -- "$1" "$store"
+cd "$primary"
+exec "$primary/scripts/tracker-env" jit validate
