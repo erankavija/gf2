@@ -65,12 +65,16 @@ verification. Each subcommand is one step of `cutover-sequence` in
       is empty on the main branch and on the branch. Refuses an unverified
       harvest, uncommitted tracked changes, a detached WT and a conflict
       outside `.jit/` (the merge is aborted).
+      Verifies that the cleaned commit's tree outside `.jit` equals the
+      merge result; a mismatch restores the original branch ref and checkout
+      and is reported as a refusal, keeping the local store.
   cutover.py clean --repo CODE (--branch B | --branches FILE)
                 --merge-message MSG --message MSG [--main BRANCH]
       Cleans a parked branch without a shared store or harvest, in a temporary
       linked worktree under TMPDIR outside every tracked tree, removed on
       success or failure. FILE lists one branch per line with optional `#`
-      comments. Prints one line per branch: `cleaned`, `already clean` when
+      comments. Prints one line per branch: `cleaned; tree outside .jit equals
+      the merge result`, `already clean` when
       main is already merged and no tracker paths remain (nothing committed),
       `conflict outside .jit: not forced` (merge aborted, ref unchanged), or
       another refusal with its reason. Refuses a branch already checked out;
@@ -148,7 +152,7 @@ def git_rc(*args, cwd):
     return subprocess.run(["git", *args], cwd=cwd, capture_output=True).returncode
 
 
-def main(argv):
+def main(argv, *, self_test_after_clean=None):
     parser = argparse.ArgumentParser(prog="cutover.py", description=__doc__.split("\n")[0])
     parser.add_argument("--self-test", action="store_true")
     sub = parser.add_subparsers(dest="command")
@@ -204,6 +208,7 @@ def main(argv):
     if not args.command:
         parser.print_usage(sys.stderr)
         return 2
+    args.self_test_after_clean = self_test_after_clean
     try:
         return COMMANDS[args.command](args) or 0
     except Refusal as refusal:
@@ -794,8 +799,12 @@ def clean_linked(args):
         runs, pointers, _, faults = harvest_plan(shared, store)
         if runs or pointers or faults:
             raise Refusal(f"the harvest of {store} into {shared} is not verified")
-    outcome = clean_checkout(args, worktree, branch)
-    if store.is_dir():
+    try:
+        outcome = clean_checkout(args, worktree, branch)
+    except Refusal as error:
+        print(f"{branch}: refused: {error}")
+        return 2
+    if outcome != "already clean" and store.is_dir():
         shutil.rmtree(store)
         print(f"deleted the local store {store}")
     print(f"{branch}: {outcome}")
@@ -841,6 +850,7 @@ def clean_checkout(args, worktree, branch):
             raise Refusal(f"merging {args.main} into {branch}: {merged.stderr.strip()}")
         git("rm", "-q", "--cached", "--", *conflicts, cwd=worktree)
         git("commit", "-q", "--no-edit", cwd=worktree)
+    merge_result = git("rev-parse", "HEAD", cwd=worktree).strip()
     remaining = worktree_listing(worktree, "--", STORE)
     if remaining:
         git("rm", "-r", "-q", "--cached", "--", STORE, cwd=worktree)
@@ -848,7 +858,14 @@ def clean_checkout(args, worktree, branch):
     for rev in (args.main, branch):
         if tracked_under(rev, STORE, worktree):
             raise Failure(f"{rev} still tracks paths under {STORE}")
-    return "already clean" if git("rev-parse", "HEAD", cwd=worktree).strip() == head else "cleaned"
+    if git("rev-parse", "HEAD", cwd=worktree).strip() == head:
+        return "already clean"
+    if args.self_test_after_clean:
+        args.self_test_after_clean(worktree)
+    if git_rc("diff", "--quiet", merge_result, "HEAD", "--", ".", ":(exclude).jit", cwd=worktree) != 0:
+        git("reset", "--hard", head, cwd=worktree)
+        raise Refusal("tree outside .jit mismatch with the merge result; branch ref restored")
+    return "cleaned; tree outside .jit equals the merge result"
 
 
 # rollback -------------------------------------------------------------------
@@ -941,14 +958,14 @@ class SelfTest:
             print(f"  FAIL {label}")
         return condition
 
-    def run(self, *argv):
+    def run(self, *argv, after_clean=None):
         for arg in argv:
             if arg.startswith("/"):
                 if inside(Path(arg), self.invoking):
                     raise Refusal(f"self-test argument inside the invoking checkout: {arg}")
         out = io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(out):
-            code = main(list(argv))
+            code = main(list(argv), self_test_after_clean=after_clean)
         return code, out.getvalue()
 
     def sh(self, *cmd, cwd, check=True, env=None):
@@ -1257,7 +1274,8 @@ class SelfTest:
         self.commit_all(wb, "chore: tracker changes on wb after the cutover")
         rc, out = self.run("clean", "--repo", code, "--worktree", wb, *args)
         print(out, end="")
-        self.check(rc == 0, "REQ-07 clean passes on wb")
+        self.check(rc == 0 and "wb: cleaned; tree outside .jit equals the merge result" in out.splitlines(),
+                   "REQ-07 clean passes on wb and reports tree equality outside .jit")
         self.check(git("ls-tree", "-r", "--name-only", "wb", "--", STORE, cwd=code) == ""
                    and git("ls-tree", "-r", "--name-only", "main", "--", STORE, cwd=code) == "",
                    "REQ-07 git ls-files .jit is empty on main and on wb")
@@ -1276,10 +1294,36 @@ class SelfTest:
         self.check(rc == 2 and (Path(wa) / STORE).is_dir() and git("rev-parse", "HEAD", cwd=wa).strip() == head,
                    "REQ-07 clean refuses an unverified harvest and keeps the store")
         extra.unlink()
+
+        def plant_mismatch(worktree):
+            (Path(worktree) / "src" / "lib.rs").write_text("pub fn planted_mismatch() {}\n")
+            self.commit_all(worktree, "test: plant a non-tracker tree mismatch")
+
+        rc, out = self.run("clean", "--repo", code, "--worktree", wa, *args,
+                           after_clean=plant_mismatch)
+        self.check(rc == 2 and "tree outside .jit mismatch" in out
+                   and "branch ref restored" in out
+                   and git("rev-parse", "wa", cwd=code).strip() == head
+                   and not git("status", "--porcelain", "--untracked-files=no", cwd=wa).strip()
+                   and (Path(wa) / STORE).is_dir(),
+                   "REQ-07 a planted tree mismatch is refused, restores the ref and keeps the store")
         rc, out = self.run("clean", "--repo", code, "--worktree", wa, *args)
         self.check(rc == 0 and not (Path(wa) / STORE).exists()
+                   and "wa: cleaned; tree outside .jit equals the merge result" in out.splitlines()
                    and git("ls-tree", "-r", "--name-only", "wa", "--", STORE, cwd=code) == "",
                    "REQ-07 clean passes on wa")
+        head = git("rev-parse", "wa", cwd=code).strip()
+        local = Path(wa) / STORE
+        local.mkdir()
+        marker = local / "server.log"
+        marker.write_text("keep the local store\n")
+        rc, out = self.run("clean", "--repo", code, "--worktree", wa, *args,
+                           after_clean=plant_mismatch)
+        self.check(rc == 0 and out.strip() == "wa: already clean"
+                   and git("rev-parse", "wa", cwd=code).strip() == head
+                   and marker.is_file() and marker.read_text() == "keep the local store\n",
+                   "REQ-07 an already clean linked branch changes neither its ref nor its local store")
+        shutil.rmtree(local, ignore_errors=True)
 
     def parked_setup(self, code):
         fixture = self.path("parked-fixture")
@@ -1305,7 +1349,7 @@ class SelfTest:
         single_head = git("rev-parse", "parked-single", cwd=code).strip()
         rc, out = self.run("clean", "--repo", code, "--branch", "parked-single", *args)
         print(out, end="")
-        self.check(rc == 0 and out.strip() == "parked-single: cleaned",
+        self.check(rc == 0 and out.strip() == "parked-single: cleaned; tree outside .jit equals the merge result",
                    "REQ-07 a single parked branch cleans without a shared store or harvest")
         self.check(not tracked_under("parked-single", STORE, code)
                    and git_rc("merge-base", "--is-ancestor", "main", "parked-single", cwd=code) == 0
@@ -1328,7 +1372,8 @@ class SelfTest:
         rc, out = self.run("clean", "--repo", code, "--branches", str(branches), *args)
         print(out, end="")
         self.check(rc != 0 and out.splitlines() == [
-            "parked: cleaned", "parked-conflict: conflict outside .jit: not forced",
+            "parked: cleaned; tree outside .jit equals the merge result",
+            "parked-conflict: conflict outside .jit: not forced",
             "parked-already: already clean"],
             "REQ-07 batch lists each outcome and exits nonzero while a code conflict remains")
         self.check(git("rev-parse", "parked-conflict", cwd=code).strip() == head
