@@ -61,7 +61,7 @@
           "id": "e610f5c4-3833-4e23-8399-eb5b8b483ea8",
           "short_id": "e610f5c4",
           "title": "Build the cutover tool that moves the tracker out of the code repository",
-          "status": "final round phase 2 (Codex gpt-6.1-sol, by gf2-bf) running; then blocking Claude Opus review, then D-12 rework (Claude), Codex review, gates once"
+          "status": "checkpoint ece58ef3c (Codex phase 2, stopped, self-test ok 587 s); folded round dispatched to Claude Opus 5.5 (Step 0 final round + D-12); then blocking Claude Opus review + Codex review, gates once"
         },
         {
           "id": "2a4c2684-b7a6-4a72-822f-918a873a07bf",
@@ -149,7 +149,7 @@
     "6310679b": 1,
     "daa33be8": 1,
     "7854cfad": 1,
-    "e610f5c4": 4,
+    "e610f5c4": 5,
     "d1eba151": 3
   },
   "surfaced_pitfalls": [
@@ -337,6 +337,21 @@
       "vendor": "Claude",
       "model": "Sonnet 5.5",
       "reviewer": "Codex gate FAIL; parked per ruling"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "final round phase 2",
+      "vendor": "Codex",
+      "model": "gpt-6.1-sol high",
+      "reviewer": "pending (folded)",
+      "note": "stopped at 69 min by gf2-bf, no report; checkpoint ece58ef3c"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "final round completion + D-12 round (REQ-01/07/09/10/11)",
+      "vendor": "Claude",
+      "model": "Opus 5.5",
+      "reviewer": "blocking Claude Opus (audit replay) + Codex read-only, then Codex gate"
     }
   ]
 }
