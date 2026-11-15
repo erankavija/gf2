@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Plan the qualification of `satisfies:` and `cites:` link labels.
 
-Reads the tracker read-only (`.jit/issues/*.json` and `jit item list`) and
+Reads the tracker read-only (issue records and `jit item list`) and
 writes an idempotent shell script of `jit issue update` commands plus a
 markdown record of every label it leaves unqualified.
+
+Issue records and configuration come from `JIT_DATA_DIR` when set, otherwise
+`.jit/` under `--root` (the current checkout's top level by default).
+Item queries inherit the tracker environment.
 
 `satisfies:<id>` becomes `satisfies:<owner>/<id>`. The owner is the nearest
 container (an issue whose configured type is coarser than the finest tier and
@@ -23,6 +27,8 @@ citation; an unregistered key is left unchanged and listed.
 `--verify MIGRATED_ROOT` compares requirement credit of `--root` under
 unqualified matching with credit of the migrated copy under qualified matching,
 and prints every changed (container, requirement) pair.
+The explicit migrated copy is read from `.jit/` under `MIGRATED_ROOT`,
+independently of `JIT_DATA_DIR`.
 """
 
 import argparse
@@ -40,9 +46,9 @@ EXCLUDE = {"planning", "breakdown"}
 UNMARKED = re.compile(r"^\s*-\s*(?:\[[ xX]\]\s*)?(REQ-\d+):", re.M)
 
 
-def load_issues(root):
+def load_issues(data_root):
     issues = {}
-    for path in glob.glob(os.path.join(root, ".jit", "issues", "*.json")):
+    for path in glob.glob(os.path.join(data_root, "issues", "*.json")):
         with open(path) as handle:
             issue = json.load(handle)
         issues[issue["id"]] = issue
@@ -59,9 +65,9 @@ def issue_type(issue):
     return next((l[5:] for l in issue.get("labels", []) if l.startswith("type:")), None)
 
 
-def hierarchy(root):
+def hierarchy(data_root):
     """Container types and the membership namespace of each type."""
-    with open(os.path.join(root, ".jit", "config.toml"), "rb") as handle:
+    with open(os.path.join(data_root, "config.toml"), "rb") as handle:
         config = tomllib.load(handle)["type_hierarchy"]
     levels = config["types"]
     return ({t for t, level in levels.items() if level < max(levels.values())} - EXCLUDE,
@@ -272,10 +278,10 @@ def credit(issues, hard, containers, qualified):
     return out
 
 
-def verify(root, migrated, hard, sat, containers):
-    issues = load_issues(root)
+def verify(data_root, migrated, hard, sat, containers):
+    issues = load_issues(data_root)
     before = credit(issues, hard, containers, False)
-    after = credit(load_issues(migrated), hard, containers, True)
+    after = credit(load_issues(os.path.join(migrated, ".jit")), hard, containers, True)
     hard = {c: ids for c, ids in hard.items()
             if c in {i[:SHORT] for i, v in issues.items() if issue_type(v) in containers}}
     evaluated = {l.split(":", 1)[1] for i in issues.values() for l in i.get("labels", [])
@@ -317,7 +323,7 @@ def verify(root, migrated, hard, sat, containers):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--root", default=".", help="repository root, read only")
+    parser.add_argument("--root", help="repository root, read only (default: git top level)")
     parser.add_argument("--jit", default="jit")
     parser.add_argument("--script", help="write the jit issue update script here")
     parser.add_argument("--record", help="write the markdown label record here")
@@ -327,7 +333,11 @@ def main():
     parser.add_argument("--items-from", metavar="REPO", help="jit repository listing items (default: --root)")
     args = parser.parse_args()
 
-    issues = load_issues(args.root)
+    if args.root is None:
+        args.root = subprocess.run(["git", "rev-parse", "--show-toplevel"], check=True,
+                                   capture_output=True, text=True).stdout.strip()
+    data_root = os.environ.get("JIT_DATA_DIR", os.path.join(args.root, ".jit"))
+    issues = load_issues(data_root)
     source = args.items_from or args.root
     requirements = items(source, args.jit, "requirement")
     declared = collections.defaultdict(set)
@@ -336,10 +346,10 @@ def main():
         declared[item["scope"]].add(item["self_id"])
         if re.sub(r"^\[[ xX]\]\s*", "", item["text"]).startswith("[hard]"):
             hard[item["scope"]].add(item["self_id"])
-    containers, associations = hierarchy(args.root)
+    containers, associations = hierarchy(data_root)
     sat = plan_satisfies(issues, declared, containers, associations)
     if args.verify:
-        print(verify(args.root, args.verify, hard, sat, containers), end="")
+        print(verify(data_root, args.verify, hard, sat, containers), end="")
         return
     cit = plan_cites(issues, {i["self_id"] for i in items(source, args.jit, "citation")})
     if args.script:
