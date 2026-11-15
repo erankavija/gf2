@@ -10,13 +10,13 @@
           "id": "6d5ba9fb-421b-4c77-a111-985e816c85ee",
           "short_id": "6d5ba9fb",
           "title": "Resolve tracker files through the data root in the gate checkers",
-          "status": "gates-passed, landing pending"
+          "status": "done (landed d05b8c59d)"
         },
         {
           "id": "28aa2a9d-fef8-4ccc-988e-2a76d2065af8",
           "short_id": "28aa2a9d",
           "title": "Check tracker references against a mounted store",
-          "status": "code-review failed, rework 1 pending"
+          "status": "rework 1 committed (e0491f072, cbe05d7c5); blocking Claude review PASS; cargo-ci held for gf2-24's quiet-host pair, then code-review gate"
         }
       ]
     },
@@ -27,7 +27,7 @@
           "id": "3fb4accb-3343-4969-a9d9-8339d6dfbd5a",
           "short_id": "3fb4accb",
           "title": "Run jit against the shared store through one entry point",
-          "status": "pending"
+          "status": "dispatched (Claude Opus 5.5)"
         }
       ]
     },
@@ -97,7 +97,7 @@
   "created_during_execution": [],
   "escalations": [],
   "rework_counts": {
-    "28aa2a9d": 0
+    "28aa2a9d": 1
   },
   "surfaced_pitfalls": [
     "docs-mechanical exits 2 when JIT_DATA_DIR lies outside any git repository (documented contract; advisory from the 6d5ba9fb Claude review)",
@@ -105,10 +105,11 @@
     "contrib/gates/code-review-prompt.md drifted from its package source in 5855c6dab (outside this epic; reported to the steward)"
   ],
   "started_at": "2026-11-15T01:17:00+02:00",
-  "lead": "gf2-e3 (took over from gf2-7d)",
+  "lead": "gf2-bf under steward gf2-a2 (took over from gf2-e3, gf2-7d)",
   "notes": {
     "2a4c2684": "implemented by gf2-00 on the lead's call after 3fb4accb and 6310679b land",
-    "6889e6e6": "waits on an owner timing decision (rewrite paused, steward 01:22)"
+    "6889e6e6": "waits on an owner timing decision (rewrite paused, steward 01:22)",
+    "6d5ba9fb": "Blocking Claude review (Claude Sonnet 5.5, beside the Codex gate): PASS at 43e85778e; REQ-01 to REQ-08 met; REQ-02 checked with the real jit against scratch roots. cargo-ci and code-review re-passed at merged head 33c4df96a."
   },
   "dispatches": [
     {
@@ -130,8 +131,15 @@
       "kind": "rework 1",
       "vendor": "Codex",
       "model": "gpt-6-luna xhigh",
-      "reviewer": "pending",
-      "note": "stopped at 01:35 by the hand-off order before any edit"
+      "reviewer": "Claude Sonnet 5.5 blocking (PASS, one docstring advisory fixed by Claude Haiku 5.5 at cbe05d7c5) + Codex gate",
+      "note": "rerun 2026-11-15 by gf2-bf; done"
+    },
+    {
+      "issue": "3fb4accb",
+      "kind": "implement",
+      "vendor": "Claude",
+      "model": "Opus 5.5",
+      "reviewer": "Codex gate"
     }
   ]
 }
