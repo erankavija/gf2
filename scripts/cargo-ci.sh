@@ -11,6 +11,11 @@ set -euo pipefail
 #   0 — all steps passed
 #   1 — one or more steps failed
 #   2 — environment problem: no real cargo available on PATH
+#
+# A failed step prints the path of its full log under `target/cargo-ci-logs/`;
+# a failed nextest step (`test`, `test-build` and the per-package `*-build` and
+# `*-nextest` steps) also prints its cause: failing tests and nextest error
+# blocks, else the log tail.
 
 # Every step runs its command directly. The only host lock a step takes is the
 # GPU lock that nextest holds for each `gpu-serial` test
@@ -76,6 +81,10 @@ SYSTEM_TMPDIR=${TMPDIR:-/tmp}
 RUN_ROOT=$(mktemp -d)
 trap 'rm -rf "$RUN_ROOT"' EXIT
 LOGDIR="$RUN_ROOT/logs"
+# A failed step's full log is copied to `target/cargo-ci-logs/<run stamp>/`
+# (untracked) before the trap removes `LOGDIR`.
+# shellcheck disable=SC2034 # read by keep_failed_log
+CARGO_CI_LOG_DIR="$(cd "$(dirname "$0")/.." && pwd)/target/cargo-ci-logs/$(date +%Y%m%dT%H%M%S)-$$"
 SCRATCH="$RUN_ROOT/scratch"
 mkdir -p "$LOGDIR" "$SCRATCH"
 export TMPDIR="$SCRATCH"
@@ -143,6 +152,7 @@ run_step() {
   else
     local rc=$?
     summary+="  ✗ $name: FAILED (exit $rc, $((SECONDS - started))s)"$'\n'
+    keep_failed_log "$name" "$LOGDIR/$name.out"
     summarize_fail "$name"
     failed=1
   fi
@@ -184,20 +194,17 @@ summarize_pass() {
   esac
 }
 
+# shellcheck source=cargo-ci-failure.sh
+source "$(dirname "$0")/cargo-ci-failure.sh"
+
 summarize_fail() {
   local name="$1"
   case "$name" in
-    test|scalar-lane-nextest)
-      # Show failure details from nextest output.
-      #
-      # These patterns must not anchor at column zero: nextest indents its
-      # per-test result lines ("        FAIL [   0.005s] ..."), so an `^FAIL`
-      # anchor matches nothing and a failing gate records an exit code with no
-      # diagnostic at all. Observed on a run whose seven TIMEOUT lines were
-      # invisible in the gate record.
+    test|test-build|*-nextest|*-build)
+      # nextest indents its result lines, so no pattern anchors at column zero;
+      # see scripts/cargo-ci-failure.sh for the cause extraction.
       echo "--- $name failures ---"
-      plain "$LOGDIR/$name.out" | grep -E "^[[:space:]]*(FAIL|TIMEOUT|SIGSEGV|SIGABRT|LEAK|×)" || true
-      plain "$LOGDIR/$name.out" | grep -A 20 -E "^[[:space:]]*--- (STDOUT|STDERR):" | head -60 || true
+      print_failure_cause "$LOGDIR/$name.out"
       ;;
     clippy|doc|doc-coding)
       echo "--- $name diagnostics ---"
@@ -282,6 +289,7 @@ run_step docs-mechanical-self-test python3 contrib/gates/tests/docs-mechanical-t
 run_step tracker-lifecycle-self-test sh scripts/tracker-lifecycle.test.sh
 run_step tuning-campaign-launcher-syntax bash -n dev/scripts/tuning-extent-campaign.sh
 run_step gpu-lock-wrapper bash scripts/nextest-gpu-lock.test.sh
+run_step failure-report-self-test bash scripts/cargo-ci-failure.test.sh
 run_step tracker-env-self-test sh scripts/tracker-env.test.sh
 run_step gpu-lock-filter python3 -B scripts/check-gpu-lock-filter.py .config/nextest.toml crates/gf2-kernels-hip/.config/nextest.toml
 run_step tuning-lifecycle-cargo cargo test -p gf2-core --profile ci-test --no-default-features --test tuning_process_lifecycle
