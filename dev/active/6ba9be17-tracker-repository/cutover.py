@@ -22,8 +22,12 @@ verification. Each subcommand is one step of `cutover-sequence` in
       `primary` or `worktree-<name git registers>`, and the SHA-256 of every
       member to `DIR/manifest.json`; then re-reads each archive and compares
       it, and each store still on disk, with the manifest. `--verify` only
-      re-reads; a store a clean deleted is compared with its archive alone. Refuses a DIR inside a store, inside the git directory or
-      unignored inside a checkout, and a non-empty DIR when writing.
+      re-reads; a store a clean deleted is compared with its archive alone.
+      Each archive and the manifest are written under a `.partial` name and
+      renamed, so a rerun after an interruption replaces the partial set.
+      Refuses a DIR inside a store, inside the git directory or unignored
+      inside a checkout, and, when writing, a DIR holding a manifest or
+      files of its own.
   cutover.py extract --repo CODE --commit REV --dest NEW [--split REV]
       Splits the history of `.jit` up to REV with `git subtree split` (or
       takes the split commit `--split` names) and creates the repository NEW
@@ -39,16 +43,23 @@ verification. Each subcommand is one step of `cutover-sequence` in
       `max_tree_bytes` to the committed tree size, as
       `scripts/check-tracked-budget.py` measures it, rounded up to the next
       10 kB; `scripts/reference-exceptions.toml` loses the exceptions for the
-      event log and `.jit/references.toml`. Refuses a linked worktree,
-      another branch, staged changes, edits to those files, or an index
-      without tracker paths.
+      event log and `.jit/references.toml`. A rerun after an interruption
+      discards the partial edit (index changes under `.jit/` and to those
+      files) and redoes it; once the commit is made, a rerun reports it and
+      changes nothing. Refuses a linked worktree, another branch, any other
+      staged or unstaged change to those files, or an index without
+      tracker paths.
   cutover.py mount --repo PRIMARY --tracker NEW --aside PATH
       Clones NEW into a sibling of `.jit`, moves `.jit` to PATH, moves the
       clone into place and copies back the machine-local files: those the
       patterns of the store's `.gitignore` outside jit's marker region
       match. Fails unless every tracked file of the mount is byte-identical
-      to the head tree of NEW. Refuses a linked worktree, a code repository
-      that still tracks or does not ignore `.jit`, and an existing PATH.
+      to the head tree of NEW. A rerun after an interruption resumes: with
+      PATH holding the old store it clones into place if `.jit` is not yet
+      the clone, then restores the machine-local files `.jit` lacks.
+      Refuses a linked worktree, a code repository that still tracks or does
+      not ignore `.jit`, a PATH on another filesystem than `.jit` and a PATH
+      that is not the old store of an interrupted mount.
   cutover.py harvest --store SHARED --from STORE
       Copies the run records of STORE, one file per run under
       `gate-runs/<issue>/`, into SHARED and copies each verdict pointer
@@ -69,7 +80,8 @@ verification. Each subcommand is one step of `cutover-sequence` in
       commit's tree outside `.jit` equals the merge result. Any failure
       after the merge starts (a mismatch, a rejected or empty commit
       message, a failing `git rm`) restores the branch ref and checkout to
-      the pre-clean head, keeps the local store and says so; when that
+      the pre-clean head and says so; so does a failing deletion of the
+      local store, whose message says part of it may be gone. When that
       restore fails, the message names the commit the ref is left at.
   cutover.py clean --repo CODE (--branch B | --branches FILE)
                 --merge-message MSG --message MSG [--main BRANCH]
@@ -86,18 +98,26 @@ verification. Each subcommand is one step of `cutover-sequence` in
       after failures. Both `--branch` and `--branches` exit 1 when any
       branch is neither cleaned nor already clean, and 2 only for a usage
       error or an unreadable FILE. Both forms require main and every
-      cleaned branch to track no path under `.jit/`. An error removing the
-      temporary worktree is reported together with the error before it.
+      cleaned branch to track no path under `.jit/`. A failing removal of
+      the temporary worktree after a clean restores the branch ref and
+      prunes the registration; an error removing it after another failure
+      is reported together with that failure.
   cutover.py rollback --repo PRIMARY --cutover REV --aside PATH --message MSG
                    [--archives DIR] [--main BRANCH]
       Moves the mounted tracker repository to PATH, reverts the code-side
       commit REV and copies the moved store's files over the restored
       `.jit`, deleting the tracked paths the store no longer has, in one
       commit. With `--archives`, restores each linked worktree's store that
-      a clean removed from its verified archive. Refuses a `.jit` that is
-      not a repository of its own, an existing PATH and a REV that is not a
-      code-side commit on the main branch; a conflicting revert is aborted
-      and the store moved back.
+      a clean removed from its verified archive, extracting into a staging
+      directory checked against the manifest and renamed into place. A
+      tracked file missing from the store counts as deleted. A rerun after
+      an interruption resumes from the state on disk: the store already at
+      PATH, an uncommitted revert (discarded and redone), the rollback
+      commit made, each worktree store restored; a rerun of a finished
+      rollback changes nothing. Refuses a state that is none of these, PATH
+      on another filesystem than `.jit`, uncommitted changes outside the
+      cutover commit's paths and a REV that is not a code-side commit on the
+      main branch; a conflicting revert is aborted and the store moved back.
   cutover.py --self-test
       Runs every subcommand on scratch repositories under a new directory
       in TMPDIR and refuses a scratch path inside the invoking checkout. The
@@ -160,7 +180,7 @@ def git_rc(*args, cwd):
     return subprocess.run(["git", *args], cwd=cwd, capture_output=True).returncode
 
 
-def main(argv, *, self_test_after_clean=None):
+def main(argv, *, hooks=None):
     parser = argparse.ArgumentParser(prog="cutover.py", description=__doc__.split("\n")[0])
     parser.add_argument("--self-test", action="store_true")
     sub = parser.add_subparsers(dest="command")
@@ -216,7 +236,7 @@ def main(argv, *, self_test_after_clean=None):
     if not args.command:
         parser.print_usage(sys.stderr)
         return 2
-    args.self_test_after_clean = self_test_after_clean
+    args.hooks = hooks or {}
     try:
         return COMMANDS[args.command](args) or 0
     except Refusal as refusal:
@@ -305,8 +325,20 @@ def store_files(store):
 def copy_file(source, target):
     target.parent.mkdir(parents=True, exist_ok=True)
     stage = target.with_name(f".{target.name}.cutover-{os.getpid()}")
-    shutil.copy2(source, stage)
-    os.replace(stage, target)
+    try:
+        shutil.copy2(source, stage)
+        os.replace(stage, target)
+    finally:
+        stage.unlink(missing_ok=True)
+
+
+def step(args, name):
+    """Marks the end of a step; the self-test interrupts or fails a subcommand here."""
+    args.hooks.get("step", lambda _: None)(name)
+
+
+def same_filesystem(a, b):
+    return os.stat(a).st_dev == os.stat(b).st_dev
 
 
 def worktree_listing(checkout, *args):
@@ -401,14 +433,15 @@ def refuse_archive_dest(dest, found, repo):
                 raise Refusal(f"{dest} lies in the tracked tree of {path}")
 
 
-def write_archives(dest, found):
+def write_archives(args, dest, found):
     manifest = {}
     for checkout in found:
         store = checkout["path"] / STORE
         if not store.is_dir():
             continue
         files = store_files(store)
-        with tarfile.open(dest / f"{checkout['name']}.tar", "x") as tar:
+        partial = dest / f"{checkout['name']}.tar.partial"
+        with tarfile.open(partial, "x") as tar:
             for root, dirs, names in os.walk(store):
                 dirs.sort()
                 for name in sorted(dirs) + sorted(names):
@@ -416,9 +449,12 @@ def write_archives(dest, found):
                     rel = path.relative_to(store).as_posix()
                     if path.is_dir() or rel in files:
                         tar.add(path, arcname=rel, recursive=False)
+        os.rename(partial, dest / f"{checkout['name']}.tar")
         manifest[checkout["name"]] = {"checkout": str(checkout["path"]), "files": files}
+        step(args, f"archived {checkout['name']}")
         print(f"archived {store}: {len(files)} files in {checkout['name']}.tar")
-    (dest / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    (dest / "manifest.json.partial").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    os.rename(dest / "manifest.json.partial", dest / "manifest.json")
 
 
 def archive_faults(dest, name, entry, against_disk):
@@ -458,10 +494,14 @@ def archive(args):
     found = checkouts(args.repo)
     refuse_archive_dest(dest, found, args.repo)
     if not args.verify:
-        if dest.exists() and (not dest.is_dir() or any(dest.iterdir())):
-            raise Refusal(f"{dest} exists and is not an empty directory")
+        ours = {f"{c['name']}.tar{suffix}" for c in found for suffix in ("", ".partial")} | {"manifest.json.partial"}
+        present = set(os.listdir(dest)) if dest.is_dir() else set()
+        if (dest.exists() and not dest.is_dir()) or "manifest.json" in present or present - ours:
+            raise Refusal(f"{dest} exists and holds a written archive set or other files")
+        for name in present:
+            (dest / name).unlink()
         dest.mkdir(parents=True, exist_ok=True)
-        write_archives(dest, found)
+        write_archives(args, dest, found)
     manifest = read_manifest(dest)
     faults = []
     for name, entry in sorted(manifest.items()):
@@ -566,19 +606,35 @@ def set_tree_limit(text, limit):
     return result
 
 
+def changed_paths(repo, *args):
+    return {p for p in git("diff", "-z", "--name-only", *args, cwd=repo).split("\0") if p}
+
+
 def code_side(args):
+    """Makes the code-side commit; a rerun after an interruption discards the partial edit and redoes it."""
     repo = primary_checkout(args.repo)
     require_branch(repo, args.main)
-    if git_rc("diff", "--cached", "--quiet", cwd=repo) != 0:
-        raise Refusal("the index holds staged changes")
     edited = (".gitignore", ".gitattributes", BUDGET, REFERENCES)
-    if git_rc("diff", "--quiet", "--", *edited, cwd=repo) != 0:
-        raise Refusal(f"one of {', '.join(edited)} has unstaged changes")
+    ours = lambda paths: all(p in edited or p.startswith(f"{STORE}/") for p in paths)
+    if (not tracked_under("HEAD", STORE, repo) and tracked_under("HEAD^", STORE, repo)
+            and ours(changed_paths(repo, "HEAD^", "HEAD"))):
+        print(f"code-side commit {git('rev-parse', 'HEAD', cwd=repo).strip()} is already made")
+        return 0
+    staged, unstaged = changed_paths(repo, "--cached", "HEAD"), changed_paths(repo)
+    if staged or unstaged & set(edited):
+        if not (ours(staged) and ours(unstaged)
+                and all(p in edited for p in staged | unstaged if not p.startswith(f"{STORE}/"))):
+            raise Refusal(f"the checkout holds changes besides an interrupted code-side: {sorted(staged | unstaged)}")
+        git("reset", "-q", cwd=repo)
+        git("checkout", "-q", "HEAD", "--", *(p for p in edited if git_rc("cat-file", "-e", f"HEAD:{p}", cwd=repo) == 0),
+            cwd=repo)
+        print("discarded the partial edit of an interrupted code-side")
     if not worktree_listing(repo, "--", STORE):
         raise Refusal(f"the index holds no path under {STORE}")
     checker = load_budget_checker(repo)
     old_limit = tomllib.loads((repo / BUDGET).read_text())["max_tree_bytes"]
     git("rm", "-r", "-q", "--cached", "--", STORE, cwd=repo)
+    step(args, "untracked")
     ignore = (repo / ".gitignore").read_text()
     if "/.jit/" not in ignore.splitlines():
         sep = "" if not ignore or ignore.endswith("\n") else "\n"
@@ -593,6 +649,7 @@ def code_side(args):
             git("rm", "-q", "--", ".gitattributes", cwd=repo)
     (repo / REFERENCES).write_text(remove_exceptions((repo / REFERENCES).read_text(), {EVENTS, CITATIONS}))
     budget = forbid_store(remove_exceptions((repo / BUDGET).read_text(), {EVENTS}))
+    step(args, "edited")
     limit = None
     for _ in range(4):
         (repo / BUDGET).write_text(budget if limit is None else set_tree_limit(budget, limit))
@@ -606,7 +663,9 @@ def code_side(args):
         raise Failure("the tree limit does not settle")
     if limit > old_limit:
         raise Failure(f"the measured tree {size} rounds to {limit}, above the current limit {old_limit}")
+    step(args, "staged")
     git("commit", "-q", "-m", args.message, cwd=repo)
+    step(args, "committed")
     if worktree_listing(repo, "--", STORE):
         raise Failure(f"paths under {STORE} are still tracked")
     head = git("rev-parse", "HEAD", cwd=repo).strip()
@@ -645,7 +704,7 @@ def mount_faults(store, tracker):
     for entry in filter(None, git("ls-tree", "-r", "-z", "HEAD", cwd=tracker).split("\0")):
         meta, rel = entry.split("\t", 1)
         expected[rel] = meta.split()[2]
-    tracked = worktree_listing(store)
+    tracked = [rel for rel in worktree_listing(store) if (store / rel).is_file()]
     hashes = git("hash-object", "--no-filters", "--stdin-paths", cwd=store,
                  input="\n".join(tracked) + "\n").split() if tracked else []
     actual = dict(zip(tracked, hashes))
@@ -655,6 +714,14 @@ def mount_faults(store, tracker):
     return faults
 
 
+def own_repository(path):
+    """Whether `path` is the top level of a git repository of its own."""
+    if not path.is_dir() or not (path / ".git").exists():
+        return False
+    top = git("rev-parse", "--show-toplevel", cwd=path, check=False).strip()
+    return bool(top) and physical(top) == physical(path)
+
+
 def mount(args):
     repo = primary_checkout(args.repo)
     tracker, aside, store = physical(args.tracker), physical(args.aside), repo / STORE
@@ -662,21 +729,34 @@ def mount(args):
         raise Refusal(f"the code repository still tracks {STORE}; run code-side first")
     if git_rc("check-ignore", "-q", f"{STORE}/", cwd=repo) != 0:
         raise Refusal(f"the code repository does not ignore {STORE}/")
-    if not store.is_dir():
-        raise Refusal(f"no store at {store}")
-    if aside.exists() or aside.is_symlink():
-        raise Refusal(f"{aside} exists")
-    stage = repo / f"{STORE}.mount-{os.getpid()}"
-    git("clone", "-q", "--", str(tracker), str(stage), cwd=repo)
-    shutil.move(store, aside)
-    os.rename(stage, store)
+    moved = aside.exists() or aside.is_symlink()
+    if not moved:
+        if not store.is_dir() or own_repository(store):
+            raise Refusal(f"no old store at {store}")
+        if not aside.parent.is_dir() or not same_filesystem(store.parent, aside.parent):
+            raise Refusal(f"{aside} must lie in an existing directory on the filesystem of {store}")
+    elif not aside.is_dir() or own_repository(aside) or (store.exists() and not own_repository(store)):
+        raise Refusal(f"{aside} exists and is not the old store of an interrupted mount")
+    if not own_repository(store):
+        stage = repo / f"{STORE}.mount-stage"
+        shutil.rmtree(stage, ignore_errors=True)
+        git("clone", "-q", "--", str(tracker), str(stage), cwd=repo)
+        step(args, "cloned")
+        if not moved:
+            os.rename(store, aside)
+            step(args, "moved")
+        os.rename(stage, store)
+        step(args, "placed")
     restored = 0
     for rel in ignored_files(aside, machine_local_patterns(store)):
         target = store / rel
         if target.exists():
-            raise Failure(f"machine-local {rel} would overwrite {target}")
+            if not same_bytes(aside / rel, target):
+                raise Failure(f"machine-local {rel} would overwrite {target}")
+            continue
         copy_file(aside / rel, target)
         restored += 1
+        step(args, "restored a machine-local file")
     faults = mount_faults(store, tracker)
     for fault in faults:
         print(fault)
@@ -807,14 +887,21 @@ def clean_linked(args):
         runs, pointers, _, faults = harvest_plan(shared, store)
         if runs or pointers or faults:
             raise Refusal(f"the harvest of {store} into {shared} is not verified")
+    def remove_store():
+        try:
+            step(args, "store-removal")
+            if store.is_dir():
+                shutil.rmtree(store)
+        except OSError as error:
+            raise Failure(f"deleting the local store {store} failed and may have removed part of it; "
+                          f"its run records are harvested into {shared}: {error}")
+        print(f"deleted the local store {store}")
+
     try:
-        outcome = clean_checkout(args, worktree, branch)
+        outcome = clean_checkout(args, worktree, branch, finish=remove_store)
     except Refusal as error:
         print(f"{branch}: refused: {error}")
         return 2
-    if store.is_dir():
-        shutil.rmtree(store)
-        print(f"deleted the local store {store}")
     print(f"{branch}: {outcome}")
 
 
@@ -835,9 +922,13 @@ def clean_parked(args, branch):
             raise Refusal("TMPDIR places the temporary worktree inside a tracked tree")
         worktree = root / "worktree"
         error = None
+        def remove_worktree():
+            step(args, "worktree-removal")
+            git("worktree", "remove", "--force", str(worktree), cwd=repo)
+
         try:
             git("worktree", "add", "-q", "--", str(worktree), branch, cwd=repo)
-            return clean_checkout(args, worktree, branch)
+            return clean_checkout(args, worktree, branch, finish=remove_worktree, repo=repo)
         except (Refusal, Failure, OSError) as raised:
             error = raised
             raise
@@ -850,31 +941,49 @@ def clean_parked(args, branch):
                 raise Failure(f"{prior}removing the temporary worktree {worktree} failed: {cleanup}") from error
 
 
-def clean_checkout(args, worktree, branch):
-    """Cleans the branch checked out at `worktree`; any failure restores its ref and checkout."""
+def clean_checkout(args, worktree, branch, finish=None, repo=None):
+    """Cleans the branch checked out at `worktree`, then runs `finish`.
+
+    Any failure, `finish` included, restores the branch ref and checkout; `repo`
+    restores the ref when `finish` removed the checkout.
+    """
     if git("status", "--porcelain", "--untracked-files=no", cwd=worktree).strip():
         raise Refusal(f"{worktree} has uncommitted tracked changes")
     head = git("rev-parse", "HEAD", cwd=worktree).strip()
     try:
-        return merge_and_remove(args, worktree, branch, head)
+        outcome = merge_and_remove(args, worktree, branch, head)
+        if finish:
+            finish()
+        return outcome
     except (Refusal, Failure, OSError) as error:
-        raise restored(error, worktree, branch, head) from error
+        raise restored(error, worktree, branch, head, repo) from error
 
 
-def restored(error, worktree, branch, head):
+def restored(error, worktree, branch, head, repo=None):
     """`error` after putting `branch` back at `head`, or a Failure naming the unrestored ref."""
+    kind = type(error) if isinstance(error, (Refusal, Failure)) else Failure
+    if not (Path(worktree) / ".git").exists() and repo is not None:
+        ref = f"refs/heads/{branch}"
+        current = git("rev-parse", "-q", "--verify", ref, cwd=repo, check=False).strip()
+        try:
+            if current != head:
+                git("update-ref", ref, head, cwd=repo)
+            git("worktree", "prune", cwd=repo)
+        except Failure as update:
+            return Failure(f"{error}; {branch} is left at {current or 'an unknown commit'}, "
+                           f"not restored to {head}: {update}")
+        return kind(f"{error}; {branch} restored to {head}" if current != head else str(error))
     if git_rc("rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=worktree) == 0:
         git("merge", "--abort", cwd=worktree, check=False)
     current = git("rev-parse", "HEAD", cwd=worktree, check=False).strip()
     dirty = git("status", "--porcelain", "--untracked-files=no", cwd=worktree, check=False).strip()
     if current == head and not dirty:
-        return error if isinstance(error, (Refusal, Failure)) else Failure(str(error))
+        return kind(str(error))
     try:
         git("reset", "-q", "--hard", head, cwd=worktree)
     except Failure as reset:
         return Failure(f"{error}; {branch} is left at {current or 'an unknown commit'}, "
                        f"not restored to {head}: {reset}")
-    kind = type(error) if isinstance(error, (Refusal, Failure)) else Failure
     return kind(f"{error}; {branch} restored to {head}")
 
 
@@ -900,8 +1009,8 @@ def merge_and_remove(args, worktree, branch, head):
             raise Failure(f"{rev} still tracks paths under {STORE}")
     if git("rev-parse", "HEAD", cwd=worktree).strip() == head:
         return "already clean"
-    if args.self_test_after_clean:
-        args.self_test_after_clean(worktree)
+    if "after_clean" in args.hooks:
+        args.hooks["after_clean"](worktree)
     if git_rc("diff", "--quiet", merge_result, "HEAD", "--", ".", ":(exclude).jit", cwd=worktree) != 0:
         raise Refusal("tree outside .jit mismatch with the merge result")
     return "cleaned; tree outside .jit equals the merge result"
@@ -911,19 +1020,20 @@ def merge_and_remove(args, worktree, branch, head):
 
 
 def rollback(args):
+    """Rolls the cutover back; a rerun after an interruption resumes at the first step not done.
+
+    The steps are detected from the repository: the store moved aside (`.jit`
+    is no repository of its own and PATH is), the rollback committed (HEAD
+    tracks `.jit` again) and each worktree store restored (it exists). An
+    uncommitted revert of an interrupted run is discarded and redone.
+    """
     repo = primary_checkout(args.repo)
     require_branch(repo, args.main)
     store, aside = repo / STORE, physical(args.aside)
-    if not store.is_dir() or physical(git("rev-parse", "--show-toplevel", cwd=store).strip()) != store:
-        raise Refusal(f"{store} is not a repository of its own")
-    if aside.exists() or aside.is_symlink():
-        raise Refusal(f"{aside} exists")
     cutover = git("rev-parse", "--verify", f"{args.cutover}^{{commit}}", cwd=repo).strip()
     if (git_rc("merge-base", "--is-ancestor", cutover, "HEAD", cwd=repo) != 0
             or tracked_under(cutover, STORE, repo) or not tracked_under(f"{cutover}^", STORE, repo)):
         raise Refusal(f"{cutover} is not a code-side commit on {args.main}")
-    if git("status", "--porcelain", "--untracked-files=no", cwd=repo).strip():
-        raise Refusal(f"{repo} has uncommitted tracked changes")
     manifest = None
     if args.archives:
         archives = physical(args.archives)
@@ -932,33 +1042,84 @@ def rollback(args):
                   for f in archive_faults(archives, name, entry, against_disk=False)]
         if faults:
             raise Refusal(f"archives do not verify: {faults}")
-    shutil.move(store, aside)
-    reverted = subprocess.run(["git", "revert", "--no-commit", cutover], cwd=repo, capture_output=True, text=True)
-    if reverted.returncode != 0:
-        git("revert", "--abort", cwd=repo, check=False)
-        if not store.exists():
-            shutil.move(aside, store)
-        raise Failure(f"reverting {cutover} conflicts: {reverted.stderr.strip()}; store moved back")
-    current = set(worktree_listing(aside, "-co", "--exclude-standard"))
-    restored = set(p.removeprefix(f"{STORE}/") for p in worktree_listing(repo, "--", STORE))
-    gone = sorted(restored - current)
-    if gone:
-        git("rm", "-q", "-f", "--", *(f"{STORE}/{p}" for p in gone), cwd=repo)
-    local = set(worktree_listing(aside, "-o", "-i", "--exclude-standard"))
-    for rel in sorted(current | local):
-        if not rel.startswith(".git/"):
-            copy_file(aside / rel, store / rel)
-    git("add", "-A", "--", STORE, cwd=repo)
-    git("commit", "-q", "-m", args.message, cwd=repo)
-    print(f"reverted {cutover}; {len(current)} tracker files restored, {len(gone)} deleted; "
-          f"tracker repository at {aside}")
+    committed = bool(tracked_under("HEAD", STORE, repo))
+    moved = own_repository(aside) and not own_repository(store)
+    if not moved and (not own_repository(store) or aside.exists() or aside.is_symlink()):
+        raise Refusal(f"neither {store} nor {aside} is the tracker repository of a cutover to roll back")
+    if committed and not moved:
+        raise Refusal(f"HEAD tracks {STORE} but the tracker repository is not at {aside}")
+    if not committed:
+        if moved:
+            discard_partial_revert(repo, cutover)
+        else:
+            if git("status", "--porcelain", "--untracked-files=no", cwd=repo).strip():
+                raise Refusal(f"{repo} has uncommitted tracked changes")
+            if not aside.parent.is_dir() or not same_filesystem(store.parent, aside.parent):
+                raise Refusal(f"{aside} must lie in an existing directory on the filesystem of {store}")
+            os.rename(store, aside)
+            step(args, "moved")
+        restore_tracked_store(args, repo, cutover, store, aside)
+    else:
+        print(f"{cutover} is already reverted; tracker repository at {aside}")
     for name, entry in sorted((manifest or {}).items()):
         checkout = Path(entry["checkout"])
         if name == "primary" or not checkout.is_dir() or (checkout / STORE).exists():
             continue
+        stage = checkout / f"{STORE}.rollback-stage"
+        shutil.rmtree(stage, ignore_errors=True)
         with tarfile.open(physical(args.archives) / f"{name}.tar") as tar:
-            tar.extractall(checkout / STORE, filter="tar")
+            tar.extractall(stage, filter="tar")
+        if store_files(stage) != entry["files"]:
+            raise Failure(f"{stage} differs from the manifest of {name}.tar")
+        step(args, f"extracted {name}")
+        os.rename(stage, checkout / STORE)
+        step(args, f"restored {name}")
         print(f"restored {checkout / STORE} from {name}.tar")
+
+
+def discard_partial_revert(repo, cutover):
+    """Resets the uncommitted revert of an interrupted rollback, refusing changes outside its paths."""
+    touched = set(p for p in git("diff", "-z", "--name-only", f"{cutover}^", cutover, cwd=repo).split("\0") if p)
+    changed = set(p for p in git("diff", "-z", "--name-only", "HEAD", cwd=repo).split("\0") if p)
+    changed |= set(p for p in git("diff", "-z", "--name-only", "--cached", "HEAD", cwd=repo).split("\0") if p)
+    foreign = {p for p in changed - touched if not p.startswith(f"{STORE}/")}
+    if foreign:
+        raise Refusal(f"uncommitted changes outside the cutover commit and {STORE}: {sorted(foreign)}")
+    git("revert", "--quit", cwd=repo, check=False)
+    git("reset", "-q", "--hard", "HEAD", cwd=repo)
+
+
+def restore_tracked_store(args, repo, cutover, store, aside):
+    """Reverts the code-side commit and carries the moved store's state into one commit."""
+    reverted = subprocess.run(["git", "revert", "--no-commit", cutover], cwd=repo, capture_output=True, text=True)
+    if reverted.returncode != 0:
+        git("revert", "--abort", cwd=repo, check=False)
+        git("reset", "-q", "--hard", "HEAD", cwd=repo)
+        if not own_repository(store):
+            shutil.rmtree(store, ignore_errors=True)
+            os.rename(aside, store)
+        raise Failure(f"reverting {cutover} conflicts: {reverted.stderr.strip()}; store moved back")
+    step(args, "reverted")
+    deleted = set(worktree_listing(aside, "-d"))
+    current = set(worktree_listing(aside, "-co", "--exclude-standard")) - deleted
+    restored = set(p.removeprefix(f"{STORE}/") for p in worktree_listing(repo, "--", STORE))
+    gone = sorted(restored - current)
+    if gone:
+        git("rm", "-q", "-f", "--ignore-unmatch", "--", *(f"{STORE}/{p}" for p in gone), cwd=repo)
+    step(args, "deleted")
+    local = set(worktree_listing(aside, "-o", "-i", "--exclude-standard"))
+    for index, rel in enumerate(sorted(current | local)):
+        if not rel.startswith(".git/") and (aside / rel).is_file():
+            copy_file(aside / rel, store / rel)
+            if index == 0:
+                step(args, "copied a file")
+    step(args, "copied")
+    git("add", "-A", "--", STORE, cwd=repo)
+    step(args, "staged")
+    git("commit", "-q", "-m", args.message, cwd=repo)
+    step(args, "committed")
+    print(f"reverted {cutover}; {len(current)} tracker files restored, {len(gone)} deleted; "
+          f"tracker repository at {aside}")
 
 
 COMMANDS = {
@@ -997,15 +1158,74 @@ class SelfTest:
             print(f"  FAIL {label}")
         return condition
 
-    def run(self, *argv, after_clean=None):
+    def run(self, *argv, after_clean=None, hooks=None):
         for arg in argv:
             if arg.startswith("/"):
                 if inside(Path(arg), self.invoking):
                     raise Refusal(f"self-test argument inside the invoking checkout: {arg}")
+        hooks = dict(hooks or {})
+        if after_clean:
+            hooks["after_clean"] = after_clean
         out = io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(out):
-            code = main(list(argv), self_test_after_clean=after_clean)
+            try:
+                code = main(list(argv), hooks=hooks)
+            except Interrupted:
+                code = "interrupted"
         return code, out.getvalue()
+
+    def snapshot(self):
+        keep = self.base / ".snapshot"
+        shutil.rmtree(keep, ignore_errors=True)
+        keep.mkdir()
+        for entry in self.base.iterdir():
+            if entry.name != keep.name:
+                copy_entry(entry, keep / entry.name)
+
+    def restore(self):
+        keep = self.base / ".snapshot"
+        for entry in list(self.base.iterdir()):
+            if entry.name != keep.name:
+                remove_entry(entry)
+        for entry in keep.iterdir():
+            copy_entry(entry, self.base / entry.name)
+
+    def interrupt_each(self, argv, steps, state, label):
+        """Interrupts the command after each step and requires a rerun to reach `state`."""
+        self.check(steps != [], f"{label}: the command reports its steps")
+        for step in steps:
+            self.restore()
+            rc, out = self.run(*argv, hooks={"step": interrupt_at(step)})
+            self.check(rc == "interrupted", f"{label}: interrupted after {step}")
+            rc, out = self.run(*argv)
+            self.check(rc == 0 and self.state_of(argv) == state,
+                       f"{label}: a rerun after an interruption at {step} reaches the uninterrupted end state")
+        rc, out = self.run(*argv)
+        self.check(rc == 0 and self.state_of(argv) == state, f"{label}: a rerun of the finished command changes nothing")
+
+    def state_of(self, argv):
+        code = Path(argv[argv.index("--repo") + 1])
+        aside = Path(argv[argv.index("--aside") + 1]) if "--aside" in argv else None
+
+        def files(root):
+            if root is None or not root.is_dir():
+                return None
+            return {k: v for k, v in store_files(root).items() if not k.startswith(".git/")}
+
+        def head(root):
+            return git("rev-parse", "HEAD", cwd=root, check=False).strip() if root and (root / ".git").exists() else None
+
+        state = {"code": git("rev-parse", "HEAD^{tree}", "HEAD^", cwd=code),
+                 "status": git("status", "--porcelain", "--ignored", cwd=code),
+                 "worktrees": [l for l in git("worktree", "list", "--porcelain", cwd=code).splitlines()
+                               if not l.startswith("HEAD ")],
+                 "store": files(code / STORE), "store head": head(code / STORE),
+                 "aside": files(aside), "aside head": head(aside),
+                 "listing": sorted(os.listdir(code)), "revert": (code / ".git" / "REVERT_HEAD").exists()}
+        for name in ("wa", "wb"):
+            state[name] = files(Path(self.path(name)) / STORE)
+            state[f"{name} listing"] = sorted(os.listdir(self.path(name)))
+        return state
 
     def sh(self, *cmd, cwd, check=True, env=None):
         result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
@@ -1176,6 +1396,12 @@ class SelfTest:
         record.write_bytes(b'{"run": "r3"}\n')
         rc, _ = self.run("archive", "--repo", code, "--dest", dest)
         self.check(rc == 2, "REQ-02 archive refuses to overwrite a written archive directory")
+        partial = self.path("archives-partial")
+        rc, _ = self.run("archive", "--repo", code, "--dest", partial, hooks={"step": interrupt_at("archived primary")})
+        self.check(rc == "interrupted" and "manifest.json" not in os.listdir(partial),
+                   "REQ-02 an interrupted archive writes no manifest")
+        rc, _ = self.run("archive", "--repo", code, "--dest", partial)
+        self.check(rc == 0 and sorted(os.listdir(partial)) == names, "REQ-02 a rerun completes an interrupted archive")
         return dest
 
     def extract(self, code):
@@ -1206,7 +1432,10 @@ class SelfTest:
         before = git("rev-parse", "HEAD", cwd=code).strip()
         rc, _ = self.run("code-side", "--repo", self.path("wa"), "--message", "chore: cut over")
         self.check(rc == 2, "REQ-04 code-side refuses a linked worktree")
-        rc, out = self.run("code-side", "--repo", code, "--message", "chore: move the tracker out")
+        argv = ("code-side", "--repo", code, "--message", "chore: move the tracker out")
+        self.snapshot()
+        steps = []
+        rc, out = self.run(*argv, hooks={"step": steps.append})
         print(out, end="")
         self.check(rc == 0, "REQ-04 code-side commits")
         if rc != 0:
@@ -1241,13 +1470,17 @@ class SelfTest:
                    "REQ-04 the event log and citation registry reference exceptions are gone")
         self.check(".jit/issues/*" in paths and ".jit/archive-evidence/*" in paths,
                    "REQ-04 the issue-prose and archive-record reference exceptions stay")
-        return head
+        self.interrupt_each(argv, steps, self.state_of(argv), "REQ-04 code-side")
+        return git("rev-parse", "HEAD", cwd=code).strip()
 
     def mount(self, code, new):
         aside = self.path("primary-store-aside")
         rc, out = self.run("mount", "--repo", self.path("wa"), "--tracker", new, "--aside", aside)
         self.check(rc == 2 and not os.path.exists(aside), "REQ-05 mount refuses a linked worktree")
-        rc, out = self.run("mount", "--repo", code, "--tracker", new, "--aside", aside)
+        self.snapshot()
+        self.mount_steps = []
+        rc, out = self.run("mount", "--repo", code, "--tracker", new, "--aside", aside,
+                           hooks={"step": self.mount_steps.append})
         print(out, end="")
         self.check(rc == 0, "REQ-05 mount replaces .jit with a clone")
         if rc != 0:
@@ -1270,6 +1503,8 @@ class SelfTest:
                        f"REQ-05 machine-local {rel} is restored")
         self.check(not (store / "tmp" / "redo.record").exists(), "REQ-05 jit's scratch directory is not restored")
         self.check(git("status", "--porcelain", cwd=code) == "", "REQ-05 the code checkout stays clean")
+        argv = ("mount", "--repo", code, "--tracker", new, "--aside", aside)
+        self.interrupt_each(argv, self.mount_steps, self.state_of(argv), "REQ-05 mount")
 
     def harvest(self, code):
         shared = str(Path(code) / STORE)
@@ -1311,6 +1546,13 @@ class SelfTest:
         events.open("a").write('{"event": "late"}\n')
         (Path(wb) / STORE / "issues" / "late.json").write_text('{"late": true}\n')
         self.commit_all(wb, "chore: tracker changes on wb after the cutover")
+        start = git("rev-parse", "wb", cwd=code).strip()
+        rc, out = self.run("clean", "--repo", code, "--worktree", wb, *args,
+                           hooks={"step": fail_at("store-removal")})
+        self.check(rc == 1 and "restored" in out and git("rev-parse", "wb", cwd=code).strip() == start
+                   and tracked_under("wb", STORE, code) != [] and (Path(wb) / STORE).is_dir()
+                   and git("status", "--porcelain", "--untracked-files=no", cwd=wb) == "",
+                   "REQ-07 a failing store deletion restores the branch ref and keeps the store")
         rc, out = self.run("clean", "--repo", code, "--worktree", wb, *args)
         print(out, end="")
         self.check(rc == 0 and "wb: cleaned; tree outside .jit equals the merge result" in out.splitlines(),
@@ -1461,6 +1703,13 @@ class SelfTest:
                        and git("worktree", "list", "--porcelain", cwd=code) == before,
                        f"REQ-07 a removal commit that fails ({name}) restores the branch ref")
         hook.unlink()
+        start = git("rev-parse", "parked-hook", cwd=code).strip()
+        rc, out = self.run("clean", "--repo", code, "--branch", "parked-hook", *args,
+                           hooks={"step": fail_at("worktree-removal")})
+        self.check(rc == 1 and "restored" in out and git("rev-parse", "parked-hook", cwd=code).strip() == start
+                   and git("worktree", "list", "--porcelain", cwd=code) == before
+                   and set(Path(tempfile.gettempdir()).glob("cutover-clean-*")) == tmp_before,
+                   "REQ-07 a failing temporary-worktree removal restores the ref and leaves no registration")
 
     def rollback(self, code, cutover, archives):
         store = Path(code) / STORE
@@ -1470,9 +1719,14 @@ class SelfTest:
             log.write('{"event": "after the cutover"}\n')
         self.commit_all(str(store), "snapshot after the cutover")
         (store / "issues" / "after.json").write_text('{"after": true}\n')
+        unsnapshotted = f"issues/{issue_files[1]}"
+        (store / unsnapshotted).unlink()
         aside = self.path("nested-aside")
-        rc, out = self.run("rollback", "--repo", code, "--cutover", cutover, "--aside", aside,
-                           "--message", "chore: roll back the cutover", "--archives", archives)
+        argv = ("rollback", "--repo", code, "--cutover", cutover, "--aside", aside,
+                "--message", "chore: roll back the cutover", "--archives", archives)
+        self.snapshot()
+        steps = []
+        rc, out = self.run(*argv, hooks={"step": steps.append})
         print(out, end="")
         self.check(rc == 0, "REQ-08 rollback passes")
         if rc != 0:
@@ -1482,22 +1736,60 @@ class SelfTest:
         self.check(git_rc("diff", "--quiet", f"{cutover}^", "HEAD", "--", ".", ":!.jit", cwd=code) == 0,
                    "REQ-08 the code-side commit is reverted")
         expected = {}
-        for rel in filter(None, git("ls-files", "-z", "-co", "--exclude-standard", cwd=aside).split("\0")):
-            expected[f"{STORE}/{rel}"] = git("hash-object", "--no-filters", rel, cwd=aside).strip()
+        deleted = set(worktree_listing(aside, "-d"))
+        for rel in worktree_listing(aside, "-co", "--exclude-standard"):
+            if rel not in deleted:
+                expected[f"{STORE}/{rel}"] = git("hash-object", "--no-filters", rel, cwd=aside).strip()
         restored = {}
         for entry in filter(None, git("ls-tree", "-r", "-z", "HEAD", "--", STORE, cwd=code).split("\0")):
             meta, rel = entry.split("\t", 1)
             restored[rel] = meta.split()[2]
         self.check(restored == expected, "REQ-08 the tracked store holds each tracker change since the cutover")
-        self.check(f"{STORE}/issues/{issue_files[0]}" not in restored, "REQ-08 a deletion in the store is restored")
+        self.check(f"{STORE}/issues/{issue_files[0]}" not in restored, "REQ-08 a snapshotted deletion is carried")
+        self.check(f"{STORE}/{unsnapshotted}" not in restored and not (store / unsnapshotted).exists()
+                   and unsnapshotted in deleted,
+                   "REQ-08 a deletion the tracker never snapshotted is carried")
+        self.check(f"{STORE}/issues/after.json" in restored, "REQ-08 an unsnapshotted addition is carried")
         self.check((store / "gate-runs" / I3 / "r3.json").is_file(), "REQ-08 the shared run records stay")
         self.check(git("status", "--porcelain", cwd=code) == "", "REQ-08 the code checkout is clean")
         manifest = json.loads(Path(archives, "manifest.json").read_text())
         for name in ("wa", "wb"):
             files = manifest[f"worktree-{name}"]["files"]
             root = Path(self.path(name)) / STORE
-            ok = all((root / rel).is_file() and sha256(root / rel) == digest for rel, digest in files.items())
-            self.check(ok, f"REQ-08 the store of {name} is restored from its archive")
+            self.check(store_files(root) == files, f"REQ-08 the store of {name} is restored from its archive")
+        self.interrupt_each(argv, steps, self.state_of(argv), "REQ-08 rollback")
+
+
+class Interrupted(Exception):
+    """Raised by a self-test hook to stop a subcommand between two of its steps."""
+
+
+def interrupt_at(target):
+    def hook(step):
+        if step == target:
+            raise Interrupted(step)
+    return hook
+
+
+def fail_at(target):
+    def hook(step):
+        if step == target:
+            raise OSError(f"planted failure at {step}")
+    return hook
+
+
+def copy_entry(source, target):
+    if source.is_dir() and not source.is_symlink():
+        shutil.copytree(source, target, symlinks=True)
+    else:
+        shutil.copy2(source, target, follow_symlinks=False)
+
+
+def remove_entry(path):
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+    else:
+        path.unlink()
 
 
 def pointer(issue, run):
