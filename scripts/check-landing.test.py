@@ -232,11 +232,11 @@ def main():
 def run_cases(h):
     os.makedirs(h.repo)
     h.git("init", "-q")
-    base = h.commit({"src/a": "a\n", "src/d/skip1.md": "s\n", "docs/x": "x\n"})
+    base = h.commit({"src/a": "a\n", "src/d/skip1.md": "s\n", "other/x": "x\n"})
     # Changes inside declared exclusions only: a glob and a directory match.
     excluded = h.commit({"src/d/skip1.md": "t\n", "src/d/target/out": "o\n"})
     in_root = h.commit({"src/a": "b\n"})
-    outside = h.commit({"docs/x": "y\n"}, parent=base)
+    outside = h.commit({"other/x": "y\n"}, parent=base)
     h.git("branch", "tip", excluded)
     h.git("checkout", "-q", "--detach", base)
     h.git("commit", "-q", "--allow-empty", "-m", "same tree")
@@ -270,7 +270,7 @@ def run_cases(h):
     result = h.check(fixture(runs), short, outside)
     expect_status("no declared inputs", result, 1, "plain: refused",
                   f"recorded commit {base}", f"expected {outside}",
-                  "no declared inputs", "docs/x", absent=(SUCCESS,))
+                  "no declared inputs", "other/x", absent=(SUCCESS,))
 
     # Without declared inputs an identical tree at another commit still refuses.
     runs = dict(all_kinds, ci=executed("ci", same_tree, 1))
