@@ -340,7 +340,7 @@ def faults_in(
             if line[end : end + 1] in ("*", "{", "<", "$"):
                 continue
             # A trailing slash names the directory itself.
-            spelling = match.group(1).rstrip(".,:;").rstrip("/")
+            spelling = _trimmed(match.group(1)).rstrip("/")
             target = _reference("", spelling)
             if target is not None and DEVICE.match(target):
                 continue
@@ -1038,6 +1038,15 @@ def _reference(base: str, spelling: str) -> str | None:
     return "/".join(parts) or "."
 
 
+def _trimmed(spelling: str) -> str:
+    """`spelling` without trailing sentence punctuation, keeping a final `..`."""
+    while spelling[-1:] in (".", ",", ":", ";") and not (
+        spelling == ".." or spelling.endswith("/..")
+    ):
+        spelling = spelling[:-1]
+    return spelling
+
+
 def _canonical(target: str) -> bool:
     """Whether a fault's target is a resolved path rather than an unresolved spelling."""
     return _reference("", target) == target
@@ -1225,6 +1234,8 @@ def check(root: Path, data: Path | None = None, notes: list[str] | None = None) 
         known.add(STORE)
     else:
         known = Unchecked(resolvable_set(tracked))
+    # `_reference` names the repository root `.`.
+    known.add(".")
     skipped = set()
     if local and store.mounted:
         files = {path: file for path, file in files.items() if not _tracker(path)}
@@ -1795,6 +1806,33 @@ def route_faults() -> dict[str, list[str]]:
     }
 
 
+def trailing_self_test() -> None:
+    """Sentence punctuation after a path is stripped; a final `..` is kept."""
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory) / "mounted"
+        root.mkdir()
+        git(root, "init", "-q", "-b", "main")
+        (root / ".gitignore").write_text("/.jit/\n")
+        (root / "README.md").write_text("See .jit/missing/target/..\n")
+        _commit(root, "main")
+        (root / STORE).mkdir()
+        git(root / STORE, "init", "-q", "-b", "main")
+        (root / STORE / STORE_INDEX).write_text("{}")
+        (root / STORE / ".gitignore").write_text("target/\n")
+        faults = check(root, root / STORE)
+        assert faults == ["README.md:1: .jit/missing"], faults
+        root = Path(directory) / "bare"
+        root.mkdir()
+        git(root, "init", "-q", "-b", "main")
+        (root / "README.md").write_text("The repository root is .jit/..\n")
+        _commit(root, "main")
+        notes = []
+        faults = check(root, root / STORE, notes)
+        assert not faults, faults
+        assert notes == ["check-references: 0 tracker reference(s) left unchecked: "
+                         "no store index at the data root"], notes
+
+
 def route_self_test() -> None:
     """Each spelling reaches every route once, as one path resolved from its own base."""
     for name, found in route_faults().items():
@@ -1976,6 +2014,7 @@ def layout_self_test() -> None:
             }), known, trees=Trees(root)), target
             assert known.tracker == {".jit/absent.json"}, (target, known.tracker)
     route_self_test()
+    trailing_self_test()
     root = Path("/checkout")
     assert data_root(root, {}) == root / ".jit"
     assert data_root(root, {"JIT_DATA_DIR": "/shared/.jit"}) == Path("/shared/.jit")
