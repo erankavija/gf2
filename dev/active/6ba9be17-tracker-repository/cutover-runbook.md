@@ -231,8 +231,11 @@ Then every branch merged into `main` at this moment is deleted, not
 archived: anything merged since the steward's earlier deletion, at least the
 tool and runbook branches of step 0. The batch excludes `main`, each entry is
 verified with `git merge-base --is-ancestor`, and the batch with each head is
-written to `<backup>/merged-deleted.txt`. A deleted name also leaves
-`<survivor-list>`, since an ancestor of `main` holds nothing `main` lacks. A
+written to `<backup>/merged-deleted.txt`. A deleted name also leaves the
+survivors, since an ancestor of `main` holds nothing `main` lacks:
+`<backup>/survivors-clean.txt` is `<survivor-list>` less those names and less
+every branch checked out in a linked worktree, which the worktree form of
+step 9 cleans. A
 branch checked out in a linked worktree has that worktree detached first; the
 worktree is removed when clean, and a dirty one stays detached with its store
 and is listed for the steward:
@@ -249,8 +252,8 @@ git worktree list --porcelain | awk '/^worktree /{w=substr($0,10)} /^branch refs
   done
 cut -d' ' -f1 "<backup>/merged-deleted.txt" | while IFS= read -r b; do git branch -d "$b"; done
 cut -d' ' -f1 "<backup>/merged-deleted.txt" > "<backup>/merged-names.txt"
-grep -vxF -f "<backup>/merged-names.txt" "<survivor-list>" > "<backup>/survivors-kept.txt"
-cp "<backup>/survivors-kept.txt" "<survivor-list>"
+git worktree list --porcelain | sed -n 's/^branch refs\/heads\///p' >> "<backup>/merged-names.txt"
+sed 's/#.*//' "<survivor-list>" | sed '/^[[:space:]]*$/d' | grep -vxF -f "<backup>/merged-names.txt" > "<backup>/survivors-clean.txt"
 ```
 
 Then `git worktree remove "<worktree>"` for each clean detached worktree of a
@@ -298,7 +301,7 @@ Each surviving branch gets one commit that removes its tracked `.jit/` paths
 and merges nothing; its code tree is unchanged. A branch without a worktree:
 
 ```sh
-cutover clean --repo . --branches "<survivor-list>" \
+cutover clean --repo . --branches "<backup>/survivors-clean.txt" \
   --message "chore(jit:6889e6e6): remove the tracked tracker paths"
 ```
 
@@ -324,11 +327,12 @@ resumes.
 The step passes when every local branch is `main` or cleaned, every abandoned
 branch is under `refs/archive/`, and the commands below print nothing other
 than branches listed for the steward. The first lists a branch that is neither
-`main` nor on `<survivor-list>`, the second an abandoned branch with no
+`main` nor on `<survivor-list>` less the deleted names, the second an abandoned branch with no
 `refs/archive/` ref, the third a branch that tracks `.jit`:
 
 ```sh
-{ echo main; sed 's/#.*//' "<survivor-list>" | sed '/^[[:space:]]*$/d'; } > "<backup>/live.txt"
+cut -d' ' -f1 "<backup>/merged-deleted.txt" > "<backup>/merged-names.txt"
+{ echo main; sed 's/#.*//' "<survivor-list>" | sed '/^[[:space:]]*$/d' | grep -vxF -f "<backup>/merged-names.txt"; } > "<backup>/live.txt"
 git for-each-ref --format='%(refname:short)' refs/heads/ | grep -vxF -f "<backup>/live.txt"
 sed 's/#.*//' "<abandon-list>" | sed '/^[[:space:]]*$/d' | while IFS= read -r b; do
   git show-ref --verify --quiet "refs/archive/$b" || printf '%s\n' "$b"
