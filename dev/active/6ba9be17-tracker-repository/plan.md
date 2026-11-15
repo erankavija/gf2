@@ -109,12 +109,12 @@ GitHub runners have no store and check everything else.
 
 1. Quiesce, in a quiet window of its own: no tracker writer,
    no pending redo record, every lease released, each surviving branch's
-   branch-only tracker edits ported into `main`'s store or recorded as
-   abandoned, gate-run holders listed. Before the window, each branch of a
+   branch-only tracker edits ported into `main`'s store by tracker commits
+   or recorded as abandoned, gate-run holders listed. Before the window, each branch of a
    done issue whose content is on `main` is abandoned on the owner's reviewed
    list: its ref moves to `refs/archive/<name>`.
-2. Back up the code repository as a bundle and the store of every checkout as
-   an archive.
+2. Save the ref listing (`git for-each-ref`) and archive the store of every
+   linked worktree.
 3. Extract the tracker paths with their history into a new repository; require
    equal tree identifiers.
 4. Mount: commit the code-side change, replace `.jit/` of the primary
@@ -132,9 +132,13 @@ GitHub runners have no store and check everything else.
    `main` and on each live branch; the branch merges `main` when it resumes.
    Delete the local store once its harvest is verified. Step 1 ported or
    abandoned any branch-only tracker content first.
-8. Roll back on a failed step 6: move the nested repository aside, revert the
-   cutover commit, copy the store's files over the restored paths. After
-   step 7 a rollback also restores the worktree stores from their archives.
+8. Roll back on a failed step 6 or 7 through git: refs back to the step-2
+   listing with `git update-ref`, `main` back to its pre-cutover commit, the
+   mounted clone removed and the tracked `.jit` checked out; the cutover is
+   retried in a later window. The tool is the forward path only: a step that
+   meets an unexpected state stops with a message and changes nothing, and
+   no step writes, resets or removes a working-tree file outside `.jit/`
+   (owner order 2026-11-16).
 9. Snapshot and release the window; the history rewrite later starts from
    this state.
 
