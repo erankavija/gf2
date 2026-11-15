@@ -45,7 +45,7 @@ Every issue below is assigned to `agent:gf2-e9`; the successor reassigns them. E
   - It was the last rework. A third code-review failure goes to the owner with option B: close on the round-1 fixes under `@/inv/caller-trusted-fast-paths`. Before gating, merge main after 506f76d4 lands and recheck the `dev/tools/tuning-campaign-support/config/protocol.md` exception, whose `freeze` writer 506f76d4 may remove.
 - **66fefd9e retired rows:** inventory rows and history entries in files retired by `@/issue/d1c0e062` are marked "retired by owner decision" and drop out.
   - Rework 2 rewrites 4 passages, 68 in total.
-  - The branch no longer touches `dispatch-7a816262-phase1.md` and must not bring it back on merge.
+  - The branch no longer touches `dispatch-7a816262-phase1.md` (removed by @/issue/d1c0e062) and must not bring it back on merge.
   - Line numbers in the inventory are at `96fc9b751`.
 - **History retirement:** old history files are retired, not edited.
   - This directory keeps one current handoff.
@@ -87,7 +87,7 @@ Unchanged since rehearsal 3, apart from the reword decision above.
 
 ## Next
 
-0. The steward handoff is `dev/active/2caf738d-1-0/handoff-3.md`. The d1c0e062 branch's hunk in `dev/active/2caf738d-1-0/handoff.md` has no target since `8cbf9eb17` retired that file: drop it when the branch next merges main.
+0. The steward handoff is `dev/active/2caf738d-1-0/handoff-4.md`. The d1c0e062 branch's hunk in `dev/active/2caf738d-1-0/handoff.md` has no target since `8cbf9eb17` retired that file: drop it when the branch next merges main.
 
 1. **506f76d4: second review failure.** Escalated to the steward, who decides with the owner. The finding:
    - `dev/tools/tuning-campaign-support/src/receipt.rs:513` requires cold executions to disable calibration and supply `cold_calls` for every protocol version.
@@ -96,7 +96,7 @@ Unchanged since rehearsal 3, apart from the reword decision above.
    - The fix passes the protocol version into the validation.
    Once it passes its gates, land it. It frees about 804 kB, unblocks 5f33fb28 and fe2221d5, and must land before da6200b8 and 0fe85425 are gated.
 2. **d1c0e062:** gate it (cargo-ci, then code-review) and land it. It conflicts with nothing in flight.
-3. **66fefd9e:** merge main into the branch, keeping `dispatch-7a816262-phase1.md` deleted, then gate and land.
+3. **66fefd9e:** merge main into the branch, keeping `dispatch-7a816262-phase1.md` (removed by @/issue/d1c0e062) deleted, then gate and land.
 4. **da6200b8:** after 506f76d4, as above.
 5. **0fe85425:**
    - Merge main.
@@ -124,7 +124,7 @@ The code-review gate's reviewer is Codex gpt-6.1-sol, so every implementation we
 
 ## Traps
 
-- A cold `cargo-ci` under load exceeds the 900 s gate timeout and records `error`. Warm the worktree with a direct `BUSY_HOST_OVERRIDE=1 ./scripts/cargo-ci.sh` (about 3 min warm), then evaluate the gate. Chain code-review only after cargo-ci passes.
+- A cold `cargo-ci` under load exceeds the 900 s gate timeout and records `error`, which is not a verdict. Warm the worktree with a direct `BUSY_HOST_OVERRIDE=1 ./scripts/cargo-ci.sh` (about 3 min warm), then evaluate the gate. Chain code-review only after cargo-ci passes.
 - `jit gate evaluate` and `jit issue update` in a worktree record on that branch's `.jit`. After merging a gated branch, copy its `.jit/gate-runs/<issue-uuid>/` records into main's ignored `.jit/gate-runs/`.
 - docs-mechanical needs main's `.jit/gate-runs/` in a worktree. Copy it into that worktree's ignored `.jit/gate-runs/` before running the check there.
 - Main's working tree usually holds other leads' uncommitted tracker lines. Stage only your own paths and event lines, never check out or reset `.jit/events.jsonl`, and merge with plumbing (`git merge-tree`, `git commit-tree`, `git update-ref`). Plumbing skips the pre-commit hook, so run `scripts/check-tracked-budget.py --range` on the new commit first.
@@ -135,10 +135,10 @@ The code-review gate's reviewer is Codex gpt-6.1-sol, so every implementation we
 - Sweeps by one agent miss wording forms. Slice by directory and reconcile two independent inventories by different vendors.
 - Commit subjects from `wip(...)` commits and default merge messages reach main. Squash or reword on the branch, and count every subject with `${#s}`.
 - Deleting machinery that validates committed artifacts can take live run-time checks with it (506f76d4, round 1). List what the deleted code checked on fresh results before deleting it.
+- Dispatch and rework prompts are ephemeral coordination material and are never committed (owner directive 2026-08-24). Briefs live in `<gf2-share>/45ecf975-handoff-38/`.
 - `git stash` is shared across worktrees and sessions. Never use it, and never put it in a brief.
 - `rm -rf` outside the scratchpad is refused by the session's permission classifier unless the owner approves it in that session.
 - `breakdown.json` stays excluded from audit by recorded owner decision (`240b7618`, `679cf170`). Do not argue its properties, edit it, or resync it. Do not amend an issue description without checking that issue's copy in it.
-- A cold `cargo-ci` exceeds the 900 s gate timeout, and an `error` at that limit is not a verdict. Warm the tree with a direct run, then rerun the gate.
 - Concurrent builds in other worktrees make fast-tier tests miss their 15 s kill. Check the gate record and rerun solo before reading a failure as a regression.
 - GPU-device tests fail under host contention. Rerun the single test alone before reading it as a regression.
 - Stage explicit paths and check `git diff --cached --stat`. `jit` materializes shared `.git/jit` state into the checkout that runs it, so a worker commit can carry other issues' `.jit/` changes.
@@ -160,6 +160,87 @@ The code-review gate's reviewer is Codex gpt-6.1-sol, so every implementation we
 - `git commit -F -` after an `&&` chain hangs. Write the message to a file.
 - `/usr/bin/time` is not installed. Time commands with shell `date` arithmetic.
 - Agent-tool sandboxed worktrees have vanished. Read the leak-check output and check peer sessions before reverting anything.
+- `DVB_TEST_VECTORS_PATH` has no default. Unset, the DVB-T2 stream tests return early or report absent streams and pass, so a slow-tier run that is meant to check the streams must set it.
+- A stale `claims.lock` wedges `jit gate evaluate` between checker completion and verdict recording. Diagnose through `.git/jit/locks/` and `jit recover`; recover also when a sandbox makes the shared `.git/jit` store look unwritable.
+- `jit dep add` refuses edges that break transitive reduction. Add such edges with `--reduce`.
+- `jit gate define` re-renders profile-claimed projections and can break repository-wide `jit validate` (`profile-ownership`). Run `jit validate` after it.
+- `jit issue show` fails in a worktree ("Failed to load gate runs"). Read the issue JSON directly there.
+- Open issues' descriptions name files they plan to create. Do not scrub them as stale references.
+- The lead's `git add <paths> && git commit` also commits whatever a same-checkout worker has staged. Never commit on a checkout where a worker runs.
+- Do not tell a worker both "never write under `.jit/`" and "use `jit doc add`"; the second writes under `.jit/`.
+- A `codex exec` sandbox cannot reach the GPU: HIP error 100 from `hipGetDevice` is the sandbox, not the host. Codex transcripts carry `patch_apply_end` events with per-file diffs, the authoritative record of a worker's edits.
+- Do not keep re-dispatching a worker through a run of API 529 overload errors. Wait, and never let two writers share a checkout.
+- Background Bash tasks die at the 10-minute cap. Never arm a sleep-then-run there.
+- A process-matching kill run from a shell whose command line holds the pattern kills that shell.
+- `rocm-smi` reporting high GPU use with no VRAM allocated and no KFD process is not a workload. Check the kernel log before waiting for idle.
+- sccache hit rates on fresh-worktree builds have been near zero, cause unestablished. Budget fresh-worktree builds as cold.
+- The gf2-sim `rare_event_artifact_*` fast-tier tests run near their kill limit. Check them first when the fast tier slows.
+- The benchmark-window tooling is `dev/scripts/bench-window`. A timer for a window-gated run:
+  - checks clock sync first (`timedatectl`); the host clock has run half an hour ahead with NTP inactive;
+  - exports `ROCM_PATH` for any HIP build, since user units do not source the ROCm profile and `hipcc` then misses its headers;
+  - is transient unless made otherwise: it vanishes once elapsed and does not survive reboot, so record the arming in a durable log;
+  - is verified past its first fragile stage, the build, before the session ends.
+- Sandboxed `systemctl --user` cannot reach the user bus. Set `XDG_RUNTIME_DIR=/run/user/<uid>` and `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/<uid>/bus` before concluding that no timer exists.
+- During a timed measurement run no Cargo, nextest, benchmark, simulation or competing GPU work runs on the host, and the measured source closure is not rebuilt or edited. Leave the main tree clean when a measurement may start unattended.
+- Keep measurement recovery state outside `target/`, which a crash or rebuild erases.
+- `scripts/check-references.py`'s pattern check reads known roots; a bare relative path inside a data file passes it. Anchor every host-path pattern, since an unanchored one matched ordinary relative paths.
+- The ROCm probe build of `permanent-wave-gpu-ci` is outside the ordinary checks; only the release tests, formatting and Clippy of `permanent_wave_gpu` run.
+- Review and criteria practice:
+  - A conformance table never labels a criterion "satisfied in part"; reviewers read that as unmet. A criterion that names evidence "during the measured run" cannot be met by later writing, and its escape clause is checked against the facts.
+  - Sweep criteria against contracts forward before review. A collision a reviewer finds costs a round.
+  - The AI review gates fail before run evidence exists. Evaluate cargo-ci before the run and the reviews after the receipt.
+  - Reviewer verdicts are nondeterministic: earlier passes can precede a failure on a real defect.
+  - A validation that does not exercise the real artifact validates nothing. A worker's green suite can be environment-masked; rerun it as lead.
+  - Workers invent favourable claims, such as a "retained configuration", and repeat known traps such as GNU `time`. Check worker reports and runbooks against the evidence.
+  - doc-review misses present-tense violations, and a record that describes its own commit goes stale on commit. Sweep the record itself after committing.
+  - A provenance file that states a planned analysis policy contradicts the analysis once the policy is superseded; record the change as a dated amendment. Resource predictions also live in HIP translation-unit headers, not only the README.
+  - A research-review citation failure on an issue that builds on no literature is not fixed by adding `cites:` labels.
+  - Plain `#[test]` functions are named `test_<operation>_<scenario>` (owner precedent on `9ce34225`).
+- Permanent-statistics campaign (`experiments/permanent-statistics`, `@/issue/67194d70` and the campaign arms):
+  - No campaign-purpose draw starts without a separate owner go. A successful dry schedule or a passed validation is no such go.
+  - After validation, $(q,n)=(7,20)$ runs alone first and cells then run one at a time, as the protocol orders.
+  - No terminal, failed or censored outcome is redrawn, overwritten, rerun or relabelled, and committed historical receipts, preregistrations and reports are not rewritten: they are falsification evidence. A failed-receipt supersession covers admission refusals only.
+  - Preregistration and producing code are committed before the first draw they govern.
+  - Linked run evidence comes from the final producing-tool revision; a tool change unlinks the superseded evidence.
+  - Do not trust `target/release/permanent_campaign` after Cargo work; a rebuild replaces the pinned bytes. Hash-check the executable against the record before running.
+  - Runtime provenance (source closure, binary, toolchain, hardware, invocation, worker count, RNG identity, timestamps) is observed by the production path, never caller-authored. A closure check covers the built closure including path dependencies, not the whole shared tree.
+  - A tree hash names committed content and identifies the measured bytes only when the closure is clean; a commit hash answers a history question, not a content one.
+  - One semantic `StreamPurpose` or complete `MatrixAddress` drives both sampling and evidence identity. Validation never uses `StreamPurpose::CampaignCell`, and validation and campaign artifacts stay disjoint.
+  - The exact-test decision is `!two_sided_test(k, N, p0).rejects_at(0.001)`: no equality of re-exponentiated logs, tolerance or Clopper–Pearson. $p_0$ comes from the exhaustive numerator and denominator, not from preregistered expected counts.
+  - The exhaustive oracle is independent of the production evaluator, and the validation reuses that evaluator through a library API instead of duplicating it. It streams each matrix once in bounded batches fanned to every backend; the backend union derives from the manifest.
+  - Bounded matrix batch size and Rayon worker count are distinct parameters. The harness `--batch-size` flag stays opt-in.
+  - A journal link is published only after syncing its directory; test stale temporary files and adoption.
+  - A serde round trip is not receipt validation; mutate each field and require rejection. JSON needs serde_json's `float_roundtrip` feature to preserve `f64` bits.
+  - A selected-field execution is not manifest-global: the cost-table requirement in `permanent_campaign` reads every manifest field.
+  - Campaign paths, digests and orchestration policy stay out of the reusable library, and no superseded representation (q-only selector, path-only input, sidecar mutator, emitter bypass, legacy reader or alias) returns.
+  - The strict manifest schema rejects unknown fields; error-budget values bind elsewhere. A checksum sidecar never hashes itself, and a manifest binds no draft document.
+  - The schema rejects completed rows whose determinant count and estimate states disagree. Representative determinant costs are not per-cell measurements.
+  - Exit 0 does not mean a finite measurement; censored rows report `NaN`. A censor-ranking rule for incomplete arms needs owner approval.
+  - A pooled raw estimator and its uncertainty interval are separate quantities. Trailing zeros are significant in published integer tables.
+  - `csv.DictReader` yields `None` for a physically short record and `""` for a present empty field; only the former is an interrupted tail, and malformed input never meets a permissive reader.
+  - The stopping-rule cap bounds when a repetition may start, not a cell's total. Derive per-cell budgets from probes of the same field and order: small-field probe costs underestimate large orders, and the Ryser work-model projection overestimates probe-calibrated prototype chains.
+  - The harness `equivalence` subcommand is global (no `q` filter); only `grid` parses `--execution-id` and `--skip-machine-warmup`. Gray-update `wave-gf3`/`fold-gf3` rows of run `20260813T230032Z-1321576` alias the shipped kernel and are not prototype evidence.
+  - The 63-cell selection is reproducible from the committed CSVs; do not re-derive it to review it. In cell $(3,27)$ the rule-3-ineligible accelerator arm has the higher finite-only mean, and it stays unselected.
+  - The dataset home `permanent-zero-fraction/<campaign-id>/` is a path in the tree (`@/issue/5758790d`).
+- Run jit and git state commands from the repository root, never with the shell parked in a worker worktree or a subdirectory: jit materializes state into the checkout that runs it, and diagnosed from a subdirectory it reports passed gates as never run.
+- Merge from the repository root: `git merge <branch>` while on that branch is a silent no-op, and `git worktree remove` of the shell's own directory strands it.
+- A codex worker's `ps -o etime` resets when `codex` re-execs; judge liveness by its growing session file instead.
+- A failed gate verdict is reused by input digest until an input changes; rerun with `jit gate evaluate --force` after a load failure.
+- Do not file an issue with `--orphan`: it fails repository validation until wired. Wire it to its epic in the same step.
+- Write success criteria as `[hard] REQ-nn:` or `[aspirational] REQ-nn:` the first time; other shapes warn on every item.
+- Every `cites:` key in an issue's gate context appears as a `[Key]` token in its text, or the research-review checker fails.
+- Merging main into a branch that rewrote issue descriptions conflicts on every issue another lead edited: resolve field by field and reapply the edit to their newer text.
+- Removing ignore lines exposes old run output in the main checkout as untracked files; move it under `target/` before landing.
+- The hooks are local: GitHub refuses push rulesets on this public user-owned repository, so `--no-verify` bypasses them and CI reports only afterwards.
+- Do not widen a wall-clock assertion for a busy runner, and do not run ignored campaign or slow tests during ordinary work.
+- Do not commit measured output; the issue records its location and digest.
+- Old tuning protocol receipts cannot be re-evaluated (`ConfigurationUnavailable`); their input bytes come from git history until the rewrite and from the backup after it.
+- `rank_event_rates` was moved without rerunning its ignored receipt test; its stream equality rests on code reading until that test runs.
+- A required validation backend that is unavailable fails the validation; it is never skipped.
+- Measurements taken with different binaries are different cohorts; never rank across cohorts.
+- GPU launch overhead is host-submission duration plus the device-only event span; never subtract across host and device clocks.
+- On gfx1030 the permanent kernels avoid batch size M=4096: one attempt faulted the device with cause unestablished.
+- `refdb add item --arxiv` does not deduplicate against manual entries that lack `arxiv_id`; enrich those with notes instead.
 
 ## References
 
