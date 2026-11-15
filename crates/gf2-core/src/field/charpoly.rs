@@ -2447,9 +2447,23 @@ mod tests {
         let f2 = random_fp::<MERSENNE_31>(1, 6, 0x222);
         let a = gemm(&f1, &f2);
         let cubic = a.charpoly_cubic();
-        if let Some(kg) = a.charpoly_keller_gehrig(0x333) {
-            assert_eq!(cubic, kg);
-        }
+        // A rank-1 matrix has characteristic polynomial x^6 - tr(A) x^5.
+        let zero = Fp::<MERSENNE_31>::new(0);
+        let expected = FieldPoly::new(vec![
+            zero,
+            zero,
+            zero,
+            zero,
+            zero,
+            Fp::<MERSENNE_31>::new(MERSENNE_31) - a.trace(),
+            Fp::<MERSENNE_31>::new(1),
+        ]);
+        assert_eq!(cubic, expected);
+        // The minimal polynomial has degree 2 < 6, so no vector is cyclic
+        // and every Krylov matrix is singular: KG returns None. At n = 6 the
+        // dispatching `charpoly` routes to the cubic implementation directly.
+        assert!(a.charpoly_keller_gehrig(0x333).is_none());
+        assert_eq!(a.charpoly(), expected);
         let pa = cubic.eval_at_matrix(&a);
         for i in 0..6 {
             for j in 0..6 {

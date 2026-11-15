@@ -1768,13 +1768,27 @@ mod tests {
 
     #[test]
     fn test_parity_xor_property() {
-        let bv_all_ones = BitVec::from_bytes_le(&[0xFF]);
-        let bv_all_zeros = BitVec::from_bytes_le(&[0x00]);
-        let bv_single = BitVec::from_bytes_le(&[0x01]);
-
-        assert!(!bv_all_ones.parity());
-        assert!(!bv_all_zeros.parity());
-        assert!(bv_single.parity());
+        // parity(a ^ b) == parity(a) ^ parity(b), checked at word-boundary
+        // lengths against a bit-by-bit reference parity.
+        let mut state = 0x9E37_79B9_7F4A_7C15_u64;
+        let mut next = || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        for &len in &[0usize, 1, 63, 64, 65, 128, 130] {
+            for _ in 0..8 {
+                let words = len.div_ceil(64);
+                let a = BitVec::from_words((0..words).map(|_| next()).collect(), len);
+                let b = BitVec::from_words((0..words).map(|_| next()).collect(), len);
+                let naive = |v: &BitVec| (0..len).fold(false, |acc, i| acc ^ v.get(i));
+                let mut x = a.clone();
+                x.bit_xor_into(&b);
+                assert_eq!(x.parity(), a.parity() ^ b.parity(), "len {len}");
+                assert_eq!(x.parity(), naive(&x), "len {len}");
+            }
+        }
     }
 
     #[test]
@@ -2142,58 +2156,68 @@ mod select_edge_cases {
 mod kani_proofs {
     use super::*;
 
+    /// `len` bits of zero words with `last_word` stored unmasked as the last word.
+    fn with_last_word(len: usize, last_word: u64) -> BitVec {
+        let mut data = vec![0u64; len.div_ceil(64)];
+        *data.last_mut().unwrap() = last_word;
+        BitVec {
+            data,
+            len_bits: len,
+            rank_select_index: Mutex::new(None),
+        }
+    }
+
     #[kani::proof]
+    #[kani::unwind(3)]
     fn mask_tail_zeros_padding() {
         let len: usize = kani::any();
         kani::assume(len >= 1 && len <= 128);
 
         let last_word: u64 = kani::any();
+        let mut bv = with_last_word(len, last_word);
+        bv.mask_tail();
 
         let bits_in_last = len % 64;
         if bits_in_last != 0 {
-            let mask = (1u64 << bits_in_last) - 1;
-            let masked = last_word & mask;
-            assert!(masked >> bits_in_last == 0);
+            assert!(bv.data.last().unwrap() >> bits_in_last == 0);
         }
     }
 
     #[kani::proof]
+    #[kani::unwind(3)]
     fn mask_tail_preserves_valid_bits() {
         let len: usize = kani::any();
         kani::assume(len >= 1 && len <= 128);
 
         let last_word: u64 = kani::any();
+        let mut bv = with_last_word(len, last_word);
+        bv.mask_tail();
 
         let bits_in_last = len % 64;
         if bits_in_last != 0 {
             let mask = (1u64 << bits_in_last) - 1;
-            let masked = last_word & mask;
-            assert!((masked & mask) == (last_word & mask));
+            assert!(*bv.data.last().unwrap() == (last_word & mask));
+        } else {
+            assert!(*bv.data.last().unwrap() == last_word);
         }
     }
 
     #[kani::proof]
+    #[kani::unwind(3)]
     fn ones_constructor_tail_clean() {
         let len: usize = kani::any();
         kani::assume(len >= 1 && len <= 128);
 
-        let num_words = len.div_ceil(64);
+        let bv = BitVec::ones(len);
         let used_bits = len % 64;
-
-        let last_word = if used_bits != 0 {
-            (1u64 << used_bits) - 1
-        } else {
-            u64::MAX
-        };
-
+        let last = *bv.data.last().unwrap();
         if used_bits != 0 {
-            assert!(last_word >> used_bits == 0);
-            let expected_mask = (1u64 << used_bits) - 1;
-            assert!(last_word == expected_mask);
+            assert!(last >> used_bits == 0);
+            assert!(last == (1u64 << used_bits) - 1);
         } else {
-            assert!(last_word == u64::MAX);
+            assert!(last == u64::MAX);
         }
-        assert!(num_words == (len + 63) / 64);
+        assert!(bv.data.len() == len.div_ceil(64));
     }
 
     #[kani::proof]
