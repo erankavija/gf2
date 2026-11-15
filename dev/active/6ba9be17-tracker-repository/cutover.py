@@ -314,7 +314,7 @@ def copy_file(source, target):
 
 
 def step(args, name):
-    """Marks the end of a step; the self-test interrupts or fails a subcommand here."""
+    """Marks the end of a step; the self-test interrupts a subcommand here."""
     args.hooks.get("step", lambda _: None)(name)
 
 
@@ -986,22 +986,21 @@ class SelfTest:
         self.base = base
         self.invoking = invoking
         self.failures = []
+        self.cases = 0
         self.jit = shutil.which("jit")
 
     def check(self, condition, label):
+        self.cases += 1
         if not condition:
             self.failures.append(label)
             print(f"  FAIL {label}")
         return condition
 
-    def run(self, *argv, after_clean=None, hooks=None):
+    def run(self, *argv, hooks=None):
         for arg in argv:
             if arg.startswith("/"):
                 if inside(Path(arg), self.invoking):
                     raise Refusal(f"self-test argument inside the invoking checkout: {arg}")
-        hooks = dict(hooks or {})
-        if after_clean:
-            hooks["after_clean"] = after_clean
         out = io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(out):
             try:
@@ -1026,42 +1025,60 @@ class SelfTest:
         for entry in keep.iterdir():
             copy_entry(entry, self.base / entry.name)
 
-    def interrupt_each(self, argv, steps, state, label):
-        """Interrupts the command after each step and requires a rerun to reach `state`."""
+    def observe(self):
+        """Every path and file digest under the scratch base, every ref and every index listing.
+
+        Git object and log directories are skipped, and an index file is compared
+        by its listing, since git may rewrite its stat cache.
+        """
+        state, indexes = {}, {}
+        for root, dirs, names in os.walk(self.base):
+            here = Path(root)
+            if here == self.base:
+                dirs[:] = [d for d in dirs if d != ".snapshot"]
+            if ".git" in here.parts or here.name == ".git":
+                dirs[:] = [d for d in dirs if d not in ("objects", "logs")]
+            for name in dirs:
+                state[(here / name).relative_to(self.base).as_posix()] = "dir"
+            for name in names:
+                path = here / name
+                rel = path.relative_to(self.base).as_posix()
+                if name == "index" and (".git" in here.parts or here.name == ".git"):
+                    indexes[rel] = git(f"--git-dir={here}", "ls-files", "-s", cwd=here, check=False)
+                    continue
+                state[rel] = "link:" + os.readlink(path) if path.is_symlink() else sha256(path)
+        refs = {}
+        for repo in ("code", "tracker"):
+            if (self.base / repo / ".git").exists():
+                refs[repo] = git("for-each-ref", "--format=%(refname) %(objectname)", cwd=self.base / repo)
+        return state, indexes, refs
+
+    def refused_unchanged(self, argv, label, hooks=None):
+        """Runs `argv` and requires a refusal (exit 2) that changes nothing."""
+        before = self.observe()
+        rc, out = self.run(*argv, hooks=hooks)
+        after = self.observe()
+        if not self.check(rc == 2 and after == before, label):
+            print(f"    rc {rc}: {out.strip()}")
+            for part, (x, y) in enumerate(zip(before, after)):
+                for key in sorted(set(x) | set(y)):
+                    if x.get(key) != y.get(key):
+                        print(f"    changed: {key}")
+        return out
+
+    def refuse_after_each(self, argv, steps, label):
+        """Interrupts `argv` after each step; a rerun on that partial state is refused and changes nothing."""
         self.check(steps != [], f"{label}: the command reports its steps")
-        for step in steps:
+        for step in dict.fromkeys(steps):
             self.restore()
-            rc, out = self.run(*argv, hooks={"step": interrupt_at(step)})
+            rc, _ = self.run(*argv, hooks={"step": interrupt_at(step)})
             self.check(rc == "interrupted", f"{label}: interrupted after {step}")
-            rc, out = self.run(*argv)
-            self.check(rc == 0 and self.state_of(argv) == state,
-                       f"{label}: a rerun after an interruption at {step} reaches the uninterrupted end state")
+            self.refused_unchanged(argv, f"REQ-08 {label}: a rerun after an interruption at {step} "
+                                         f"is refused and changes nothing")
+        self.restore()
         rc, out = self.run(*argv)
-        self.check(rc == 0 and self.state_of(argv) == state, f"{label}: a rerun of the finished command changes nothing")
-
-    def state_of(self, argv):
-        code = Path(argv[argv.index("--repo") + 1])
-        aside = Path(argv[argv.index("--aside") + 1]) if "--aside" in argv else None
-
-        def files(root):
-            if root is None or not root.is_dir():
-                return None
-            return {k: v for k, v in store_files(root).items() if not k.startswith(".git/")}
-
-        def head(root):
-            return git("rev-parse", "HEAD", cwd=root, check=False).strip() if root and (root / ".git").exists() else None
-
-        state = {"code": git("rev-parse", "HEAD^{tree}", "HEAD^", cwd=code),
-                 "status": git("status", "--porcelain", "--ignored", cwd=code),
-                 "worktrees": [l for l in git("worktree", "list", "--porcelain", cwd=code).splitlines()
-                               if not l.startswith("HEAD ")],
-                 "store": files(code / STORE), "store head": head(code / STORE),
-                 "aside": files(aside), "aside head": head(aside),
-                 "listing": sorted(os.listdir(code)), "revert": (code / ".git" / "REVERT_HEAD").exists()}
-        for name in ("wa", "wb"):
-            state[name] = files(Path(self.path(name)) / STORE)
-            state[f"{name} listing"] = sorted(os.listdir(self.path(name)))
-        return state
+        self.check(rc == 0, f"{label}: an uninterrupted run passes again")
+        self.refused_unchanged(argv, f"REQ-08 {label}: a rerun of the finished command is refused and changes nothing")
 
     def sh(self, *cmd, cwd, check=True, env=None):
         result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
@@ -1265,8 +1282,9 @@ class SelfTest:
         rc, _ = self.run("archive", "--repo", code, "--dest", partial, hooks={"step": interrupt_at("archived primary")})
         self.check(rc == "interrupted" and "manifest.json" not in os.listdir(partial),
                    "REQ-02 an interrupted archive writes no manifest")
-        rc, _ = self.run("archive", "--repo", code, "--dest", partial)
-        self.check(rc == 0 and sorted(os.listdir(partial)) == names, "REQ-02 a rerun completes an interrupted archive")
+        self.refused_unchanged(("archive", "--repo", code, "--dest", partial),
+                               "REQ-08 archive refuses a rerun on a partial archive set and changes nothing")
+        shutil.rmtree(partial)
         return dest
 
     def extract(self, code):
@@ -1298,6 +1316,15 @@ class SelfTest:
         rc, _ = self.run("code-side", "--repo", self.path("wa"), "--message", "chore: cut over")
         self.check(rc == 2, "REQ-04 code-side refuses a linked worktree")
         argv = ("code-side", "--repo", code, "--message", "chore: move the tracker out")
+        for rel in (".gitignore", ".gitattributes", BUDGET, REFERENCES):
+            target = Path(code) / rel
+            original = target.read_bytes()
+            target.write_bytes(original + b"# an ordinary edit\n")
+            self.refused_unchanged(argv, f"REQ-08 code-side refuses an ordinary edit to {rel} and changes nothing")
+            target.write_bytes(original)
+        self.sh("git", "rm", "-q", "--cached", f"{STORE}/config.toml", cwd=code)
+        self.refused_unchanged(argv, "REQ-08 code-side refuses an index under .jit that differs from HEAD")
+        self.sh("git", "reset", "-q", "--", f"{STORE}/config.toml", cwd=code)
         self.snapshot()
         steps = []
         rc, out = self.run(*argv, hooks={"step": steps.append})
@@ -1335,17 +1362,24 @@ class SelfTest:
                    "REQ-04 the event log and citation registry reference exceptions are gone")
         self.check(".jit/issues/*" in paths and ".jit/archive-evidence/*" in paths,
                    "REQ-04 the issue-prose and archive-record reference exceptions stay")
-        self.interrupt_each(argv, steps, self.state_of(argv), "REQ-04 code-side")
+        self.refuse_after_each(argv, steps, "code-side")
         return git("rev-parse", "HEAD", cwd=code).strip()
 
     def mount(self, code, new):
         aside = self.path("primary-store-aside")
         rc, out = self.run("mount", "--repo", self.path("wa"), "--tracker", new, "--aside", aside)
         self.check(rc == 2 and not os.path.exists(aside), "REQ-05 mount refuses a linked worktree")
+        argv = ("mount", "--repo", code, "--tracker", new, "--aside", aside)
+        os.mkdir(aside)
+        self.refused_unchanged(argv, "REQ-08 mount refuses an existing aside path and changes nothing")
+        os.rmdir(aside)
+        stage = Path(aside).with_name(f".{Path(aside).name}.mount-stage")
+        stage.mkdir()
+        self.refused_unchanged(argv, "REQ-08 mount refuses an existing staging path and changes nothing")
+        stage.rmdir()
         self.snapshot()
-        self.mount_steps = []
-        rc, out = self.run("mount", "--repo", code, "--tracker", new, "--aside", aside,
-                           hooks={"step": self.mount_steps.append})
+        steps = []
+        rc, out = self.run(*argv, hooks={"step": steps.append})
         print(out, end="")
         self.check(rc == 0, "REQ-05 mount replaces .jit with a clone")
         if rc != 0:
@@ -1368,8 +1402,8 @@ class SelfTest:
                        f"REQ-05 machine-local {rel} is restored")
         self.check(not (store / "tmp" / "redo.record").exists(), "REQ-05 jit's scratch directory is not restored")
         self.check(git("status", "--porcelain", cwd=code) == "", "REQ-05 the code checkout stays clean")
-        argv = ("mount", "--repo", code, "--tracker", new, "--aside", aside)
-        self.interrupt_each(argv, self.mount_steps, self.state_of(argv), "REQ-05 mount")
+        self.check(not stage.exists(), "REQ-05 mount leaves no staging path")
+        self.refuse_after_each(argv, steps, "mount")
 
     def harvest(self, code):
         shared = str(Path(code) / STORE)
@@ -1397,69 +1431,101 @@ class SelfTest:
         rc, _ = self.run("harvest", "--store", shared, "--from", str(wa))
         self.check(rc == 0, "REQ-06 a repeated harvest passes")
 
+    def abandon(self, code):
+        for name in ("landed-a", "landed-b", "landed-c", "landed-d"):
+            self.sh("git", "branch", name, "main", cwd=code)
+        self.sh("git", "update-ref", "refs/archive/landed-b", "main~1", cwd=code)
+        tip = git("rev-parse", "landed-a", cwd=code).strip()
+        rc, out = self.run("abandon", "--repo", code, "--branch", "landed-a")
+        self.check(rc == 0 and out.splitlines() == ["landed-a: abandoned to refs/archive/landed-a"]
+                   and rev("refs/archive/landed-a", code) == tip and rev("refs/heads/landed-a", code) is None,
+                   "REQ-10 abandon moves the branch to refs/archive/<name> and deletes the branch ref")
+        before = self.observe()
+        rc, out = self.run("abandon", "--repo", code, "--branch", "landed-a")
+        self.check(rc == 0 and out.splitlines() == ["landed-a: already abandoned"] and self.observe() == before,
+                   "REQ-10 a rerun reports already abandoned and changes nothing")
+        rc, out = self.run("abandon", "--repo", code, "--branch", "landed-b")
+        self.check(rc == 1 and out.startswith("landed-b: refused: refs/archive/landed-b exists")
+                   and self.observe() == before,
+                   "REQ-10 abandon refuses an existing archive ref and changes nothing")
+        rc, out = self.run("abandon", "--repo", code, "--branch", "wa")
+        self.check(rc == 1 and out.startswith("wa: refused: wa is checked out in") and self.observe() == before,
+                   "REQ-10 abandon refuses a branch checked out in a worktree and changes nothing")
+        listed = Path(self.path("abandon.txt"))
+        listed.write_text("# landed branches\nlanded-c\nwa # checked out\nlanded-d\n")
+        rc, out = self.run("abandon", "--repo", code, "--branches", str(listed))
+        lines = out.splitlines()
+        self.check(rc == 1 and len(lines) == 3 and lines[0] == "landed-c: abandoned to refs/archive/landed-c"
+                   and lines[1].startswith("wa: refused:") and lines[2] == "landed-d: abandoned to refs/archive/landed-d",
+                   "REQ-10 a batch prints one line per branch, continues after a refusal and exits 1")
+        self.sh("git", "update-ref", "-d", "refs/archive/landed-b", cwd=code)
+        self.sh("git", "branch", "-D", "landed-b", cwd=code)
+
+    def outside(self, checkout):
+        """Digest of every file of `checkout` outside `.jit` and its git link, untracked and ignored files included."""
+        files = {}
+        for root, dirs, names in os.walk(checkout):
+            here = Path(root)
+            if here == Path(checkout):
+                dirs[:] = [d for d in dirs if d not in (STORE, ".git")]
+            for name in names:
+                path = here / name
+                rel = path.relative_to(checkout).as_posix()
+                if rel != ".git":
+                    files[rel] = sha256(path)
+        return files
+
     def clean(self, code, cutover_state):
         shared = str(Path(code) / STORE)
         wa, wb = self.path("wa"), self.path("wb")
-        args = ("--store", shared, "--merge-message", "chore: merge main", "--message", "chore: drop the tracker")
+        args = ("--store", shared, "--message", "chore: drop the tracker")
         if cutover_state == "before":
-            head = git("rev-parse", "HEAD", cwd=wa).strip()
             rc, out = self.run("clean", "--repo", code, "--worktree", wa, *args)
-            self.check(rc == 1 and git("rev-parse", "HEAD", cwd=wa).strip() == head,
-                       "REQ-07 clean fails while main tracks .jit and changes nothing")
+            self.check(rc == 1, "REQ-07 clean fails while main tracks .jit")
             return
-        events = Path(wb) / EVENTS
-        events.open("a").write('{"event": "late"}\n')
+        (Path(wb) / EVENTS).open("a").write('{"event": "late"}\n')
         (Path(wb) / STORE / "issues" / "late.json").write_text('{"late": true}\n')
         self.commit_all(wb, "chore: tracker changes on wb after the cutover")
         start = git("rev-parse", "wb", cwd=code).strip()
-        rc, out = self.run("clean", "--repo", code, "--worktree", wb, *args,
-                           hooks={"step": fail_at("store-removal")})
-        self.check(rc == 1 and "restored" in out and git("rev-parse", "wb", cwd=code).strip() == start
-                   and tracked_under("wb", STORE, code) != [] and (Path(wb) / STORE).is_dir()
-                   and git("status", "--porcelain", "--untracked-files=no", cwd=wb) == "",
-                   "REQ-07 a failing store deletion restores the branch ref and keeps the store")
+        (Path(wb) / "notes.txt").write_text("untracked\n")
+        (Path(wb) / "target" / "debug").mkdir(parents=True)
+        (Path(wb) / "target" / "debug" / "build.log").write_text("ignored\n")
+        (Path(wb) / STORE / "config.toml").open("a").write("# uncommitted tracker edit\n")
+        self.check(git_rc("check-ignore", "-q", "target/debug/build.log", cwd=wb) == 0
+                   and "?? notes.txt" in git("status", "--porcelain", cwd=wb),
+                   "REQ-09 the fixture worktree wb is dirty with an untracked and an ignored file")
+        files = self.outside(wb)
         rc, out = self.run("clean", "--repo", code, "--worktree", wb, *args)
         print(out, end="")
-        self.check(rc == 0 and "wb: cleaned; tree outside .jit equals the merge result" in out.splitlines(),
+        self.check(rc == 0 and "wb: cleaned; tree outside .jit equals the tip" in out.splitlines(),
                    "REQ-07 clean passes on wb and reports tree equality outside .jit")
+        self.check(self.outside(wb) == files,
+                   "REQ-08 the files of the dirty worktree wb outside .jit are byte-identical after its clean")
+        self.check(git("rev-parse", "wb^", cwd=code).strip() == start
+                   and len(git("rev-list", "--parents", "-n1", "wb", cwd=code).split()) == 2
+                   and git_rc("diff", "--quiet", start, "wb", "--", ".", ":(exclude).jit", cwd=code) == 0,
+                   "REQ-07 wb gets one commit on its tip, merging nothing, with the tip's tree outside .jit")
         self.check(git("ls-tree", "-r", "--name-only", "wb", "--", STORE, cwd=code) == ""
-                   and git("ls-tree", "-r", "--name-only", "main", "--", STORE, cwd=code) == "",
-                   "REQ-07 git ls-files .jit is empty on main and on wb")
-        merge = git("rev-parse", "wb^", cwd=code).strip()
-        parents = git("rev-list", "--parents", "-n1", merge, cwd=code).split()[1:]
-        self.check(len(parents) == 2 and git_rc("merge-base", "--is-ancestor", "main", merge, cwd=code) == 0,
-                   "REQ-07 wb merges main")
-        removed = git("diff", "--name-only", "--diff-filter=D", "wb^", "wb", cwd=code).split()
-        self.check(f"{STORE}/issues/late.json" in removed,
-                   "REQ-07 the branch-only file that merged without conflict is removed in the next commit")
+                   and git("ls-tree", "-r", "--name-only", "main", "--", STORE, cwd=code) == ""
+                   and git("ls-files", STORE, cwd=wb) == "",
+                   "REQ-07 git ls-files .jit is empty on main, on wb and in the index of wb")
+        self.check(git("status", "--porcelain", "--untracked-files=no", cwd=wb) == "",
+                   "REQ-07 the index of wb matches its new HEAD")
         self.check(not (Path(wb) / STORE).exists(), "REQ-07 wb's local store is deleted")
+        lib = Path(wa) / "src" / "lib.rs"
+        original = lib.read_bytes()
+        lib.write_bytes(original + b"// uncommitted\n")
+        self.refused_unchanged(("clean", "--repo", code, "--worktree", wa, *args),
+                               "REQ-07 clean refuses uncommitted tracked changes outside .jit and changes nothing")
+        lib.write_bytes(original)
         extra = Path(wa) / STORE / "gate-runs" / I2 / "unharvested.json"
         extra.write_bytes(b'{"run": "late"}\n')
-        head = git("rev-parse", "HEAD", cwd=wa).strip()
-        rc, out = self.run("clean", "--repo", code, "--worktree", wa, *args)
-        self.check(rc == 2 and (Path(wa) / STORE).is_dir() and git("rev-parse", "HEAD", cwd=wa).strip() == head,
-                   "REQ-07 clean refuses an unverified harvest and keeps the store")
+        self.refused_unchanged(("clean", "--repo", code, "--worktree", wa, *args),
+                               "REQ-07 clean refuses an unverified harvest and keeps the store")
         extra.unlink()
-
-        def plant_mismatch(worktree):
-            (Path(worktree) / "src" / "lib.rs").write_text("pub fn planted_mismatch() {}\n")
-            self.commit_all(worktree, "test: plant a non-tracker tree mismatch")
-
-        rc, out = self.run("clean", "--repo", code, "--worktree", wa, *args,
-                           after_clean=plant_mismatch)
-        self.check(rc == 2 and "tree outside .jit mismatch" in out
-                   and f"wa restored to {head}" in out
-                   and git("rev-parse", "wa", cwd=code).strip() == head
-                   and not git("status", "--porcelain", "--untracked-files=no", cwd=wa).strip()
-                   and (Path(wa) / STORE).is_dir(),
-                   "REQ-07 a planted tree mismatch is refused, restores the ref and keeps the store")
-        unrestored = restored(Failure("planted"), Path(wa), "wa", "0" * 40)
-        self.check(isinstance(unrestored, Failure) and "wa is left at" in str(unrestored)
-                   and "not restored to" in str(unrestored) and git("rev-parse", "wa", cwd=code).strip() == head,
-                   "REQ-07 a failed restore names the ref it leaves")
         rc, out = self.run("clean", "--repo", code, "--worktree", wa, *args)
         self.check(rc == 0 and not (Path(wa) / STORE).exists()
-                   and "wa: cleaned; tree outside .jit equals the merge result" in out.splitlines()
+                   and "wa: cleaned; tree outside .jit equals the tip" in out.splitlines()
                    and git("ls-tree", "-r", "--name-only", "wa", "--", STORE, cwd=code) == "",
                    "REQ-07 clean passes on wa")
         head = git("rev-parse", "wa", cwd=code).strip()
@@ -1467,11 +1533,9 @@ class SelfTest:
         local.mkdir()
         (local / "server.log").write_text("machine-local\n")
         self.write_runs(local, {f"{I2}/r2.json": b'{"run": "r2"}\n'})
-        rc, out = self.run("clean", "--repo", code, "--worktree", wa, *args,
-                           after_clean=plant_mismatch)
+        rc, out = self.run("clean", "--repo", code, "--worktree", wa, *args)
         self.check(rc == 0 and "wa: already clean" in out.splitlines()
-                   and git("rev-parse", "wa", cwd=code).strip() == head
-                   and not local.exists(),
+                   and git("rev-parse", "wa", cwd=code).strip() == head and not local.exists(),
                    "REQ-07 an already clean linked branch commits nothing and deletes its verified store")
 
     def parked_setup(self, code):
@@ -1480,7 +1544,7 @@ class SelfTest:
         (Path(fixture) / STORE / "config.toml").open("a").write("# parked tracker change\n")
         (Path(fixture) / STORE / "issues" / "parked.json").write_text('{"parked": true}\n')
         self.commit_all(fixture, "chore: parked tracker changes")
-        for name in ("parked-single", "parked-hook", "parked-empty"):
+        for name in ("parked-single", "parked-empty"):
             self.sh("git", "branch", name, "parked", cwd=code)
         self.sh("git", "switch", "-q", "-c", "parked-conflict", "main", cwd=fixture)
         (Path(fixture) / "src" / "lib.rs").write_text("pub fn parked() {}\n")
@@ -1491,90 +1555,64 @@ class SelfTest:
         self.commit_all(code, "chore: main code change")
 
     def parked_clean(self, code):
-        args = ("--merge-message", "chore: merge main", "--message", "chore: drop the tracker")
+        args = ("--message", "chore: drop the tracker")
         self.sh("git", "branch", "parked-already", "main", cwd=code)
-        before = git("worktree", "list", "--porcelain", cwd=code)
-        tmp_before = set(Path(tempfile.gettempdir()).glob("cutover-clean-*"))
-        head = git("rev-parse", "parked-conflict", cwd=code).strip()
-        single_head = git("rev-parse", "parked-single", cwd=code).strip()
+        store = Path(code) / STORE
+        (store / "issues" / "primary-only.json").write_text('{"primary": true}\n')
+        primary = {k: v for k, v in store_files(store).items() if not k.startswith(".git/")}
+        self.check(git("show", f"parked-single:{STORE}/config.toml", cwd=code).encode()
+                   != (store / "config.toml").read_bytes(),
+                   "REQ-09 the primary checkout's .jit differs from the parked branch's tracked .jit")
+        worktrees = git("worktree", "list", "--porcelain", cwd=code)
+        single = git("rev-parse", "parked-single", cwd=code).strip()
         rc, out = self.run("clean", "--repo", code, "--branch", "parked-single", *args)
         print(out, end="")
-        self.check(rc == 0 and out.strip() == "parked-single: cleaned; tree outside .jit equals the merge result",
+        self.check(rc == 0 and out.strip() == "parked-single: cleaned; tree outside .jit equals the tip",
                    "REQ-07 a single parked branch cleans without a shared store or harvest")
         self.check(not tracked_under("parked-single", STORE, code)
-                   and git_rc("merge-base", "--is-ancestor", "main", "parked-single", cwd=code) == 0
-                   and git("rev-parse", "parked-single", cwd=code).strip() != single_head,
-                   "REQ-07 a parked branch merges main and removes all tracked tracker paths")
-        removed = git("diff", "--name-only", "--diff-filter=D", "parked-single^", "parked-single", cwd=code)
-        self.check(f"{STORE}/issues/parked.json" in removed,
-                   "REQ-07 the parked branch-only tracker file is removed and committed")
-        clean_head = git("rev-parse", "parked-already", cwd=code).strip()
+                   and git("rev-parse", "parked-single^", cwd=code).strip() == single
+                   and len(git("rev-list", "--parents", "-n1", "parked-single", cwd=code).split()) == 2
+                   and git_rc("diff", "--quiet", single, "parked-single", "--", ".", ":(exclude).jit", cwd=code) == 0,
+                   "REQ-07 a parked branch gets one commit on its tip with the tip's tree outside .jit")
+        self.check({k: v for k, v in store_files(store).items() if not k.startswith(".git/")} == primary
+                   and git("worktree", "list", "--porcelain", cwd=code) == worktrees,
+                   "REQ-07 a parked clean leaves the primary checkout's .jit and the worktree list as they were")
+        for branch in ("parked-conflict", "outside-conflict"):
+            tip = git("rev-parse", branch, cwd=code).strip()
+            conflicts = merge_result(code, "main", branch)[1]
+            self.check([p for p in conflicts if not p.startswith(f"{STORE}/")] == ["src/lib.rs"],
+                       f"REQ-09 the fixture branch {branch} conflicts with main outside .jit")
+            rc, out = self.run("clean", "--repo", code, "--branch", branch, *args)
+            self.check(rc == 0 and out.strip() == f"{branch}: cleaned; tree outside .jit equals the tip"
+                       and git("rev-parse", f"{branch}^", cwd=code).strip() == tip
+                       and git_rc("diff", "--quiet", tip, branch, "--", ".", ":(exclude).jit", cwd=code) == 0
+                       and not tracked_under(branch, STORE, code),
+                       f"REQ-07 {branch}, which conflicts with main outside .jit, is cleaned with its code tree unchanged")
+        already = git("rev-parse", "parked-already", cwd=code).strip()
         rc, out = self.run("clean", "--repo", code, "--branch", "parked-already", *args)
         self.check(rc == 0 and out.strip() == "parked-already: already clean"
-                   and git("rev-parse", "parked-already", cwd=code).strip() == clean_head,
+                   and git("rev-parse", "parked-already", cwd=code).strip() == already,
                    "REQ-07 an already clean parked branch commits nothing")
-        rc, out = self.run("clean", "--repo", code, "--branch", "parked-conflict", *args)
-        self.check(rc == 1 and out.strip() == "parked-conflict: conflict outside .jit: not forced: src/lib.rs"
-                   and git("rev-parse", "parked-conflict", cwd=code).strip() == head,
-                   "REQ-07 a parked code conflict is listed, aborted and leaves its ref unchanged")
         branches = Path(self.path("branches.txt"))
-        branches.write_text("# parked branches\nparked\nparked-conflict # requires the steward\n\nparked-already\n")
+        branches.write_text("# parked branches\nparked\nmissing-branch\nwa # checked out\n\nparked-already\n")
         rc, out = self.run("clean", "--repo", code, "--branches", str(branches), *args)
         print(out, end="")
-        self.check(rc == 1 and out.splitlines() == [
-            "parked: cleaned; tree outside .jit equals the merge result",
-            "parked-conflict: conflict outside .jit: not forced: src/lib.rs",
-            "parked-already: already clean"],
-            "REQ-07 batch lists each outcome and exits nonzero while a code conflict remains")
-        self.check(git("rev-parse", "parked-conflict", cwd=code).strip() == head
-                   and git("rev-parse", "parked-already", cwd=code).strip() == clean_head,
-                   "REQ-07 a failed batch branch changes no other branch ref")
-        self.check(all(not tracked_under(rev, STORE, code)
-                       for rev in ("main", "parked", "parked-already"))
-                   and git_rc("merge-base", "--is-ancestor", "main", "parked", cwd=code) == 0,
+        lines = out.splitlines()
+        self.check(rc == 1 and len(lines) == 4
+                   and lines[0] == "parked: cleaned; tree outside .jit equals the tip"
+                   and lines[1] == "missing-branch: refused: not a local branch: missing-branch"
+                   and lines[2].startswith("wa: refused: wa is checked out in")
+                   and lines[3] == "parked-already: already clean",
+                   "REQ-07 a batch lists each outcome, continues after refusals and exits 1")
+        self.check(all(not tracked_under(r, STORE, code) for r in ("main", "parked", "parked-already")),
                    "REQ-07 main and every cleaned branch track no tracker path")
-        self.check(git("worktree", "list", "--porcelain", cwd=code) == before,
-                   "REQ-07 git worktree list is unchanged after the batch")
-        self.check(set(Path(tempfile.gettempdir()).glob("cutover-clean-*")) == tmp_before,
-                   "REQ-07 success and refusal leave no temporary worktree behind")
         branches.write_text("parked\nparked-already\n")
         rc, out = self.run("clean", "--repo", code, "--branches", str(branches), *args)
         self.check(rc == 0 and out.splitlines() == ["parked: already clean", "parked-already: already clean"],
                    "REQ-07 a batch of clean branches succeeds without commits")
-        branches.write_text("missing-branch\nwa\nparked-already\n")
-        rc, out = self.run("clean", "--repo", code, "--branches", str(branches), *args)
-        lines = out.splitlines()
-        self.check(rc == 1 and len(lines) == 3
-                   and lines[0] == "missing-branch: refused: not a local branch: missing-branch"
-                   and lines[1].startswith("wa: refused: wa is already checked out;")
-                   and lines[2] == "parked-already: already clean",
-                   "REQ-07 other refusals include their reasons and do not stop the batch")
-        self.check(git("worktree", "list", "--porcelain", cwd=code) == before
-                   and set(Path(tempfile.gettempdir()).glob("cutover-clean-*")) == tmp_before,
-                   "REQ-07 other refusals leave no temporary worktree or registration")
-        hook = Path(git("rev-parse", "--git-common-dir", cwd=code).strip())
-        hook = (hook if hook.is_absolute() else Path(code) / hook) / "hooks" / "commit-msg"
-        hook.parent.mkdir(exist_ok=True)
-        hook.write_text('#!/bin/sh\nif grep -q REJECT "$1"; then echo rejected >&2; exit 1; fi\n')
-        hook.chmod(0o755)
-        failing = {"parked-hook": ("--merge-message", "chore: merge main", "--message", "chore: REJECT"),
-                   "parked-empty": ("--merge-message", "chore: merge main", "--message", "")}
-        for name, messages in failing.items():
-            start = git("rev-parse", name, cwd=code).strip()
-            rc, out = self.run("clean", "--repo", code, "--branch", name, *messages)
-            self.check(rc == 1 and out.startswith(f"{name}: failed:") and "restored" in out
-                       and git("rev-parse", name, cwd=code).strip() == start
-                       and tracked_under(name, STORE, code) != []
-                       and git("worktree", "list", "--porcelain", cwd=code) == before,
-                       f"REQ-07 a removal commit that fails ({name}) restores the branch ref")
-        hook.unlink()
-        start = git("rev-parse", "parked-hook", cwd=code).strip()
-        rc, out = self.run("clean", "--repo", code, "--branch", "parked-hook", *args,
-                           hooks={"step": fail_at("worktree-removal")})
-        self.check(rc == 1 and "restored" in out and git("rev-parse", "parked-hook", cwd=code).strip() == start
-                   and git("worktree", "list", "--porcelain", cwd=code) == before
-                   and set(Path(tempfile.gettempdir()).glob("cutover-clean-*")) == tmp_before,
-                   "REQ-07 a failing temporary-worktree removal restores the ref and leaves no registration")
+        self.refused_unchanged(("clean", "--repo", code, "--branch", "parked-empty", "--message", ""),
+                               "REQ-07 clean refuses an empty commit message and changes nothing")
+
 
 class Interrupted(Exception):
     """Raised by a self-test hook to stop a subcommand between two of its steps."""
@@ -1584,13 +1622,6 @@ def interrupt_at(target):
     def hook(step):
         if step == target:
             raise Interrupted(step)
-    return hook
-
-
-def fail_at(target):
-    def hook(step):
-        if step == target:
-            raise OSError(f"planted failure at {step}")
     return hook
 
 
@@ -1656,6 +1687,8 @@ def self_test():
         code = test.build()
         print("inventory")
         test.inventory(code)
+        print("abandon")
+        test.abandon(code)
         print("archive")
         archives = test.archive(code)
         print("extract")
@@ -1663,7 +1696,7 @@ def self_test():
         test.clean(code, "before")
         test.parked_setup(code)
         print("code-side")
-        cutover = test.code_side(code)
+        test.code_side(code)
         print("mount")
         test.mount(code, new)
         print("harvest")
@@ -1677,9 +1710,9 @@ def self_test():
     finally:
         shutil.rmtree(base, ignore_errors=True)
     if test.failures:
-        print(f"cutover.py --self-test: {len(test.failures)} failure(s)", file=sys.stderr)
+        print(f"cutover.py --self-test: {len(test.failures)} of {test.cases} checks failed", file=sys.stderr)
         return 1
-    print("cutover.py --self-test: ok")
+    print(f"cutover.py --self-test: ok, {test.cases} checks")
     return 0
 
 
