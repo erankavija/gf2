@@ -61,7 +61,7 @@
           "id": "e610f5c4-3833-4e23-8399-eb5b8b483ea8",
           "short_id": "e610f5c4",
           "title": "Build the cutover tool that moves the tracker out of the code repository",
-          "status": "final round phase 2 (Codex) running; handed to gf2-5c"
+          "status": "final round phase 2 (Codex gpt-6.1-sol, by gf2-bf) running; then blocking Claude Opus review, then D-12 rework (Claude), Codex review, gates once"
         },
         {
           "id": "2a4c2684-b7a6-4a72-822f-918a873a07bf",
@@ -78,7 +78,7 @@
           "id": "6b9e6b14-2382-42d9-b8f5-dea181b3dea6",
           "short_id": "6b9e6b14",
           "title": "Write the cutover runbook and rehearse it with the history rewrite",
-          "status": "phase 1 runbook draft (Claude Opus) running; handed to gf2-5c"
+          "status": "phase 1 runbook draft at 1cc64aa24 (Claude Opus, by gf2-bf); phase 2 rehearsal waits for e610f5c4 landing"
         }
       ]
     },
@@ -124,6 +124,11 @@
       "issue": "6ba9be17",
       "kind": "owner timing decision impact",
       "ruling": "cutover alone before the rewrite; parked branches cleaned at the cutover (option a); criteria moved per fc38867b3"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "cleaning rule vs 70 branches conflicting outside .jit",
+      "ruling": "owner via steward, charter D-12 (08fe9f8b9): abandon stale branches to refs/archive before the window; clean every surviving branch (26 no-issue included) with one removal-only commit, no merge; inventory judges .jit part only; abandon subcommand; criteria reworded"
     }
   ],
   "rework_counts": {
@@ -143,15 +148,17 @@
     "check-references: a file-name link label is checked as its own inline citation (pre-existing; out of 28aa2a9d scope)",
     "Gate runs on fresh or rebuilt worktrees hit the 900 s cargo-ci timeout at load 20+; a warm direct ./scripts/cargo-ci.sh pre-run then --force gate works",
     "The worktree dispatch script refuses while another session holds uncommitted dev/ files in main; create the worktree with git worktree add from main instead",
-    "Each main landing by a peer that touches crates/ or scripts/ invalidates cargo-ci verdicts at branch tips; tracker-only main drift does not (merged without re-gating)"
+    "Each main landing by a peer that touches crates/ or scripts/ invalidates cargo-ci verdicts at branch tips; tracker-only main drift does not (merged without re-gating)",
+    "cutover.py inventory (:366-368 at 9aeddb20f) reports any merge-tree conflict as a tracker action, also conflicts outside .jit; fixed under e610f5c4 REQ-01 in the D-12 round"
   ],
   "started_at": "2026-11-15T01:17:00+02:00",
-  "lead": "gf2-bf (session 2), handed off to gf2-5c (cutover line) and gf2-f6 (7854cfad, d1eba151, 2a4c2684)",
+  "lead": "gf2-5c (cutover line: e610f5c4, 6b9e6b14, 6889e6e6) and gf2-f6 (7854cfad, d1eba151, 2a4c2684, inventory) under steward gf2-a2; took over from gf2-bf",
   "notes": {
     "2a4c2684": "assigned to gf2-bf by steward gf2-a2 (gf2-00 has no session); design at the runbook backup directory, rewrite-plan/2026-11-14b/2a4c2684-design.md; scope per steward message",
     "6889e6e6": "waits on an owner timing decision (rewrite paused, steward 01:22)",
     "6d5ba9fb": "Blocking Claude review (Claude Sonnet 5.5, beside the Codex gate): PASS at 43e85778e; REQ-01 to REQ-08 met; REQ-02 checked with the real jit against scratch roots. cargo-ci and code-review re-passed at merged head 33c4df96a.",
-    "durable_artifacts": "the durable directory named in handoff-2.md"
+    "durable_artifacts": "the durable directory named in handoff-2.md",
+    "6b9e6b14": "lead choices: linked-worktree gate probe is docs-mechanical added to 6889e6e6; second-identity lease on 6ba9be17"
   },
   "dispatches": [
     {
