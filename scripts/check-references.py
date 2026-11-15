@@ -6,10 +6,23 @@ paths under the repository's top-level directories, relative and inline paths,
 links, Cargo path dependencies and Rust includes. A JSON, TOML or YAML file is
 also parsed: a string under a path-named member (`DATA_PATH_MEMBER`) shaped
 like a relative path must resolve from the repository root or the file's
-directory, be ignored by git, or be a template. A Markdown link or `../` path
-resolves from its own file, a `./` path from its own file or the root, an
-inline file name (bare or with directories) from its own directory or one
-enclosing it. Issue prose has no directory: bare names need repository paths.
+directory, be ignored by git, or be a template (`TEMPLATE`, which includes an
+elided `...` directory). A path under a top-level
+directory, a leading-`/` link and a `./dir/name` path resolve from the root,
+the last as a command spelling run there. A Markdown link, a `../` path, a
+Cargo path and a Rust include resolve from their own file. An inline file
+name (bare or with directories) resolves from its own directory or one
+enclosing it, a `./name` from its own directory or the root. Issue prose has
+no directory: its references resolve from the root, and bare names need
+repository paths. A match inside the character span of a Markdown link
+target, a Cargo path (a TOML basic or literal string), a Rust include or a
+path-named data member's string belongs to that extractor alone; the data
+check leaves to `CARGO_PATH` exactly the strings it extracts. Each reference
+is normalized once, from its extractor's base, into a repository path; its
+membership, store and branch lookups, ignore rules, exception match and
+fault text all use that path, and an inline name's fault
+names its own-directory reading. A `..` that climbs above the root resolves
+nowhere: it faults as written and no ignore rule or planned path excuses it.
 Every `/tmp` path in prose is host-local unless its own line writes or locks
 that path. Host-local also means a user's
 home or a host mount; the toolchain's own home directories and device paths
@@ -39,7 +52,33 @@ backticks, resolves through that target when their base names match. A
 mismatched file-name label faults; the target is checked independently.
 
 An invariant citation `@/inv/<id>` or `@/invariant/<id>` must name an
-invariant of `.jit/invariants.toml`.
+identifier of the projection between the `jit:invariants` markers of
+`AGENTS.md`, with or without the tracker store.
+
+A tracker reference is a path under `.jit/` named in text. The data root is
+`JIT_DATA_DIR` when set, otherwise `.jit` under the repository root, and the
+store is mounted when the data root holds `index.json`. The files of the store
+are the tracked and the untracked unignored files of the git repository that
+contains the data root, whether that is the code repository or the store's own.
+With the store mounted a tracker reference must name one of them or a path the
+ignore rules of the store's repository cover; the code repository's ignore
+rules excuse no tracker reference. Equivalent spellings, with `.` and `..`
+components crossing into or out of `.jit/`, normalize to one path and so use
+the same files, branch trees and ignore rules. Without a store,
+as on a fresh clone or a CI runner, tracker references pass and the checker
+prints how many it left unchecked; every other check runs.
+
+When the data root is `.jit` under the repository root, the files of the store
+are scanned as `.jit/` paths, so issue records and archive records are checked
+under their exception entries whichever repository tracks them. When the data
+root lies elsewhere, as for a linked worktree sharing the primary checkout's
+store, that prose is written against other branches: issue records and archive
+records are skipped with a printed count. In an issue record, a tracker path
+in prose or a document entry resolves only against the mounted store's files
+or its ignore rules. A pinned document link to a repository path resolves in
+that commit's tree; an unpinned repository link, a document asset and a
+repository path of the prose resolve in the checkout or in the tree of a local
+branch head, which all checkouts of the host share.
 
 Every exception is an entry of `reference-exceptions.toml` beside this script,
 with its reason; `path` is a glob or a list of globs. An entry with `planned`
@@ -49,7 +88,8 @@ itself; it lets a closed issue's prose name evidence and invariants the tree no
 longer holds. The code holds two limits of its own. A file over
 `MAX_TEXT_BYTES` (4 MiB) is not read, since no tracked text file approaches
 it. A fault whose target git ignores is run output and passes, except a bare
-evidence name, which has no location for the ignore rules to match.
+evidence name, which has no location for the ignore rules to match; a tracker
+reference answers to the ignore rules of the store's repository.
 """
 
 from __future__ import annotations
@@ -58,12 +98,14 @@ import argparse
 import ast
 import fnmatch
 import json
+import os
 import re
 import shlex
 import subprocess
 import sys
 import tempfile
 import tomllib
+from collections import Counter
 from pathlib import Path
 
 EXCEPTIONS = "scripts/reference-exceptions.toml"
@@ -85,10 +127,17 @@ REPOSITORY_PATH = re.compile(rf"(?<![\w./+~}}-])/?({ROOTS}/[\w.+=-]+(?:/[\w.+=-]
 RELATIVE_PATH = re.compile(r"(?<![\w./+-])((?:\.\./)+[\w.+=-]+(?:/[\w.+=-]+)*)")
 INLINE_PATH = re.compile(r"`((?!10\.\d)[\w.+=-]+(?:/[\w.+=-]+)*/[\w+=-]+\.\w+)`")
 MARKDOWN_LINK = re.compile(r"\]\((?!https?:|mailto:|#)([^)#\s]+)")
-CARGO_PATH = re.compile(r"""\bpath\s*=\s*"([^"]+)\"""")
+# A TOML basic or literal string; the path is the group its quote opens.
+CARGO_PATH = re.compile(r"""\bpath\s*=\s*(?:"([^"\n]+)"|'([^'\n]+)')""")
+JSON_TOKEN = re.compile(r'"(?:[^"\\\n]|\\.)*"|[{}\[\]:]')
+TOML_TOKEN = re.compile(
+    r'#[^\n]*|"""[\s\S]*?"""|' r"'''[\s\S]*?'''" r'|"(?:[^"\\\n]|\\.)*"' r"|'[^'\n]*'"
+    r'|[\[\]{}=,.\n]|[^\s\[\]{}=,.#"' r"']+"
+)
 RUST_INCLUDE = re.compile(r"""include(?:_str|_bytes)?!\(\s*"([^"]+)"\s*\)""")
 DOT_PATH = re.compile(r"(?<![\w./+-])\./([\w.+=-]+(?:/[\w.+=-]+)+)")
-TEMPLATE = re.compile(r"[<>{}*$]")
+# A placeholder: a template character or an elided `...` directory.
+TEMPLATE = re.compile(r"[<>{}*$]|(?:^|/)\.{3,}(?:/|$)")
 DATA_SUFFIXES = (".json", ".toml", ".yaml", ".yml")
 DATA_PATH_MEMBER = re.compile(
     r"(?i:(?:^|[_-])(?:path|dir|directory|directories|file|root|location)s?)$"
@@ -115,7 +164,13 @@ MARKDOWN_FILE_LINK = re.compile(
 DATA_PROSE = re.compile(r"(?:dev|experiments)/.*\.json$")
 DATA_FILE_NAME = re.compile(rf"\.(?:{FILE_EXTENSIONS})$")
 INVARIANT = re.compile(r"@/(?:inv|invariant)/([\w-]+)")
-INVARIANTS = ".jit/invariants.toml"
+INVARIANT_PROJECTION = "AGENTS.md"
+PROJECTION = re.compile(r"<!-- jit:invariants:begin -->(.*?)<!-- jit:invariants:end -->", re.DOTALL)
+PROJECTED_ID = re.compile(r"^- \*\*([\w-]+)\*\*", re.MULTILINE)
+STORE = ".jit"
+STORE_INDEX = "index.json"
+# Issue records and archive records: the prose a shared store holds for every branch.
+STORE_RECORD = re.compile(r"\.jit/(?:issues/[^/]+\.json|archive-evidence/.+)$")
 TARGET_DIR = re.compile(r"(?<![\w.-])target/")
 WRITER_SUFFIXES = (".rs", ".py", ".sh", ".c", ".cpp", ".h", ".hip")
 # A string literal whose last path component is a file name.
@@ -167,16 +222,19 @@ def evidence_faults(
     markdown: bool = False,
     base: str = "",
     files: bool = False,
+    owned: list[tuple[int, int]] = (),
 ) -> list[str]:
     """Evidence-kind file names on `line` that name no tracked file.
 
     `written` holds the base names tracked code writes (`written_names`).
-    `base` is the directory a `./` name resolves against. A name under `target/`
-    is returned for the caller's ignore check. A bare name is excused when
+    `base` is the file's directory; a name with directories is returned as the
+    path `_named` resolves, a bare name as written. A name under `target/` is
+    returned for the caller's ignore check. A bare name is excused when
     `line` or `before` names a `target/` location. `markdown` adds every
     backticked bare file name and the backticked-only evidence kinds. `files`
     reads `line` as a data string: the Markdown names, and the whole string
-    when it is one file name of a known kind (`DATA_FILE_NAME`).
+    when it is one file name of a known kind (`DATA_FILE_NAME`). A name
+    inside an `owned` span of `line` belongs to another extractor.
     """
     names = []
     if markdown:
@@ -189,20 +247,17 @@ def evidence_faults(
         # Only the label is covered by the link; a separate citation of the
         # same name on this line still needs its own resolution.
         line = MARKDOWN_FILE_LINK.sub(label, line)
-    tokens = [(token, EVIDENCE_NAME) for token in FILE_TOKEN.findall(line)]
+    matches = [(match, EVIDENCE_NAME) for match in FILE_TOKEN.finditer(line)]
+    if markdown or files:
+        matches += [(match, None) for match in BARE_INLINE.finditer(line)]
+        matches += [(match, INLINE_EVIDENCE_NAME) for match in INLINE_PATH.finditer(line)]
+    tokens = [(match.group(1), kind) for match, kind in matches if not _within(match.span(1), owned)]
     if files and FILE_TOKEN.fullmatch(line.strip()):
         tokens.append((line.strip(), DATA_FILE_NAME))
-    if markdown or files:
-        tokens += [(token, None) for token in BARE_INLINE.findall(line)]
-        tokens += [
-            (token, INLINE_EVIDENCE_NAME)
-            for token in INLINE_PATH.findall(line)
-            if ".." not in token
-        ]
     for token, kind in tokens:
         name = token.removeprefix("./")
         # `RELATIVE_PATH` resolves a `../` name against its file.
-        if ".." in name.split("/"):
+        if RELATIVE_PATH.fullmatch(token) or TEMPLATE.search(token):
             continue
         if kind is not None and not kind.search(Path(name).name):
             continue
@@ -210,6 +265,7 @@ def evidence_faults(
             continue
         if "/" not in name and (TARGET_DIR.search(line) or TARGET_DIR.search(before)):
             continue
+        name = _named(token, base) or token
         if name not in names:
             names.append(name)
     return names
@@ -223,12 +279,18 @@ def faults_in(
     evidence: bool = True,
     written: frozenset[str] = frozenset(),
     invariants: frozenset[str] | None = None,
+    owned: dict[int, list[tuple[int, int]]] | None = None,
 ) -> list[str]:
     """`base` is the directory relative references resolve against.
 
     Passing it marks `text` as Markdown prose whatever the file's suffix.
     `evidence` false skips `evidence_faults` and the invariant check.
-    `invariants` None skips the invariant check.
+    `invariants` None skips the invariant check. `owned` maps a line to the
+    spans of the values `data_faults` resolves there (`data_ownership`).
+
+    A match inside the span of a Markdown link target, a Cargo path, a Rust
+    include or an `owned` value belongs to that extractor alone, so each
+    reference resolves once from the base its own syntax names.
     """
     faults = []
     markdown = base is not None or path.endswith(".md")
@@ -238,11 +300,25 @@ def faults_in(
     )
     base = str(Path(path).parent) if base is None else base
     before = ""
+
+    def unresolved(spelling: str, target: str | None) -> list[str]:
+        if target is not None and target in known:
+            return []
+        return [f"{path}:{number}: {spelling if target is None else target}"]
+
+    owned = owned or {}
     for number, line in enumerate(text.splitlines(), 1):
+        cargo = _cargo_paths(line) if path.endswith("Cargo.toml") else []
+        spans = [
+            match.span(1)
+            for pattern, applies in ((MARKDOWN_LINK, markdown), (RUST_INCLUDE, path.endswith(".rs")))
+            if applies
+            for match in pattern.finditer(line)
+        ] + [span for span, _ in cargo] + owned.get(number, [])
         if prose and evidence:
             faults += [
                 f"{path}:{number}: {name}"
-                for name in evidence_faults(line, before, known, written, markdown, base)
+                for name in evidence_faults(line, before, known, written, markdown, base, owned=spans)
             ]
         if evidence and invariants is not None:
             faults += [
@@ -258,42 +334,51 @@ def faults_in(
         ):
             faults.append(f"{path}:{number}: host-local path")
         for match in REPOSITORY_PATH.finditer(line):
+            if _within(match.span(1), spans):
+                continue
             end = match.end()
             if line[end : end + 1] in ("*", "{", "<", "$"):
                 continue
             # A trailing slash names the directory itself.
-            target = match.group(1).rstrip(".,:;").rstrip("/")
-            if DEVICE.match(target):
+            spelling = _trimmed(match.group(1)).rstrip("/")
+            target = _reference("", spelling)
+            if target is not None and DEVICE.match(target):
                 continue
-            if not TEMPLATE.search(target) and target not in known:
-                faults.append(f"{path}:{number}: {target}")
+            if not TEMPLATE.search(spelling):
+                faults += unresolved(spelling, target)
         if path.endswith("Cargo.toml"):
-            for dependency in CARGO_PATH.findall(line):
-                target = str(Path(*_normal(f"{base}/{dependency}")))
-                if target not in known:
-                    faults.append(f"{path}:{number}: {target}")
+            for _, dependency in cargo:
+                faults += unresolved(dependency, _reference(base, dependency))
         if path.endswith(".rs"):
             for included in RUST_INCLUDE.findall(line):
-                target = str(Path(*_normal(f"{base}/{included}")))
-                if target not in known:
-                    faults.append(f"{path}:{number}: {target}")
-        for dotted in DOT_PATH.findall(line):
-            if dotted not in known and prose:
-                faults.append(f"{path}:{number}: {dotted}")
-        for relative in RELATIVE_PATH.findall(line):
-            target = str(Path(*_normal(f"{base}/{relative}")))
-            if prose and target not in known:
-                faults.append(f"{path}:{number}: {target}")
+                faults += unresolved(included, _reference(base, included))
+        if prose:
+            # A `./` path in prose is a command spelling run from the root.
+            for match in DOT_PATH.finditer(line):
+                if not _within(match.span(), spans):
+                    faults += unresolved(match.group(), _reference("", match.group(1)))
+            for match in RELATIVE_PATH.finditer(line):
+                if not _within(match.span(1), spans):
+                    faults += unresolved(match.group(1), _reference(base, match.group(1)))
         if markdown:
-            for inline in INLINE_PATH.findall(line):
-                if ".." not in inline and not _resolves(inline, base, known):
-                    faults.append(f"{path}:{number}: {inline}")
+            for match in INLINE_PATH.finditer(line):
+                inline = match.group(1)
+                # `REPOSITORY_PATH`, `DOT_PATH` and `RELATIVE_PATH` own their spellings.
+                if (
+                    REPOSITORY_PATH.fullmatch(inline)
+                    or DOT_PATH.fullmatch(inline)
+                    or RELATIVE_PATH.fullmatch(inline)
+                    or TEMPLATE.search(inline)
+                    or _within(match.span(1), spans)
+                ):
+                    continue
+                if not _resolves(inline, base, known):
+                    faults += unresolved(inline, _reference(base, inline))
             for link in MARKDOWN_LINK.findall(line):
-                target = link[1:] if link.startswith("/") else f"{base}/{link}"
-                normal = str(Path(*_normal(target)))
-                if not TEMPLATE.search(link) and normal not in known:
-                    faults.append(f"{path}:{number}: {link}")
-    return faults
+                if not TEMPLATE.search(link):
+                    faults += unresolved(link, _reference("" if link.startswith("/") else base, link))
+    # Extractors that read one spelling yield the same resolved path.
+    return list(dict.fromkeys(faults))
 
 
 def data_faults(
@@ -302,13 +387,16 @@ def data_faults(
     known: set[str],
     is_ignored=lambda target: False,
     written: frozenset[str] = frozenset(),
+    deferred: Counter | None = None,
 ) -> list[str]:
     """Path-named members of a structured data file that resolve nowhere.
 
     Its reader may resolve a value from the repository root or from the file's
     directory, so either reading resolves it, and so does a reading git
     ignores. The fault names the file-relative reading of a `../` value and
-    the root-relative reading of any other.
+    the root-relative reading of any other, or the value as written when a
+    `..` climbs above the root in both. `deferred` counts the members whose
+    string `CARGO_PATH` extracts (`data_ownership`); they are left to it.
     """
     try:
         members = list(_data_members(path, text))
@@ -318,23 +406,168 @@ def data_faults(
     lines = text.splitlines()
     faults = []
     files = bool(DATA_PROSE.match(path))
+    deferred = Counter(data_ownership(path, text)[1] if deferred is None else deferred)
     for number, member, value in members:
-        for name in evidence_faults(value, "", known, written, base=base, files=files):
-            line = number or next((i for i, text in enumerate(lines, 1) if name in text), 0)
-            faults.append(f"{path}:{line}: {name}")
-        if not DATA_PATH_MEMBER.search(member) or "/" not in value:
+        if deferred[member, value]:
+            deferred[member, value] -= 1
             continue
-        if not DATA_PATH_VALUE.fullmatch(value) or TEMPLATE.search(value):
+        if not _data_path(member, value):
+            for name in evidence_faults(value, "", known, written, base=base, files=files):
+                line = number or next((i for i, text in enumerate(lines, 1) if name in text), 0)
+                faults.append(f"{path}:{line}: {name}")
             continue
-        readings = ["/".join(_normal(value)), "/".join(_normal(f"{base}/{value}"))]
+        readings = [_reference("", value), _reference(base, value)]
         if value.startswith("../"):
             readings.reverse()
+        readings = [reading for reading in readings if reading is not None]
         if any(reading in known or is_ignored(reading) for reading in readings):
             continue
         if number is None:
             number = next((i for i, line in enumerate(lines, 1) if value in line), 0)
-        faults.append(f"{path}:{number}: {readings[0]}")
+        faults.append(f"{path}:{number}: {readings[0] if readings else value}")
     return faults
+
+
+def _cargo_paths(line: str) -> list[tuple[tuple[int, int], str]]:
+    """The span and value of each `CARGO_PATH` path on `line`."""
+    return [
+        (match.span(group), match.group(group))
+        for match in CARGO_PATH.finditer(line)
+        for group in (1, 2)
+        if match.group(group) is not None
+    ]
+
+
+def _data_path(member: str, value: str) -> bool:
+    """Whether `data_faults` resolves the value of `member` as a path."""
+    return bool(
+        DATA_PATH_MEMBER.search(member)
+        and "/" in value
+        and DATA_PATH_VALUE.fullmatch(value)
+        and not TEMPLATE.search(value)
+    )
+
+
+def _within(span: tuple[int, int], spans) -> bool:
+    return any(begin <= span[0] and span[1] <= end for begin, end in spans)
+
+
+def data_ownership(path: str, text: str) -> tuple[dict[int, list[tuple[int, int]]], Counter]:
+    """The spans a data file's values own, and the members `CARGO_PATH` extracts.
+
+    Returns the spans by line of the strings `data_faults` resolves as paths,
+    and the count of each `(member, value)` whose string is a `CARGO_PATH`
+    path. A string counts only when the parsed file holds its member and value.
+    """
+    try:
+        parsed = {(member, value) for _, member, value in _data_members(path, text)}
+    except (ValueError, tomllib.TOMLDecodeError):
+        return {}, Counter()
+    lines = text.splitlines()
+    owned: dict[int, list[tuple[int, int]]] = {}
+    deferred: Counter = Counter()
+    for number, span, member, value in _literals(path, text):
+        if (member, value) not in parsed:
+            continue
+        if path.endswith("Cargo.toml") and (span, value) in _cargo_paths(lines[number - 1]):
+            deferred[member, value] += 1
+        elif _data_path(member, value):
+            owned.setdefault(number, []).append(span)
+    return owned, deferred
+
+
+def _literals(path: str, text: str):
+    """Yields `(line, span, member, value)` of each one-line string of a data file.
+
+    `member` is the name `_data_members` gives the string's value.
+    """
+    if path.endswith((".yaml", ".yml")):
+        owner = None
+        for number, line in enumerate(text.splitlines(), 1):
+            if member := YAML_MEMBER.match(line):
+                owner = member.group(1) if not member.group(3) else None
+                yield number, member.span(3), member.group(1), member.group(3)
+            elif (item := YAML_ITEM.match(line)) and owner is not None:
+                yield number, item.span(2), owner, item.group(2)
+        return
+    starts = [0]
+    for line in text.splitlines(keepends=True):
+        starts.append(starts[-1] + len(line))
+    scanned = _json_strings(text) if path.endswith(".json") else _toml_strings(text)
+    number = 0
+    for start, end, member, value in scanned:
+        while number + 1 < len(starts) and starts[number + 1] <= start:
+            number += 1
+        yield number + 1, (start - starts[number], end - starts[number]), member, value
+
+
+def _decoded(token: str) -> str:
+    if token.startswith("'"):
+        return token[1:-1]
+    try:
+        return json.loads(token)
+    except ValueError:
+        return token[1:-1]
+
+
+def _json_strings(text: str):
+    """`(start, end, member, value)` of each JSON string value, in text order."""
+    tokens = list(JSON_TOKEN.finditer(text))
+    # A frame is an object with its current key, or an array with its name.
+    frames: list[list] = []
+    for index, token in enumerate(tokens):
+        kind = token.group()
+        if kind == "{":
+            frames.append(["{", None])
+        elif kind == "[":
+            frames.append(["[", frames[-1][1] if frames else None])
+        elif kind in ("}", "]"):
+            if frames:
+                frames.pop()
+        elif kind != ":" and frames:
+            if index + 1 < len(tokens) and tokens[index + 1].group() == ":":
+                frames[-1][1] = _decoded(kind)
+            elif frames[-1][1] is not None:
+                yield token.start() + 1, token.end() - 1, frames[-1][1], _decoded(kind)
+
+
+def _toml_strings(text: str):
+    """`(start, end, member, value)` of each one-line TOML string value, in text order."""
+    frames: list[list] = [["{", None]]
+    key, header, parts = True, False, []
+    for token in TOML_TOKEN.finditer(text):
+        kind = token.group()
+        if kind.startswith("#"):
+            continue
+        if kind == "\n":
+            if len(frames) == 1:
+                key, header, parts = True, False, []
+            continue
+        if header:
+            continue
+        string = kind[0] in "\"'"
+        if key:
+            if kind == "[" and len(frames) == 1 and not parts:
+                header = True
+            elif kind == "=":
+                frames[-1][1] = parts[-1] if parts else None
+                key, parts = False, []
+            elif kind == "}":
+                frames.pop()
+                key = False
+            elif kind not in (".", ","):
+                parts.append(_decoded(kind) if string else kind)
+        elif kind == "[":
+            frames.append(["[", frames[-1][1]])
+        elif kind == "{":
+            frames.append(["{", None])
+            key = True
+        elif kind in ("]", "}") and len(frames) > 1:
+            frames.pop()
+        elif kind == ",":
+            key = frames[-1][0] == "{"
+        elif string and kind[:3] not in ('"""', "'''") and frames[-1][1] is not None:
+            yield token.start() + 1, token.end() - 1, frames[-1][1], _decoded(kind)
 
 
 def _data_members(path: str, text: str):
@@ -368,36 +601,87 @@ def issue_faults(
     written: frozenset[str] = frozenset(),
     invariants: frozenset[str] | None = None,
     history: bool = False,
+    trees: Trees | None = None,
 ) -> list[str]:
     """An issue's references resolve from the repository root; its links must exist.
 
     A link is a document entry's `path` and the `resolved_path` of each of its
     non-external assets; git-ignored build output such as `target/doc` passes.
+    With `trees`, a repository link pinned to a commit resolves in that commit's
+    tree, and an unpinned repository link or a repository path of the prose also
+    in a local branch head's tree. A tracker path resolves only against the store.
 
     `history` skips the evidence-name and invariant checks of its prose.
     """
     issue = json.loads(text)
     prose = "\n".join(filter(None, [issue.get("description"), issue.get("context") if isinstance(issue.get("context"), str) else None]))
-    faults = faults_in(
-        path, prose, known, base="", evidence=not history, written=written, invariants=invariants
-    )
-    faults += [
-        f"{path}:0: {document['path']}"
-        for document in issue.get("documents", [])
-        if document["path"] not in known
+    faults = [
+        fault
+        for fault in faults_in(
+            path, prose, known, base="", evidence=not history, written=written, invariants=invariants
+        )
+        if trees is None
+        or (target := fault.rsplit(": ", 1)[1]).startswith("@/")
+        or target == "host-local path"
+        or not _canonical(target)
+        or _tracker(target)
+        or not trees.on_branch(target)
     ]
+
+    def resolves(target: str | None, commit: str | None, pinned: bool = False) -> bool:
+        if target is None:
+            return False
+        if _tracker(target) or trees is None:
+            return target in known
+        if pinned and commit:
+            return trees.holds([commit], target)
+        return target in known or trees.on_branch(target) or bool(commit and trees.holds([commit], target))
+
+    for document in issue.get("documents", []):
+        target = _reference("", document["path"])
+        if not resolves(target, document.get("commit"), pinned=True):
+            faults.append(f"{path}:0: {document['path'] if target is None else target}")
     # Every local link a document entry carries: its scanned assets, local,
     # directory or missing; an external asset is a URL.
     faults += [
-        f"{path}:0: {target}"
+        f"{path}:0: {spelling if target is None else target}"
         for document in issue.get("documents", [])
         for asset in document.get("assets", [])
         if asset.get("asset_type") != "external"
-        and (target := str(asset.get("resolved_path", "")).rstrip("/"))
-        and not TEMPLATE.search(target)
-        and target not in known
+        and (spelling := str(asset.get("resolved_path", "")).rstrip("/"))
+        and not TEMPLATE.search(spelling)
+        and not resolves(target := _reference("", spelling), document.get("commit"))
     ]
     return faults
+
+
+class Trees:
+    """Path lookups in commit trees of the git objects every checkout shares."""
+
+    def __init__(self, root: Path):
+        self.root = root
+        self._heads: list[str] | None = None
+        self._branch: dict[str, bool] = {}
+
+    def holds(self, revisions: list[str], target: str) -> bool:
+        """Whether any of `revisions` holds the normalized repository path `target`."""
+        if not revisions or target == ".":
+            return False
+        lines = subprocess.run(
+            ["git", "-C", str(self.root), "cat-file", "--batch-check"],
+            input="".join(f"{revision}:{target}\n" for revision in revisions),
+            check=True, capture_output=True, text=True,
+        ).stdout.splitlines()
+        # A present object prints its size last; a missing one `missing`.
+        return any(line.rsplit(" ", 1)[-1].isdigit() for line in lines)
+
+    def on_branch(self, target: str) -> bool:
+        if self._heads is None:
+            refs = git(self.root, "for-each-ref", "--format=%(objectname)", "refs/heads")
+            self._heads = sorted(set(refs.split()))
+        if target not in self._branch:
+            self._branch[target] = self.holds(self._heads, target)
+        return self._branch[target]
 
 
 def _evidence_kind(name: str) -> bool:
@@ -412,13 +696,11 @@ def _resolves(name: str, base: str, known: set[str]) -> bool:
     `src/lib.rs` or a skill's `references/x.md` does. Bare names use those
     same directories; issue prose uses only the root.
     """
-    if name.startswith("./"):
-        name = name[2:]
-        return name in known or "/".join(_normal(f"{base}/{name}")) in known
-    parts = _normal(base) if base else []
+    parts = base.split("/") if base else []
+    depths = (len(parts), 0) if name.startswith("./") else range(len(parts), -1, -1)
     return any(
-        "/".join([*parts[:depth], *_normal(name)]) in known
-        for depth in range(len(parts), -1, -1)
+        (target := _reference("/".join(parts[:depth]), name)) is not None and target in known
+        for depth in depths
     )
 
 
@@ -739,15 +1021,46 @@ def written_names(
     return frozenset(names)
 
 
-def _normal(target: str) -> list[str]:
+def _reference(base: str, spelling: str) -> str | None:
+    """The normalized repository path `spelling` names from the directory `base`.
+
+    `base` is a repository path, empty for the root. None when a `..` climbs
+    above the root: such a reference resolves nowhere.
+    """
     parts: list[str] = []
-    for part in target.split("/"):
+    for part in f"{base}/{spelling}".split("/"):
         if part == "..":
-            if parts:
-                parts.pop()
+            if not parts:
+                return None
+            parts.pop()
         elif part not in ("", "."):
             parts.append(part)
-    return parts or ["."]
+    return "/".join(parts) or "."
+
+
+def _trimmed(spelling: str) -> str:
+    """`spelling` without trailing sentence punctuation, keeping a final `..`."""
+    while spelling[-1:] in (".", ",", ":", ";") and not (
+        spelling == ".." or spelling.endswith("/..")
+    ):
+        spelling = spelling[:-1]
+    return spelling
+
+
+def _canonical(target: str) -> bool:
+    """Whether a fault's target is a resolved path rather than an unresolved spelling."""
+    return _reference("", target) == target
+
+
+def _named(token: str, base: str) -> str | None:
+    """The path a file name of prose names.
+
+    A spelling `REPOSITORY_PATH` or `DOT_PATH` reads resolves from the root,
+    another with directories from `base`; a bare name has no location.
+    """
+    if REPOSITORY_PATH.fullmatch(token) or DOT_PATH.fullmatch(token):
+        return _reference("", token)
+    return _reference(base, token) if "/" in token else token
 
 
 def excepted(
@@ -767,7 +1080,8 @@ def excepted(
             if planned is None:
                 return True
             if (
-                target.startswith(tuple(planned))
+                _canonical(target)
+                and target.startswith(tuple(planned))
                 and target.rstrip("/") not in removed
                 and _open_issue(root, path)
             ):
@@ -787,11 +1101,70 @@ def removed_paths(root: Path) -> frozenset[str]:
     return frozenset(resolvable_set([path for path in deleted if path]))
 
 
-def invariant_ids(root: Path) -> frozenset[str] | None:
-    config = root / INVARIANTS
-    if not config.exists():
-        return None
-    return frozenset(entry["id"] for entry in tomllib.loads(config.read_text())["invariants"])
+def invariant_ids(root: Path) -> frozenset[str]:
+    """Identifiers of the invariant projection between the `jit:invariants` markers."""
+    file = root / INVARIANT_PROJECTION
+    text = file.read_text() if file.is_file() else ""
+    return frozenset(name for block in PROJECTION.findall(text) for name in PROJECTED_ID.findall(block))
+
+
+def data_root(root: Path, environ=os.environ) -> Path:
+    """`JIT_DATA_DIR` when set, otherwise `.jit` under the repository root."""
+    value = environ.get("JIT_DATA_DIR")
+    return Path(value).absolute() if value else root / STORE
+
+
+def _tracker(target: str) -> bool:
+    """Whether a normalized repository path belongs to the store."""
+    return target == STORE or target.startswith(STORE + "/")
+
+
+class Store:
+    """The files of the store at a data root and its repository's ignore rules.
+
+    Its files are the tracked and the untracked unignored files, under the data
+    root, of the git repository that contains it; outside any repository, every
+    file under the data root.
+    """
+
+    def __init__(self, data: Path):
+        self.mounted = (data / STORE_INDEX).is_file()
+        self.top: Path | None = None
+        self.prefix = ""
+        self.files: list[str] = []
+        if not self.mounted:
+            return
+        try:
+            self.top = Path(git(data, "rev-parse", "--show-toplevel").strip())
+        except subprocess.CalledProcessError:
+            self.files = sorted(str(p.relative_to(data)) for p in data.rglob("*") if p.is_file())
+            return
+        prefix = os.path.relpath(data.resolve(), self.top.resolve())
+        self.prefix = "" if prefix == "." else prefix + "/"
+        listed = git(
+            self.top, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", prefix
+        ).split("\0")[:-1]
+        self.files = [p[len(self.prefix):] for p in dict.fromkeys(listed) if p.startswith(self.prefix)]
+
+    def ignored(self, target: str) -> bool:
+        """Whether the store's repository ignores the tracker reference `target`."""
+        return self.top is not None and target != STORE and ignored(
+            self.top, self.prefix + target[len(STORE) + 1:]
+        )
+
+
+class Unchecked(set):
+    """Known paths with every tracker reference passing; `tracker` records them."""
+
+    def __init__(self, known: set[str]):
+        super().__init__(known)
+        self.tracker: set[str] = set()
+
+    def __contains__(self, target) -> bool:
+        if isinstance(target, str) and _tracker(target):
+            self.tracker.add(target)
+            return True
+        return super().__contains__(target)
 
 
 def history(root: Path, path: str, exceptions: list[dict[str, str]]) -> bool:
@@ -830,27 +1203,52 @@ def scan(
     written: frozenset[str] = frozenset(),
     invariants: frozenset[str] | None = None,
     is_history: bool = False,
+    trees: Trees | None = None,
 ) -> list[str]:
     if fnmatch.fnmatch(path, ".jit/issues/*.json"):
-        return issue_faults(path, text, known, written, invariants, is_history)
-    faults = faults_in(path, text, known, written=written, invariants=invariants)
+        return issue_faults(path, text, known, written, invariants, is_history, trees)
+    owned, deferred = data_ownership(path, text) if path.endswith(DATA_SUFFIXES) else ({}, Counter())
+    faults = faults_in(path, text, known, written=written, invariants=invariants, owned=owned)
     if path.endswith(DATA_SUFFIXES):
         faults += [
-            fault for fault in data_faults(path, text, known, is_ignored, written) if fault not in faults
+            fault
+            for fault in data_faults(path, text, known, is_ignored, written, deferred)
+            if fault not in faults
         ]
     return faults
 
 
-def check(root: Path) -> list[str]:
+def check(root: Path, data: Path | None = None, notes: list[str] | None = None) -> list[str]:
+    """Faults of the checkout at `root` with the store at the data root `data`.
+
+    `notes` receives the counts of what the checker left unchecked.
+    """
+    data = root / STORE if data is None else data
+    notes = [] if notes is None else notes
+    store = Store(data)
+    local = data.resolve() == (root / STORE).resolve()
     tracked = git(root, "ls-files", "-z").split("\0")[:-1]
-    known = resolvable_set(tracked)
+    files = {path: root / path for path in tracked}
+    if store.mounted:
+        known = resolvable_set([p for p in tracked if not _tracker(p)] + [f"{STORE}/{p}" for p in store.files])
+        known.add(STORE)
+    else:
+        known = Unchecked(resolvable_set(tracked))
+    # `_reference` names the repository root `.`.
+    known.add(".")
+    skipped = set()
+    if local and store.mounted:
+        files = {path: file for path, file in files.items() if not _tracker(path)}
+        files.update({f"{STORE}/{path}": data / path for path in store.files})
+    elif not local:
+        skipped = {path for path in [*files, *(f"{STORE}/{p}" for p in store.files)] if STORE_RECORD.match(path)}
+        files = {path: file for path, file in files.items() if path not in skipped}
     config = root / EXCEPTIONS
     configuration = tomllib.loads(config.read_text()) if config.exists() else {}
     exceptions = configuration.get('exception', [])
     helpers = configuration.get('writer_helpers', {})
     texts = {}
-    for path in tracked:
-        file = root / path
+    for path, file in files.items():
         if file.is_symlink() or not file.is_file():
             continue
         if file.stat().st_size > MAX_TEXT_BYTES:
@@ -862,16 +1260,25 @@ def check(root: Path) -> list[str]:
     written = written_names(texts, helpers)
     invariants = invariant_ids(root)
     removed = removed_paths(root)
+    trees = Trees(root)
     faults = writer_helper_faults(texts, helpers)
+
+    def is_ignored(target: str) -> bool:
+        # The code repository's rules never excuse a tracker reference, and
+        # no rule excuses a spelling that resolves nowhere.
+        if not _canonical(target):
+            return False
+        return store.ignored(target) if _tracker(target) else ignored(root, target)
     for path, text in texts.items():
         found = scan(
             path,
             text,
             known,
-            lambda target: ignored(root, target),
+            is_ignored,
             written,
             invariants,
             fnmatch.fnmatch(path, ".jit/issues/*.json") and history(root, path, exceptions),
+            trees,
         )
         # A bare evidence name has no location, so git's ignore rules do not
         # excuse it; any other bare name git ignores is run output.
@@ -881,9 +1288,19 @@ def check(root: Path) -> list[str]:
             and not (
                 not (target := fault.rsplit(": ", 1)[1]).startswith("@/")
                 and ("/" in target or not _evidence_kind(target))
-                and ignored(root, target)
+                and is_ignored(target)
             )
         ]
+    if not store.mounted:
+        notes.append(
+            f"check-references: {len(known.tracker)} tracker reference(s) left unchecked: "
+            "no store index at the data root"
+        )
+    if skipped:
+        notes.append(
+            f"check-references: skipped the prose of {len(skipped)} issue and archive record(s): "
+            "the data root lies outside the checkout"
+        )
     return faults
 
 
@@ -995,7 +1412,7 @@ def self_test() -> None:
         "docs/page.md:1: unique.rs"
     ], "a link resolves only its own label"
     assert faults_in("docs/page.md", "[`gone.rs`](../elsewhere/gone.rs)", known) == [
-        "docs/page.md:1: elsewhere/gone.rs", "docs/page.md:1: ../elsewhere/gone.rs"
+        "docs/page.md:1: elsewhere/gone.rs"
     ], "a matching label does not excuse an unresolved target"
     assert issue_faults(".jit/issues/test.json", json.dumps({
         "description": "`local.rs`", "state": "ready",
@@ -1089,7 +1506,8 @@ def self_test() -> None:
         (root / ".jit/issues/f.json").write_text(json.dumps({"state": "done", "description": "see `unlisted.out`"}))
         (root / "notes").mkdir()
         (root / "notes/kept-receipt.md").write_text("")
-        (root / ".jit/invariants.toml").write_text('[[invariants]]\nid = "kept-rule"\n')
+        (root / "AGENTS.md").write_text(PROJECTION_TEXT.format(ids="- **kept-rule** — kept\n"))
+        (root / ".jit/index.json").write_text("{}")
         (root / "docs/invariants.md").write_text("`@/inv/kept-rule`, @/invariant/kept-rule, @/inv/gone-rule\n")
         (root / ".jit/issues/d.json").write_text(json.dumps({"state": "ready", "description": "@/invariant/gone-open"}))
         (root / ".jit/issues/e.json").write_text(json.dumps({"state": "done", "description": "@/inv/gone-closed"}))
@@ -1126,7 +1544,9 @@ def self_test() -> None:
         }))
         git(root, "add", ".")
         git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", "b", "--no-verify")
-        faults = check(root)
+        notes = []
+        faults = check(root, root / ".jit", notes)
+    assert not notes, notes
     assert any("bad-link.md" in f for f in faults), faults
     assert not any(f.endswith((": docs", ": dev/$template", "x.pdf")) for f in faults), faults
     assert sum("host-local" in f for f in faults) == 6, faults
@@ -1138,7 +1558,7 @@ def self_test() -> None:
     assert not any(f.startswith("docs/listed-") for f in faults), faults
     assert any("pkg/Cargo.toml" in f and "absent-crate" in f for f in faults), faults
     assert not any("pkg/Cargo.toml" in f and "docs" in f for f in faults), faults
-    for target in ("dev/gone/after-newline.md", "issue-link.md", "gone/issue.md", "dev/gone-document.md",
+    for target in ("dev/gone/after-newline.md", "../issue-link.md", "gone/issue.md", "dev/gone-document.md",
                    "docs/gone-asset.json", "dev/gone-missing.md"):
         assert any(f.startswith(".jit/issues/a.json") and target in f for f in faults), (target, faults)
     assert any("missing/file.txt" in f for f in faults), faults
@@ -1157,7 +1577,7 @@ def self_test() -> None:
     assert unwritten == ["joined.log", "interpolated.log", "targeted.log",
                          "const-read.log", "tuple.log", "fixed.log"], unwritten
     local = [f.split(": ", 1)[1] for f in faults if f.startswith("docs/sub/local.md:")]
-    assert local == ["good.md", "./good.md"], local
+    assert local == ["docs/sub/good.md"], local
     data = [f for f in faults if f.startswith("data/")]
     for expected in (
         "data/fixture.json:3: gap-packages/guava-3.21",
@@ -1172,7 +1592,7 @@ def self_test() -> None:
     evidence = [f.split(":", 1)[1] for f in faults if f.startswith("docs/evidence.md:")]
     assert evidence == [
         "1: f5_wave_resource_usage.log",
-        "2: hip/architecture_compile_evidence-v1.log",
+        "2: docs/hip/architecture_compile_evidence-v1.log",
         "3: gap.out",
         "3: run.stdout",
         "4: make-receipt.py",
@@ -1189,16 +1609,415 @@ def self_test() -> None:
     assert ".jit/issues/d.json:1: @/inv/gone-open" in faults, faults
     assert not any(f.startswith(".jit/issues/e.json") for f in faults), faults
     bare = [f.split(": ", 1)[1] for f in faults if f.startswith("docs/bare.md:")]
-    assert bare == ["absent-name.rs", "notes/absent-note.txt", "table.csv", "fix.patch"], bare
+    assert bare == ["absent-name.rs", "docs/notes/absent-note.txt", "table.csv", "fix.patch"], bare
     assert ".jit/issues/p.json:1: crates/removed.rs" in faults, faults
     assert not any("crates/planned.rs" in f for f in faults), faults
     assert ".jit/issues/p.json:1: crates/moved.rs" in faults, faults
-    assert "notes/suffix.md:1: sub/local.md" in faults, faults
+    assert "notes/suffix.md:1: notes/sub/local.md" in faults, faults
     assert not any(f.startswith("docs/sub/deep.md") for f in faults), faults
     assert [f for f in faults if f.startswith("dev/plan.json")] == [
         "dev/plan.json:1: absent_module.rs", "dev/plan.json:1: kept.sh", "dev/plan.json:1: gone.rs",
     ], faults
     assert not any("absent_outside.rs" in f for f in faults), faults
+    layout_self_test()
+
+
+PROJECTION_TEXT = "# Agents\n<!-- jit:invariants:begin -->\n{ids}<!-- jit:invariants:end -->\n"
+
+
+def _commit(root: Path, message: str) -> str:
+    git(root, "add", "-A")
+    git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "commit", "-qm", message, "--no-verify")
+    return git(root, "rev-parse", "HEAD").strip()
+
+
+ROUTE_CASES = {
+    # MARKDOWN_LINK
+    "docs/link-own.md": ("[a](present.md) [b](missing-own.md)", ["1: docs/missing-own.md"]),
+    "docs/link-dot.md": ("[a](./missing-dot.md)", ["1: docs/missing-dot.md"]),
+    "docs/link-root.md": ("[a](/docs/missing-root.md)", ["1: docs/missing-root.md"]),
+    "docs/link-in.md": (
+        "[a](../.jit/reference/missing-in.md) [b](../.jit/reference/present.md) [c](../.jit/tmp/x.md)",
+        ["1: .jit/reference/missing-in.md"],
+    ),
+    ".jit/reference/link-out.md": (
+        "[a](../../docs/missing-out.md) [b](../../docs/present.md) [c](../../target/x.md)",
+        ["1: docs/missing-out.md"],
+    ),
+    ".jit/reference/a.md": ("[a](target/missing.md)", ["1: .jit/reference/target/missing.md"]),
+    "docs/b.md": ("[b](.jit/tmp/x.md)", ["1: docs/.jit/tmp/x.md"]),
+    "docs/link-above.md": ("[a](../../scripts/x.sh)", ["1: ../../scripts/x.sh"]),
+    # RELATIVE_PATH
+    "docs/sub/rel-own.md": ("see ../present.md and ../missing-rel.md", ["1: docs/missing-rel.md"]),
+    "docs/rel-in.md": (
+        "see ../.jit/reference/missing-rel-in.md, ../.jit/reference/present.md, ../.jit/tmp/x.md",
+        ["1: .jit/reference/missing-rel-in.md"],
+    ),
+    ".jit/reference/rel-out.md": (
+        "see ../../docs/missing-rel-out.md, ../../docs/present.md, ../../target/x.md",
+        ["1: docs/missing-rel-out.md"],
+    ),
+    "docs/rel-above.md": ("see ../../scripts/x.sh", ["1: ../../scripts/x.sh"]),
+    # REPOSITORY_PATH, from the root wherever it stands
+    ".jit/reference/repo-own.md": (
+        "see docs/missing-repo.md and docs/present.md", ["1: docs/missing-repo.md"]
+    ),
+    "docs/repo-root.md": ("see /docs/missing-repo-root.md", ["1: docs/missing-repo-root.md"]),
+    "docs/repo-in.md": (
+        "see docs/../.jit/reference/missing-repo-in.md and docs/../.jit/tmp/x.md",
+        ["1: .jit/reference/missing-repo-in.md"],
+    ),
+    ".jit/reference/repo-out.md": (
+        "see .jit/../docs/missing-repo-out.md and .jit/../target/x.md",
+        ["1: docs/missing-repo-out.md"],
+    ),
+    "docs/repo-above.md": ("see docs/../../x/y.md", ["1: docs/../../x/y.md"]),
+    # DOT_PATH, a command spelling run from the root
+    ".jit/reference/dot-own.md": ("run ./docs/missing-dot-own.md", ["1: docs/missing-dot-own.md"]),
+    "docs/dot-in.md": (
+        "see ./docs/../.jit/reference/missing-dot-in.md and ./.jit/tmp/x.md",
+        ["1: .jit/reference/missing-dot-in.md"],
+    ),
+    ".jit/reference/dot-out.md": (
+        "see ./.jit/../docs/missing-dot-out.md and ./.jit/../target/x.md",
+        ["1: docs/missing-dot-out.md"],
+    ),
+    "docs/dot-above.md": ("see ./../x/y.md", ["1: ./../x/y.md"]),
+    # INLINE_PATH, and the backticked evidence kinds of the same names
+    "docs/inline-own.md": ("`sub/missing-inline.md`", ["1: docs/sub/missing-inline.md"]),
+    "crates/a/docs/inline-enclosing.md": ("`src/present.txt`", []),
+    "docs/inline-dot.md": ("`./missing-inline-dot.md`", ["1: docs/missing-inline-dot.md"]),
+    "docs/inline-owned.md": ("`docs/missing-inline-owned.md`", ["1: docs/missing-inline-owned.md"]),
+    ".jit/reference/inline-store.md": ("`target/x.md`", ["1: .jit/reference/target/x.md"]),
+    # Evidence names
+    "docs/ev-own.md": ("wrote results/run.log", ["1: docs/results/run.log"]),
+    "docs/ev-dot.md": ("wrote ./run.log", ["1: docs/run.log"]),
+    "docs/ev-root.md": ("wrote /docs/run-root.log", ["1: docs/run-root.log"]),
+    ".jit/reference/ev-store.md": ("wrote target/run.log", ["1: .jit/reference/target/run.log"]),
+    # Path-named data members, read from the root or the file's directory
+    "scripts/data-own.json": (
+        '{"path": "sub/missing-data", "dir": "./sub/missing-dot", "file": "../.jit/reference/missing-data", "root": "../.jit/tmp/x"}',
+        ["1: sub/missing-data", "1: sub/missing-dot", "1: .jit/reference/missing-data"],
+    ),
+    ".jit/reference/data-out.json": (
+        '{"path": "../../docs/missing-data", "dir": "../../target/x"}', ["1: docs/missing-data"]
+    ),
+    "scripts/data-above.json": ('{"path": "../../x/y"}', ["1: ../../x/y"]),
+    # CARGO_PATH; its `path` members are also data members
+    "crates/a/Cargo.toml": (
+        '[dependencies]\nb = { path = "../missing-crate" }\n'
+        'd = { path = "../../.jit/missing-cargo" }\ne = { path = "../../../x" }\n',
+        ["2: crates/missing-crate", "3: .jit/missing-cargo", "4: ../../../x"],
+    ),
+    "crates/c/Cargo.toml": (
+        '[dependencies]\nx = { path = "./missing-x" }\ny = { path = "./present-x" }\n'
+        'b = { path = "../missing-b" }\nc = { path = "../a" }\nd = { path = "benchmarks/missing-cb" }\n',
+        ["2: crates/c/missing-x", "4: crates/missing-b", "6: crates/c/benchmarks/missing-cb"],
+    ),
+    # One spelling two extractors match belongs to the one whose base it names
+    "docs/link-repo.md": ("[a](docs/missing-lr.md)", ["1: docs/docs/missing-lr.md"]),
+    "docs/link-dot-path.md": ("[a](./docs/missing-ld.md)", ["1: docs/docs/missing-ld.md"]),
+    "docs/link-ev.md": ("[a](docs/run-link.log)", ["1: docs/docs/run-link.log"]),
+    "crates/a/src/repo.rs": ('include_str!("docs/missing-inc.md");', ["1: crates/a/src/docs/missing-inc.md"]),
+    "scripts/data-repo.json": ('{"path": "docs/x-data"}', []),
+    "scripts/data-ev.json": ('{"log_path": "results/run-data.log"}', ["1: results/run-data.log"]),
+    "scripts/data.yaml": ("path: ./docs/x-yaml\n", []),
+    "scripts/store.yaml": (
+        "path: .jit/reference/missing.md\n# See .jit/reference/missing.md\n",
+        ["2: .jit/reference/missing.md"],
+    ),
+    "scripts/guide.toml": ('path = "docs/guide"\n# See docs/guide.md\n', ["2: docs/guide.md"]),
+    "scripts/data-note.json": ('{"path": "docs/x-data", "note": "docs/x-data"}', ["1: docs/x-data"]),
+    "crates/d/Cargo.toml": (
+        "[dependencies]\nmissing = { path = '../absent' }\npresent = { path = '../a' }\n",
+        ["2: crates/absent"],
+    ),
+    "README.md": ("`notes/../.jit/missing.md` and `notes/../docs/present.md`", ["1: .jit/missing.md"]),
+    "docs/inline-above.md": ("`a/../../../x.md`", ["1: a/../../../x.md"]),
+    "docs/ev-dotdot.md": ("wrote results/../run-dd.log", ["1: docs/run-dd.log"]),
+    "docs/elided.md": ("`derived/.../claim.json` and derived/.../run.log", []),
+    # RUST_INCLUDE
+    "crates/a/src/lib.rs": (
+        'include_str!("missing.txt");\ninclude_str!("./present.txt");\n'
+        'include_str!("./missing-dot.txt");\n'
+        'include_str!("../../../.jit/reference/missing-include.md");\n'
+        'include_str!("../../../../x");\n',
+        ["1: crates/a/src/missing.txt", "3: crates/a/src/missing-dot.txt",
+         "4: .jit/reference/missing-include.md", "5: ../../../../x"],
+    ),
+    # Issue prose, document entries and their assets, from the root
+    ".jit/issues/routes.json": (json.dumps({
+        "state": "ready",
+        "description": "see ./docs/missing-prose.md and [a](../x.md)",
+        "documents": [
+            {"path": "./docs/missing-doc.md"},
+            {"path": "/docs/missing-doc-root.md"},
+            {"path": "docs/../.jit/reference/missing-doc-in.md"},
+            {"path": ".jit/../docs/missing-doc-out.md"},
+            {"path": "./.jit/tmp/x.md"},
+            {"path": ".jit/../target/x.md"},
+            {"path": "../x.md"},
+            {"path": "docs/present.md", "assets": [
+                {"asset_type": "local", "resolved_path": "./docs/missing-asset.md"},
+                {"asset_type": "local", "resolved_path": "./.jit/tmp/asset.md"},
+                {"asset_type": "local", "resolved_path": "docs/../../x"},
+            ]},
+        ],
+    }), [
+        "1: docs/missing-prose.md", "1: ../x.md",
+        "0: docs/missing-doc.md", "0: docs/missing-doc-root.md",
+        "0: .jit/reference/missing-doc-in.md", "0: docs/missing-doc-out.md", "0: ../x.md",
+        "0: docs/missing-asset.md", "0: docs/../../x",
+    ]),
+}
+
+
+def route_faults() -> dict[str, list[str]]:
+    """The faults of each `ROUTE_CASES` file, as `line: target`.
+
+    The code repository ignores `target/` and `/.jit/`; the store is its own
+    repository and ignores `/tmp/`.
+    """
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        git(root, "init", "-q", "-b", "main")
+        (root / ".gitignore").write_text("target/\n/.jit/\n")
+        data = root / STORE
+        data.mkdir()
+        git(data, "init", "-q", "-b", "main")
+        (data / STORE_INDEX).write_text("{}")
+        (data / ".gitignore").write_text("/tmp/\n")
+        for name in (
+            "docs/present.md", "scripts/x.sh", "crates/a/src/present.txt", ".jit/reference/present.md",
+            "crates/c/present-x/lib.rs", "scripts/docs/x-data", "scripts/docs/x-yaml",
+            "scripts/.jit/reference/missing.md", "scripts/docs/guide",
+        ):
+            (root / name).parent.mkdir(parents=True, exist_ok=True)
+            (root / name).write_text("")
+        for name, (text, _) in ROUTE_CASES.items():
+            (root / name).parent.mkdir(parents=True, exist_ok=True)
+            (root / name).write_text(text)
+        _commit(root, "main")
+        faults = check(root, data)
+    assert not [f for f in faults if f.split(":", 1)[0] not in ROUTE_CASES], faults
+    return {
+        name: sorted(f.removeprefix(f"{name}:") for f in faults if f.startswith(f"{name}:"))
+        for name in ROUTE_CASES
+    }
+
+
+def trailing_self_test() -> None:
+    """Sentence punctuation after a path is stripped; a final `..` is kept."""
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory) / "mounted"
+        root.mkdir()
+        git(root, "init", "-q", "-b", "main")
+        (root / ".gitignore").write_text("/.jit/\n")
+        (root / "README.md").write_text("See .jit/missing/target/..\n")
+        _commit(root, "main")
+        (root / STORE).mkdir()
+        git(root / STORE, "init", "-q", "-b", "main")
+        (root / STORE / STORE_INDEX).write_text("{}")
+        (root / STORE / ".gitignore").write_text("target/\n")
+        faults = check(root, root / STORE)
+        assert faults == ["README.md:1: .jit/missing"], faults
+        root = Path(directory) / "bare"
+        root.mkdir()
+        git(root, "init", "-q", "-b", "main")
+        (root / "README.md").write_text("The repository root is .jit/..\n")
+        _commit(root, "main")
+        notes = []
+        faults = check(root, root / STORE, notes)
+        assert not faults, faults
+        assert notes == ["check-references: 0 tracker reference(s) left unchecked: "
+                         "no store index at the data root"], notes
+
+
+def route_self_test() -> None:
+    """Each spelling reaches every route once, as one path resolved from its own base."""
+    for name, found in route_faults().items():
+        assert found == sorted(ROUTE_CASES[name][1]), (name, found)
+    planned = [{"path": "docs/a.md", "planned": ["docs/"]}]
+    assert not excepted(Path("/checkout"), "docs/a.md:1: docs/../../x", planned)
+
+
+def layout_self_test() -> None:
+    """The store tracked by its own repository, outside the root, and absent."""
+    references = (
+        "see .jit/issues/kept.json, .jit/absent.json and .jit/tmp/run.txt\n"
+        "@/inv/kept-rule and @/invariant/gone-rule\n"
+    )
+
+    def code(root: Path, ignore: str = "") -> None:
+        git(root, "init", "-q", "-b", "main")
+        (root / "docs").mkdir()
+        (root / "docs/refs.md").write_text(references)
+        (root / "AGENTS.md").write_text(PROJECTION_TEXT.format(ids="- **kept-rule** — kept\n"))
+        (root / ".gitignore").write_text(ignore)
+
+    def store(data: Path, issues: dict[str, dict]) -> None:
+        data.mkdir(parents=True, exist_ok=True)
+        git(data, "init", "-q", "-b", "main")
+        (data / "index.json").write_text("{}")
+        (data / ".gitignore").write_text("/tmp/\n/target/\n")
+        (data / "issues").mkdir()
+        for name, issue in issues.items():
+            (data / f"issues/{name}.json").write_text(json.dumps(issue))
+        (data / "archive-evidence").mkdir()
+        (data / "archive-evidence/c.json").write_text(json.dumps({"source": "dev/archived-away.md"}))
+        _commit(data, "store")
+        # Untracked and unignored, so a file of the store.
+        (data / "issues/untracked.json").write_text(json.dumps({"state": "done"}))
+
+    with tempfile.TemporaryDirectory() as directory:
+        # The store in its own repository, mounted where the code ignores it.
+        root = Path(directory) / "own"
+        root.mkdir()
+        code(root, "/.jit/\n")
+        (root / "refs.md").write_text("")
+        main = _commit(root, "main")
+        git(root, "checkout", "-q", "-b", "feature")
+        (root / "dev").mkdir()
+        (root / "dev/branch-only.md").write_text("")
+        (root / ".jit").mkdir()
+        (root / ".jit/branch-only.toml").write_text("code branch tracker path\n")
+        (root / ".jit/pinned-only.toml").write_text("code branch tracker path\n")
+        git(root, "add", "dev/branch-only.md")
+        git(root, "add", "-f", ".jit/branch-only.toml", ".jit/pinned-only.toml")
+        feature = _commit(root, "feature")
+        git(root, "checkout", "-q", "main")
+        document = "dev/branch-only.md"
+        store(root / ".jit", {
+            "kept": {"state": "ready", "description": "names docs/missing.md and dev/branch-only.md"},
+            "missing-tracker": {
+                "state": "done",
+                "description": "names .jit/branch-only.toml",
+                "documents": [{"path": ".jit/branch-only.toml"}],
+            },
+            "pinned-tracker": {
+                "state": "done",
+                "documents": [{"path": ".jit/pinned-only.toml", "commit": feature}],
+            },
+            "pinned": {"state": "done", "documents": [{"path": document, "commit": feature}]},
+            "unpinned": {"state": "done", "documents": [{"path": document, "commit": None}]},
+            "stale-pin": {"state": "done", "documents": [{"path": document, "commit": main}]},
+            "nowhere": {"state": "done", "documents": [{"path": "dev/nowhere.md", "commit": None}]},
+        })
+        notes = []
+        faults = check(root, root / ".jit", notes)
+        assert sorted(faults) == sorted([
+            "docs/refs.md:1: .jit/absent.json",
+            "docs/refs.md:2: @/inv/gone-rule",
+            ".jit/issues/kept.json:1: docs/missing.md",
+            ".jit/issues/missing-tracker.json:1: .jit/branch-only.toml",
+            ".jit/issues/missing-tracker.json:0: .jit/branch-only.toml",
+            ".jit/issues/pinned-tracker.json:0: .jit/pinned-only.toml",
+            ".jit/issues/stale-pin.json:0: dev/branch-only.md",
+            ".jit/issues/nowhere.json:0: dev/nowhere.md",
+            ".jit/archive-evidence/c.json:1: dev/archived-away.md",
+        ]), faults
+        assert not notes, notes
+
+        spellings = (
+            ".jit/{}", "./.jit/{}", "/.jit/{}", "dev/../.jit/{}",
+            ".jit/./{}", ".jit/../.jit/{}", "./dev/../.jit/{}",
+        )
+        for spelling in spellings:
+            missing = spelling.format("branch-only.toml")
+            kept = spelling.format("index.json")
+            output = spelling.format("target/review.txt")
+            for target, present in ((missing, False), (kept, True), (output, True)):
+                prose = f"[reference]({target})\nnames {target}"
+                (root / "refs.md").write_text(prose)
+                for commit in (None, feature):
+                    record = {
+                        "state": "ready",
+                        "description": prose,
+                    }
+                    for document in (
+                        {"path": target, "commit": commit},
+                        {"path": ".jit/index.json", "commit": commit, "assets": [
+                            {"asset_type": "local", "resolved_path": target},
+                        ]},
+                    ):
+                        record["documents"] = [document]
+                        path = root / ".jit/issues/spellings.json"
+                        path.write_text(json.dumps(record))
+                        faults = check(root, root / ".jit")
+                        found = [f for f in faults
+                                 if f.startswith(".jit/issues/spellings.json:")]
+                        prose_faults = [f for f in faults if f.startswith("refs.md:")]
+                        if present:
+                            assert not found and not prose_faults, (target, document, found, prose_faults)
+                        else:
+                            assert f".jit/issues/spellings.json:0: {_reference('', target)}" in found, (
+                                target, document, found
+                            )
+                            for line in (1, 2):
+                                assert any(f.startswith(f".jit/issues/spellings.json:{line}: ")
+                                           for f in found), (target, document, found)
+                                assert any(f.startswith(f"refs.md:{line}: ")
+                                           for f in prose_faults), (target, prose_faults)
+        (root / ".jit/issues/spellings.json").unlink()
+        (root / "refs.md").write_text("")
+
+        aliases = Path(directory) / "aliases"
+        aliases.mkdir()
+        dotdot = aliases / "../own/.jit"
+        symlink = Path(directory) / "shared-store"
+        symlink.symlink_to(root / ".jit", target_is_directory=True)
+        for spelling in (dotdot, symlink):
+            data = data_root(root, {"JIT_DATA_DIR": str(spelling)})
+            notes = []
+            faults = check(root, data, notes)
+            assert ".jit/issues/kept.json:1: docs/missing.md" in faults, faults
+            assert ".jit/archive-evidence/c.json:1: dev/archived-away.md" in faults, faults
+            assert not notes, notes
+
+        # The store outside the root, named by the data root.
+        root = Path(directory) / "outside"
+        root.mkdir()
+        code(root)
+        (root / ".jit/issues").mkdir(parents=True)
+        (root / ".jit/issues/tracked.json").write_text(json.dumps({"description": "dev/gone.md"}))
+        _commit(root, "main")
+        data = Path(directory) / "shared/.jit"
+        store(data, {"kept": {"state": "ready", "description": "names docs/missing.md"}})
+        notes = []
+        faults = check(root, data, notes)
+        assert sorted(faults) == ["docs/refs.md:1: .jit/absent.json", "docs/refs.md:2: @/inv/gone-rule"], faults
+        assert notes == ["check-references: skipped the prose of 4 issue and archive record(s): "
+                         "the data root lies outside the checkout"], notes
+
+        # No store: tracker references pass and are counted.
+        root = Path(directory) / "bare"
+        root.mkdir()
+        code(root)
+        (root / "refs.md").write_text("\n".join(
+            f"[reference](/{spelling.format('absent.json').lstrip('/')})"
+            for spelling in spellings
+        ))
+        _commit(root, "main")
+        notes = []
+        faults = check(root, root / ".jit", notes)
+        assert faults == ["docs/refs.md:2: @/inv/gone-rule"], faults
+        assert notes == ["check-references: 3 tracker reference(s) left unchecked: "
+                         "no store index at the data root"], notes
+        for spelling in spellings:
+            target = spelling.format("absent.json")
+            known = Unchecked(set())
+            assert not issue_faults(".jit/issues/test.json", json.dumps({
+                "description": f"[reference]({target})\nnames {target}",
+                "documents": [{"path": target, "commit": "HEAD", "assets": [
+                    {"asset_type": "local", "resolved_path": target},
+                ]}],
+            }), known, trees=Trees(root)), target
+            assert known.tracker == {".jit/absent.json"}, (target, known.tracker)
+    route_self_test()
+    trailing_self_test()
+    root = Path("/checkout")
+    assert data_root(root, {}) == root / ".jit"
+    assert data_root(root, {"JIT_DATA_DIR": "/shared/.jit"}) == Path("/shared/.jit")
 
 
 def main() -> int:
@@ -1209,9 +2028,12 @@ def main() -> int:
         print("check-references: self-test ok")
         return 0
     root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel").strip())
-    faults = check(root)
+    notes = []
+    faults = check(root, data_root(root), notes)
     for fault in faults:
         print(fault)
+    for note in notes:
+        print(note)
     print(f"check-references: {len(faults)} fault(s)" if faults else "check-references: ok")
     return 1 if faults else 0
 
