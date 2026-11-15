@@ -1,0 +1,137 @@
+{
+  "epic_id": "6ba9be17-94b5-4faa-a325-0133eaa9713a",
+  "epic_short_id": "6ba9be17",
+  "current_wave": 1,
+  "waves": [
+    {
+      "wave_number": 1,
+      "issues": [
+        {
+          "id": "6d5ba9fb-421b-4c77-a111-985e816c85ee",
+          "short_id": "6d5ba9fb",
+          "title": "Resolve tracker files through the data root in the gate checkers",
+          "status": "gates-passed, landing pending"
+        },
+        {
+          "id": "28aa2a9d-fef8-4ccc-988e-2a76d2065af8",
+          "short_id": "28aa2a9d",
+          "title": "Check tracker references against a mounted store",
+          "status": "code-review failed, rework 1 pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 2,
+      "issues": [
+        {
+          "id": "3fb4accb-3343-4969-a9d9-8339d6dfbd5a",
+          "short_id": "3fb4accb",
+          "title": "Run jit against the shared store through one entry point",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 3,
+      "issues": [
+        {
+          "id": "daa33be8-175c-4e21-8f52-fa7c6859c5f8",
+          "short_id": "daa33be8",
+          "title": "Refuse a landing whose gate verdicts do not count for the branch tip",
+          "status": "pending"
+        },
+        {
+          "id": "6310679b-c818-42cc-ae9c-89250dccf992",
+          "short_id": "6310679b",
+          "title": "Mount and snapshot the tracker repository with one command each",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 4,
+      "issues": [
+        {
+          "id": "7854cfad-5480-4c94-b7ba-e6ace2744289",
+          "short_id": "7854cfad",
+          "title": "Hold dependents until a code change has landed on main",
+          "status": "pending"
+        },
+        {
+          "id": "e610f5c4-3833-4e23-8399-eb5b8b483ea8",
+          "short_id": "e610f5c4",
+          "title": "Build the cutover tool that moves the tracker out of the code repository",
+          "status": "pending"
+        },
+        {
+          "id": "2a4c2684-b7a6-4a72-822f-918a873a07bf",
+          "short_id": "2a4c2684",
+          "title": "Carry the separate tracker through the history rewrite",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 5,
+      "issues": [
+        {
+          "id": "6b9e6b14-2382-42d9-b8f5-dea181b3dea6",
+          "short_id": "6b9e6b14",
+          "title": "Write the cutover runbook and rehearse it with the history rewrite",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 6,
+      "issues": [
+        {
+          "id": "6889e6e6-9b0f-4ff1-8de4-e2cc6cba9a6d",
+          "short_id": "6889e6e6",
+          "title": "Execute the tracker cutover",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "created_during_execution": [],
+  "escalations": [],
+  "rework_counts": {
+    "28aa2a9d": 0
+  },
+  "surfaced_pitfalls": [
+    "docs-mechanical exits 2 when JIT_DATA_DIR lies outside any git repository (documented contract; advisory from the 6d5ba9fb Claude review)",
+    "28aa2a9d: a data root outside any git repository falls back to all files on disk (worker note)",
+    "contrib/gates/code-review-prompt.md drifted from its package source in 5855c6dab (outside this epic; reported to the steward)"
+  ],
+  "started_at": "2026-11-15T01:17:00+02:00",
+  "lead": "gf2-e3 (took over from gf2-7d)",
+  "notes": {
+    "2a4c2684": "implemented by gf2-00 on the lead's call after 3fb4accb and 6310679b land",
+    "6889e6e6": "waits on an owner timing decision (rewrite paused, steward 01:22)"
+  },
+  "dispatches": [
+    {
+      "issue": "6d5ba9fb",
+      "kind": "implement",
+      "vendor": "Codex",
+      "model": "gpt-6.1-sol high",
+      "reviewer": "Claude Sonnet 5.5 blocking + Codex gate"
+    },
+    {
+      "issue": "28aa2a9d",
+      "kind": "implement",
+      "vendor": "Claude",
+      "model": "Opus 5.5",
+      "reviewer": "Codex gate"
+    },
+    {
+      "issue": "28aa2a9d",
+      "kind": "rework 1",
+      "vendor": "Codex",
+      "model": "gpt-6-luna xhigh",
+      "reviewer": "pending",
+      "note": "stopped at 01:35 by the hand-off order before any edit"
+    }
+  ]
+}
