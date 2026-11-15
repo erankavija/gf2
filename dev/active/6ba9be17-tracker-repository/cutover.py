@@ -65,6 +65,18 @@ verification. Each subcommand is one step of `cutover-sequence` in
       is empty on the main branch and on the branch. Refuses an unverified
       harvest, uncommitted tracked changes, a detached WT and a conflict
       outside `.jit/` (the merge is aborted).
+  cutover.py clean --repo CODE (--branch B | --branches FILE)
+                --merge-message MSG --message MSG [--main BRANCH]
+      Cleans a parked branch without a shared store or harvest, in a temporary
+      linked worktree under TMPDIR outside every tracked tree, removed on
+      success or failure. FILE lists one branch per line with optional `#`
+      comments. Prints one line per branch: `cleaned`, `already clean` when
+      main is already merged and no tracker paths remain (nothing committed),
+      `conflict outside .jit: not forced` (merge aborted, ref unchanged), or
+      another refusal with its reason. Refuses a branch already checked out;
+      use the worktree form for a linked checkout. A batch continues after
+      failures and exits 1 while any branch needs action. Both forms
+      require main and every cleaned branch to track no path under `.jit/`.
   cutover.py rollback --repo PRIMARY --cutover REV --aside PATH --message MSG
                    [--archives DIR] [--main BRANCH]
       Moves the mounted tracker repository to PATH, reverts the code-side
@@ -163,10 +175,16 @@ def main(argv):
     p = sub.add_parser("harvest")
     p.add_argument("--store", required=True)
     p.add_argument("--from", dest="source", required=True)
-    p = sub.add_parser("clean")
+    p = sub.add_parser("clean", description="Merge main and remove every tracked tracker path.",
+                       epilog="Parked branches use temporary worktrees under TMPDIR; --branches lists "
+                       "one branch per line with # comments. Each branch prints its outcome; "
+                       "any refused branch makes the exit status nonzero.")
     p.add_argument("--repo", required=True)
-    p.add_argument("--worktree", required=True)
-    p.add_argument("--store", required=True)
+    target = p.add_mutually_exclusive_group(required=True)
+    target.add_argument("--worktree", help="linked worktree whose harvest must be verified")
+    target.add_argument("--branch", help="parked local branch without a worktree")
+    target.add_argument("--branches", help="file listing parked local branches")
+    p.add_argument("--store", help="shared store; required with --worktree only")
     p.add_argument("--merge-message", required=True)
     p.add_argument("--message", required=True)
     p.add_argument("--main", default="main")
@@ -732,6 +750,35 @@ def harvest(args):
 
 
 def clean(args):
+    if args.worktree:
+        if not args.store:
+            raise Refusal("--worktree requires --store")
+        return clean_linked(args)
+    if args.store:
+        raise Refusal("--store applies only to --worktree")
+    if args.branches:
+        try:
+            branches = [line.partition("#")[0].strip()
+                        for line in Path(args.branches).read_text().splitlines()]
+        except (OSError, ValueError) as error:
+            raise Refusal(f"cannot read branches: {error}")
+        branches = [branch for branch in branches if branch]
+    else:
+        branches = [args.branch]
+    failed = 0
+    for branch in branches:
+        try:
+            outcome = clean_parked(args, branch)
+        except (Refusal, Failure, OSError) as error:
+            outcome = " ".join(str(error).splitlines())
+            if outcome != f"conflict outside {STORE}: not forced":
+                outcome = f"refused: {outcome}"
+            failed = 2 if isinstance(error, (Refusal, OSError)) else 1
+        print(f"{branch}: {outcome}")
+    return 1 if args.branches and failed else failed
+
+
+def clean_linked(args):
     found = checkouts(args.repo)
     worktree = physical(args.worktree)
     checkout = next((c for c in found if c["path"] == worktree), None)
@@ -747,8 +794,41 @@ def clean(args):
         runs, pointers, _, faults = harvest_plan(shared, store)
         if runs or pointers or faults:
             raise Refusal(f"the harvest of {store} into {shared} is not verified")
+    outcome = clean_checkout(args, worktree, branch)
+    if store.is_dir():
+        shutil.rmtree(store)
+        print(f"deleted the local store {store}")
+    print(f"{branch}: {outcome}")
+
+
+def clean_parked(args, branch):
+    repo = physical(args.repo)
+    if (git_rc("check-ref-format", "--branch", branch, cwd=repo) != 0
+            or git_rc("rev-parse", "--verify", f"refs/heads/{branch}^{{commit}}", cwd=repo) != 0):
+        raise Refusal(f"not a local branch: {branch}")
+    found = checkouts(repo)
+    if any(c["branch"] == branch for c in found):
+        raise Refusal(f"{branch} is already checked out; use --worktree and --store for a linked checkout")
+    if tracked_under(args.main, STORE, repo):
+        raise Failure(f"{args.main} still tracks paths under {STORE}")
+    with tempfile.TemporaryDirectory(prefix="cutover-clean-") as directory:
+        root = physical(directory)
+        refuse_archive_dest(root, found, repo)
+        if git("rev-parse", "--show-toplevel", cwd=root, check=False).strip():
+            raise Refusal("TMPDIR places the temporary worktree inside a tracked tree")
+        worktree = root / "worktree"
+        try:
+            git("worktree", "add", "-q", "--", str(worktree), branch, cwd=repo)
+            return clean_checkout(args, worktree, branch)
+        finally:
+            if any(c["path"] == worktree for c in checkouts(repo)):
+                git("worktree", "remove", "--force", str(worktree), cwd=repo)
+
+
+def clean_checkout(args, worktree, branch):
     if git("status", "--porcelain", "--untracked-files=no", cwd=worktree).strip():
         raise Refusal(f"{worktree} has uncommitted tracked changes")
+    head = git("rev-parse", "HEAD", cwd=worktree).strip()
     merged = subprocess.run(["git", "merge", "-q", "--no-edit", "-m", args.merge_message, args.main],
                             cwd=worktree, capture_output=True, text=True)
     if merged.returncode != 0:
@@ -756,22 +836,19 @@ def clean(args):
         outside = [p for p in conflicts if not p.startswith(f"{STORE}/")]
         if outside or not conflicts:
             git("merge", "--abort", cwd=worktree, check=False)
-            raise Refusal(f"merging {args.main} into {branch} conflicts outside {STORE}: "
-                          f"{outside or merged.stderr.strip()}; merge aborted")
+            if outside:
+                raise Refusal(f"conflict outside {STORE}: not forced")
+            raise Refusal(f"merging {args.main} into {branch}: {merged.stderr.strip()}")
         git("rm", "-q", "--cached", "--", *conflicts, cwd=worktree)
         git("commit", "-q", "--no-edit", cwd=worktree)
-        print(f"merged {args.main} into {branch}; {len(conflicts)} tracker conflicts resolved by deletion")
     remaining = worktree_listing(worktree, "--", STORE)
     if remaining:
         git("rm", "-r", "-q", "--cached", "--", STORE, cwd=worktree)
         git("commit", "-q", "-m", args.message, cwd=worktree)
-        print(f"removed {len(remaining)} tracked paths under {STORE} from {branch}")
     for rev in (args.main, branch):
         if tracked_under(rev, STORE, worktree):
             raise Failure(f"{rev} still tracks paths under {STORE}")
-    if store.is_dir():
-        shutil.rmtree(store)
-        print(f"deleted the local store {store}")
+    return "already clean" if git("rev-parse", "HEAD", cwd=worktree).strip() == head else "cleaned"
 
 
 # rollback -------------------------------------------------------------------
@@ -1204,6 +1281,83 @@ class SelfTest:
                    and git("ls-tree", "-r", "--name-only", "wa", "--", STORE, cwd=code) == "",
                    "REQ-07 clean passes on wa")
 
+    def parked_setup(self, code):
+        fixture = self.path("parked-fixture")
+        self.sh("git", "worktree", "add", "-q", "-b", "parked", fixture, "main", cwd=code)
+        (Path(fixture) / STORE / "config.toml").open("a").write("# parked tracker change\n")
+        (Path(fixture) / STORE / "issues" / "parked.json").write_text('{"parked": true}\n')
+        self.commit_all(fixture, "chore: parked tracker changes")
+        self.sh("git", "branch", "parked-single", "parked", cwd=code)
+        self.sh("git", "switch", "-q", "-c", "parked-conflict", "main", cwd=fixture)
+        (Path(fixture) / "src" / "lib.rs").write_text("pub fn parked() {}\n")
+        (Path(fixture) / STORE / "config.toml").open("a").write("# conflicting branch tracker\n")
+        self.commit_all(fixture, "chore: parked code conflict")
+        self.sh("git", "worktree", "remove", fixture, cwd=code)
+        (Path(code) / "src" / "lib.rs").write_text("pub fn main_branch() {}\n")
+        self.commit_all(code, "chore: main code change")
+
+    def parked_clean(self, code):
+        args = ("--merge-message", "chore: merge main", "--message", "chore: drop the tracker")
+        self.sh("git", "branch", "parked-already", "main", cwd=code)
+        before = git("worktree", "list", "--porcelain", cwd=code)
+        tmp_before = set(Path(tempfile.gettempdir()).glob("cutover-clean-*"))
+        head = git("rev-parse", "parked-conflict", cwd=code).strip()
+        single_head = git("rev-parse", "parked-single", cwd=code).strip()
+        rc, out = self.run("clean", "--repo", code, "--branch", "parked-single", *args)
+        print(out, end="")
+        self.check(rc == 0 and out.strip() == "parked-single: cleaned",
+                   "REQ-07 a single parked branch cleans without a shared store or harvest")
+        self.check(not tracked_under("parked-single", STORE, code)
+                   and git_rc("merge-base", "--is-ancestor", "main", "parked-single", cwd=code) == 0
+                   and git("rev-parse", "parked-single", cwd=code).strip() != single_head,
+                   "REQ-07 a parked branch merges main and removes all tracked tracker paths")
+        removed = git("diff", "--name-only", "--diff-filter=D", "parked-single^", "parked-single", cwd=code)
+        self.check(f"{STORE}/issues/parked.json" in removed,
+                   "REQ-07 the parked branch-only tracker file is removed and committed")
+        clean_head = git("rev-parse", "parked-already", cwd=code).strip()
+        rc, out = self.run("clean", "--repo", code, "--branch", "parked-already", *args)
+        self.check(rc == 0 and out.strip() == "parked-already: already clean"
+                   and git("rev-parse", "parked-already", cwd=code).strip() == clean_head,
+                   "REQ-07 an already clean parked branch commits nothing")
+        rc, out = self.run("clean", "--repo", code, "--branch", "parked-conflict", *args)
+        self.check(rc != 0 and out.strip() == "parked-conflict: conflict outside .jit: not forced"
+                   and git("rev-parse", "parked-conflict", cwd=code).strip() == head,
+                   "REQ-07 a parked code conflict is listed, aborted and leaves its ref unchanged")
+        branches = Path(self.path("branches.txt"))
+        branches.write_text("# parked branches\nparked\nparked-conflict # requires the steward\n\nparked-already\n")
+        rc, out = self.run("clean", "--repo", code, "--branches", str(branches), *args)
+        print(out, end="")
+        self.check(rc != 0 and out.splitlines() == [
+            "parked: cleaned", "parked-conflict: conflict outside .jit: not forced",
+            "parked-already: already clean"],
+            "REQ-07 batch lists each outcome and exits nonzero while a code conflict remains")
+        self.check(git("rev-parse", "parked-conflict", cwd=code).strip() == head
+                   and git("rev-parse", "parked-already", cwd=code).strip() == clean_head,
+                   "REQ-07 a failed batch branch changes no other branch ref")
+        self.check(all(not tracked_under(rev, STORE, code)
+                       for rev in ("main", "parked", "parked-already"))
+                   and git_rc("merge-base", "--is-ancestor", "main", "parked", cwd=code) == 0,
+                   "REQ-07 main and every cleaned branch track no tracker path")
+        self.check(git("worktree", "list", "--porcelain", cwd=code) == before,
+                   "REQ-07 git worktree list is unchanged after the batch")
+        self.check(set(Path(tempfile.gettempdir()).glob("cutover-clean-*")) == tmp_before,
+                   "REQ-07 success and refusal leave no temporary worktree behind")
+        branches.write_text("parked\nparked-already\n")
+        rc, out = self.run("clean", "--repo", code, "--branches", str(branches), *args)
+        self.check(rc == 0 and out.splitlines() == ["parked: already clean", "parked-already: already clean"],
+                   "REQ-07 a batch of clean branches succeeds without commits")
+        branches.write_text("missing-branch\nwa\nparked-already\n")
+        rc, out = self.run("clean", "--repo", code, "--branches", str(branches), *args)
+        lines = out.splitlines()
+        self.check(rc == 1 and len(lines) == 3
+                   and lines[0] == "missing-branch: refused: not a local branch: missing-branch"
+                   and lines[1].startswith("wa: refused: wa is already checked out;")
+                   and lines[2] == "parked-already: already clean",
+                   "REQ-07 other refusals include their reasons and do not stop the batch")
+        self.check(git("worktree", "list", "--porcelain", cwd=code) == before
+                   and set(Path(tempfile.gettempdir()).glob("cutover-clean-*")) == tmp_before,
+                   "REQ-07 other refusals leave no temporary worktree or registration")
+
     def rollback(self, code, cutover, archives):
         store = Path(code) / STORE
         issue_files = sorted(p.name for p in (store / "issues").iterdir())
@@ -1295,6 +1449,7 @@ def self_test():
         print("extract")
         new = test.extract(code)
         test.clean(code, "before")
+        test.parked_setup(code)
         print("code-side")
         cutover = test.code_side(code)
         print("mount")
@@ -1303,6 +1458,7 @@ def self_test():
         test.harvest(code)
         print("clean")
         test.clean(code, "after")
+        test.parked_clean(code)
         print("rollback")
         test.rollback(code, cutover, archives)
     except (Failure, Refusal, subprocess.CalledProcessError, OSError, KeyError) as error:
