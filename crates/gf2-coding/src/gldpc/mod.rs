@@ -1617,6 +1617,9 @@ mod tests {
                 let cw = code.encode(&msg);
                 prop_assert_eq!(cw.len(), code.code_n());
                 prop_assert!(code.is_valid_codeword(&cw));
+                for (i, &col) in code.systematic_positions().iter().enumerate() {
+                    prop_assert_eq!(cw.get(col), msg.get(i), "message bit {} at column {}", i, col);
+                }
             }
         }
     }

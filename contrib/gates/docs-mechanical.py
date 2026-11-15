@@ -12,6 +12,13 @@ addresses through `jit issue show`); projection freshness compares each
 configured target with a `jit project render` run in a scratch copy. Missing
 paths that git ignores are local runtime state, not findings.
 
+The tracker data root is `JIT_DATA_DIR` when set, otherwise `.jit/` under
+`--root` (the current checkout's top level by default). Configuration and
+unignored tracker files come from that data root's
+git repository. Rendering sets both `JIT_DATA_DIR` and `JIT_WORKTREE_ROOT` to
+the scratch copy; item lookups use the source store and the checked code root.
+Logical `.jit/` links, citations and projection targets address the data root.
+
 Exit status: 0 pass, 1 findings, 2 environment error (configuration, jit, git).
 """
 
@@ -19,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -93,6 +101,7 @@ def failure_text(result: subprocess.CompletedProcess) -> str:
 class Checker:
     def __init__(self, root: Path, jit: str):
         self.root = root
+        self.data_root = Path(os.environ.get("JIT_DATA_DIR", root / ".jit")).resolve()
         self.jit = jit
         self.findings: set[tuple[str, int, str, str]] = set()
         self.missing: list[tuple[Path, int, str, str, str]] = []
@@ -100,6 +109,12 @@ class Checker:
         self.anchor_cache: dict[Path, set[str]] = {}
         self.names: set[str] | None = None
         self.top_level = {entry.name for entry in root.iterdir()} - {".git"}
+        self.top_level.add(".jit")
+
+    def repository_path(self, relative: str | Path) -> Path:
+        """Logical `.jit/` paths address the selected data root, as they do in jit."""
+        path = Path(relative)
+        return self.data_root / path.relative_to(".jit") if path.is_relative_to(".jit") else self.root / path
 
     def report(self, path: Path, line: int, kind: str, target: str):
         self.findings.add((path.relative_to(self.root).as_posix(), line, kind, target))
@@ -132,8 +147,11 @@ class Checker:
             resolved = (source.parent / path_part).resolve()
         if not resolved.is_relative_to(self.root):
             self.report(source, line, "broken-link", target)
-        elif not resolved.exists():
-            self.missing.append((source, line, "broken-link", target, resolved.relative_to(self.root).as_posix()))
+            return
+        relative = resolved.relative_to(self.root).as_posix()
+        resolved = self.repository_path(relative)
+        if not resolved.exists():
+            self.missing.append((source, line, "broken-link", target, relative))
         elif fragment and resolved.is_file():
             line_anchor = LINE_ANCHOR.match(fragment)
             if line_anchor:
@@ -155,7 +173,7 @@ class Checker:
                 cited = LINE_SUFFIX.sub("", span.strip())
                 segments = cited.rstrip("/").split("/")
                 if CITATION.fullmatch(cited) and segments[0] in self.top_level and "..." not in segments:
-                    if not (self.root / cited).exists():
+                    if not self.repository_path(cited).exists():
                         self.missing.append((path, number, "missing-citation", span.strip(), cited))
                 elif BARE_FILE.fullmatch(cited) and cited not in self.file_names():
                     self.report(path, number, "missing-citation", span.strip())
@@ -170,9 +188,9 @@ class Checker:
                 if "/" in target or "." in last:
                     self.check_link(path, number, target)
 
-    def git(self, *arguments: str, stdin: str = "", ok=(0,)) -> str:
+    def git(self, *arguments: str, stdin: str = "", ok=(0,), cwd: Path | None = None) -> str:
         try:
-            result = subprocess.run(["git", *arguments], cwd=self.root, input=stdin, capture_output=True, text=True)
+            result = subprocess.run(["git", *arguments], cwd=cwd or self.root, input=stdin, capture_output=True, text=True)
         except OSError as error:
             raise EnvironmentFailure(f"cannot run git: {error}") from error
         if result.returncode not in ok:
@@ -182,24 +200,35 @@ class Checker:
     def file_names(self) -> set[str]:
         """Bare file names cite a file by name, so they resolve against every unignored file's name."""
         if self.names is None:
-            self.names = {relative.rsplit("/", 1)[-1] for relative in self.unignored_files(".")}
+            paths = self.unignored_files(".") + self.unignored_files(".", cwd=self.data_root)
+            self.names = {relative.rsplit("/", 1)[-1] for relative in paths}
         return self.names
 
-    def unignored_files(self, directory: str) -> list[str]:
-        return self.git("ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", directory).split("\0")[:-1]
+    def unignored_files(self, directory: str, cwd: Path | None = None) -> list[str]:
+        return self.git("ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", directory,
+                        cwd=cwd).split("\0")[:-1]
 
     def report_missing(self):
         if not self.missing:
             return
-        queries = "".join(f"{p}\n{p.rstrip('/')}/\n" for *_, p in self.missing)
-        ignored = {line.rstrip("/") for line in self.git("check-ignore", "--stdin", stdin=queries, ok=(0, 1)).splitlines()}
-        for source, line, kind, target, relative in self.missing:
-            if relative.rstrip("/") not in ignored:
-                self.report(source, line, kind, target)
+        for tracker, directory in ((False, self.root), (True, self.data_root)):
+            missing = [(entry, Path(entry[-1]).relative_to(".jit").as_posix() if tracker else entry[-1])
+                       for entry in self.missing if Path(entry[-1]).is_relative_to(".jit") == tracker]
+            if not missing:
+                continue
+            queries = "".join(f"{p}\n{p.rstrip('/')}/\n" for _, p in missing)
+            ignored = {line.rstrip("/") for line in self.git("check-ignore", "--stdin", stdin=queries,
+                                                            ok=(0, 1), cwd=directory).splitlines()}
+            for (source, line, kind, target, _), relative in missing:
+                if relative.rstrip("/") not in ignored:
+                    self.report(source, line, kind, target)
 
-    def run_jit(self, cwd: Path, *arguments: str) -> subprocess.CompletedProcess:
+    def run_jit(self, cwd: Path, *arguments: str, data_root: Path | None = None) -> subprocess.CompletedProcess:
+        environment = {**os.environ, "JIT_DATA_DIR": str(data_root or self.data_root),
+                       "JIT_WORKTREE_ROOT": str(cwd)}
         try:
-            return subprocess.run([self.jit, *arguments], cwd=cwd, capture_output=True, text=True, timeout=300)
+            return subprocess.run([self.jit, *arguments], cwd=cwd, env=environment,
+                                  capture_output=True, text=True, timeout=300)
         except (OSError, subprocess.TimeoutExpired) as error:
             raise EnvironmentFailure(f"cannot run {self.jit}: {error}") from error
 
@@ -226,23 +255,27 @@ class Checker:
             return
         with tempfile.TemporaryDirectory(prefix="gf2-docs-mechanical-") as scratch:
             copy = Path(scratch)
-            for relative in self.unignored_files(".jit") + targets:
-                if (self.root / relative).is_file() and not (copy / relative).exists():
-                    (copy / relative).parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copyfile(self.root / relative, copy / relative)
-            result = self.run_jit(copy, "project", "render", "--json")
+            data_copy = copy / ".jit"
+            files = [(self.data_root / relative, data_copy / relative)
+                     for relative in self.unignored_files(".", cwd=self.data_root)]
+            files += [(self.repository_path(target), copy / target) for target in targets]
+            for source, destination in files:
+                if source.is_file() and not destination.exists():
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(source, destination)
+            result = self.run_jit(copy, "project", "render", "--json", data_root=data_copy)
             if result.returncode != 0:
                 raise EnvironmentFailure(f"jit project render failed ({failure_text(result)})")
             for target in targets:
                 if not (copy / target).is_file():
                     raise EnvironmentFailure(f"jit project render produced no {target}")
                 rendered = (copy / target).read_bytes().splitlines(keepends=True)
-                current_path = self.root / target
+                current_path = self.repository_path(target)
                 current = current_path.read_bytes().splitlines(keepends=True) if current_path.is_file() else []
                 if current != rendered:
                     line = next((i for i, (a, b) in enumerate(zip(current, rendered), 1) if a != b),
                                 min(len(current), len(rendered)) + 1)
-                    self.report(current_path, line, "stale-projection", target)
+                    self.report(self.root / target, line, "stale-projection", target)
 
 
 def collect(root: Path, patterns: list[str], excluded: list[Path]) -> list[Path]:
@@ -266,19 +299,20 @@ def load_baseline(path: Path | None) -> set[tuple[str, int, str, str]]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--root", type=Path, default=Path.cwd())
+    parser.add_argument("--root", type=Path, help="code checkout root (default: git top level)")
     parser.add_argument("--jit", default="jit")
     args = parser.parse_args()
-    root = args.root.resolve()
     try:
-        config = tomllib.loads((root / ".jit/config.toml").read_text(encoding="utf-8"))
+        root = args.root.resolve() if args.root else Path(subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True).stdout.strip())
+        checker = Checker(root, args.jit)
+        config = tomllib.loads((checker.data_root / "config.toml").read_text(encoding="utf-8"))
         settings = tomllib.loads((root / SETTINGS).read_text(encoding="utf-8"))
         excluded = [root / prefix for prefix in settings.get("exclude", [])]
         baseline_path = root / settings["baseline"] if "baseline" in settings else None
         markdown = [p for p in collect(root, settings.get("markdown", []), excluded) if p != baseline_path]
         cited = set(collect(root, settings.get("citations", []), excluded))
         rustdoc = collect(root, settings.get("rustdoc", []), excluded)
-        checker = Checker(root, args.jit)
         checker.check_projections([table["target"] for table in config.get("projection", {}).values()])
         for path in markdown:
             checker.check_markdown(path, path in cited)
@@ -290,7 +324,7 @@ def main() -> int:
                 for path, line in sites:
                     checker.report(path, line, "unresolved-item", reference)
         baseline = load_baseline(baseline_path)
-    except (OSError, KeyError, tomllib.TOMLDecodeError, EnvironmentFailure) as error:
+    except (OSError, KeyError, tomllib.TOMLDecodeError, subprocess.CalledProcessError, EnvironmentFailure) as error:
         print(f"docs-mechanical: environment error: {error!r}", file=sys.stderr)
         return 2
     findings = sorted(checker.findings - baseline)

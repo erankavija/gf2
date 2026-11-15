@@ -403,11 +403,21 @@ mod tests {
     }
 
     #[test]
-    fn test_host_rng_reproducible_at_seed() {
-        let mut a = ChaCha20Rng::seed_from_u64(123);
-        let mut b = ChaCha20Rng::seed_from_u64(123);
-        for _ in 0..16 {
-            assert_eq!(a.next_u32(), b.next_u32());
+    fn test_key_derivation_matches_rand_chacha_seed_from_u64() {
+        for seed in [0u64, 1, 123, 0xDEAD_BEEF_CAFE_F00D, u64::MAX] {
+            let key_bytes: Vec<u8> = chacha20_key_from_seed(seed)
+                .iter()
+                .flat_map(|w| w.to_le_bytes())
+                .collect();
+            let mut from_key = ChaCha20Rng::from_seed(key_bytes.try_into().unwrap());
+            let mut from_seed = ChaCha20Rng::seed_from_u64(seed);
+            for i in 0..64 {
+                assert_eq!(
+                    from_key.next_u32(),
+                    from_seed.next_u32(),
+                    "seed {seed} word {i}"
+                );
+            }
         }
     }
 }

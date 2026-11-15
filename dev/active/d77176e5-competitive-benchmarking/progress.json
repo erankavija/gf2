@@ -208,7 +208,7 @@
     },
     {
      "short_id": "9a1b24fc",
-     "status": "design approved at round 4 and merged; branch A dispatched on worktree-agent-9a1b24fc-a",
+     "status": "branch A Claude review passed round 3 (90eb89c4f); cargo-ci after the window, then land; gate F1 is branch B scope",
      "branch": "worktree-agent-9a1b24fc",
      "dispatches": [
       {
@@ -232,6 +232,22 @@
        "model": "gpt-6.1-sol",
        "effort": "high",
        "task": "branch A implementation"
+      },
+      {
+       "vendor": "claude",
+       "model": "opus",
+       "task": "merge main into A"
+      },
+      {
+       "vendor": "claude",
+       "model": "opus",
+       "task": "code review rounds 1-3"
+      },
+      {
+       "vendor": "codex",
+       "model": "gpt-6.1-sol",
+       "effort": "high",
+       "task": "review reworks 1 and 2"
       }
      ]
     },
@@ -333,7 +349,8 @@
   "c9cb0dd2": 1,
   "ebfaff31": 3,
   "9a1b24fc": 3,
-  "3461a52a": 3
+  "3461a52a": 3,
+  "9a1b24fc-A": 2
  },
  "surfaced_pitfalls": [
   "The window runner waits for a quiet host only before its first job; a single-core job queued after a multi-worker job starts in that job's load tail. Order single-core lines first or add a per-job quiet wait. Tracked as bb28cf4f.",
@@ -359,6 +376,7 @@
   "Session 7 lead gf2-f4 succeeds gf2-d7 (steward gf2-96); cargo-ci cap lifted by the owner",
   "9a1b24fc F1 option (a) approved by the steward as rework 3, structural cache-derived cap, overflow-safe; round-4 failure goes to the owner",
   "3461a52a NR key resolution Q = 4 (lead, routine planning default)",
-  "3461a52a fourth attempt in place (owner); plan-review passed"
+  "3461a52a fourth attempt in place (owner); plan-review passed",
+  "9a1b24fc branch A: gate F1 (LDPC/RU) is branch B scope under the steward's split; reworks 1 and 2 approved, round 3 passed"
  ]
 }

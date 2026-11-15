@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -17,17 +18,22 @@ RENDERED_GUIDE = "# Guide\n\n<!-- region:begin -->\n- rule-a\n<!-- region:end --
 
 FAKE_JIT = """#!{python}
 import json, os, pathlib, sys
-args, root = sys.argv[1:], pathlib.Path.cwd()
+args = sys.argv[1:]
+root = pathlib.Path(os.environ.get("JIT_WORKTREE_ROOT", pathlib.Path.cwd()))
+data = pathlib.Path(os.environ.get("JIT_DATA_DIR", root / ".jit"))
 if os.environ.get("FAKE_JIT_BROKEN"):
     print("internal failure", file=sys.stderr)
     sys.exit(101)
 if args[:2] == ["project", "render"]:
-    for target, text in json.loads((root / ".jit/fake-render.json").read_text()).items():
-        (root / target).write_text(text)
+    (data / "render-touched").write_text("render ran here")
+    for target, text in json.loads((data / "fake-render.json").read_text()).items():
+        path = data / target[5:] if target.startswith(".jit/") else root / target
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
     print("{{}}")
     sys.exit(0)
 reference = args[2] if args[0] == "item" else "@/issue/" + args[2]
-if reference in (root / ".jit/fake-items").read_text().split():
+if reference in (data / "fake-items").read_text().split():
     print(json.dumps({{"id": reference}}))
     sys.exit(0)
 code = "ITEM_COMMAND_FAILED" if args[0] == "item" else "ISSUE_NOT_FOUND"
@@ -45,8 +51,12 @@ FIXTURE = {
     ".jit/config.toml": """
         [projection.guide]
         target = "GUIDE.md"
+        [projection.registry]
+        target = ".jit/reference/projection.md"
         """,
-    ".jit/fake-render.json": json.dumps({"GUIDE.md": RENDERED_GUIDE}),
+    ".jit/fake-render.json": json.dumps({"GUIDE.md": RENDERED_GUIDE,
+                                         ".jit/reference/projection.md": RENDERED_GUIDE}),
+    ".jit/reference/projection.md": RENDERED_GUIDE,
     ".jit/fake-items": "@/inv/rule-a\n@/issue/abcd1234\n",
     ".gitignore": "out/\n",
     "out/previous.txt": "runtime output\n",
@@ -111,9 +121,11 @@ class DocsMechanicalTest(unittest.TestCase):
         self.scratch.cleanup()
 
     def run_check(self, jit: Path | None = None, **env: str) -> subprocess.CompletedProcess:
+        environment = {key: value for key, value in os.environ.items()
+                       if key not in {"JIT_DATA_DIR", "JIT_WORKTREE_ROOT"}}
         return subprocess.run(
             [sys.executable, str(SCRIPT), "--root", str(self.root), "--jit", str(jit or self.jit)],
-            capture_output=True, text=True, env={**os.environ, **env})
+            capture_output=True, text=True, env={**environment, **env})
 
     def append(self, relative: str, text: str) -> int:
         path = self.root / relative
@@ -166,6 +178,70 @@ class DocsMechanicalTest(unittest.TestCase):
     def test_projection_drift(self):
         (self.root / "GUIDE.md").write_text(RENDERED_GUIDE.replace("rule-a", "rule-b"))
         self.assert_only_finding("GUIDE.md", 4, "stale-projection")
+
+    def snapshot(self, root: Path) -> dict[str, bytes]:
+        return {path.relative_to(root).as_posix(): path.read_bytes()
+                for path in root.rglob("*") if path.is_file()
+                and ".git" not in path.relative_to(root).parts}
+
+    def test_external_store_has_the_same_findings(self):
+        self.append("docs/guide.md", "Applies @/inv/rule-z.")
+        self.append("README.md", "See [registry](.jit/reference/projection.md#guide), "
+                    "cited as `.jit/reference/projection.md`.")
+        (self.root / "GUIDE.md").write_text(RENDERED_GUIDE.replace("rule-a", "rule-b"))
+        expected = self.run_check()
+        self.assertEqual(expected.returncode, 1, expected.stdout + expected.stderr)
+        source = Path(self.scratch.name) / "source"
+        (self.root / ".jit").rename(source)
+        for nested in (False, True):
+            with self.subTest(nested=nested):
+                repository = Path(self.scratch.name) / ("nested" if nested else "standalone")
+                data = repository / "tracker" if nested else repository
+                data.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copytree(source, data)
+                subprocess.run(["git", "init", "-q", str(repository)], check=True)
+                before_code, before_data = self.snapshot(self.root), self.snapshot(data)
+                result = self.run_check(JIT_DATA_DIR=str(data))
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertEqual(result.stdout, expected.stdout)
+                self.assertEqual(self.snapshot(self.root), before_code)
+                self.assertEqual(self.snapshot(data), before_data)
+                self.assertFalse((self.root / ".jit").exists())
+
+    def test_external_tracker_projection_drift(self):
+        (self.root / ".jit/reference/projection.md").write_text(RENDERED_GUIDE.replace("rule-a", "rule-b"))
+        expected = self.run_check()
+        self.assertEqual(parse(expected.stdout), {(".jit/reference/projection.md", 4, "stale-projection")})
+        data = Path(self.scratch.name) / "tracker"
+        (self.root / ".jit").rename(data)
+        subprocess.run(["git", "init", "-q", str(data)], check=True)
+        result = self.run_check(JIT_DATA_DIR=str(data))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, expected.stdout)
+        self.assertFalse((self.root / ".jit").exists())
+
+    def test_inherited_roots_cannot_redirect_scratch_render(self):
+        for external in (False, True):
+            with self.subTest(external=external):
+                data = self.root / ".jit"
+                if external:
+                    data = Path(self.scratch.name) / "external"
+                    (self.root / ".jit").rename(data)
+                    subprocess.run(["git", "init", "-q", str(data)], check=True)
+                (self.root / "GUIDE.md").write_text(RENDERED_GUIDE.replace("rule-a", "rule-b"))
+                before_code, before_data = self.snapshot(self.root), self.snapshot(data)
+                result = self.run_check(JIT_DATA_DIR=str(data), JIT_WORKTREE_ROOT=str(self.root))
+                self.assertEqual(self.snapshot(self.root), before_code)
+                self.assertEqual(self.snapshot(data), before_data)
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertEqual(parse(result.stdout), {("GUIDE.md", 4, "stale-projection")})
+
+    def test_root_overrides_inherited_worktree_for_item_resolution(self):
+        other = Path(self.scratch.name) / "other-checkout"
+        other.mkdir()
+        result = self.run_check(JIT_DATA_DIR=str(self.root / ".jit"), JIT_WORKTREE_ROOT=str(other))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.snapshot(other), {})
 
     def test_terminal_newline_drift(self):
         (self.root / "GUIDE.md").write_text(RENDERED_GUIDE.rstrip("\n"))
