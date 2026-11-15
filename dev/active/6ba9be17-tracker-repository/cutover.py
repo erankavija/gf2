@@ -24,6 +24,16 @@ location comes from git.
       whose merge would change the main branch's `.jit` tree, a checkout with
       uncommitted tracker changes, a lease or a redo record. Other lines
       start `info:`.
+  cutover.py abandon --repo CODE (--branch B | --branches FILE)
+      Moves each branch to `refs/archive/<B>` and deletes `refs/heads/<B>` in
+      one ref transaction, both by compare-and-swap from the branch tip. FILE
+      lists one branch per line with optional `#` comments. Prints one line
+      per branch: `abandoned to refs/archive/<B>`, `already abandoned` when
+      the archive ref exists and the branch ref does not, `refused: <reason>`
+      or `failed: <reason>`. Refuses an existing archive ref beside the
+      branch ref and a branch checked out in any worktree. A batch continues
+      after failures and exits 1 when any branch is neither abandoned nor
+      already abandoned.
   cutover.py archive --repo CODE --dest DIR [--verify]
       Writes the store of every checkout to `DIR/<name>.tar`, `<name>` being
       `primary` or `worktree-<name git registers>`, and the SHA-256 of every
@@ -162,6 +172,11 @@ def main(argv, *, hooks=None):
     p = sub.add_parser("inventory")
     p.add_argument("--repo", required=True)
     p.add_argument("--main", default="main")
+    p = sub.add_parser("abandon", description="Move branches to refs/archive/ and delete their refs.")
+    p.add_argument("--repo", required=True)
+    target = p.add_mutually_exclusive_group(required=True)
+    target.add_argument("--branch", help="local branch to abandon")
+    target.add_argument("--branches", help="file listing local branches, one per line")
     p = sub.add_parser("archive")
     p.add_argument("--repo", required=True)
     p.add_argument("--dest", required=True)
@@ -393,6 +408,32 @@ def inventory(args):
     for kind, text in lines:
         print(f"{kind}: {text}")
     return 1 if any(kind == "action" for kind, _ in lines) else 0
+
+
+# abandon --------------------------------------------------------------------
+
+
+def abandon(args):
+    return batch(args, abandon_branch)
+
+
+def abandon_branch(args, branch):
+    repo = args.repo
+    ref, archived = f"refs/heads/{branch}", f"refs/archive/{branch}"
+    if git_rc("check-ref-format", "--branch", branch, cwd=repo) != 0:
+        raise Refusal(f"not a branch name: {branch}")
+    tip, kept = rev(ref, repo), rev(archived, repo)
+    if tip is None:
+        if kept:
+            return "already abandoned"
+        raise Refusal(f"not a local branch: {branch}")
+    if kept:
+        raise Refusal(f"{archived} exists at {kept}")
+    refuse_checked_out(repo, branch)
+    # One transaction: the archive ref must not exist and the branch ref must still be at the tip.
+    git("update-ref", "-m", "cutover.py abandon", "--stdin", cwd=repo,
+        input=f"create {archived} {tip}\ndelete {ref} {tip}\n")
+    return f"abandoned to {archived}"
 
 
 # archive --------------------------------------------------------------------
@@ -918,7 +959,7 @@ def clean_linked(args):
 
 
 COMMANDS = {
-    "inventory": inventory, "archive": archive, "extract": extract, "code-side": code_side,
+    "inventory": inventory, "abandon": abandon, "archive": archive, "extract": extract, "code-side": code_side,
     "mount": mount, "harvest": harvest, "clean": clean,
 }
 
