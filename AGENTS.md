@@ -120,7 +120,8 @@ mechanical documentation check resolves.
 - Commit subjects are `<type>(<scope>): <summary>`, with type one of `feat`,
   `fix`, `docs`, `test`, `refactor`, `perf`, `chore`; the list is closed. The
   whole subject line is at most 71 characters. A commit that implements or
-  serves an issue carries `jit:<short-id>` as its scope.
+  serves an issue carries `jit:<short-id>` as its scope. Work with no issue
+  carries `jit:none`.
 - The rule binds every commit that enters `main`: merge commits
   (`chore(jit:<id>): merge ...`), tracker state commits and salvage commits
   included. Reword a private branch before it merges; the history of `main`
