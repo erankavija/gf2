@@ -577,10 +577,12 @@ mod legacy_compat_tests {
         // (Eb/N0, rate), QPSK (m=2) has half the sigma^2 of BPSK (m=1).
         let eb_n0_db = 10.0_f64;
         let rate = 0.5_f64;
-        let eb_n0_linear = 10.0_f64.powf(eb_n0_db / 10.0);
-        let sigma_sq_bpsk = 1.0 / (2.0 * 1.0 * rate * eb_n0_linear);
-        let sigma_sq_qpsk = 1.0 / (2.0 * 2.0 * rate * eb_n0_linear);
-        assert!((sigma_sq_bpsk - 2.0 * sigma_sq_qpsk).abs() < 1e-12);
+        // Known answers at Eb/N0 = 10 dB (linear 10), rate 1/2.
+        let sigma_sq_bpsk = unit_energy_sigma_sq_from_eb_n0_db(1, rate, eb_n0_db);
+        let sigma_sq_qpsk = unit_energy_sigma_sq_from_eb_n0_db(2, rate, eb_n0_db);
+        assert!((sigma_sq_bpsk - 0.1).abs() < 1e-12);
+        assert!((sigma_sq_qpsk - 0.05).abs() < 1e-12);
+        assert!((unit_energy_n0_from_eb_n0_db(2, rate, eb_n0_db) - 0.1).abs() < 1e-12);
 
         let qpsk_mapper = GrayQamMapper::<f32>::from_preset_order(4);
         let qpsk_demap = ReferenceSoftDemapper::new(ModemSpec::<f32>::gray_square_qam(4));
