@@ -1,7 +1,7 @@
 {
   "epic_id": "6ba9be17-94b5-4faa-a325-0133eaa9713a",
   "epic_short_id": "6ba9be17",
-  "current_wave": 3,
+  "current_wave": 4,
   "waves": [
     {
       "wave_number": 1,
@@ -16,7 +16,7 @@
           "id": "28aa2a9d-fef8-4ccc-988e-2a76d2065af8",
           "short_id": "28aa2a9d",
           "title": "Check tracker references against a mounted store",
-          "status": "rework 3 (steward-approved, Claude Opus) at 0e2df1102; gates running at merged head 1682e2cd3"
+          "status": "done (landed 4783f062d)"
         }
       ]
     },
@@ -38,13 +38,13 @@
           "id": "daa33be8-175c-4e21-8f52-fa7c6859c5f8",
           "short_id": "daa33be8",
           "title": "Refuse a landing whose gate verdicts do not count for the branch tip",
-          "status": "dispatched (Claude Opus 5.5)"
+          "status": "rework 1 (Claude Opus) at 83bb4268e; cargo-ci passed there; code-review at merged head 9692f5ce8 running; cargo-ci at merged head after gf2-24's hold"
         },
         {
           "id": "6310679b-c818-42cc-ae9c-89250dccf992",
           "short_id": "6310679b",
           "title": "Mount and snapshot the tracker repository with one command each",
-          "status": "dispatched (Codex gpt-6.1-sol high)"
+          "status": "done (landed 4f27cd829)"
         }
       ]
     },
@@ -61,13 +61,13 @@
           "id": "e610f5c4-3833-4e23-8399-eb5b8b483ea8",
           "short_id": "e610f5c4",
           "title": "Build the cutover tool that moves the tracker out of the code repository",
-          "status": "pending"
+          "status": "dispatched (Claude Opus 5.5)"
         },
         {
           "id": "2a4c2684-b7a6-4a72-822f-918a873a07bf",
           "short_id": "2a4c2684",
           "title": "Carry the separate tracker through the history rewrite",
-          "status": "pending"
+          "status": "assigned to gf2-bf by the steward; after e610f5c4 lands"
         }
       ]
     },
@@ -94,7 +94,15 @@
       ]
     }
   ],
-  "created_during_execution": [],
+  "created_during_execution": [
+    {
+      "id": "d1eba151-5f0f-4b0e-8d9e-450e742c4062",
+      "short_id": "d1eba151",
+      "title": "Classify extensionless scripts by their interpreter line in the reference checker",
+      "reason": "daa33be8 had to write around the prose rules of check-references (convention-convergence); depends on 28aa2a9d and daa33be8",
+      "wave": 4
+    }
+  ],
   "escalations": [
     {
       "issue": "28aa2a9d",
@@ -104,7 +112,9 @@
   ],
   "rework_counts": {
     "28aa2a9d": 3,
-    "3fb4accb": 1
+    "3fb4accb": 1,
+    "6310679b": 1,
+    "daa33be8": 1
   },
   "surfaced_pitfalls": [
     "docs-mechanical exits 2 when JIT_DATA_DIR lies outside any git repository (documented contract; advisory from the 6d5ba9fb Claude review)",
@@ -112,12 +122,15 @@
     "contrib/gates/code-review-prompt.md drifted from its package source in 5855c6dab (outside this epic; reported to the steward)",
     "jit gate evaluate reuses a failed verdict for identical inputs; after a transient failure use --force",
     "3fb4accb: one unexplained nextest test-step exit 100 at load ~13 (recorded in the issue Notes; reported to gf2-24)",
-    "check-references: a file-name link label is checked as its own inline citation (pre-existing; out of 28aa2a9d scope)"
+    "check-references: a file-name link label is checked as its own inline citation (pre-existing; out of 28aa2a9d scope)",
+    "Gate runs on fresh or rebuilt worktrees hit the 900 s cargo-ci timeout at load 20+; a warm direct ./scripts/cargo-ci.sh pre-run then --force gate works",
+    "The worktree dispatch script refuses while another session holds uncommitted dev/ files in main; create the worktree with git worktree add from main instead",
+    "Each main landing by a peer that touches crates/ or scripts/ invalidates cargo-ci verdicts at branch tips; tracker-only main drift does not (merged without re-gating)"
   ],
   "started_at": "2026-11-15T01:17:00+02:00",
   "lead": "gf2-bf under steward gf2-a2 (took over from gf2-e3, gf2-7d)",
   "notes": {
-    "2a4c2684": "implemented by gf2-00 on the lead's call after 3fb4accb and 6310679b land",
+    "2a4c2684": "assigned to gf2-bf by steward gf2-a2 (gf2-00 has no session); design at the runbook backup directory, rewrite-plan/2026-11-14b/2a4c2684-design.md; scope per steward message",
     "6889e6e6": "waits on an owner timing decision (rewrite paused, steward 01:22)",
     "6d5ba9fb": "Blocking Claude review (Claude Sonnet 5.5, beside the Codex gate): PASS at 43e85778e; REQ-01 to REQ-08 met; REQ-02 checked with the real jit against scratch roots. cargo-ci and code-review re-passed at merged head 33c4df96a."
   },
@@ -184,6 +197,27 @@
       "kind": "implement",
       "vendor": "Claude",
       "model": "Opus 5.5",
+      "reviewer": "Codex gate"
+    },
+    {
+      "issue": "6310679b",
+      "kind": "rework 1",
+      "vendor": "Codex",
+      "model": "gpt-6-luna xhigh",
+      "reviewer": "Claude Sonnet 5.5 blocking PASS + Codex gate PASS"
+    },
+    {
+      "issue": "daa33be8",
+      "kind": "rework 1",
+      "vendor": "Claude",
+      "model": "Opus 5.5",
+      "reviewer": "Codex gate"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "implement",
+      "vendor": "Claude",
+      "model": "Opus 5.5 (steward: strongest Claude tier)",
       "reviewer": "Codex gate"
     }
   ]
