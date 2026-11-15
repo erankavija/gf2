@@ -227,20 +227,30 @@ After the harvests, `load_check strict` runs in the primary checkout. The
 step passes when every harvest exits 0 or is listed and the check passes; a
 failure stops the cutover.
 
-Then the branches merged into `main` are deleted, not archived. The batch is
-taken at this moment, excluding `main`, and written with each head to
-`<backup>/merged-deleted.txt`. A branch checked out in a linked worktree has
-that worktree detached first; the worktree is removed when clean, and a dirty
-one stays detached with its store and is listed for the steward:
+Then every branch merged into `main` at this moment is deleted, not
+archived: anything merged since the steward's earlier deletion, at least the
+tool and runbook branches of step 0. The batch excludes `main`, each entry is
+verified with `git merge-base --is-ancestor`, and the batch with each head is
+written to `<backup>/merged-deleted.txt`. A deleted name also leaves
+`<survivor-list>`, since an ancestor of `main` holds nothing `main` lacks. A
+branch checked out in a linked worktree has that worktree detached first; the
+worktree is removed when clean, and a dirty one stays detached with its store
+and is listed for the steward:
 
 ```sh
-git branch --merged main --format='%(refname:short) %(objectname)' |
-  grep -v '^main ' > "<backup>/merged-deleted.txt"
+: > "<backup>/merged-deleted.txt"
+git branch --merged main --format='%(refname:short) %(objectname)' | while read -r b h; do
+  [ "$b" = main ] && continue
+  git merge-base --is-ancestor "$b" main && printf '%s %s\n' "$b" "$h" >> "<backup>/merged-deleted.txt"
+done
 git worktree list --porcelain | awk '/^worktree /{w=substr($0,10)} /^branch refs\/heads\//{print substr($0,19) "\t" w}' |
   while IFS="$(printf '\t')" read -r b w; do
     grep -q "^$b " "<backup>/merged-deleted.txt" && git -C "$w" switch --detach
   done
 cut -d' ' -f1 "<backup>/merged-deleted.txt" | while IFS= read -r b; do git branch -d "$b"; done
+cut -d' ' -f1 "<backup>/merged-deleted.txt" > "<backup>/merged-names.txt"
+grep -vxF -f "<backup>/merged-names.txt" "<survivor-list>" > "<backup>/survivors-kept.txt"
+cp "<backup>/survivors-kept.txt" "<survivor-list>"
 ```
 
 Then `git worktree remove "<worktree>"` for each clean detached worktree of a
