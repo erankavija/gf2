@@ -173,7 +173,9 @@
     "durable_artifacts": "the durable directory named in handoff-2.md",
     "6b9e6b14": "lead choices: linked-worktree gate probe is docs-mechanical added to 6889e6e6; second-identity lease on 6ba9be17",
     "7854cfad": "landed before the cutover under the pre-cutover rule: cargo-ci at c4849dd01 and code-review at b1c997544; main drift to the tip was docs and tracker only; check-references, tracked-budget and jit validate passed at tip 50a591ac0",
-    "d1eba151": "parked 2026-11-16 (steward ruling): branch at 348f302d4; cargo-ci passed at 14e30f81f, code-review failed there on untested env forms the steward had scoped out"
+    "d1eba151": "parked 2026-11-16 (steward ruling): branch at 348f302d4; cargo-ci passed at 14e30f81f, code-review failed there on untested env forms the steward had scoped out",
+    "18276ff1": "resumed with gf2-f6 (owner, 2026-11-16); fix 8233df6d0 reviewed PASS; REQ-06 and final gates after the cutover",
+    "port": "applied on main in 97b8e84a9; 30 referenced run records copied into main's store"
   },
   "dispatches": [
     {
@@ -352,6 +354,13 @@
       "vendor": "Claude",
       "model": "Opus 5.5",
       "reviewer": "blocking Claude Opus (audit replay) + Codex read-only, then Codex gate"
+    },
+    {
+      "issue": "18276ff1",
+      "kind": "SIGINT fix (owner resumption)",
+      "vendor": "Codex",
+      "model": "gpt-6.1-sol high",
+      "reviewer": "Claude Opus 5.5 blocking PASS"
     }
   ]
 }
