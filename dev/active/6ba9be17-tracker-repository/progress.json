@@ -55,7 +55,7 @@
           "id": "7854cfad-5480-4c94-b7ba-e6ace2744289",
           "short_id": "7854cfad",
           "title": "Hold dependents until a code change has landed on main",
-          "status": "cargo-ci passed at c81afe2ae; code-review next; handed to gf2-f6"
+          "status": "done (landed 8c46dae79)"
         },
         {
           "id": "e610f5c4-3833-4e23-8399-eb5b8b483ea8",
@@ -102,6 +102,13 @@
       "reason": "daa33be8 had to write around the prose rules of check-references (convention-convergence); depends on 28aa2a9d and daa33be8",
       "wave": 4,
       "status": "backlog; handed to gf2-f6"
+    },
+    {
+      "id": "84022ee3-5195-41a1-95a5-822783074b15",
+      "short_id": "84022ee3",
+      "title": "Check gate presets against the gate registry",
+      "reason": "steward ruling at the 7854cfad landing: jit presets embed full gate definitions (drift against gates.toml), plus the Sonnet review advisory on untested parse cases",
+      "wave": 5
     }
   ],
   "escalations": [
@@ -152,13 +159,14 @@
     "cutover.py inventory (:366-368 at 9aeddb20f) reports any merge-tree conflict as a tracker action, also conflicts outside .jit; fixed under e610f5c4 REQ-01 in the D-12 round"
   ],
   "started_at": "2026-11-15T01:17:00+02:00",
-  "lead": "gf2-5c (cutover line: e610f5c4, 6b9e6b14, 6889e6e6) and gf2-f6 (7854cfad, d1eba151, 2a4c2684, inventory) under steward gf2-a2; took over from gf2-bf",
+  "lead": "gf2-5c (cutover line: e610f5c4, 6b9e6b14, 6889e6e6) and gf2-f6 (7854cfad, d1eba151, 2a4c2684, 84022ee3, inventory) under steward gf2-a2; took over from gf2-bf",
   "notes": {
     "2a4c2684": "assigned to gf2-bf by steward gf2-a2 (gf2-00 has no session); design at the runbook backup directory, rewrite-plan/2026-11-14b/2a4c2684-design.md; scope per steward message",
     "6889e6e6": "waits on an owner timing decision (rewrite paused, steward 01:22)",
     "6d5ba9fb": "Blocking Claude review (Claude Sonnet 5.5, beside the Codex gate): PASS at 43e85778e; REQ-01 to REQ-08 met; REQ-02 checked with the real jit against scratch roots. cargo-ci and code-review re-passed at merged head 33c4df96a.",
     "durable_artifacts": "the durable directory named in handoff-2.md",
-    "6b9e6b14": "lead choices: linked-worktree gate probe is docs-mechanical added to 6889e6e6; second-identity lease on 6ba9be17"
+    "6b9e6b14": "lead choices: linked-worktree gate probe is docs-mechanical added to 6889e6e6; second-identity lease on 6ba9be17",
+    "7854cfad": "landed before the cutover under the pre-cutover rule: cargo-ci at c4849dd01 and code-review at b1c997544; main drift to the tip was docs and tracker only; check-references, tracked-budget and jit validate passed at tip 50a591ac0"
   },
   "dispatches": [
     {
@@ -287,6 +295,13 @@
       "vendor": "Claude",
       "model": "Opus 5.5",
       "reviewer": "pending"
+    },
+    {
+      "issue": "7854cfad",
+      "kind": "rework (gate-kind enums)",
+      "vendor": "Codex",
+      "model": "gpt-6-luna",
+      "reviewer": "Claude Sonnet 5.5 blocking PASS + Codex gate PASS at b1c997544"
     }
   ]
 }
