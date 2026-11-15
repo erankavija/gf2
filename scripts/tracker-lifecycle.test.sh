@@ -95,7 +95,14 @@ init_repo "$TRACKER"
 printf '{}\n' >"$TRACKER/index.json"
 printf 'old\n' >"$TRACKER/record"
 : >"$TRACKER/remove-me"
-cp "$ROOT/.jit/.gitignore" "$TRACKER/.gitignore"
+cat >"$TRACKER/.gitignore" <<'EOF'
+# jit:data-root-ignore:begin
+/tmp/
+# jit:data-root-ignore:end
+
+*.lock
+gate-runs/
+EOF
 git -C "$TRACKER" add .
 git -C "$TRACKER" commit -qm init
 CODE="$BASE/code"
@@ -192,8 +199,8 @@ expect 'clean snapshot HEAD' "$(git -C "$CODE/.jit" rev-parse HEAD)" "$head"
 printf 'new\n' >"$CODE/.jit/record"
 : >"$CODE/.jit/added"
 rm "$CODE/.jit/remove-me"
-mkdir -p "$CODE/.jit/tmp" "$CODE/.jit/gate-runs" "$CODE/.jit/gate-artifacts" "$CODE/.jit/nested"
-for local in worktree.json server.log server.pid.json write.lock nested/write.lock tmp/local gate-runs/local gate-artifacts/local; do
+mkdir -p "$CODE/.jit/tmp" "$CODE/.jit/gate-runs" "$CODE/.jit/nested"
+for local in write.lock nested/write.lock tmp/local gate-runs/local; do
   : >"$CODE/.jit/$local"
 done
 rc=0
