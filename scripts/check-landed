@@ -28,9 +28,9 @@ import sys
 from sys import stderr
 
 from landing_gates import (
-    BUILTIN,
-    EXECUTED,
-    LANDED,
+    GateKeyKind,
+    GateKind,
+    GateLabel,
     JitError,
     JitUnavailable,
     executing_run,
@@ -38,6 +38,8 @@ from landing_gates import (
     git,
     is_reused,
     jit,
+    parse_gate_key,
+    parse_gate_run,
 )
 
 EXIT_OK, EXIT_NOT_LANDED, EXIT_JIT, EXIT_USAGE = 0, 1, 2, 64
@@ -46,7 +48,7 @@ MAIN = "refs/heads/main"
 
 def judge_executed(issue_id, key):
     """Returns (on main, detail) for an executed-command gate."""
-    run = jit("gate", "status", issue_id, key)
+    run = parse_gate_run(jit("gate", "status", issue_id, key.value))
     if not run.get("run_id"):
         return False, "has no run, so no commit is recorded"
     executed = executing_run(key, run)
@@ -69,21 +71,22 @@ def check(issue_id):
     print(f"check-landed: issue {issue_id} against {MAIN}")
     judged, not_landed = 0, []
     for gate in issue.get("gates") or []:
-        key = gate["key"]
-        if key == LANDED:
+        key = parse_gate_key(gate["key"])
+        if key.kind is GateKeyKind.LANDED:
             continue
-        kind = gate_kind(jit("gate", "show", key))
-        if kind != EXECUTED:
-            label = "store-judged" if kind == BUILTIN else "attested"
-            print(f"  {key}: {label}; imposes no condition")
+        kind = gate_kind(jit("gate", "show", key.value))
+        if kind is not GateKind.EXECUTED:
+            label = GateLabel.STORE_JUDGED if kind is GateKind.BUILTIN else GateLabel.ATTESTED
+            print(f"  {key.value}: {label.value}; imposes no condition")
             continue
         judged += 1
         on_main, detail = judge_executed(issue_id, key)
-        print(f"  {key}: {'on main' if on_main else 'not landed'}: {detail}")
+        label = GateLabel.ON_MAIN if on_main else GateLabel.NOT_LANDED
+        print(f"  {key.value}: {label.value}: {detail}")
         if not on_main:
-            not_landed.append(key)
+            not_landed.append(key.value)
     if not_landed:
-        print(f"check-landed: not landed: {', '.join(not_landed)}")
+        print(f"check-landed: {GateLabel.NOT_LANDED.value}: {', '.join(not_landed)}")
         return EXIT_NOT_LANDED
     if not judged:
         print("check-landed: no executed-command gate, so no commit was judged")

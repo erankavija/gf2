@@ -7,10 +7,8 @@ the run that executed the checker.
 
 import json
 import subprocess
-
-EXECUTED, MANUAL, BUILTIN = "executed", "manual", "builtin"
-# The gate that judges, after the merge, whether the other verdicts landed.
-LANDED = "landed"
+from dataclasses import dataclass
+from enum import Enum
 
 
 class JitUnavailable(Exception):
@@ -21,6 +19,99 @@ class JitError(Exception):
     def __init__(self, code, message):
         super().__init__(message)
         self.code = code
+
+
+class GateKind(Enum):
+    EXECUTED = "executed"
+    MANUAL = "manual"
+    BUILTIN = "builtin"
+
+
+class GateMode(Enum):
+    AUTO = "auto"
+    MANUAL = "manual"
+
+
+class CheckerType(Enum):
+    EXEC = "exec"
+    ISSUE_VALIDATION = "issue_validation"
+    LABEL_TARGET_VALIDATION = "label_target_validation"
+    REPOSITORY_VALIDATION = "repository_validation"
+
+
+class RunStatus(Enum):
+    PASSED = "passed"
+    FAILED = "failed"
+    PENDING = "pending"
+
+
+class RunDerivation(Enum):
+    EXECUTED = "executed"
+    REUSED = "reused"
+    ATTESTED = "attested"
+
+
+class GateKeyKind(Enum):
+    REQUIRED = "required"
+    LANDED = "landed"
+
+
+@dataclass(frozen=True)
+class GateKey:
+    value: str
+    kind: GateKeyKind
+
+
+class GateLabel(Enum):
+    COUNTS = "counts"
+    REFUSED = "refused"
+    ATTESTED = "attested"
+    STORE_JUDGED = "store-judged"
+    JUDGED_AFTER_MERGE = "judged after the merge"
+    ON_MAIN = "on main"
+    NOT_LANDED = "not landed"
+
+
+def _parse(enum_type, value, vocabulary):
+    try:
+        return enum_type(value)
+    except (TypeError, ValueError) as error:
+        raise JitError(None, f"jit returned unknown {vocabulary} {value!r}") from error
+
+
+def parse_gate_mode(value):
+    """Parses the optional mode from a jit gate definition."""
+    return None if value is None else _parse(GateMode, value, "gate mode")
+
+
+def parse_checker_type(value):
+    """Parses the optional checker type from a jit gate definition."""
+    return None if value is None else _parse(CheckerType, value, "checker type")
+
+
+def parse_run_status(value):
+    """Parses a run status, preserving the absent status of a never-run gate."""
+    return None if value is None else _parse(RunStatus, value, "gate run status")
+
+
+def parse_run_derivation(value):
+    """Parses a run origin derivation when one is present."""
+    return None if value is None else _parse(RunDerivation, value, "run derivation")
+
+
+def parse_gate_key(value):
+    """Parses a registry key and identifies the special post-merge gate."""
+    if not isinstance(value, str):
+        raise JitError(None, f"jit returned invalid gate key {value!r}")
+    kind = GateKeyKind.LANDED if value == GateKeyKind.LANDED.value else GateKeyKind.REQUIRED
+    return GateKey(value, kind)
+
+
+def parse_gate_run(run):
+    """Validates run vocabularies at the jit JSON boundary."""
+    parse_run_status(run.get("status"))
+    parse_run_derivation((run.get("origin") or {}).get("derivation"))
+    return run
 
 
 def run(argv):
@@ -57,19 +148,22 @@ def git(*args):
 
 
 def gate_kind(definition):
-    """EXECUTED for a checker that is a command, else MANUAL or BUILTIN.
+    """Returns the typed kind of a gate definition.
 
     Only an executed command's run records the commit it ran at.
     """
-    if definition.get("mode") == "manual":
-        return MANUAL
-    if (definition.get("checker") or {}).get("type") == "exec":
-        return EXECUTED
-    return BUILTIN
+    mode = parse_gate_mode(definition.get("mode"))
+    checker = parse_checker_type((definition.get("checker") or {}).get("type"))
+    if mode is GateMode.MANUAL:
+        return GateKind.MANUAL
+    if checker is CheckerType.EXEC:
+        return GateKind.EXECUTED
+    return GateKind.BUILTIN
 
 
 def is_reused(run):
-    return (run.get("origin") or {}).get("derivation") == "reused"
+    derivation = parse_run_derivation((run.get("origin") or {}).get("derivation"))
+    return derivation is RunDerivation.REUSED
 
 
 def executing_run(key, run):
@@ -82,7 +176,7 @@ def executing_run(key, run):
             return None
         seen.add(source)
         try:
-            history = jit("gate", "status", source[0], "--all", "--gate", key)
+            history = jit("gate", "status", source[0], "--all", "--gate", key.value)
         except JitError as err:
             if err.code == "ISSUE_NOT_FOUND":
                 return None
@@ -93,4 +187,5 @@ def executing_run(key, run):
         )
         if run is None:
             return None
+        parse_gate_run(run)
     return run

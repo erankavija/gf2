@@ -10,6 +10,15 @@ import shutil
 import subprocess
 import sys
 
+from landing_gates import (
+    CheckerType,
+    GateKeyKind,
+    GateMode,
+    RunDerivation,
+    RunStatus,
+    parse_gate_key,
+)
+
 ISSUE = "051c2ade-1d12-4fb7-bcd7-69a02900c6e4"
 SOURCE_ISSUE = "a57cb8d0-29fc-4f05-a3a3-58142532b5bf"
 
@@ -29,27 +38,27 @@ sys.exit(reply["rc"])
 DEFINITIONS = {
     "ci": {
         "checker": {"command": "./ci.sh", "env": {}, "pass_context": False,
-                    "timeout_seconds": 30, "type": "exec", "working_dir": None},
+                    "timeout_seconds": 30, "type": CheckerType.EXEC.value, "working_dir": None},
         "description": "ci",
         "inputs": {"exclude": ["src/**/skip*.md", "**/target"], "roots": ["src"]},
-        "key": "ci", "message": "Gate ci: ci", "mode": "auto", "priority": 100,
+        "key": "ci", "message": "Gate ci: ci", "mode": GateMode.AUTO.value, "priority": 100,
         "reserved": {}, "stage": "postcheck", "title": "ci", "version": 1,
     },
     "plain": {
         "checker": {"command": "./plain.sh", "env": {}, "pass_context": False,
-                    "timeout_seconds": 30, "type": "exec", "working_dir": None},
+                    "timeout_seconds": 30, "type": CheckerType.EXEC.value, "working_dir": None},
         "description": "plain", "key": "plain", "message": "Gate plain: plain",
-        "mode": "auto", "priority": 100, "reserved": {}, "stage": "postcheck",
+        "mode": GateMode.AUTO.value, "priority": 100, "reserved": {}, "stage": "postcheck",
         "title": "plain", "version": 1,
     },
     "att": {
         "description": "att", "key": "att", "message": "Gate att: att",
-        "mode": "manual", "priority": 100, "reserved": {}, "stage": "postcheck",
+        "mode": GateMode.MANUAL.value, "priority": 100, "reserved": {}, "stage": "postcheck",
         "title": "att", "version": 1,
     },
     "val": {
-        "checker": {"type": "issue_validation"}, "description": "val", "key": "val",
-        "message": "Gate val: val", "mode": "auto", "priority": 100, "reserved": {},
+        "checker": {"type": CheckerType.ISSUE_VALIDATION.value}, "description": "val", "key": "val",
+        "message": "Gate val: val", "mode": GateMode.AUTO.value, "priority": 100, "reserved": {},
         "stage": "postcheck", "title": "val", "version": 1,
     },
 }
@@ -59,57 +68,57 @@ def run_id(n):
     return f"00000000-0000-4000-8000-{n:012d}"
 
 
-def executed(key, commit, n, status="passed"):
+def executed(key, commit, n, status=RunStatus.PASSED):
     record = {
         "by": "auto:executor", "command": DEFINITIONS[key]["checker"]["command"],
         "completed_at": "2026-11-15T16:56:20.547212530+00:00", "duration_ms": 100,
-        "evaluation_stability": "stable", "exit_code": 0 if status == "passed" else 1,
-        "key": key, "message": f"Gate '{key}': {status}",
-        "origin": {"derivation": "executed"}, "run_id": run_id(n),
+        "evaluation_stability": "stable", "exit_code": 0 if status is RunStatus.PASSED else 1,
+        "key": key, "message": f"Gate '{key}': {status.value}",
+        "origin": {"derivation": RunDerivation.EXECUTED.value}, "run_id": run_id(n),
         "stage": "postcheck", "started_at": "2026-11-15T16:56:20.446969674+00:00",
-        "status": status, "stderr": "", "stdout": "",
+        "status": status.value, "stderr": "", "stdout": "",
     }
     if commit is not None:
         record.update(branch="main", commit=commit)
     return record
 
 
-def reused(key, source_run, n, status="passed"):
+def reused(key, source_run, n, status=RunStatus.PASSED):
     return {
         "by": "auto:executor", "command": DEFINITIONS[key]["checker"]["command"],
         "completed_at": "2026-11-15T16:56:25.983604318+00:00", "duration_ms": 0,
         "evaluation_stability": "stable", "key": key,
-        "message": f"Gate '{key}': {status}",
-        "origin": {"derivation": "reused", "source_issue": SOURCE_ISSUE,
+        "message": f"Gate '{key}': {status.value}",
+        "origin": {"derivation": RunDerivation.REUSED.value, "source_issue": SOURCE_ISSUE,
                    "source_run": source_run},
         "run_id": run_id(n), "stage": "postcheck",
-        "started_at": "2026-11-15T16:56:25.983604318+00:00", "status": status,
+        "started_at": "2026-11-15T16:56:25.983604318+00:00", "status": status.value,
         "stderr": "", "stdout": "",
     }
 
 
-def attested(n, status="passed"):
+def attested(n, status=RunStatus.PASSED):
     return {
         "by": "human:tester", "command": "",
         "completed_at": "2026-11-15T16:56:20.685430347+00:00",
         "evaluation_stability": "stable", "key": "att",
-        "message": f"Gate 'att': {status}", "origin": {"derivation": "attested"},
+        "message": f"Gate 'att': {status.value}", "origin": {"derivation": RunDerivation.ATTESTED.value},
         "run_id": run_id(n), "stage": "postcheck",
-        "started_at": "2026-11-15T16:56:20.685430347+00:00", "status": status,
+        "started_at": "2026-11-15T16:56:20.685430347+00:00", "status": status.value,
         "stderr": "",
     }
 
 
-def builtin(n, status="passed"):
+def builtin(n, status=RunStatus.PASSED):
     return {
         "by": "auto:executor", "command": "builtin:issue_validation",
         "completed_at": "2026-11-15T16:56:20.675045339+00:00", "duration_ms": 1,
-        "evaluation_stability": "stable", "exit_code": 0 if status == "passed" else 1,
+        "evaluation_stability": "stable", "exit_code": 0 if status is RunStatus.PASSED else 1,
         "findings": {"findings": [], "summary": "Built-in validation", "verdict": "pass"},
-        "key": "val", "message": f"Gate 'val': {status}",
-        "origin": {"derivation": "executed"}, "run_id": run_id(n),
+        "key": "val", "message": f"Gate 'val': {status.value}",
+        "origin": {"derivation": RunDerivation.EXECUTED.value}, "run_id": run_id(n),
         "stage": "postcheck", "started_at": "2026-11-15T16:56:20.673611481+00:00",
-        "status": status, "stderr": "",
+        "status": status.value, "stderr": "",
     }
 
 
@@ -136,13 +145,14 @@ def fixture(runs, history=None, ref=ISSUE[:8]):
         "title": "t", "description": "d", "labels": [], "dependencies": [],
         "gates": [
             {"exit_code": r.get("exit_code"), "key": k,
-             "last_run_at": r.get("started_at"), "status": r.get("status", "pending")}
+             "last_run_at": r.get("started_at"),
+             "status": r.get("status", RunStatus.PENDING.value)}
             for k, r in runs.items()
         ],
     }
     calls = {f"issue show {ref} --json": reply(issue)}
     for key, run in runs.items():
-        if key == "landed":
+        if parse_gate_key(key).kind is GateKeyKind.LANDED:
             continue
         calls[f"gate show {key} --json"] = reply(DEFINITIONS[key])
         calls[f"gate status {ISSUE} {key} --json"] = reply(run)

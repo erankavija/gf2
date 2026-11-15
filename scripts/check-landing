@@ -28,20 +28,23 @@ import sys
 from sys import stderr
 
 from landing_gates import (
-    EXECUTED,
-    LANDED,
-    MANUAL,
+    GateKeyKind,
+    GateKind,
+    GateLabel,
     JitError,
     JitUnavailable,
+    RunStatus,
     executing_run,
     gate_kind,
     git,
     is_reused,
     jit,
+    parse_gate_key,
+    parse_gate_run,
+    parse_run_status,
 )
 
 EXIT_OK, EXIT_REFUSED, EXIT_JIT, EXIT_USAGE = 0, 1, 2, 64
-SKIPPED_GATES = {LANDED}
 PATH_LIMIT = 20
 
 
@@ -109,7 +112,7 @@ def compared_paths(recorded, commit, definition):
     return False, f"differing input paths: {shown}"
 
 
-def judge_executed(issue_id, key, definition, run, commit, revision):
+def judge_executed(issue_id, key, definition, run, status, commit, revision):
     """Returns (counts, detail) for an executed-command gate's latest run.
 
     A refusal always names the recorded commit, the expected commit and the
@@ -120,11 +123,10 @@ def judge_executed(issue_id, key, definition, run, commit, revision):
     recorded = (executed or {}).get("commit")
     via = f" via origin run {executed.get('run_id')}" if reused and executed else ""
     same, paths = compared_paths(recorded, commit, definition)
-    status = run.get("status")
     if not run.get("run_id") or status is None:
         reason = "has no run"
-    elif status != "passed":
-        reason = f"latest run {run['run_id']} is {status}"
+    elif status is not RunStatus.PASSED:
+        reason = f"latest run {run['run_id']} is {status.value}"
     elif reused and executed is None:
         reason = "the run that executed the checker is not found"
     elif not same:
@@ -135,7 +137,7 @@ def judge_executed(issue_id, key, definition, run, commit, revision):
         return True, f"ran at {recorded}{via}; {paths}"
     force = (
         f"needs a forced evaluation at {revision}"
-        f" (jit gate evaluate {issue_id} {key} --force)"
+        f" (jit gate evaluate {issue_id} {key.value} --force)"
         if reused
         else f"re-evaluate at {revision}"
     )
@@ -145,22 +147,26 @@ def judge_executed(issue_id, key, definition, run, commit, revision):
 
 def judge_gate(issue_id, key, commit, revision):
     """Returns (counts, label, detail) for one required gate."""
-    if key in SKIPPED_GATES:
-        return True, "judged after the merge", None
-    definition = jit("gate", "show", key)
-    run = jit("gate", "status", issue_id, key)
+    if key.kind is GateKeyKind.LANDED:
+        return True, GateLabel.JUDGED_AFTER_MERGE, None
+    definition = jit("gate", "show", key.value)
+    run = parse_gate_run(jit("gate", "status", issue_id, key.value))
     kind = gate_kind(definition)
-    if kind == EXECUTED:
-        counts, detail = judge_executed(issue_id, key, definition, run, commit, revision)
-        return counts, "counts" if counts else "refused", detail
-    status = run.get("status")
+    status = parse_run_status(run.get("status"))
+    if kind is GateKind.EXECUTED:
+        counts, detail = judge_executed(
+            issue_id, key, definition, run, status, commit, revision
+        )
+        return counts, GateLabel.COUNTS if counts else GateLabel.REFUSED, detail
     if not run.get("run_id") or status is None:
-        return False, "refused", "has no run; no commit applies"
-    if status != "passed":
-        return False, "refused", f"latest run {run['run_id']} is {status}; no commit applies"
-    if kind == MANUAL:
-        return True, "attested", f"by {run.get('by', 'unknown')}"
-    return True, "store-judged", f"run {run['run_id']} passed"
+        return False, GateLabel.REFUSED, "has no run; no commit applies"
+    if status is not RunStatus.PASSED:
+        return False, GateLabel.REFUSED, (
+            f"latest run {run['run_id']} is {status.value}; no commit applies"
+        )
+    if kind is GateKind.MANUAL:
+        return True, GateLabel.ATTESTED, f"by {run.get('by', 'unknown')}"
+    return True, GateLabel.STORE_JUDGED, f"run {run['run_id']} passed"
 
 
 def check(issue_ref, revision):
@@ -174,10 +180,10 @@ def check(issue_ref, revision):
         print(f"check-landing: issue {issue_id} at {revision} ({commit})")
         refused = 0
         for gate in issue.get("gates") or []:
-            key = gate["key"]
+            key = parse_gate_key(gate["key"])
             counts, label, detail = judge_gate(issue_id, key, commit, revision)
             refused += not counts
-            print(f"  {key}: {label}" + (f": {detail}" if detail else ""))
+            print(f"  {key.value}: {label.value}" + (f": {detail}" if detail else ""))
     except JitUnavailable as err:
         print(f"check-landing: {err}", file=stderr)
         return EXIT_JIT
@@ -188,7 +194,10 @@ def check(issue_ref, revision):
             print(f"check-landing: {err}", file=stderr)
         return EXIT_JIT
     if refused:
-        print(f"check-landing: refused: {refused} gate verdict(s) do not count for {commit}")
+        print(
+            f"check-landing: {GateLabel.REFUSED.value}: {refused} gate verdict(s) "
+            f"do not count for {commit}"
+        )
         return EXIT_REFUSED
     print(f"check-landing: every required verdict counts for {commit}")
     return EXIT_OK

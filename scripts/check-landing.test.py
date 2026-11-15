@@ -13,6 +13,7 @@ import tempfile
 from landing_gates_fixture import (
     ISSUE, Harness, attested, builtin, executed, expect_status, fixture, not_run,
     report, reply, reused, run_id)
+from landing_gates import RunStatus
 
 SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "check-landing")
 SUCCESS = "every required verdict counts"
@@ -95,20 +96,20 @@ def run_cases(h):
                   absent=(SUCCESS,))
 
     # REQ-02: a run that did not pass names its commits and input paths.
-    runs = dict(all_kinds, ci=executed("ci", base, 1, "failed"),
+    runs = dict(all_kinds, ci=executed("ci", base, 1, RunStatus.FAILED),
                 plain=executed("plain", in_root, 2))
     result = h.check(fixture(runs), short, in_root)
     expect_status("failed at older commit", result, 1, "ci: refused",
                   f"recorded commit {base}", f"expected {in_root}",
                   "differing input paths: src/a", f"latest run {run_id(1)} is failed",
                   absent=(SUCCESS, "skip1.md"))
-    result = h.check(fixture(dict(all_kinds, ci=executed("ci", base, 1, "failed"))),
+    result = h.check(fixture(dict(all_kinds, ci=executed("ci", base, 1, RunStatus.FAILED))),
                      short, base)
     expect_status("failed at expected commit", result, 1, "ci: refused",
                   f"recorded commit {base}", f"expected {base}",
                   "differing input paths: none", f"latest run {run_id(1)} is failed",
                   absent=(SUCCESS,))
-    for key, run in (("att", attested(3, "failed")), ("val", builtin(4, "failed"))):
+    for key, run in (("att", attested(3, RunStatus.FAILED)), ("val", builtin(4, RunStatus.FAILED))):
         result = h.check(fixture(dict(all_kinds, **{key: run})), short, base)
         expect_status(f"{key} failed", result, 1, f"{key}: refused", "is failed",
                       "no commit applies", absent=(SUCCESS,))
@@ -134,7 +135,7 @@ def run_cases(h):
                   f"recorded commit {base}", f"expected {in_root}", "src/a",
                   "needs a forced evaluation at", "--force", absent=(SUCCESS,))
     # A failed reused run names its origin run and the input paths.
-    failed_runs = dict(runs, ci=reused("ci", run_id(10), 5, "failed"))
+    failed_runs = dict(runs, ci=reused("ci", run_id(10), 5, RunStatus.FAILED))
     result = h.check(fixture(failed_runs, history), short, in_root)
     expect_status("reused failed", result, 1, "ci: refused",
                   f"recorded commit {base} via origin run {run_id(10)}",
@@ -160,6 +161,14 @@ def run_cases(h):
     expect_status("jit garbage", result, 2, "no JSON object", absent=(SUCCESS,))
     result = h.check({}, short, base)
     expect_status("jit fails", result, 2, "exited 97", absent=(SUCCESS,))
+
+    unknown_status = fixture(all_kinds)
+    unknown_status[f"gate status {ISSUE} ci --json"] = reply(
+        {**executed("ci", base, 1), "status": "mystery-status"}
+    )
+    result = h.check(unknown_status, short, base)
+    expect_status("unknown run status", result, 2,
+                  "unknown gate run status 'mystery-status'", absent=(SUCCESS,))
 
     # Usage and revision errors.
     expect_status("no arguments", h.check({}), 64, "usage", absent=(SUCCESS,))

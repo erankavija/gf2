@@ -12,6 +12,7 @@ import tempfile
 from landing_gates_fixture import (
     ISSUE, Harness, attested, builtin, executed, expect_status, fixture, not_run,
     report, reply, reused, run_id)
+from landing_gates import RunStatus
 
 SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "check-landed")
 LANDED = "check-landed: every executed run's commit is on main"
@@ -103,7 +104,7 @@ def run_cases(h):
 
     # REQ-02, REQ-06: no executed-command gate passes with nothing judged,
     # whatever the manual and built-in runs say.
-    result = check({"att": attested(3, "failed"), "val": builtin(4)})
+    result = check({"att": attested(3, RunStatus.FAILED), "val": builtin(4)})
     expect_status("no executed gate", result, 0, NONE_JUDGED,
                   "att: attested; imposes no condition",
                   "val: store-judged; imposes no condition", absent=(LANDED,))
