@@ -12,8 +12,10 @@ set -euo pipefail
 #   1 — one or more steps failed
 #   2 — environment problem: no real cargo available on PATH
 #
-# A failed step prints its cause (per-test results, else nextest error lines,
-# else the log tail) and the path of its full log under `target/cargo-ci-logs/`.
+# A failed step prints the path of its full log under `target/cargo-ci-logs/`;
+# a failed nextest step (`test`, `test-build` and the per-package `*-build` and
+# `*-nextest` steps) also prints its cause: failing tests and nextest error
+# blocks, else the log tail.
 
 # Every step runs its command directly. The only host lock a step takes is the
 # GPU lock that nextest holds for each `gpu-serial` test
@@ -81,6 +83,7 @@ trap 'rm -rf "$RUN_ROOT"' EXIT
 LOGDIR="$RUN_ROOT/logs"
 # A failed step's full log is copied to `target/cargo-ci-logs/<run stamp>/`
 # (untracked) before the trap removes `LOGDIR`.
+# shellcheck disable=SC2034 # read by keep_failed_log
 CARGO_CI_LOG_DIR="$(cd "$(dirname "$0")/.." && pwd)/target/cargo-ci-logs/$(date +%Y%m%dT%H%M%S)-$$"
 SCRATCH="$RUN_ROOT/scratch"
 mkdir -p "$LOGDIR" "$SCRATCH"
@@ -150,6 +153,7 @@ run_step() {
     local rc=$?
     summary+="  ✗ $name: FAILED (exit $rc, $((SECONDS - started))s)"$'\n'
     summarize_fail "$name"
+    keep_failed_log "$name" "$LOGDIR/$name.out"
     failed=1
   fi
 }
@@ -199,7 +203,8 @@ summarize_fail() {
     test|test-build|*-nextest|*-build)
       # nextest indents its result lines, so no pattern anchors at column zero;
       # see scripts/cargo-ci-failure.sh for the cause extraction.
-      report_failed_step "$name" "$LOGDIR/$name.out"
+      echo "--- $name failures ---"
+      print_failure_cause "$LOGDIR/$name.out"
       ;;
     clippy|doc|doc-coding)
       echo "--- $name diagnostics ---"

@@ -23,18 +23,37 @@ printf '%s\n' l1 l2 l3 l4 l5 >"$TMP/plain.out"
 
 check() { # name log pattern-present pattern-absent
   local out
-  out=$(report_failed_step "$1" "$2")
+  out=$(print_failure_cause "$2"; keep_failed_log "$1" "$2")
   grep -qE -- "$3" <<<"$out" || fail "$1: missing /$3/ in: $out"
   [ -z "${4:-}" ] || ! grep -qE -- "$4" <<<"$out" || fail "$1: unexpected /$4/"
   grep -qF "full log: $CARGO_CI_LOG_DIR/$1.log" <<<"$out" || fail "$1: no log path"
   [ -s "$CARGO_CI_LOG_DIR/$1.log" ] || fail "$1: log not kept"
   ! grep -q $'\x1b' "$CARGO_CI_LOG_DIR/$1.log" || fail "$1: kept log has colour"
+  printf '%s\n' "$out"
 }
+has() { grep -qE -- "$2" <<<"$1" || fail "missing /$2/ in: $1"; }
 
-check test "$TMP/test.out" 'FAIL .*a::broken' 'tail'
-grep -q 'assertion failed' <<<"$(report_failed_step test "$TMP/test.out")" || fail "stderr section"
-check setup "$TMP/setup.out" 'error: setup script failed' 'Starting 3'
-grep -q 'SETUP FAIL' <<<"$(report_failed_step setup "$TMP/setup.out")" || fail "SETUP FAIL line"
-check plain "$TMP/plain.out" 'last 3 log lines' 'l2'
-grep -qx l5 <<<"$(report_failed_step plain "$TMP/plain.out")" || fail "tail content"
+out=$(check test "$TMP/test.out" 'FAIL .*a::broken' 'tail')
+has "$out" 'assertion failed'
+out=$(check setup "$TMP/setup.out" 'error: setup script failed' 'Starting 3')
+has "$out" 'SETUP FAIL'
+out=$(check plain "$TMP/plain.out" 'last 3 log lines' 'l2')
+has "$out" '^l5$'
+
+# Every failure status, with a list error after the results.
+printf '%s\n' '        XFAIL [   0.1s] m::x' '        SIGKILL [   0.2s] m::k' \
+  '        SIGILL [   0.2s] m::i' '    TRY 2 TIMEOUT [  1.0s] m::t' \
+  '        LKFAIL [   0.3s] m::l' '        PASS [   0.1s] m::ok' \
+  'error: creating test list failed' '  Caused by:' '    archive is corrupt' \
+  '    at byte 12' '' '  unrelated indented line' >"$TMP/mixed.out"
+out=$(check mixed "$TMP/mixed.out" 'XFAIL .*m::x' 'tail|m::ok|unrelated')
+for p in 'SIGKILL .*m::k' 'SIGILL .*m::i' 'TIMEOUT .*m::t' 'LKFAIL .*m::l' \
+  'error: creating test list failed' 'Caused by:' 'archive is corrupt' 'at byte 12'; do
+  has "$out" "$p"
+done
+
+# An unwritable log directory is reported and does not abort the caller.
+touch "$TMP/file"
+out=$(CARGO_CI_LOG_DIR="$TMP/file/sub" keep_failed_log x "$TMP/plain.out")
+has "$out" '^full log not kept: cannot write '
 echo "cargo-ci-failure: ok"

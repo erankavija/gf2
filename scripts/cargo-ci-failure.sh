@@ -2,45 +2,54 @@
 # Failure reporting for scripts/cargo-ci.sh, sourced by it and by
 # scripts/cargo-ci-failure.test.sh. Defines functions only.
 #
-# `report_failed_step <name> <log>` prints a failed step's cause and keeps its
-# full log under `$CARGO_CI_LOG_DIR/<name>.log`; the caller sets
-# `CARGO_CI_LOG_DIR` (a directory outside the tracked tree) and `plain`.
+# `print_failure_cause <log>` prints a failed nextest step's cause.
+# `keep_failed_log <name> <log>` copies the full log to
+# `$CARGO_CI_LOG_DIR/<name>.log` and prints its path, or one line saying it
+# could not. The caller defines `plain` and `CARGO_CI_LOG_DIR` (a directory
+# outside the tracked tree).
 
 # Lines of the log tail printed when no test result or error line is found.
 CARGO_CI_FAIL_TAIL_LINES=40
 
-# nextest status and error lines outside a test result: `error:`/`Error:`
-# (setup script, wrapper script, list and archive failures, exit-code
-# reports), `SETUP FAIL`-style setup-script statuses, and cause chains.
-NEXTEST_ERROR_RE='^[[:space:]]*(error|Error|ERROR)\b|^[[:space:]]*SETUP[[:space:]]+(FAIL|LKFAIL|LEAK|TMO|EXFAIL|TIMEOUT)|^[[:space:]]*(Caused by|caused by)'
+# nextest per-test failure statuses: FAIL, XFAIL, LKFAIL, LEAK-FAIL, TIMEOUT,
+# EXEC FAIL, ABORT and the signal names (SIGSEGV, SIGKILL, SIGILL, ...). The
+# status may follow `TRY <n> ` and precedes the `[ <time>]` field.
+NEXTEST_TEST_FAIL_RE='^[[:space:]]*(TRY [0-9]+ )?(FAIL|XFAIL|LKFAIL|LEAK-FAIL|LEAK|TIMEOUT|EXEC ?-?FAIL|ABORT|SIG[A-Z0-9]+)[[:space:]]+\[|^[[:space:]]*×'
 
-# Prints the per-test result lines and captured output, else the nextest error
-# lines, else the log tail.
+# A nextest diagnostic outside a test result: an `error:`/`Error:` line with
+# its indented cause chain, and setup-script failure statuses.
+print_nextest_errors() {
+  plain "$1" | awk '
+    /^[[:space:]]*(error|Error|ERROR)\>/ { on = 1; print; next }
+    /^[[:space:]]*SETUP[[:space:]]+(FAIL|LKFAIL|LEAK|TMO|EXFAIL|TIMEOUT)/ { print; next }
+    on && (/^[[:space:]]+[^[:space:]]/ || /^(Caused by|caused by)/) { print; next }
+    { on = 0 }'
+}
+
+# Per-test failures with captured output, then nextest error blocks; the log
+# tail only when both are absent.
 print_failure_cause() {
-  local log="$1" found
-  found=$(plain "$log" | grep -E "^[[:space:]]*(FAIL|TIMEOUT|SIGSEGV|SIGABRT|LEAK|×)" || true)
-  if [ -n "$found" ]; then
-    printf '%s\n' "$found"
+  local log="$1" tests errors
+  tests=$(plain "$log" | grep -E "$NEXTEST_TEST_FAIL_RE" || true)
+  errors=$(print_nextest_errors "$log")
+  if [ -n "$tests" ]; then
+    printf '%s\n' "$tests"
     plain "$log" | grep -A 20 -E "^[[:space:]]*--- (STDOUT|STDERR):" | head -60 || true
-    return 0
   fi
-  found=$(plain "$log" | grep -E "$NEXTEST_ERROR_RE" || true)
-  if [ -n "$found" ]; then
-    printf '%s\n' "$found"
-    return 0
+  [ -z "$errors" ] || printf '%s\n' "$errors"
+  if [ -z "$tests$errors" ]; then
+    echo "(no test result or error line; last $CARGO_CI_FAIL_TAIL_LINES log lines)"
+    plain "$log" | tail -n "$CARGO_CI_FAIL_TAIL_LINES" || true
   fi
-  echo "(no test result or error line; last $CARGO_CI_FAIL_TAIL_LINES log lines)"
-  plain "$log" | tail -n "$CARGO_CI_FAIL_TAIL_LINES"
+  return 0
 }
 
 keep_failed_log() {
-  mkdir -p "$CARGO_CI_LOG_DIR"
-  plain "$2" >"$CARGO_CI_LOG_DIR/$1.log"
-  echo "full log: $CARGO_CI_LOG_DIR/$1.log"
-}
-
-report_failed_step() {
-  echo "--- $1 failures ---"
-  print_failure_cause "$2"
-  keep_failed_log "$1" "$2"
+  local dest="$CARGO_CI_LOG_DIR/$1.log"
+  if { mkdir -p "$CARGO_CI_LOG_DIR" && plain "$2" >"$dest"; } 2>/dev/null; then
+    echo "full log: $dest"
+  else
+    echo "full log not kept: cannot write $dest"
+  fi
+  return 0
 }
