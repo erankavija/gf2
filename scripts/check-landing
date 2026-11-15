@@ -136,49 +136,67 @@ def executing_run(issue_id, key, run):
     return run
 
 
-def judge_executed(issue_id, key, definition, run, commit, revision):
-    """Returns (counts, detail) for a passed executed-command gate."""
-    reused = (run.get("origin") or {}).get("derivation") == "reused"
-    force = (
-        f"; needs a forced evaluation at {revision}"
-        f" (jit gate evaluate {issue_id} {key} --force)"
-        if reused
-        else f"; re-evaluate at {revision}"
-    )
-    executed = executing_run(issue_id, key, run)
-    if executed is None:
-        return False, (
-            f"recorded commit none, expected {commit}: the run that executed the"
-            f" checker is not found{force}"
-        )
-    recorded = executed.get("commit")
-    via = f" via origin run {executed.get('run_id')}" if reused else ""
+def compared_paths(recorded, commit, definition):
+    """Returns (counts by commit, paths text) for a recorded commit."""
     if not recorded:
-        return False, f"recorded commit none{via}, expected {commit}{force}"
+        return False, "differing input paths: unknown without a recorded commit"
     if recorded == commit:
-        return True, f"ran at {commit}{via}"
+        return True, "differing input paths: none"
     if git("cat-file", "-e", f"{recorded}^{{commit}}")[0] != 0:
         return False, (
-            f"recorded commit {recorded}{via}, expected {commit}: the recorded"
-            f" commit is not in this repository{force}"
+            "differing input paths: unknown, the recorded commit is not in this"
+            " repository"
         )
     specs = input_pathspecs(definition.get("inputs"))
     try:
         paths = differing_paths(recorded, commit, specs)
     except GitError as err:
-        return False, f"recorded commit {recorded}{via}: git diff failed: {err}{force}"
+        return False, f"differing input paths: unknown, git diff failed: {err}"
     if specs is not None and not paths:
-        return True, f"ran at {recorded}{via}; declared inputs identical"
+        return True, "declared inputs identical"
     shown = ", ".join(paths[:PATH_LIMIT]) or "none"
     if len(paths) > PATH_LIMIT:
         shown += f" and {len(paths) - PATH_LIMIT} more"
-    scope = (
-        "differing input paths"
-        if specs is not None
-        else "no declared inputs, so it counts only for the recorded commit;"
-        " differing paths"
+    if specs is None:
+        return False, (
+            "no declared inputs, so it counts only for the recorded commit;"
+            f" differing paths: {shown}"
+        )
+    return False, f"differing input paths: {shown}"
+
+
+def judge_executed(issue_id, key, definition, run, commit, revision):
+    """Returns (counts, detail) for an executed-command gate's latest run.
+
+    A refusal always names the recorded commit, the expected commit and the
+    differing input paths, whatever the run's status.
+    """
+    reused = (run.get("origin") or {}).get("derivation") == "reused"
+    executed = executing_run(issue_id, key, run) if run.get("run_id") else None
+    recorded = (executed or {}).get("commit")
+    via = f" via origin run {executed.get('run_id')}" if reused and executed else ""
+    same, paths = compared_paths(recorded, commit, definition)
+    status = run.get("status")
+    if not run.get("run_id") or status is None:
+        reason = "has no run"
+    elif status != "passed":
+        reason = f"latest run {run['run_id']} is {status}"
+    elif reused and executed is None:
+        reason = "the run that executed the checker is not found"
+    elif not same:
+        reason = None
+    elif recorded == commit:
+        return True, f"ran at {commit}{via}"
+    else:
+        return True, f"ran at {recorded}{via}; {paths}"
+    force = (
+        f"needs a forced evaluation at {revision}"
+        f" (jit gate evaluate {issue_id} {key} --force)"
+        if reused
+        else f"re-evaluate at {revision}"
     )
-    return False, f"recorded commit {recorded}{via}, expected {commit}; {scope}: {shown}{force}"
+    parts = [f"recorded commit {recorded or 'none'}{via}, expected {commit}", paths]
+    return False, "; ".join(parts + ([reason] if reason else []) + [force])
 
 
 def judge_gate(issue_id, key, commit, revision):
@@ -187,17 +205,19 @@ def judge_gate(issue_id, key, commit, revision):
         return True, "judged after the merge", None
     definition = jit("gate", "show", key)
     run = jit("gate", "status", issue_id, key)
+    if (definition.get("checker") or {}).get("type") == "exec" and (
+        definition.get("mode") != "manual"
+    ):
+        counts, detail = judge_executed(issue_id, key, definition, run, commit, revision)
+        return counts, "counts" if counts else "refused", detail
     status = run.get("status")
     if not run.get("run_id") or status is None:
-        return False, "refused", "has no run"
+        return False, "refused", "has no run; no commit applies"
     if status != "passed":
-        return False, "refused", f"latest run {run['run_id']} is {status}"
+        return False, "refused", f"latest run {run['run_id']} is {status}; no commit applies"
     if definition.get("mode") == "manual":
         return True, "attested", f"by {run.get('by', 'unknown')}"
-    if (definition.get("checker") or {}).get("type") != "exec":
-        return True, "store-judged", f"run {run['run_id']} passed"
-    counts, detail = judge_executed(issue_id, key, definition, run, commit, revision)
-    return counts, "counts" if counts else "refused", detail
+    return True, "store-judged", f"run {run['run_id']} passed"
 
 
 def check(issue_ref, revision):

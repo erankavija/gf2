@@ -78,16 +78,16 @@ def executed(key, commit, n, status="passed"):
     return record
 
 
-def reused(key, source_run, n):
+def reused(key, source_run, n, status="passed"):
     return {
         "by": "auto:executor", "command": DEFINITIONS[key]["checker"]["command"],
         "completed_at": "2026-11-15T16:56:25.983604318+00:00", "duration_ms": 0,
         "evaluation_stability": "stable", "key": key,
-        "message": f"Gate '{key}': passed",
+        "message": f"Gate '{key}': {status}",
         "origin": {"derivation": "reused", "source_issue": SOURCE_ISSUE,
                    "source_run": source_run},
         "run_id": run_id(n), "stage": "postcheck",
-        "started_at": "2026-11-15T16:56:25.983604318+00:00", "status": "passed",
+        "started_at": "2026-11-15T16:56:25.983604318+00:00", "status": status,
         "stderr": "", "stdout": "",
     }
 
@@ -298,14 +298,30 @@ def run_cases(h):
                   f"recorded commit {absent}", "not in this repository",
                   absent=(SUCCESS,))
 
-    # REQ-02: any run that did not pass, of every gate kind, and a gate never run.
-    for key, run in (("ci", executed("ci", base, 1, "failed")),
-                     ("att", attested(3, "failed")), ("val", builtin(4, "failed"))):
+    # REQ-02: a run that did not pass names its commits and input paths.
+    runs = dict(all_kinds, ci=executed("ci", base, 1, "failed"),
+                plain=executed("plain", in_root, 2))
+    result = h.check(fixture(runs), short, in_root)
+    expect_status("failed at older commit", result, 1, "ci: refused",
+                  f"recorded commit {base}", f"expected {in_root}",
+                  "differing input paths: src/a", f"latest run {run_id(1)} is failed",
+                  absent=(SUCCESS, "skip1.md"))
+    result = h.check(fixture(dict(all_kinds, ci=executed("ci", base, 1, "failed"))),
+                     short, base)
+    expect_status("failed at expected commit", result, 1, "ci: refused",
+                  f"recorded commit {base}", f"expected {base}",
+                  "differing input paths: none", f"latest run {run_id(1)} is failed",
+                  absent=(SUCCESS,))
+    for key, run in (("att", attested(3, "failed")), ("val", builtin(4, "failed"))):
         result = h.check(fixture(dict(all_kinds, **{key: run})), short, base)
-        expect_status(f"{key} failed", result, 1, f"{key}: refused", "failed",
-                      absent=(SUCCESS,))
+        expect_status(f"{key} failed", result, 1, f"{key}: refused", "is failed",
+                      "no commit applies", absent=(SUCCESS,))
     result = h.check(fixture(dict(all_kinds, att=not_run("att"))), short, base)
-    expect_status("never run", result, 1, "att: refused", "has no run",
+    expect_status("manual never run", result, 1, "att: refused", "has no run",
+                  "no commit applies", absent=(SUCCESS,))
+    result = h.check(fixture(dict(all_kinds, ci=not_run("ci"))), short, base)
+    expect_status("executed never run", result, 1, "ci: refused", "has no run",
+                  "recorded commit none", f"expected {base}", "differing input paths",
                   absent=(SUCCESS,))
 
     # REQ-03: a reused verdict is judged by the run that executed the checker.
@@ -321,6 +337,14 @@ def run_cases(h):
     expect_status("reused refused", result, 1, "ci: refused",
                   f"recorded commit {base}", f"expected {in_root}", "src/a",
                   "needs a forced evaluation at", "--force", absent=(SUCCESS,))
+    # A failed reused run names its origin run and the input paths.
+    failed_runs = dict(runs, ci=reused("ci", run_id(10), 5, "failed"))
+    result = h.check(fixture(failed_runs, history), short, in_root)
+    expect_status("reused failed", result, 1, "ci: refused",
+                  f"recorded commit {base} via origin run {run_id(10)}",
+                  f"expected {in_root}", "differing input paths: src/a",
+                  f"latest run {run_id(5)} is failed", "needs a forced evaluation at",
+                  absent=(SUCCESS,))
     missing = {"ci": [executed("ci", base, 12)]}
     result = h.check(fixture(runs, missing), short, in_root)
     expect_status("reused source missing", result, 1, "ci: refused",
