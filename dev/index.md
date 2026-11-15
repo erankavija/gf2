@@ -22,6 +22,7 @@ The workflow rules are in the JIT workflow section of
 
 - `.jit/` is the checkout of the tracker repository, ignored by the code
   repository. A fresh clone mounts it with `scripts/tracker-bootstrap <path-or-url>`.
+  On a host with a mounted tracker, its home is `git -C .jit remote get-url origin`; a fresh clone on that host mounts it with `scripts/tracker-bootstrap "$(git -C <primary-checkout>/.jit remote get-url origin)"`.
 - A linked worktree runs jit as `scripts/tracker-env jit ...` and finds the
   store's files under the primary checkout's `.jit/`.
 - Skill scripts that require `.jit` under their root run against the primary
@@ -33,6 +34,7 @@ The workflow rules are in the JIT workflow section of
   the lead evaluates after the merged-tree gate.
 - A lead runs `scripts/tracker-snapshot` after each landing, the steward at the
   end of a session.
+  `scripts/tracker-snapshot` commits locally; `git -C .jit push origin main` then keeps the home current.
 
 ## Epic documents: `active/`
 

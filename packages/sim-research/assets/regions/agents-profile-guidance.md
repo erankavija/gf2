@@ -6,7 +6,7 @@ _No invariants declared._
 
 ## JIT workflow
 
-- `.jit/` is the checkout of the tracker repository; the code repository ignores it. A fresh clone mounts it with `scripts/tracker-bootstrap <path-or-url>`.
+- `.jit/` is the checkout of the tracker repository; the code repository ignores it. A fresh clone mounts it with `scripts/tracker-bootstrap <path-or-url>`. On a host with a mounted tracker, its home is `git -C .jit remote get-url origin`; a fresh clone on that host mounts it with `scripts/tracker-bootstrap "$(git -C <primary-checkout>/.jit remote get-url origin)"`.
 - Run jit from a linked worktree through `scripts/tracker-env jit ...`. The entry point sets `JIT_DATA_DIR` to the primary checkout's `.jit/`, where such a worktree finds the store's files, and `JIT_WORKTREE_ROOT` to the worktree.
 - Skill scripts that require `.jit` under their root run against the primary checkout.
 - Read `.jit/reference/content-standards.md` before authoring issues or planning documents.
@@ -16,5 +16,5 @@ _No invariants declared._
 - Link a document that exists only on a branch with `jit doc add` pinned to a branch commit (`--commit`), and re-link it unpinned when it lands.
 - A branch lands only after `scripts/check-landing <issue> <tip>` passes.
 - A code-producing issue carries the `landed` gate through the `code-task` preset; the lead evaluates it after the merged-tree gate.
-- A lead runs `scripts/tracker-snapshot` after each landing, and the steward at the end of a session.
+- A lead runs `scripts/tracker-snapshot` after each landing, and the steward at the end of a session. `scripts/tracker-snapshot` commits locally; `git -C .jit push origin main` then keeps the home current.
 - Run the configured gates before completing an issue; a passing review placeholder is advisory evidence only.
