@@ -200,8 +200,8 @@ class Harness:
             json.dump(calls, f)
         env = {**self.env, **(env or {}),
                "PATH": self.bin if jit_on_path else self.bare_bin}
-        proc = subprocess.run([sys.executable, self.script, *args], cwd=self.repo,
-                              env=env, capture_output=True, text=True)
+        proc = subprocess.run([sys.executable, "-B", self.script, *args],
+                              cwd=self.repo, env=env, capture_output=True, text=True)
         return proc.returncode, proc.stdout, proc.stderr
 
 

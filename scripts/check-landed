@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+"""Checker of the `landed` gate: passes once an issue's code is on main.
+
+    JIT_ISSUE_ID=<issue> check-landed
+
+jit sets JIT_ISSUE_ID when it runs the gate. Reads the issue's required gates,
+their definitions and the latest run of each through `jit ... --json` from
+PATH, with the caller's environment. Git runs in the current checkout.
+
+Each other required gate whose checker is an executed command is judged by
+the run that executed the checker (the origin of a reused verdict): it is on
+main when that run's recorded commit is an ancestor of refs/heads/main. A
+manual gate is listed as attested and a gate with a built-in checker as
+store-judged; neither records a commit, so neither imposes a condition. An
+issue without an executed-command gate passes with no commit judged.
+
+Exit statuses:
+    0   every judged commit is on main, or no commit was judged
+    1   not landed: a judged gate has no run, its run records no commit, or
+        the commit is not an ancestor of main
+    2   jit is unavailable or failed, or the issue does not exist
+    64  usage error: arguments given or JIT_ISSUE_ID unset
+"""
+
+import os
+import sys
+# Bare stream name until @/issue/d1eba151 classifies extensionless scripts.
+from sys import stderr
+
+from landing_gates import (
+    BUILTIN,
+    EXECUTED,
+    LANDED,
+    JitError,
+    JitUnavailable,
+    executing_run,
+    gate_kind,
+    git,
+    is_reused,
+    jit,
+)
+
+EXIT_OK, EXIT_NOT_LANDED, EXIT_JIT, EXIT_USAGE = 0, 1, 2, 64
+MAIN = "refs/heads/main"
+
+
+def judge_executed(issue_id, key):
+    """Returns (on main, detail) for an executed-command gate."""
+    run = jit("gate", "status", issue_id, key)
+    if not run.get("run_id"):
+        return False, "has no run, so no commit is recorded"
+    executed = executing_run(key, run)
+    if executed is None:
+        return False, (
+            f"the run that executed the checker for run {run['run_id']} is not found"
+        )
+    via = f" via origin run {executed['run_id']}" if is_reused(run) else ""
+    commit = executed.get("commit")
+    if not commit:
+        return False, f"run {executed['run_id']} records no commit"
+    if git("merge-base", "--is-ancestor", commit, MAIN)[0] != 0:
+        return False, f"commit {commit} of run {executed['run_id']} is not on main"
+    return True, f"ran at {commit}{via}"
+
+
+def check(issue_id):
+    issue = jit("issue", "show", issue_id)
+    issue_id = issue.get("id") or issue_id
+    print(f"check-landed: issue {issue_id} against {MAIN}")
+    judged, not_landed = 0, []
+    for gate in issue.get("gates") or []:
+        key = gate["key"]
+        if key == LANDED:
+            continue
+        kind = gate_kind(jit("gate", "show", key))
+        if kind != EXECUTED:
+            label = "store-judged" if kind == BUILTIN else "attested"
+            print(f"  {key}: {label}; imposes no condition")
+            continue
+        judged += 1
+        on_main, detail = judge_executed(issue_id, key)
+        print(f"  {key}: {'on main' if on_main else 'not landed'}: {detail}")
+        if not on_main:
+            not_landed.append(key)
+    if not_landed:
+        print(f"check-landed: not landed: {', '.join(not_landed)}")
+        return EXIT_NOT_LANDED
+    if not judged:
+        print("check-landed: no executed-command gate, so no commit was judged")
+    else:
+        print("check-landed: every executed run's commit is on main")
+    return EXIT_OK
+
+
+def main(argv):
+    issue_id = os.environ.get("JIT_ISSUE_ID")
+    if argv or not issue_id:
+        print("usage: JIT_ISSUE_ID=<issue> check-landed", file=stderr)
+        return EXIT_USAGE
+    try:
+        return check(issue_id)
+    except JitUnavailable as err:
+        print(f"check-landed: {err}", file=stderr)
+    except JitError as err:
+        if err.code == "ISSUE_NOT_FOUND":
+            print(f"check-landed: issue not found: {issue_id}", file=stderr)
+        else:
+            print(f"check-landed: {err}", file=stderr)
+    return EXIT_JIT
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

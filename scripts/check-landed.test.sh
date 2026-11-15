@@ -22,7 +22,8 @@ expect() { [ "$2" = "$3" ] || fail "$1: got [$2], expected [$3]"; }
 unset GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR GIT_INDEX_FILE GIT_OBJECT_DIRECTORY \
   GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_CEILING_DIRECTORIES \
   GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS
-unset JIT_DATA_DIR JIT_WORKTREE_ROOT JIT_AGENT_ID JIT_ISSUE_ID
+# A gate checker inherits jit's JIT_* settings; the scratch leads set their own.
+for name in $(env | sed -n 's/^\(JIT_[A-Za-z0-9_]*\)=.*/\1/p'); do unset "$name"; done
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
 export GIT_AUTHOR_NAME=test GIT_AUTHOR_EMAIL=test@example.invalid
 export GIT_COMMITTER_NAME=test GIT_COMMITTER_EMAIL=test@example.invalid
@@ -91,7 +92,7 @@ land() {
   for gate in $2; do extra="$extra --gate $gate"; done
   issue=$(new_issue "code-producing $1" --gate ci --gate landed $extra)
   dependent=$(new_issue "dependent $1")
-  two dep add "$dependent" "$issue" -q
+  two dep add "$dependent" "$issue" -q >/dev/null
   one issue claim "$issue" agent:lead-one -q
   printf '%s\n' "$1" >>"$ONE/code"
   git -C "$ONE" commit -qam "change $1"
