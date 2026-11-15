@@ -1,0 +1,27 @@
+#!/bin/sh
+# Commits unignored tracker changes while jit holds the store write lock.
+# Usage: tracker-snapshot; exits 0 on a commit or a clean store, nonzero on failure.
+# Refuses arguments, an unavailable store/lock, or a store without its own git root.
+set -eu
+
+[ "$#" -eq 0 ] || { echo 'usage: tracker-snapshot' >&2; exit 1; }
+scripts=$(cd "$(dirname "$0")" && pwd -P)
+# shellcheck disable=SC2016 # Expanded by the shell running under the store lock.
+exec "$scripts/tracker-env" jit worktree exec -- sh -eu -c '
+  data=$(cd "$JIT_DATA_DIR" && pwd -P)
+  if [ "$(git -C "$data" rev-parse --show-toplevel)" != "$data" ]; then
+    echo "tracker-snapshot: store is not the top level of its own git repository: $data" >&2
+    exit 1
+  fi
+  git -C "$data" add -A
+  if git -C "$data" diff --cached --quiet; then
+    exit 0
+  else
+    status=$?
+    [ "$status" -eq 1 ] || exit "$status"
+  fi
+  main=$(git -C "$JIT_WORKTREE_ROOT" rev-parse --verify "refs/heads/main^{commit}")
+  main=$(printf "%.12s" "$main")
+  utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  git -C "$data" commit -m "snapshot $utc main $main"
+'

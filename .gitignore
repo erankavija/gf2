@@ -60,14 +60,7 @@ benchmarks/reference/ntl_gf2pow32_smoke
 *.llbc
 
 # JIT artifacts
-.jit/**/*.lock
 .jit-bootstrap.lock
-.jit/worktree.json
-.jit/tmp/
-.jit/server.log
-.jit/server.pid.json
-.jit/gate-runs/
-.jit/gate-artifacts/
 .claude/worktrees/
 .agents/worktrees/
 # Shared Cargo build cache for agent worktrees; regenerated on demand.
