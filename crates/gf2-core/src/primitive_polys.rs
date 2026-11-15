@@ -235,7 +235,7 @@ impl PrimitivePolynomialDatabase {
     }
 
     /// Prose form of the `m = 64..=127` guarantee of [`Self::standard_u128`].
-    pub const fn standard_u128_irreducibility_note() -> &'static str {
+    pub const fn standard_u128_primitivity_note() -> &'static str {
         "PrimitivePolynomialDatabase::standard_u128 entries for m = 64..=127 \
          are verified primitive over GF(2) by \
          primitive_polys::is_primitive_u128."
