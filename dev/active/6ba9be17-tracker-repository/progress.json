@@ -106,8 +106,8 @@
     {
       "id": "84022ee3-5195-41a1-95a5-822783074b15",
       "short_id": "84022ee3",
-      "title": "Check gate presets against the gate registry",
-      "reason": "steward ruling at the 7854cfad landing: jit presets embed full gate definitions (drift against gates.toml), plus the Sonnet review advisory on untested parse cases",
+      "title": "Rewrite the code-task preset as gate keys and test the parse cases",
+      "reason": "steward ruling at the 7854cfad landing, narrowed when the jit project took key-only presets (jit 5e3bee43): rewrite code-task as keys with the new binary; the Sonnet review advisory on untested parse cases",
       "wave": 5
     }
   ],
