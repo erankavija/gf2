@@ -102,3 +102,6 @@ __pycache__/
 **/inputs/producing/
 **/source-inputs/
 perf.data*
+
+# The tracker repository, mounted here
+/.jit/
