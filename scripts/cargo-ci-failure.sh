@@ -11,17 +11,19 @@
 # Lines of the log tail printed when no test result or error line is found.
 CARGO_CI_FAIL_TAIL_LINES=40
 
-# nextest per-test failure statuses: FAIL, XFAIL, LKFAIL, LEAK-FAIL, TIMEOUT,
-# EXEC FAIL, ABORT and the signal names (SIGSEGV, SIGKILL, SIGILL, ...). The
-# status may follow `TRY <n> ` and precedes the `[ <time>]` field.
-NEXTEST_TEST_FAIL_RE='^[[:space:]]*(TRY [0-9]+ )?(FAIL|XFAIL|LKFAIL|LEAK-FAIL|LEAK|TIMEOUT|EXEC ?-?FAIL|ABORT|SIG[A-Z0-9]+)[[:space:]]+\[|^[[:space:]]*×'
+# nextest result lines (reporter/displayer/imp.rs): a right-aligned label, then
+# the bracketed duration `[   0.005s]`, then the test or script name. Every
+# such line is a failure unless its label is a success or progress status, so
+# a label nextest adds later is printed by default.
+NEXTEST_RESULT_RE='^[[:space:]]*[A-Za-z][A-Za-z0-9 +/-]*[[:space:]]\[[ 0-9.]+s\]'
+NEXTEST_OK_LABEL_RE='^[[:space:]]*(SETUP )?(PASS|SKIP|SLOW|SLOW \+ LEAK|SLOW\+TMPASS|LEAK|TIMEOUT-PASS|START|TERMINATING|FLAKY [0-9]+/[0-9]+|TRY [0-9]+ (PASS|SLOW|START|TRMNTG))[[:space:]]+\['
+NEXTEST_SUMMARY_RE='^[[:space:]]*Summary[[:space:]]+\['
 
 # A nextest diagnostic outside a test result: an `error:`/`Error:` line with
-# its indented cause chain, and setup-script failure statuses.
+# its indented cause chain.
 print_nextest_errors() {
   plain "$1" | awk '
     /^[[:space:]]*(error|Error|ERROR)\>/ { on = 1; print; next }
-    /^[[:space:]]*SETUP[[:space:]]+(FAIL|LKFAIL|LEAK|TMO|EXFAIL|TIMEOUT)/ { print; next }
     on && (/^[[:space:]]+[^[:space:]]/ || /^(Caused by|caused by)/) { print; next }
     { on = 0 }'
 }
@@ -30,13 +32,14 @@ print_nextest_errors() {
 # tail only when both are absent.
 print_failure_cause() {
   local log="$1" tests errors
-  tests=$(plain "$log" | grep -E "$NEXTEST_TEST_FAIL_RE" || true)
+  tests=$(plain "$log" | grep -E "$NEXTEST_RESULT_RE" | grep -vE "$NEXTEST_OK_LABEL_RE" || true)
   errors=$(print_nextest_errors "$log")
   if [ -n "$tests" ]; then
     printf '%s\n' "$tests"
     plain "$log" | grep -A 20 -E "^[[:space:]]*--- (STDOUT|STDERR):" | head -60 || true
   fi
   [ -z "$errors" ] || printf '%s\n' "$errors"
+  plain "$log" | grep -E "$NEXTEST_SUMMARY_RE" || true
   if [ -z "$tests$errors" ]; then
     echo "(no test result or error line; last $CARGO_CI_FAIL_TAIL_LINES log lines)"
     plain "$log" | tail -n "$CARGO_CI_FAIL_TAIL_LINES" || true

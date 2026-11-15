@@ -40,14 +40,23 @@ has "$out" 'SETUP FAIL'
 out=$(check plain "$TMP/plain.out" 'last 3 log lines' 'l2')
 has "$out" '^l5$'
 
-# Every failure status, with a list error after the results.
+# Failure labels incl. compound and retry forms, an unknown future label, and
+# success forms that stay unprinted, with a list error after the results.
 printf '%s\n' '        XFAIL [   0.1s] m::x' '        SIGKILL [   0.2s] m::k' \
   '        SIGILL [   0.2s] m::i' '    TRY 2 TIMEOUT [  1.0s] m::t' \
   '        LKFAIL [   0.3s] m::l' '        PASS [   0.1s] m::ok' \
+  '      FAIL + LEAK [   0.1s] m::fl' '    TRY 2 FL+LK [   0.1s] m::tfl' \
+  '    TRY 2 TMT [   0.1s] m::tmt' '    TRY 2 KILL [   0.1s] m::tk' \
+  '      NEWFAIL [   0.1s] m::future' '     FLAKY 2/3 [   0.1s] m::flaky' \
+  '    TRY 1 PASS [   0.1s] m::tp' '        LEAK [   0.1s] m::leakok' \
+  '        START [         ] m::st' \
+  '     Summary [   1.000s] 9 tests run: 3 passed, 6 failed, 0 skipped' \
   'error: creating test list failed' '  Caused by:' '    archive is corrupt' \
   '    at byte 12' '' '  unrelated indented line' >"$TMP/mixed.out"
-out=$(check mixed "$TMP/mixed.out" 'XFAIL .*m::x' 'tail|m::ok|unrelated')
+out=$(check mixed "$TMP/mixed.out" 'XFAIL .*m::x' 'tail|m::ok|unrelated|m::flaky|m::tp|m::leakok|m::st')
 for p in 'SIGKILL .*m::k' 'SIGILL .*m::i' 'TIMEOUT .*m::t' 'LKFAIL .*m::l' \
+  'FAIL \+ LEAK .*m::fl' 'FL\+LK .*m::tfl' 'TMT .*m::tmt' 'TRY 2 KILL .*m::tk' \
+  'NEWFAIL .*m::future' 'Summary .*6 failed' \
   'error: creating test list failed' 'Caused by:' 'archive is corrupt' 'at byte 12'; do
   has "$out" "$p"
 done
