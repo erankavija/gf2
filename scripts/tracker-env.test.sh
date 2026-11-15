@@ -52,9 +52,23 @@ gitq -C "$EMPTY" worktree add -q "$BASE/empty-wt" -b wt
 # Prints the three variables, one per line, as the command sees them.
 # shellcheck disable=SC2016 # expanded by the probing shell
 probe='printf "%s\n" "$JIT_DATA_DIR" "$JIT_WORKTREE_ROOT" "${JIT_AGENT_ID-<unset>}"'
+empty_probe='printf "%s\n%s\n%s|%s\n" "$JIT_DATA_DIR" "$JIT_WORKTREE_ROOT" "${JIT_AGENT_ID+set}" "${JIT_AGENT_ID-<unset>}"'
 
 expect() { # $1: label, $2: actual, $3: expected
   [ "$2" = "$3" ] || fail "$1: got [$2], expected [$3]"
+}
+
+empty_id_cases() { # $1: label, $2: working directory, $3: checkout root
+  expected=$(printf '%s\n%s\n%s|%s' "$P/.jit" "$3" set '')
+  out=$(cd "$2" && JIT_AGENT_ID= "$shell" "$ENTRY" sh -c "$empty_probe")
+  expect "$shell $1 empty command" "$out" "$expected"
+
+  printed=$(cd "$2" && JIT_AGENT_ID= "$shell" "$ENTRY")
+  printf '%s\n' "$printed" | grep -Fx "export JIT_AGENT_ID=''" >/dev/null ||
+    fail "$shell $1 empty print omitted export JIT_AGENT_ID=''"
+  out=$(cd "$2" && JIT_AGENT_ID= "$shell" -c \
+    'eval "$1" || exit 1; '"$empty_probe" _ "$printed")
+  expect "$shell $1 empty eval" "$out" "$expected"
 }
 
 for shell in sh bash zsh; do
@@ -73,6 +87,10 @@ for shell in sh bash zsh; do
   # --- REQ-03: a caller-set identity passes through -------------------------
   out=$(cd "$BASE/a/wt/sub" && JIT_AGENT_ID="agent:caller x" "$shell" "$ENTRY" sh -c "$probe")
   expect "$shell linked caller id" "$(printf '%s\n' "$out" | sed -n 3p)" "agent:caller x"
+
+  # --- REQ-03: an explicitly empty caller identity remains set and empty -----
+  empty_id_cases linked "$BASE/a/wt/sub" "$BASE/a/wt"
+  empty_id_cases primary "$P/sub" "$P"
 
   # --- REQ-02: primary checkout leaves JIT_AGENT_ID as the caller set it ----
   out=$(cd "$P/sub/dir" && env -u JIT_AGENT_ID "$shell" "$ENTRY" sh -c "$probe")

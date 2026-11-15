@@ -37,7 +37,7 @@ if [ "$gitdir" != "$common" ]; then
   if [ -e "$top/.jit" ] || [ -L "$top/.jit" ]; then
     die "linked worktree holds a store of its own: $top/.jit"
   fi
-  if [ -z "${JIT_AGENT_ID:-}" ]; then
+  if [ "${JIT_AGENT_ID+set}" != set ]; then
     JIT_AGENT_ID="agent:$(basename "$gitdir")"
     export JIT_AGENT_ID
   fi
