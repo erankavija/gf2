@@ -49,9 +49,11 @@ are the tracked and the untracked unignored files of the git repository that
 contains the data root, whether that is the code repository or the store's own.
 With the store mounted a tracker reference must name one of them or a path the
 ignore rules of the store's repository cover; the code repository's ignore
-rules excuse no tracker reference. Without a store, as on a fresh clone or a
-CI runner, tracker references pass and the checker prints how many it left
-unchecked; every other check runs.
+rules excuse no tracker reference. Repository-relative targets are normalized
+before resolution, including leading `/`, `.` and `..` components, so equivalent
+spellings use the same files, branch trees and ignore rules. Without a store,
+as on a fresh clone or a CI runner, tracker references pass and the checker
+prints how many it left unchecked; every other check runs.
 
 When the data root is `.jit` under the repository root, the files of the store
 are scanned as `.jit/` paths, so issue records and archive records are checked
@@ -294,7 +296,7 @@ def faults_in(
             if line[end : end + 1] in ("*", "{", "<", "$"):
                 continue
             # A trailing slash names the directory itself.
-            target = match.group(1).rstrip(".,:;").rstrip("/")
+            target = "/".join(_normal(match.group(1).rstrip(".,:;").rstrip("/")))
             if DEVICE.match(target):
                 continue
             if not TEMPLATE.search(target) and target not in known:
@@ -310,8 +312,9 @@ def faults_in(
                 if target not in known:
                     faults.append(f"{path}:{number}: {target}")
         for dotted in DOT_PATH.findall(line):
-            if dotted not in known and prose:
-                faults.append(f"{path}:{number}: {dotted}")
+            target = "/".join(_normal(dotted))
+            if target not in known and prose:
+                faults.append(f"{path}:{number}: {target}")
         for relative in RELATIVE_PATH.findall(line):
             target = str(Path(*_normal(f"{base}/{relative}")))
             if prose and target not in known:
@@ -420,26 +423,24 @@ def issue_faults(
             path, prose, known, base="", evidence=not history, written=written, invariants=invariants
         )
         if trees is None
-        or (target := fault.rsplit(": ", 1)[1]).startswith("@/")
+        or (target := "/".join(_normal(fault.rsplit(": ", 1)[1]))).startswith("@/")
         or target == "host-local path"
         or _tracker(target)
         or not trees.on_branch(target)
     ]
 
-    def resolves(target: str, commit: str | None) -> bool:
+    def resolves(target: str, commit: str | None, pinned: bool = False) -> bool:
+        target = "/".join(_normal(target))
         if _tracker(target):
             return target in known
         if trees is None:
             return target in known
+        if pinned and commit:
+            return trees.holds([commit], target)
         return target in known or trees.on_branch(target) or bool(commit and trees.holds([commit], target))
 
     for document in issue.get("documents", []):
-        commit = document.get("commit")
-        if trees is not None and commit and not _tracker(document["path"]):
-            linked = trees.holds([commit], document["path"])
-        else:
-            linked = resolves(document["path"], None)
-        if not linked:
+        if not resolves(document["path"], document.get("commit"), pinned=True):
             faults.append(f"{path}:0: {document['path']}")
     # Every local link a document entry carries: its scanned assets, local,
     # directory or missing; an external asset is a URL.
@@ -464,8 +465,7 @@ class Trees:
         self._branch: dict[str, bool] = {}
 
     def holds(self, revisions: list[str], target: str) -> bool:
-        """Whether the tree of any of `revisions` holds `target`."""
-        target = "/".join(_normal(target))
+        """Whether any of `revisions` holds the normalized repository path `target`."""
         if not revisions or target == ".":
             return False
         lines = subprocess.run(
@@ -499,7 +499,7 @@ def _resolves(name: str, base: str, known: set[str]) -> bool:
     """
     if name.startswith("./"):
         name = name[2:]
-        return name in known or "/".join(_normal(f"{base}/{name}")) in known
+        return "/".join(_normal(name)) in known or "/".join(_normal(f"{base}/{name}")) in known
     parts = _normal(base) if base else []
     return any(
         "/".join([*parts[:depth], *_normal(name)]) in known
@@ -886,6 +886,7 @@ def data_root(root: Path, environ=os.environ) -> Path:
 
 
 def _tracker(target: str) -> bool:
+    """Whether a normalized repository path belongs to the store."""
     return target == STORE or target.startswith(STORE + "/")
 
 
@@ -1030,6 +1031,7 @@ def check(root: Path, data: Path | None = None, notes: list[str] | None = None) 
 
     def is_ignored(target: str) -> bool:
         # The code repository's rules never excuse a tracker reference.
+        target = "/".join(_normal(target))
         return store.ignored(target) if _tracker(target) else ignored(root, target)
     for path, text in texts.items():
         found = scan(
@@ -1411,7 +1413,7 @@ def layout_self_test() -> None:
         data.mkdir(parents=True, exist_ok=True)
         git(data, "init", "-q", "-b", "main")
         (data / "index.json").write_text("{}")
-        (data / ".gitignore").write_text("/tmp/\n")
+        (data / ".gitignore").write_text("/tmp/\n/target/\n")
         (data / "issues").mkdir()
         for name, issue in issues.items():
             (data / f"issues/{name}.json").write_text(json.dumps(issue))
@@ -1426,6 +1428,7 @@ def layout_self_test() -> None:
         root = Path(directory) / "own"
         root.mkdir()
         code(root, "/.jit/\n")
+        (root / "refs.md").write_text("")
         main = _commit(root, "main")
         git(root, "checkout", "-q", "-b", "feature")
         (root / "dev").mkdir()
@@ -1469,6 +1472,49 @@ def layout_self_test() -> None:
         ]), faults
         assert not notes, notes
 
+        spellings = (
+            ".jit/{}", "./.jit/{}", "/.jit/{}", "dev/../.jit/{}",
+            ".jit/./{}", ".jit/../.jit/{}", "./dev/../.jit/{}",
+        )
+        for spelling in spellings:
+            missing = spelling.format("branch-only.toml")
+            kept = spelling.format("index.json")
+            output = spelling.format("target/review.txt")
+            for target, present in ((missing, False), (kept, True), (output, True)):
+                prose = f"[reference]({target})\nnames {target}"
+                (root / "refs.md").write_text(prose)
+                for commit in (None, feature):
+                    record = {
+                        "state": "ready",
+                        "description": prose,
+                    }
+                    for document in (
+                        {"path": target, "commit": commit},
+                        {"path": ".jit/index.json", "commit": commit, "assets": [
+                            {"asset_type": "local", "resolved_path": target},
+                        ]},
+                    ):
+                        record["documents"] = [document]
+                        path = root / ".jit/issues/spellings.json"
+                        path.write_text(json.dumps(record))
+                        faults = check(root, root / ".jit")
+                        found = [f for f in faults
+                                 if f.startswith(".jit/issues/spellings.json:")]
+                        prose_faults = [f for f in faults if f.startswith("refs.md:")]
+                        if present:
+                            assert not found and not prose_faults, (target, document, found, prose_faults)
+                        else:
+                            assert f".jit/issues/spellings.json:0: {target}" in found, (
+                                target, document, found
+                            )
+                            for line in (1, 2):
+                                assert any(f.startswith(f".jit/issues/spellings.json:{line}: ")
+                                           for f in found), (target, document, found)
+                                assert any(f.startswith(f"refs.md:{line}: ")
+                                           for f in prose_faults), (target, prose_faults)
+        (root / ".jit/issues/spellings.json").unlink()
+        (root / "refs.md").write_text("")
+
         aliases = Path(directory) / "aliases"
         aliases.mkdir()
         dotdot = aliases / "../own/.jit"
@@ -1501,12 +1547,26 @@ def layout_self_test() -> None:
         root = Path(directory) / "bare"
         root.mkdir()
         code(root)
+        (root / "refs.md").write_text("\n".join(
+            f"[reference](/{spelling.format('absent.json').lstrip('/')})"
+            for spelling in spellings
+        ))
         _commit(root, "main")
         notes = []
         faults = check(root, root / ".jit", notes)
         assert faults == ["docs/refs.md:2: @/inv/gone-rule"], faults
         assert notes == ["check-references: 3 tracker reference(s) left unchecked: "
                          "no store index at the data root"], notes
+        for spelling in spellings:
+            target = spelling.format("absent.json")
+            known = Unchecked(set())
+            assert not issue_faults(".jit/issues/test.json", json.dumps({
+                "description": f"[reference]({target})\nnames {target}",
+                "documents": [{"path": target, "commit": "HEAD", "assets": [
+                    {"asset_type": "local", "resolved_path": target},
+                ]}],
+            }), known, trees=Trees(root)), target
+            assert known.tracker == {".jit/absent.json"}, (target, known.tracker)
     root = Path("/checkout")
     assert data_root(root, {}) == root / ".jit"
     assert data_root(root, {"JIT_DATA_DIR": "/shared/.jit"}) == Path("/shared/.jit")
