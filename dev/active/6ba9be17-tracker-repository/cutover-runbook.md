@@ -63,7 +63,8 @@ EOF
 
 Two functions guard the discards and the removals. `worktree_remove` removes a
 linked worktree only when every entry of `git status --porcelain --ignored`
-there is untracked or ignored under `target/` or `.jit/`, because
+there is untracked or ignored under `target/` or `.jit/`, or is the
+`.jit-bootstrap.lock` that `scripts/tracker-env` leaves at the top level, because
 `git worktree remove --force` also deletes ignored files; any other entry
 (a tracked change, or untracked or ignored content elsewhere, such as an
 untracked measurement arm or a run directory) keeps the worktree, detached,
@@ -73,11 +74,13 @@ holds. `port_check` confirms that a worktree dirty only under `.jit` is
 ported: for each changed issue file its `gates_status` entries and run ids
 appear on `main`'s copy, and each event of that issue in its
 `.jit/events.jsonl` has its id in `main`'s event log; any other changed path
-fails.
+fails. `branch_check <b>` lists each `gates_status` run id and each
+`.jit/gates.toml` gate that branch `<b>` carries and `main` lacks, and exits 1
+when there is any.
 
 ```sh
 worktree_remove() {
-  extra=$(git -C "$1" status --porcelain --ignored | grep -vE '^(\?\?|!!) (target|\.jit)/')
+  extra=$(git -C "$1" status --porcelain --ignored | grep -vE '^(\?\?|!!) (target/|\.jit/|\.jit-bootstrap\.lock$)')
   if [ -n "$extra" ]; then printf 'kept %s:\n%s\n' "$1" "$extra"; return 1; fi
   git worktree remove --force "$1"
 }
@@ -110,6 +113,27 @@ for p in paths:
             if e.get("issue_id") == mine["id"] and e["id"] not in main_events]
 print("\n".join(bad))
 sys.exit(1 if bad else 0)
+EOF
+}
+branch_check() { python3 -I - "$1" <<'EOF'
+import json, shlex, subprocess, sys, tomllib
+b = sys.argv[1]
+def git(*a):
+    rc, out = subprocess.getstatusoutput(shlex.join(["git", *a]))
+    return out if rc == 0 else None
+def runs(text):
+    d = json.loads(text) if text else {}
+    return {(g, e["run_id"]) for g, e in d.get("gates_status", {}).items() if e.get("run_id")}
+carried = []
+for p in git("diff", "--name-only", "main..." + b, "--", ".jit/issues").split():
+    for g, r in sorted(runs(git("show", b + ":" + p)) - runs(git("show", "main:" + p))):
+        carried.append("%s gate %s run %s" % (p, g, r))
+def keys(rev):
+    t = git("show", rev + ":.jit/gates.toml")
+    return {g["key"] for g in tomllib.loads(t)["gates"]} if t else set()
+carried += ["gates.toml gate %s" % k for k in sorted(keys(b) - keys("main"))]
+print("\n".join(carried))
+sys.exit(1 if carried else 0)
 EOF
 }
 ```
@@ -223,11 +247,12 @@ gate-run holders are the harvest list of step 7. Record the issue count,
 
 1. Set the statement of `resolvable-references` in `.jit/invariants.toml` to
    the approved wording in the execution issue, run `jit project render`, and
-   check that the only changes are that statement and its projection in
-   `AGENTS.md`. Commit both:
+   check that the only changes are that statement, its projection in
+   `AGENTS.md` and the `files_published` event the render appends to
+   `.jit/events.jsonl`. Commit all three:
 
    ```sh
-   git add .jit/invariants.toml AGENTS.md
+   git add .jit/invariants.toml .jit/events.jsonl AGENTS.md
    git commit -m "docs(jit:6889e6e6): amend the resolvable-references invariant"
    A=$(git rev-parse HEAD)
    ```
@@ -333,11 +358,11 @@ baseline.
 | Tree identity | `git rev-parse "$C^:.jit"` and `git -C .jit rev-parse 'HEAD^{tree}'` | equal, and equal to the identifiers step 5 recorded |
 | Code side | `git ls-files .jit` on `main`; `git check-ignore -q .jit/`; `git status --porcelain` | prints nothing; exits 0; lists no path under `.jit/` |
 | Gate from a linked worktree | `jit gate add 6889e6e6 docs-mechanical` in the primary checkout, then `scripts/tracker-env jit gate evaluate 6889e6e6 docs-mechanical` in `<backup>/probe-1` | passes, and its run record under `.jit/gate-runs/` names commit `$C` and branch `cutover-probe-1` (TBD-rehearsal: duration of the checker from a probe worktree) |
-| Plain jit in a linked worktree | in `<backup>/probe-1`: `jit status` | fails, finding no store |
+| Plain jit in a linked worktree (RULING-PENDING) | in `<backup>/probe-1`: `jit status` | fails, finding no store |
 | Checkers with the store | `python3 -B scripts/check-references.py` and `python3 scripts/check-tracked-budget.py` in the primary checkout | both exit 0 |
 | Checkers without the store | the same two commands in `<backup>/fresh` | both exit 0; the reference checker reports the count of tracker references it left unchecked |
 | Issue load without the store's runs | `load_check report` in `<backup>/fresh` after its mount | exits 0: the only load failures are issues whose gate records name runs; the listing is recorded |
-| Fresh-clone mount | in `<backup>/fresh`: `scripts/tracker-bootstrap "<the primary checkout>/.jit"`, then the two checkers | the mount exits 0, which includes `jit validate`; both checkers exit 0 |
+| Fresh-clone mount (RULING-PENDING) | in `<backup>/fresh`: `scripts/tracker-bootstrap "<the primary checkout>/.jit"`, then `python3 scripts/check-tracked-budget.py` | the mount exits 0, which includes `jit validate`; the budget checker exits 0 |
 
 When every check passes, the executor re-acquires its own lease from the
 primary checkout, `JIT_AGENT_ID=<executor> jit claim acquire 6889e6e6`,
@@ -440,16 +465,20 @@ further work, from the primary checkout:
    git switch main
    ```
 
-4. Re-add each worktree step 7 removed, from `<backup>/worktrees-before.txt`:
+4. Re-add each worktree step 7 or step 9 removed, from `<backup>/worktrees-before.txt`:
    `git worktree add "<wt>" <b>`.
-5. `git checkout -- .jit`.
+5. `git checkout -- .jit`, then restore the primary's machine-local files,
+   `gate-runs/` among them, from its archive:
+   `tar -C .jit -xf "<backup>/stores/primary.tar"`, the members checked
+   against `<backup>/stores/manifest.json`. Run records written after the
+   listing are lost.
 6. In each linked worktree whose branch step 9 cleaned, put the tracked store
    back into its index and files with `git -C "<worktree>" checkout HEAD -- .jit`;
    nothing outside `.jit` changes.
 7. Re-attach each worktree step 3 or step 7 detached and left in place, to the same commit so no file
    changes: `git -C "<worktree>" switch <branch>`.
-8. Restore each worktree store a clean deleted or step 7 removed with its
-   worktree, from its archive, adding the ignored files:
+8. Restore each worktree store a clean deleted or step 7 or step 9 removed
+   with its worktree, from its archive, adding the ignored files:
    `tar -C "<worktree>/.jit" -xf "<backup>/stores/worktree-<name>.tar"`, the
    members checked against `<backup>/stores/manifest.json`.
 9. Run `jit validate`, which exits 0, and `load_check strict`, which exits 0,
@@ -479,6 +508,7 @@ window; the inventory lists what remains.
 | Inventory line | Resolution |
 |---|---|
 | `action: branch <b>: holds tracker changes main lacks` | Ported: the steward's port commits the branch's tracker changes to `main`, and the line disappears on rerun. Abandoned: the branch is on `<abandon-list>` and step 3 moves its ref to `refs/archive/<name>`; the window log records it with `git diff --stat "main...<b>" -- .jit`. Any other branch is listed for the steward and the window waits. |
+| `action: branch <b>: its tracker files conflict with main` | Run `branch_check <b>`. When it exits 0 the branch carries nothing `main` lacks and step 9 cleans it. When it fails, the branch is listed for the steward with the lines it printed; the steward's disposition (superseded or abandoned) is recorded in the window log, and step 9 then cleans it. |
 | `info: branch <b>: tracker files differ from main, which holds all of its tracker changes` | Nothing before extraction; step 9 cleans the branch. |
 | `action: checkout <path>: uncommitted tracker changes` | The checkout's session commits them on its branch, which turns them into a branch line above, or, when their content was ported to `main`, discards them: `port_check <path>` exits 0, then `git -C <path> restore --staged --worktree -- .jit`, and the window log records `<port-commit>`. A failing `port_check` lists the worktree for the steward and the window waits. For the primary checkout they are committed on `main`. |
 | `info: checkout <path>: tracker files differ from main` | Nothing; the checkout's branch is reconciled by its branch line. |
