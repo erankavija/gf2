@@ -152,8 +152,8 @@ run_step() {
   else
     local rc=$?
     summary+="  ✗ $name: FAILED (exit $rc, $((SECONDS - started))s)"$'\n'
-    summarize_fail "$name"
     keep_failed_log "$name" "$LOGDIR/$name.out"
+    summarize_fail "$name"
     failed=1
   fi
 }
