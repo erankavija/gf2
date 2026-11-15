@@ -406,8 +406,9 @@ def issue_faults(
 
     A link is a document entry's `path` and the `resolved_path` of each of its
     non-external assets; git-ignored build output such as `target/doc` passes.
-    With `trees`, a link pinned to a commit resolves in that commit's tree, and
-    an unpinned link or a path of the prose also in a local branch head's tree.
+    With `trees`, a repository link pinned to a commit resolves in that commit's
+    tree, and an unpinned repository link or a repository path of the prose also
+    in a local branch head's tree. A tracker path resolves only against the store.
 
     `history` skips the evidence-name and invariant checks of its prose.
     """
