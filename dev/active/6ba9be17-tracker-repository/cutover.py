@@ -22,7 +22,7 @@ verification. Each subcommand is one step of `cutover-sequence` in
       `primary` or `worktree-<name git registers>`, and the SHA-256 of every
       member to `DIR/manifest.json`; then re-reads each archive and compares
       it, and each store still on disk, with the manifest. `--verify` only
-      re-reads. Refuses a DIR inside a store, inside the git directory or
+      re-reads; a store a clean deleted is compared with its archive alone. Refuses a DIR inside a store, inside the git directory or
       unignored inside a checkout, and a non-empty DIR when writing.
   cutover.py extract --repo CODE --commit REV --dest NEW [--split REV]
       Splits the history of `.jit` up to REV with `git subtree split` (or
@@ -196,13 +196,641 @@ def main(argv):
         return 1
 
 
-def not_implemented(args):
-    raise Failure("not implemented")
+# Repository layout -----------------------------------------------------------
+
+
+def physical(path):
+    return Path(os.path.realpath(path))
+
+
+def common_dir(repo):
+    return physical(Path(repo) / git("rev-parse", "--git-common-dir", cwd=repo).strip())
+
+
+def checkouts(repo):
+    """Each checkout git registers for the repository: the primary one first."""
+    entries, entry = [], {}
+    for line in git("worktree", "list", "--porcelain", cwd=repo).splitlines() + [""]:
+        if not line:
+            if entry and "bare" not in entry and "prunable" not in entry:
+                entries.append(entry)
+            entry = {}
+            continue
+        key, _, value = line.partition(" ")
+        entry[key] = value
+    result = []
+    for index, entry in enumerate(entries):
+        path = physical(entry["worktree"])
+        branch = entry.get("branch", "").removeprefix("refs/heads/") or None
+        if index == 0:
+            name = "primary"
+        else:
+            name = "worktree-" + physical(git("rev-parse", "--absolute-git-dir", cwd=path).strip()).name
+        result.append({"path": path, "head": entry.get("HEAD"), "branch": branch, "name": name,
+                       "primary": index == 0})
+    return result
+
+
+def primary_checkout(repo):
+    """The primary checkout of `repo`, refusing a linked worktree."""
+    top = physical(git("rev-parse", "--show-toplevel", cwd=repo).strip())
+    if physical(git("rev-parse", "--absolute-git-dir", cwd=repo).strip()) != common_dir(repo):
+        raise Refusal(f"{top} is a linked worktree; the step runs in the primary checkout")
+    return top
+
+
+def tree_of(rev, path, repo):
+    """The tree id of `rev:path`, or None when it has none."""
+    result = subprocess.run(["git", "rev-parse", "-q", "--verify", f"{rev}:{path}"],
+                            cwd=repo, capture_output=True, text=True)
+    if result.returncode != 0:
+        return None
+    tree = result.stdout.strip()
+    return tree if git("cat-file", "-t", tree, cwd=repo).strip() == "tree" else None
+
+
+def tracked_under(rev, path, repo):
+    return [p for p in git("ls-tree", "-r", "-z", "--name-only", rev, "--", path, cwd=repo).split("\0") if p]
+
+
+def require_branch(checkout, branch):
+    current = git("symbolic-ref", "-q", "--short", "HEAD", cwd=checkout, check=False).strip()
+    if current != branch:
+        raise Refusal(f"{checkout} has {current or 'a detached HEAD'} checked out, not {branch}")
+
+
+def store_files(store):
+    """Relative path to SHA-256 of every regular file under `store`."""
+    files = {}
+    for root, dirs, names in os.walk(store):
+        dirs.sort()
+        for name in sorted(names):
+            path = Path(root) / name
+            if path.is_file() and not path.is_symlink():
+                files[path.relative_to(store).as_posix()] = sha256(path)
+    return files
+
+
+def copy_file(source, target):
+    target.parent.mkdir(parents=True, exist_ok=True)
+    stage = target.with_name(f".{target.name}.cutover-{os.getpid()}")
+    shutil.copy2(source, stage)
+    os.replace(stage, target)
+
+
+def worktree_listing(checkout, *args):
+    return [p for p in git("ls-files", "-z", *args, cwd=checkout).split("\0") if p]
+
+
+# inventory ------------------------------------------------------------------
+
+
+def inventory(args):
+    repo = args.repo
+    if git_rc("rev-parse", "-q", "--verify", f"refs/heads/{args.main}", cwd=repo) != 0:
+        raise Refusal(f"no branch {args.main}")
+    main_tree = tree_of(args.main, STORE, repo)
+    lines = []
+    found = checkouts(repo)
+    heads = [(ref, ref) for ref in git("for-each-ref", "--format=%(refname:short)", "refs/heads/", cwd=repo).split()
+             if ref != args.main]
+    heads += [(c["head"], f"detached HEAD of {c['path']}") for c in found if c["branch"] is None]
+    for rev, label in heads:
+        if tree_of(rev, STORE, repo) == main_tree:
+            continue
+        merged = subprocess.run(["git", "merge-tree", "--write-tree", "--no-messages", args.main, rev],
+                                cwd=repo, capture_output=True, text=True)
+        result = merged.stdout.split("\n", 1)[0].strip()
+        if merged.returncode != 0 or tree_of(result, STORE, repo) != main_tree:
+            lines.append(("action", f"branch {label}: holds tracker changes {args.main} lacks"))
+        else:
+            lines.append(("info", f"branch {label}: tracker files differ from {args.main}, "
+                                  f"which holds all of its tracker changes"))
+    main_blobs = {}
+    for entry in filter(None, git("ls-tree", "-r", "-z", args.main, "--", STORE, cwd=repo).split("\0")):
+        meta, path = entry.split("\t", 1)
+        main_blobs[path] = meta.split()[2]
+    lease_dirs = {common_dir(repo) / "jit" / "leases"}
+    stores = []
+    for checkout in found:
+        path, store = checkout["path"], checkout["path"] / STORE
+        if git_rc("check-ignore", "-q", f"{STORE}/", cwd=path) != 0:
+            present = set(worktree_listing(path, "-co", "--exclude-standard", "--", STORE))
+            present -= set(worktree_listing(path, "-d", "--", STORE))
+            ordered = sorted(present)
+            hashes = git("hash-object", "--stdin-paths", cwd=path, input="\n".join(ordered) + "\n").split() if ordered else []
+            if dict(zip(ordered, hashes)) != main_blobs:
+                lines.append(("info", f"checkout {path}: tracker files differ from {args.main}"))
+            if git("status", "--porcelain", "--untracked-files=all", "--", STORE, cwd=path).strip():
+                lines.append(("action", f"checkout {path}: uncommitted tracker changes"))
+        if not store.is_dir():
+            continue
+        stores.append(store)
+        runs = run_records(store)
+        if runs:
+            lines.append(("info", f"checkout {path}: {len(runs)} gate-run records in {store}"))
+        if (store / "tmp" / "redo.record").exists():
+            lines.append(("action", f"store {store}: pending redo record tmp/redo.record"))
+        inner = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=store, capture_output=True, text=True)
+        if inner.returncode == 0:
+            lease_dirs.add(physical(store / inner.stdout.strip()) / "jit" / "leases")
+    owners = {}
+    for store in stores:
+        try:
+            owners[json.loads((store / "worktree.json").read_text())["worktree_id"]] = store
+        except (OSError, ValueError, KeyError):
+            pass
+    for leases in sorted(lease_dirs):
+        for lease in sorted(leases.glob("*.json")) if leases.is_dir() else []:
+            try:
+                record = json.loads(lease.read_text())
+            except ValueError:
+                record = {}
+            holder = owners.get(record.get("worktree_id"), f"repository {leases.parent.parent}")
+            lines.append(("action", f"store {holder}: unreleased lease on {record.get('issue_id', lease.stem)} "
+                                    f"by {record.get('agent_id', 'unknown agent')} ({lease})"))
+    for kind, text in lines:
+        print(f"{kind}: {text}")
+    return 1 if any(kind == "action" for kind, _ in lines) else 0
+
+
+# archive --------------------------------------------------------------------
+
+
+def refuse_archive_dest(dest, found, repo):
+    if inside(dest, common_dir(repo)):
+        raise Refusal(f"{dest} is inside the git directory")
+    for checkout in found:
+        path = checkout["path"]
+        if inside(dest, path / STORE):
+            raise Refusal(f"{dest} is inside the store {path / STORE}")
+        if inside(dest, path):
+            rel = Path(os.path.realpath(dest)).relative_to(path).as_posix()
+            if rel == "." or git_rc("check-ignore", "-q", f"{rel}/", cwd=path) != 0:
+                raise Refusal(f"{dest} lies in the tracked tree of {path}")
+
+
+def write_archives(dest, found):
+    manifest = {}
+    for checkout in found:
+        store = checkout["path"] / STORE
+        if not store.is_dir():
+            continue
+        files = store_files(store)
+        with tarfile.open(dest / f"{checkout['name']}.tar", "x") as tar:
+            for root, dirs, names in os.walk(store):
+                dirs.sort()
+                for name in sorted(dirs) + sorted(names):
+                    path = Path(root) / name
+                    rel = path.relative_to(store).as_posix()
+                    if path.is_dir() or rel in files:
+                        tar.add(path, arcname=rel, recursive=False)
+        manifest[checkout["name"]] = {"checkout": str(checkout["path"]), "files": files}
+        print(f"archived {store}: {len(files)} files in {checkout['name']}.tar")
+    (dest / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+
+
+def archive_faults(dest, name, entry, against_disk):
+    faults, members = [], {}
+    try:
+        with tarfile.open(dest / f"{name}.tar") as tar:
+            for member in tar:
+                if member.isfile():
+                    digest = hashlib.sha256()
+                    handle = tar.extractfile(member)
+                    for block in iter(lambda: handle.read(1 << 20), b""):
+                        digest.update(block)
+                    members[member.name] = digest.hexdigest()
+    except (OSError, tarfile.TarError) as error:
+        return [f"{name}.tar: unreadable: {error}"]
+    for rel in sorted(set(members) | set(entry["files"])):
+        if members.get(rel) != entry["files"].get(rel):
+            faults.append(f"{name}.tar: {rel} differs from the manifest")
+    store = Path(entry["checkout"]) / STORE
+    if against_disk and store.is_dir():
+        disk = store_files(store)
+        for rel in sorted(set(disk) | set(entry["files"])):
+            if disk.get(rel) != entry["files"].get(rel):
+                faults.append(f"{name}: {store / rel} differs from the manifest")
+    return faults
+
+
+def read_manifest(dest):
+    try:
+        return json.loads((dest / "manifest.json").read_text())
+    except (OSError, ValueError) as error:
+        raise Failure(f"no readable manifest in {dest}: {error}")
+
+
+def archive(args):
+    dest = physical(args.dest)
+    found = checkouts(args.repo)
+    refuse_archive_dest(dest, found, args.repo)
+    if not args.verify:
+        if dest.exists() and (not dest.is_dir() or any(dest.iterdir())):
+            raise Refusal(f"{dest} exists and is not an empty directory")
+        dest.mkdir(parents=True, exist_ok=True)
+        write_archives(dest, found)
+    manifest = read_manifest(dest)
+    faults = []
+    for name, entry in sorted(manifest.items()):
+        faults += archive_faults(dest, name, entry, against_disk=True)
+    for fault in faults:
+        print(fault)
+    if faults:
+        raise Failure(f"{len(faults)} archive faults")
+    print(f"verified {len(manifest)} archives in {dest}")
+
+
+# extract --------------------------------------------------------------------
+
+
+def subtree_split(repo, commit):
+    """`git subtree split`, removing the cache it leaves in the git directory."""
+    cache = physical(git("rev-parse", "--absolute-git-dir", cwd=repo).strip()) / "subtree-cache"
+    before = set(os.listdir(cache)) if cache.is_dir() else set()
+    try:
+        return git("subtree", "split", f"--prefix={STORE}", commit, cwd=repo).split()[-1]
+    finally:
+        for name in (set(os.listdir(cache)) if cache.is_dir() else set()) - before:
+            shutil.rmtree(cache / name, ignore_errors=True)
+        if cache.is_dir() and not before and not os.listdir(cache):
+            cache.rmdir()
+
+
+def extract(args):
+    repo, dest = args.repo, physical(args.dest)
+    if dest.exists() or dest.is_symlink():
+        raise Refusal(f"{dest} exists")
+    commit = git("rev-parse", "--verify", f"{args.commit}^{{commit}}", cwd=repo).strip()
+    code_tree = tree_of(commit, STORE, repo)
+    if code_tree is None:
+        raise Refusal(f"{commit} has no {STORE} tree")
+    split = git("rev-parse", "--verify", f"{args.split or subtree_split(repo, commit)}^{{commit}}", cwd=repo).strip()
+    split_tree = git("rev-parse", f"{split}^{{tree}}", cwd=repo).strip()
+    if split_tree != code_tree:
+        raise Failure(f"split {split} has tree {split_tree}, {commit}:{STORE} is {code_tree}")
+    stage = dest.with_name(f".{dest.name}.extract-{os.getpid()}")
+    try:
+        git("init", "-q", "-b", "main", str(stage), cwd=repo)
+        git("config", "receive.denyCurrentBranch", "updateInstead", cwd=stage)
+        git("push", "-q", str(stage), f"{split}:refs/heads/main", cwd=repo)
+        git("config", "--unset", "receive.denyCurrentBranch", cwd=stage)
+        head_tree = git("rev-parse", "HEAD^{tree}", cwd=stage).strip()
+        if head_tree != code_tree or git("status", "--porcelain", cwd=stage).strip():
+            raise Failure(f"head tree {head_tree} of the new repository differs from {code_tree}")
+        os.rename(stage, dest)
+    finally:
+        shutil.rmtree(stage, ignore_errors=True)
+    count = git("rev-list", "--count", "HEAD", cwd=dest).strip()
+    print(f"extracted {dest}: {count} commits, head {split}, tree {code_tree}")
+
+
+# code-side ------------------------------------------------------------------
+
+
+def toml_blocks(lines, header):
+    """(start, end) of each `header` table, ending before a blank, comment or table line."""
+    blocks = []
+    for start, line in enumerate(lines):
+        if line.strip() == header:
+            end = start + 1
+            while end < len(lines) and lines[end].strip() and not lines[end].lstrip().startswith(("#", "[")):
+                end += 1
+            blocks.append((start, end))
+    return blocks
+
+
+def remove_exceptions(text, paths):
+    lines = text.splitlines(keepends=True)
+    for start, end in reversed(toml_blocks(lines, "[[exception]]")):
+        entry = tomllib.loads("".join(lines[start + 1:end]))
+        if isinstance(entry.get("path"), str) and entry["path"] in paths:
+            if start > 0 and not lines[start - 1].strip():
+                start -= 1
+            del lines[start:end]
+    result = "".join(lines)
+    left = {e.get("path") for e in tomllib.loads(result).get("exception", []) if isinstance(e.get("path"), str)}
+    if left & set(paths):
+        raise Failure(f"exceptions for {sorted(left & set(paths))} remain")
+    return result
+
+
+def forbid_store(text):
+    if FORBID_STORE in tomllib.loads(text).get("forbidden_paths", []):
+        return text
+    lines = text.splitlines(keepends=True)
+    start = next((i for i, l in enumerate(lines) if l.startswith("forbidden_paths = [")), None)
+    if start is None:
+        raise Failure(f"{BUDGET} has no forbidden_paths list")
+    end = next(i for i in range(start, len(lines)) if lines[i].rstrip() == "]")
+    lines[end:end] = ["  # The tracker is its own repository, mounted at .jit/.\n", f"  '{FORBID_STORE}',\n"]
+    return "".join(lines)
+
+
+def set_tree_limit(text, limit):
+    result, count = re.subn(r"(?m)^max_tree_bytes = \d+$", f"max_tree_bytes = {limit}", text)
+    if count != 1:
+        raise Failure(f"{BUDGET} has {count} max_tree_bytes lines")
+    return result
+
+
+def code_side(args):
+    repo = primary_checkout(args.repo)
+    require_branch(repo, args.main)
+    if git_rc("diff", "--cached", "--quiet", cwd=repo) != 0:
+        raise Refusal("the index holds staged changes")
+    edited = (".gitignore", ".gitattributes", BUDGET, REFERENCES)
+    if git_rc("diff", "--quiet", "--", *edited, cwd=repo) != 0:
+        raise Refusal(f"one of {', '.join(edited)} has unstaged changes")
+    if not worktree_listing(repo, "--", STORE):
+        raise Refusal(f"the index holds no path under {STORE}")
+    checker = load_budget_checker(repo)
+    old_limit = tomllib.loads((repo / BUDGET).read_text())["max_tree_bytes"]
+    git("rm", "-r", "-q", "--cached", "--", STORE, cwd=repo)
+    ignore = (repo / ".gitignore").read_text()
+    if "/.jit/" not in ignore.splitlines():
+        sep = "" if not ignore or ignore.endswith("\n") else "\n"
+        (repo / ".gitignore").write_text(f"{ignore}{sep}\n# The tracker repository, mounted here\n/.jit/\n")
+    attributes = repo / ".gitattributes"
+    if attributes.exists():
+        kept = [l for l in attributes.read_text().splitlines(keepends=True)
+                if not re.match(rf"\s*{re.escape(EVENTS)}\s.*\bmerge=union\b", l)]
+        if any(l.strip() and not l.lstrip().startswith("#") for l in kept):
+            attributes.write_text("".join(kept))
+        else:
+            git("rm", "-q", "--", ".gitattributes", cwd=repo)
+    (repo / REFERENCES).write_text(remove_exceptions((repo / REFERENCES).read_text(), {EVENTS, CITATIONS}))
+    budget = forbid_store(remove_exceptions((repo / BUDGET).read_text(), {EVENTS}))
+    limit = None
+    for _ in range(4):
+        (repo / BUDGET).write_text(budget if limit is None else set_tree_limit(budget, limit))
+        git("add", "--", *(p for p in edited if (repo / p).exists()), cwd=repo)
+        size = sum(checker.tree_sizes(git("write-tree", cwd=repo).strip(), str(repo)).values())
+        rounded = -(-size // TREE_STEP) * TREE_STEP
+        if rounded == limit:
+            break
+        limit = rounded
+    else:
+        raise Failure("the tree limit does not settle")
+    if limit > old_limit:
+        raise Failure(f"the measured tree {size} rounds to {limit}, above the current limit {old_limit}")
+    git("commit", "-q", "-m", args.message, cwd=repo)
+    if worktree_listing(repo, "--", STORE):
+        raise Failure(f"paths under {STORE} are still tracked")
+    head = git("rev-parse", "HEAD", cwd=repo).strip()
+    print(f"code-side commit {head}: tree {size} bytes, max_tree_bytes {limit}")
+
+
+# mount ----------------------------------------------------------------------
+
+
+def machine_local_patterns(store):
+    """The patterns of the store's ignore file outside jit's marker region."""
+    patterns, marked = [], False
+    for line in (store / ".gitignore").read_text().splitlines():
+        if line.strip() == MARKER_BEGIN:
+            marked = True
+        elif line.strip() == MARKER_END:
+            marked = False
+        elif not marked and line.strip() and not line.startswith("#"):
+            patterns.append(line)
+    return patterns
+
+
+def ignored_files(directory, patterns):
+    """Files under `directory` the ignore patterns match, read by git alone."""
+    with tempfile.TemporaryDirectory() as scratch:
+        git("init", "-q", "--bare", f"{scratch}/git", cwd=scratch)
+        (Path(scratch) / "patterns").write_text("\n".join(patterns) + "\n")
+        out = git(f"--git-dir={scratch}/git", f"--work-tree={directory}", "ls-files", "-z", "-o", "-i",
+                  f"--exclude-from={scratch}/patterns", cwd=directory)
+    return [p for p in out.split("\0") if p and not p.startswith(".git/")]
+
+
+def mount_faults(store, tracker):
+    faults = []
+    expected = {}
+    for entry in filter(None, git("ls-tree", "-r", "-z", "HEAD", cwd=tracker).split("\0")):
+        meta, rel = entry.split("\t", 1)
+        expected[rel] = meta.split()[2]
+    tracked = worktree_listing(store)
+    hashes = git("hash-object", "--no-filters", "--stdin-paths", cwd=store,
+                 input="\n".join(tracked) + "\n").split() if tracked else []
+    actual = dict(zip(tracked, hashes))
+    for rel in sorted(set(expected) | set(actual)):
+        if expected.get(rel) != actual.get(rel):
+            faults.append(f"{store / rel} differs from the extracted tree")
+    return faults
+
+
+def mount(args):
+    repo = primary_checkout(args.repo)
+    tracker, aside, store = physical(args.tracker), physical(args.aside), repo / STORE
+    if worktree_listing(repo, "--", STORE):
+        raise Refusal(f"the code repository still tracks {STORE}; run code-side first")
+    if git_rc("check-ignore", "-q", f"{STORE}/", cwd=repo) != 0:
+        raise Refusal(f"the code repository does not ignore {STORE}/")
+    if not store.is_dir():
+        raise Refusal(f"no store at {store}")
+    if aside.exists() or aside.is_symlink():
+        raise Refusal(f"{aside} exists")
+    stage = repo / f"{STORE}.mount-{os.getpid()}"
+    git("clone", "-q", "--", str(tracker), str(stage), cwd=repo)
+    shutil.move(store, aside)
+    os.rename(stage, store)
+    restored = 0
+    for rel in ignored_files(aside, machine_local_patterns(store)):
+        target = store / rel
+        if target.exists():
+            raise Failure(f"machine-local {rel} would overwrite {target}")
+        copy_file(aside / rel, target)
+        restored += 1
+    faults = mount_faults(store, tracker)
+    for fault in faults:
+        print(fault)
+    if faults:
+        raise Failure(f"{len(faults)} tracked files differ from the extracted tree")
+    print(f"mounted {tracker} at {store}; {restored} machine-local files restored; old store at {aside}")
+
+
+# harvest --------------------------------------------------------------------
+
+
+def run_records(store):
+    """Relative paths `gate-runs/<issue>/...` of the store's run records."""
+    root = Path(store) / "gate-runs"
+    if not root.is_dir():
+        return []
+    return sorted(p.relative_to(store).as_posix() for p in root.rglob("*")
+                  if p.is_file() and p.relative_to(root).parts[0] != "verdicts")
+
+
+def verdict_pointers(store):
+    root = Path(store) / "gate-runs" / "verdicts"
+    return sorted(p.relative_to(store).as_posix() for p in root.rglob("*.json")) if root.is_dir() else []
+
+
+def pointed_run(store, rel):
+    try:
+        record = json.loads((Path(store) / rel).read_text())
+        return f"gate-runs/{record['issue_id']}/{record['run_id']}.json"
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise Failure(f"{Path(store) / rel}: not a verdict pointer: {error}")
+
+
+def same_bytes(a, b):
+    return a.is_file() and b.is_file() and a.read_bytes() == b.read_bytes()
+
+
+def harvest_plan(shared, source):
+    """The runs and pointers to copy, the kept pointers and the faults that stop a harvest."""
+    shared, source = Path(shared), Path(source)
+    runs, pointers, kept, faults = [], [], [], []
+    for rel in run_records(source):
+        if not (shared / rel).exists():
+            runs.append(rel)
+        elif not same_bytes(shared / rel, source / rel):
+            faults.append(f"run record {rel} exists in {shared} with different bytes")
+    held = set(run_records(shared)) | set(runs)
+    for rel in verdict_pointers(source):
+        named = [pointed_run(source, rel)]
+        if not (shared / rel).exists():
+            pointers.append(rel)
+        elif not same_bytes(shared / rel, source / rel):
+            kept.append(rel)
+            named.append(pointed_run(shared, rel))
+        for run in named:
+            if run not in held:
+                faults.append(f"verdict pointer {rel} names {run}, absent from {shared}")
+    return runs, pointers, kept, faults
+
+
+def harvest(args):
+    shared, source = physical(args.store), physical(args.source)
+    for path in (shared, source):
+        if not path.is_dir():
+            raise Refusal(f"no store at {path}")
+    if shared == source:
+        raise Refusal("the source is the shared store")
+    runs, pointers, kept, faults = harvest_plan(shared, source)
+    for fault in faults:
+        print(fault)
+    if faults:
+        raise Failure(f"harvest of {source} stopped; nothing copied")
+    for rel in runs + pointers:
+        copy_file(source / rel, shared / rel)
+    for rel in kept:
+        print(f"kept the store's verdict pointer {rel}")
+    left, unset, _, faults = harvest_plan(shared, source)
+    if left or unset or faults:
+        raise Failure(f"harvest of {source} does not verify: {faults or left + unset}")
+    print(f"harvested {source}: {len(runs)} run records and {len(pointers)} pointers copied, verified")
+
+
+# clean ----------------------------------------------------------------------
+
+
+def clean(args):
+    found = checkouts(args.repo)
+    worktree = physical(args.worktree)
+    checkout = next((c for c in found if c["path"] == worktree), None)
+    if checkout is None or checkout["primary"]:
+        raise Refusal(f"{worktree} is not a linked worktree of {args.repo}")
+    branch = checkout["branch"]
+    if branch is None:
+        raise Refusal(f"{worktree} has a detached HEAD")
+    if tracked_under(args.main, STORE, worktree):
+        raise Failure(f"{args.main} still tracks paths under {STORE}")
+    store, shared = worktree / STORE, physical(args.store)
+    if store.is_dir():
+        runs, pointers, _, faults = harvest_plan(shared, store)
+        if runs or pointers or faults:
+            raise Refusal(f"the harvest of {store} into {shared} is not verified")
+    if git("status", "--porcelain", "--untracked-files=no", cwd=worktree).strip():
+        raise Refusal(f"{worktree} has uncommitted tracked changes")
+    merged = subprocess.run(["git", "merge", "-q", "--no-edit", "-m", args.merge_message, args.main],
+                            cwd=worktree, capture_output=True, text=True)
+    if merged.returncode != 0:
+        conflicts = [p for p in git("diff", "-z", "--name-only", "--diff-filter=U", cwd=worktree).split("\0") if p]
+        outside = [p for p in conflicts if not p.startswith(f"{STORE}/")]
+        if outside or not conflicts:
+            git("merge", "--abort", cwd=worktree, check=False)
+            raise Refusal(f"merging {args.main} into {branch} conflicts outside {STORE}: "
+                          f"{outside or merged.stderr.strip()}; merge aborted")
+        git("rm", "-q", "--cached", "--", *conflicts, cwd=worktree)
+        git("commit", "-q", "--no-edit", cwd=worktree)
+        print(f"merged {args.main} into {branch}; {len(conflicts)} tracker conflicts resolved by deletion")
+    remaining = worktree_listing(worktree, "--", STORE)
+    if remaining:
+        git("rm", "-r", "-q", "--cached", "--", STORE, cwd=worktree)
+        git("commit", "-q", "-m", args.message, cwd=worktree)
+        print(f"removed {len(remaining)} tracked paths under {STORE} from {branch}")
+    for rev in (args.main, branch):
+        if tracked_under(rev, STORE, worktree):
+            raise Failure(f"{rev} still tracks paths under {STORE}")
+    if store.is_dir():
+        shutil.rmtree(store)
+        print(f"deleted the local store {store}")
+
+
+# rollback -------------------------------------------------------------------
+
+
+def rollback(args):
+    repo = primary_checkout(args.repo)
+    require_branch(repo, args.main)
+    store, aside = repo / STORE, physical(args.aside)
+    if not store.is_dir() or physical(git("rev-parse", "--show-toplevel", cwd=store).strip()) != store:
+        raise Refusal(f"{store} is not a repository of its own")
+    if aside.exists() or aside.is_symlink():
+        raise Refusal(f"{aside} exists")
+    cutover = git("rev-parse", "--verify", f"{args.cutover}^{{commit}}", cwd=repo).strip()
+    if (git_rc("merge-base", "--is-ancestor", cutover, "HEAD", cwd=repo) != 0
+            or tracked_under(cutover, STORE, repo) or not tracked_under(f"{cutover}^", STORE, repo)):
+        raise Refusal(f"{cutover} is not a code-side commit on {args.main}")
+    if git("status", "--porcelain", "--untracked-files=no", cwd=repo).strip():
+        raise Refusal(f"{repo} has uncommitted tracked changes")
+    manifest = None
+    if args.archives:
+        archives = physical(args.archives)
+        manifest = read_manifest(archives)
+        faults = [f for name, entry in sorted(manifest.items())
+                  for f in archive_faults(archives, name, entry, against_disk=False)]
+        if faults:
+            raise Refusal(f"archives do not verify: {faults}")
+    shutil.move(store, aside)
+    reverted = subprocess.run(["git", "revert", "--no-commit", cutover], cwd=repo, capture_output=True, text=True)
+    if reverted.returncode != 0:
+        git("revert", "--abort", cwd=repo, check=False)
+        if not store.exists():
+            shutil.move(aside, store)
+        raise Failure(f"reverting {cutover} conflicts: {reverted.stderr.strip()}; store moved back")
+    current = set(worktree_listing(aside, "-co", "--exclude-standard"))
+    restored = set(p.removeprefix(f"{STORE}/") for p in worktree_listing(repo, "--", STORE))
+    gone = sorted(restored - current)
+    if gone:
+        git("rm", "-q", "-f", "--", *(f"{STORE}/{p}" for p in gone), cwd=repo)
+    local = set(worktree_listing(aside, "-o", "-i", "--exclude-standard"))
+    for rel in sorted(current | local):
+        if not rel.startswith(".git/"):
+            copy_file(aside / rel, store / rel)
+    git("add", "-A", "--", STORE, cwd=repo)
+    git("commit", "-q", "-m", args.message, cwd=repo)
+    print(f"reverted {cutover}; {len(current)} tracker files restored, {len(gone)} deleted; "
+          f"tracker repository at {aside}")
+    for name, entry in sorted((manifest or {}).items()):
+        checkout = Path(entry["checkout"])
+        if name == "primary" or not checkout.is_dir() or (checkout / STORE).exists():
+            continue
+        with tarfile.open(physical(args.archives) / f"{name}.tar") as tar:
+            tar.extractall(checkout / STORE, filter="tar")
+        print(f"restored {checkout / STORE} from {name}.tar")
 
 
 COMMANDS = {
-    name: not_implemented
-    for name in ("inventory", "archive", "extract", "code-side", "mount", "harvest", "clean", "rollback")
+    "inventory": inventory, "archive": archive, "extract": extract, "code-side": code_side,
+    "mount": mount, "harvest": harvest, "clean": clean, "rollback": rollback,
 }
 
 
@@ -459,7 +1087,7 @@ class SelfTest:
         self.check(all(p in allowed or p.startswith(".jit/") for p in changed),
                    f"REQ-04 the commit touches only the tracker and its four configuration files: {changed}")
         self.check("/.jit/" in git("show", "HEAD:.gitignore", cwd=code).splitlines(), "REQ-04 /.jit/ ignored")
-        self.check(git_rc("check-ignore", "-q", ".jit/issues/x.json", cwd=code) == 0,
+        self.check(git_rc("check-ignore", "-q", f"{STORE}/issues/probe.json", cwd=code) == 0,
                    "REQ-04 git ignores a path under .jit/")
         attributes = git("show", "HEAD:.gitattributes", cwd=code, check=False)
         self.check("merge=union" not in attributes, "REQ-04 the union-merge attribute is gone")
@@ -468,7 +1096,7 @@ class SelfTest:
                    "REQ-04 the event log's budget exception is gone")
         checker = load_budget_checker(code)
         self.check(FORBID_STORE in budget["forbidden_paths"]
-                   and checker.path_faults([".jit/issues/x.json"], budget) != [],
+                   and checker.path_faults([f"{STORE}/issues/probe.json"], budget) != [],
                    "REQ-04 tracked paths under .jit/ are forbidden")
         size = sum(checker.tree_sizes(head, code).values())
         self.check(budget["max_tree_bytes"] == -(-size // TREE_STEP) * TREE_STEP,
