@@ -61,6 +61,59 @@ EOF
 }
 ```
 
+Two functions guard the discards and the removals. `worktree_remove` removes a
+linked worktree only when every entry of `git status --porcelain --ignored`
+there is untracked or ignored under `target/` or `.jit/`, because
+`git worktree remove --force` also deletes ignored files; any other entry
+(a tracked change, or untracked or ignored content elsewhere, such as an
+untracked measurement arm or a run directory) keeps the worktree, detached,
+with its stale `.jit`, and prints what it holds. Such a worktree is listed for
+the steward as a named exception to REQ-09 of `@/issue/6ba9be17`, with what it
+holds. `port_check` confirms that a worktree dirty only under `.jit` is
+ported: for each changed issue file its `gates_status` entries and run ids
+appear on `main`'s copy, and each event of that issue in its
+`.jit/events.jsonl` has its id in `main`'s event log; any other changed path
+fails.
+
+```sh
+worktree_remove() {
+  extra=$(git -C "$1" status --porcelain --ignored | grep -vE '^(\?\?|!!) (target|\.jit)/')
+  if [ -n "$extra" ]; then printf 'kept %s:\n%s\n' "$1" "$extra"; return 1; fi
+  git worktree remove --force "$1"
+}
+port_check() { python3 -I - "$1" <<'EOF'
+import json, subprocess, sys
+from pathlib import Path
+wt = sys.argv[1]
+lines = subprocess.run(["git", "-C", wt, "status", "--porcelain", "--", ".jit"],
+                       capture_output=True, text=True, check=True).stdout.splitlines()
+paths = [l[3:] for l in lines]
+main_events = {json.loads(l)["id"] for l in Path(".jit/events.jsonl").read_text().splitlines() if l}
+wt_events = [json.loads(l) for l in (Path(wt) / ".jit/events.jsonl").read_text().splitlines() if l]
+bad = []
+for p in paths:
+    if p == ".jit/events.jsonl":
+        continue
+    if not (p.startswith(".jit/issues/") and p.endswith(".json")):
+        bad.append(p)
+        continue
+    mine = json.loads((Path(wt) / p).read_text())
+    base = Path(p)
+    if not base.is_file():
+        bad.append(p)
+        continue
+    theirs = json.loads(base.read_text()).get("gates_status", {})
+    for gate, entry in mine.get("gates_status", {}).items():
+        if entry.get("run_id") and theirs.get(gate, {}).get("run_id") != entry["run_id"]:
+            bad.append("%s gate %s" % (p, gate))
+    bad += ["%s event %s" % (p, e["id"]) for e in wt_events
+            if e.get("issue_id") == mine["id"] and e["id"] not in main_events]
+print("\n".join(bad))
+sys.exit(1 if bad else 0)
+EOF
+}
+```
+
 Arguments the executor fixes before the window and records in the window log:
 
 | Argument | Meaning |
@@ -70,6 +123,7 @@ Arguments the executor fixes before the window and records in the window log:
 | `<abandon-list>` | A file of branch names, one per line, `#` comments allowed: the "Abandon" section of the steward's final lists, rechecked right before the window. |
 | `<survivor-list>` | A file of branch names in the same form: the branches the steward's final lists keep. |
 | `<bundle>` | An existing all-refs bundle the steward names, the fallback when the archive fails, and the source of the branches the steward deleted before the window. |
+| `<port-commit>` | The commit on `main` that holds the port of branch-only tracker edits; the window log records it with each discarded worktree. |
 | `<executor>` | The executor's agent identity, `agent:<name>`. |
 
 `TMPDIR` is exported as `<backup>/tmp`, so the temporary worktrees of the
@@ -153,8 +207,8 @@ cutover abandon --repo . --branches "<abandon-list>"
 
 `abandon` moves each listed ref to `refs/archive/<name>`. A detached worktree
 whose tracker store and working tree are clean is harvested in step 7 and
-removed with `git worktree remove` in step 9. A dirty one stays detached with
-its store, is never removed, and is listed for the steward.
+removed with `worktree_remove` in step 9. A dirty one stays detached with its
+store, is never removed, and is listed for the steward.
 
 ### 4. Inventory
 
@@ -233,12 +287,10 @@ tool and runbook branches of step 0. The batch excludes `main`, each entry is
 verified with `git merge-base --is-ancestor`, and the batch with each head is
 written to `<backup>/merged-deleted.txt`. A deleted name also leaves the
 survivors, since an ancestor of `main` holds nothing `main` lacks:
-`<backup>/survivors-clean.txt` is `<survivor-list>` less those names and less
-every branch checked out in a linked worktree, which the worktree form of
-step 9 cleans. A
+`<backup>/survivors-parked.txt` of step 9 excludes them. A
 branch checked out in a linked worktree has that worktree detached first; the
-worktree is removed when clean, and a dirty one stays detached with its store
-and is listed for the steward:
+worktree is removed by `worktree_remove` when clean, and any other stays
+detached with its store and is listed for the steward:
 
 ```sh
 : > "<backup>/merged-deleted.txt"
@@ -251,13 +303,11 @@ git worktree list --porcelain | awk '/^worktree /{w=substr($0,10)} /^branch refs
     grep -q "^$b " "<backup>/merged-deleted.txt" && git -C "$w" switch --detach
   done
 cut -d' ' -f1 "<backup>/merged-deleted.txt" | while IFS= read -r b; do git branch -d "$b"; done
-cut -d' ' -f1 "<backup>/merged-deleted.txt" > "<backup>/merged-names.txt"
-git worktree list --porcelain | sed -n 's/^branch refs\/heads\///p' >> "<backup>/merged-names.txt"
-sed 's/#.*//' "<survivor-list>" | sed '/^[[:space:]]*$/d' | grep -vxF -f "<backup>/merged-names.txt" > "<backup>/survivors-clean.txt"
 ```
 
-Then `git worktree remove "<worktree>"` for each clean detached worktree of a
-deleted branch. The `<abandon-list>` branches keep `cutover abandon` and their
+Then `worktree_remove "<worktree>"` for each detached worktree of a deleted
+branch, and `git worktree prune` for any registration whose directory is gone.
+The `<abandon-list>` branches keep `cutover abandon` and their
 `refs/archive/` refs.
 
 ### 8. Verify
@@ -291,25 +341,37 @@ baseline.
 
 When every check passes, the executor re-acquires its own lease from the
 primary checkout, `JIT_AGENT_ID=<executor> jit claim acquire 6889e6e6`,
-removes the probes with `git worktree remove` and `git branch -D`, deletes
+removes the probes with `worktree_remove` and `git branch -D`, deletes
 `<backup>/fresh`, and snapshots: `scripts/tracker-snapshot`. The snapshot
 precedes the history rewrite's first bundle.
 
 ### 9. Clean
 
 Each surviving branch gets one commit that removes its tracked `.jit/` paths
-and merges nothing; its code tree is unchanged. A branch without a worktree:
+and merges nothing; its code tree is unchanged. The batch form refuses a
+branch checked out in a linked worktree, so `<backup>/survivors-parked.txt` is
+`<survivor-list>` less the names in `<backup>/merged-deleted.txt` and less
+every branch `git worktree list --porcelain` reports. A branch without a
+worktree:
 
 ```sh
-cutover clean --repo . --branches "<backup>/survivors-clean.txt" \
+git worktree list --porcelain | sed -n 's/^branch refs\/heads\///p' > "<backup>/worktree-branches.txt"
+cut -d' ' -f1 "<backup>/merged-deleted.txt" >> "<backup>/worktree-branches.txt"
+sed 's/#.*//' "<survivor-list>" | sed '/^[[:space:]]*$/d' > "<backup>/survivors-all.txt"
+grep -vxF -f "<backup>/worktree-branches.txt" "<backup>/survivors-all.txt" > "<backup>/survivors-parked.txt"
+cutover clean --repo . --branches "<backup>/survivors-parked.txt" \
   --message "chore(jit:6889e6e6): remove the tracked tracker paths"
 ```
 
-A branch checked out in a linked worktree, after its harvest:
+Each linked worktree whose branch is on `<survivor-list>`, after its harvest:
 
 ```sh
-cutover clean --repo . --worktree "<worktree>" --store .jit \
-  --message "chore(jit:6889e6e6): remove the tracked tracker paths"
+git worktree list --porcelain | awk '/^worktree /{w=substr($0,10)} /^branch refs\/heads\//{print substr($0,19) "\t" w}' |
+  while IFS="$(printf '\t')" read -r b w; do
+    grep -qxF -- "$b" "<backup>/survivors-all.txt" &&
+      cutover clean --repo . --worktree "$w" --store .jit \
+        --message "chore(jit:6889e6e6): remove the tracked tracker paths"
+  done
 ```
 
 The batch prints one line per branch and continues after failures; the
@@ -318,7 +380,8 @@ Each refusal or failure is listed for the steward with the subcommand's
 message. A worktree left with its store is refused by `scripts/tracker-env`,
 so no session uses its stale copy. A clean worktree of an abandoned branch,
 detached in step 3 and harvested in step 7, is removed with
-`git worktree remove`; a dirty one is listed.
+`worktree_remove`; any other is listed. `git worktree prune` then drops each
+registration whose directory is gone.
 
 A removal-only branch checked out in the primary checkout shows the mounted
 tracker as untracked until it merges `main`; the branch merges `main` when it
@@ -417,7 +480,7 @@ window; the inventory lists what remains.
 |---|---|
 | `action: branch <b>: holds tracker changes main lacks` | Ported: the steward's port commits the branch's tracker changes to `main`, and the line disappears on rerun. Abandoned: the branch is on `<abandon-list>` and step 3 moves its ref to `refs/archive/<name>`; the window log records it with `git diff --stat "main...<b>" -- .jit`. Any other branch is listed for the steward and the window waits. |
 | `info: branch <b>: tracker files differ from main, which holds all of its tracker changes` | Nothing before extraction; step 9 cleans the branch. |
-| `action: checkout <path>: uncommitted tracker changes` | The checkout's session commits them on its branch, which turns them into a branch line above, or discards them with `git -C <path> restore --staged --worktree -- .jit` and `git -C <path> clean -fd -- .jit`; for the primary checkout they are committed on `main`. |
+| `action: checkout <path>: uncommitted tracker changes` | The checkout's session commits them on its branch, which turns them into a branch line above, or, when their content was ported to `main`, discards them: `port_check <path>` exits 0, then `git -C <path> restore --staged --worktree -- .jit`, and the window log records `<port-commit>`. A failing `port_check` lists the worktree for the steward and the window waits. For the primary checkout they are committed on `main`. |
 | `info: checkout <path>: tracker files differ from main` | Nothing; the checkout's branch is reconciled by its branch line. |
 | `info: checkout <path>: <n> gate-run records in <store>` | Harvested in step 7. |
 | `action: store <store>: pending redo record tmp/redo.record` | `jit recover` in that checkout applies the record; the window log records its output. |
