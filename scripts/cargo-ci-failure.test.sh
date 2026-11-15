@@ -32,9 +32,9 @@ check() { # name log pattern-present pattern-absent
 }
 
 check test "$TMP/test.out" 'FAIL .*a::broken' 'tail'
-grep -q 'assertion failed' <(report_failed_step test "$TMP/test.out") || fail "stderr section"
+grep -q 'assertion failed' <<<"$(report_failed_step test "$TMP/test.out")" || fail "stderr section"
 check setup "$TMP/setup.out" 'error: setup script failed' 'Starting 3'
-grep -q 'SETUP FAIL' <(report_failed_step setup "$TMP/setup.out") || fail "SETUP FAIL line"
+grep -q 'SETUP FAIL' <<<"$(report_failed_step setup "$TMP/setup.out")" || fail "SETUP FAIL line"
 check plain "$TMP/plain.out" 'last 3 log lines' 'l2'
-grep -qx l5 <(report_failed_step plain "$TMP/plain.out") || fail "tail content"
+grep -qx l5 <<<"$(report_failed_step plain "$TMP/plain.out")" || fail "tail content"
 echo "cargo-ci-failure: ok"
