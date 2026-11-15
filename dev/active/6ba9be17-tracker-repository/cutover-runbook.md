@@ -27,8 +27,8 @@ cutover() { python3 -B "$epic/cutover.py" "$@"; }
 The issue-load check runs in the checkout whose `.jit/` it reads. It runs
 `jit issue show` for every id of `jit query all --json`, and scans every
 `gates_status` entry that names a run for its file
-`.jit/gate-runs/<issue>/<run>.json`. `jit validate` passes while an issue whose
-entry names a missing run fails to load ("Failed to load gate runs"). With
+`.jit/gate-runs/<issue>/<run>.json`. An issue whose entry names a missing run
+fails to load ("Failed to load gate runs"). With
 `strict` the check passes on zero load failures and zero missing run files.
 With `report` it prints both lists and passes when every load failure is an
 issue that names a run, as `gate-runs/` is ignored by the store's
@@ -162,7 +162,10 @@ subcommand or starts the [rollback](#rollback).
 
 ## Preconditions
 
-- `jit --version` prints `jit 1.0.0 (profile release)`.
+- `jit --version` prints `jit 1.0.0 (profile release)` and
+  `sha256sum "$(command -v jit)"` prints
+  `d5c2b82a84520d37f43c350d5edcde3b660e475ed3a395015ed2fc3085ec232b`, the
+  binary the rehearsal ran. A different binary stops the window.
 - The tool, `scripts/tracker-env`, `scripts/tracker-bootstrap`,
   `scripts/tracker-snapshot`, `scripts/check-landing`, the reference checker
   that resolves tracker references through the data root, the `landed` gate
@@ -246,7 +249,9 @@ gate-run holders are the harvest list of step 7. Record the issue count,
 ### 5. Amend the invariant and extract
 
 1. Set the statement of `resolvable-references` in `.jit/invariants.toml` to
-   the approved wording in the execution issue, run `jit project render`, and
+   the approved wording in the execution issue followed by the existing
+   sentence "`scripts/check-references.py` enforces this.", run
+   `jit project render`, and
    check that the only changes are that statement, its projection in
    `AGENTS.md` and the `files_published` event the render appends to
    `.jit/events.jsonl`. Commit all three:
@@ -350,6 +355,10 @@ the [rollback](#rollback) before any further work. `load_check strict` also
 runs before step 5, in the primary checkout, and its result is recorded as the
 baseline.
 
+jit 1.0.0 resolves the primary's store from a linked worktree through the git
+common directory (plan F-05 is falsified, recorded in `@/issue/6889e6e6`), so
+a linked worktree runs jit only through `scripts/tracker-env`.
+
 | Check | Command | Pass condition |
 |---|---|---|
 | Repository validation | `jit validate` | exits 0 (TBD-rehearsal: duration with the harvested gate-run records) |
@@ -358,11 +367,10 @@ baseline.
 | Tree identity | `git rev-parse "$C^:.jit"` and `git -C .jit rev-parse 'HEAD^{tree}'` | equal, and equal to the identifiers step 5 recorded |
 | Code side | `git ls-files .jit` on `main`; `git check-ignore -q .jit/`; `git status --porcelain` | prints nothing; exits 0; lists no path under `.jit/` |
 | Gate from a linked worktree | `jit gate add 6889e6e6 docs-mechanical` in the primary checkout, then `scripts/tracker-env jit gate evaluate 6889e6e6 docs-mechanical` in `<backup>/probe-1` | passes, and its run record under `.jit/gate-runs/` names commit `$C` and branch `cutover-probe-1` (TBD-rehearsal: duration of the checker from a probe worktree) |
-| Plain jit in a linked worktree (RULING-PENDING) | in `<backup>/probe-1`: `jit status` | fails, finding no store |
 | Checkers with the store | `python3 -B scripts/check-references.py` and `python3 scripts/check-tracked-budget.py` in the primary checkout | both exit 0 |
 | Checkers without the store | the same two commands in `<backup>/fresh` | both exit 0; the reference checker reports the count of tracker references it left unchecked |
 | Issue load without the store's runs | `load_check report` in `<backup>/fresh` after its mount | exits 0: the only load failures are issues whose gate records name runs; the listing is recorded |
-| Fresh-clone mount (RULING-PENDING) | in `<backup>/fresh`: `scripts/tracker-bootstrap "<the primary checkout>/.jit"`, then `python3 scripts/check-tracked-budget.py` | the mount exits 0, which includes `jit validate`; the budget checker exits 0 |
+| Fresh-clone mount | in `<backup>/fresh`: `scripts/tracker-bootstrap "<the primary checkout>/.jit"`, then `python3 scripts/check-tracked-budget.py` | the mount exits 4 on its `jit validate`, and passes when every validate error is a `gate-run-reference` error naming a run whose record exists under the primary's `.jit/gate-runs/`; any other error fails. Run records are machine-local by design (plan D-07). The budget checker exits 0 |
 
 When every check passes, the executor re-acquires its own lease from the
 primary checkout, `JIT_AGENT_ID=<executor> jit claim acquire 6889e6e6`,
@@ -439,6 +447,10 @@ done
 3. Run `scripts/tracker-snapshot`, record the tracker head and `main` in the
    window log, and tell every session through the steward that the window is
    released and that a linked worktree runs jit through `scripts/tracker-env`.
+
+Rewriting the `code-task` gate preset as gate keys follows right after the
+window as its own tracker commit (`@/issue/84022ee3`); it is not a cutover
+step.
 
 ## Rollback
 
