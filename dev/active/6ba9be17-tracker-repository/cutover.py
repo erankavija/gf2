@@ -19,6 +19,16 @@ verification. Each subcommand is one step of `cutover-sequence` in
       whose merge would change the main branch's `.jit` tree, a checkout with
       uncommitted tracker changes, a lease or a redo record. Other lines
       start `info:`.
+  cutover.py abandon --repo CODE (--branch B | --branches FILE)
+      Moves each branch to `refs/archive/<B>` and deletes `refs/heads/<B>`,
+      both by compare-and-swap from the branch tip. FILE lists one branch per
+      line with optional `#` comments. Prints one line per branch:
+      `abandoned to refs/archive/<B>`, `already abandoned` when the archive
+      ref exists and the branch ref does not, `refused: <reason>` or
+      `failed: <reason>`. Refuses an existing archive ref beside the branch
+      ref and a branch checked out in any worktree (detach that worktree
+      first). A batch continues after failures and exits 1 when any branch is
+      not abandoned.
   cutover.py archive --repo CODE --dest DIR [--verify]
       Writes the store of every checkout to `DIR/<name>.tar`, `<name>` being
       `primary` or `worktree-<name git registers>`, and the SHA-256 of every
@@ -213,6 +223,11 @@ def main(argv, *, hooks=None):
     p = sub.add_parser("inventory")
     p.add_argument("--repo", required=True)
     p.add_argument("--main", default="main")
+    p = sub.add_parser("abandon", description="Move branches to refs/archive/ and delete their refs.")
+    p.add_argument("--repo", required=True)
+    target = p.add_mutually_exclusive_group(required=True)
+    target.add_argument("--branch", help="local branch to abandon")
+    target.add_argument("--branches", help="file listing local branches, one per line")
     p = sub.add_parser("archive")
     p.add_argument("--repo", required=True)
     p.add_argument("--dest", required=True)
@@ -791,6 +806,49 @@ def inventory(args):
     for kind, text in lines:
         print(f"{kind}: {text}")
     return 1 if any(kind == "action" for kind, _ in lines) else 0
+
+
+# abandon --------------------------------------------------------------------
+
+
+def abandon(args):
+    return batch(args, abandon_branch, ("repo", "branch"))
+
+
+def abandon_branch(args, branch):
+    repo = primary_checkout(args.repo)
+    single = argparse.Namespace(**{**vars(args), "branch": branch, "branches": None})
+    ref, archived = f"refs/heads/{branch}", f"refs/archive/{branch}"
+
+    def refuse_checked_out():
+        holder = next((c for c in checkouts(repo) if c["branch"] == branch), None)
+        if holder:
+            raise Refusal(f"{branch} is checked out in {holder['path']}; detach that worktree first")
+
+    with Operation(single, repo, canonical(single, "repo", "branch")) as op:
+        if op.load() is None:
+            if git_rc("check-ref-format", "--branch", branch, cwd=repo) != 0:
+                raise Refusal(f"not a branch name: {branch}")
+            tip, kept = rev(ref, repo), rev(archived, repo)
+            if tip is None:
+                if kept:
+                    return "already abandoned"
+                raise Refusal(f"not a local branch: {branch}")
+            if kept:
+                raise Refusal(f"{archived} exists at {kept}")
+            refuse_checked_out()
+            # The branch ref is the subject; deleting it is this operation's last step.
+            op.begin({**head_state(repo, ref), "also": [None]})
+        tip = op.record["start"]["head"]
+
+        def delete():
+            refuse_checked_out()
+            compare_and_swap(single, repo, ref, None, tip, "deleted", "cutover.py abandon")
+
+        op.run([("archived", lambda: compare_and_swap(single, repo, archived, tip, None, "archived",
+                                                      "cutover.py abandon"), "ref"),
+                ("deleted", delete, "ref")])
+    return f"abandoned to {archived}"
 
 
 # archive --------------------------------------------------------------------
@@ -1899,7 +1957,7 @@ def restore_steps(args, op, restore):
 
 
 COMMANDS = {
-    "inventory": inventory, "archive": archive, "extract": extract, "code-side": code_side,
+    "inventory": inventory, "abandon": abandon, "archive": archive, "extract": extract, "code-side": code_side,
     "mount": mount, "harvest": harvest, "clean": clean, "rollback": rollback,
 }
 
@@ -2116,7 +2174,7 @@ class SelfTest:
             before = self.observe()
             invocation = list(argv)
             if probe == "arguments":
-                key = next(k for k in ("--message", "--dest", "--aside", "--from", "--plan") if k in invocation)
+                key = next(k for k in ("--message", "--dest", "--aside", "--from", "--plan", "--branch") if k in invocation)
                 invocation[invocation.index(key) + 1] += "-other"
             rc, out = self.run(*invocation)
             unowned = not target or (probe != "mode-drift" and not target[0])
@@ -2358,6 +2416,47 @@ class SelfTest:
                        for l in lines) and rc == 1,
                    "REQ-01 a branch whose .jit conflicts with main needs action and names the conflict")
         self.sh("git", "branch", "-D", "outside-conflict", "tracker-conflict", cwd=code)
+
+    def abandon(self, code):
+        for name in ("landed-a", "landed-b", "landed-c", "landed-d", "landed-e"):
+            self.sh("git", "branch", name, "main", cwd=code)
+        self.sh("git", "update-ref", "refs/archive/landed-b", "main~1", cwd=code)
+        tip = git("rev-parse", "landed-a", cwd=code).strip()
+        rc, out = self.run("abandon", "--repo", code, "--branch", "landed-a")
+        self.check(rc == 0 and out.splitlines() == ["landed-a: abandoned to refs/archive/landed-a"]
+                   and rev("refs/archive/landed-a", code) == tip and rev("refs/heads/landed-a", code) is None,
+                   "REQ-10 abandon moves the branch to refs/archive/<name> and deletes the branch ref")
+        rc, out = self.run("abandon", "--repo", code, "--branch", "landed-a")
+        self.check(rc == 0 and out.splitlines() == ["landed-a: already abandoned"]
+                   and rev("refs/archive/landed-a", code) == tip,
+                   "REQ-10 a rerun after success reports already abandoned and changes nothing")
+        before = git("show-ref", cwd=code)
+        rc, out = self.run("abandon", "--repo", code, "--branch", "landed-b")
+        self.check(rc == 1 and out.startswith("landed-b: refused: refs/archive/landed-b exists")
+                   and git("show-ref", cwd=code) == before,
+                   "REQ-10 abandon refuses an existing archive ref and changes no ref")
+        rc, out = self.run("abandon", "--repo", code, "--branch", "wa")
+        self.check(rc == 1 and out.startswith("wa: refused: wa is checked out in")
+                   and git("show-ref", cwd=code) == before,
+                   "REQ-10 abandon refuses a branch checked out in a worktree and changes no ref")
+        listed = Path(self.path("abandon.txt"))
+        listed.write_text("# landed branches\nlanded-c\nwa # checked out\nlanded-d\n")
+        rc, out = self.run("abandon", "--repo", code, "--branches", str(listed))
+        lines = out.splitlines()
+        self.check(rc == 1 and len(lines) == 3 and lines[0] == "landed-c: abandoned to refs/archive/landed-c"
+                   and lines[1].startswith("wa: refused:") and lines[2] == "landed-d: abandoned to refs/archive/landed-d",
+                   "REQ-10 a batch prints one line per branch, continues after a refusal and exits 1")
+        argv = ("abandon", "--repo", code, "--branch", "landed-e")
+        self.snapshot()
+        steps = []
+        rc, out = self.run(*argv, hooks={"step": steps.append})
+        self.check(rc == 0, "REQ-10 abandon of landed-e")
+        self.interrupt_each(argv, steps, self.state_of(argv), "REQ-10 abandon")
+        self.guard_probes(argv, "archived", "abandon", lambda r: None)
+        rc, _ = self.run(*argv)
+        self.check(rc == 0 and rev("refs/heads/landed-e", code) is None, "SAFE restart abandon final fixture")
+        self.sh("git", "update-ref", "-d", "refs/archive/landed-b", cwd=code)
+        self.sh("git", "branch", "-D", "landed-b", cwd=code)
 
     def archive(self, code):
         inside_dest = str(Path(code) / "docs" / "archives")
@@ -2947,6 +3046,8 @@ def self_test():
         code = test.build()
         print("inventory")
         test.inventory(code)
+        print("abandon")
+        test.abandon(code)
         print("archive")
         archives = test.archive(code)
         print("extract")
