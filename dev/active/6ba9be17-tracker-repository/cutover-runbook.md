@@ -27,8 +27,9 @@ cutover() { python3 -B "$epic/cutover.py" "$@"; }
 The issue-load check runs in the checkout whose `.jit/` it reads. It runs
 `jit issue show` for every id of `jit query all --json`, and scans every
 `gates_status` entry that names a run for its file
-`.jit/gate-runs/<issue>/<run>.json`. An issue whose entry names a missing run
-fails to load ("Failed to load gate runs"). With
+`.jit/gate-runs/<issue>/<run>.json`. `jit validate` checks that each gate
+record's run record exists (`gate-run-reference`); `load_check` also loads
+every issue, which validation does not. With
 `strict` the check passes on zero load failures and zero missing run files.
 With `report` it prints both lists and passes when every load failure is an
 issue that names a run, as `gate-runs/` is ignored by the store's
