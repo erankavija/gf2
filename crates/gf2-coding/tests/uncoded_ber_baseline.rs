@@ -2,7 +2,8 @@
 //! CSV export.
 
 use gf2_coding::info_theory::bi_awgn_capacity;
-use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
+use gf2_coding::simulation::{SimulationConfig, SimulationRunner, QUICK_TEST_SEED};
+use rand::{rngs::StdRng, SeedableRng};
 
 #[test]
 #[ignore = "sim: uncoded BPSK BER baseline, 100 000 frames"]
@@ -12,7 +13,7 @@ fn test_uncoded_ber_at_high_snr() {
     config.min_errors = 10;
     config.max_frames = 100_000;
 
-    let mut rng = rand::thread_rng();
+    let mut rng = StdRng::seed_from_u64(QUICK_TEST_SEED);
     let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
     assert_eq!(results.len(), 1);
@@ -31,7 +32,7 @@ fn test_uncoded_ber_decreases_monotonically() {
     config.min_errors = 100;
     config.max_frames = 100_000;
 
-    let mut rng = rand::thread_rng();
+    let mut rng = StdRng::seed_from_u64(QUICK_TEST_SEED);
     let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
     assert_eq!(results.len(), 3);
@@ -57,7 +58,7 @@ fn test_uncoded_ber_reasonable_values() {
     config.min_errors = 200;
     config.max_frames = 500_000;
 
-    let mut rng = rand::thread_rng();
+    let mut rng = StdRng::seed_from_u64(QUICK_TEST_SEED);
     let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
     assert!(
@@ -81,7 +82,7 @@ fn test_ber_far_from_shannon_limit() {
     config.min_errors = 100;
     config.max_frames = 100_000;
 
-    let mut rng = rand::thread_rng();
+    let mut rng = StdRng::seed_from_u64(QUICK_TEST_SEED);
     let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
     // Uncoded (rate 1): Es/N0 = Eb/N0 = 3 dB, where capacity is ~0.91 bit,
@@ -105,7 +106,7 @@ fn test_csv_export_format() {
     config.eb_n0_range_db = vec![3.0];
     config.min_errors = 50;
 
-    let mut rng = rand::thread_rng();
+    let mut rng = StdRng::seed_from_u64(QUICK_TEST_SEED);
     let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
     let csv = SimulationRunner::results_to_csv(&results, true);
@@ -133,7 +134,7 @@ mod property_tests {
             config.min_errors = 10;
             config.max_frames = 10_000;
 
-            let mut rng = rand::thread_rng();
+            let mut rng = StdRng::seed_from_u64(QUICK_TEST_SEED);
             let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
             prop_assert!(results[0].ber <= 0.5,
