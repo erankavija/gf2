@@ -142,6 +142,8 @@ def fixture(runs, history=None):
     }
     calls = {f"issue show {ISSUE[:8]} --json": reply(issue)}
     for key, run in runs.items():
+        if key == "landed":
+            continue
         calls[f"gate show {key} --json"] = reply(DEFINITIONS[key])
         calls[f"gate status {ISSUE} {key} --json"] = reply(run)
     for key, results in (history or {}).items():
@@ -251,6 +253,11 @@ def run_cases(h):
     result = h.check(fixture(all_kinds), short, base)
     expect_status("exact commit", result, 0, SUCCESS, "att: attested",
                   "val: store-judged", "ci: counts", "plain: counts")
+
+    # The landed gate judges the merge after this check: skipped, never queried.
+    result = h.check(fixture(dict(all_kinds, landed=not_run("landed"))), short, base)
+    expect_status("landed skipped", result, 0, SUCCESS,
+                  "  landed: judged after the merge\n")
 
     # REQ-01, REQ-06: a change inside a declared exclusion keeps the verdict.
     runs = dict(all_kinds, plain=executed("plain", excluded, 2))

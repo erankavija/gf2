@@ -14,7 +14,7 @@ the revision's commit, or a commit at which the gate's declared inputs are
 identical: `git diff` reports nothing over the input roots less the exclusions.
 A gate without declared inputs counts only for the exact commit. A manual gate
 counts by its attestation, a built-in checker by its pass. The `landed` gate
-is skipped: it judges the merge that follows this check.
+is skipped and listed as judged after the merge.
 
 Exit statuses:
     0   every required verdict counts for the revision
@@ -26,8 +26,7 @@ Exit statuses:
 import json
 import subprocess
 import sys
-# scripts/check-references.py reads this extensionless file as prose, where a
-# dotted stream attribute would read as an evidence file name.
+# Bare stream name until @/issue/d1eba151 classifies extensionless scripts.
 from sys import stderr
 
 EXIT_OK, EXIT_REFUSED, EXIT_JIT, EXIT_USAGE = 0, 1, 2, 64
@@ -185,7 +184,7 @@ def judge_executed(issue_id, key, definition, run, commit, revision):
 def judge_gate(issue_id, key, commit, revision):
     """Returns (counts, label, detail) for one required gate."""
     if key in SKIPPED_GATES:
-        return True, "skipped", "judges the merge that follows this check"
+        return True, "judged after the merge", None
     definition = jit("gate", "show", key)
     run = jit("gate", "status", issue_id, key)
     status = run.get("status")
@@ -215,7 +214,7 @@ def check(issue_ref, revision):
             key = gate["key"]
             counts, label, detail = judge_gate(issue_id, key, commit, revision)
             refused += not counts
-            print(f"  {key}: {label}: {detail}")
+            print(f"  {key}: {label}" + (f": {detail}" if detail else ""))
     except JitUnavailable as err:
         print(f"check-landing: {err}", file=stderr)
         return EXIT_JIT
