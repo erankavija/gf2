@@ -13,8 +13,10 @@ Cargo path and a Rust include resolve from their own file. An inline file
 name (bare or with directories) resolves from its own directory or one
 enclosing it, a `./name` from its own directory or the root. Issue prose has
 no directory: its references resolve from the root, and bare names need
-repository paths. Each reference is normalized once, from that base, into a
-repository path; its membership, store and branch lookups, ignore rules,
+repository paths. A spelling inside a Markdown link target, a Cargo path, a
+Rust include or a path-named data member belongs to that extractor alone, and
+a manifest's Cargo paths are not data members. Each reference is normalized
+once, from its extractor's base, into a repository path; its membership, store and branch lookups, ignore rules,
 exception match and fault text all use that path, and an inline name's fault
 names its own-directory reading. A `..` that climbs above the root resolves
 nowhere: it faults as written and no ignore rule or planned path excuses it.
@@ -122,6 +124,8 @@ RELATIVE_PATH = re.compile(r"(?<![\w./+-])((?:\.\./)+[\w.+=-]+(?:/[\w.+=-]+)*)")
 INLINE_PATH = re.compile(r"`((?!10\.\d)[\w.+=-]+(?:/[\w.+=-]+)*/[\w+=-]+\.\w+)`")
 MARKDOWN_LINK = re.compile(r"\]\((?!https?:|mailto:|#)([^)#\s]+)")
 CARGO_PATH = re.compile(r"""\bpath\s*=\s*"([^"]+)\"""")
+# The data members of a manifest whose values `CARGO_PATH` reads.
+CARGO_MEMBER = re.compile(r"(?:.*\W)?path")
 RUST_INCLUDE = re.compile(r"""include(?:_str|_bytes)?!\(\s*"([^"]+)"\s*\)""")
 DOT_PATH = re.compile(r"(?<![\w./+-])\./([\w.+=-]+(?:/[\w.+=-]+)+)")
 TEMPLATE = re.compile(r"[<>{}*$]")
@@ -209,6 +213,7 @@ def evidence_faults(
     markdown: bool = False,
     base: str = "",
     files: bool = False,
+    owned: list[tuple[int, int]] = (),
 ) -> list[str]:
     """Evidence-kind file names on `line` that name no tracked file.
 
@@ -219,7 +224,8 @@ def evidence_faults(
     `line` or `before` names a `target/` location. `markdown` adds every
     backticked bare file name and the backticked-only evidence kinds. `files`
     reads `line` as a data string: the Markdown names, and the whole string
-    when it is one file name of a known kind (`DATA_FILE_NAME`).
+    when it is one file name of a known kind (`DATA_FILE_NAME`). A name
+    starting in an `owned` span belongs to another extractor.
     """
     names = []
     if markdown:
@@ -232,16 +238,15 @@ def evidence_faults(
         # Only the label is covered by the link; a separate citation of the
         # same name on this line still needs its own resolution.
         line = MARKDOWN_FILE_LINK.sub(label, line)
-    tokens = [(token, EVIDENCE_NAME) for token in FILE_TOKEN.findall(line)]
+    matches = [(match, EVIDENCE_NAME) for match in FILE_TOKEN.finditer(line)]
+    if markdown or files:
+        matches += [(match, None) for match in BARE_INLINE.finditer(line)]
+        matches += [
+            (match, INLINE_EVIDENCE_NAME) for match in INLINE_PATH.finditer(line) if ".." not in match.group(1)
+        ]
+    tokens = [(match.group(1), kind) for match, kind in matches if not _within(match.start(1), owned)]
     if files and FILE_TOKEN.fullmatch(line.strip()):
         tokens.append((line.strip(), DATA_FILE_NAME))
-    if markdown or files:
-        tokens += [(token, None) for token in BARE_INLINE.findall(line)]
-        tokens += [
-            (token, INLINE_EVIDENCE_NAME)
-            for token in INLINE_PATH.findall(line)
-            if ".." not in token
-        ]
     for token, kind in tokens:
         name = token.removeprefix("./")
         # `RELATIVE_PATH` resolves a `../` name against its file.
@@ -267,12 +272,18 @@ def faults_in(
     evidence: bool = True,
     written: frozenset[str] = frozenset(),
     invariants: frozenset[str] | None = None,
+    owned: frozenset[str] = frozenset(),
 ) -> list[str]:
     """`base` is the directory relative references resolve against.
 
     Passing it marks `text` as Markdown prose whatever the file's suffix.
     `evidence` false skips `evidence_faults` and the invariant check.
-    `invariants` None skips the invariant check.
+    `invariants` None skips the invariant check. `owned` holds the values
+    `data_faults` resolves.
+
+    A spelling inside a Markdown link target, a Cargo path, a Rust include or
+    an `owned` value belongs to that extractor alone, so each reference
+    resolves once from the base its own syntax names.
     """
     faults = []
     markdown = base is not None or path.endswith(".md")
@@ -288,11 +299,26 @@ def faults_in(
             return []
         return [f"{path}:{number}: {spelling if target is None else target}"]
 
+    values = owned and re.compile(
+        r"(?<![\w./+-])(?:"
+        + "|".join(map(re.escape, sorted(owned, key=len, reverse=True)))
+        + r")(?![\w/+=-])"
+    )
     for number, line in enumerate(text.splitlines(), 1):
+        spans = [
+            match.span(1)
+            for pattern, applies in (
+                (MARKDOWN_LINK, markdown),
+                (CARGO_PATH, path.endswith("Cargo.toml")),
+                (RUST_INCLUDE, path.endswith(".rs")),
+            )
+            if applies
+            for match in pattern.finditer(line)
+        ] + ([match.span() for match in values.finditer(line)] if values else [])
         if prose and evidence:
             faults += [
                 f"{path}:{number}: {name}"
-                for name in evidence_faults(line, before, known, written, markdown, base)
+                for name in evidence_faults(line, before, known, written, markdown, base, owned=spans)
             ]
         if evidence and invariants is not None:
             faults += [
@@ -308,6 +334,8 @@ def faults_in(
         ):
             faults.append(f"{path}:{number}: host-local path")
         for match in REPOSITORY_PATH.finditer(line):
+            if _within(match.start(), spans):
+                continue
             end = match.end()
             if line[end : end + 1] in ("*", "{", "<", "$"):
                 continue
@@ -326,14 +354,22 @@ def faults_in(
                 faults += unresolved(included, _reference(base, included))
         if prose:
             # A `./` path in prose is a command spelling run from the root.
-            for dotted in DOT_PATH.findall(line):
-                faults += unresolved(f"./{dotted}", _reference("", dotted))
-            for relative in RELATIVE_PATH.findall(line):
-                faults += unresolved(relative, _reference(base, relative))
+            for match in DOT_PATH.finditer(line):
+                if not _within(match.start(), spans):
+                    faults += unresolved(match.group(), _reference("", match.group(1)))
+            for match in RELATIVE_PATH.finditer(line):
+                if not _within(match.start(), spans):
+                    faults += unresolved(match.group(1), _reference(base, match.group(1)))
         if markdown:
-            for inline in INLINE_PATH.findall(line):
+            for match in INLINE_PATH.finditer(line):
+                inline = match.group(1)
                 # `REPOSITORY_PATH` and `DOT_PATH` own their spellings.
-                if ".." in inline or REPOSITORY_PATH.fullmatch(inline) or DOT_PATH.fullmatch(inline):
+                if (
+                    ".." in inline
+                    or REPOSITORY_PATH.fullmatch(inline)
+                    or DOT_PATH.fullmatch(inline)
+                    or _within(match.start(1), spans)
+                ):
                     continue
                 if not _resolves(inline, base, known):
                     faults.append(f"{path}:{number}: {_reference(base, inline)}")
@@ -357,7 +393,8 @@ def data_faults(
     directory, so either reading resolves it, and so does a reading git
     ignores. The fault names the file-relative reading of a `../` value and
     the root-relative reading of any other, or the value as written when a
-    `..` climbs above the root in both.
+    `..` climbs above the root in both. A manifest member `CARGO_PATH` reads
+    is left to it.
     """
     try:
         members = list(_data_members(path, text))
@@ -368,12 +405,12 @@ def data_faults(
     faults = []
     files = bool(DATA_PROSE.match(path))
     for number, member, value in members:
-        for name in evidence_faults(value, "", known, written, base=base, files=files):
-            line = number or next((i for i, text in enumerate(lines, 1) if name in text), 0)
-            faults.append(f"{path}:{line}: {name}")
-        if not DATA_PATH_MEMBER.search(member) or "/" not in value:
+        if _cargo_member(path, member):
             continue
-        if not DATA_PATH_VALUE.fullmatch(value) or TEMPLATE.search(value):
+        if not _data_path(path, member, value):
+            for name in evidence_faults(value, "", known, written, base=base, files=files):
+                line = number or next((i for i, text in enumerate(lines, 1) if name in text), 0)
+                faults.append(f"{path}:{line}: {name}")
             continue
         readings = [_reference("", value), _reference(base, value)]
         if value.startswith("../"):
@@ -385,6 +422,35 @@ def data_faults(
             number = next((i for i, line in enumerate(lines, 1) if value in line), 0)
         faults.append(f"{path}:{number}: {readings[0] if readings else value}")
     return faults
+
+
+def _cargo_member(path: str, member: str) -> bool:
+    return path.endswith("Cargo.toml") and bool(CARGO_MEMBER.fullmatch(member))
+
+
+def _data_path(path: str, member: str, value: str) -> bool:
+    """Whether `data_faults` resolves the value of `member` as a path."""
+    return bool(
+        DATA_PATH_MEMBER.search(member)
+        and "/" in value
+        and DATA_PATH_VALUE.fullmatch(value)
+        and not TEMPLATE.search(value)
+        and not _cargo_member(path, member)
+    )
+
+
+def data_paths(path: str, text: str) -> frozenset[str]:
+    """The values of a data file that `data_faults` resolves as paths."""
+    try:
+        return frozenset(
+            value for _, member, value in _data_members(path, text) if _data_path(path, member, value)
+        )
+    except (ValueError, tomllib.TOMLDecodeError):
+        return frozenset()
+
+
+def _within(start: int, spans) -> bool:
+    return any(begin <= start < end for begin, end in spans)
 
 
 def _data_members(path: str, text: str):
@@ -1015,7 +1081,8 @@ def scan(
 ) -> list[str]:
     if fnmatch.fnmatch(path, ".jit/issues/*.json"):
         return issue_faults(path, text, known, written, invariants, is_history, trees)
-    faults = faults_in(path, text, known, written=written, invariants=invariants)
+    owned = data_paths(path, text) if path.endswith(DATA_SUFFIXES) else frozenset()
+    faults = faults_in(path, text, known, written=written, invariants=invariants, owned=owned)
     if path.endswith(DATA_SUFFIXES):
         faults += [
             fault for fault in data_faults(path, text, known, is_ignored, written) if fault not in faults
@@ -1512,6 +1579,19 @@ ROUTE_CASES = {
         'd = { path = "../../.jit/missing-cargo" }\ne = { path = "../../../x" }\n',
         ["2: crates/missing-crate", "3: .jit/missing-cargo", "4: ../../../x"],
     ),
+    "crates/c/Cargo.toml": (
+        '[dependencies]\nx = { path = "./missing-x" }\ny = { path = "./present-x" }\n'
+        'b = { path = "../missing-b" }\nc = { path = "../a" }\nd = { path = "benchmarks/missing-cb" }\n',
+        ["2: crates/c/missing-x", "4: crates/missing-b", "6: crates/c/benchmarks/missing-cb"],
+    ),
+    # One spelling two extractors match belongs to the one whose base it names
+    "docs/link-repo.md": ("[a](docs/missing-lr.md)", ["1: docs/docs/missing-lr.md"]),
+    "docs/link-dot-path.md": ("[a](./docs/missing-ld.md)", ["1: docs/docs/missing-ld.md"]),
+    "docs/link-ev.md": ("[a](docs/run-link.log)", ["1: docs/docs/run-link.log"]),
+    "crates/a/src/repo.rs": ('include_str!("docs/missing-inc.md");', ["1: crates/a/src/docs/missing-inc.md"]),
+    "scripts/data-repo.json": ('{"path": "docs/x-data"}', []),
+    "scripts/data-ev.json": ('{"log_path": "results/run-data.log"}', ["1: results/run-data.log"]),
+    "scripts/data.yaml": ("path: ./docs/x-yaml\n", []),
     # RUST_INCLUDE
     "crates/a/src/lib.rs": (
         'include_str!("missing.txt");\ninclude_str!("./present.txt");\n'
@@ -1548,8 +1628,8 @@ ROUTE_CASES = {
 }
 
 
-def route_self_test() -> None:
-    """Each spelling reaches every route as one path resolved from its own base.
+def route_faults() -> dict[str, list[str]]:
+    """The faults of each `ROUTE_CASES` file, as `line: target`.
 
     The code repository ignores `target/` and `/.jit/`; the store is its own
     repository and ignores `/tmp/`.
@@ -1563,7 +1643,10 @@ def route_self_test() -> None:
         git(data, "init", "-q", "-b", "main")
         (data / STORE_INDEX).write_text("{}")
         (data / ".gitignore").write_text("/tmp/\n")
-        for name in ("docs/present.md", "scripts/x.sh", "crates/a/src/present.txt", ".jit/reference/present.md"):
+        for name in (
+            "docs/present.md", "scripts/x.sh", "crates/a/src/present.txt", ".jit/reference/present.md",
+            "crates/c/present-x/lib.rs", "scripts/docs/x-data", "scripts/docs/x-yaml",
+        ):
             (root / name).parent.mkdir(parents=True, exist_ok=True)
             (root / name).write_text("")
         for name, (text, _) in ROUTE_CASES.items():
@@ -1571,10 +1654,17 @@ def route_self_test() -> None:
             (root / name).write_text(text)
         _commit(root, "main")
         faults = check(root, data)
-        for name, (_, expected) in ROUTE_CASES.items():
-            found = sorted(f.removeprefix(f"{name}:") for f in faults if f.startswith(f"{name}:"))
-            assert found == sorted(expected), (name, found)
-        assert not [f for f in faults if f.split(":", 1)[0] not in ROUTE_CASES], faults
+    assert not [f for f in faults if f.split(":", 1)[0] not in ROUTE_CASES], faults
+    return {
+        name: sorted(f.removeprefix(f"{name}:") for f in faults if f.startswith(f"{name}:"))
+        for name in ROUTE_CASES
+    }
+
+
+def route_self_test() -> None:
+    """Each spelling reaches every route once, as one path resolved from its own base."""
+    for name, found in route_faults().items():
+        assert found == sorted(ROUTE_CASES[name][1]), (name, found)
     planned = [{"path": "docs/a.md", "planned": ["docs/"]}]
     assert not excepted(Path("/checkout"), "docs/a.md:1: docs/../../x", planned)
 
