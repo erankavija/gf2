@@ -86,19 +86,24 @@ claims, leases, locks and the worktree identity under the code repository's
       `git -C .jit fetch <rw>/.jit && git -C .jit merge --ff-only FETCH_HEAD`.
       The primary tracker is the one writable store; a non-fast-forward means
       a tracker write during the window and stops the step.
-    - Move `.git` aside, clone the rewritten mirror, and copy `jit/` from the
-      moved-aside `.git` into the new `.git` before any jit command. The
+    - Move `.git` aside, `git clone --bare <mirror> .git`, set
+      `core.bare false`, run `git reset` to fill the index, and copy `jit/`
+      from the moved-aside `.git` into the new `.git` before any jit command.
+      A bare clone keeps every local branch. The
       ignored `.jit/` lies outside `.git` and stays in place;
       `git -C .jit rev-parse HEAD` equals the step-6 snapshot. The primary
       `.jit` keeps its own machine-local files.
     - Set `origin` and run `scripts/install-hooks.sh`.
-    - Recreate needed worktrees at the mapped commits, each without a `.jit`.
-      For pinned and parked worktrees, keep the untracked built arms in place
-      with `git worktree repair <path>` and
-      `git -C <path> reset --soft <mapped head>`. A parked worktree with
-      uncommitted tracked changes stops the reseat.
-    - `jit claim list` and the worktree ID equal the recorded ones, and
-      `jit validate` passes.
+    - Recreate needed worktrees at the rewritten branch heads, each without a
+      `.jit`. The new `.git` has no `worktrees/` entries, so
+      `git worktree repair` alone fails. For pinned and parked worktrees, keep
+      the untracked built arms in place: `git worktree add --no-checkout <tmp> <branch>`,
+      move `<tmp>/.git` over `<path>/.git`, remove `<tmp>`, then
+      `git worktree repair <path>` and `git -C <path> reset`; its status is
+      then clean. A parked worktree with uncommitted tracked changes stops the
+      reseat.
+    - The leases of `jit claim list` and the worktree ID equal the recorded
+      ones, and `jit validate` passes.
 11. Fix old commit IDs in the primary checkout and its tracker issue records.
     Run [old_ids.py](old_ids.py) from the primary checkout, using the archived
     map and original history (the commands below abbreviate its repository path
