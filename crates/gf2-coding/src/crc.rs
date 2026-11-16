@@ -23,13 +23,15 @@ impl CrcCode {
     ///
     /// # Panics
     ///
-    /// Panics if `n <= k` or if `poly` does not have degree `n - k`.
+    /// Panics if `n <= k`, if `n > 64` (a codeword must fit one `u64`), or if
+    /// `poly` does not have degree `n - k`.
     ///
     /// # Complexity
     ///
     /// O(k * n) for constructing the systematic generator matrix.
     pub fn new(n: usize, k: usize, poly: u64) -> Self {
         assert!(n > k, "n must be greater than k");
+        assert!(n <= 64, "n must be at most 64, got {n}");
         let r = n - k;
 
         let degree = 63 - poly.leading_zeros() as usize;
@@ -175,6 +177,18 @@ impl GeneratorMatrixAccess for CrcCode {
 mod tests {
     use super::*;
     use crate::traits::BlockEncoder;
+
+    #[test]
+    #[should_panic(expected = "n must be at most 64")]
+    fn new_rejects_codeword_length_above_one_word() {
+        CrcCode::new(65, 49, (1u64 << 16) | 0x1021);
+    }
+
+    #[test]
+    fn new_accepts_codeword_length_of_one_word() {
+        let code = CrcCode::new(64, 48, (1u64 << 16) | 0x1021);
+        assert_eq!((code.n(), code.k()), (64, 48));
+    }
 
     #[test]
     fn test_crc_25_15_parameters() {
