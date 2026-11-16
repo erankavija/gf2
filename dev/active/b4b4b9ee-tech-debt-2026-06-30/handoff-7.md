@@ -80,4 +80,4 @@ None.
 
 ## References
 
-- Epic `b4b4b9ee`; `progress.json` in this directory; steward handoff `dev/active/2caf738d-1-0/handoff-4.md`; carve-out plan `dev/active/6ba9be17-tracker-repository/plan.md`.
+- Epic `b4b4b9ee`; `progress.json` in this directory; steward handoff `dev/active/2caf738d-1-0/handoff-5.md`; carve-out plan `dev/active/6ba9be17-tracker-repository/plan.md`.

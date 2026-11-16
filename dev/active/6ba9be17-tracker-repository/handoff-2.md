@@ -79,4 +79,4 @@
 
 - [plan.md](plan.md), [breakdown.json](breakdown.json), [investigation.md](investigation.md), [progress.json](progress.json).
 - Durable artifacts: `~/.local/share/gf2/6ba9be17-handoff-2/`.
-- Steward handoff `dev/active/2caf738d-1-0/handoff-4.md`; charter `dev/research/2caf738d-charter.md`.
+- Steward handoff `dev/active/2caf738d-1-0/handoff-5.md`; charter `dev/research/2caf738d-charter.md`.

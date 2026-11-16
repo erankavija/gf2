@@ -43,4 +43,4 @@ None.
 
 ## References
 
-- [plan.md](plan.md), [progress.json](progress.json); steward handoff `dev/active/2caf738d-1-0/handoff-4.md`; charter `dev/research/2caf738d-charter.md` (D-8 to D-12).
+- [plan.md](plan.md), [progress.json](progress.json); steward handoff `dev/active/2caf738d-1-0/handoff-5.md`; charter `dev/research/2caf738d-charter.md` (D-8 to D-12).
