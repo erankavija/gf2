@@ -47,19 +47,25 @@ claims, leases, locks and the worktree identity under the code repository's
    subjects of the listed commits on `main` that break the commit convention.
    `drop` removes `.jit` and every path under it first.
 5. `git gc --prune=now --aggressive`. Clone the mirror to a checkout, `<rw>`.
-   A parked head whose entry in `filter-repo/commit-map` is all zeros stops the
-   run.
+   A parked branch whose ref is missing from the mirror, or whose
+   `git diff main...<branch>` disagrees with the original outside `.jit` and
+   the stripped blobs, stops the run. A head commit that only removed `.jit`
+   paths, as the cutover's cleaning commit did, is pruned: its map entry is
+   all zeros and the ref moves to its nearest kept ancestor.
 6. Mount and remap in `<rw>`:
    - `scripts/tracker-bootstrap <tracker>`, where `<tracker>` is the primary
-     checkout's `.jit`. A nonzero exit is accepted only when its findings are
-     `gate-run-reference` alone: gate-run records are machine-local and absent
-     from a clone.
+     checkout's `.jit`. Its nonzero exit is accepted when its findings are
+     `gate-run-reference` (gate-run records are machine-local and absent from
+     a clone) and the `document-reference` errors of the unremapped pins.
    - Copy `gate-runs/` and `gate-artifacts/` of the primary `.jit` (read only)
-     into `<rw>/.jit`; `scripts/tracker-env jit validate` then passes.
+     into `<rw>/.jit`.
    - Record `git -C .jit rev-parse HEAD`, run
-     `scripts/tracker-env python3 dev/active/b8206228-permanent-statistics/45ecf975/map_pins.py <mirror>/filter-repo/commit-map`,
+     `scripts/tracker-env python3 dev/active/b8206228-permanent-statistics/45ecf975/map_pins.py <mirror>/filter-repo/commit-map <backup>/gf2.git`,
      commit the remapped pins in the tracker with `scripts/tracker-snapshot`,
-     and record the tracker head again.
+     and record the tracker head again. A pin on a commit the rewrite pruned
+     maps to its nearest kept first-parent ancestor, found in the step-1
+     backup mirror; the tool prints both counts.
+   - `scripts/tracker-env jit validate` passes.
    - In the code repository, add the gzipped map as
      `dev/history-rewrite-commit-map.gz`, state in `AGENTS.md` that older
      recorded commit IDs resolve through it, and commit those two paths only.
@@ -109,7 +115,9 @@ tracker and a `.git/jit/`. It reports to the owner through the issue:
   only on `.jit` paths; the old `drop` is the copy in
   [rewrite_tools_test.py](rewrite_tools_test.py), which passes under
   `python3 -B`;
-- the tracker head before and after the remap and the pinned commits mapped;
+- the tracker head before and after the remap and the pinned commits mapped
+  directly and through a pruned commit (the rehearsal's original is its
+  backup mirror);
 - the `jit validate` result in `<rw>` with the tracker mounted;
 - the rehearsed reseat: tracker head kept, `jit claim list` and worktree ID
   unchanged, `jit validate` passing;
