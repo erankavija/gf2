@@ -67,6 +67,11 @@ cargo run -p gf2-coding --release --features parallel --bin sim_runner -- \
 `--seed` defaults to 42. `--parallel` simulates the SNR points of an LDPC or
 GLDPC curve concurrently and the frames of a product-code curve concurrently.
 
+For parallel product curves, `turbo.frames_per_worker_chunk` optionally sets a
+positive number of frames per worker per batch. The default adapts each batch
+to the outstanding frame-error target and worker count. Changing the batch size
+or worker count preserves seeded results.
+
 ## Locate the output
 
 `output_dir` resolves against the working directory. Per curve it holds:

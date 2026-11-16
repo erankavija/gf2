@@ -24,10 +24,14 @@ impl BcjrDecoder {
     ///
     /// # Panics
     ///
-    /// Panics if `h` has more than 20 rows.
+    /// Panics if `h` has more than 20 rows or fewer columns than rows.
     pub fn new(h: &BitMatrix) -> Self {
         let m = h.rows();
         let n = h.cols();
+        assert!(
+            n >= m,
+            "Parity-check matrix has fewer columns than rows ({n} < {m})"
+        );
         assert!(
             m <= 20,
             "Parity-check matrix has {} rows; BCJR trellis with 2^{} states is infeasible",
@@ -227,6 +231,12 @@ mod tests {
     use crate::drm::DrmCode;
     use crate::traits::BlockEncoder;
     use gf2_core::BitVec;
+
+    #[test]
+    #[should_panic(expected = "fewer columns than rows")]
+    fn new_rejects_more_rows_than_columns() {
+        BcjrDecoder::new(&BitMatrix::zeros(3, 2));
+    }
 
     fn hamming74_h() -> BitMatrix {
         gf2_core::bitmatrix![
