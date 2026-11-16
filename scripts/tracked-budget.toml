@@ -1,7 +1,7 @@
 # Limits for scripts/check-tracked-budget.py. The numbers may only fall.
 max_file_bytes = 1048576
 max_commit_added_bytes = 5242880
-max_tree_bytes = 34040000
+max_tree_bytes = 20650000
 
 forbidden_paths = [
   '(^|/)(inputs|source-inputs|test-logs)/',
@@ -24,6 +24,8 @@ forbidden_paths = [
   # A TOML file under dev/active is a frozen run configuration unless it is
   # a build or tool manifest.
   '^dev/active/(?!(.*/)?(Cargo|rust-toolchain|rustfmt|clippy|deny|pyproject|lakefile|nextest)\.toml$).*\.toml$',
+  # The tracker is its own repository, mounted at .jit/.
+  '^\.jit/',
 ]
 
 # A JSON, TOML or YAML document the rules above admit under `record_documents` holds
@@ -127,10 +129,6 @@ reason = "synthetic dataset member the schema-3 verifier requires; carries seede
 [[exception]]
 path = "experiments/permanent-statistics/tests/fixtures/analysis/*/summary.csv"
 reason = "synthetic dataset member the schema-3 verifier requires; pools the seeded shard counts"
-
-[[exception]]
-path = ".jit/events.jsonl"
-reason = "append-only tracker log; grows with the tracker"
 
 [[exception]]
 path = "crates/*/tests/compile_fail/*.stderr"

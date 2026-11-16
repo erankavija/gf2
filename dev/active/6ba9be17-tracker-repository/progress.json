@@ -38,7 +38,7 @@
           "id": "daa33be8-175c-4e21-8f52-fa7c6859c5f8",
           "short_id": "daa33be8",
           "title": "Refuse a landing whose gate verdicts do not count for the branch tip",
-          "status": "rework 1 (Claude Opus) at 83bb4268e; cargo-ci passed there; code-review at merged head 9692f5ce8 running; cargo-ci at merged head after gf2-24's hold"
+          "status": "done (landed 9a8c52991)"
         },
         {
           "id": "6310679b-c818-42cc-ae9c-89250dccf992",
@@ -55,19 +55,19 @@
           "id": "7854cfad-5480-4c94-b7ba-e6ace2744289",
           "short_id": "7854cfad",
           "title": "Hold dependents until a code change has landed on main",
-          "status": "pending"
+          "status": "done (landed 8c46dae79)"
         },
         {
           "id": "e610f5c4-3833-4e23-8399-eb5b8b483ea8",
           "short_id": "e610f5c4",
           "title": "Build the cutover tool that moves the tracker out of the code repository",
-          "status": "dispatched (Claude Opus 5.5)"
+          "status": "cutover tool adf7406f3 merged 54b4491a2; ran the live cutover; cargo-ci and landed passed, code-review failed (6 findings recorded); open"
         },
         {
           "id": "2a4c2684-b7a6-4a72-822f-918a873a07bf",
           "short_id": "2a4c2684",
           "title": "Carry the separate tracker through the history rewrite",
-          "status": "assigned to gf2-bf by the steward; after e610f5c4 lands"
+          "status": "unassigned; gf2-f6 takes it after e610f5c4 lands"
         }
       ]
     },
@@ -78,7 +78,7 @@
           "id": "6b9e6b14-2382-42d9-b8f5-dea181b3dea6",
           "short_id": "6b9e6b14",
           "title": "Write the cutover runbook and rehearse it with the history rewrite",
-          "status": "pending"
+          "status": "runbook merged 01a338f5a; rehearsal run 2 clean, results in the issue; cargo-ci (reused) and landed passed, code-review failed (5 findings); open"
         }
       ]
     },
@@ -89,7 +89,7 @@
           "id": "6889e6e6-9b0f-4ff1-8de4-e2cc6cba9a6d",
           "short_id": "6889e6e6",
           "title": "Execute the tracker cutover",
-          "status": "pending"
+          "status": "cutover executed 2026-11-16 01:43-01:52, C=c0ea7b369; guidance merged 28c472a14; cargo-ci, docs-mechanical and landed passed, code-review failed (2 findings); open"
         }
       ]
     }
@@ -100,7 +100,22 @@
       "short_id": "d1eba151",
       "title": "Classify extensionless scripts by their interpreter line in the reference checker",
       "reason": "daa33be8 had to write around the prose rules of check-references (convention-convergence); depends on 28aa2a9d and daa33be8",
-      "wave": 4
+      "wave": 4,
+      "status": "backlog; handed to gf2-f6"
+    },
+    {
+      "id": "84022ee3-5195-41a1-95a5-822783074b15",
+      "short_id": "84022ee3",
+      "title": "Rewrite the code-task preset as gate keys and test the parse cases",
+      "reason": "steward ruling at the 7854cfad landing, narrowed when the jit project took key-only presets (jit 5e3bee43): rewrite code-task as keys with the new binary; the Sonnet review advisory on untested parse cases",
+      "wave": 5
+    },
+    {
+      "id": "8660c096-870b-466e-8690-e28d76a1cc73",
+      "short_id": "8660c096",
+      "title": "Give the tracked tree-size limit room for the next commit",
+      "reason": "the cutover's rounded tree limit blocked the next commit under 'limits only fall' (steward ruling)",
+      "wave": "owner decision"
     }
   ],
   "escalations": [
@@ -108,13 +123,41 @@
       "issue": "28aa2a9d",
       "kind": "rework limit / repeated finding class",
       "ruling": "steward gf2-a2: third attempt by Claude Opus with a structural brief (route table first); pre-gate Codex review part of attempt 3; trailing-.. input contrived but fixed; park on an ordinary-spelling failure of this class"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "rework limit (new defect, rollback)",
+      "ruling": "one targeted fix by the same Claude worker"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "parked on a data-loss gate finding",
+      "ruling": "one final round closing the class: git-dir state markers, destructive-command audit, refusal tests; another data-loss path parks and goes to the owner"
+    },
+    {
+      "issue": "6ba9be17",
+      "kind": "owner timing decision impact",
+      "ruling": "cutover alone before the rewrite; parked branches cleaned at the cutover (option a); criteria moved per fc38867b3"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "cleaning rule vs 70 branches conflicting outside .jit",
+      "ruling": "owner via steward, charter D-12 (08fe9f8b9): abandon stale branches to refs/archive before the window; clean every surviving branch (26 no-issue included) with one removal-only commit, no merge; inventory judges .jit part only; abandon subcommand; criteria reworded"
+    },
+    {
+      "issue": "d1eba151",
+      "kind": "rework limit (size of the env parser)",
+      "ruling": "steward gf2-a2: third attempt by Claude Sonnet with the simple rule, untested env forms are no finding; park on a further gate failure"
     }
   ],
   "rework_counts": {
     "28aa2a9d": 3,
     "3fb4accb": 1,
     "6310679b": 1,
-    "daa33be8": 1
+    "daa33be8": 1,
+    "7854cfad": 1,
+    "e610f5c4": 5,
+    "d1eba151": 3
   },
   "surfaced_pitfalls": [
     "docs-mechanical exits 2 when JIT_DATA_DIR lies outside any git repository (documented contract; advisory from the 6d5ba9fb Claude review)",
@@ -125,14 +168,25 @@
     "check-references: a file-name link label is checked as its own inline citation (pre-existing; out of 28aa2a9d scope)",
     "Gate runs on fresh or rebuilt worktrees hit the 900 s cargo-ci timeout at load 20+; a warm direct ./scripts/cargo-ci.sh pre-run then --force gate works",
     "The worktree dispatch script refuses while another session holds uncommitted dev/ files in main; create the worktree with git worktree add from main instead",
-    "Each main landing by a peer that touches crates/ or scripts/ invalidates cargo-ci verdicts at branch tips; tracker-only main drift does not (merged without re-gating)"
+    "Each main landing by a peer that touches crates/ or scripts/ invalidates cargo-ci verdicts at branch tips; tracker-only main drift does not (merged without re-gating)",
+    "cutover.py inventory (:366-368 at 9aeddb20f) reports any merge-tree conflict as a tracker action, also conflicts outside .jit; fixed under e610f5c4 REQ-01 in the D-12 round",
+    "cutover.py --self-test fails after the cutover (HEAD:.gitattributes gone); e610f5c4 REQ-09",
+    "jit binary replaced 2026-11-16 01:10 (still 1.0.0): validate checks gate-run records, presets key-only, jit profile diff rejects manifest version 1",
+    "8 detached worktrees keep stale .jit stores (named exceptions); epic REQ-09 and 6889e6e6 REQ-03 open until the owner accepts or they are cleaned",
+    "plain jit in a linked worktree resolves the primary store with the wrong code root (F-05 falsified)"
   ],
   "started_at": "2026-11-15T01:17:00+02:00",
-  "lead": "gf2-bf under steward gf2-a2 (took over from gf2-e3, gf2-7d)",
+  "lead": "gf2-5c (cutover line) under steward gf2-a2; session ended 2026-11-16 after the cutover",
   "notes": {
     "2a4c2684": "assigned to gf2-bf by steward gf2-a2 (gf2-00 has no session); design at the runbook backup directory, rewrite-plan/2026-11-14b/2a4c2684-design.md; scope per steward message",
     "6889e6e6": "waits on an owner timing decision (rewrite paused, steward 01:22)",
-    "6d5ba9fb": "Blocking Claude review (Claude Sonnet 5.5, beside the Codex gate): PASS at 43e85778e; REQ-01 to REQ-08 met; REQ-02 checked with the real jit against scratch roots. cargo-ci and code-review re-passed at merged head 33c4df96a."
+    "6d5ba9fb": "Blocking Claude review (Claude Sonnet 5.5, beside the Codex gate): PASS at 43e85778e; REQ-01 to REQ-08 met; REQ-02 checked with the real jit against scratch roots. cargo-ci and code-review re-passed at merged head 33c4df96a.",
+    "durable_artifacts": "the durable directory named in handoff-2.md",
+    "6b9e6b14": "lead choices: linked-worktree gate probe is docs-mechanical added to 6889e6e6; second-identity lease on 6ba9be17",
+    "7854cfad": "landed before the cutover under the pre-cutover rule: cargo-ci at c4849dd01 and code-review at b1c997544; main drift to the tip was docs and tracker only; check-references, tracked-budget and jit validate passed at tip 50a591ac0",
+    "d1eba151": "parked 2026-11-16 (steward ruling): branch at 348f302d4; cargo-ci passed at 14e30f81f, code-review failed there on untested env forms the steward had scoped out",
+    "18276ff1": "resumed with gf2-f6 (owner, 2026-11-16); fix 8233df6d0 reviewed PASS; REQ-06 and final gates after the cutover",
+    "port": "applied on main in 97b8e84a9; 30 referenced run records copied into main's store"
   },
   "dispatches": [
     {
@@ -219,6 +273,134 @@
       "vendor": "Claude",
       "model": "Opus 5.5 (steward: strongest Claude tier)",
       "reviewer": "Codex gate"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "rework 1 (parked branches)",
+      "vendor": "Codex",
+      "model": "gpt-6.1-sol high",
+      "reviewer": "Claude Opus blocking FAIL"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "rework 2",
+      "vendor": "Claude",
+      "model": "Opus 5.5",
+      "reviewer": "Codex read-only FAIL (rollback)"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "targeted fix",
+      "vendor": "Claude",
+      "model": "Opus 5.5",
+      "reviewer": "Codex gate FAIL (data loss)"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "final round",
+      "vendor": "Codex",
+      "model": "gpt-6.1-sol high",
+      "reviewer": "pending: Claude Opus blocking audit replay"
+    },
+    {
+      "issue": "7854cfad",
+      "kind": "rework 1",
+      "vendor": "Codex",
+      "model": "gpt-6-luna xhigh",
+      "reviewer": "Claude Sonnet blocking PASS; code-review gate pending"
+    },
+    {
+      "issue": "6b9e6b14",
+      "kind": "phase 1 runbook draft",
+      "vendor": "Claude",
+      "model": "Opus 5.5",
+      "reviewer": "pending"
+    },
+    {
+      "issue": "7854cfad",
+      "kind": "rework (gate-kind enums)",
+      "vendor": "Codex",
+      "model": "gpt-6-luna",
+      "reviewer": "Claude Sonnet 5.5 blocking PASS + Codex gate PASS at b1c997544"
+    },
+    {
+      "issue": "d1eba151",
+      "kind": "implement",
+      "vendor": "Codex",
+      "model": "gpt-6-luna xhigh",
+      "reviewer": "lead FAIL (REQ-04)"
+    },
+    {
+      "issue": "d1eba151",
+      "kind": "rework 1",
+      "vendor": "Claude",
+      "model": "Sonnet 5.5",
+      "reviewer": "Claude Sonnet 5.5 blocking PASS; Codex gate FAIL F1"
+    },
+    {
+      "issue": "d1eba151",
+      "kind": "rework 2",
+      "vendor": "Codex",
+      "model": "gpt-6-luna xhigh",
+      "reviewer": "lead: correct but a 130-line parser; escalated"
+    },
+    {
+      "issue": "d1eba151",
+      "kind": "rework 3 (steward-approved)",
+      "vendor": "Claude",
+      "model": "Sonnet 5.5",
+      "reviewer": "Codex gate FAIL; parked per ruling"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "final round phase 2",
+      "vendor": "Codex",
+      "model": "gpt-6.1-sol high",
+      "reviewer": "pending (folded)",
+      "note": "stopped at 69 min by gf2-bf, no report; checkpoint ece58ef3c"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "final round completion + D-12 round (REQ-01/07/09/10/11)",
+      "vendor": "Claude",
+      "model": "Opus 5.5",
+      "reviewer": "blocking Claude Opus (audit replay) + Codex read-only, then Codex gate"
+    },
+    {
+      "issue": "18276ff1",
+      "kind": "SIGINT fix (owner resumption)",
+      "vendor": "Codex",
+      "model": "gpt-6.1-sol high",
+      "reviewer": "Claude Opus 5.5 blocking PASS"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "cut tool (forward only)",
+      "vendor": "Claude",
+      "model": "Opus 5.5",
+      "reviewer": "Codex gate",
+      "note": "replaced impl-e610f5c4-d12, which kept the marker machinery after the redirect"
+    },
+    {
+      "issue": "6b9e6b14",
+      "kind": "runbook cut and fixes",
+      "vendor": "Claude",
+      "model": "Sonnet 5.5",
+      "reviewer": "lead + Codex gate"
+    },
+    {
+      "issue": "6b9e6b14",
+      "kind": "rehearsals (early, forward run 1, run 2)",
+      "vendor": "Claude",
+      "model": "Sonnet 5.5 / Opus 5.5",
+      "reviewer": "lead"
+    },
+    {
+      "issue": "6889e6e6",
+      "kind": "guidance docs REQ-06",
+      "vendor": "Claude",
+      "model": "Sonnet 5.5",
+      "reviewer": "lead + Codex gate"
     }
   ]
 }

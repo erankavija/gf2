@@ -1,7 +1,7 @@
 # Handoff: Competitive benchmarking against Magma/Sage/AFF3CT (d77176e5) and general BCH (ae03bcd0), session 7, wind-down
 
 **Date:** 2026-11-15
-**Prior handoffs:** handoff-7 is retired (Git history); its rulings and traps still bind unless this file records their resolution. Steward handoff: `dev/active/2caf738d-1-0/handoff-4.md`. Charter: `dev/research/2caf738d-charter.md`.
+**Prior handoffs:** handoff-7 is retired (Git history); its rulings and traps still bind unless this file records their resolution. Steward handoff: `dev/active/2caf738d-1-0/handoff-5.md`. Charter: `dev/research/2caf738d-charter.md`.
 
 ## Current state
 

@@ -155,7 +155,7 @@ mechanical documentation check resolves.
 - **library-first-generality** — Generic behavior lands as a reusable API in the layer-appropriate library crate, and binaries, simulations, and orchestration stay thin consumers. An experiment's protocol, constants, records, validation and orchestration live with that experiment outside the library crates and consume library APIs.
 - **committed-evidence-budget** — Measurements, receipts, execution logs, result tables, copied source and inputs, and third-party archives are never committed; the repository holds harnesses and their configuration, and a run writes outside the tracked tree. A decision record may state the measured values its pre-registered rule decides on, labelled with the host; receipts, logs and result tables stay outside the tree. `scripts/check-tracked-budget.py` enforces this and the file, commit and tree limits, which only fall.
 - **no-deferred-defects** — Quality defects surfaced while implementing a change are fixed in that change or filed as a tracked issue before completion; a TODO or FIXME marker without a tracked issue is a defect.
-- **resolvable-references** — Tracked text names only what a fresh clone resolves: no host-local path and no repository path that does not exist. `scripts/check-references.py` enforces this.
+- **resolvable-references** — Tracked text names only what a fresh clone resolves, alone or with the tracker checkout mounted at `.jit/`: no host-local path and no repository path that does not exist. `scripts/check-references.py` enforces this.
 - **falsification-preserved** — Data that contradicts a criterion, hypothesis, or cited claim is recorded together with the contradiction; silent rework of the falsified statement is a defect.
 - **campaign-evidence** — A campaign is a measurement whose result a decision record or publication cites, or that spans several benchmark windows. It is a resumable sequence of bounded runs with one append-only execution log, and its record pins the executable digest, the configuration, the seed and the host facts the tool observes. Evidence is invalidated only by a change to those or to the tool's measurement behavior; Git commit IDs, clean/dirty status and documentation changes decide nothing. A ledger, schema, checker or protocol version beyond this is a defect unless a success criterion names it. Any other measurement carries a harness, a configuration and a host name.
 - **caller-trusted-fast-paths** — API contracts trust the caller: validation exists to catch mistakes and to amortize cost, never to defend against an adversary. A path that skips validation for performance is a distinct method under the _unchecked naming convention with its precondition documented, and violating that precondition is caller error with unspecified mathematical results — never grounds for sealing types, policing evidence provenance, or other adversarial hardening in a library that does HPC, not security.
@@ -168,10 +168,16 @@ mechanical documentation check resolves.
 
 ## JIT workflow
 
-- Treat `.jit/` as repository-owned workflow configuration and issue data.
+- `.jit/` is the checkout of the tracker repository; the code repository ignores it. A fresh clone mounts it with `scripts/tracker-bootstrap <path-or-url>`. On a host with a mounted tracker, its home is `git -C .jit remote get-url origin`; a fresh clone on that host mounts it with `scripts/tracker-bootstrap "$(git -C <primary-checkout>/.jit remote get-url origin)"`.
+- Run jit from a linked worktree through `scripts/tracker-env jit ...`. The entry point sets `JIT_DATA_DIR` to the primary checkout's `.jit/`, where such a worktree finds the store's files, and `JIT_WORKTREE_ROOT` to the worktree.
+- Skill scripts that require `.jit` under their root run against the primary checkout.
 - Read `.jit/reference/content-standards.md` before authoring issues or planning documents.
 - Derive hierarchy, templates, gates, namespaces, and documentation paths from repository configuration.
 - A label means what its `[namespaces.<ns>]` declaration in `.jit/config.toml` says it means; read that declaration before judging what a label on an issue claims.
 - Use `jit issue status`, `jit query available`, and the dependency graph to select and sequence work.
+- Link a document that exists only on a branch with `jit doc add` pinned to a branch commit (`--commit`), and re-link it unpinned when it lands.
+- A branch lands only after `scripts/check-landing <issue> <tip>` passes.
+- A code-producing issue carries the `landed` gate through the `code-task` preset; the lead evaluates it after the merged-tree gate.
+- A lead runs `scripts/tracker-snapshot` after each landing, and the steward at the end of a session. `scripts/tracker-snapshot` commits locally; `git -C .jit push origin main` then keeps the home current.
 - Run the configured gates before completing an issue; a passing review placeholder is advisory evidence only.
 <!-- jit:profile-sim-research-guidance:end -->
