@@ -12,14 +12,14 @@ The streams `d77176e5`, `ae03bcd0` and `45ecf975` keep their handoffs of
 - The tracker cutover `@/issue/6889e6e6` ran on 2026-11-16, 01:43 to 01:52 local. The tracker is its own Git repository mounted at `.jit/` of the primary checkout; `main` tracks no path under `.jit/`. Its home is the mount's origin (`git -C .jit remote get-url origin`).
 - Every session is wound down by the owner's order. No lead, worker, gate or lease runs. Nothing is pushed in the code repository; the pre-push hook refuses `main` on budget findings in unpushed history.
 - Landed and closed this session: `574ed420`, `697b9178`, `9c0568ee`, `d8aee1f4`, `6d5ba9fb`, `28aa2a9d`, `3fb4accb`, `daa33be8`, `6310679b`, `7854cfad`.
-- Open with recorded code-review findings, gates cargo-ci and landed passed: `e610f5c4` (tool retired after its run, in history at `c0ea7b369`), `6b9e6b14`, `6889e6e6`.
+- Open with recorded code-review findings, gates cargo-ci and landed passed: `e610f5c4` (tool retired after its run, in history at `6c886acb5`), `6b9e6b14`, `6889e6e6`.
 - Charter decisions D-10 (cutover alone, before the rewrite), D-11 (`jit:none`) and D-12 (stale branches abandoned, the rest cleaned by a removal-only commit) are logged.
 - Branches: the owner had every branch merged into `main` deleted, with the worktrees of 49 of them; 46 done-issue branches sit under `refs/archive/`; 46 local branches remain. Eight detached worktrees keep a stale `.jit` directory as named exceptions; the cutover handoff lists them.
 
 ## Owner decisions of this session
 
 - Cutover alone, rehearsed alone, forward-only tool, rollback by git; the gates of its three issues ran after the window.
-- Rewrite rewords: `42e42101a94d`, `797e1d5205af`, `79f9117d417b`, `f57fbec1e3d4`, `fceb1c842c57` take `jit:b4b4b9ee`; `49c78483d964` and the eleven free-scope subjects take `jit:none`. The 26 branches without an issue are deleted at the rewrite. All in the Notes of `@/issue/45ecf975`.
+- Rewrite rewords: `42e42101a94d`, `797e1d5205af`, `79f9117d417b`, `f57fbec1e3d4`, `fceb1c842c57` take `jit:b4b4b9ee`; `a33af036b983` and the eleven free-scope subjects take `jit:none`. The 26 branches without an issue are deleted at the rewrite. All in the Notes of `@/issue/45ecf975`.
 - Pushes stay held until the rewrite. A local bundle of all refs replaces the online backup.
 - `18276ff1`: the budget-gate self-test waits on events only (option (a)).
 - jit: run records may be declared machine-local (jit issue f25d6fda, approved by the owner on the jit side); gf2's plan decision D-07 stands.

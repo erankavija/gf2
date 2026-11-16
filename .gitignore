@@ -39,7 +39,7 @@ proofs/scratch/
 
 # Compiled C++ benchmarks
 benches/fflas_fdot_bench
-# Stray unstripped ELF committed in 095e93b5; untracked, kept ignored.
+# Stray unstripped ELF committed in 6f21b528; untracked, kept ignored.
 crates/gf2-core/lib
 
 # Reference benchmark run outputs (jit:a03b2556)

@@ -6,19 +6,19 @@
 ## Current state
 
 - Wound down by the owner's order through the steward (`gf2-92`). The lead was `gf2-a5`; the epic is assigned to `agent:gf2-a5`. No lease, process or worktree of this lead remains, apart from the issue worktrees.
-- Landed and closed: `4f395137` (merge `5b879c12f`) and `22bb2dcd` (merge `4abe2a4d0`), the first landings after the tracker cutover.
+- Landed and closed: `4f395137` (merge `f05893b12`) and `22bb2dcd` (merge `3d3ab62a3`), the first landings after the tracker cutover.
 - Filed for the tracker epic `6ba9be17` and owned by lead `gf2-54`: `a5773e5b` and `673cd2bc`.
 
 | Issue | Branch head | Done | Missing |
 |---|---|---|---|
-| `18276ff1` | `4ca3ff8fe` | SIGINT fix `8233df6d0`, main merged, REQ-06 attempt 3 recorded | rayon pairing of three tests from `22bb2dcd`, tree-limit headroom (`8660c096`) or a smaller branch, the four samples above the pool, REQ-06, final gates, steward approval |
+| `18276ff1` | `726495395` | SIGINT fix `e1cba325d`, main merged, REQ-06 attempt 3 recorded | rayon pairing of three tests from `22bb2dcd`, tree-limit headroom (`8660c096`) or a smaller branch, the four samples above the pool, REQ-06, final gates, steward approval |
 | `90cd64a9` | none | ready | implement (Claude by alternation), gates |
 | `959ab809` | on main | REQ-01; second capture of the silent cancellation (`18276ff1` attempt 3, run 4) | REQ-02, REQ-03 |
 | `d73ac633`, `e29fd776`, `9ff05f12`, `b5782224`, `903dc74c` | as in `handoff-7.md`, plus the cutover cleaning commit | unchanged | as in `handoff-7.md`, after a main merge |
 
 ## Dispatch record
 
-No worker was dispatched. Gate reviewers: `code-review` (Codex gpt-6.1-sol) passed on `4f395137` at `5000606be` and on `22bb2dcd` at `282ec6d45`. The next implementation dispatch is Claude.
+No worker was dispatched. Gate reviewers: `code-review` (Codex gpt-6.1-sol) passed on `4f395137` at `2079905bd` and on `22bb2dcd` at `71642de6e`. The next implementation dispatch is Claude.
 
 ## What happened
 

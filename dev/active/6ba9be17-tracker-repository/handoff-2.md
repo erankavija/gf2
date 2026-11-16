@@ -12,8 +12,8 @@
 
 | Issue | New lead | Branch, head, worktree | Gate state | Running worker at handoff |
 |---|---|---|---|---|
-| `e610f5c4` cutover tool | `gf2-5c` | `worktree-agent-e610f5c4` at `ece58ef3c`, checkpoint of the Codex final-round phase 2 that gf2-bf stopped at 69 min without a report; `--self-test` passes there in 587 s | cargo-ci passed and code-review FAILED (data loss) at `35bb34927`; nothing run since | Claude Opus 5.5 (gf2-5c): finish the final round as Step 0, then the charter D-12 round (REQ-01, REQ-07, REQ-10, REQ-11) on top; then a blocking Claude Opus review replaying the audit and a Codex review, then gates once; brief in `~/.local/share/gf2/6ba9be17-handoff-3/` |
-| `7854cfad` `landed` gate | `gf2-f6` | `worktree-agent-7854cfad` at `b1c997544`, clean | cargo-ci passed at `c81afe2ae` (merged head); code-review failed at `263f78438` (semantic-types), fixed in `b889cf825`, Claude Sonnet blocking review PASS; code-review not yet rerun | none |
+| `e610f5c4` cutover tool | `gf2-5c` | `worktree-agent-e610f5c4` at `18a0e0609`, checkpoint of the Codex final-round phase 2 that gf2-bf stopped at 69 min without a report; `--self-test` passes there in 587 s | cargo-ci passed and code-review FAILED (data loss) at `59106f4ad`; nothing run since | Claude Opus 5.5 (gf2-5c): finish the final round as Step 0, then the charter D-12 round (REQ-01, REQ-07, REQ-10, REQ-11) on top; then a blocking Claude Opus review replaying the audit and a Codex review, then gates once; brief in `~/.local/share/gf2/6ba9be17-handoff-3/` |
+| `7854cfad` `landed` gate | `gf2-f6` | `worktree-agent-7854cfad` at `b1c997544`, clean | cargo-ci passed at `908423595` (merged head); code-review failed at `897ea4ed0` (semantic-types), fixed in `ebf4cdb61`, Claude Sonnet blocking review PASS; code-review not yet rerun | none |
 | `6b9e6b14` runbook and rehearsal | `gf2-5c` | `worktree-agent-6b9e6b14` at `4809b47c9`, worktree `.agents/worktrees/agent-6b9e6b14` | none | Claude Opus, phase 1 runbook draft (`dev/active/6ba9be17-tracker-repository/cutover-runbook.md` on that branch, marked `TBD-rehearsal:` where rehearsal results go); brief `brief-6b9e6b14.md` |
 | `2a4c2684` rewrite side | `gf2-f6` | none | none | none; depends on `e610f5c4` |
 | `d1eba151` extensionless scripts | `gf2-f6` | none | none | none; after `7854cfad` (both touch the landing scripts) |
@@ -30,7 +30,7 @@
 
 ### `7854cfad`
 
-- Next: code-review gate at the branch head (its declared inputs differ from `c81afe2ae` only by tracker records), then the steward before the merge (gate-set change).
+- Next: code-review gate at the branch head (its declared inputs differ from `908423595` only by tracker records), then the steward before the merge (gate-set change).
 - Open question for the steward: jit's preset format embeds a full copy of each gate definition (a key-only preset fails to parse), so `.jit/config/gate-presets/code-task.json` can drift from `.jit/gates.toml`. Recommendation: accept and regenerate with `jit gate preset create` whenever a bundled gate changes; ask the jit project for key-only presets.
 
 ### `2a4c2684`
@@ -41,7 +41,7 @@
 
 - D-10 (charter and plan): the cutover runs alone, in a quiet window of its own, before the history rewrite; accepted cost "branches settle twice".
 - Parked branches, option (a): the cutover cleans every parked branch (main merged in, tracker conflicts resolved by deletion, tracked `.jit/` removed); a branch conflicting outside `.jit` is listed for the steward, never forced. The parked list includes the branches `gf2-24` parked tonight. The 17 no-issue branches are cleaned the same way (lead's answer to the steward: the criterion requires it; no exception asked).
-- `6b9e6b14` REQ-05 moved to `2a4c2684` REQ-06; `2a4c2684` REQ-05 reworded; `2a4c2684` depends on `e610f5c4`, the epic on `2a4c2684` directly (`fc38867b3`).
+- `6b9e6b14` REQ-05 moved to `2a4c2684` REQ-06; `2a4c2684` REQ-05 reworded; `2a4c2684` depends on `e610f5c4`, the epic on `2a4c2684` directly (`4b78d4e7b`).
 - Commit scope `jit:none` for work without an issue.
 - File-name alignments allowed without asking when an enforced rule requires them, noted in the issue (`cutover.py`, the runbook's `.md` suffix).
 - The rehearsal check "the cutover's step-6 snapshot precedes the rewrite's step-1 bundle" is moot: the two run in separate windows.

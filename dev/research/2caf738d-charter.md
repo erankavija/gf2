@@ -181,7 +181,7 @@ Optimization never relaxes mathematical or standards conformance.
 
 - **Chosen:** A commit for work with no JIT issue carries the scope
   `jit:none`. The rewrite rewords earlier subjects of that kind to it,
-  `49c78483d` included.
+  `a33af036b` included.
 - **Rejected:** Free-form scopes such as `skills`: a reader cannot tell a
   missing issue from an intended one.
 - **Rejected:** Attaching such commits to the nearest epic: the commit then

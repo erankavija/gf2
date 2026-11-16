@@ -24,7 +24,7 @@
 ## What to do next
 
 - [ ] After the window: confirm `window.log` shows the d1b4f85e job exit 0 and the runner's post-check passed; copy `2026-10-02-d1b4f85e-w1w2` from the run worktree onto main.
-- [ ] Dispatch fd9d5416 (Opus) to render and commit the receipt with `render_receipt.py` under R-57/R-58, link it, then run doc-review and research-review. If Tier A/B shows a DVB-T2 W1 regression, a33fda32 becomes a prerequisite (REQ-13). If research-review rejects the cross-harness Tier B basis, take option B from the protocol note (legacy encoder re-measured at 74871c6b in its own window).
+- [ ] Dispatch fd9d5416 (Opus) to render and commit the receipt with `render_receipt.py` under R-57/R-58, link it, then run doc-review and research-review. If Tier A/B shows a DVB-T2 W1 regression, a33fda32 becomes a prerequisite (REQ-13). If research-review rejects the cross-harness Tier B basis, take option B from the protocol note (legacy encoder re-measured at da47ec76 in its own window).
 - [ ] Epic close: map success criteria, reconcile `surfaced_pitfalls` against criteria, `jit gate evaluate-all ae03bcd0`, completion report, transition, archive.
 - [ ] Reclaim `agent-d1b4f85e-run` after copying its output.
 

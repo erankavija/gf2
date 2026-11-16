@@ -13,12 +13,12 @@
 ## Cutover record
 
 - Commits on `main`:
-  - `54b4491a2`: merge of the tool;
-  - `01a338f5a`: merge of the runbook;
+  - `f9234e6da`: merge of the tool;
+  - `bb768320e`: merge of the runbook;
   - `641fa5a46`: P, the owner's go;
-  - `0ad613715`: A, the invariant amendment;
-  - `c0ea7b369`: C, the cutover commit;
-  - `28c472a14`: merge of the `6889e6e6` guidance.
+  - `a5cb565cc`: A, the invariant amendment;
+  - `6c886acb5`: C, the cutover commit;
+  - `86d282fab`: merge of the `6889e6e6` guidance.
 - Tracker:
   - extracted with 3532 commits; its tree `5055cdd2` equals `A:.jit` and the mount;
   - 6667 machine-local files restored at the mount;
@@ -70,12 +70,12 @@
 
 - Took over from `gf2-bf`. The owner's order on branch cleaning became charter D-12: removal-only cleaning, abandon to `refs/archive/`, and merged branches deleted.
 - Criteria were reworded several times on the owner's orders, each in its own tracker commit:
-  - D-12 (`c15d7e5dd`);
-  - REQ-11 `port`, added then withdrawn (`b2a8192a8`, `9d2fed2b5`);
-  - the forward path only (`9d2fed2b5`);
-  - the rehearsal falsifications (`85bc7e448`);
+  - D-12 (`640b56fc7`);
+  - REQ-11 `port`, added then withdrawn (`b2a8192a8`, `895b63c73`);
+  - the forward path only (`895b63c73`);
+  - the rehearsal falsifications (`00af93484`);
   - REQ-08 of `e610f5c4`, which excepts the code-side edits.
-- The marker-based final round of `e610f5c4` was stopped, and a second worker kept the marker machinery after being redirected. Both were replaced. The forward-only tool `adf7406f3` came from a fresh worker in about 30 minutes; its self-test ran 130 checks in 3 s.
+- The marker-based final round of `e610f5c4` was stopped, and a second worker kept the marker machinery after being redirected. Both were replaced. The forward-only tool `5b057b9fa` came from a fresh worker in about 30 minutes; its self-test ran 130 checks in 3 s.
 - Rehearsals on scratch clones of the real repository:
   - an early timing pass;
   - forward run 1, which found F2 to F10;
@@ -94,7 +94,7 @@
 
 ## Traps
 
-- The cutover tool is retired (steward ruling): commit `c0ea7b369` holds it, and the runbook runs it from there. Its self-test fails on any commit after the cutover, because its fixture copies `.gitattributes` from `HEAD`. The successor decides with the owner whether `@/issue/e610f5c4` closes as delivered and retired or is rejected.
+- The cutover tool is retired (steward ruling): commit `6c886acb5` holds it, and the runbook runs it from there. Its self-test fails on any commit after the cutover, because its fixture copies `.gitattributes` from `HEAD`. The successor decides with the owner whether `@/issue/e610f5c4` closes as delivered and retired or is rejected.
 - The tree-size limit set at the cutover leaves no room under "limits only fall"; `@/issue/8660c096` asks the owner for a headroom rule. Retiring the tool freed the room for this handoff.
 - The host's jit binary changed at 01:10 on 2026-11-16 and still reports `1.0.0`. It validates gate-run records and reads only key-only presets. `jit profile diff` now fails on `packages/jit-default` (manifest version 1, expected 2); a projected profile region in `AGENTS.md` was therefore checked by diff against its source, not by jit. The jit session holds further installs until the steward sends "gf2 cutover done". A future jit install on this host is announced to gf2 first.
 - The runbook's rollback items 5 and 8 name no command for the manifest check. `cutover archive --repo . --dest <backup>/stores --verify` is that check.

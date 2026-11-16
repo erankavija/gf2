@@ -916,7 +916,7 @@
           "title": "gf2-coding constructor-bound and simulation-runner defects reported by the comment sweep",
           "classification": "implementation",
           "priority": "normal",
-          "status": "done: landed 4abe2a4d0 (2026-11-16)"
+          "status": "done: landed 3d3ab62a3 (2026-11-16)"
         },
         {
           "id": "ee3bf65e-c23e-4fab-ba12-651058d94e8e",
@@ -1416,7 +1416,7 @@
         },
         {
           "short_id": "22bb2dcd",
-          "status": "done: landed 4abe2a4d0 (2026-11-16)"
+          "status": "done: landed 3d3ab62a3 (2026-11-16)"
         },
         {
           "short_id": "697b9178",
@@ -1428,7 +1428,7 @@
         },
         {
           "short_id": "f21b25ac",
-          "status": "done: merged ace3b37b9, closed 8a3daec11; REQ-04 amended by owner 2026-11-13, filing tracked in 41517289"
+          "status": "done: merged ba9387a61, closed 8a3daec11; REQ-04 amended by owner 2026-11-13, filing tracked in 41517289"
         },
         {
           "short_id": "5a3abee1",
@@ -1449,7 +1449,7 @@
           "title": "Window follower defaults to a host-specific systemd unit",
           "classification": "implementation",
           "priority": "normal",
-          "status": "done: merged b697da248 (claude sonnet worker; doc-review needed 2 reworks)"
+          "status": "done: merged 241baf052 (claude sonnet worker; doc-review needed 2 reworks)"
         },
         {
           "id": "9c0568ee-32cc-4755-9aa1-dfee8e40018e",
@@ -1457,7 +1457,7 @@
           "title": "Rename standard_u128_irreducibility_note to a primitivity name",
           "classification": "implementation",
           "priority": "normal",
-          "status": "in_progress: rename committed 7b2166aae; gates due"
+          "status": "in_progress: rename committed 6c0f2590a; gates due"
         },
         {
           "id": "903dc74c-56d4-4853-ae9a-cdcceb7b03fc",
@@ -1534,43 +1534,43 @@
         },
         {
           "short_id": "697b9178",
-          "status": "done (12f0f331b)"
+          "status": "done (e3772473e)"
         },
         {
           "short_id": "9c0568ee",
-          "status": "done (fb96c74d8)"
+          "status": "done (77891d21c)"
         },
         {
           "short_id": "22bb2dcd",
-          "status": "done: landed 4abe2a4d0 (2026-11-16)"
+          "status": "done: landed 3d3ab62a3 (2026-11-16)"
         },
         {
           "short_id": "d73ac633",
-          "status": "parked at 0ac0d915b"
+          "status": "parked at c32082219"
         },
         {
           "short_id": "e29fd776",
-          "status": "parked at 5520d7b03"
+          "status": "parked at 69ec2cc2f"
         },
         {
           "short_id": "9ff05f12",
-          "status": "parked at b9f2f9a42"
+          "status": "parked at d91b26d84"
         },
         {
           "short_id": "b5782224",
-          "status": "parked at 75f70cab1"
+          "status": "parked at 4d2adb22e"
         },
         {
           "short_id": "903dc74c",
-          "status": "parked at 22f57141d (unblocked)"
+          "status": "parked at 2b8b3b999 (unblocked)"
         },
         {
           "short_id": "18276ff1",
-          "status": "parked at 4ca3ff8fe: REQ-06 attempt 3 failed (tree limit, rayon pairing of three 22bb2dcd tests, one silent cancellation)"
+          "status": "parked at 726495395: REQ-06 attempt 3 failed (tree limit, rayon pairing of three 22bb2dcd tests, one silent cancellation)"
         },
         {
           "short_id": "d8aee1f4",
-          "status": "done (848bf4e95)"
+          "status": "done (7ecd1bbe2)"
         },
         {
           "short_id": "959ab809",
@@ -1578,7 +1578,7 @@
         },
         {
           "short_id": "4f395137",
-          "status": "done: landed 5b879c12f (2026-11-16)"
+          "status": "done: landed f05893b12 (2026-11-16)"
         },
         {
           "short_id": "1452ba69",

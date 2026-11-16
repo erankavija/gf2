@@ -10,10 +10,10 @@
 
 | issue | branch, head | state |
 |---|---|---|
-| `9a1b24fc` A | `worktree-agent-9a1b24fc-a` at `bea38411a` (main merged) | code-review failed: F1 (LDPC/RU, B scope), F2 (subject of `90eb89c4f` has 72 characters). cargo-ci not run. |
-| `9a1b24fc` B | `worktree-agent-9a1b24fc-b` at `f93b1a4cf`, on A | partial LDPC/RU trait work in one parked commit; not compiled or tested to completion, not reviewed |
-| `7fbd1042` | `worktree-agent-7fbd1042-a` at `70e284d8f`, on A | partial tests only; implementation missing |
-| `243d1160` | `worktree-agent-243d1160-a` at `aaf42ea6d`, on A | partial inline `BitVec`; allocation witness still on the removed inherent form |
+| `9a1b24fc` A | `worktree-agent-9a1b24fc-a` at `c7e482e45` (main merged) | code-review failed: F1 (LDPC/RU, B scope), F2 (subject of `ef302cbde` has 72 characters). cargo-ci not run. |
+| `9a1b24fc` B | `worktree-agent-9a1b24fc-b` at `b5f221614`, on A | partial LDPC/RU trait work in one parked commit; not compiled or tested to completion, not reviewed |
+| `7fbd1042` | `worktree-agent-7fbd1042-a` at `b918b2597`, on A | partial tests only; implementation missing |
+| `243d1160` | `worktree-agent-243d1160-a` at `44d03e611`, on A | partial inline `BitVec`; allocation witness still on the removed inherent form |
 | `4443de83`, `2275f760`, `ae03bcd0` | unchanged | wait for `9a1b24fc` |
 
 The former branches `worktree-agent-7fbd1042` and `worktree-agent-243d1160` are superseded by the `-a` branches; abandon them.
@@ -37,7 +37,7 @@ The next implementation dispatch is Codex.
 ## Next
 
 1. Branch B: finish and verify (focused tests, clippy, fmt, the shared batch contract at lengths 0, 1, 63, 64, 65), then review by Codex.
-2. On B's final head: reword `90eb89c4f` (`git rebase -r`, the history holds merges), merge main, ask the steward for a cargo-ci slot, run cargo-ci and code-review, then land by the repository flow.
+2. On B's final head: reword `ef302cbde` (`git rebase -r`, the history holds merges), merge main, ask the steward for a cargo-ci slot, run cargo-ci and code-review, then land by the repository flow.
 3. Then `7fbd1042` (Codex worker), `243d1160` (Claude worker), `4443de83` onto the trait form, `2275f760`, and `ae03bcd0` completion.
 
 ## Traps

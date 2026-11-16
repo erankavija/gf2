@@ -14,7 +14,7 @@
       "bench_target": "matmul_row_xor_fallback/production_mul",
       "baseline_bench_target": "matmul_row_xor_fallback/scalar_backend",
       "baseline_name": "current-scalar-backend",
-      "commit_hash": "dfa42df",
+      "commit_hash": "17a4a5b",
       "design_size_class": ["512x1x8192"]
     },
     "A3": {
@@ -101,7 +101,7 @@
       "bench_target": "sparse_matvec_ldpc_rcm_amortized_128/rcm_reordered_output",
       "baseline_bench_target": "sparse_matvec_ldpc_rcm_amortized_128/csr",
       "baseline_name": "current-csr",
-      "commit_hash": "03b9806d2a8a55bb0dd6228fc8b9fdd768909261",
+      "commit_hash": "7a52304f8623266cbe49e8dc9a1432770791dbac",
       "design_size_class": ["4096x8192_w6", "8192x16384_w6", "4096x32768_w32"],
       "rationale": "D2 adds this benchmark leaf, so compare current RCM against current CSR rather than a missing saved baseline. The optimized leaf keeps vectors and results in reordered coordinates after one-time RCM preprocessing; the separate `rcm_original_output` Criterion leaf and unit/property tests document and verify the extra `unapply_rows` path for callers that require original row order."
     }

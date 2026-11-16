@@ -246,7 +246,7 @@ pub type Prepared<'a> = Result<Box<dyn Config + 'a>, (String, String)>;
 pub trait Arm {
     /// `pre`, `current` or `external`.
     fn role(&self) -> &'static str;
-    /// The implementation's name, e.g. `gf2 74871c6b` or `bchlib`.
+    /// The implementation's name, e.g. `gf2 da47ec76` or `bchlib`.
     fn name(&self) -> String;
     /// The configurations this arm times on `cell`, over `messages`.
     fn configs<'a>(&'a self, cell: &Cell, messages: &'a [Vec<u64>]) -> Vec<Prepared<'a>>;

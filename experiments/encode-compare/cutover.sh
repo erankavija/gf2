@@ -5,7 +5,7 @@
 #
 # Environment: GF2_SRSRAN_ROOT, GF2_AFF3CT_ROOT, GF2_BCHLIB_ROOT and
 # GF2_M4RI_ROOT (an M4RI install prefix) name the staged comparator trees.
-# CUTOVER_PRE_REVISION (default 74871c6b, the pinned pre-cutover revision of
+# CUTOVER_PRE_REVISION (default da47ec76, the pinned pre-cutover revision of
 # @/issue/88ca7d2f), CUTOVER_ROUNDS (default 5), CUTOVER_CELLS (cell-ID
 # prefixes such as W1/B2,W2/T2S) and CUTOVER_CALL_BUDGET_S (default 10)
 # configure the run; CUTOVER_CORES (default 2-5) pins an indication.
@@ -35,7 +35,7 @@ cd "$repo"
 : "${GF2_M4RI_ROOT:?GF2_M4RI_ROOT must name the M4RI install prefix}"
 export GF2_SRSRAN_ROOT GF2_AFF3CT_ROOT GF2_BCHLIB_ROOT GF2_M4RI_ROOT
 
-pre=$(git rev-parse --verify "${CUTOVER_PRE_REVISION:-74871c6b73b722f35d5acb5ef68750cecd93e2ef}^{commit}")
+pre=$(git rev-parse --verify "${CUTOVER_PRE_REVISION:-da47ec768fbf25c7f10c66ef4241471a5185a3f4}^{commit}")
 current=$(git rev-parse --verify "HEAD^{commit}")
 work="$repo/target/encode-compare/cutover"
 external="$here/external/target/release/encode-compare"

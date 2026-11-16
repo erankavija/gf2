@@ -1,29 +1,29 @@
 # Handoff: Technical debt assessment remediation (2026-06-30) (b4b4b9ee), session 6
 
 **Date:** 2026-11-15
-**Prior handoffs:** `handoff-5.md` is no longer cited (the `d77176e5` lead dropped the citation in `d75b874e9`) and is retired in the next tracker commit. Its traps that still bind are repeated below.
+**Prior handoffs:** `handoff-5.md` is no longer cited (the `d77176e5` lead dropped the citation in `8fd51ffca`) and is retired in the next tracker commit. Its traps that still bind are repeated below.
 
 ## Current state
 
 - Wound down by the owner's order of 2026-11-15 01:22, through the steward: everything except the carve-out `6ba9be17` stops. This epic takes no dispatch, gate or landing. Every open branch is parked as it stands and is carried through the history rewrite as a rewritten ref (owner). A parked branch resumes only on a new owner word.
 - Lead `gf2-7d` under steward `gf2-96`. `6ba9be17` was handed to `gf2-e3` at 01:18 with both wave-1 worktrees, heads, claims, gate state and the Claude review of `6d5ba9fb`. Its `6d5ba9fb` cargo-ci gate, run 65dc8131, timed out at 900 s on a cold worktree: an environment error, no verdict.
 - No build, gate, worker or Codex process of this lead runs. No `cargo-pool-run` process of this lead remains.
-- On main this session: `2e6e3557` (merge `9e5cbf7c8`, closed) and `c34e8203` (merge `100e5380a`, closed under the owner's scope ruling).
+- On main this session: `2e6e3557` (merge `a6cc7708b`, closed) and `c34e8203` (merge `59f6d5ad3`, closed under the owner's scope ruling).
 - Filed this session: `d8aee1f4` (protocol tests with a fixed 6 s stall deadline) and `18276ff1` (nextest test processes draw from the host cargo pool).
 - Parked branches, each `worktree-agent-<id>` in `.agents/worktrees/agent-<id>`, with `target/` removed. Every gate reruns on the head that lands.
 
 | Issue | Head | Done | Missing |
 |---|---|---|---|
-| `574ed420` | `4d3829b01` (main merged at 01:20) | REQ-01, REQ-02 met; design and implementation reviewed | REQ-04 pair back to back on a quiet host (before at main, after at the branch, cold and warm, all rc=0, start load stated); REQ-03 rerun; cargo-ci; code-review. Harness kept outside the tree. |
-| `18276ff1` | `945da678c` | design reviewed; owner decisions and REQ-01 to REQ-09 recorded; `649530477` (wrapper test) and `4c83737f3` (wrapper) committed by the worker | `945da678c` holds unverified work in progress from the stop: the budget gate script, filter checker, AGENTS.md, invariants, gates.toml and per-epic gate edits, gf2-sim width changes, other leads' handoff wording. Review or drop it before any merge. REQ-08 width-24 decision (A/B/C, in the issue); REQ-06 evidence after `574ed420`; Codex gate; steward approval. |
-| `697b9178` | `26a4d4d01` | code-review passed; Kani run of the bitvec harnesses recorded earlier | cargo-ci (killed tests under concurrency; a direct run passed in 517 s) |
-| `9c0568ee` | `8b4a79e6b` | Claude review PASS recorded earlier | cargo-ci (GPU-lock timeout; a direct run passed in 584 s), code-review |
-| `22bb2dcd` | `ca855d173` | code-review passed at this head | cargo-ci (GPU-lock timeout; a direct run passed in 628 s); afterwards `90cd64a9` |
-| `d73ac633` | `0ac0d915b` | code-review passed; blocking Claude review PASS at `593832a42` | cargo-ci |
-| `e29fd776` | `5520d7b03` | code-review passed; blocking Claude review PASS at `50b003164` | cargo-ci, doc-review |
-| `9ff05f12` | `b9f2f9a42` | — | cargo-ci, code-review, doc-review |
-| `b5782224` | `75f70cab1` | REQ-01 to REQ-03 implemented (Claude Sonnet 5.5); the folded interleaver finding is parked in the issue's Notes (owner, option 1) | cargo-ci, code-review |
-| `903dc74c` | `22f57141d` | — | after `697b9178`: merge main, `cargo-kani`, code-review |
+| `574ed420` | `dff5dd6d8` (main merged at 01:20) | REQ-01, REQ-02 met; design and implementation reviewed | REQ-04 pair back to back on a quiet host (before at main, after at the branch, cold and warm, all rc=0, start load stated); REQ-03 rerun; cargo-ci; code-review. Harness kept outside the tree. |
+| `18276ff1` | `01efabcc4` | design reviewed; owner decisions and REQ-01 to REQ-09 recorded; `e30758718` (wrapper test) and `8e7910c06` (wrapper) committed by the worker | `01efabcc4` holds unverified work in progress from the stop: the budget gate script, filter checker, AGENTS.md, invariants, gates.toml and per-epic gate edits, gf2-sim width changes, other leads' handoff wording. Review or drop it before any merge. REQ-08 width-24 decision (A/B/C, in the issue); REQ-06 evidence after `574ed420`; Codex gate; steward approval. |
+| `697b9178` | `c30601598` | code-review passed; Kani run of the bitvec harnesses recorded earlier | cargo-ci (killed tests under concurrency; a direct run passed in 517 s) |
+| `9c0568ee` | `1c5f53d98` | Claude review PASS recorded earlier | cargo-ci (GPU-lock timeout; a direct run passed in 584 s), code-review |
+| `22bb2dcd` | `5af22986b` | code-review passed at this head | cargo-ci (GPU-lock timeout; a direct run passed in 628 s); afterwards `90cd64a9` |
+| `d73ac633` | `c32082219` | code-review passed; blocking Claude review PASS at `efd0e6c0d` | cargo-ci |
+| `e29fd776` | `69ec2cc2f` | code-review passed; blocking Claude review PASS at `6ec6f47b0` | cargo-ci, doc-review |
+| `9ff05f12` | `d91b26d84` | — | cargo-ci, code-review, doc-review |
+| `b5782224` | `4d2adb22e` | REQ-01 to REQ-03 implemented (Claude Sonnet 5.5); the folded interleaver finding is parked in the issue's Notes (owner, option 1) | cargo-ci, code-review |
+| `903dc74c` | `2b8b3b999` | — | after `697b9178`: merge main, `cargo-kani`, code-review |
 
 - Stopped without dispatch: `90cd64a9`, `d8aee1f4`, `6eb12747`, `85e7e4c0`, `41517289` (owner action) and the ready set.
 - Nothing is pushed.
@@ -50,7 +50,7 @@
 - `18276ff1` (owner, 2026-11-15): timeout enforcement moves to epic level (`budget` profile, `CARGO_CI_BUDGET=1`, epic gate `test-budgets` that waits on a busy host); the rayon gap is in scope (REQ-08); wording in the issue.
 - `2e6e3557` (steward): the `ci-slow.yml` fold was approved as a scope extension.
 - Vendors alternate per implementation dispatch; the reviewer is the other vendor; a Codex-implemented change gets a blocking Claude review.
-- Before every review or plan gate, merge main into the branch: a verdict on a base older than `49c78483d` reruns (steward).
+- Before every review or plan gate, merge main into the branch: a verdict on a base older than `a33af036b` reruns (steward).
 - After a landing that touches `crates/`, run `CARGO_NET_OFFLINE=true cargo check --locked -p aff3ct-ldpc-gaps --bin dvb_t2_fer_diag` on the merged main tip before releasing main (`gf2-f4`).
 - `6ba9be17` (steward): scripts and checkers only; nothing touches the real store or history before `6889e6e6`; `2a4c2684` is `gf2-00`'s.
 

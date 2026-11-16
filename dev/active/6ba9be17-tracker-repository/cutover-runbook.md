@@ -15,14 +15,14 @@ and is outside this runbook.
 Every command runs from the top level of the primary checkout unless a step
 names another directory. The shell may be `sh`, `bash` or `zsh`; commands quote
 every expansion. The cutover tool (task `@/issue/e610f5c4`) is retired after
-its run; commit `c0ea7b369` holds it in this directory, and its docstring
+its run; commit `6c886acb5` holds it in this directory, and its docstring
 there is the reference for each subcommand's arguments, refusals and
 exit statuses (0 done, 1 failed or action needed, 2 refused). It is the forward
 path only; the rollback is git. A shell function runs it from that commit:
 
 ```sh
 epic=dev/active/6ba9be17-tracker-repository
-cutover() { git show "c0ea7b369:$epic/cutover.py" | python3 -B - "$@"; }
+cutover() { git show "6c886acb5:$epic/cutover.py" | python3 -B - "$@"; }
 ```
 
 The issue-load check runs in the checkout whose `.jit/` it reads. It runs

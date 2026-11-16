@@ -70,14 +70,14 @@
           "short_id": "0dffa759",
           "title": "Field-by-field go/no-go synthesis with production design",
           "classification": "design",
-          "status": "done: all gates passed at 85269c1c after the session-10 rework (RNG registry derivation, figure removal, F.13 closure); lead six-tier review PASS"
+          "status": "done: all gates passed at 3a154182 after the session-10 rework (RNG registry derivation, figure removal, F.13 closure); lead six-tier review PASS"
         },
         {
           "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
           "short_id": "51498b90",
           "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
           "classification": "implementation",
-          "status": "done: cargo-ci + code-review + doc-review passed at 85269c1c under the owner-approved quarantine reconciliation and REQ-02 amendment; lead six-tier review PASS"
+          "status": "done: cargo-ci + code-review + doc-review passed at 3a154182 under the owner-approved quarantine reconciliation and REQ-02 amendment; lead six-tier review PASS"
         }
       ]
     },
@@ -121,7 +121,7 @@
           "short_id": "032cc754",
           "title": "Processor backend selection for campaign cells",
           "classification": "implementation",
-          "status": "done: cargo-ci + code-review passed at 55782dba after rework-1; lead six-tier review PASS. R1 finding F1 (REQ-06 reached only the scheduler; driver.rs stringified BackendUnavailable into the quarantine branch, yielding a completed campaign and exit 0) closed by a pre-flight resolve of every enumerated work item in run_field_checkpointed_inner, returning CampaignDriverError::Schedule before any checkpoint open, matrix draw or emission. Lead decision: the production evaluator now propagates ScheduleError typed rather than stringified, so every production ScheduleError is fatal, not only BackendUnavailable. This narrows 51498b90 REQ-04 on the production path; accepted because every ScheduleError the production evaluator can raise is a manifest or config defect (StreamIndex::new, MatrixSampler::new, the internal packed-path disagreement) rather than a per-matrix evaluation failure, the kernels do not return Result so a real evaluation failure is a panic under either design, and REQ-04 remains demonstrated through the _with_evaluator seam its own test uses. Owner may overturn."
+          "status": "done: cargo-ci + code-review passed at c530b2f6 after rework-1; lead six-tier review PASS. R1 finding F1 (REQ-06 reached only the scheduler; driver.rs stringified BackendUnavailable into the quarantine branch, yielding a completed campaign and exit 0) closed by a pre-flight resolve of every enumerated work item in run_field_checkpointed_inner, returning CampaignDriverError::Schedule before any checkpoint open, matrix draw or emission. Lead decision: the production evaluator now propagates ScheduleError typed rather than stringified, so every production ScheduleError is fatal, not only BackendUnavailable. This narrows 51498b90 REQ-04 on the production path; accepted because every ScheduleError the production evaluator can raise is a manifest or config defect (StreamIndex::new, MatrixSampler::new, the internal packed-path disagreement) rather than a per-matrix evaluation failure, the kernels do not return Result so a real evaluation failure is a panic under either design, and REQ-04 remains demonstrated through the _with_evaluator seam its own test uses. Owner may overturn."
         }
       ],
       "note": "Historical wave complete. The amended 3f664839 design depends on the unfinished manifest freeze and moved to wave 9 during the 2026-08-24 reconciliation."
@@ -134,7 +134,7 @@
           "short_id": "a39bb161",
           "title": "Accelerator execution for campaign cells",
           "classification": "implementation",
-          "status": "done: owner-approved bounded lead-direct repair merged at d7f1b428; the real-binary mixed-manifest regression and per-cell scheduler contract pass. Registered cargo-ci passed on a clean tree, code-review passed with zero findings, lead six-tier review passed, and the issue closed at fbe7bef1."
+          "status": "done: owner-approved bounded lead-direct repair merged at 4769bbd0; the real-binary mixed-manifest regression and per-cell scheduler contract pass. Registered cargo-ci passed on a clean tree, code-review passed with zero findings, lead six-tier review passed, and the issue closed at fbe7bef1."
         }
       ]
     },
@@ -146,21 +146,21 @@
           "short_id": "7a816262",
           "title": "Frozen root manifest for the campaign",
           "classification": "implementation",
-          "status": "done: focused high-tier rework changed only the frozen executable invocation and its coupled checksum/freeze references. The manifest retains 63 cells and 14,229 shards; doc-review and research-review passed at 8e660ae3 with zero findings; lead six-tier review PASS; closure commit d7210bb0."
+          "status": "done: focused high-tier rework changed only the frozen executable invocation and its coupled checksum/freeze references. The manifest retains 63 cells and 14,229 shards; doc-review and research-review passed at 6ecff848 with zero findings; lead six-tier review PASS; closure commit d7210bb0."
         },
         {
           "id": "1947125e-33eb-4442-b717-24442cc35ca1",
           "short_id": "1947125e",
           "title": "Shared behavioural conformance suite across campaign backends",
           "classification": "implementation",
-          "status": "done: cargo-ci passed at 51e28a31 (clean tree) and code-review passed at d8f6cb01 with zero findings; lead six-tier review PASS; closed session 16, closure commit 370eb43a."
+          "status": "done: cargo-ci passed at 51e28a31 (clean tree) and code-review passed at 0739792a with zero findings; lead six-tier review PASS; closed session 16, closure commit 370eb43a."
         },
         {
           "id": "ec22205e-64f9-43c9-9848-ff8e6c41348c",
           "short_id": "ec22205e",
           "title": "Complete determinant marginal-cost coverage for campaign cells",
           "classification": "research",
-          "status": "done: all four registered gates re-evaluated on the clean tree at HEAD 0e389483 and passed (cargo-ci, code-review, doc-review, research-review VERDICT: PASS). The v5 receipt revalidated byte-for-byte. Lead six-tier review PASS; Tier 1.5 confirms all four prior findings closed with no regression, Tiers 2.5 and 2.75 empty. research-review advisory F4 recorded in surfaced_pitfalls. Closed session 22."
+          "status": "done: all four registered gates re-evaluated on the clean tree at HEAD 0d2e2a69 and passed (cargo-ci, code-review, doc-review, research-review VERDICT: PASS). The v5 receipt revalidated byte-for-byte. Lead six-tier review PASS; Tier 1.5 confirms all four prior findings closed with no regression, Tiers 2.5 and 2.75 empty. research-review advisory F4 recorded in surfaced_pitfalls. Closed session 22."
         }
       ],
       "note": "Historical wave complete. The final freeze repair passed both gates and the lead review on 2026-08-30."
@@ -180,14 +180,14 @@
           "short_id": "3f664839",
           "title": "Preregistered compressed-state rare-event design",
           "classification": "design",
-          "status": "done: rework-2 bound exact invocation and runtime-observed hardware through immutable attempt/checkpoint/final-receipt lineage; cargo-ci, doc-review, and research-review passed at 0032051d with zero findings; lead six-tier review passed; issue completed at 29f0a1ee."
+          "status": "done: rework-2 bound exact invocation and runtime-observed hardware through immutable attempt/checkpoint/final-receipt lineage; cargo-ci, doc-review, and research-review passed at 84e6f065 with zero findings; lead six-tier review passed; issue completed at 29f0a1ee."
         },
         {
           "id": "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
           "short_id": "73317b2e",
           "title": "Standing acceptance tests for campaign cells",
           "classification": "implementation",
-          "status": "done: merged at 35da7951 with coordinator-owned canonical projections, exact (7,20) selection, exact interpretation-source identities, and a scientific-payload-preserving emitter refreeze. Independent review and refreeze audit passed; registered cargo-ci and code-review passed; issue closed without a campaign draw."
+          "status": "done: merged at 162c59fe with coordinator-owned canonical projections, exact (7,20) selection, exact interpretation-source identities, and a scientific-payload-preserving emitter refreeze. Independent review and refreeze audit passed; registered cargo-ci and code-review passed; issue closed without a campaign draw."
         }
       ]
     },
@@ -199,14 +199,14 @@
           "short_id": "8ec10dde",
           "title": "Exact compressed-state permanental-rank propagation",
           "classification": "implementation",
-          "status": "done: exact propagation and panic-contract repair are merged; all four configured gates passed at 248220fb, doc-review F1 closed, lead six-tier review passed, and issue completed at 91b7eefa. The one pre-existing stale-link advisory is tracked by 049a89af."
+          "status": "done: exact propagation and panic-contract repair are merged; all four configured gates passed at aaae87f3, doc-review F1 closed, lead six-tier review passed, and issue completed at 91b7eefa. The one pre-existing stale-link advisory is tracked by 049a89af."
         },
         {
           "id": "02b8137c-c258-44d0-93c4-171d15e5e1ab",
           "short_id": "02b8137c",
           "title": "Execute frozen pre-draw validation anchors",
           "classification": "implementation",
-          "status": "in_progress: the owner-authorized two-segment continuation implementation merged at e0c3959a after independent rereview passed. It binds the exact 22-file producer-0 prefix, admits only the missing anchors under one exact second producer, publishes the canonical schema-v2 receipt path, and preserves strict default producer mismatch and no-redraw behavior. Integrated cargo-ci passed. A clean pinned execution tree at fa8a9d9c passed cargo-ci and produced Rust 1.95 release+HIP validator d0d67480...; gf2-predraw-validation3.timer is active and waiting for 2026-09-01 02:00:30 EEST. No campaign-purpose draw is authorized."
+          "status": "in_progress: the owner-authorized two-segment continuation implementation merged at 3304fccb after independent rereview passed. It binds the exact 22-file producer-0 prefix, admits only the missing anchors under one exact second producer, publishes the canonical schema-v2 receipt path, and preserves strict default producer mismatch and no-redraw behavior. Integrated cargo-ci passed. A clean pinned execution tree at c8f4b602 passed cargo-ci and produced Rust 1.95 release+HIP validator d0d67480...; gf2-predraw-validation3.timer is active and waiting for 2026-09-01 02:00:30 EEST. No campaign-purpose draw is authorized."
         },
         {
           "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
@@ -239,7 +239,7 @@
           "short_id": "6639435f",
           "title": "Independent importance-sampling cross-check",
           "classification": "implementation",
-          "status": "done: owner-authorized bounded high-tier rework closed all four audit boundary findings (descriptor-pinned DirHandle store, sealed typed publication, OS-observed timed liveness, filesystem-reconstructed checkpoint proof) plus lead findings F-R1 (non-UTF-8 env recorded as unset), F-R2/F-R4 (phantom-path and blanket no-path doc claims), F-R3 (validation before any filesystem effect; descriptor-walked root creation). Thin runner real and resume-tested. Merged at 660b742b; cargo-ci clean-tree pass, code-review pass with zero findings, doc-review pass with one pre-existing advisory tracked by 049a89af. Lead six-tier review PASS; closed session 32."
+          "status": "done: owner-authorized bounded high-tier rework closed all four audit boundary findings (descriptor-pinned DirHandle store, sealed typed publication, OS-observed timed liveness, filesystem-reconstructed checkpoint proof) plus lead findings F-R1 (non-UTF-8 env recorded as unset), F-R2/F-R4 (phantom-path and blanket no-path doc claims), F-R3 (validation before any filesystem effect; descriptor-walked root creation). Thin runner real and resume-tested. Merged at 7a14d64b; cargo-ci clean-tree pass, code-review pass with zero findings, doc-review pass with one pre-existing advisory tracked by 049a89af. Lead six-tier review PASS; closed session 32."
         },
         {
           "id": "f27150a5-8713-4bce-b404-9e477937d498",
@@ -310,7 +310,7 @@
       "reason": "Owner-approved wire-and-rerun resolution of the 2026-08-14 escalation; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
       "wave": "0.9",
       "status": "done",
-      "note": "Closed 2026-08-14 (session 6). Implementation 3933338a; budget fix de5f7414 (per-cell 240 s rule, q=5,n=28 count 4->2); full-order host equivalence validation 0c0f525f; smoke evidence 7174718d. All three gates passed with persisted records; lead review PASS."
+      "note": "Closed 2026-08-14 (session 6). Implementation 7948e70a; budget fix 8cb28a84 (per-cell 240 s rule, q=5,n=28 count 4->2); full-order host equivalence validation f9c0f01c; smoke evidence c1ffa422. All three gates passed with persisted records; lead review PASS."
     },
     {
       "short_id": "a2c0db52",
@@ -326,7 +326,7 @@
       "reason": "The 6c7fcb38 code-review finding (receipts deny the wave_gf7_equivalence.hip:8-18 per-lane lower bounds) generalises to the closed F_5 receipts, which deny the f5_wave_equivalence.hip:9-15 models; filed per the a2c0db52 interleaved-bug precedent.",
       "wave": "1 (interleaved)",
       "status": "done",
-      "note": "Closed 2026-08-16: pairing corrected at 682d5942, doc-review passed first round with persisted record, lead six-tier review PASS."
+      "note": "Closed 2026-08-16: pairing corrected at e3236280, doc-review passed first round with persisted record, lead six-tier review PASS."
     },
     {
       "short_id": "4fdd781a",
@@ -334,7 +334,7 @@
       "reason": "Found by the F_5 receipts; rendering correction with recorded check.",
       "wave": "1 (interleaved)",
       "status": "done",
-      "note": "Closed 2026-08-15: R1 7a0af9ab daggered the two source cells; R2 0795a82a daggered every rendering incl. derived figures and widened the check document-wide; R3 c315fe2b (luna, rework count 2 = MAX, passed) verifies both stopping-rule minima: five-second half from the pinned harness source's loop-exit structure plus direct total_s>=5 proof, cap-path evidence total_s>=120 for reps<5 rows. total_s undercounts the stopping clock (conforming rows near the stopping boundary), so a naive total_s>=5 test falsely flags conforming cells. doc-review passed R3 with persisted record at c315fe2b, 0 findings; lead six-tier review PASS."
+      "note": "Closed 2026-08-15: R1 aa03ea5d daggered the two source cells; R2 ef689731 daggered every rendering incl. derived figures and widened the check document-wide; R3 59b4e953 (luna, rework count 2 = MAX, passed) verifies both stopping-rule minima: five-second half from the pinned harness source's loop-exit structure plus direct total_s>=5 proof, cap-path evidence total_s>=120 for reps<5 rows. total_s undercounts the stopping clock (conforming rows near the stopping boundary), so a naive total_s>=5 test falsely flags conforming cells. doc-review passed R3 with persisted record at 59b4e953, 0 findings; lead six-tier review PASS."
     },
     {
       "short_id": "63d931a9",
@@ -408,7 +408,7 @@
       "wave": "8 (freeze closure)",
       "reason": "research-review F3 owner decision: produce the evidence; wired before all three campaign arms; full run scheduled for the 02:00 exclusive window",
       "status": "in_progress",
-      "note": "Session 24: harness extension landed at 4e847a3f (Sol xhigh worker; embedded SHA-256-pinned selection authority, 63 cells / 124 nominations verified by deterministic tests; budget rule extends de5f7414 with conservative higher-order substitution and recorded 2-matrix floor). Addendum draft committed with TO FILL placeholders. Full receipt run scheduled inside the 02:00 window. Gates (code-review, doc-review) run after the receipt and addendum finalization."
+      "note": "Session 24: harness extension landed at 4e847a3f (Sol xhigh worker; embedded SHA-256-pinned selection authority, 63 cells / 124 nominations verified by deterministic tests; budget rule extends 8cb28a84 with conservative higher-order substitution and recorded 2-matrix floor). Addendum draft committed with TO FILL placeholders. Full receipt run scheduled inside the 02:00 window. Gates (code-review, doc-review) run after the receipt and addendum finalization."
     },
     {
       "short_id": "02b8137c",
@@ -417,7 +417,7 @@
       "wave": "10 (pre-draw prerequisite)",
       "reason": "Session-30 launch audit found no committed evidence for the frozen protocol's complete ten-anchor 1,024-matrix regeneration and 400,000-draw exact two-sided validation phase. Existing 44534b2f covers 4,096 draws with a Clopper-Pearson interval instead. All three campaign arms are wired behind this leaf.",
       "status": "ready",
-      "note": "Session 33 preserved the five-terminal failed validation journal at 3fd2893b and merged the bit-exact JSON repair at 2e760af7. The timer ran; this was not a permission or scheduling failure. Integrated cargo-ci passed. The issue remains in_progress pending an owner-approved versioned continuation that truthfully records the old-producer/new-producer boundary without redrawing or overwriting any terminal."
+      "note": "Session 33 preserved the five-terminal failed validation journal at 804b33da and merged the bit-exact JSON repair at 6067b5d2. The timer ran; this was not a permission or scheduling failure. Integrated cargo-ci passed. The issue remains in_progress pending an owner-approved versioned continuation that truthfully records the old-producer/new-producer boundary without redrawing or overwriting any terminal."
     },
     {
       "short_id": "93df507a",
@@ -458,7 +458,7 @@
   "escalations": [
     {
       "issue": "ec22205e",
-      "reason": "The owner-authorized tail-aware repair at 8af81b55 closes physical truncation before a parseable address, but final readiness review found that scratch_row_is_incomplete treats both DictReader missing-column None values and explicit empty strings as interruption. A full-width final row with backend=\"\" is therefore converted to harness_censored instead of failing hard. This is the third review on the same failure-retention root cause, reaching MAX_SAME_FINDING_REPEATS even though the second-reset rework counter is 1.",
+      "reason": "The owner-authorized tail-aware repair at f583a735 closes physical truncation before a parseable address, but final readiness review found that scratch_row_is_incomplete treats both DictReader missing-column None values and explicit empty strings as interruption. A full-width final row with backend=\"\" is therefore converted to harness_censored instead of failing hard. This is the third review on the same failure-retention root cause, reaching MAX_SAME_FINDING_REPEATS even though the second-reset rework counter is 1.",
       "status": "approved",
       "requested_at": "2026-08-29T13:18:19+03:00",
       "resolved_at": "2026-08-29T14:37:36+03:00",
@@ -471,7 +471,7 @@
     },
     {
       "issue": "ec22205e",
-      "reason": "At rework MAX after the owner-approved canonical-v5 reset, independent readiness review proved that the failure-retention repair handles a truncated scratch row only after q/n/process_index are parseable. A signal can interrupt the Rust writeln before those fields are complete; Python then calls int(None) while indexing scratch rows and aborts before writing the promised complete 315-row censored receipt. This violates hard REQ-02 and REQ-04, so timing cannot be scheduled at HEAD 1ddcc266.",
+      "reason": "At rework MAX after the owner-approved canonical-v5 reset, independent readiness review proved that the failure-retention repair handles a truncated scratch row only after q/n/process_index are parseable. A signal can interrupt the Rust writeln before those fields are complete; Python then calls int(None) while indexing scratch rows and aborts before writing the promised complete 315-row censored receipt. This violates hard REQ-02 and REQ-04, so timing cannot be scheduled at HEAD a2ee20e5.",
       "status": "approved",
       "requested_at": "2026-08-29T13:04:40+03:00",
       "resolved_at": "2026-08-29T13:08:56+03:00",
@@ -536,7 +536,7 @@
     },
     {
       "issue": "240b7618",
-      "reason": "The approved REQ-05 amendment did not settle the criterion. Five rounds have now objected to excluding breakdown.json on five different grounds, each created by fixing the previous one: framing live in the manifest; a second occurrence; the exclusion is not archived material; the README's fidelity check reports DIVERGED after the amendment changed this issue's own description; resynchronising means the manifest is not frozen; and finally the README's cited revision 89531d65 does not match the file. The last is factually correct - the file differs from 89531d65 in eight entries (protocol-draft, dataset-schema, acceptance-checks, arm-q3-reproduction, arm-q5, arm-q7, curve-generation, campaign-finalization), all from 9c5b26fb's protocol-bracket resyncs in 7901430a and 95e16b81, none from 240b7618. The manifest is therefore neither the snapshot at its claimed revision nor a mirror of the store, and any prose describing it becomes the next round's target. The root cause is the file's location under dev/active, not the criterion's wording.",
+      "reason": "The approved REQ-05 amendment did not settle the criterion. Five rounds have now objected to excluding breakdown.json on five different grounds, each created by fixing the previous one: framing live in the manifest; a second occurrence; the exclusion is not archived material; the README's fidelity check reports DIVERGED after the amendment changed this issue's own description; resynchronising means the manifest is not frozen; and finally the README's cited revision f97a32f7 does not match the file. The last is factually correct - the file differs from f97a32f7 in eight entries (protocol-draft, dataset-schema, acceptance-checks, arm-q3-reproduction, arm-q5, arm-q7, curve-generation, campaign-finalization), all from 9c5b26fb's protocol-bracket resyncs in 298bb34f and e85db490, none from 240b7618. The manifest is therefore neither the snapshot at its claimed revision nor a mirror of the store, and any prose describing it becomes the next round's target. The root cause is the file's location under dev/active, not the criterion's wording.",
       "status": "approved",
       "requested_at": "2026-08-09T22:58:00Z",
       "options": [
@@ -674,7 +674,7 @@
       "status": "approved",
       "requested_at": "2026-08-24T01:13:13+03:00",
       "resolved_at": "2026-08-24T01:18:00+03:00",
-      "decision": "Owner approved the recommended bounded lead-direct repair. The lead applied the field-scoped predicate and real-binary mixed-manifest regression, obtained an independent PASS, and merged it at d7f1b428; registered gates remain required.",
+      "decision": "Owner approved the recommended bounded lead-direct repair. The lead applied the field-scoped predicate and real-binary mixed-manifest regression, obtained an independent PASS, and merged it at 4769bbd0; registered gates remain required.",
       "options": [
         "Approve one bounded lead-direct repair: scope the CLI requirement to the selected field, add a real-binary mixed-manifest regression, and rerun the registered gates.",
         "Take over the issue manually.",
@@ -724,7 +724,7 @@
       "reason": "Every gpu_hip premeasure position carried scratch data_row_count_2: the frozen harness grid holds two gpu_hip specs per cell and the runner's --batch-size override precedes --only filtering, so each GPU process measures its cell twice while the collector required exactly one row.",
       "status": "resolved",
       "requested_at": "2026-08-25T10:15:00Z",
-      "resolution": "Owner 2026-08-25: (1) collector accepts dual-row gpu_hip scratch and selects the native-M grid slot (second data row) as the process measurement, first row preserved as unused replicate; (2) bounded lead-direct repair (main d7493bdc, pinned collector branch 8811d7b6, premeasure test t11); (3) re-arm tonight's bounded session, same root and run ID."
+      "resolution": "Owner 2026-08-25: (1) collector accepts dual-row gpu_hip scratch and selects the native-M grid slot (second data row) as the process measurement, first row preserved as unused replicate; (2) bounded lead-direct repair (main d8da0f38, pinned collector branch 8811d7b6, premeasure test t11); (3) re-arm tonight's bounded session, same root and run ID."
     },
     {
       "issue": "7a816262",
@@ -770,7 +770,7 @@
     },
     {
       "issue": "7a816262",
-      "reason": "Independent read-only audit returned VERDICT: FAIL after the freeze artifacts were committed. F1 (medium): the freeze record's validation section narrates the pre-commit worker tree as current state and commit 57c9633f falsified them; simulation_results is a permanent path so present-tense-prose (AGENTS.md:145) binds it; the :185-190 transcript no longer reproduces because observe_provenance overwrites git_revision with live HEAD. doc-review passed over this. F2 (medium): the freeze record is the sole record of REQ-04/05/07/08 construction but no committed artifact records its digest, so editing the per-cell level, K=63, the stream-index construction, or a determinant cost passes sha256sum -c, emission-check and verify_dataset unchanged; adding the freeze record to checksums.sha256 makes verify_dataset raise IntegrityFault::OutsideRawSet. Additional LOW findings were recorded. Other LOW findings were also recorded: F3 the freeze record sits outside the campaign README's closed layout table; F4 three phase-1 drafts remain linked asserting present-tense draft status with no supersession pointer (managed path, so present-tense-prose does not bind); F5 (pre-existing) README.md:253-254 claims an execution receipt quotes the sidecar SHA-256 while driver.rs:206 emits blake3 over a fresh re-serialization; F6 the protocol's required committed pre-draw execution receipt (protocol.md:3-6) is unallocated and unflagged.",
+      "reason": "Independent read-only audit returned VERDICT: FAIL after the freeze artifacts were committed. F1 (medium): the freeze record's validation section narrates the pre-commit worker tree as current state and commit e0092492 falsified them; simulation_results is a permanent path so present-tense-prose (AGENTS.md:145) binds it; the :185-190 transcript no longer reproduces because observe_provenance overwrites git_revision with live HEAD. doc-review passed over this. F2 (medium): the freeze record is the sole record of REQ-04/05/07/08 construction but no committed artifact records its digest, so editing the per-cell level, K=63, the stream-index construction, or a determinant cost passes sha256sum -c, emission-check and verify_dataset unchanged; adding the freeze record to checksums.sha256 makes verify_dataset raise IntegrityFault::OutsideRawSet. Additional LOW findings were recorded. Other LOW findings were also recorded: F3 the freeze record sits outside the campaign README's closed layout table; F4 three phase-1 drafts remain linked asserting present-tense draft status with no supersession pointer (managed path, so present-tense-prose does not bind); F5 (pre-existing) README.md:253-254 claims an execution receipt quotes the sidecar SHA-256 while driver.rs:206 emits blake3 over a fresh re-serialization; F6 the protocol's required committed pre-draw execution receipt (protocol.md:3-6) is unallocated and unflagged.",
       "status": "approved",
       "requested_at": "2026-08-29T18:43:06+03:00",
       "lead_recommendation": "F1 is a bounded mechanical correction to the freeze record's validation section: rewrite the pre-commit narration as a post-commit record and re-transcribe the emission-check output that reproduces at HEAD. F2 needs an owner decision on where a non-raw frozen record's digest belongs, because checksums.sha256 structurally cannot hold it.",
@@ -876,7 +876,7 @@
     "4a6bdcff": 1,
     "eb8825c8": 1,
     "7a816262": 1,
-    "7a816262_note": "The owner guidance recorded in session 23 reset the review-cycle counter. Final research-review at 94d81c78 closed F1/F3/F4/F5 and retained F2 (observer argv versus the exact executable campaign-driver argv required by the protocol). Focused high-tier rework-1 was dispatched on 2026-08-30; any new scope or contract conflict escalates rather than being argued around.",
+    "7a816262_note": "The owner guidance recorded in session 23 reset the review-cycle counter. Final research-review at 077d5995 closed F1/F3/F4/F5 and retained F2 (observer argv versus the exact executable campaign-driver argv required by the protocol). Focused high-tier rework-1 was dispatched on 2026-08-30; any new scope or contract conflict escalates rather than being argued around.",
     "ec22205e": 2,
     "ec22205e_note": "The first cycle reached MAX after v4 research-review found three publication-evidence gaps. The owner's first option-A reset produced canonical v5 and reached MAX when failure-retention review exposed truncation before a parseable address. The owner's second option-A reset produced the tail-aware parser as count 1; its review found the None-versus-empty conflation, the third repeat of the same root cause. Owner option A at 2026-08-29T14:37:36+03:00 authorizes the exact correction as count 2. MAX is reached; any further readiness failure escalates. Timing remains held.",
     "032cc754": 1,
@@ -889,7 +889,7 @@
     "02b8137c": 2,
     "02b8137c_note": "Rework-1 fixed the reproduced q=5 one-ULP JSON publication drift with serde_json float_roundtrip and adoption/tamper regressions. Rework-2 closed the continuation review's four findings: canonical schema-v2 cutover, exact-SHA separation of historical evidence decoding from temporary execution admission, a fresh schema-v2 runtime-mismatch no-mutation regression, and on-disk rehash tests for both producer states and both terminal segments. Independent rereview passed and integrated cargo-ci passed. MAX is reached; any further readiness defect escalates.",
     "daef2dc3": 5,
-    "daef2dc3_note": "code-review failed at 46bdf2114, 0971a9ba6, c709110e5, ac89f1a07 and 87df671e5; stopped for the owner",
+    "daef2dc3_note": "code-review failed at 69e0c565b, c3e008c4a, 3999ada1d, 311ebe233 and 87df671e5; stopped for the owner",
     "66fefd9e": 2,
     "da6200b8": 1
   },
@@ -906,7 +906,7 @@
       "surfaced_at": "2026-08-31",
       "issue": "02b8137c",
       "finding": "The validation publisher hardlinks immutable terminal bytes and then deserializes them for equality verification. With serde_json 1.0.151 default features, the q=5,n=1 terminal's log_p_value and p_value deserialize differently from the in-memory values, so a valid terminal is rejected after publication. An exact Rust probe reproduced the bit-level discrepancy; this is not a racing writer or timer-permission failure.",
-      "disposition": "Enabled serde_json float_roundtrip for gf2-sim, added bit-exact q=5 publication, committed-terminal adoption, and tamper-rejection regressions, and passed integrated cargo-ci at merge 2e760af7. The existing old-producer journal still requires an owner-approved provenance-preserving continuation before execution resumes."
+      "disposition": "Enabled serde_json float_roundtrip for gf2-sim, added bit-exact q=5 publication, committed-terminal adoption, and tamper-rejection regressions, and passed integrated cargo-ci at merge 6067b5d2. The existing old-producer journal still requires an owner-approved provenance-preserving continuation before execution resumes."
     },
     "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
     "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
@@ -929,13 +929,13 @@
       "finding": "No committed artifact predating the results establishes the claimed preregistered cells, sample sizes, and stopping rule; the harness constants were committed together with the receipt.",
       "disposition": "advisory; epic REQ-06 (preregistered rare-event estimator) names preregistration for the ASPIRATIONAL estimator issues 3f664839/6639435f/b05c908b \u2014 for those, require the design/constants commit to land and be linked BEFORE any estimating run, so this finding does not recur as a blocking one."
     },
-    "The v1 F_3 receipts (commit 6eb364e9) and all campaign run 20260813T230032Z-1321576 raw evidence come from the pre-e31b1918 harness. After the rerun, supersede them per the standing rule: git rm superseded run evidence and re-point links in the same commit; reviewers reject evidence from a non-final tool revision.",
+    "The v1 F_3 receipts (commit 1823ccdd) and all campaign run 20260813T230032Z-1321576 raw evidence come from the pre-e31b1918 harness. After the rerun, supersede them per the standing rule: git rm superseded run evidence and re-point links in the same commit; reviewers reject evidence from a non-final tool revision.",
     "Gray-update isolate rows for wave-gf3/fold-gf3 in run 20260813T230032Z-1321576 alias the shipped gray_update_micro_kernel (field selected from q alone); do not cite them as prototype evidence anywhere downstream.",
-    "RESOLVED 2026-08-14 (de5f7414): equivalence counts are now budgeted per (q,n) cell against the summed committed probe costs of that cell's measured CPU backends (240 s per-cell budget; only q=5,n=28 halves to 2). The general lesson stands: never derive a per-cell budget from one field's fastest backend; sum the participating backends' measured costs.",
+    "RESOLVED 2026-08-14 (8cb28a84): equivalence counts are now budgeted per (q,n) cell against the summed committed probe costs of that cell's measured CPU backends (240 s per-cell budget; only q=5,n=28 halves to 2). The general lesson stands: never derive a per-cell budget from one field's fastest backend; sum the participating backends' measured costs.",
     "The runner's smoke outputs land under each campaign study's smoke/ directory; a new smoke run supersedes the smoke evidence linked on closed 2ddf2f4b \u2014 git rm the superseded evidence and re-point the jit doc links in the same commit.",
     "The Ryser work-model projection is conservative (lands low) only on fixed-batch GPU chains; on probe-calibrated prototype chains it lands HIGH at large orders because batch size moves sharply between adjacent orders. Never treat a censored prototype cell's projection as a lower bound.",
     "Harness defects surfaced by the F_3 receipts and filed under the tech-debt umbrella 86b9c719: 3ea21d74 (grid CSV emits unquoted note columns; malformed rows per field-grid) and 79c5ace7 (host_submission_s carries two semantics across backend rows). Receipt tooling for F_5/F_7 must reuse the seed_root-anchored CSV split and the device-clock launch column, as the F_3 analysis does.",
-    "Lead and worker sharing one checkout share one git index: the lead's `git add <paths> && git commit` commits ANYTHING the worker has staged, burying the worker's change in the lead's commit (happened to the 047b62ed receipts alignment; repaired by splitting unpushed HEAD, commits 2a5cda47 + 62c061c7). Before any lead commit while a worker is active on the same checkout, run `git diff --cached --stat` and abort if staged paths are not the lead's own; better, never run lead commits while a same-checkout worker is mid-task.",
+    "Lead and worker sharing one checkout share one git index: the lead's `git add <paths> && git commit` commits ANYTHING the worker has staged, burying the worker's change in the lead's commit (happened to the 047b62ed receipts alignment; repaired by splitting unpushed HEAD, commits 2a5cda47 + c40764dd). Before any lead commit while a worker is active on the same checkout, run `git diff --cached --stat` and abort if staged paths are not the lead's own; better, never run lead commits while a same-checkout worker is mid-task.",
     {
       "issue": "91605d4d",
       "source": "code-review round 1 (advisory, pre-existing)",
@@ -951,7 +951,7 @@
       "surfaced_at": "2026-08-18",
       "issue": "7a816262",
       "summary": "premeasure-plan-v1 nominates 60 gap cells over n=4..27 but the permanent_sampling_feas grid is fixed at NS=[12,16,20,24,28]; 51/60 cells cannot be selected by --only. The shell tests and validation.md did not exercise the real harness grid, so the mismatch survived to the overnight run.",
-      "status": "resolved: owner chose the opt-in orders flag 2026-08-18; the admission recovery landed at 03db1bbb with plan-vs-real-grid validation, and the fresh 2026-08-24 prepare admitted the complete 1,440-process plan under one pinned cohort binary"
+      "status": "resolved: owner chose the opt-in orders flag 2026-08-18; the admission recovery landed at 55875132 with plan-vs-real-grid validation, and the fresh 2026-08-24 prepare admitted the complete 1,440-process plan under one pinned cohort binary"
     },
     {
       "id": "gpu-wedge-2026-08-18",
@@ -1001,7 +1001,7 @@
       "issue": "1947125e",
       "source": "read-only next-wave preflight, session 14",
       "finding": "REQ-01's all-five-backends-per-supported-field wording is unattainable because resolve_processor_path intentionally supports intra_matrix_parallel only for q=3; q=5 and q=7 expose scalar, batch-parallel, generic Ryser, and accelerator, not intra-matrix.",
-      "disposition": "Resolved at b9c50d97 under the owner's field-scoped selectable-backend amendment. Implementation commits bdf08771, 78ef0d55, 5aa6ea33, and d8f6cb01 are under claim; code-review passed and cargo-ci remains pending."
+      "disposition": "Resolved at b9c50d97 under the owner's field-scoped selectable-backend amendment. Implementation commits c1173cdf, 01611cc4, 04ff1f64, and 0739792a are under claim; code-review passed and cargo-ci remains pending."
     },
     {
       "issue": "b8206228",
@@ -1023,7 +1023,7 @@
       "issue": "7a816262",
       "source": "session-17 service and durable-root reconciliation",
       "finding": "The 2026-08-26 collector unit failed with status 200/CHDIR because its old worktree path had vanished, even though the overnight resume session completed every remaining preregistered position.",
-      "disposition": "Recovered without touching receipts: ran premeasure-collect from a temporary worktree at pinned commit 8811d7b6, obtained valid terminal ledger rows and candidate rows, with no invalid rows, and removed the temporary worktree. The final evidence is committed at 5e2799f7."
+      "disposition": "Recovered without touching receipts: ran premeasure-collect from a temporary worktree at pinned commit 8811d7b6, obtained valid terminal ledger rows and candidate rows, with no invalid rows, and removed the temporary worktree. The final evidence is committed at 2e16b06e."
     },
     {
       "issue": "7a816262",

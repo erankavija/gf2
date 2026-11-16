@@ -59,17 +59,17 @@
     },
     {
      "short_id": "ebfaff31",
-     "status": "done; doc-review passed at 8f30ed4f0 after reworks 2 (Claude Sonnet) and 3 (Codex gpt-6-luna xhigh: narrow doc fixes)",
+     "status": "done; doc-review passed at 5cc4f27eb after reworks 2 (Claude Sonnet) and 3 (Codex gpt-6-luna xhigh: narrow doc fixes)",
      "branch": "worktree-agent-ebfaff31"
     },
     {
      "short_id": "a6039c72",
-     "status": "gates passed at a6b8921f0; window line queued 2026-11-13",
+     "status": "gates passed at 370cbf603; window line queued 2026-11-13",
      "branch": "worktree-agent-a6039c72"
     },
     {
      "short_id": "60c82c4c",
-     "status": "designs merged 75ea2c792 and linked; broken down into 6379e04e, 7fbd1042, 4443de83",
+     "status": "designs merged fbc669688 and linked; broken down into 6379e04e, 7fbd1042, 4443de83",
      "branch": "worktree-agent-60c82c4c"
     },
     {
@@ -84,7 +84,7 @@
     },
     {
      "short_id": "c6b20bec",
-     "status": "done; merged ff3223f20",
+     "status": "done; merged f52137331",
      "branch": "worktree-agent-c6b20bec"
     },
     {
@@ -204,11 +204,11 @@
    "issues": [
     {
      "short_id": "6379e04e",
-     "status": "done; merged dc1b537f4, code-review passed (Codex)"
+     "status": "done; merged 2654e358c, code-review passed (Codex)"
     },
     {
      "short_id": "9a1b24fc",
-     "status": "branch A Claude review passed round 3 (90eb89c4f); cargo-ci after the window, then land; gate F1 is branch B scope",
+     "status": "branch A Claude review passed round 3 (ef302cbde); cargo-ci after the window, then land; gate F1 is branch B scope",
      "branch": "worktree-agent-9a1b24fc",
      "dispatches": [
       {
@@ -253,7 +253,7 @@
     },
     {
      "short_id": "3461a52a",
-     "status": "plan-review passed at 844492b60 (attempt 4); planning merged; 15 issues filed; stays open for the window curves and validation",
+     "status": "plan-review passed at 865531ddd (attempt 4); planning merged; 15 issues filed; stays open for the window curves and validation",
      "branch": "worktree-agent-3461a52a",
      "dispatches": [
       {

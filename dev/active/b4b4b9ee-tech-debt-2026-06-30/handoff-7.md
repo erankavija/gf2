@@ -6,21 +6,21 @@
 ## Current state
 
 - Wound down at about 23:00 by the owner's order through the steward (`gf2-a2`): the tracker cutover has priority. This epic takes no dispatch, gate or measurement until the owner resumes it. The lead was `gf2-24`. No push; the history rewrite, the benchmark window and the streams `d77176e5`, `ae03bcd0` and `45ecf975` stay paused. `41517289` stays the owner's action.
-- Landed and closed this session: `574ed420` (merge `1ff971676`), `697b9178` (`12f0f331b`), `9c0568ee` (`fb96c74d8`), `d8aee1f4` (`848bf4e95`).
+- Landed and closed this session: `574ed420` (merge `1ff971676`), `697b9178` (`e3772473e`), `9c0568ee` (`77891d21c`), `d8aee1f4` (`7ecd1bbe2`).
 - Landed, still open: `959ab809` REQ-01 (`6e2d5ec59`). Each failed cargo-ci step keeps its full log under `target/cargo-ci-logs/<stamp>-<pid>/` and prints the path; nextest steps also print each failing test, the error blocks and the summary. REQ-02 and REQ-03 are open. The first captured occurrence (recorded in the issue) reads as a nextest cancellation: every started test passed and 19 were not run.
 - Filed this session: `959ab809`, `4f395137` (unseeded `quick_test()` simulations), `1452ba69` (converge the wrapper self-test helpers, after `18276ff1`).
 - No process of this lead runs. No claim lease is held.
 
 | Issue | Branch head | Done | Missing |
 |---|---|---|---|
-| `18276ff1` | `90ed7a351` | rework 2, fixture fix, option (a); production fixes in the pool wrapper guardian and the budget gate sampler; REQ-06 attempts 1 and 2 recorded | the case-7 SIGINT fix (issue section "Option (a) review and park"), then REQ-06, final gates, steward approval, `test-budgets` on the open epics |
-| `4f395137` | `ac0859cb9` | implementation `6192440ad`; REQ-01 to REQ-03 evidence on the branch; `cargo-ci` passed at the head | `code-review` rerun, land |
-| `22bb2dcd` | `f8aec8aab` | main merged, target warm | `cargo-ci`, `code-review` on the landing head; then `90cd64a9` |
-| `d73ac633` | `0ac0d915b` | as in `handoff-6.md` | `cargo-ci` |
-| `e29fd776` | `5520d7b03` | as in `handoff-6.md` | `cargo-ci`, `doc-review` |
-| `9ff05f12` | `b9f2f9a42` | — | `cargo-ci`, `code-review`, `doc-review` |
-| `b5782224` | `75f70cab1` | REQ-01 to REQ-03 implemented | `cargo-ci`, `code-review` |
-| `903dc74c` | `22f57141d` | unblocked by `697b9178` | merge main, `cargo-kani`, `code-review` |
+| `18276ff1` | `8ba77b8d7` | rework 2, fixture fix, option (a); production fixes in the pool wrapper guardian and the budget gate sampler; REQ-06 attempts 1 and 2 recorded | the case-7 SIGINT fix (issue section "Option (a) review and park"), then REQ-06, final gates, steward approval, `test-budgets` on the open epics |
+| `4f395137` | `6dbb0dae4` | implementation `d16675b9a`; REQ-01 to REQ-03 evidence on the branch; `cargo-ci` passed at the head | `code-review` rerun, land |
+| `22bb2dcd` | `88fdbcacc` | main merged, target warm | `cargo-ci`, `code-review` on the landing head; then `90cd64a9` |
+| `d73ac633` | `c32082219` | as in `handoff-6.md` | `cargo-ci` |
+| `e29fd776` | `69ec2cc2f` | as in `handoff-6.md` | `cargo-ci`, `doc-review` |
+| `9ff05f12` | `d91b26d84` | — | `cargo-ci`, `code-review`, `doc-review` |
+| `b5782224` | `4d2adb22e` | REQ-01 to REQ-03 implemented | `cargo-ci`, `code-review` |
+| `903dc74c` | `2b8b3b999` | unblocked by `697b9178` | merge main, `cargo-kani`, `code-review` |
 
 Each issue records its parked state. The worktrees of `d73ac633`, `e29fd776` and `4f395137` hold uncommitted gate-run records in `.jit/`.
 

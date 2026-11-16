@@ -7,8 +7,8 @@
 
 - Lead `gf2-54` under steward `gf2-92`, assigned to fix the defects the post-cutover flow exposed. The epic is assigned to `agent:gf2-54`. Nothing is pushed in the code repository; the tracker home is current.
 - Landed on `main` and done:
-  - merge `14c12829e` carries `c4d14911`, `a5773e5b`, `c568cb92`, `63813d52`, `a6d0c14a`, `673cd2bc`, `0cb65df5` and `3f10673e`;
-  - merge `f600a1214` carries `8660c096`;
+  - merge `5b4539c7b` carries `c4d14911`, `a5773e5b`, `c568cb92`, `63813d52`, `a6d0c14a`, `673cd2bc`, `0cb65df5` and `3f10673e`;
+  - merge `ecf17069f` carries `8660c096`;
   - `8d6a135f` (worktree retirement) has no code and is done.
 - Parked by the owner's order until the history rewrite, all `ready`:
   - `a9ddca84`: amend plan decision D-12 to a tracker home that leads keep current.

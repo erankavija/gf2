@@ -9,13 +9,13 @@
 
 ## Scope-history note (R2 rework, 2026-05-04)
 
-The original promotion (commit `b8ed382`) covered both `matmul` and
+The original promotion (commit `05fb2a4`) covered both `matmul` and
 `echelon`. The round-3 code-review rejected the echelon scope on the
 grounds that the echelon contract in
 the comparable-semantics requirement (@/issue/1d6043e8) is
 *bitwise canonical RREF equality* against an independent RREF
 implementation, and that the structural-RREF-invariants oracle added
-in `b8ed382` (`smoke_echelon_one_cell()`) certifies only the structure
+in `05fb2a4` (`smoke_echelon_one_cell()`) certifies only the structure
 of the output, not its row-equivalence to the input.
 
 This R2 rework chooses option (a) from the rework spec: down-scope
@@ -56,11 +56,11 @@ dispatch contract for wave 2.
 
 | # | Criterion | Status | Evidence |
 |---|-----------|--------|----------|
-| 1 | Reproducible build | **PASS** | `benchmarks/Containerfile` `# === m4rie begin/end ===` stanza pinning `M4RIE_VERSION=20250128` and `M4RIE_SHA256=96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7`. `benchmarks/image.lock` `[libs.m4rie]` block carries the same fields. `benchmarks/run.sh:163` carries `verify_sha M4RIE_SHA256 libs.m4rie` (added by the lead's wave-2 cleanup commit `e3592fe`); the M4RIE pin is now cross-checked between Containerfile and image.lock at run-time, in addition to `sha256sum -c -` inside the Containerfile build. The container build is the first command under *Build evidence*. |
+| 1 | Reproducible build | **PASS** | `benchmarks/Containerfile` `# === m4rie begin/end ===` stanza pinning `M4RIE_VERSION=20250128` and `M4RIE_SHA256=96f1adafd50e6a0b51dc3aa1cb56cb6c1361ae7c10d97dc35c3fa70822a55bd7`. `benchmarks/image.lock` `[libs.m4rie]` block carries the same fields. `benchmarks/run.sh:163` carries `verify_sha M4RIE_SHA256 libs.m4rie` (added by the lead's wave-2 cleanup commit `52b3380`); the M4RIE pin is now cross-checked between Containerfile and image.lock at run-time, in addition to `sha256sum -c -` inside the Containerfile build. The container build is the first command under *Build evidence*. |
 | 2 | Same hardware | **PASS** | The host capture of the same-hardware requirement and the timing sweep run on the same host and image. `benchmarks/reference/m4rie_one_cell.c` drives the in-scope cell **matmul GF(2^16) n=1024 uniform** under `perf stat -r 10 -e cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses` (10 inner iterations × 10 repeats). Both write outside the tracked tree. |
 | 3 | Comparable semantics | **PASS** (matmul only) | `m4rie_bench --smoke` runs the n=16 bitwise-equality contract for matmul over GF(2^4), GF(2^8), GF(2^16) against an independent scalar reference (`ref_gf2m_mul`) plus M4RIE's own internal scalar (`ff->mul`); both pass for all three fields. The matmul cross-check is element-wise bitwise equality against `ref_gf2m_mul`, satisfying the comparable-semantics requirement's *Bitwise equality of every element of A·B over the field* contract. **No basis-change matrix is required** because `gf2e_init(minpoly)` accepts an arbitrary polynomial — gf2-core's `0x13`, `0x11d`, `0x1002d` are passed in directly and are also present in M4RIE's `irreducible_polynomials[]` table in M4RIE's gf2e.c source. Echelon is **out of scope** — the comparable-semantics requirement echelon contract is bitwise canonical RREF equality against an independent RREF reference, which this harness does not yet supply (see *Target-matrix designation*). See § 5 below for the polynomial table. |
 | 4 | Shared data shape | **PASS** | `benchmarks/reference/m4rie_bench.c` emits exactly the 10-column schema with `lib=m4rie` and `field ∈ {GF(2^4), GF(2^8), GF(2^16)}`. The `GF(2^4)` tag is new (see § 8 below for the cross-cutting `analyze.py FIELD_FAMILY` flag); `GF(2^8)` and `GF(2^16)` are already declared in the schema of the shared-data-shape requirement. The timing sweep emits one row per in-scope cell (3 fields × 1 op × 3 sizes × 2 regimes). |
-| 5 | CSV merge support | **PASS** | `python3 benchmarks/analyze.py --smoke` accepts the sweep's rows. `python3 benchmarks/analyze.py --gf2 <gf2 sweep>.csv --reference <m4rie sweep>.csv --out <tables>.md` merges both sweeps. Per-cell column header reads `m4rie` for GF(2^m) families: the cross-cutting `reference_lib_for()` change landed in commit `e3592fe` (see § 8 item 2). |
+| 5 | CSV merge support | **PASS** | `python3 benchmarks/analyze.py --smoke` accepts the sweep's rows. `python3 benchmarks/analyze.py --gf2 <gf2 sweep>.csv --reference <m4rie sweep>.csv --out <tables>.md` merges both sweeps. Per-cell column header reads `m4rie` for GF(2^m) families: the cross-cutting `reference_lib_for()` change landed in commit `52b3380` (see § 8 item 2). |
 
 ## Build evidence
 
@@ -115,7 +115,7 @@ above pivots, zero rows below rank). RREF is unique."* The contract
 language is bitwise, not structural: a candidate's RREF output for
 input matrix `A` must be bit-identical to the RREF computed by an
 independent reference on the same `A`. The structural-RREF-invariants
-oracle (`smoke_echelon_one_cell`) introduced in commit `b8ed382`
+oracle (`smoke_echelon_one_cell`) introduced in commit `05fb2a4`
 verified only that the *output* satisfied the canonical RREF shape,
 which is necessary but not sufficient — many distinct input matrices
 share the same RREF, so structure alone does not certify the
@@ -242,7 +242,7 @@ what makes M4RIE performance-relevant.
 The full side-by-side rendering will populate when `gf2-core` adds a
 `matmul`-named GF(2^m) row at the same sizes; the `benchmarks/analyze.py`
 `reference_lib_for(field)` change required for the side-by-side
-columns to read `m4rie` for GF(2^m) **landed in commit `e3592fe`**
+columns to read `m4rie` for GF(2^m) **landed in commit `52b3380`**
 (see § 8 item 2 below).
 
 ## Cross-cutting findings flagged for the lead
@@ -251,19 +251,19 @@ These were out of scope for `jit:507b0036` per the dispatch contract
 ("**No `benchmarks/analyze.py` mods.** Even if you discover `FIELD_FAMILY` needs a
 new entry — stop and flag.") and were recorded here so the lead could
 dispatch the follow-up. **Items 1 and 2 below were completed by the
-lead in commit `e3592fe`** (chore(jit:97bf0879): wire wave 2 secondary
+lead in commit `52b3380`** (chore(jit:97bf0879): wire wave 2 secondary
 references into run.sh + analyze.py); the entries are kept here as a
 historical record of the cross-cutting flag and its disposition.
 
 1. **`analyze.py FIELD_FAMILY` needed `GF(2^4)`.** *Completed by lead
-   in commit `e3592fe`.* The `FIELD_FAMILY` dict in
+   in commit `52b3380`.* The `FIELD_FAMILY` dict in
    `benchmarks/analyze.py` now includes `"GF(2^4)": "gf2m"` alongside
    the existing `GF(2^8) / GF(2^16) / GF(2^32)` entries, so the
    m4rie rows that carry `field=GF(2^4)` are no longer silently skipped
    by future cell-bucketing changes.
 
 2. **`analyze.py reference_lib_for()` learned GF(2^m) → m4rie.**
-   *Completed by lead in commit `e3592fe`.* `benchmarks/analyze.py`
+   *Completed by lead in commit `52b3380`.* `benchmarks/analyze.py`
    now routes any field with `FIELD_FAMILY[field] == "gf2m"` to
    `m4rie`; concretely, `reference_lib_for("GF(2^4)") ==
    reference_lib_for("GF(2^8)") == reference_lib_for("GF(2^16)") ==
@@ -273,7 +273,7 @@ historical record of the cross-cutting flag and its disposition.
    of this document.
 
 3. **`run.sh verify_sha M4RIE_SHA256 libs.m4rie` — added by lead in
-   commit `e3592fe`.** The dispatch contract for `507b0036` was
+   commit `52b3380`.** The dispatch contract for `507b0036` was
    read-only on `benchmarks/run.sh`; the lead consolidated the cross-cutting
    plumbing for all four wave-2 secondary references (linbox, m4rie,
    ntl, flint) into a single follow-up commit. M4RIE pin drift is now

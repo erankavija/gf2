@@ -12,10 +12,10 @@
 
 | issue | on main | on a branch | waits for |
 |---|---|---|---|
-| `6379e04e` | done, merge `dc1b537f4` | none | none |
-| `9a1b24fc` | approved design `dev/active/d77176e5-competitive-benchmarking/design-9a1b24fc.md` (`e4b14f68b`) | Parked: branch A `worktree-agent-9a1b24fc-a` at `ffe050981`, with main merged (`f9d514b42`). It holds the trait, the BCH and `LayoutView` cutover, `Shortened`, the BCH callers and the REQ-06 sweep, and it passed the Claude Opus review in round 3 (`90eb89c4f`, after reworks 1 and 2). | cargo-ci and the Codex code-review gate are outstanding on A (the 01:01 cargo-ci was killed in the pool deadlock, an environment error). The gate's open finding F1 (LDPC/RU) is branch B scope; the issue's gates close on branch B's final head. Branch B is not started. |
-| `3461a52a` | planning record, manifest and inventory (`7a6b7dfc2`); 15 planned issues filed and wired (`cc2e3b2dd`) | none | REQ-01 and REQ-03 met; REQ-02 open until the curves establish the rule or reject it. The validation slice has not run (window cancelled). The 15 planned issues are wound down. |
-| `b8157e14` | partial findings `dev/active/d77176e5-competitive-benchmarking/findings-b8157e14.md` (`7ad504671`), with the quantized DE estimate and the NR BG1 reversal recorded as a falsification | none (merged) | REQ-03 open. The next measurements are the adaptive-rule curve and the NR BG1 floor, in a window after the rewrite. Wound down. Blocks 1.0. |
+| `6379e04e` | done, merge `2654e358c` | none | none |
+| `9a1b24fc` | approved design `dev/active/d77176e5-competitive-benchmarking/design-9a1b24fc.md` (`6aadeb2e1`) | Parked: branch A `worktree-agent-9a1b24fc-a` at `635ab9c00`, with main merged (`0f0551d76`). It holds the trait, the BCH and `LayoutView` cutover, `Shortened`, the BCH callers and the REQ-06 sweep, and it passed the Claude Opus review in round 3 (`ef302cbde`, after reworks 1 and 2). | cargo-ci and the Codex code-review gate are outstanding on A (the 01:01 cargo-ci was killed in the pool deadlock, an environment error). The gate's open finding F1 (LDPC/RU) is branch B scope; the issue's gates close on branch B's final head. Branch B is not started. |
+| `3461a52a` | planning record, manifest and inventory (`db79ae785`); 15 planned issues filed and wired (`c65611b85`) | none | REQ-01 and REQ-03 met; REQ-02 open until the curves establish the rule or reject it. The validation slice has not run (window cancelled). The 15 planned issues are wound down. |
+| `b8157e14` | partial findings `dev/active/d77176e5-competitive-benchmarking/findings-b8157e14.md` (`40fb060a8`), with the quantized DE estimate and the NR BG1 reversal recorded as a falsification | none (merged) | REQ-03 open. The next measurements are the adaptive-rule curve and the NR BG1 floor, in a window after the rewrite. Wound down. Blocks 1.0. |
 | `2275f760` | filed (code fingerprint convergence) | none | `9a1b24fc` |
 | `243d1160` | none | `worktree-agent-243d1160` (3 WIP commits) | parked: rebase onto A after A and `697b9178` land, then the admission gate. Wound down. |
 | `7fbd1042` | none | `worktree-agent-7fbd1042` (1 WIP commit) | parked: finish on A (the lockstep `batch_granularity` override). Wound down. |
@@ -41,7 +41,7 @@ All handoff-7 rulings stand. Added:
 - `3461a52a`: the plain $(\lambda,\rho)$ model's cap-200 DVB-T2 difference (0.09 dB) is recorded beside the estimate, and the DE-tool leaf requires staircase two-edge DE. Plan-review failed three times; the owner chose a fourth attempt in place, and it passed. NR key resolution $Q = 4$ is a lead planning default.
 - `b8157e14`: the NR BG1 reversal is a falsification of the earlier "NR unchanged" reading; the findings landed on their own as a partial record.
 - The owner lifted the cargo-ci cap. In practice a gate fits its 900 s timeout only with about two cargo-ci runs host-wide until `18276ff1` lands; that issue also stops task-level slow-test kills.
-- Skills load from the user's skill directory. `49c78483d` (owner) removed the repository copies, so a branch based before it runs stale skill scripts in its gates. Merge main first.
+- Skills load from the user's skill directory. `a33af036b` (owner) removed the repository copies, so a branch based before it runs stale skill scripts in its gates. Merge main first.
 - Flaky `fading::tests::test_interleaver_still_composes` (unseeded `quick_test()`) is folded into gf2-7d's `b5782224`.
 
 ## Dispatch record (session 7)

@@ -21,11 +21,11 @@ Every issue below is assigned to `agent:gf2-e9`; the successor reassigns them. E
 | Issue | State | Branch head | Gates | Where it stands |
 |---|---|---|---|---|
 | `@/issue/67194d70` | in progress, on main | — | cargo-ci, code-review never run | REQ-01 is recorded in the issue: the validation passed, 10 of 10 anchors. REQ-02 and REQ-03 still need the gates. |
-| `@/issue/506f76d4` | in progress | `worktree-agent-506f76d4` `ea5b56748` | cargo-ci passed at `88e04e1a4`; code-review failed twice | Second failure: version-1 cold cells. See Next. |
-| `@/issue/d1c0e062` | in progress | `worktree-agent-d1c0e062` `9e2bfff58` | not started | Retirement complete. check-references, docs-mechanical and `jit validate` pass. It frees 337,199 bytes against main `eacbb3a91`. |
+| `@/issue/506f76d4` | in progress | `worktree-agent-506f76d4` `ea5b56748` | cargo-ci passed at `eb60cfca7`; code-review failed twice | Second failure: version-1 cold cells. See Next. |
+| `@/issue/d1c0e062` | in progress | `worktree-agent-d1c0e062` `1546a8ffe` | not started | Retirement complete. check-references, docs-mechanical and `jit validate` pass. It frees 337,199 bytes against main `eacbb3a91`. |
 | `@/issue/66fefd9e` | in progress, on main with two failed reviews | `worktree-agent-66fefd9e` `8320233b8`, base `96fc9b751` | rework 2 not gated; one cold cargo-ci timeout | Rework 2: 4 passages rewritten and both inventories reconciled in the issue. A third review failure goes to the owner. |
-| `@/issue/da6200b8` | in progress, on main with two failed reviews | `worktree-agent-da6200b8` `c33d20e56` | rework 2 not gated | Option A allow-list at `be55de2b9`. A third failure goes to the owner, with option B on the table. |
-| `@/issue/0fe85425` | in progress | `worktree-agent-0fe85425` `04ab2400b` | ungated | Rework not dispatched. See Next. |
+| `@/issue/da6200b8` | in progress, on main with two failed reviews | `worktree-agent-da6200b8` `c33d20e56` | rework 2 not gated | Option A allow-list at `6398f9e90`. A third failure goes to the owner, with option B on the table. |
+| `@/issue/0fe85425` | in progress | `worktree-agent-0fe85425` `b1eb09c54` | ungated | Rework not dispatched. See Next. |
 | `@/issue/5f33fb28` | backlog, blocked by 506f76d4 | — | — | Owner decisions recorded in the issue. |
 | `@/issue/fe2221d5` | backlog, blocked by 506f76d4 | — | — | Interim stopgap, low priority. |
 | `@/issue/95077f84`, `@/issue/411e7267` | backlog / ready | — | — | Untouched. |
@@ -37,7 +37,7 @@ Every issue below is assigned to `agent:gf2-e9`; the successor reassigns them. E
   - The `experiments/aff3ct-ldpc-gaps/` tuned arm keeps its included coding profile. The REQ-02 reason, recorded in the issue: it is experiment code outside the library crates, and a tuned arm is gf2's counterpart to the reference's fastest configuration under `@/inv/performance-deliverable`.
 - **History rewrite rewords:** the Codex review's 11 proposals replace the drafts.
   - Ten apply as proposed.
-  - `4fe5b6bf8162` exceeded 71 characters and becomes `docs(jit:daef2dc3): write shortened paths in full in BCH investigation` (70).
+  - `1e8e1e7871a9` exceeded 71 characters and becomes `docs(jit:daef2dc3): write shortened paths in full in BCH investigation` (70).
   - All are in `reword-candidates-owner.tsv`. That file, not `reword-candidates.tsv`, feeds the next rehearsal.
 - **da6200b8, option A:**
   - The written-name rule is a short positive list of plain forms, stated once in the docstring. Everything outside it excuses nothing.
@@ -87,7 +87,7 @@ Unchanged since rehearsal 3, apart from the reword decision above.
 
 ## Next
 
-0. The steward handoff is `dev/active/2caf738d-1-0/handoff-5.md`. The d1c0e062 branch's hunk in `dev/active/2caf738d-1-0/handoff.md` has no target since `8cbf9eb17` retired that file: drop it when the branch next merges main.
+0. The steward handoff is `dev/active/2caf738d-1-0/handoff-5.md`. The d1c0e062 branch's hunk in `dev/active/2caf738d-1-0/handoff.md` has no target since `34aba1c49` retired that file: drop it when the branch next merges main.
 
 1. **506f76d4: second review failure.** Escalated to the steward, who decides with the owner. The finding:
    - `dev/tools/tuning-campaign-support/src/receipt.rs:513` requires cold executions to disable calibration and supply `cold_calls` for every protocol version.

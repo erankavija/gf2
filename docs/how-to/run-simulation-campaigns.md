@@ -46,7 +46,7 @@ code family, and the keys each family accepts, including the optional
 `channel` table, are the fields of `CurveConfig` in
 [`sim_runner.rs`](../../crates/gf2-coding/src/bin/sim_runner.rs). The
 repository's own campaign files are in
-[`dev/campaigns/`](https://github.com/erankavija/gf2/tree/6776fe30ea9af85ad509ddca95926f051421676d/dev/campaigns).
+[`dev/campaigns/`](https://github.com/erankavija/gf2/tree/d498b792f23eed5fd77b7ca65b94f325e2f0544b/dev/campaigns).
 
 ## Run it
 
