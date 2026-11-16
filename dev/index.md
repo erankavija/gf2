@@ -57,11 +57,14 @@ One branch lands on `main` at a time, in these steps:
 3. The tip merges into `main` with `git merge --no-ff`, under a
    `chore(jit:<id>): merge ...` subject.
 4. The merged-tree step: the required executed-command gates hold for the tree
-   on `main` after the merge. The step is met without a run when the merge's
-   tree equals the gated tip's tree, which a `--no-ff` merge of a tip that
-   contains `main` always gives. When `main` moved between gating and merging
-   and the trees differ, `cargo-ci` reruns at `main` before the next step. The
-   landing check at the merge commit is not this step.
+   on `main` after the merge. The step is met without a run when `cargo-ci`'s
+   verdict at the tip counts for the merge commit under the counting rule of
+   `scripts/check-landing`: the gate's declared inputs are identical at both
+   commits. A merge tree equal to the gated tip's tree, which a `--no-ff`
+   merge of a tip that contains `main` gives, is the common case. Otherwise,
+   when `main` moved between gating and merging, `cargo-ci` reruns at `main`
+   before the next step. Running the whole landing check at the merge commit
+   is not this step: it refuses the gates that declare no inputs.
 5. `scripts/tracker-snapshot` records the merge-time store.
 6. The `landed` gate passes; it judges that each gated commit is an ancestor
    of `main`.
