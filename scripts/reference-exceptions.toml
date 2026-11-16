@@ -49,8 +49,9 @@ reason = "installable rule packs name paths of the projects that adopt them"
 path = [
   "dev/active/b8206228-permanent-statistics/45ecf975/history-rewrite-runbook.md",
   "dev/active/b8206228-permanent-statistics/45ecf975/rewrite_paths.py",
+  "dev/active/b8206228-permanent-statistics/45ecf975/rewrite_tools_test.py",
 ]
-reason = "history rewrite runbook and its path filter name the paths and backups the rewrite handles; remove when 45ecf975 closes"
+reason = "history rewrite runbook, its path filter and the filter's self-test name the paths and backups the rewrite handles; remove when 45ecf975 closes"
 
 [[exception]]
 path = "crates/gf2-coding/data/ldpc/nr_5g/PROVENANCE.md"
