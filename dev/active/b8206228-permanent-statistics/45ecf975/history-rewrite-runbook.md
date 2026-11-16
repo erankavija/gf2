@@ -69,11 +69,10 @@ claims, leases, locks and the worktree identity under the code repository's
    its map entry is all zeros and the ref moves to its nearest kept ancestor.
 6. Mount and remap in `<rw>`:
    - `scripts/tracker-bootstrap <tracker>`, where `<tracker>` is the primary
-     checkout's `.jit`. Its nonzero exit is accepted when its findings are
-     `gate-run-reference` (gate-run records are machine-local and absent from
-     a clone) and the `document-reference` errors of the unremapped pins.
-   - Copy `gate-runs/` and `gate-artifacts/` of the primary `.jit` (read only)
-     into `<rw>/.jit`.
+     checkout's `.jit`. The store declares gate-run records machine-local
+     (`[storage] gate_run_records`), so a clone validates without them; the
+     bootstrap's nonzero exit is accepted when its only findings are the
+     `document-reference` errors of the unremapped pins.
    - Record `git -C .jit rev-parse HEAD`, run
      `scripts/tracker-env python3 dev/active/b8206228-permanent-statistics/45ecf975/map_pins.py <mirror>/filter-repo/commit-map <backup>/gf2.git`,
      commit the remapped pins in the tracker with `scripts/tracker-snapshot`,
