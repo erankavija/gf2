@@ -51,8 +51,8 @@ The workflow rules are in the JIT workflow section of
 
 One branch lands on `main` at a time, in these steps:
 
-1. The issue's gates pass at the branch tip, evaluated through
-   `scripts/tracker-env` in the branch's worktree.
+1. The issue's gates other than `landed` pass at the branch tip, evaluated
+   through `scripts/tracker-env` in the branch's worktree.
 2. `scripts/check-landing <issue> <tip>` passes.
 3. The tip merges into `main` with `git merge --no-ff`, under a
    `chore(jit:<id>): merge ...` subject.
@@ -65,8 +65,9 @@ One branch lands on `main` at a time, in these steps:
 5. `scripts/tracker-snapshot` records the merge-time store.
 6. The `landed` gate passes; it judges that each gated commit is an ancestor
    of `main`.
-7. `scripts/tracker-snapshot --push` records the `landed` verdict and pushes
-   the store to its home.
+7. `scripts/tracker-snapshot` records the `landed` verdict, and the store's
+   commits reach its home, through the snapshot's opt-in `--push` or
+   `git -C .jit push origin main`.
 
 ## Epic documents: `active/`
 
