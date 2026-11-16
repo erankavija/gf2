@@ -16,5 +16,5 @@ _No invariants declared._
 - Link a document that exists only on a branch with `jit doc add` pinned to a branch commit (`--commit`), and re-link it unpinned when it lands.
 - A branch lands only after `scripts/check-landing <issue> <tip>` passes.
 - A code-producing issue carries the `landed` gate through the `code-task` preset; the lead evaluates it after the merged-tree gate.
-- A lead runs `scripts/tracker-snapshot` after each landing, and the steward at the end of a session. `scripts/tracker-snapshot` commits locally; `git -C .jit push origin main` then keeps the home current.
+- A lead runs `scripts/tracker-snapshot` after each landing, and the steward at the end of a session. `scripts/tracker-snapshot --push` also pushes the store to its home; without `--push` it commits locally, and `git -C .jit push origin main` sends the commits.
 - Run the configured gates before completing an issue; a passing review placeholder is advisory evidence only.

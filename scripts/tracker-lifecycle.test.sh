@@ -88,7 +88,8 @@ make_code() {
   git -C "$1" commit -qm init
 }
 bootstrap() { (cd "$TEST_CODE/sub/dir" && "$TEST_CODE/scripts/tracker-bootstrap" "$@"); }
-snapshot() { (cd "$TEST_CODE/sub/dir" && TEST_CHECK_LOCK=1 "$TEST_CODE/scripts/tracker-snapshot"); }
+snapshot() { (cd "$TEST_CODE/sub/dir" && TEST_CHECK_LOCK=1 "$TEST_CODE/scripts/tracker-snapshot" "$@"); }
+change() { printf '%s\n' "$1" >"$CODE/.jit/record"; }
 
 TRACKER="$BASE/tracker"
 init_repo "$TRACKER"
@@ -242,5 +243,40 @@ git -C "$CODE/.jit" diff --cached --quiet || fail 'snapshot left staged changes'
 head=$(git -C "$CODE/.jit" rev-parse HEAD)
 snapshot >"$TMP/findings" 2>&1 || fail 'snapshot with only ignored files failed'
 expect 'ignored-only snapshot HEAD' "$(git -C "$CODE/.jit" rev-parse HEAD)" "$head"
+
+# --- Push only on request -----------------------------------------------------
+TEST_CODE=$CODE
+rc=0
+snapshot --pull >"$TMP/findings" 2>&1 || rc=$?
+[ "$rc" -ne 0 ] || fail 'unknown argument accepted'
+rc=0
+snapshot --push extra >"$TMP/findings" 2>&1 || rc=$?
+[ "$rc" -ne 0 ] || fail 'extra argument accepted'
+# Without --push an unreachable origin is never contacted.
+git -C "$CODE/.jit" remote set-url origin "$TMP/no-such-remote"
+change local-only
+snapshot >"$TMP/findings" 2>&1 || fail "snapshot without push: $(cat "$TMP/findings")"
+local_head=$(git -C "$CODE/.jit" rev-parse HEAD)
+# A failed push names the remote and keeps the commit.
+change unpushed
+rc=0
+snapshot --push >"$TMP/findings" 2>&1 || rc=$?
+[ "$rc" -ne 0 ] || fail 'failed push returned success'
+grep -qF "$TMP/no-such-remote" "$TMP/findings" || fail "push failure message: $(cat "$TMP/findings")"
+[ "$(git -C "$CODE/.jit" rev-parse HEAD^)" = "$local_head" ] || fail 'failed push lost the commit'
+HOME_REMOTE="$BASE/home.git"
+git init -q --bare --initial-branch=main "$HOME_REMOTE"
+git -C "$CODE/.jit" remote set-url origin "$HOME_REMOTE"
+# A clean store with --push sends the commits left unpushed.
+snapshot --push >"$TMP/findings" 2>&1 || fail "clean push: $(cat "$TMP/findings")"
+expect 'clean push reaches home' "$(git -C "$HOME_REMOTE" rev-parse main)" "$(git -C "$CODE/.jit" rev-parse HEAD)"
+change pushed
+snapshot --push >"$TMP/findings" 2>&1 || fail "push: $(cat "$TMP/findings")"
+expect 'pushed snapshot reaches home' "$(git -C "$HOME_REMOTE" rev-parse main)" "$(git -C "$CODE/.jit" rev-parse HEAD)"
+expect 'pushed snapshot content' "$(git -C "$HOME_REMOTE" show main:record)" pushed
+change not-pushed
+snapshot >"$TMP/findings" 2>&1 || fail "unpushed snapshot: $(cat "$TMP/findings")"
+[ "$(git -C "$HOME_REMOTE" rev-parse main)" != "$(git -C "$CODE/.jit" rev-parse HEAD)" ] ||
+  fail 'snapshot without --push pushed'
 
 echo 'tracker lifecycle self-test passed'

@@ -35,8 +35,9 @@ The workflow rules are in the JIT workflow section of
   code-producing issue carries the `landed` gate (`code-task` preset), which
   the lead evaluates after the merged-tree gate.
 - A lead runs `scripts/tracker-snapshot` after each landing, the steward at the
-  end of a session.
-  `scripts/tracker-snapshot` commits locally; `git -C .jit push origin main` then keeps the home current.
+  end of a session. With `--push` it also pushes the store to its home;
+  without it, it commits locally and `git -C .jit push origin main` sends the
+  commits.
 
 ## Epic documents: `active/`
 
