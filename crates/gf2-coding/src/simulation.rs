@@ -425,6 +425,7 @@ pub struct SimulationConfig {
     /// RNG seed of the coded runners; the uncoded runners draw from the
     /// caller's RNG. When `None`, the sequential runners seed from
     /// `rand::thread_rng()` and the parallel runner uses a fixed default.
+    /// [`SimulationConfig::quick_test`] sets a fixed seed.
     pub rng_seed: Option<u64>,
 
     /// Result file of the coded runners. A `.json` path is written once at
@@ -463,15 +464,21 @@ pub struct SimulationConfig {
     pub heartbeat_every_frames: Option<usize>,
 }
 
+/// Default [`SimulationConfig::rng_seed`] of [`SimulationConfig::quick_test`].
+pub const QUICK_TEST_SEED: u64 = 0x51C4_7E57;
+
 impl SimulationConfig {
-    /// A small sweep for quick tests.
+    /// A small sweep for quick tests, seeded with [`QUICK_TEST_SEED`] so a run
+    /// is reproducible; set [`rng_seed`](Self::rng_seed) to vary the noise.
+    ///
+    /// The uncoded runners draw from the caller's RNG and ignore the seed.
     pub fn quick_test() -> Self {
         SimulationConfig {
             eb_n0_range_db: vec![0.0, 3.0, 6.0],
             min_errors: 100,
             max_frames: 100_000,
             max_decoder_iterations: 50,
-            rng_seed: None,
+            rng_seed: Some(QUICK_TEST_SEED),
             output_path: None,
             checkpoint_dir: None,
             tracing_log_path: None,
@@ -1027,6 +1034,7 @@ impl SimulationRunner {
     /// use gf2_coding::simulation::{
     ///     BpskAwgnChannel, SimulationConfig, SimulationRunner,
     /// };
+    /// use rand::{rngs::StdRng, SeedableRng};
     ///
     /// let mut config = SimulationConfig::quick_test();
     /// config.eb_n0_range_db = vec![6.0];
@@ -1039,7 +1047,7 @@ impl SimulationRunner {
     /// // capture must be tagged to match or the runner will panic.
     /// let mut capture =
     ///     AnalysisCapture::with_method(&mut stats, DemapMethod::ExactLogMap);
-    /// let mut rng = rand::thread_rng();
+    /// let mut rng = StdRng::seed_from_u64(1);
     /// let results = SimulationRunner::run_uncoded_ber_with_analysis(
     ///     &channel,
     ///     &config,
@@ -2832,7 +2840,7 @@ mod tests {
         assert!(config.min_errors > 0);
         assert!(config.max_frames > config.min_errors);
         assert_eq!(config.max_decoder_iterations, 50);
-        assert!(config.rng_seed.is_none());
+        assert_eq!(config.rng_seed, Some(QUICK_TEST_SEED));
         assert!(config.output_path.is_none());
     }
 
@@ -2852,7 +2860,7 @@ mod tests {
         config.min_errors = 10;
         config.max_frames = 10_000;
 
-        let mut rng = rand::thread_rng();
+        let mut rng = StdRng::seed_from_u64(QUICK_TEST_SEED);
         let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
         assert_eq!(results.len(), 1);
@@ -2867,7 +2875,7 @@ mod tests {
         config.eb_n0_range_db = vec![0.0, 6.0];
         config.min_errors = 50;
 
-        let mut rng = rand::thread_rng();
+        let mut rng = StdRng::seed_from_u64(QUICK_TEST_SEED);
         let results = SimulationRunner::run_uncoded_ber(&config, &mut rng);
 
         assert_eq!(results.len(), 2);
