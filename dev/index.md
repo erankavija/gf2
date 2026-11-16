@@ -24,17 +24,51 @@ The workflow rules are in the JIT workflow section of
   repository. A fresh clone mounts it with `scripts/tracker-bootstrap <path-or-url>`.
   On a host with a mounted tracker, its home is `git -C .jit remote get-url origin`; a fresh clone on that host mounts it with `scripts/tracker-bootstrap "$(git -C <primary-checkout>/.jit remote get-url origin)"`.
 - A linked worktree runs jit as `scripts/tracker-env jit ...` and finds the
-  store's files under the primary checkout's `.jit/`.
+  store's files under the primary checkout's `.jit/`. A gate run there records
+  the caller's `JIT_AGENT_ID`, otherwise the holder of the issue's active
+  lease, otherwise `agent:<worktree name>`.
+- jit limits each agent's indefinite leases by
+  `[coordination] max_indefinite_leases_per_agent`, read from
+  `.jit/config.toml`, which leaves it unset, so jit's default of two applies;
+  `jit config show` prints the effective value. A lead
+  holding more issues takes finite leases and extends each with
+  `jit claim renew` before it expires; an indefinite lease needs a
+  `jit claim heartbeat` within jit's claim stale threshold.
 - Skill scripts that require `.jit` under their root run against the primary
   checkout.
 - A document existing only on a branch is linked with `jit doc add --commit
   <branch-commit>` and re-linked unpinned when it lands.
-- A branch lands after `scripts/check-landing <issue> <tip>` passes. A
-  code-producing issue carries the `landed` gate (`code-task` preset), which
-  the lead evaluates after the merged-tree gate.
+- A branch lands by the [landing flow](#landing-flow). A code-producing issue
+  carries the `landed` gate (`code-task` preset).
 - A lead runs `scripts/tracker-snapshot` after each landing, the steward at the
-  end of a session.
-  `scripts/tracker-snapshot` commits locally; `git -C .jit push origin main` then keeps the home current.
+  end of a session. With `--push` it also pushes the store to its home;
+  without it, it commits locally and `git -C .jit push origin main` sends the
+  commits. Each snapshot commits the pending changes of every session sharing
+  the store, and its `Jit-Agent` trailer names the agent that took it, when
+  `JIT_AGENT_ID` is set.
+
+## Landing flow
+
+One branch lands on `main` at a time, in these steps:
+
+1. The issue's gates other than `landed` pass at the branch tip, evaluated
+   through `scripts/tracker-env` in the branch's worktree.
+2. `scripts/check-landing <issue> <tip>` passes.
+3. The tip merges into `main` with `git merge --no-ff`, under a
+   `chore(jit:<id>): merge ...` subject.
+4. The merged-tree step: the required executed-command gates hold for the tree
+   on `main` after the merge. The step is met without a run when `cargo-ci`'s
+   verdict at the tip counts for the merge commit under the counting rule of
+   `scripts/check-landing`: the gate's declared inputs are identical at both
+   commits. A merge tree equal to the gated tip's tree, which a `--no-ff`
+   merge of a tip that contains `main` gives, is the common case. Otherwise,
+   when `main` moved between gating and merging, `cargo-ci` reruns at `main`
+   before the next step. Running the whole landing check at the merge commit
+   is not this step: it refuses the gates that declare no inputs.
+5. `scripts/tracker-snapshot` records the merge-time store.
+6. The `landed` gate passes; it judges that each gated commit is an ancestor
+   of `main`.
+7. `scripts/tracker-snapshot` records the `landed` verdict.
 
 ## Epic documents: `active/`
 

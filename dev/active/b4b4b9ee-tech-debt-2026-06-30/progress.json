@@ -916,7 +916,7 @@
           "title": "gf2-coding constructor-bound and simulation-runner defects reported by the comment sweep",
           "classification": "implementation",
           "priority": "normal",
-          "status": "in_progress: rework 1 done; gates due"
+          "status": "done: landed 4abe2a4d0 (2026-11-16)"
         },
         {
           "id": "ee3bf65e-c23e-4fab-ba12-651058d94e8e",
@@ -1416,7 +1416,7 @@
         },
         {
           "short_id": "22bb2dcd",
-          "status": "in_progress: rework 1 done; gates due"
+          "status": "done: landed 4abe2a4d0 (2026-11-16)"
         },
         {
           "short_id": "697b9178",
@@ -1503,7 +1503,7 @@
         {
           "short_id": "90cd64a9",
           "title": "Simulation runner resume, seed-log and config gaps after 22bb2dcd",
-          "status": "pending: after 22bb2dcd"
+          "status": "pending: ready, undispatched"
         },
         {
           "short_id": "6eb12747",
@@ -1542,7 +1542,7 @@
         },
         {
           "short_id": "22bb2dcd",
-          "status": "parked at f8aec8aab: cargo-ci, code-review; then 90cd64a9"
+          "status": "done: landed 4abe2a4d0 (2026-11-16)"
         },
         {
           "short_id": "d73ac633",
@@ -1566,7 +1566,7 @@
         },
         {
           "short_id": "18276ff1",
-          "status": "parked at 90ed7a351: case-7 SIGINT fix, REQ-06, final gates, steward approval"
+          "status": "parked at 4ca3ff8fe: REQ-06 attempt 3 failed (tree limit, rayon pairing of three 22bb2dcd tests, one silent cancellation)"
         },
         {
           "short_id": "d8aee1f4",
@@ -1578,7 +1578,7 @@
         },
         {
           "short_id": "4f395137",
-          "status": "parked at ac0859cb9: cargo-ci passed; code-review rerun, land"
+          "status": "done: landed 5b879c12f (2026-11-16)"
         },
         {
           "short_id": "1452ba69",
