@@ -65,9 +65,7 @@ One branch lands on `main` at a time, in these steps:
 5. `scripts/tracker-snapshot` records the merge-time store.
 6. The `landed` gate passes; it judges that each gated commit is an ancestor
    of `main`.
-7. `scripts/tracker-snapshot` records the `landed` verdict, and the store's
-   commits reach its home, through the snapshot's opt-in `--push` or
-   `git -C .jit push origin main`.
+7. `scripts/tracker-snapshot` records the `landed` verdict.
 
 ## Epic documents: `active/`
 
