@@ -61,7 +61,7 @@
           "id": "e610f5c4-3833-4e23-8399-eb5b8b483ea8",
           "short_id": "e610f5c4",
           "title": "Build the cutover tool that moves the tracker out of the code repository",
-          "status": "checkpoint ece58ef3c (Codex phase 2, stopped, self-test ok 587 s); folded round dispatched to Claude Opus 5.5 (Step 0 final round + D-12); then blocking Claude Opus review + Codex review, gates once"
+          "status": "cutover tool adf7406f3 merged 54b4491a2; ran the live cutover; cargo-ci and landed passed, code-review failed (6 findings recorded); open"
         },
         {
           "id": "2a4c2684-b7a6-4a72-822f-918a873a07bf",
@@ -78,7 +78,7 @@
           "id": "6b9e6b14-2382-42d9-b8f5-dea181b3dea6",
           "short_id": "6b9e6b14",
           "title": "Write the cutover runbook and rehearse it with the history rewrite",
-          "status": "phase 1 runbook draft at 1cc64aa24 (Claude Opus, by gf2-bf); phase 2 rehearsal waits for e610f5c4 landing"
+          "status": "runbook merged 01a338f5a; rehearsal run 2 clean, results in the issue; cargo-ci (reused) and landed passed, code-review failed (5 findings); open"
         }
       ]
     },
@@ -89,7 +89,7 @@
           "id": "6889e6e6-9b0f-4ff1-8de4-e2cc6cba9a6d",
           "short_id": "6889e6e6",
           "title": "Execute the tracker cutover",
-          "status": "waits for the owner's go; handed to gf2-5c"
+          "status": "cutover executed 2026-11-16 01:43-01:52, C=c0ea7b369; guidance merged 28c472a14; cargo-ci, docs-mechanical and landed passed, code-review failed (2 findings); open"
         }
       ]
     }
@@ -109,6 +109,13 @@
       "title": "Rewrite the code-task preset as gate keys and test the parse cases",
       "reason": "steward ruling at the 7854cfad landing, narrowed when the jit project took key-only presets (jit 5e3bee43): rewrite code-task as keys with the new binary; the Sonnet review advisory on untested parse cases",
       "wave": 5
+    },
+    {
+      "id": "8660c096-870b-466e-8690-e28d76a1cc73",
+      "short_id": "8660c096",
+      "title": "Give the tracked tree-size limit room for the next commit",
+      "reason": "the cutover's rounded tree limit blocked the next commit under 'limits only fall' (steward ruling)",
+      "wave": "owner decision"
     }
   ],
   "escalations": [
@@ -162,10 +169,14 @@
     "Gate runs on fresh or rebuilt worktrees hit the 900 s cargo-ci timeout at load 20+; a warm direct ./scripts/cargo-ci.sh pre-run then --force gate works",
     "The worktree dispatch script refuses while another session holds uncommitted dev/ files in main; create the worktree with git worktree add from main instead",
     "Each main landing by a peer that touches crates/ or scripts/ invalidates cargo-ci verdicts at branch tips; tracker-only main drift does not (merged without re-gating)",
-    "cutover.py inventory (:366-368 at 9aeddb20f) reports any merge-tree conflict as a tracker action, also conflicts outside .jit; fixed under e610f5c4 REQ-01 in the D-12 round"
+    "cutover.py inventory (:366-368 at 9aeddb20f) reports any merge-tree conflict as a tracker action, also conflicts outside .jit; fixed under e610f5c4 REQ-01 in the D-12 round",
+    "cutover.py --self-test fails after the cutover (HEAD:.gitattributes gone); e610f5c4 REQ-09",
+    "jit binary replaced 2026-11-16 01:10 (still 1.0.0): validate checks gate-run records, presets key-only, jit profile diff rejects manifest version 1",
+    "8 detached worktrees keep stale .jit stores (named exceptions); epic REQ-09 and 6889e6e6 REQ-03 open until the owner accepts or they are cleaned",
+    "plain jit in a linked worktree resolves the primary store with the wrong code root (F-05 falsified)"
   ],
   "started_at": "2026-11-15T01:17:00+02:00",
-  "lead": "gf2-5c (cutover line: e610f5c4, 6b9e6b14, 6889e6e6) and gf2-f6 (7854cfad, d1eba151, 2a4c2684, 84022ee3, inventory) under steward gf2-a2; took over from gf2-bf",
+  "lead": "gf2-5c (cutover line) under steward gf2-a2; session ended 2026-11-16 after the cutover",
   "notes": {
     "2a4c2684": "assigned to gf2-bf by steward gf2-a2 (gf2-00 has no session); design at the runbook backup directory, rewrite-plan/2026-11-14b/2a4c2684-design.md; scope per steward message",
     "6889e6e6": "waits on an owner timing decision (rewrite paused, steward 01:22)",
@@ -361,6 +372,35 @@
       "vendor": "Codex",
       "model": "gpt-6.1-sol high",
       "reviewer": "Claude Opus 5.5 blocking PASS"
+    },
+    {
+      "issue": "e610f5c4",
+      "kind": "cut tool (forward only)",
+      "vendor": "Claude",
+      "model": "Opus 5.5",
+      "reviewer": "Codex gate",
+      "note": "replaced impl-e610f5c4-d12, which kept the marker machinery after the redirect"
+    },
+    {
+      "issue": "6b9e6b14",
+      "kind": "runbook cut and fixes",
+      "vendor": "Claude",
+      "model": "Sonnet 5.5",
+      "reviewer": "lead + Codex gate"
+    },
+    {
+      "issue": "6b9e6b14",
+      "kind": "rehearsals (early, forward run 1, run 2)",
+      "vendor": "Claude",
+      "model": "Sonnet 5.5 / Opus 5.5",
+      "reviewer": "lead"
+    },
+    {
+      "issue": "6889e6e6",
+      "kind": "guidance docs REQ-06",
+      "vendor": "Claude",
+      "model": "Sonnet 5.5",
+      "reviewer": "lead + Codex gate"
     }
   ]
 }
