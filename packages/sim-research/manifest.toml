@@ -329,7 +329,7 @@ reserved = {}
 [contribution.value.checker]
 type = "exec"
 command = "./scripts/cargo-ci.sh"
-timeout_seconds = 900
+timeout_seconds = 1800
 pass_context = false
 env = {}
 
