@@ -1,0 +1,214 @@
+#!/usr/bin/env python3
+"""Refuses a landing whose gate verdicts do not count for the revision.
+
+    check-landing <issue> <revision>
+
+Reads the issue's required gates, their definitions and the latest run of each
+through `jit ... --json` from PATH, with the caller's environment; run it
+through `scripts/tracker-env` from a linked worktree. Git runs in the current
+checkout.
+
+A gate whose checker is an executed command counts when its latest run passed
+and the run that executed the checker (the origin of a reused verdict) records
+the revision's commit, or a commit at which the gate's declared inputs are
+identical: `git diff` reports nothing over the input roots less the exclusions.
+A gate without declared inputs counts only for the exact commit. A manual gate
+counts by its attestation, a built-in checker by its pass. The `landed` gate
+is skipped and listed as judged after the merge.
+
+Exit statuses:
+    0   every required verdict counts for the revision
+    1   refused: a run did not pass, records no commit, or does not count
+    2   jit is unavailable or failed, or the issue does not exist
+    64  usage error or a revision git cannot resolve
+"""
+
+import sys
+# Bare stream name until @/issue/d1eba151 classifies extensionless scripts.
+from sys import stderr
+
+from landing_gates import (
+    GateKeyKind,
+    GateKind,
+    GateLabel,
+    JitError,
+    JitUnavailable,
+    RunStatus,
+    executing_run,
+    gate_kind,
+    git,
+    is_reused,
+    jit,
+    parse_gate_key,
+    parse_gate_run,
+    parse_run_status,
+)
+
+EXIT_OK, EXIT_REFUSED, EXIT_JIT, EXIT_USAGE = 0, 1, 2, 64
+PATH_LIMIT = 20
+
+
+class GitError(Exception):
+    pass
+
+
+def resolve_commit(revision):
+    status, out, _ = git("rev-parse", "--verify", "--quiet", f"{revision}^{{commit}}")
+    return out.strip() if status == 0 else None
+
+
+def input_pathspecs(inputs):
+    """Git pathspecs for jit's input roots less exclusions, or None.
+
+    jit excludes a path that matches an exclusion glob and everything below it;
+    a git glob pathspec matches the path only, hence the second `/**` form.
+    """
+    roots = (inputs or {}).get("roots") or []
+    if not roots:
+        return None
+    specs = [f":(top,literal){root}" for root in roots]
+    for pattern in (inputs or {}).get("exclude") or []:
+        pattern = pattern.rstrip("/")
+        specs += [f":(top,exclude,glob){pattern}", f":(top,exclude,glob){pattern}/**"]
+    return specs
+
+
+def differing_paths(recorded, expected, specs):
+    args = ["diff", "--name-only", "-z", "--no-renames", recorded, expected]
+    if specs is not None:
+        args += ["--", *specs]
+    status, out, err = git(*args)
+    if status != 0:
+        raise GitError(err.strip())
+    return [p for p in out.split("\0") if p]
+
+
+def compared_paths(recorded, commit, definition):
+    """Returns (counts by commit, paths text) for a recorded commit."""
+    if not recorded:
+        return False, "differing input paths: unknown without a recorded commit"
+    if recorded == commit:
+        return True, "differing input paths: none"
+    if git("cat-file", "-e", f"{recorded}^{{commit}}")[0] != 0:
+        return False, (
+            "differing input paths: unknown, the recorded commit is not in this"
+            " repository"
+        )
+    specs = input_pathspecs(definition.get("inputs"))
+    try:
+        paths = differing_paths(recorded, commit, specs)
+    except GitError as err:
+        return False, f"differing input paths: unknown, git diff failed: {err}"
+    if specs is not None and not paths:
+        return True, "declared inputs identical"
+    shown = ", ".join(paths[:PATH_LIMIT]) or "none"
+    if len(paths) > PATH_LIMIT:
+        shown += f" and {len(paths) - PATH_LIMIT} more"
+    if specs is None:
+        return False, (
+            "no declared inputs, so it counts only for the recorded commit;"
+            f" differing paths: {shown}"
+        )
+    return False, f"differing input paths: {shown}"
+
+
+def judge_executed(issue_id, key, definition, run, status, commit, revision):
+    """Returns (counts, detail) for an executed-command gate's latest run.
+
+    A refusal always names the recorded commit, the expected commit and the
+    differing input paths, whatever the run's status.
+    """
+    reused = is_reused(run)
+    executed = executing_run(key, run) if run.get("run_id") else None
+    recorded = (executed or {}).get("commit")
+    via = f" via origin run {executed.get('run_id')}" if reused and executed else ""
+    same, paths = compared_paths(recorded, commit, definition)
+    if not run.get("run_id") or status is None:
+        reason = "has no run"
+    elif status is not RunStatus.PASSED:
+        reason = f"latest run {run['run_id']} is {status.value}"
+    elif reused and executed is None:
+        reason = "the run that executed the checker is not found"
+    elif not same:
+        reason = None
+    elif recorded == commit:
+        return True, f"ran at {commit}{via}"
+    else:
+        return True, f"ran at {recorded}{via}; {paths}"
+    force = (
+        f"needs a forced evaluation at {revision}"
+        f" (jit gate evaluate {issue_id} {key.value} --force)"
+        if reused
+        else f"re-evaluate at {revision}"
+    )
+    parts = [f"recorded commit {recorded or 'none'}{via}, expected {commit}", paths]
+    return False, "; ".join(parts + ([reason] if reason else []) + [force])
+
+
+def judge_gate(issue_id, key, commit, revision):
+    """Returns (counts, label, detail) for one required gate."""
+    if key.kind is GateKeyKind.LANDED:
+        return True, GateLabel.JUDGED_AFTER_MERGE, None
+    definition = jit("gate", "show", key.value)
+    run = parse_gate_run(jit("gate", "status", issue_id, key.value))
+    kind = gate_kind(definition)
+    status = parse_run_status(run.get("status"))
+    if kind is GateKind.EXECUTED:
+        counts, detail = judge_executed(
+            issue_id, key, definition, run, status, commit, revision
+        )
+        return counts, GateLabel.COUNTS if counts else GateLabel.REFUSED, detail
+    if not run.get("run_id") or status is None:
+        return False, GateLabel.REFUSED, "has no run; no commit applies"
+    if status is not RunStatus.PASSED:
+        return False, GateLabel.REFUSED, (
+            f"latest run {run['run_id']} is {status.value}; no commit applies"
+        )
+    if kind is GateKind.MANUAL:
+        return True, GateLabel.ATTESTED, f"by {run.get('by', 'unknown')}"
+    return True, GateLabel.STORE_JUDGED, f"run {run['run_id']} passed"
+
+
+def check(issue_ref, revision):
+    commit = resolve_commit(revision)
+    if commit is None:
+        print(f"check-landing: git cannot resolve revision {revision!r}", file=stderr)
+        return EXIT_USAGE
+    try:
+        issue = jit("issue", "show", issue_ref)
+        issue_id = issue.get("id") or issue_ref
+        print(f"check-landing: issue {issue_id} at {revision} ({commit})")
+        refused = 0
+        for gate in issue.get("gates") or []:
+            key = parse_gate_key(gate["key"])
+            counts, label, detail = judge_gate(issue_id, key, commit, revision)
+            refused += not counts
+            print(f"  {key.value}: {label.value}" + (f": {detail}" if detail else ""))
+    except JitUnavailable as err:
+        print(f"check-landing: {err}", file=stderr)
+        return EXIT_JIT
+    except JitError as err:
+        if err.code == "ISSUE_NOT_FOUND":
+            print(f"check-landing: issue not found: {issue_ref}", file=stderr)
+        else:
+            print(f"check-landing: {err}", file=stderr)
+        return EXIT_JIT
+    if refused:
+        print(
+            f"check-landing: {GateLabel.REFUSED.value}: {refused} gate verdict(s) "
+            f"do not count for {commit}"
+        )
+        return EXIT_REFUSED
+    print(f"check-landing: every required verdict counts for {commit}")
+    return EXIT_OK
+
+
+def main(argv):
+    if len(argv) != 2 or argv[0].startswith("-"):
+        print("usage: check-landing <issue> <revision>", file=stderr)
+        return EXIT_USAGE
+    return check(argv[0], argv[1])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

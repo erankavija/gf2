@@ -811,6 +811,7 @@ mod channel_model_tests {
         config.eb_n0_range_db = vec![10.0];
         config.max_frames = 20;
         config.min_errors = 1;
+        config.rng_seed = Some(1);
 
         let results = SimulationRunner::run_coded(&ebch, &decoder, &channel, &config);
         assert_eq!(results.points.len(), 1);
@@ -896,6 +897,7 @@ mod modem_framework_calibration_tests {
         config.eb_n0_range_db = vec![12.0];
         config.max_frames = 30;
         config.min_errors = 1;
+        config.rng_seed = Some(1);
 
         let results = SimulationRunner::run_coded(&ebch, &decoder, &channel, &config);
         assert_eq!(results.points.len(), 1);

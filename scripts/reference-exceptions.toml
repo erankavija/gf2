@@ -8,10 +8,6 @@ path = "experiments/dvb-t2-awgn/src/bin/dvb_t2_awgn_campaign.rs"
 reason = "<campaign-dir>/tracing.jsonl is written by the tracing subscriber installed through pipeline configuration, beyond local writer-helper flow"
 
 [[exception]]
-path = ".jit/events.jsonl"
-reason = "append-only tracker log records paths as they were"
-
-[[exception]]
 path = ".jit/issues/*"
 history = "closed"
 reason = "a closed issue's prose is history: it may name evidence and invariants the tree no longer holds"
@@ -24,10 +20,6 @@ reason = "open issues name files they plan to create"
 [[exception]]
 path = ".jit/archive-evidence/*"
 reason = "archive records of completed containers state the paths their documents moved from and to"
-
-[[exception]]
-path = ".jit/references.toml"
-reason = "citations name files inside the cited upstream sources"
 
 [[exception]]
 path = "dev/reference_data/osd_ebch_128_64_fossorier1994.md"

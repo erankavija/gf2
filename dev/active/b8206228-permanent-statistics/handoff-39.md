@@ -87,7 +87,7 @@ Unchanged since rehearsal 3, apart from the reword decision above.
 
 ## Next
 
-0. The steward handoff is `dev/active/2caf738d-1-0/handoff-4.md`. The d1c0e062 branch's hunk in `dev/active/2caf738d-1-0/handoff.md` has no target since `8cbf9eb17` retired that file: drop it when the branch next merges main.
+0. The steward handoff is `dev/active/2caf738d-1-0/handoff-5.md`. The d1c0e062 branch's hunk in `dev/active/2caf738d-1-0/handoff.md` has no target since `8cbf9eb17` retired that file: drop it when the branch next merges main.
 
 1. **506f76d4: second review failure.** Escalated to the steward, who decides with the owner. The finding:
    - `dev/tools/tuning-campaign-support/src/receipt.rs:513` requires cold executions to disable calibration and supply `cold_calls` for every protocol version.

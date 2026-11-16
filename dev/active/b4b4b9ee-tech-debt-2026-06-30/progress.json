@@ -1530,47 +1530,59 @@
         },
         {
           "short_id": "574ed420",
-          "status": "in_progress: REQ-02 met; REQ-03 and REQ-04 need a quiet host after the window"
+          "status": "done (1ff971676)"
         },
         {
           "short_id": "697b9178",
-          "status": "in_progress: code-review passed; cargo-ci rerun"
+          "status": "done (12f0f331b)"
         },
         {
           "short_id": "9c0568ee",
-          "status": "in_progress: cargo-ci GPU-lock timeout; rerun alone, then code-review"
+          "status": "done (fb96c74d8)"
         },
         {
           "short_id": "22bb2dcd",
-          "status": "in_progress: code-review passed; cargo-ci GPU-lock timeout"
+          "status": "parked at f8aec8aab: cargo-ci, code-review; then 90cd64a9"
         },
         {
           "short_id": "d73ac633",
-          "status": "in_progress: code-review and blocking Claude review passed; cargo-ci"
+          "status": "parked at 0ac0d915b"
         },
         {
           "short_id": "e29fd776",
-          "status": "in_progress: code-review and blocking Claude review passed; cargo-ci, doc-review"
+          "status": "parked at 5520d7b03"
         },
         {
           "short_id": "9ff05f12",
-          "status": "in_progress: all gates"
+          "status": "parked at b9f2f9a42"
         },
         {
           "short_id": "b5782224",
-          "status": "in_progress: rework for the folded finding, then gates"
+          "status": "parked at 75f70cab1"
         },
         {
           "short_id": "903dc74c",
-          "status": "in_progress: after 697b9178"
+          "status": "parked at 22f57141d (unblocked)"
         },
         {
           "short_id": "18276ff1",
-          "status": "in_progress: design approved; implement after the window"
+          "status": "parked at 90ed7a351: case-7 SIGINT fix, REQ-06, final gates, steward approval"
         },
         {
           "short_id": "d8aee1f4",
-          "status": "pending"
+          "status": "done (848bf4e95)"
+        },
+        {
+          "short_id": "959ab809",
+          "status": "REQ-01 landed (6e2d5ec59); REQ-02/03 open"
+        },
+        {
+          "short_id": "4f395137",
+          "status": "parked at ac0859cb9: cargo-ci passed; code-review rerun, land"
+        },
+        {
+          "short_id": "1452ba69",
+          "status": "pending: after 18276ff1"
         }
       ]
     }
@@ -1637,7 +1649,10 @@
     "6eb12747",
     "85e7e4c0",
     "18276ff1",
-    "d8aee1f4"
+    "d8aee1f4",
+    "959ab809",
+    "4f395137",
+    "1452ba69"
   ],
   "escalations": [
     {
@@ -1671,6 +1686,18 @@
     {
       "topic": "33057520 changed snr_checkpoint.rs and executor/drain.rs, listed by source digest in 3be770d5 receipts",
       "decision": "open: revalidate or not"
+    },
+    {
+      "date": "2026-11-15",
+      "lead": "gf2-24",
+      "items": [
+        "18276ff1 REQ-08 width A",
+        "REQ-05 reading",
+        "REQ-09 error verdict",
+        "18276ff1 REQ-06 attempt 1 failure (a)",
+        "18276ff1 park and resumption",
+        "959ab809 past rework limit (option 1)"
+      ]
     }
   ],
   "rework_counts": {
@@ -1690,7 +1717,9 @@
     "f21b25ac": 0,
     "1b7228b9": 1,
     "5c1c87b7": 1,
-    "c34e8203": 2
+    "c34e8203": 2,
+    "18276ff1": "2 reworks + 2 steward-authorised bounded fixes",
+    "959ab809": "2 reworks + 1 steward-authorised final fix"
   },
   "surfaced_pitfalls": [
     {
@@ -1757,7 +1786,8 @@
     "Finished branches are merged together and cargo-ci runs on the combined tree; code and doc review gates run per issue in parallel.",
     "Gate order: cargo-ci first, then code-review and doc-review; reviewers fail an issue whose cargo-ci is pending.",
     "Worktrees are reclaimed as soon as their branch merges, with target/ deleted first; the cache pool was deleted on the invoker's instruction and must stay deleted or be rebuilt from a clean build.",
-    "A disk watchdog (free < 30 GB or /tmp inodes > 80%) ran as a background loop in session 1; restart one each session."
+    "A disk watchdog (free < 30 GB or /tmp inodes > 80%) ran as a background loop in session 1; restart one each session.",
+    "2026-11-15 23:00: wound down for the tracker cutover (owner); handoff-7.md"
   ],
   "batches": [
     {

@@ -1,2 +1,0 @@
-# JIT merge drivers
-.jit/events.jsonl merge=union

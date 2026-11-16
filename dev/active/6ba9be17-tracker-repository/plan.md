@@ -20,7 +20,7 @@ branch content.
 | REQ-06 | Gate checkers and repository scripts read the data root, isolate their scratch render from an inherited environment and write logs under `target/`; skill scripts, outside the repository, run against the primary checkout | D-11, F-09, F-14, F-15, F-23, F-25 |
 | REQ-07 | A snapshot command commits under jit's write lock | `tracker-snapshot-discipline`, F-10, D-12 |
 | REQ-08 | A mount command clones the tracker into place and validates it; the cutover checks a fresh clone with and without it | D-09, D-13 |
-| REQ-09 | A tool and a runbook, rehearsed with rollback and with the history rewrite on a scratch clone | `cutover-sequence`, `rewrite-tracker-handoff` |
+| REQ-09 | A tool and a runbook, rehearsed with rollback on a scratch clone | `cutover-sequence`, `rewrite-tracker-handoff` |
 | REQ-10 | The cutover commit carries the layout statements and the lower tree limit | D-08 |
 
 ## Shared architectural contracts
@@ -107,11 +107,14 @@ GitHub runners have no store and check everything else.
 
 ### `cutover-sequence` [plan-fixed] — order of the cutover
 
-1. Quiesce, inside the quiet window of the history rewrite: no tracker writer,
-   no pending redo record, every lease released, each live branch merged or
-   its tracker changes merged into `main`, gate-run holders listed.
-2. Back up the code repository as a bundle and the store of every checkout as
-   an archive.
+1. Quiesce, in a quiet window of its own: no tracker writer,
+   no pending redo record, every lease released, each surviving branch's
+   branch-only tracker edits ported into `main`'s store by tracker commits
+   or recorded as abandoned, gate-run holders listed. Before the window, each branch of a
+   done issue whose content is on `main` is abandoned on the owner's reviewed
+   list: its ref moves to `refs/archive/<name>`.
+2. Save the ref listing (`git for-each-ref`) and archive the store of every
+   linked worktree.
 3. Extract the tracker paths with their history into a new repository; require
    equal tree identifiers.
 4. Mount: commit the code-side change, replace `.jit/` of the primary
@@ -123,29 +126,34 @@ GitHub runners have no store and check everything else.
 6. Verify: repository validation, issue count, a gate from a linked worktree
    created at the cutover commit, two agent identities, both checkers with
    and without the store, a fresh clone. Then snapshot.
-7. Clean each surviving branch and worktree: merge `main` with tracker
-   conflicts resolved by deletion, remove every tracked path still under
-   `.jit/` and commit, so `git ls-files .jit` is empty on `main` and on each
-   live branch; delete the local store once its harvest is verified. Step 1
-   merged or abandoned any branch-only tracker content first.
-8. Roll back on a failed step 6: move the nested repository aside, revert the
-   cutover commit, copy the store's files over the restored paths. After
-   step 7 a rollback also restores the worktree stores from their archives.
-9. Hand over to the history rewrite at its backup step.
+7. Clean each surviving branch and worktree with one commit whose tree is
+   the branch tip's tree without `.jit`, merging nothing, so the clean cannot
+   conflict, the code tree is unchanged and `git ls-files .jit` is empty on
+   `main` and on each live branch; the branch merges `main` when it resumes.
+   Delete the local store once its harvest is verified. Step 1 ported or
+   abandoned any branch-only tracker content first.
+8. Roll back on a failed step 6 or 7 through git: refs back to the step-2
+   listing with `git update-ref`, `main` back to its pre-cutover commit, the
+   mounted clone removed and the tracked `.jit` checked out; the cutover is
+   retried in a later window. The tool is the forward path only: a step that
+   meets an unexpected state stops with a message and changes nothing, and
+   no step writes, resets or removes a working-tree file outside `.jit/`
+   (owner order 2026-11-16).
+9. Snapshot and release the window; the history rewrite later starts from
+   this state.
 
 ### `rewrite-tracker-handoff` [plan-fixed] — the history rewrite after the cutover
 
-The history rewrite of `@/issue/45ecf975` runs in the same quiet window,
-after the cutover's verification. Its path filter drops `.jit` and every path
+The history rewrite of `@/issue/45ecf975` runs later, in a quiet window of its
+own, against the separated tracker. Its path filter drops `.jit` and every path
 under it from every commit. Its pin mapper reads issue records through the
 data root and runs against the tracker mounted in the rewritten checkout; the
 remapped pins are a tracker commit. Its rehearsal and validation step mount
 the tracker before repository validation. Its backup bundles the tracker
 repository, and its reseating keeps the primary checkout's tracker repository
-with the remapped pins. The cutover rehearsal runs the rewrite rehearsal on
-its result, so one combined rehearsal passes before the window. Task
-`rewrite-runbook-tracker` carries the rewrite side; the lead of the rewrite's
-stream implements it and keeps the runbook (F-20, F-26).
+with the remapped pins. The rewrite rehearsal runs on a scratch clone of a
+repository after a rehearsed cutover. Task `rewrite-runbook-tracker` carries
+the rewrite side and keeps the runbook (F-20, F-26).
 
 ## Generated decomposition overview
 
@@ -159,8 +167,8 @@ stream implements it and keeps the runbook (F-20, F-26).
 | reference-checker-tracker-references | Check tracker references against a mounted store | task | The reference checker passes without the tracker and checks tracker references and branch-only document links when it is mounted | tracker-reference-resolution, tracker-root-resolution | REQ-05, REQ-06, D-03, F-11, F-12, F-17, F-18, F-22, F-27 | touches 1 | — | — |
 | tracker-lifecycle-commands | Mount and snapshot the tracker repository with one command each | task | A fresh clone mounts the tracker with one command and the store is snapshotted with another | tracker-root-resolution, tracker-snapshot-discipline | REQ-07, REQ-08, D-06, D-09, F-09, F-10 | creates 2, touches 3 | — | tracker-entry-point |
 | cutover-tool | Build the cutover tool that moves the tracker out of the code repository | task | One tool carries the tracker and each worktree's tracker state through the cutover and back | cutover-sequence, tracker-root-resolution | REQ-02, REQ-09, D-01, D-07, D-08, F-01, F-06, F-07, F-09, F-19 | creates 1 | — | tracker-lifecycle-commands |
-| rewrite-runbook-tracker | Carry the separate tracker through the history rewrite | task | The history rewrite drops the tracker paths and keeps the separate tracker valid through reseating | rewrite-tracker-handoff, tracker-root-resolution | REQ-09, D-10, F-20, F-26 | touches 3 | — | tracker-lifecycle-commands |
-| cutover-rehearsal | Write the cutover runbook and rehearse it with the history rewrite | task | A runbook rehearsed end to end with the history rewrite carries the tracker through the cutover and back | cutover-sequence, rewrite-tracker-handoff, tracker-root-resolution, tracker-reference-resolution | REQ-09, D-01, D-07, D-10, F-05, F-07, F-20, F-27 | creates 1 | — | landing-check, reference-checker-tracker-references, cutover-tool, rewrite-runbook-tracker |
+| rewrite-runbook-tracker | Carry the separate tracker through the history rewrite | task | The history rewrite drops the tracker paths and keeps the separate tracker valid through reseating | rewrite-tracker-handoff, tracker-root-resolution | REQ-09, D-10, F-20, F-26 | touches 3 | — | cutover-tool |
+| cutover-rehearsal | Write the cutover runbook and rehearse it | task | A runbook rehearsed end to end carries the tracker through the cutover and back | cutover-sequence, rewrite-tracker-handoff, tracker-root-resolution, tracker-reference-resolution | REQ-09, D-01, D-07, D-10, F-05, F-07, F-20, F-27 | creates 1 | — | landing-check, reference-checker-tracker-references, cutover-tool |
 | cutover-execution | Execute the tracker cutover | task | The live repository runs on the separate tracker with no tracked or stale store left | cutover-sequence, rewrite-tracker-handoff, landing-link, tracker-snapshot-discipline, tracker-reference-resolution | REQ-01, REQ-02, REQ-03, REQ-07, REQ-08, REQ-09, REQ-10, D-01, D-02, D-03, D-05, D-06, D-08, D-09, D-10, F-01, F-16, F-19, F-20, D-13, D-14 | touches 10 | — | cutover-rehearsal, landed-gate |
 
 ```mermaid
@@ -173,18 +181,17 @@ flowchart LR
     N5["tracker-lifecycle-commands: Mount and snapshot the tracker repository with one command each"]
     N6["cutover-tool: Build the cutover tool that moves the tracker out of the code repository"]
     N7["rewrite-runbook-tracker: Carry the separate tracker through the history rewrite"]
-    N8["cutover-rehearsal: Write the cutover runbook and rehearse it with the history rewrite"]
+    N8["cutover-rehearsal: Write the cutover runbook and rehearse it"]
     N9["cutover-execution: Execute the tracker cutover"]
     N0 --> N1
     N1 --> N2
     N2 --> N3
     N1 --> N5
     N5 --> N6
-    N5 --> N7
+    N6 --> N7
     N2 --> N8
     N4 --> N8
     N6 --> N8
-    N7 --> N8
     N8 --> N9
     N3 --> N9
 ```
@@ -203,13 +210,13 @@ flowchart LR
 | D-07 Gate runs | One shared, uncommitted `gate-runs/` directory replaces the copying between worktrees. The records hold 46 MB of checker output on this host and are execution records under `@/inv/committed-evidence-budget`; the cutover harvests each worktree's records into the store. Kani logs move to `target/`. |
 | D-08 Budgets | The code repository forbids tracked paths under `.jit/`, drops the tracker exceptions the mounted check does not read and lowers the tree limit to the measured size. The tracker repository has no size budget: it is the record. Its event log grows without bound: the jit project does not plan request U-5. |
 | D-09 Bootstrap | The mount command takes the tracker repository's path or URL as its argument; a fresh clone on this host names the path. Without the tracker a clone builds, tests and passes CI; only jit is unavailable. |
-| D-10 Timing | The owner decided on 2026-11-14: the cutover runs inside the quiet window of the history rewrite, before the rewrite's extraction step, so the rewrite drops the tracker paths from history (`rewrite-tracker-handoff`). Rejected: before the window, which settles every branch twice; after the rewrite, which keeps the tracker paths in history until a second rewrite. External edge for breakdown: `@/issue/45ecf975`, which runs the rewrite, depends on `cutover-execution`. |
+| D-10 Timing | The owner decided on 2026-11-15, superseding the decision of 2026-11-14: the cutover runs alone in a quiet window of its own, before the history rewrite, and cleans every parked branch. The cleaning rule is charter D-12 (owner, 2026-11-15, superseding the merge of `main`): a branch of a done issue whose content is on `main` is abandoned to `refs/archive/<name>` before the window; every surviving branch, those without an issue included, gets one commit that removes its tracked `.jit/` paths and merges `main` when it resumes. A removal-only branch checked out in the primary checkout shows the mounted tracker as untracked until it merges `main`. The rewrite runs later against the separated tracker and drops the tracker paths from history (`rewrite-tracker-handoff`). Accepted cost: branches settle twice, at the cutover and at the rewrite. Rejected: after the rewrite, which keeps the tracker paths in history until a second rewrite. External edge for breakdown: `@/issue/45ecf975`, which runs the rewrite, depends on `cutover-execution`. |
 | D-11 Script scope | The owner narrowed epic REQ-06 on 2026-11-14 to the scripts under `scripts/`, `contrib/gates/` and `dev/scripts/`. The jit skills and their scripts live in the user-level skill directory, outside the repository; they work through the `.jit/` mount of the checkout they run in, which after the cutover is the primary checkout only. No manifest task changes them. |
 | D-12 Local tracker | The owner decided on 2026-11-14 that the tracker repository is local. Pushing is an owner action outside the plan, and no criterion orders it. |
 | D-13 Branch documents | The owner decided on 2026-11-14: a document that exists only on a branch is linked pinned to a branch commit and re-linked unpinned when it lands. jit resolves the pin from the git objects every checkout shares, so validation passes in the primary checkout and in a clone of the host's repository; an unpinned branch-only link fails validation in the primary checkout at once. Rejected: linking documents only from `main`, which stops planning on a branch from linking its artifacts; amending REQ-08. |
 | D-14 Landed gate | The owner decided on 2026-11-14: a required automated `landed` gate on code-producing issues, evaluated after the merged-tree gate and skipped by the landing check, judges the executed-command gates and holds done and the promotion of dependents until the merge; a `code-task` gate preset bundles it. The repository held no gate preset. Rejected: a dispatch query that waits for each dependency's landing, which every dispatch path would have to use; recording the last gate after the merge, which nothing enforces. The gate is permanent: the jit project declines U-9 and documents this landing-gate pattern. |
 | RISK-01 Shared identity | Checkouts sharing the store share one worktree identity (F-07); a lease is attributed by agent identity alone. The entry point derives a distinct identity per checkout; the entry point stays until jit v1.1 ships U-4. |
-| RISK-02 Unverified jit behaviour | F-04, F-05, F-07, F-27 and the resolution of the worktree root for a nested repository rest on documentation, source and one experiment. The rehearsal re-checks them and records any contradiction before the runbook changes. |
+| RISK-02 Unverified jit behaviour | F-04, F-05, F-07, F-27 and the resolution of the worktree root for a nested repository rest on documentation, source and one experiment. The rehearsal re-checks them and records any contradiction before the runbook changes. The forward rehearsal of 2026-11-16 falsified F-05: plain jit in a linked worktree resolves the primary checkout's store through the git common directory; linked worktrees use the entry point (recorded in `@/issue/6889e6e6`). |
 | RISK-03 Skill scripts | The jit skills live in the user-level skill directory and name jit without the entry point (F-21, F-25, F-30). The standards scanner and fixer of the project-lead skill take the project root as their argument, require `.jit` under it, read the configuration and the documents from it and run jit there. Run from a linked worktree after the cutover they exit 2 naming the missing `.jit`; given the primary checkout as root, from any directory, they sweep the primary checkout's documents and the shared store. The worker dispatch script resolves the store through jit, so it works through the entry point; the manifest helper of the planning-lead skill takes the configuration path under the data root through its `--config` option. The landing script of the execution-lead skill commits `.jit` in the code repository and refuses a set `JIT_DATA_DIR`, so it stops working at the cutover; leads land with the landing check, the merge and the snapshot command instead. `AGENTS.md`, which every agent loads, states this. The rule stays until jit v1.1 ships U-7 and the skill fixes. |
 | RISK-04 Concurrent store | All sessions now write one store. jit serializes writers with its store lock; a tracker change is visible to every lead at once, without review by merge. |
 | RISK-05 Document links | jit resolves an unpinned document link in the invoking checkout and a pinned one at its commit in the code repository's objects (F-27). A clone holds a pinned commit when it is cloned from the host's repository, which holds every branch. The rehearsal checks both cases in the primary checkout; the pinning rule stays until jit v1.1 ships U-8. |
