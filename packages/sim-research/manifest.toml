@@ -154,7 +154,6 @@ description = "Independently review the linked plan before implementation work f
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -178,7 +177,6 @@ description = "Independently review decomposition quality, issue content, and de
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -202,7 +200,6 @@ description = "Review issue-attributable implementation changes against reposito
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -226,7 +223,6 @@ description = "Validate the container named by the breakdown issue's brackets la
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -246,7 +242,6 @@ description = "Run declarative validation for the gated issue."
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -265,7 +260,6 @@ description = "Run structural and declarative validation for the whole repositor
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -284,7 +278,6 @@ description = "Automatically review issue-attributable documentation impact acro
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -308,7 +301,6 @@ description = "Independently review a configured-hierarchy container for hard-cr
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -332,7 +324,6 @@ description = "Run the full release-mode Rust workspace CI pipeline: build, test
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -397,7 +388,6 @@ description = "Run all bounded model-checking harnesses and retain the bounded s
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -420,7 +410,6 @@ description = "Require the configured Clippy targets to pass with warnings denie
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -443,7 +432,6 @@ description = "Require geomean speedup against the pinned baseline of at least 1
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -466,7 +454,6 @@ description = "Require cargo fmt to report no formatting drift."
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -489,7 +476,6 @@ description = "Require lake build to succeed with no sorry warnings in hand-writ
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -512,7 +498,6 @@ description = "Require a committed benchmark receipt showing that measured paral
 stage = "postcheck"
 mode = "manual"
 priority = 100
-auto = false
 reserved = {}
 
 [[contribution]]
@@ -528,7 +513,6 @@ description = "Remind implementers to establish failing behavioral evidence befo
 stage = "precheck"
 mode = "manual"
 priority = 100
-auto = false
 reserved = {}
 
 [[contribution]]
@@ -544,7 +528,6 @@ description = "Run the legacy cargo test gate retained for issues that explicitl
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
@@ -567,7 +550,6 @@ description = "Regenerate LLBC and Lean from current Rust with Charon and Aeneas
 stage = "postcheck"
 mode = "auto"
 priority = 100
-auto = true
 reserved = {}
 
 [contribution.value.checker]
