@@ -37,7 +37,9 @@ The workflow rules are in the JIT workflow section of
 - A lead runs `scripts/tracker-snapshot` after each landing, the steward at the
   end of a session. With `--push` it also pushes the store to its home;
   without it, it commits locally and `git -C .jit push origin main` sends the
-  commits.
+  commits. Each snapshot commits the pending changes of every session sharing
+  the store, and its `Jit-Agent` trailer names the agent that took it, when
+  `JIT_AGENT_ID` is set.
 
 ## Epic documents: `active/`
 

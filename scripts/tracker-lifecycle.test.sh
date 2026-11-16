@@ -28,7 +28,7 @@ cat >"$TMP/bin/jit" <<'SH'
 set -eu
 [ "$JIT_DATA_DIR" = "$TEST_PRIMARY/.jit" ] || exit 90
 [ "$JIT_WORKTREE_ROOT" = "$TEST_CODE" ] || exit 91
-[ "$JIT_AGENT_ID" = agent:outer ] || exit 92
+[ "${JIT_AGENT_ID-}" = "${TEST_AGENT-agent:outer}" ] || exit 92
 case $* in
   validate)
     [ "$(pwd -P)" = "$TEST_CODE" ] || exit 93
@@ -89,6 +89,7 @@ make_code() {
 }
 bootstrap() { (cd "$TEST_CODE/sub/dir" && "$TEST_CODE/scripts/tracker-bootstrap" "$@"); }
 snapshot() { (cd "$TEST_CODE/sub/dir" && TEST_CHECK_LOCK=1 "$TEST_CODE/scripts/tracker-snapshot" "$@"); }
+trailer() { git -C "$CODE/.jit" log -1 --format='%(trailers:key=Jit-Agent,valueonly)' | sed '/^$/d'; }
 change() { printf '%s\n' "$1" >"$CODE/.jit/record"; }
 
 TRACKER="$BASE/tracker"
@@ -244,8 +245,25 @@ head=$(git -C "$CODE/.jit" rev-parse HEAD)
 snapshot >"$TMP/findings" 2>&1 || fail 'snapshot with only ignored files failed'
 expect 'ignored-only snapshot HEAD' "$(git -C "$CODE/.jit" rev-parse HEAD)" "$head"
 
-# --- Push only on request -----------------------------------------------------
+# --- The trailer names the agent that took the snapshot ---------------------
 TEST_CODE=$CODE
+expect 'caller agent trailer' "$(git -C "$CODE/.jit" log -1 --format='%(trailers:key=Jit-Agent,valueonly)' HEAD | sed '/^$/d')" agent:outer
+# A linked worktree's identity comes from scripts/tracker-env.
+TEST_CODE=$LINKED
+change linked
+(unset JIT_AGENT_ID; TEST_AGENT=agent:linked snapshot) >"$TMP/findings" 2>&1 ||
+  fail "linked identity snapshot: $(cat "$TMP/findings")"
+expect 'linked agent trailer' "$(trailer)" agent:linked
+TEST_CODE=$CODE
+# Without JIT_AGENT_ID the commit carries no trailer.
+change unknown
+(unset JIT_AGENT_ID; TEST_AGENT= snapshot) >"$TMP/findings" 2>&1 ||
+  fail "unknown identity snapshot: $(cat "$TMP/findings")"
+expect 'no agent, no trailer' "$(git -C "$CODE/.jit" log -1 --format=%b)" ''
+printf '%s\n' "$(git -C "$CODE/.jit" log -1 --format=%s)" | grep -Eq "^snapshot [0-9TZ:-]+ main $main$" ||
+  fail "subject with trailer: $(git -C "$CODE/.jit" log -1 --format=%s)"
+
+# --- Push only on request -----------------------------------------------------
 rc=0
 snapshot --pull >"$TMP/findings" 2>&1 || rc=$?
 [ "$rc" -ne 0 ] || fail 'unknown argument accepted'

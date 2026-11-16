@@ -3,7 +3,11 @@
 # Usage: tracker-snapshot [--push]; exits 0 on a commit or a clean store,
 # nonzero on failure.
 #
-# The commit's subject is `snapshot <UTC time> main <commit>`.
+# The commit covers the pending changes of every session that shares the
+# store. Its subject is `snapshot <UTC time> main <commit>`, and its trailer
+# `Jit-Agent: <id>` names the agent that took the snapshot, JIT_AGENT_ID as
+# scripts/tracker-env leaves it. Without one the commit has no trailer: jit
+# prints no identity it resolves from its own configuration.
 #
 # --push, after the commit or on a clean store, pushes the store's main to its
 # origin remote, so a snapshot left unpushed earlier also reaches the home. A
@@ -40,7 +44,11 @@ exec "$scripts/tracker-env" jit worktree exec -- sh -eu -c '
     main=$(git -C "$JIT_WORKTREE_ROOT" rev-parse --verify "refs/heads/main^{commit}")
     main=$(printf "%.12s" "$main")
     utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-    git -C "$data" commit -m "snapshot $utc main $main"
+    if [ -n "${JIT_AGENT_ID-}" ]; then
+      git -C "$data" commit -m "snapshot $utc main $main" -m "Jit-Agent: $JIT_AGENT_ID"
+    else
+      git -C "$data" commit -m "snapshot $utc main $main"
+    fi
   fi
   [ "$TRACKER_SNAPSHOT_PUSH" = 1 ] || exit 0
   if ! git -C "$data" push -q origin main; then
