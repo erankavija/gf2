@@ -13,6 +13,7 @@ of rewrite_paths.py removes, or a pruned commit without a kept ancestor fails
 naming its issue record.
 """
 import glob
+import gzip
 import json
 import os
 import subprocess
@@ -35,7 +36,13 @@ exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        "rewrite_paths.py")).read(), rules)
 
 
-def kept_ancestor(commit, original):
+def load_map(path):
+    opener = gzip.open if str(path).endswith(".gz") else open
+    with opener(path, "rt") as source:
+        return dict(line.split() for line in source if not line.startswith("old"))
+
+
+def kept_ancestor(commit, original, mapping):
     while True:
         parent = subprocess.run(
             ["git", "--git-dir", original, "rev-parse", commit + "^"],
@@ -44,43 +51,46 @@ def kept_ancestor(commit, original):
         if parent.returncode:
             return None
         commit = parent.stdout.strip()
-        full = next((k for k in mapping if k.startswith(commit)), None)
-        if full is not None and set(mapping[full]) != {"0"}:
-            return mapping[full]
+        new = mapping.get(commit)
+        if new is not None and set(new) != {"0"}:
+            return new
 
 
-original = sys.argv[2]
-mapping = dict(
-    line.split() for line in open(sys.argv[1]) if not line.startswith("old")
-)
-mapped = through = 0
-for path in sorted(glob.glob(os.path.join(data_root(), "issues", "*.json"))):
-    text = open(path).read()
-    issue = json.loads(text)
-    changed = False
-    for document in issue.get("documents", []):
-        commit = document.get("commit")
-        if not commit:
-            continue
-        full = next((key for key in mapping if key.startswith(commit)), None)
-        if full is None:
-            raise SystemExit(f"{path}: commit {commit} absent from the commit map")
-        where = document.get("path", "")
-        if rules["drop"](where.encode()):
-            raise SystemExit(f"{path}: pinned path {where} is dropped")
-        new = mapping[full]
-        if set(new) == {"0"}:
-            new = kept_ancestor(full, original)
-            if new is None:
-                raise SystemExit(f"{path}: pruned commit {commit} has no kept ancestor")
-            through += 1
-        document["commit"] = new
-        changed = True
-        mapped += 1
-    if changed:
-        ending = "\n" if text.endswith("\n") else ""
-        open(path, "w").write(
-            json.dumps(issue, indent=2, ensure_ascii=False) + ending
-        )
-print(f"mapped {mapped} pinned commits: {mapped - through} directly, "
-      f"{through} through a pruned commit")
+def main():
+    original = sys.argv[2]
+    mapping = load_map(sys.argv[1])
+    mapped = through = 0
+    for path in sorted(glob.glob(os.path.join(data_root(), "issues", "*.json"))):
+        text = open(path).read()
+        issue = json.loads(text)
+        changed = False
+        for document in issue.get("documents", []):
+            commit = document.get("commit")
+            if not commit:
+                continue
+            full = next((key for key in mapping if key.startswith(commit)), None)
+            if full is None:
+                raise SystemExit(f"{path}: commit {commit} absent from the commit map")
+            where = document.get("path", "")
+            if rules["drop"](where.encode()):
+                raise SystemExit(f"{path}: pinned path {where} is dropped")
+            new = mapping[full]
+            if set(new) == {"0"}:
+                new = kept_ancestor(full, original, mapping)
+                if new is None:
+                    raise SystemExit(f"{path}: pruned commit {commit} has no kept ancestor")
+                through += 1
+            document["commit"] = new
+            changed = True
+            mapped += 1
+        if changed:
+            ending = "\n" if text.endswith("\n") else ""
+            open(path, "w").write(
+                json.dumps(issue, indent=2, ensure_ascii=False) + ending
+            )
+    print(f"mapped {mapped} pinned commits: {mapped - through} directly, "
+          f"{through} through a pruned commit")
+
+
+if __name__ == "__main__":
+    main()

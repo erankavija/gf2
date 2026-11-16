@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Self-test of rewrite_paths.py and map_pins.py. Run: python3 -B <this file>."""
+"""Self-test of the history rewrite tools. Run: python3 -B <this file>."""
+import csv
+import gzip
+import hashlib
 import json
 import os
 import re
@@ -97,4 +100,105 @@ with tempfile.TemporaryDirectory() as t:
     assert r.returncode == 1 and rec in r.stderr and "absent" in r.stderr, r
     r, rec = run_map(s, t, [A[:12]], [(A, z)])
     assert r.returncode == 1 and rec in r.stderr and "no kept ancestor" in r.stderr, r
+with tempfile.TemporaryDirectory() as t:
+    git(t, "init", "-q")
+    A = commit(t, "doc.md")
+    B = commit(t, ".jit/x")
+    C = commit(t, "other.md")
+    A2, C2 = "1" * 40, "2" * 40
+    cmap = os.path.join(t, "commit-map")
+    open(cmap, "w").write(f"old new\n{A} {A2}\n{B} {z}\n{C} {C2}\n")
+    original = os.path.join(t, ".git")
+    checkout = os.path.join(t, "checkout")
+    git(t, "clone", "-q", t, checkout)
+    text = (f"{A}\n{A[:12]}\n{A[:7]}\n{B}\n"
+            f"jit:{A[:8]} @/issue/{A[:8]} issue/{A[:8]}\n"
+            f"{C[:8]} {C[:7]}\n" + "f" * 64 + "\n" + "e" * 40 + "\n")
+    target = os.path.join(checkout, "doc.md")
+    open(target, "w").write(text)
+    store = os.path.join(t, "store")
+    os.makedirs(os.path.join(store, "issues"))
+    record = os.path.join(store, "issues", C[:8] + "-issue.json")
+    issue = {"description": "référence\n" + A,
+             "documents": [{"commit": A, "path": "doc.md"}]}
+    open(record, "w").write(json.dumps(issue) + "\n")
+    events = os.path.join(store, "events.jsonl")
+    open(events, "w").write(A + "\n")
+    binary = os.path.join(checkout, "binary")
+    large = os.path.join(checkout, "large")
+    open(binary, "wb").write(b"\0" + A.encode())
+    open(large, "w").write(A + " " * (2 * 1024 * 1024))
+    git(checkout, "add", "binary", "large")
+    report = os.path.join(t, "inventory.tsv")
+
+    def old_ids(mode):
+        return subprocess.run(
+            [sys.executable, "-B", os.path.join(here, "old_ids.py"), mode,
+             cmap, original, checkout, store, "--out", report],
+            capture_output=True, text=True,
+        )
+
+    r = old_ids("inventory")
+    assert r.returncode == 0, r
+    rows = list(csv.DictReader(open(report), delimiter="\t"))
+    assert len(rows) == 5, rows
+    assert {kind: sum(row["class"] == kind for row in rows)
+            for kind in ("mapped", "pruned", "short")} == {
+                "mapped": 3, "pruned": 1, "short": 1}, rows
+    assert all(row["suggestion"] == A2[:len(row["token"])] for row in rows), rows
+    assert [(row["line"], row["token"]) for row in rows if row["file"] == target] == [
+        ("1", A), ("2", A[:12]), ("3", A[:7]), ("4", B)], rows
+    r = old_ids("check")
+    assert r.returncode == 1 and "mapped=3" in r.stdout, r
+    r = old_ids("apply")
+    assert r.returncode == 0 and "rewrote 3" in r.stdout, r
+    assert open(target).read() == text.replace(A + "\n", A2 + "\n").replace(
+        A[:12] + "\n", A2[:12] + "\n")
+    issue["description"] = "référence\n" + A2
+    assert open(record).read() == json.dumps(issue, indent=2, ensure_ascii=False) + "\n"
+    assert open(events).read() == A + "\n"
+    assert open(binary, "rb").read() == b"\0" + A.encode()
+    assert open(large).read().startswith(A)
+    r = old_ids("check")
+    assert r.returncode == 0 and "mapped=0" in r.stdout, r
+
+    # Exercise ambiguity with two real commit objects sharing seven hex digits.
+    tree = git(t, "rev-parse", "HEAD^{tree}")
+    header = f"tree {tree}\nauthor t <t@t> 0 +0000\ncommitter t <t@t> 0 +0000\n\n"
+    seen = {}
+    nonce = 0
+    while True:
+        payload = (header + str(nonce)).encode()
+        digest = hashlib.sha1(b"commit " + str(len(payload)).encode() + b"\0" + payload).hexdigest()
+        prefix = digest[:7]
+        if prefix in seen and prefix != C[:7]:
+            for number in (seen[prefix], nonce):
+                subprocess.run(["git", "-C", t, "hash-object", "-w", "-t", "commit", "--stdin"],
+                               input=(header + str(number)).encode(), check=True, capture_output=True)
+            break
+        seen[prefix] = nonce
+        nonce += 1
+    open(target, "w").write(prefix + "\n" + C + "\n")
+    with gzip.open(cmap + ".gz", "wt") as f:
+        f.write(f"old new\n{A} {A2}\n{B} {z}\n")
+    cmap += ".gz"
+    issue = {"description": "escaped: " + A, "nested": [A[:13]],
+             "documents": [{"commit": A, "caption": A[:12]}], A: "a key"}
+    open(record, "w").write(json.dumps(issue))
+    r = old_ids("inventory")
+    assert r.returncode == 0, r
+    rows = list(csv.DictReader(open(report), delimiter="\t"))
+    assert {kind: sum(row["class"] == kind for row in rows)
+            for kind in ("mapped", "ambiguous", "unmapped")} == {
+                "mapped": 3, "ambiguous": 1, "unmapped": 1}, rows
+    assert all(row["line"] == "1" for row in rows if row["file"] == record), rows
+    r = old_ids("apply")
+    assert r.returncode == 0 and "rewrote 3" in r.stdout, r
+    issue["description"] = "escaped: " + A2
+    issue["nested"] = [A2[:13]]
+    issue["documents"][0]["caption"] = A2[:12]
+    assert open(record).read() == json.dumps(issue, indent=2, ensure_ascii=False)
+    assert open(target).read() == prefix + "\n" + C + "\n"
+    r = old_ids("check")
+    assert r.returncode == 0 and "mapped=0" in r.stdout, r
 print("ok")

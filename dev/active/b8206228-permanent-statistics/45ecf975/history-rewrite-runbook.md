@@ -66,9 +66,10 @@ claims, leases, locks and the worktree identity under the code repository's
      maps to its nearest kept first-parent ancestor, found in the step-1
      backup mirror; the tool prints both counts.
    - `scripts/tracker-env jit validate` passes.
-   - In the code repository, add the gzipped map as
-     `dev/history-rewrite-commit-map.gz`, state in `AGENTS.md` that older
-     recorded commit IDs resolve through it, and commit those two paths only.
+   - Archive the map beside the step-1 bundle, outside both repositories:
+     `gzip -n -c <mirror>/filter-repo/commit-map > <backup>/commit-map.gz`, then
+     `digest=$(sha256sum <backup>/commit-map.gz | cut -d' ' -f1)` and
+     `mv <backup>/commit-map.gz <backup>/commit-map-$digest.gz`.
 7. Check on a quiet host in `<rw>` with the tracker of step 6 mounted:
    `scripts/tracker-env jit validate`, `./scripts/cargo-ci.sh`,
    `git for-each-ref | wc -l`, pack and tree sizes, and
@@ -98,7 +99,24 @@ claims, leases, locks and the worktree identity under the code repository's
       uncommitted tracked changes stops the reseat.
     - `jit claim list` and the worktree ID equal the recorded ones, and
       `jit validate` passes.
-11. Verify a fresh clone's size, then ask GitHub Support to purge unreachable
+11. Fix old commit IDs in the primary checkout and its tracker issue records.
+    Run [old_ids.py](old_ids.py) from the primary checkout, using the archived
+    map and original history (the commands below abbreviate its repository path
+    as `<tool>`):
+    - Inventory: `python3 -B <tool> inventory <backup>/commit-map-<digest>.gz <backup>/gf2.git . .jit --out <backup>/old-ids.tsv`.
+    - Apply the mechanical pass: `python3 -B <tool> apply <backup>/commit-map-<digest>.gz <backup>/gf2.git . .jit`.
+      It replaces mapped IDs of at least 12 hex characters at the same width;
+      document pins belong to step 6.
+    - Write the remainder: `python3 -B <tool> check <backup>/commit-map-<digest>.gz <backup>/gf2.git . .jit --out <backup>/old-ids-remainder.tsv`.
+      Hand that file to low-tier workers (Codex luna, Claude Haiku). Each worker
+      rewrites a reference to its new ID, using the suggested kept ancestor for
+      a pruned commit, or rewords it when the pruned commit was tracker-only.
+    - Rerun the check: it must report zero mapped old IDs. Review the workers'
+      edits and the remainder; commit the code changes with a subject of the
+      form `chore(jit:45ecf975): ...`, and snapshot the tracker changes with
+      `scripts/tracker-snapshot`. Code and tracker commit subjects, and the
+      tracker's `events.jsonl`, are history and stay as written.
+12. Verify a fresh clone's size, then ask GitHub Support to purge unreachable
     objects if old commits stay reachable by ID.
 
 ## Rehearsal
@@ -106,7 +124,9 @@ claims, leases, locks and the worktree identity under the code repository's
 A rehearsal runs steps 1 and 3 to 7 on a scratch mirror of the repository as
 it stands after the cutover, with a scratch tracker clone in place of the
 primary `.jit`, and step 10 on a scratch copy of a checkout holding a mounted
-tracker and a `.git/jit/`. It reports to the owner through the issue:
+tracker and a `.git/jit/`. It runs step 11's inventory, mechanical pass and
+check on those scratch copies, dispatching no workers. It reports to the owner
+through the issue:
 
 - pack size, refs rewritten, commits on `main` and the compressed map size;
 - `git -C mirror.git log --all --format= --name-only -- .jit | wc -l`, which is 0;
@@ -121,6 +141,9 @@ tracker and a `.git/jit/`. It reports to the owner through the issue:
 - the `jit validate` result in `<rw>` with the tracker mounted;
 - the rehearsed reseat: tracker head kept, `jit claim list` and worktree ID
   unchanged, `jit validate` passing;
+- old-ID inventory counts: total occurrences, mechanically mapped, pruned
+  targets, and remainder (short, pruned, ambiguous and unmapped); the check
+  after the mechanical pass finds no remaining one-to-one mapped old ID;
 - one line per parked branch: old head, new head, and whether
   `git diff --stat main...<branch>` before and after agree outside `.jit` and
   the stripped paths.
