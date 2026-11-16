@@ -2,8 +2,9 @@
 """Inventory, replace, or check old commit references after a history rewrite.
 
 Usage: old_ids.py inventory|apply|check <commit-map> <original-git-dir>
-       <checkout> [<data-root>] [--out <tsv>]
-The map may be plain text or gzip. Only mapped references of at least 12 hex
+       <checkout> [<data-root>] [--out <tsv>] [--exclude <glob>]...
+The map may be plain text or gzip. Each --exclude glob is matched with fnmatch
+against the checkout-relative path; matching files are neither read nor written. Only mapped references of at least 12 hex
 characters are replaced. Short, ambiguous, pruned and unmapped references stay
 for review. The TSV contains occurrences, with suggestions at the token's width.
 JSON line numbers locate the source string, including JSON-escaped newlines.
@@ -11,6 +12,7 @@ JSON line numbers locate the source string, including JSON-escaped newlines.
 import argparse
 from collections import Counter
 import csv
+import fnmatch
 import json
 from pathlib import Path
 import re
@@ -46,9 +48,13 @@ class Source:
             # followed by a colon; their contents are never reference prose.
             values = [m for m in JSON_STRING.finditer(self.text)
                       if not self.text[m.end():].lstrip().startswith(":")]
+            leaves = list(string_values(self.issue))
+            if len(leaves) != len(values):
+                raise SystemExit(f"{path}: {len(values)} lexical strings, "
+                                 f"{len(leaves)} decoded values")
             self.strings = [
                 (trail, value, self.text.count("\n", 0, match.start()) + 1)
-                for (trail, value), match in zip(string_values(self.issue), values)
+                for (trail, value), match in zip(leaves, values)
                 if not (len(trail) == 3 and trail[0] == "documents"
                         and isinstance(trail[1], int) and trail[2] == "commit")
             ]
@@ -69,8 +75,17 @@ class Source:
         self.path.write_bytes(text.encode("utf-8"))
 
 
-def sources(checkout, data_root):
-    issues = sorted((data_root / "issues").glob("*.json")) if data_root else []
+def excluded(path, checkout, globs):
+    try:
+        name = path.resolve().relative_to(checkout.resolve()).as_posix()
+    except ValueError:
+        name = path.as_posix()
+    return any(fnmatch.fnmatch(name, glob) for glob in globs)
+
+
+def sources(checkout, data_root, globs=()):
+    issues = sorted(p for p in (data_root / "issues").glob("*.json")
+                    if not excluded(p, checkout, globs)) if data_root else []
     issue_paths = {p.resolve() for p in issues}
     tracked = subprocess.run(
         ["git", "-C", str(checkout), "ls-files", "-z"],
@@ -80,7 +95,7 @@ def sources(checkout, data_root):
         if not name:
             continue
         path = checkout / name.decode("utf-8", errors="surrogateescape")
-        if (path.is_symlink() or not path.is_file() or path.resolve() in issue_paths
+        if (excluded(path, checkout, globs) or path.is_symlink() or not path.is_file() or path.resolve() in issue_paths
                 or path.stat().st_size > MAX_TEXT_BYTES):
             continue
         try:
@@ -144,11 +159,12 @@ def main():
     parser.add_argument("checkout", type=Path)
     parser.add_argument("data_root", nargs="?", type=Path)
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--exclude", action="append", default=[], metavar="GLOB")
     args = parser.parse_args()
     mapping = load_map(args.commit_map)
     issue_ids = {p.name[:8] for p in (args.data_root / "issues").glob("*.json")
                  if re.fullmatch(r"[0-9a-f]{8}", p.name[:8])} if args.data_root else set()
-    inputs = list(sources(args.checkout, args.data_root))
+    inputs = list(sources(args.checkout, args.data_root, args.exclude))
     tokens = {m.group() for source in inputs for _, text, _ in source.strings
               for m in candidates(text, issue_ids)}
     resolved = resolve(tokens, args.original_git_dir)

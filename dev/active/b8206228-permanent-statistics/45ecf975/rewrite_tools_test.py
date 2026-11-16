@@ -131,10 +131,10 @@ with tempfile.TemporaryDirectory() as t:
     git(checkout, "add", "binary", "large")
     report = os.path.join(t, "inventory.tsv")
 
-    def old_ids(mode):
+    def old_ids(mode, *extra):
         return subprocess.run(
             [sys.executable, "-B", os.path.join(here, "old_ids.py"), mode,
-             cmap, original, checkout, store, "--out", report],
+             cmap, original, checkout, store, "--out", report, *extra],
             capture_output=True, text=True,
         )
 
@@ -150,6 +150,9 @@ with tempfile.TemporaryDirectory() as t:
         ("1", A), ("2", A[:12]), ("3", A[:7]), ("4", B)], rows
     r = old_ids("check")
     assert r.returncode == 1 and "mapped=3" in r.stdout, r
+    r = old_ids("apply", "--exclude", "doc*", "--exclude", "*/issues/*.json")
+    assert r.returncode == 0 and "total=0" in r.stdout, r
+    assert open(target).read() == text and json.load(open(record)) == issue
     r = old_ids("apply")
     assert r.returncode == 0 and "rewrote 3" in r.stdout, r
     assert open(target).read() == text.replace(A + "\n", A2 + "\n").replace(

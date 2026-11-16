@@ -85,7 +85,8 @@ claims, leases, locks and the worktree identity under the code repository's
     - Fast-forward the tracker:
       `git -C .jit fetch <rw>/.jit && git -C .jit merge --ff-only FETCH_HEAD`.
       The primary tracker is the one writable store; a non-fast-forward means
-      a tracker write during the window and stops the step.
+      a tracker write during the window and stops the step. Then
+      `git -C .jit push origin main`.
     - Move `.git` aside, `git clone --bare <mirror> .git`, set
       `core.bare false`, run `git reset` to fill the index, and copy `jit/`
       from the moved-aside `.git` into the new `.git` before any jit command.
@@ -106,21 +107,31 @@ claims, leases, locks and the worktree identity under the code repository's
       ones, and `jit validate` passes.
 11. Fix old commit IDs in the primary checkout and its tracker issue records.
     Run [old_ids.py](old_ids.py) from the primary checkout, using the archived
-    map and original history (the commands below abbreviate its repository path
-    as `<tool>`):
-    - Inventory: `python3 -B <tool> inventory <backup>/commit-map-<digest>.gz <backup>/gf2.git . .jit --out <backup>/old-ids.tsv`.
-    - Apply the mechanical pass: `python3 -B <tool> apply <backup>/commit-map-<digest>.gz <backup>/gf2.git . .jit`.
+    map and original history. The commands below abbreviate its repository path
+    as `<tool>` and `<backup>/commit-map-<digest>.gz <backup>/gf2.git . .jit <ex>` as `<args>`, where
+    `<ex>` is
+    `--exclude '*tuning-profiles/*.json' --exclude 'crates/gf2-coding/tests/data/tuning_profile_encode_family.json' --exclude 'crates/gf2-core/tests/tuning_profile_committed.rs' --exclude 'dev/tools/tuning-profile-compose/tests/golden/*' --exclude 'experiments/permanent-statistics/config/campaign.json' --exclude 'dev/active/b8206228-permanent-statistics/45ecf975/*'`.
+    Excluded files keep their old IDs, because a digest or a rewrite tool's
+    input covers them: the profiles' `assembly.content_sha256` and the
+    `sha256` of records naming them, the test asserting a committed profile's
+    `source_revision`, the preregistration's digest of `campaign.json`, and
+    the original-ID keys of [reword_subjects.py](reword_subjects.py). The
+    archived map resolves them.
+    - Inventory: `python3 -B <tool> inventory <args> --out <backup>/old-ids.tsv`.
+    - Apply the mechanical pass: `python3 -B <tool> apply <args>`.
       It replaces mapped IDs of at least 12 hex characters at the same width;
       document pins belong to step 6.
-    - Write the remainder: `python3 -B <tool> check <backup>/commit-map-<digest>.gz <backup>/gf2.git . .jit --out <backup>/old-ids-remainder.tsv`.
+    - Write the remainder: `python3 -B <tool> check <args> --out <backup>/old-ids-remainder.tsv`.
       Hand that file to low-tier workers (Codex luna, Claude Haiku). Each worker
       rewrites a reference to its new ID, using the suggested kept ancestor for
       a pruned commit, or rewords it when the pruned commit was tracker-only.
     - Rerun the check: it must report zero mapped old IDs. Review the workers'
       edits and the remainder; commit the code changes with a subject of the
       form `chore(jit:45ecf975): ...`, and snapshot the tracker changes with
-      `scripts/tracker-snapshot`. Code and tracker commit subjects, and the
-      tracker's `events.jsonl`, are history and stay as written.
+      `scripts/tracker-snapshot`, then `git -C .jit push origin main`. Code
+      and tracker commit subjects, and the tracker's `events.jsonl`, are
+      history and stay as written.
+    - `scripts/tracker-env jit validate` and `./scripts/cargo-ci.sh` pass.
 12. Verify a fresh clone's size, then ask GitHub Support to purge unreachable
     objects if old commits stay reachable by ID.
 
@@ -130,7 +141,8 @@ A rehearsal runs steps 1 and 3 to 7 on a scratch mirror of the repository as
 it stands after the cutover, with a scratch tracker clone in place of the
 primary `.jit`, and step 10 on a scratch copy of a checkout holding a mounted
 tracker and a `.git/jit/`. It runs step 11's inventory, mechanical pass and
-check on those scratch copies, dispatching no workers. It reports to the owner
+check on those scratch copies, dispatching no workers and pushing nothing.
+It reports to the owner
 through the issue:
 
 - pack size, refs rewritten, commits on `main` and the compressed map size;

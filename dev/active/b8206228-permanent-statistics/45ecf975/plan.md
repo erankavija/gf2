@@ -54,9 +54,9 @@ Starts only when the window has ended and 55c3e433's pilots are collected and co
 3. Rehearse in a throwaway clone. Check `jit validate`, full `cargo-ci`, tree and pack sizes, and that all branches rewrote.
 4. **Stop and ask the owner to confirm before the force-push, showing the rehearsal's numbers.**
 5. Force-push all refs. Reseat the local checkout and the 17 worktrees by runbook, preserving untracked built arms in the pinned ones. Ask for GitHub cache cleanup if old objects stay reachable.
-6. Commit the old-to-new commit map, compressed, under the budget. Note in `AGENTS.md` that commit IDs recorded before the rewrite resolve through it, and record this as the single exception to immutable `main`.
+6. Archive the old-to-new commit map beside the backup bundle, outside both repositories, named by its digest (owner decision of 2026-11-16, `@/issue/2a4c2684`). After the reseat, the runbook's old-ID step rewrites recorded commit IDs in tracked text and tracker issue records; records a digest covers, such as the tuning profiles, keep their old IDs, which the archived map resolves.
 
-Recorded commit IDs in receipts and tracker text are not rewritten. `@/inv/campaign-evidence` already says they never decide acceptance. The rehearsal must surface any tool that still depends on them.
+`@/inv/campaign-evidence` already says recorded commit IDs never decide acceptance. The rehearsal must surface any tool that still depends on them.
 
 ## Phase C: separate experiments
 
