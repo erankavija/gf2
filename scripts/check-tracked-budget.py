@@ -307,14 +307,22 @@ def change_faults(old, new, config, label, cwd):
 
 
 def ratchet_faults(config, cwd, tree_bytes):
-    """Limits may only fall against HEAD; a tree limit change meets the headroom."""
+    """Limits may only fall against HEAD; a tree limit change meets the headroom.
+
+    Once HEAD declares `tree_headroom_bytes`, the headroom is fixed: a change
+    or a removal is refused, so the raise its first declaration permits
+    happens once.
+    """
     try:
         old_config = read_config("HEAD", cwd)
     except subprocess.CalledProcessError:
         return []
     faults = []
-    keys = ["max_file_bytes", "max_commit_added_bytes", "tree_headroom_bytes"]
+    keys = ["max_file_bytes", "max_commit_added_bytes"]
     headroom = config.get("tree_headroom_bytes")
+    if "tree_headroom_bytes" in old_config and headroom != old_config["tree_headroom_bytes"]:
+        faults.append(f"{CONFIG}: tree_headroom_bytes changes from HEAD's "
+                      f"{old_config['tree_headroom_bytes']}; the headroom is fixed")
     if headroom is None or "tree_headroom_bytes" in old_config:
         keys.append("max_tree_bytes")
     for key in keys:
@@ -615,6 +623,12 @@ def headroom_cases(repo, run, write, config):
     current = Path(repo, CONFIG).read_text()
     write(CONFIG, 0, current.replace(f"max_tree_bytes = {target}", f"max_tree_bytes = {target + 1}"))
     assert_faults(check_staged(repo), ["rises"], "a raise after the declaration")
+    run("reset", "-q", "--hard", "HEAD")
+    write(CONFIG, 0, current.replace("tree_headroom_bytes = 2400\n", ""))
+    assert_faults(check_staged(repo), ["the headroom is fixed"], "a removal of the headroom")
+    run("reset", "-q", "--hard", "HEAD")
+    write(CONFIG, 0, current.replace("tree_headroom_bytes = 2400", "tree_headroom_bytes = 2300"))
+    assert_faults(check_staged(repo), ["the headroom is fixed"], "a change of the headroom")
     run("reset", "-q", "--hard", "HEAD")
     write("big.lock", 1000)
     text = current
