@@ -1,9 +1,10 @@
 # Tracker cutover runbook
 
-Moves `.jit/` of the code repository into an independent tracker repository
-mounted at the same path of the primary checkout, carries every surviving
-worktree's tracker state through the move, and undoes it by git steps after a
-failed verification. The order is `cutover-sequence` in [plan.md](plan.md);
+The procedure that moved `.jit/` of the code repository into an independent
+tracker repository mounted at the same path of the primary checkout, carried
+every surviving worktree's tracker state through the move, and undoes it by git
+steps after a failed verification. It ran on 2026-11-16 and is the record of the
+executed cutover; the execution issue holds its results. The order is `cutover-sequence` in [plan.md](plan.md);
 the execution issue is `@/issue/6889e6e6`. The history rewrite runs later, in a
 window of its own, under the
 [history rewrite runbook](../b8206228-permanent-statistics/45ecf975/history-rewrite-runbook.md),
@@ -13,15 +14,15 @@ and is outside this runbook.
 
 Every command runs from the top level of the primary checkout unless a step
 names another directory. The shell may be `sh`, `bash` or `zsh`; commands quote
-every expansion. The cutover tool is
-`dev/active/6ba9be17-tracker-repository/cutover.py` (task `@/issue/e610f5c4`);
-its docstring is the reference for each subcommand's arguments, refusals and
+every expansion. The cutover tool (task `@/issue/e610f5c4`) is retired after
+its run; commit `c0ea7b369` holds it in this directory, and its docstring
+there is the reference for each subcommand's arguments, refusals and
 exit statuses (0 done, 1 failed or action needed, 2 refused). It is the forward
-path only; the rollback is git. A shell function shortens the calls:
+path only; the rollback is git. A shell function runs it from that commit:
 
 ```sh
 epic=dev/active/6ba9be17-tracker-repository
-cutover() { python3 -B "$epic/cutover.py" "$@"; }
+cutover() { git show "c0ea7b369:$epic/cutover.py" | python3 -B - "$@"; }
 ```
 
 The issue-load check runs in the checkout whose `.jit/` it reads. It runs
