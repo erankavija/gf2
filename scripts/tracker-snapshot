@@ -1,11 +1,35 @@
 #!/bin/sh
 # Commits unignored tracker changes while jit holds the store write lock.
-# Usage: tracker-snapshot; exits 0 on a commit or a clean store, nonzero on failure.
-# Refuses arguments, an unavailable store/lock, or a store without its own git root.
+# Usage: tracker-snapshot [--push]; exits 0 on a commit or a clean store,
+# nonzero on failure. It prints the commit it made or, on a clean store, the
+# store's head commit, which may hold changes another session's snapshot
+# already committed.
+#
+# The commit covers the pending changes of every session that shares the
+# store. Its subject is `snapshot <UTC time> main <commit>`, and its trailer
+# `Jit-Agent: <id>` names the agent that took the snapshot, JIT_AGENT_ID as
+# scripts/tracker-env leaves it. Without one the commit has no trailer: jit
+# prints no identity it resolves from its own configuration.
+#
+# --push, after the commit or on a clean store, pushes the store's main to its
+# origin remote, so a snapshot left unpushed earlier also reaches the home. A
+# failed push exits nonzero naming the remote and keeps the local commit.
+# Without --push the script makes no remote call.
+#
+# Refuses other arguments, an unavailable store/lock, or a store without its
+# own git root.
 set -eu
 
-[ "$#" -eq 0 ] || { echo 'usage: tracker-snapshot' >&2; exit 1; }
+usage() { echo 'usage: tracker-snapshot [--push]' >&2; exit 1; }
+push=0
+case $# in
+0) ;;
+1) [ "$1" = --push ] || usage; push=1 ;;
+*) usage ;;
+esac
 scripts=$(cd "$(dirname "$0")" && pwd -P)
+TRACKER_SNAPSHOT_PUSH=$push
+export TRACKER_SNAPSHOT_PUSH
 # shellcheck disable=SC2016 # Expanded by the shell running under the store lock.
 exec "$scripts/tracker-env" jit worktree exec -- sh -eu -c '
   data=$(cd "$JIT_DATA_DIR" && pwd -P)
@@ -15,13 +39,24 @@ exec "$scripts/tracker-env" jit worktree exec -- sh -eu -c '
   fi
   git -C "$data" add -A
   if git -C "$data" diff --cached --quiet; then
-    exit 0
+    echo "tracker-snapshot: nothing to commit; store head $(git -C "$data" rev-parse --short=12 HEAD)"
   else
     status=$?
     [ "$status" -eq 1 ] || exit "$status"
+    main=$(git -C "$JIT_WORKTREE_ROOT" rev-parse --verify "refs/heads/main^{commit}")
+    main=$(printf "%.12s" "$main")
+    utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    if [ -n "${JIT_AGENT_ID-}" ]; then
+      git -C "$data" commit -q -m "snapshot $utc main $main" -m "Jit-Agent: $JIT_AGENT_ID"
+    else
+      git -C "$data" commit -q -m "snapshot $utc main $main"
+    fi
+    echo "tracker-snapshot: committed $(git -C "$data" rev-parse --short=12 HEAD)"
   fi
-  main=$(git -C "$JIT_WORKTREE_ROOT" rev-parse --verify "refs/heads/main^{commit}")
-  main=$(printf "%.12s" "$main")
-  utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-  git -C "$data" commit -m "snapshot $utc main $main"
+  [ "$TRACKER_SNAPSHOT_PUSH" = 1 ] || exit 0
+  if ! git -C "$data" push -q origin main; then
+    remote=$(git -C "$data" remote get-url origin 2>/dev/null) || remote="(no origin remote)"
+    echo "tracker-snapshot: push of main to origin $remote failed; the snapshot stays local" >&2
+    exit 1
+  fi
 '
