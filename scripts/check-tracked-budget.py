@@ -2,7 +2,9 @@
 """Refuses copied inputs, raw single-host output and oversized files in git.
 
 Enforces `@/inv/committed-evidence-budget`. Limits and exceptions live in
-`tracked-budget.toml`; limits may only fall. A JSON, TOML or YAML document
+`tracked-budget.toml`; limits may only fall. Under `tree_headroom_bytes`, a
+change of `max_tree_bytes` sets it to the measured tree plus that headroom,
+and the commit that first declares the headroom may raise it so. A JSON, TOML or YAML document
 the path rules admit under `record_documents` is also read, and refused when any member name
 matches `record_members`, the vocabulary of an execution record, or, under
 `workflow_documents`, `workflow_record_members`. A Markdown document under
@@ -304,16 +306,33 @@ def change_faults(old, new, config, label, cwd):
     return [f"{label}: adds {total} bytes, limit {limit}"] if total > limit else []
 
 
-def ratchet_faults(config, cwd):
-    """Limits may only fall against HEAD."""
+def ratchet_faults(config, cwd, tree_bytes):
+    """Limits may only fall against HEAD; a tree limit change meets the headroom.
+
+    Once HEAD declares `tree_headroom_bytes`, the headroom is fixed: a change
+    or a removal is refused, so the raise its first declaration permits
+    happens once.
+    """
     try:
         old_config = read_config("HEAD", cwd)
     except subprocess.CalledProcessError:
         return []
     faults = []
-    for key in ("max_tree_bytes", "max_file_bytes", "max_commit_added_bytes"):
-        if config[key] > old_config[key]:
+    keys = ["max_file_bytes", "max_commit_added_bytes"]
+    headroom = config.get("tree_headroom_bytes")
+    if "tree_headroom_bytes" in old_config and headroom != old_config["tree_headroom_bytes"]:
+        faults.append(f"{CONFIG}: tree_headroom_bytes changes from HEAD's "
+                      f"{old_config['tree_headroom_bytes']}; the headroom is fixed")
+    if headroom is None or "tree_headroom_bytes" in old_config:
+        keys.append("max_tree_bytes")
+    for key in keys:
+        if key in old_config and config.get(key, 0) > old_config[key]:
             faults.append(f"{CONFIG}: {key} rises above HEAD's {old_config[key]}")
+    if headroom is not None and config["max_tree_bytes"] != old_config["max_tree_bytes"]:
+        target = tree_bytes + headroom
+        if config["max_tree_bytes"] != target:
+            faults.append(f"{CONFIG}: max_tree_bytes changes to {config['max_tree_bytes']}, "
+                          f"not the measured tree plus tree_headroom_bytes, {target}")
     return faults
 
 
@@ -324,7 +343,7 @@ def check_staged(cwd):
     return (
         tree_faults(sizes, config, reader("", cwd))
         + change_faults(head, "", config, "staged change", cwd)
-        + ratchet_faults(config, cwd)
+        + ratchet_faults(config, cwd, sum(sizes.values()))
     )
 
 
@@ -527,6 +546,8 @@ reason = "fixture"
             assert_faults(check_staged(repo), [expected], name)
             run("reset", "-q", "--hard", "HEAD")
 
+        headroom_cases(repo, run, write, config)
+
         write("big.lock", 4100)
         assert_faults(check_staged(repo), [], "small append to an excepted large file")
         run("reset", "-q", "--hard", "HEAD")
@@ -563,6 +584,64 @@ reason = "fixture"
         assert_faults(at_head(), ["execution record"], "tree record")
     print("check-tracked-budget: self-test passed")
     return 0
+
+
+def headroom_cases(repo, run, write, config):
+    """The tree limit under `tree_headroom_bytes`, from its first declaration on."""
+    def staged_tree():
+        return sum(tree_sizes(git("write-tree", cwd=repo).strip(), repo).values())
+
+    # A limit below the tree plus headroom, so the declaration raises it.
+    config = config.replace("max_tree_bytes = 10000", "max_tree_bytes = 7000")
+    write(CONFIG, 0, config)
+    run("commit", "-qm", "lower", "--no-verify")
+
+    def declare(offset=0):
+        text = "tree_headroom_bytes = 2400\n" + config
+        for _ in range(3):
+            write(CONFIG, 0, text)
+            target = staged_tree() + 2400 + offset
+            text = "tree_headroom_bytes = 2400\n" + config.replace("max_tree_bytes = 7000", f"max_tree_bytes = {target}")
+        write(CONFIG, 0, text)
+        return target
+
+    target = declare()
+    assert target > 7000, target
+    assert_faults(check_staged(repo), [], "first declaration raises the limit to tree plus headroom")
+    run("reset", "-q", "--hard", "HEAD")
+    declare(offset=5)
+    assert_faults(check_staged(repo), ["not the measured tree plus"], "first declaration off the headroom")
+    run("reset", "-q", "--hard", "HEAD")
+    target = declare()
+    run("commit", "-qm", "headroom", "--no-verify")
+    write("big.lock", 4000 + 2000)
+    assert_faults(check_staged(repo), [], "a commit inside the headroom")
+    run("reset", "-q", "--hard", "HEAD")
+    write("big.lock", 4000 + 2401)
+    assert_faults(check_staged(repo), ["tree:"], "a commit beyond the headroom")
+    run("reset", "-q", "--hard", "HEAD")
+    current = Path(repo, CONFIG).read_text()
+    write(CONFIG, 0, current.replace(f"max_tree_bytes = {target}", f"max_tree_bytes = {target + 1}"))
+    assert_faults(check_staged(repo), ["rises"], "a raise after the declaration")
+    run("reset", "-q", "--hard", "HEAD")
+    write(CONFIG, 0, current.replace("tree_headroom_bytes = 2400\n", ""))
+    assert_faults(check_staged(repo), ["the headroom is fixed"], "a removal of the headroom")
+    run("reset", "-q", "--hard", "HEAD")
+    write(CONFIG, 0, current.replace("tree_headroom_bytes = 2400", "tree_headroom_bytes = 2300"))
+    assert_faults(check_staged(repo), ["the headroom is fixed"], "a change of the headroom")
+    run("reset", "-q", "--hard", "HEAD")
+    write("big.lock", 1000)
+    text = current
+    for _ in range(3):
+        write(CONFIG, 0, text)
+        lowered = staged_tree() + 2400
+        text = current.replace(f"max_tree_bytes = {target}", f"max_tree_bytes = {lowered}")
+    write(CONFIG, 0, text)
+    assert lowered < target, (lowered, target)
+    assert_faults(check_staged(repo), [], "a lowering to the tree plus headroom")
+    write(CONFIG, 0, current.replace(f"max_tree_bytes = {target}", f"max_tree_bytes = {lowered - 7}"))
+    assert_faults(check_staged(repo), ["not the measured tree plus"], "a lowering below the headroom")
+    run("reset", "-q", "--hard", "HEAD~2")
 
 
 def assert_faults(faults, expected, name):
