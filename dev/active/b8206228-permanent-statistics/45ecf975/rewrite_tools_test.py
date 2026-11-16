@@ -144,19 +144,19 @@ with tempfile.TemporaryDirectory() as t:
     assert len(rows) == 5, rows
     assert {kind: sum(row["class"] == kind for row in rows)
             for kind in ("mapped", "pruned", "short")} == {
-                "mapped": 3, "pruned": 1, "short": 1}, rows
+                "mapped": 4, "pruned": 1, "short": 0}, rows
     assert all(row["suggestion"] == A2[:len(row["token"])] for row in rows), rows
     assert [(row["line"], row["token"]) for row in rows if row["file"] == target] == [
         ("1", A), ("2", A[:12]), ("3", A[:7]), ("4", B)], rows
     r = old_ids("check")
-    assert r.returncode == 1 and "mapped=3" in r.stdout, r
+    assert r.returncode == 1 and "mapped=4" in r.stdout, r
     r = old_ids("apply", "--exclude", "doc*", "--exclude", "*/issues/*.json")
     assert r.returncode == 0 and "total=0" in r.stdout, r
     assert open(target).read() == text and json.load(open(record)) == issue
     r = old_ids("apply")
-    assert r.returncode == 0 and "rewrote 3" in r.stdout, r
+    assert r.returncode == 0 and "rewrote 4" in r.stdout, r
     assert open(target).read() == text.replace(A + "\n", A2 + "\n").replace(
-        A[:12] + "\n", A2[:12] + "\n")
+        A[:12] + "\n", A2[:12] + "\n").replace(A[:7] + "\n", A2[:7] + "\n")
     issue["description"] = "référence\n" + A2
     assert open(record).read() == json.dumps(issue, indent=2, ensure_ascii=False) + "\n"
     assert open(events).read() == A + "\n"
@@ -164,7 +164,7 @@ with tempfile.TemporaryDirectory() as t:
     assert open(large).read().startswith(A)
     r = old_ids("check")
     assert (r.returncode == 1 and "mapped=0" in r.stdout
-            and "pruned=1" in r.stdout and "short=1" in r.stdout), r
+            and "pruned=1" in r.stdout and "short=0" in r.stdout), r
 
     # Exercise ambiguity with two real commit objects sharing seven hex digits.
     tree = git(t, "rev-parse", "HEAD^{tree}")
@@ -211,4 +211,20 @@ with tempfile.TemporaryDirectory() as t:
     open(record, "w").write(json.dumps(issue))
     r = old_ids("check")
     assert r.returncode == 0 and "total=0" in r.stdout, r
+# Short tokens take the same-length new prefix, lengthened when two kept new
+# IDs share it; a pruned commit's short token stays remainder.
+with tempfile.TemporaryDirectory() as t:
+    git(t, "init", "-q")
+    D, E, F = (commit(t, n) for n in ("d.md", "e.md", "f.md"))
+    D2, E2 = "3" * 7 + "a" * 33, "3" * 7 + "b" * 33
+    cmap = os.path.join(t, "commit-map")
+    open(cmap, "w").write(f"old new\n{D} {D2}\n{E} {E2}\n{F} {z}\n")
+    checkout = os.path.join(t, "checkout")
+    git(t, "clone", "-q", t, checkout)
+    target = os.path.join(checkout, "d.md")
+    open(target, "w").write(f"{D[:7]} {E[:9]} {F[:8]}\n")
+    r = subprocess.run([sys.executable, "-B", os.path.join(here, "old_ids.py"), "apply",
+                        cmap, os.path.join(t, ".git"), checkout], capture_output=True, text=True)
+    assert r.returncode == 0 and "rewrote 2" in r.stdout and "pruned=1" in r.stdout, r
+    assert open(target).read() == f"{D2[:8]} {E2[:9]} {F[:8]}\n", open(target).read()
 print("ok")

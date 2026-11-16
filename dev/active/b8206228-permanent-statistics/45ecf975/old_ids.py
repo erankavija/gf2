@@ -4,14 +4,18 @@
 Usage: old_ids.py inventory|apply|check <commit-map> <original-git-dir>
        <checkout> [<data-root>] [--out <tsv>] [--exclude <glob>]...
 The map may be plain text or gzip. Each --exclude glob is matched with fnmatch
-against the checkout-relative path; matching files are neither read nor written. Only mapped references of at least 12 hex
-characters are replaced. Short, ambiguous, pruned and unmapped references stay
+against the checkout-relative path; matching files are neither read nor written.
+Mapped references of at least 12 hex characters are replaced at the same width.
+A 7-11 hex token that resolves to one kept old commit and is no issue ID prefix
+is replaced by the prefix of its new ID, lengthened to the shortest length
+unique among the kept new IDs. Ambiguous, pruned and unmapped references stay
 for review. The TSV contains occurrences, with suggestions at the token's width.
 JSON line numbers locate the source string, including JSON-escaped newlines.
 check exits nonzero while mapped, short or pruned references remain; ambiguous
 and unmapped references are reported without failing it.
 """
 import argparse
+from bisect import bisect_left
 from collections import Counter
 import csv
 import fnmatch
@@ -140,7 +144,17 @@ def resolve(tokens, original):
     return resolved
 
 
-def classify(commit, token, mapping, original, ancestors):
+def unique_prefix(new, width, kept):
+    """Shortest prefix of `new` of at least `width` hex unique in sorted `kept`."""
+    for length in range(width, len(new) + 1):
+        prefix = new[:length]
+        index = bisect_left(kept, prefix)
+        if not (index + 1 < len(kept) and kept[index + 1].startswith(prefix)):
+            return prefix
+    return None
+
+
+def classify(commit, token, mapping, original, ancestors, kept):
     if commit == "ambiguous":
         return "ambiguous", ""
     new = mapping.get(commit)
@@ -150,7 +164,10 @@ def classify(commit, token, mapping, original, ancestors):
         if commit not in ancestors:
             ancestors[commit] = kept_ancestor(commit, str(original), mapping)
         return "pruned", (ancestors[commit] or "")[:len(token)]
-    return ("mapped" if len(token) >= 12 else "short"), new[:len(token)]
+    if len(token) >= 12:
+        return "mapped", new[:len(token)]
+    prefix = unique_prefix(new, len(token), kept)
+    return ("short", new[:len(token)]) if prefix is None else ("mapped", prefix)
 
 
 def main():
@@ -171,7 +188,8 @@ def main():
               for m in candidates(text, issue_ids)}
     resolved = resolve(tokens, args.original_git_dir)
     ancestors = {}
-    classes = {token: classify(commit, token, mapping, args.original_git_dir, ancestors)
+    kept = sorted({new for new in mapping.values() if set(new) != {"0"}})
+    classes = {token: classify(commit, token, mapping, args.original_git_dir, ancestors, kept)
                for token, commit in resolved.items()}
     rows = []
     for source in inputs:

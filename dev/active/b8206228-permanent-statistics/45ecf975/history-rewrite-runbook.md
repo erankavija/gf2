@@ -136,9 +136,12 @@ claims, leases, locks and the worktree identity under the code repository's
     archived map resolves them.
     - Inventory: `python3 -B <tool> inventory <args> --out <backup>/old-ids.tsv`.
     - Apply the mechanical pass: `python3 -B <tool> apply <args>`.
-      It replaces mapped IDs of at least 12 hex characters at the same width;
-      document pins belong to step 6.
+      It replaces mapped IDs of at least 12 hex characters at the same width,
+      and 7-11 hex commit references by the prefix of the new ID, lengthened
+      to the shortest length unique among the kept new IDs; document pins
+      belong to step 6.
     - Write the remainder: `python3 -B <tool> inventory <args> --out <backup>/old-ids-remainder.tsv`.
+      It holds the pruned, unmapped, ambiguous and leftover short references.
       Hand that file to low-tier workers (Codex luna, Claude Haiku). Each worker
       rewrites a reference to its new ID, using the suggested kept ancestor for
       a pruned commit, or rewords it when the pruned commit was tracker-only.
@@ -176,8 +179,8 @@ through the issue:
 - the `jit validate` result in `<rw>` with the tracker mounted;
 - the rehearsed reseat: tracker head kept, `jit claim list` and worktree ID
   unchanged, `jit validate` passing;
-- old-ID inventory counts: total occurrences, mechanically mapped, pruned
-  targets, and remainder (short, pruned, ambiguous and unmapped); the check
+- old-ID inventory counts: total occurrences, mechanically mapped (full, 12+ hex and short), pruned
+  targets, and remainder (pruned, ambiguous and unmapped); the check
   after the mechanical pass is expected to fail with zero mapped and exactly
   the remaining short and pruned references (ambiguous and unmapped references
   are reported but do not fail the check);
