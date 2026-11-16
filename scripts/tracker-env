@@ -6,17 +6,18 @@
 #                      common directory
 #   JIT_WORKTREE_ROOT  the invoking checkout's top level
 #   JIT_AGENT_ID       kept when set; in a linked worktree otherwise the
-#                      holder of the active lease on the issue a
-#                      `jit gate <subcommand> <issue>` command names, or else
-#                      agent:<name git registers the worktree under>; in the
-#                      primary checkout otherwise unset, so jit uses its
-#                      configured agent
+#                      holder of the active lease on the issues a `jit gate`
+#                      command names, or else agent:<name git registers the
+#                      worktree under>; in the primary checkout otherwise
+#                      unset, so jit uses its configured agent
 #
 # A gate run from a linked worktree thus records the caller's JIT_AGENT_ID,
 # the issue's lease holder, or the worktree's name, in that order. The lease
-# lookup applies to the gate subcommands that take one issue first
-# (evaluate, eval, evaluate-all, fail, add, status, status-all) and runs the
-# command's own jit; a failed lookup or no lease keeps the worktree's name.
+# lookup covers the gate subcommands that name issues (evaluate, eval,
+# evaluate-all, fail, add, status, status-all, evaluate-many), with jit's
+# global and gate options anywhere before the subcommand, and runs the
+# command's own jit. Issues leased by different agents are refused; a failed
+# lookup or no lease keeps the worktree's name.
 #
 #   tracker-env <command> [args...]   exec the command in that environment
 #   tracker-env                       print export lines for `eval`
@@ -52,28 +53,41 @@ JIT_DATA_DIR=$store
 JIT_WORKTREE_ROOT=$top
 export JIT_DATA_DIR JIT_WORKTREE_ROOT
 
-# Prints the issue a `jit gate <subcommand> <issue> ...` command names.
-gate_issue() {
-  [ "$#" -ge 3 ] && [ "$(basename "$1")" = jit ] && [ "$2" = gate ] || return 1
-  case $3 in
-  evaluate | eval | evaluate-all | fail | add | status | status-all) ;;
-  *) return 1 ;;
-  esac
-  shift 3
-  skip=
+# Prints, one per line, the issues a `jit [options] gate [options]
+# <subcommand> ...` command names: the first operand of the subcommands that
+# take one issue, every operand after the gate key of evaluate-many.
+gate_issues() {
+  [ "$#" -ge 1 ] && [ "$(basename "$1")" = jit ] || return 1
+  shift
+  stage=gate sub='' skip='' operands=0 found=1
   for arg do
     if [ -n "$skip" ]; then
       skip=
       continue
     fi
-    case $arg in
-    --) skip= ;;
-    --gate | -b | --by | --limit | --status | --tail) skip=1 ;;
-    -*) ;;
-    *) printf '%s\n' "$arg"; return 0 ;;
+    case $stage:$arg in
+    gate:gate) stage=sub ;;
+    gate:-* | sub:-*) ;;
+    gate:*) return 1 ;;
+    sub:evaluate | sub:eval | sub:evaluate-all | sub:fail | sub:add | sub:status | sub:status-all | sub:evaluate-many)
+      stage=args sub=$arg ;;
+    sub:*) return 1 ;;
+    args:--gate | args:-b | args:--by | args:--limit | args:--status | args:--tail) skip=1 ;;
+    args:-*) ;;
+    args:*)
+      operands=$((operands + 1))
+      if [ "$sub" != evaluate-many ]; then
+        printf '%s\n' "$arg"
+        return 0
+      fi
+      if [ "$operands" -gt 1 ]; then
+        printf '%s\n' "$arg"
+        found=0
+      fi
+      ;;
     esac
   done
-  return 1
+  return "$found"
 }
 
 # Prints the agent holding the active lease on issue $2, using jit $1.
@@ -83,12 +97,22 @@ lease_holder() {
 }
 
 if [ "$gitdir" != "$common" ] && [ "${JIT_AGENT_ID+set}" != set ]; then
-  holder=
-  if issue=$(gate_issue "$@"); then
-    holder=$(lease_holder "$1" "$issue") || holder=
+  holder='' leased=''
+  if issues=$(gate_issues "$@"); then
+    while IFS= read -r issue; do
+      found=$(lease_holder "$1" "$issue") || found=''
+      [ -n "$found" ] || continue
+      if [ -n "$holder" ] && [ "$found" != "$holder" ]; then
+        die "the issues are leased by different agents ($holder holds $leased, $found holds $issue); set JIT_AGENT_ID to the one that runs the gates"
+      fi
+      holder=$found
+      leased="${leased:+$leased }$issue"
+    done <<ISSUES
+$issues
+ISSUES
   fi
   if [ -n "$holder" ]; then
-    printf 'tracker-env: running as %s, the lease holder of %s\n' "$holder" "$issue" >&2
+    printf 'tracker-env: running as %s, the lease holder of %s\n' "$holder" "$leased" >&2
     JIT_AGENT_ID=$holder
   else
     JIT_AGENT_ID="agent:$(basename "$gitdir")"

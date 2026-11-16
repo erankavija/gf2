@@ -55,8 +55,9 @@ gitq -C "$EMPTY" worktree add -q "$BASE/empty-wt" -b wt
 probe='printf "%s\n" "$JIT_DATA_DIR" "$JIT_WORKTREE_ROOT" "${JIT_AGENT_ID-<unset>}"'
 empty_probe='printf "%s\n%s\n%s|%s\n" "$JIT_DATA_DIR" "$JIT_WORKTREE_ROOT" "${JIT_AGENT_ID+set}" "${JIT_AGENT_ID-<unset>}"'
 
-# A fake jit: `claim status --issue leased --json` reports a lease held by
-# agent:holder, `--issue broken` fails, any other issue has none; every other
+# A fake jit: `claim status --issue leased --json` (or `leased2`) reports a
+# lease held by agent:holder, `--issue other` one held by agent:other,
+# `--issue broken` fails, any other issue has none; every other
 # command prints the identity it runs as.
 mkdir -p "$TMP/bin"
 FAKE_JIT="$TMP/bin/jit"
@@ -64,7 +65,8 @@ cat >"$FAKE_JIT" <<'FAKE'
 #!/bin/sh
 if [ "$1 $2 $3" = "claim status --issue" ]; then
   case $4 in
-  leased) printf '{\n  "count": 1,\n  "leases": [\n    {\n      "agent_id": "agent:holder",\n      "issue_id": "leased"\n    }\n  ]\n}\n' ;;
+  leased | leased2) printf '{\n  "count": 1,\n  "leases": [\n    {\n      "agent_id": "agent:holder",\n      "issue_id": "%s"\n    }\n  ]\n}\n' "$4" ;;
+  other) printf '{\n  "count": 1,\n  "leases": [\n    {\n      "agent_id": "agent:other",\n      "issue_id": "other"\n    }\n  ]\n}\n' ;;
   broken) exit 3 ;;
   *) printf '{\n  "count": 0,\n  "leases": []\n}\n' ;;
   esac
@@ -145,6 +147,17 @@ for shell in sh bash zsh; do
   done
   out=$(run_jit "$BASE/a/wt" gate evaluate --json --by lead --gate cargo-ci leased 2>/dev/null)
   expect "$shell lease holder after options" "$out" agent:holder
+  out=$(run_jit "$BASE/a/wt" --json -q gate --json evaluate leased cargo-ci 2>/dev/null)
+  expect "$shell lease holder after global options" "$out" agent:holder
+  out=$(run_jit "$BASE/a/wt" gate evaluate-many --by lead cargo-ci leased free leased2 2>"$TMP/err")
+  expect "$shell evaluate-many lease holder" "$out" agent:holder
+  grep -qF 'leased leased2' "$TMP/err" || fail "$shell evaluate-many note: $(cat "$TMP/err")"
+  rc=0
+  run_jit "$BASE/a/wt" gate evaluate-many cargo-ci leased other >"$TMP/out" 2>"$TMP/err" || rc=$?
+  [ "$rc" -ne 0 ] || fail "$shell mixed lease holders: exit status 0"
+  [ ! -s "$TMP/out" ] || fail "$shell mixed lease holders ran the command"
+  grep -qF agent:other "$TMP/err" && grep -qF JIT_AGENT_ID "$TMP/err" ||
+    fail "$shell mixed lease holders message: $(cat "$TMP/err")"
   # Without a lease, a lookup failure or a gate command, the default stands.
   out=$(run_jit "$BASE/a/wt" gate evaluate free cargo-ci 2>"$TMP/err")
   expect "$shell unleased gate" "$out" agent:wt
@@ -153,8 +166,12 @@ for shell in sh bash zsh; do
   expect "$shell failed lookup" "$out" agent:wt
   out=$(run_jit "$BASE/a/wt" issue show leased)
   expect "$shell non-gate command" "$out" agent:wt
-  out=$(run_jit "$BASE/a/wt" gate evaluate-many cargo-ci leased 2>/dev/null)
-  expect "$shell multi-issue gate command" "$out" agent:wt
+  out=$(run_jit "$BASE/a/wt" gate evaluate-many cargo-ci free 2>/dev/null)
+  expect "$shell unleased evaluate-many" "$out" agent:wt
+  out=$(run_jit "$BASE/a/wt" gate evaluate-many leased 2>/dev/null)
+  expect "$shell evaluate-many gate key only" "$out" agent:wt
+  out=$(run_jit "$BASE/a/wt" issue gate evaluate leased 2>/dev/null)
+  expect "$shell gate word in another command" "$out" agent:wt
   # A caller-set identity and the primary checkout are unchanged.
   out=$(cd "$BASE/a/wt" && JIT_AGENT_ID=agent:caller "$shell" "$ENTRY" "$FAKE_JIT" gate evaluate leased)
   expect "$shell caller id over lease" "$out" agent:caller
