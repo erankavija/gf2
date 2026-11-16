@@ -27,6 +27,13 @@ The workflow rules are in the JIT workflow section of
   store's files under the primary checkout's `.jit/`. A gate run there records
   the caller's `JIT_AGENT_ID`, otherwise the holder of the issue's active
   lease, otherwise `agent:<worktree name>`.
+- jit limits each agent's indefinite leases by
+  `[coordination] max_indefinite_leases_per_agent`, read from
+  `.jit/config.toml`, which leaves it unset, so jit's default of two applies;
+  `jit config show` prints the effective value. A lead
+  holding more issues takes finite leases and extends each with
+  `jit claim renew` before it expires; an indefinite lease needs a
+  `jit claim heartbeat` within jit's claim stale threshold.
 - Skill scripts that require `.jit` under their root run against the primary
   checkout.
 - A document existing only on a branch is linked with `jit doc add --commit
