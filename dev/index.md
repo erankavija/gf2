@@ -38,15 +38,35 @@ The workflow rules are in the JIT workflow section of
   checkout.
 - A document existing only on a branch is linked with `jit doc add --commit
   <branch-commit>` and re-linked unpinned when it lands.
-- A branch lands after `scripts/check-landing <issue> <tip>` passes. A
-  code-producing issue carries the `landed` gate (`code-task` preset), which
-  the lead evaluates after the merged-tree gate.
+- A branch lands by the [landing flow](#landing-flow). A code-producing issue
+  carries the `landed` gate (`code-task` preset).
 - A lead runs `scripts/tracker-snapshot` after each landing, the steward at the
   end of a session. With `--push` it also pushes the store to its home;
   without it, it commits locally and `git -C .jit push origin main` sends the
   commits. Each snapshot commits the pending changes of every session sharing
   the store, and its `Jit-Agent` trailer names the agent that took it, when
   `JIT_AGENT_ID` is set.
+
+## Landing flow
+
+One branch lands on `main` at a time, in these steps:
+
+1. The issue's gates pass at the branch tip, evaluated through
+   `scripts/tracker-env` in the branch's worktree.
+2. `scripts/check-landing <issue> <tip>` passes.
+3. The tip merges into `main` with `git merge --no-ff`, under a
+   `chore(jit:<id>): merge ...` subject.
+4. The merged-tree step: the required executed-command gates hold for the tree
+   on `main` after the merge. The step is met without a run when the merge's
+   tree equals the gated tip's tree, which a `--no-ff` merge of a tip that
+   contains `main` always gives. When `main` moved between gating and merging
+   and the trees differ, `cargo-ci` reruns at `main` before the next step. The
+   landing check at the merge commit is not this step.
+5. `scripts/tracker-snapshot` records the merge-time store.
+6. The `landed` gate passes; it judges that each gated commit is an ancestor
+   of `main`.
+7. `scripts/tracker-snapshot --push` records the `landed` verdict and pushes
+   the store to its home.
 
 ## Epic documents: `active/`
 

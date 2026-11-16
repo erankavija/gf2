@@ -561,7 +561,7 @@ A branch lands in the order `landing-link` in [plan.md](plan.md) fixes:
    `scripts/tracker-env jit gate evaluate <issue> <gate>` from its worktree.
 2. Run the landing check, `scripts/tracker-env scripts/check-landing <issue> <tip>`.
 3. Merge into `main`.
-4. Evaluate the merged-tree gate.
+4. Complete the merged-tree step of the landing flow in `dev/index.md`.
 5. Run `scripts/tracker-snapshot`.
 6. Evaluate the `landed` gate, which a code-producing issue carries through
    the `code-task` preset.
