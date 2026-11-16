@@ -163,7 +163,8 @@ with tempfile.TemporaryDirectory() as t:
     assert open(binary, "rb").read() == b"\0" + A.encode()
     assert open(large).read().startswith(A)
     r = old_ids("check")
-    assert r.returncode == 0 and "mapped=0" in r.stdout, r
+    assert (r.returncode == 1 and "mapped=0" in r.stdout
+            and "pruned=1" in r.stdout and "short=1" in r.stdout), r
 
     # Exercise ambiguity with two real commit objects sharing seven hex digits.
     tree = git(t, "rev-parse", "HEAD^{tree}")
@@ -203,5 +204,11 @@ with tempfile.TemporaryDirectory() as t:
     assert open(record).read() == json.dumps(issue, indent=2, ensure_ascii=False)
     assert open(target).read() == prefix + "\n" + C + "\n"
     r = old_ids("check")
-    assert r.returncode == 0 and "mapped=0" in r.stdout, r
+    assert (r.returncode == 0 and "mapped=0" in r.stdout
+            and "ambiguous=1" in r.stdout and "unmapped=1" in r.stdout), r
+    open(target, "w").write("clean prose\n")
+    issue["description"] = "clean prose"
+    open(record, "w").write(json.dumps(issue))
+    r = old_ids("check")
+    assert r.returncode == 0 and "total=0" in r.stdout, r
 print("ok")

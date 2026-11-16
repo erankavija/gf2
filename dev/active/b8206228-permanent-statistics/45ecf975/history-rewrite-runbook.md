@@ -81,7 +81,9 @@ claims, leases, locks and the worktree identity under the code repository's
    `Main protected` ruleset denies non-fast-forward pushes unless the account's
    repository role bypasses it.
 10. Reseat the primary checkout:
-    - Record `jit claim list` and the ID of `jit worktree info`.
+    - Record `jit claim list`, the ID of `jit worktree info`, and for each kept
+      worktree its `worktree` entry from `git worktree list --porcelain` plus
+      the admin name from `basename $(git -C <path> rev-parse --git-dir)`.
     - Fast-forward the tracker:
       `git -C .jit fetch <rw>/.jit && git -C .jit merge --ff-only FETCH_HEAD`.
       The primary tracker is the one writable store; a non-fast-forward means
@@ -98,13 +100,16 @@ claims, leases, locks and the worktree identity under the code repository's
     - Recreate needed worktrees at the rewritten branch heads, each without a
       `.jit`. The new `.git` has no `worktrees/` entries, so
       `git worktree repair` alone fails. For pinned and parked worktrees, keep
-      the untracked built arms in place: `git worktree add --no-checkout <tmp> <branch>`,
-      move `<tmp>/.git` over `<path>/.git`, remove `<tmp>`, then
-      `git worktree repair <path>` and `git -C <path> reset`; its status is
-      then clean. A parked worktree with uncommitted tracked changes stops the
-      reseat.
-    - The leases of `jit claim list` and the worktree ID equal the recorded
-      ones, and `jit validate` passes.
+      the untracked built arms in place. For each `<path>`, create a fresh empty
+      parent `<tmpdir>` and set `<tmp>` to `<tmpdir>/$(basename <path>)`:
+      `git worktree add --no-checkout <tmp> <branch>`, move `<tmp>/.git` over
+      `<path>/.git`, remove `<tmp>` and its parent, then `git worktree repair
+      <path>` and `git -C <path> reset`; its status is then clean. Matching the
+      basename preserves the registered admin name. A parked worktree with
+      uncommitted tracked changes stops the reseat.
+    - The recorded worktree paths and admin names are unchanged; the leases of
+      `jit claim list` and the worktree ID equal the recorded ones, and
+      `jit validate` passes.
 11. Fix old commit IDs in the primary checkout and its tracker issue records.
     Run [old_ids.py](old_ids.py) from the primary checkout, using the archived
     map and original history. The commands below abbreviate its repository path
@@ -121,12 +126,13 @@ claims, leases, locks and the worktree identity under the code repository's
     - Apply the mechanical pass: `python3 -B <tool> apply <args>`.
       It replaces mapped IDs of at least 12 hex characters at the same width;
       document pins belong to step 6.
-    - Write the remainder: `python3 -B <tool> check <args> --out <backup>/old-ids-remainder.tsv`.
+    - Write the remainder: `python3 -B <tool> inventory <args> --out <backup>/old-ids-remainder.tsv`.
       Hand that file to low-tier workers (Codex luna, Claude Haiku). Each worker
       rewrites a reference to its new ID, using the suggested kept ancestor for
       a pruned commit, or rewords it when the pruned commit was tracker-only.
-    - Rerun the check: it must report zero mapped old IDs. Review the workers'
-      edits and the remainder; commit the code changes with a subject of the
+    - Rerun the check after the workers: it must pass with zero mapped, short
+      and pruned references outside the exclusions. Review the workers' edits
+      and the remainder; commit the code changes with a subject of the
       form `chore(jit:45ecf975): ...`, and snapshot the tracker changes with
       `scripts/tracker-snapshot`, then `git -C .jit push origin main`. Code
       and tracker commit subjects, and the tracker's `events.jsonl`, are
@@ -160,7 +166,9 @@ through the issue:
   unchanged, `jit validate` passing;
 - old-ID inventory counts: total occurrences, mechanically mapped, pruned
   targets, and remainder (short, pruned, ambiguous and unmapped); the check
-  after the mechanical pass finds no remaining one-to-one mapped old ID;
+  after the mechanical pass is expected to fail with zero mapped and exactly
+  the remaining short and pruned references (ambiguous and unmapped references
+  are reported but do not fail the check);
 - one line per parked branch: old head, new head, and whether
   `git diff --stat main...<branch>` before and after agree outside `.jit` and
   the stripped paths.

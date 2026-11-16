@@ -8,6 +8,8 @@ against the checkout-relative path; matching files are neither read nor written.
 characters are replaced. Short, ambiguous, pruned and unmapped references stay
 for review. The TSV contains occurrences, with suggestions at the token's width.
 JSON line numbers locate the source string, including JSON-escaped newlines.
+check exits nonzero while mapped, short or pruned references remain; ambiguous
+and unmapped references are reported without failing it.
 """
 import argparse
 from collections import Counter
@@ -206,7 +208,8 @@ def main():
           + f" total={len(rows)}", file=stream)
     if args.mode == "apply":
         print(f"rewrote {counts['mapped']} mapped references")
-    return int(args.mode == "check" and counts["mapped"] > 0)
+    return int(args.mode == "check" and any(
+        counts[kind] > 0 for kind in ("mapped", "short", "pruned")))
 
 
 if __name__ == "__main__":
