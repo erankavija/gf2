@@ -197,6 +197,8 @@ git -C "$CODE" commit -qm topic
 head=$(git -C "$CODE/.jit" rev-parse HEAD)
 snapshot >"$TMP/findings" 2>&1 || fail 'clean snapshot failed'
 expect 'clean snapshot HEAD' "$(git -C "$CODE/.jit" rev-parse HEAD)" "$head"
+expect 'clean snapshot names the head' "$(cat "$TMP/findings")" \
+  "tracker-snapshot: nothing to commit; store head $(git -C "$CODE/.jit" rev-parse --short=12 HEAD)"
 
 printf 'new\n' >"$CODE/.jit/record"
 : >"$CODE/.jit/added"
@@ -236,6 +238,8 @@ stamp=${stamp% main *}
 expect 'UTC timestamp in invocation interval' \
   "$(printf '%s\n%s\n%s\n' "$start" "$stamp" "$end" | LC_ALL=C sort | sed -n 2p)" "$stamp"
 expect 'snapshot parent' "$(git -C "$CODE/.jit" rev-parse HEAD^)" "$head"
+expect 'snapshot names its commit' "$(cat "$TMP/findings")" \
+  "tracker-snapshot: committed $(git -C "$CODE/.jit" rev-parse --short=12 HEAD)"
 expect 'snapshot contents' "$(git -C "$CODE/.jit" ls-tree --name-only HEAD)" \
   "$(printf '.gitignore\nadded\nindex.json\nrecord')"
 expect 'snapshot changed contents' "$(git -C "$CODE/.jit" show HEAD:record)" new

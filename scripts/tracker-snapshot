@@ -1,7 +1,9 @@
 #!/bin/sh
 # Commits unignored tracker changes while jit holds the store write lock.
 # Usage: tracker-snapshot [--push]; exits 0 on a commit or a clean store,
-# nonzero on failure.
+# nonzero on failure. It prints the commit it made or, on a clean store, the
+# store's head commit, which may hold changes another session's snapshot
+# already committed.
 #
 # The commit covers the pending changes of every session that shares the
 # store. Its subject is `snapshot <UTC time> main <commit>`, and its trailer
@@ -37,7 +39,7 @@ exec "$scripts/tracker-env" jit worktree exec -- sh -eu -c '
   fi
   git -C "$data" add -A
   if git -C "$data" diff --cached --quiet; then
-    :
+    echo "tracker-snapshot: nothing to commit; store head $(git -C "$data" rev-parse --short=12 HEAD)"
   else
     status=$?
     [ "$status" -eq 1 ] || exit "$status"
@@ -45,10 +47,11 @@ exec "$scripts/tracker-env" jit worktree exec -- sh -eu -c '
     main=$(printf "%.12s" "$main")
     utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
     if [ -n "${JIT_AGENT_ID-}" ]; then
-      git -C "$data" commit -m "snapshot $utc main $main" -m "Jit-Agent: $JIT_AGENT_ID"
+      git -C "$data" commit -q -m "snapshot $utc main $main" -m "Jit-Agent: $JIT_AGENT_ID"
     else
-      git -C "$data" commit -m "snapshot $utc main $main"
+      git -C "$data" commit -q -m "snapshot $utc main $main"
     fi
+    echo "tracker-snapshot: committed $(git -C "$data" rev-parse --short=12 HEAD)"
   fi
   [ "$TRACKER_SNAPSHOT_PUSH" = 1 ] || exit 0
   if ! git -C "$data" push -q origin main; then
