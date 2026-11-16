@@ -8,9 +8,9 @@ it runs in; it rewrites `<root>/issues/*.json` in place. A pinned commit that
 the rewrite pruned (all-zero map entry) maps to the rewritten commit of its
 nearest first-parent ancestor with a nonzero entry, found in the pre-rewrite
 history at <original-git-dir>; that commit's tree equals the pruned one outside
-the dropped paths. A pinned commit absent from the map, a pruned commit whose
-pinned path `drop()` of rewrite_paths.py removes, or a pruned commit without a
-kept ancestor fails naming its issue record.
+the dropped paths. A pinned commit absent from the map, a pinned path that `drop()`
+of rewrite_paths.py removes, or a pruned commit without a kept ancestor fails
+naming its issue record.
 """
 import glob
 import json
@@ -65,11 +65,11 @@ for path in sorted(glob.glob(os.path.join(data_root(), "issues", "*.json"))):
         full = next((key for key in mapping if key.startswith(commit)), None)
         if full is None:
             raise SystemExit(f"{path}: commit {commit} absent from the commit map")
+        where = document.get("path", "")
+        if rules["drop"](where.encode()):
+            raise SystemExit(f"{path}: pinned path {where} is dropped")
         new = mapping[full]
         if set(new) == {"0"}:
-            where = document.get("path", "")
-            if rules["drop"](where.encode()):
-                raise SystemExit(f"{path}: pinned path {where} is dropped")
             new = kept_ancestor(full, original)
             if new is None:
                 raise SystemExit(f"{path}: pruned commit {commit} has no kept ancestor")
