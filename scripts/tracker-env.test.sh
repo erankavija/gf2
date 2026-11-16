@@ -1,6 +1,7 @@
 #!/bin/sh
 # Behavioral test for scripts/tracker-env. Scratch repositories live under
-# $TMPDIR; a fake store index stands in for a tracker store, so jit never runs.
+# $TMPDIR; a fake store index stands in for a tracker store and a fake jit
+# answers lease lookups, so the real jit never runs.
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd -P)
@@ -53,6 +54,25 @@ gitq -C "$EMPTY" worktree add -q "$BASE/empty-wt" -b wt
 # shellcheck disable=SC2016 # expanded by the probing shell
 probe='printf "%s\n" "$JIT_DATA_DIR" "$JIT_WORKTREE_ROOT" "${JIT_AGENT_ID-<unset>}"'
 empty_probe='printf "%s\n%s\n%s|%s\n" "$JIT_DATA_DIR" "$JIT_WORKTREE_ROOT" "${JIT_AGENT_ID+set}" "${JIT_AGENT_ID-<unset>}"'
+
+# A fake jit: `claim status --issue leased --json` reports a lease held by
+# agent:holder, `--issue broken` fails, any other issue has none; every other
+# command prints the identity it runs as.
+mkdir -p "$TMP/bin"
+FAKE_JIT="$TMP/bin/jit"
+cat >"$FAKE_JIT" <<'FAKE'
+#!/bin/sh
+if [ "$1 $2 $3" = "claim status --issue" ]; then
+  case $4 in
+  leased) printf '{\n  "count": 1,\n  "leases": [\n    {\n      "agent_id": "agent:holder",\n      "issue_id": "leased"\n    }\n  ]\n}\n' ;;
+  broken) exit 3 ;;
+  *) printf '{\n  "count": 0,\n  "leases": []\n}\n' ;;
+  esac
+  exit 0
+fi
+printf '%s\n' "${JIT_AGENT_ID-<unset>}"
+FAKE
+chmod +x "$FAKE_JIT"
 
 expect() { # $1: label, $2: actual, $3: expected
   [ "$2" = "$3" ] || fail "$1: got [$2], expected [$3]"
@@ -109,6 +129,37 @@ for shell in sh bash zsh; do
   expect "$shell primary eval" "$out" "$(printf '%s\n' "$P/.jit" "$P" '<unset>')"
   printed=$(cd "$P" && env -u JIT_AGENT_ID "$shell" "$ENTRY")
   case $printed in *JIT_AGENT_ID*) fail "$shell primary printed an identity: $printed" ;; esac
+
+  # --- a5773e5b: a gate command on a leased issue runs as the lease holder -
+  run_jit() { # $1: directory, then the jit arguments; identity unset
+    dir=$1
+    shift
+    (cd "$dir" && env -u JIT_AGENT_ID "$shell" "$ENTRY" "$FAKE_JIT" "$@")
+  }
+  out=$(run_jit "$BASE/a/wt/sub" gate evaluate leased cargo-ci 2>"$TMP/err")
+  expect "$shell lease holder" "$out" agent:holder
+  grep -qF 'agent:holder' "$TMP/err" || fail "$shell lease holder note: $(cat "$TMP/err")"
+  for sub in eval evaluate-all fail add status status-all; do
+    out=$(run_jit "$BASE/a/wt" gate "$sub" leased 2>/dev/null)
+    expect "$shell lease holder $sub" "$out" agent:holder
+  done
+  out=$(run_jit "$BASE/a/wt" gate evaluate --json --by lead --gate cargo-ci leased 2>/dev/null)
+  expect "$shell lease holder after options" "$out" agent:holder
+  # Without a lease, a lookup failure or a gate command, the default stands.
+  out=$(run_jit "$BASE/a/wt" gate evaluate free cargo-ci 2>"$TMP/err")
+  expect "$shell unleased gate" "$out" agent:wt
+  [ ! -s "$TMP/err" ] || fail "$shell unleased gate wrote: $(cat "$TMP/err")"
+  out=$(run_jit "$BASE/a/wt" gate evaluate broken cargo-ci 2>/dev/null)
+  expect "$shell failed lookup" "$out" agent:wt
+  out=$(run_jit "$BASE/a/wt" issue show leased)
+  expect "$shell non-gate command" "$out" agent:wt
+  out=$(run_jit "$BASE/a/wt" gate evaluate-many cargo-ci leased 2>/dev/null)
+  expect "$shell multi-issue gate command" "$out" agent:wt
+  # A caller-set identity and the primary checkout are unchanged.
+  out=$(cd "$BASE/a/wt" && JIT_AGENT_ID=agent:caller "$shell" "$ENTRY" "$FAKE_JIT" gate evaluate leased)
+  expect "$shell caller id over lease" "$out" agent:caller
+  out=$(run_jit "$P" gate evaluate leased 2>/dev/null)
+  expect "$shell primary leased" "$out" '<unset>'
 
   # --- REQ-05: the command's exit status passes through ---------------------
   rc=0

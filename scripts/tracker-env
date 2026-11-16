@@ -5,10 +5,18 @@
 #   JIT_DATA_DIR       .jit under the primary checkout, the parent of the git
 #                      common directory
 #   JIT_WORKTREE_ROOT  the invoking checkout's top level
-#   JIT_AGENT_ID       kept when set; in a linked worktree otherwise
+#   JIT_AGENT_ID       kept when set; in a linked worktree otherwise the
+#                      holder of the active lease on the issue a
+#                      `jit gate <subcommand> <issue>` command names, or else
 #                      agent:<name git registers the worktree under>; in the
 #                      primary checkout otherwise unset, so jit uses its
 #                      configured agent
+#
+# A gate run from a linked worktree thus records the caller's JIT_AGENT_ID,
+# the issue's lease holder, or the worktree's name, in that order. The lease
+# lookup applies to the gate subcommands that take one issue first
+# (evaluate, eval, evaluate-all, fail, add, status, status-all) and runs the
+# command's own jit; a failed lookup or no lease keeps the worktree's name.
 #
 #   tracker-env <command> [args...]   exec the command in that environment
 #   tracker-env                       print export lines for `eval`
@@ -37,16 +45,56 @@ if [ "$gitdir" != "$common" ]; then
   if [ -e "$top/.jit" ] || [ -L "$top/.jit" ]; then
     die "linked worktree holds a store of its own: $top/.jit"
   fi
-  if [ "${JIT_AGENT_ID+set}" != set ]; then
-    JIT_AGENT_ID="agent:$(basename "$gitdir")"
-    export JIT_AGENT_ID
-  fi
 fi
 [ -f "$store/index.json" ] || die "no tracker store at $store (missing index.json)"
 
 JIT_DATA_DIR=$store
 JIT_WORKTREE_ROOT=$top
 export JIT_DATA_DIR JIT_WORKTREE_ROOT
+
+# Prints the issue a `jit gate <subcommand> <issue> ...` command names.
+gate_issue() {
+  [ "$#" -ge 3 ] && [ "$(basename "$1")" = jit ] && [ "$2" = gate ] || return 1
+  case $3 in
+  evaluate | eval | evaluate-all | fail | add | status | status-all) ;;
+  *) return 1 ;;
+  esac
+  shift 3
+  skip=
+  for arg do
+    if [ -n "$skip" ]; then
+      skip=
+      continue
+    fi
+    case $arg in
+    --) skip= ;;
+    --gate | -b | --by | --limit | --status | --tail) skip=1 ;;
+    -*) ;;
+    *) printf '%s\n' "$arg"; return 0 ;;
+    esac
+  done
+  return 1
+}
+
+# Prints the agent holding the active lease on issue $2, using jit $1.
+lease_holder() {
+  "$1" claim status --issue "$2" --json 2>/dev/null |
+    sed -n 's/^ *"agent_id": *"\([^"]*\)".*/\1/p' | sed -n 1p
+}
+
+if [ "$gitdir" != "$common" ] && [ "${JIT_AGENT_ID+set}" != set ]; then
+  holder=
+  if issue=$(gate_issue "$@"); then
+    holder=$(lease_holder "$1" "$issue") || holder=
+  fi
+  if [ -n "$holder" ]; then
+    printf 'tracker-env: running as %s, the lease holder of %s\n' "$holder" "$issue" >&2
+    JIT_AGENT_ID=$holder
+  else
+    JIT_AGENT_ID="agent:$(basename "$gitdir")"
+  fi
+  export JIT_AGENT_ID
+fi
 
 if [ "$#" -gt 0 ]; then
   exec "$@"

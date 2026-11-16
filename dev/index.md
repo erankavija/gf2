@@ -24,7 +24,9 @@ The workflow rules are in the JIT workflow section of
   repository. A fresh clone mounts it with `scripts/tracker-bootstrap <path-or-url>`.
   On a host with a mounted tracker, its home is `git -C .jit remote get-url origin`; a fresh clone on that host mounts it with `scripts/tracker-bootstrap "$(git -C <primary-checkout>/.jit remote get-url origin)"`.
 - A linked worktree runs jit as `scripts/tracker-env jit ...` and finds the
-  store's files under the primary checkout's `.jit/`.
+  store's files under the primary checkout's `.jit/`. A gate run there records
+  the caller's `JIT_AGENT_ID`, otherwise the holder of the issue's active
+  lease, otherwise `agent:<worktree name>`.
 - Skill scripts that require `.jit` under their root run against the primary
   checkout.
 - A document existing only on a branch is linked with `jit doc add --commit

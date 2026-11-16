@@ -169,7 +169,7 @@ mechanical documentation check resolves.
 ## JIT workflow
 
 - `.jit/` is the checkout of the tracker repository; the code repository ignores it. A fresh clone mounts it with `scripts/tracker-bootstrap <path-or-url>`. On a host with a mounted tracker, its home is `git -C .jit remote get-url origin`; a fresh clone on that host mounts it with `scripts/tracker-bootstrap "$(git -C <primary-checkout>/.jit remote get-url origin)"`.
-- Run jit from a linked worktree through `scripts/tracker-env jit ...`. The entry point sets `JIT_DATA_DIR` to the primary checkout's `.jit/`, where such a worktree finds the store's files, and `JIT_WORKTREE_ROOT` to the worktree.
+- Run jit from a linked worktree through `scripts/tracker-env jit ...`. The entry point sets `JIT_DATA_DIR` to the primary checkout's `.jit/`, where such a worktree finds the store's files, and `JIT_WORKTREE_ROOT` to the worktree. A gate run there records the caller's `JIT_AGENT_ID`, otherwise the holder of the issue's active lease, otherwise `agent:<worktree name>`.
 - Skill scripts that require `.jit` under their root run against the primary checkout.
 - Read `.jit/reference/content-standards.md` before authoring issues or planning documents.
 - Derive hierarchy, templates, gates, namespaces, and documentation paths from repository configuration.
