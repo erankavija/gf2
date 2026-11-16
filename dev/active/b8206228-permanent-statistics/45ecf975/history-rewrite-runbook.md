@@ -56,19 +56,23 @@ claims, leases, locks and the worktree identity under the code repository's
    the contents of [reword_subjects.py](reword_subjects.py), which rewords the
    subjects of the listed commits on `main` that break the commit convention.
    `drop` removes `.jit` and every path under it first.
-5. `git gc --prune=now --aggressive`. Clone the mirror to a checkout, `<rw>`.
-   A parked branch whose ref is missing from the mirror, or whose
-   `git diff main...<branch>` disagrees with the original outside `.jit` and
-   the stripped blobs, stops the run. A head commit that only removed `.jit`
-   paths, as the cutover's cleaning commit did, is pruned: its map entry is
-   all zeros and the ref moves to its nearest kept ancestor.
+5. `git gc --prune=now --aggressive`. Make every mirror branch a local branch
+   in checkout `<rw>`:
+   `git clone --bare <mirror> <rw>/.git`,
+   `git -C <rw> config core.bare false`, then
+   `git -C <rw> reset --hard`. This lets
+   `scripts/check-references.py` resolve paths named in tracker prose against
+   every local branch head. A parked branch whose ref is missing from the
+   mirror, or whose `git diff main...<branch>` disagrees with the original
+   outside `.jit` and the stripped blobs, stops the run. A head commit that
+   only removed `.jit` paths, as the cutover's cleaning commit did, is pruned:
+   its map entry is all zeros and the ref moves to its nearest kept ancestor.
 6. Mount and remap in `<rw>`:
    - `scripts/tracker-bootstrap <tracker>`, where `<tracker>` is the primary
-     checkout's `.jit`. Its nonzero exit is accepted when its findings are
-     `gate-run-reference` (gate-run records are machine-local and absent from
-     a clone) and the `document-reference` errors of the unremapped pins.
-   - Copy `gate-runs/` and `gate-artifacts/` of the primary `.jit` (read only)
-     into `<rw>/.jit`.
+     checkout's `.jit`. The store declares gate-run records machine-local
+     (`[storage] gate_run_records`), so a clone validates without them; the
+     bootstrap's nonzero exit is accepted when its only findings are the
+     `document-reference` errors of the unremapped pins.
    - Record `git -C .jit rev-parse HEAD`, run
      `scripts/tracker-env python3 dev/active/b8206228-permanent-statistics/45ecf975/map_pins.py <mirror>/filter-repo/commit-map <backup>/gf2.git`,
      commit the remapped pins in the tracker with `scripts/tracker-snapshot`,
@@ -158,15 +162,19 @@ claims, leases, locks and the worktree identity under the code repository's
 
 ## Rehearsal
 
-A rehearsal runs steps 1 and 3 to 7 on a scratch mirror of the repository as
-it stands after the cutover, with a scratch tracker clone in place of the
-primary `.jit`, and step 10 on a scratch copy of a checkout holding a mounted
-tracker and a `.git/jit/`. It runs step 11's inventory, mechanical pass and
-check on those scratch copies, dispatching no workers and pushing nothing.
+A rehearsal runs steps 1 to 7 on a scratch mirror of the repository as it
+stands after the cutover, with a scratch tracker clone in place of the primary
+`.jit`. Step 2 derives deletions from that mirror's refs and the scratch
+tracker's issue states using the step-2 rules, then applies them to the scratch
+mirror before step 3 builds the strip list. The rehearsal also runs step 10 on
+a scratch copy of a checkout holding a mounted tracker and a `.git/jit/`. It
+runs step 11's inventory, mechanical pass and check on those scratch copies,
+dispatching no workers and pushing nothing.
 It reports to the owner
 through the issue:
 
 - pack size, refs rewritten, commits on `main` and the compressed map size;
+- the deleted and kept branch counts of step 2;
 - `git -C mirror.git log --all --format= --name-only -- .jit | wc -l`, which is 0;
 - the dropped counts of the old and the new `drop` over
   `git log --all --format= --name-only | sort -u` of the source, which differ
@@ -184,6 +192,7 @@ through the issue:
   after the mechanical pass is expected to fail with zero mapped and exactly
   the remaining short and pruned references (ambiguous and unmapped references
   are reported but do not fail the check);
+- `./scripts/cargo-ci.sh` in `<rw>` after step 11's mechanical pass passes;
 - one line per parked branch: old head, new head, and whether
   `git diff --stat main...<branch>` before and after agree outside `.jit` and
   the stripped paths.
