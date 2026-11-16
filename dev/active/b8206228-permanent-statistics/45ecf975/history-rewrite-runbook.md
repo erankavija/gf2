@@ -15,8 +15,14 @@ claims, leases, locks and the worktree identity under the code repository's
 - The tracker cutover (`@/issue/6889e6e6`) has been executed and verified on
   the live repository: `git ls-files .jit` is empty on `main` and on every
   surviving branch, and its snapshot precedes the step-1 backup.
-- Every live branch is merged into `main`, abandoned, or on the parked list,
-  by the owner's decision of 2026-11-15, relayed by steward gf2-96.
+- Every live branch is merged into `main`, deleted at step 2, or parked, by
+  the owner's decisions of 2026-11-15 (steward gf2-96) and 2026-11-16
+  (steward gf2-92). Parked is every unmerged branch of an open issue; it is
+  carried through as a rewritten ref.
+- Worktrees: the reseat recreates only `.agents/worktrees/agent-de311215` and
+  `.agents/worktrees/agent-fd9d5416`, keeping their untracked built arms.
+  Every other worktree is removed before the window, after a check of its
+  ignored content (`git -C <path> status --porcelain --ignored`).
 - The Rehearsal below (REQ-06 of `@/issue/2a4c2684`) has passed from the
   current `main`.
 - All worktrees are clean or their untracked files are recorded below. A
@@ -31,12 +37,16 @@ claims, leases, locks and the worktree identity under the code repository's
    `git clone --mirror .jit <backup>/tracker.git`, and
    `git -C <backup>/tracker.git bundle verify <backup>/tracker.bundle`.
    External archives stay in `~/.local/share/gf2/external-inputs/`.
-2. Delete the stale branches, which the bundle still holds: every branch not
-   merged into `main` whose issue is done or that has no issue, except those a
-   live issue or queue line uses and the parked branches. Remove their worktrees
-   with them. The list is prepared outside the tree before the rewrite, records
-   each parked branch's head and worktree path, and branches of doubtful state
-   go to the owner first.
+2. Delete the stale branches, which the bundle still holds: every branch
+   merged into `main`, every branch without an issue, and every branch whose
+   issue is done, rejected, or archived. The owner also named for deletion the
+   superseded pre-replay branches `worktree-agent-243d1160` and
+   `worktree-agent-7fbd1042`, whose `-a` successors stay parked, the backup
+   branch `backup-506f76d4-e60912a40`, and the branches abandoned on
+   2026-11-15, `worktree-agent-2bca2b28` and `wip-3461a52a-cb96b9810`. The list is
+   derived from the refs and the tracker states before the rewrite, prepared
+   outside the tree, and records each parked branch's head; a branch of
+   doubtful state goes to the owner first.
 3. Clone a fresh mirror and remove its `origin`. List blobs over 1 MiB absent from
    `main`'s tree into `strip-ids.txt`.
 4. Rewrite:
@@ -97,16 +107,18 @@ claims, leases, locks and the worktree identity under the code repository's
       `git -C .jit rev-parse HEAD` equals the step-6 snapshot. The primary
       `.jit` keeps its own machine-local files.
     - Set `origin` and run `scripts/install-hooks.sh`.
-    - Recreate needed worktrees at the rewritten branch heads, each without a
-      `.jit`. The new `.git` has no `worktrees/` entries, so
-      `git worktree repair` alone fails. For pinned and parked worktrees, keep
-      the untracked built arms in place. For each `<path>`, create a fresh empty
-      parent `<tmpdir>` and set `<tmp>` to `<tmpdir>/$(basename <path>)`:
-      `git worktree add --no-checkout <tmp> <branch>`, move `<tmp>/.git` over
-      `<path>/.git`, remove `<tmp>` and its parent, then `git worktree repair
-      <path>` and `git -C <path> reset`; its status is then clean. Matching the
-      basename preserves the registered admin name. A parked worktree with
-      uncommitted tracked changes stops the reseat.
+    - Recreate the kept worktrees of the Preconditions, each without a `.jit`.
+      The new `.git` has no `worktrees/` entries, so `git worktree repair`
+      alone fails. Each keeps its untracked built arms in place: create a fresh
+      empty parent `<tmpdir>`, set `<tmp>` to `<tmpdir>/<admin name>` (the
+      recorded admin name, which can differ from the checkout's basename),
+      and run `git worktree add --no-checkout <tmp> <branch>`, or
+      `git worktree add --no-checkout --detach <tmp> <new>` for a detached
+      worktree, where `<new>` is its recorded HEAD mapped as step 6 maps a pin.
+      Move `<tmp>/.git` over `<path>/.git`, remove `<tmp>` and its parent,
+      then `git worktree repair <path>` and `git -C <path> reset`; its status
+      is then clean. A kept worktree with uncommitted tracked changes stops
+      the reseat.
     - The recorded worktree paths and admin names are unchanged; the leases of
       `jit claim list` and the worktree ID equal the recorded ones, and
       `jit validate` passes.
