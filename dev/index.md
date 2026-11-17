@@ -70,6 +70,14 @@ One branch lands on `main` at a time, in these steps:
    of `main`.
 7. `scripts/tracker-snapshot` records the `landed` verdict.
 
+A store-sourced projection, such as the invariant list in `AGENTS.md`
+rendered from `.jit/invariants.toml`, lands in this order: the tracked copy
+changes on the branch; when the branch enters review, the store entry changes
+and `scripts/tracker-snapshot` records it; the merge follows promptly. Between
+the store edit and the merge, the documentation check and repository
+validation in the primary checkout read `main`'s copy as stale, and nobody
+repairs it there in that window, with `jit validate --fix` or otherwise.
+
 ## Epic documents: `active/`
 
 `active/<epic-short-id>-<slug>/` holds the prose and code of one open epic, per
