@@ -1,7 +1,7 @@
 {
  "epic_id": "d77176e5-eff3-4212-b24d-d475328b1090",
  "epic_short_id": "d77176e5",
- "current_wave": 4,
+ "current_wave": 5,
  "waves": [
   {
    "wave_number": 1,
@@ -306,6 +306,33 @@
     {
      "short_id": "2275f760",
      "status": "filed: converge code fingerprints, after 9a1b24fc"
+    }
+   ]
+  },
+  {
+   "wave_number": 5,
+   "note": "Session 9 (lead gf2-a4, steward gf2-29). One cargo worker at a time; f970febd before 9a1b24fc B (shared ldpc/core.rs).",
+   "issues": [
+    {
+     "short_id": "3461a52a",
+     "status": "2026-11-17 window curves recorded; 0.90 estimate falsified by 0.057 dB; open until 0e84343d and 5abf489d decide"
+    },
+    {
+     "short_id": "f970febd",
+     "status": "dispatched",
+     "branch": "worktree-agent-f970febd",
+     "dispatches": [
+      {
+       "vendor": "codex",
+       "model": "gpt-6.1-sol",
+       "effort": "high",
+       "task": "implementation: multi-file contract type"
+      }
+     ]
+    },
+    {
+     "short_id": "9a1b24fc",
+     "status": "branch B waits for f970febd landing"
     }
    ]
   }
