@@ -90,10 +90,13 @@ claims, leases, locks and the worktree identity under the code repository's
    `git -C <mirror> log --all --format= --name-only -- .jit | wc -l`, which is 0.
 8. Owner confirms with these numbers.
 9. Push with `--no-verify`, because the pre-push hook would inspect unrewritten
-   ranges: `origin` holds `main` and `badges`, so the push is
-   `git push --no-verify --force origin main badges` plus tags. The
-   `Main protected` ruleset denies non-fast-forward pushes unless the account's
-   repository role bypasses it.
+   ranges: `git push --no-verify --force origin main`. `main` is pushed
+   alone: `badges` on `origin` is a one-commit orphan the rewrite leaves
+   unchanged, `origin` holds no tags, and the local tags are backups `origin`
+   never had. The `Main protected` ruleset denies non-fast-forward pushes
+   unless the account's repository role bypasses it. The push may follow
+   step 10; no `git fetch` from `origin` runs between the reseat and the
+   push, because it would bring the old history back.
 10. Reseat the primary checkout:
     - Record `jit claim list`, the ID of `jit worktree info`, and for each kept
       worktree its `worktree` entry from `git worktree list --porcelain` plus
@@ -103,10 +106,19 @@ claims, leases, locks and the worktree identity under the code repository's
       The primary tracker is the one writable store; a non-fast-forward means
       a tracker write during the window and stops the step. Then
       `git -C .jit push origin main`.
-    - Move `.git` aside, `git clone --bare <mirror> .git`, set
-      `core.bare false`, run `git reset` to fill the index, and copy `jit/`
-      from the moved-aside `.git` into the new `.git` before any jit command.
-      A bare clone keeps every local branch. The
+    - Move `.git` aside, `git clone --mirror <mirror> .git`, set
+      `core.bare false`, unset `remote.origin.mirror` and
+      `remote.origin.tagopt`, set `remote.origin.fetch` to
+      `+refs/heads/*:refs/remotes/origin/*`, delete every `refs/remotes/`
+      ref (the rewritten copies of the old remote state), run `git reset` to
+      fill the index, and copy `jit/` from the moved-aside `.git` into the new
+      `.git` before any jit command. A mirror clone keeps every ref; a bare
+      clone keeps only branches and tags, so it would drop `refs/archive/`,
+      `refs/salvage/`, `refs/backup/` and `refs/claude/`. A clone carries
+      neither `.git/info/exclude` nor the local `branch.*` and
+      `core.logallrefupdates` settings: copy `info/exclude` from the
+      moved-aside `.git` and set those keys again, then compare
+      `git config --list --local` with the moved-aside `.git`'s. The
       ignored `.jit/` lies outside `.git` and stays in place;
       `git -C .jit rev-parse HEAD` equals the step-6 snapshot. The primary
       `.jit` keeps its own machine-local files.
