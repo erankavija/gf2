@@ -975,6 +975,81 @@ pub const NORMAL_RATE_5_6_TABLE: &[&[usize]] = &[
     &[29, 7347, 8027],
 ];
 
+// Canonical constructor/table registry; profile enumeration reads the same rows.
+pub(crate) const CODE_TABLES: &[(super::FrameSize, crate::bch::CodeRate, &[&[usize]])] = &[
+    (
+        super::FrameSize::Short,
+        crate::bch::CodeRate::Rate1_2,
+        SHORT_RATE_1_2_TABLE,
+    ),
+    (
+        super::FrameSize::Short,
+        crate::bch::CodeRate::Rate3_5,
+        SHORT_RATE_3_5_TABLE,
+    ),
+    (
+        super::FrameSize::Short,
+        crate::bch::CodeRate::Rate2_3,
+        SHORT_RATE_2_3_TABLE,
+    ),
+    (
+        super::FrameSize::Short,
+        crate::bch::CodeRate::Rate3_4,
+        SHORT_RATE_3_4_TABLE,
+    ),
+    (
+        super::FrameSize::Short,
+        crate::bch::CodeRate::Rate4_5,
+        SHORT_RATE_4_5_TABLE,
+    ),
+    (
+        super::FrameSize::Short,
+        crate::bch::CodeRate::Rate5_6,
+        SHORT_RATE_5_6_TABLE,
+    ),
+    (
+        super::FrameSize::Normal,
+        crate::bch::CodeRate::Rate1_2,
+        NORMAL_RATE_1_2_TABLE,
+    ),
+    (
+        super::FrameSize::Normal,
+        crate::bch::CodeRate::Rate3_5,
+        NORMAL_RATE_3_5_TABLE,
+    ),
+    (
+        super::FrameSize::Normal,
+        crate::bch::CodeRate::Rate2_3,
+        NORMAL_RATE_2_3_TABLE,
+    ),
+    (
+        super::FrameSize::Normal,
+        crate::bch::CodeRate::Rate3_4,
+        NORMAL_RATE_3_4_TABLE,
+    ),
+    (
+        super::FrameSize::Normal,
+        crate::bch::CodeRate::Rate4_5,
+        NORMAL_RATE_4_5_TABLE,
+    ),
+    (
+        super::FrameSize::Normal,
+        crate::bch::CodeRate::Rate5_6,
+        NORMAL_RATE_5_6_TABLE,
+    ),
+];
+
+pub(crate) fn code_table(
+    frame_size: super::FrameSize,
+    rate: crate::bch::CodeRate,
+) -> &'static [&'static [usize]] {
+    CODE_TABLES
+        .iter()
+        .find(|&&(frame, code_rate, _)| frame == frame_size && code_rate == rate)
+        .expect("every DVB-T2 configuration has a code table")
+        .2
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

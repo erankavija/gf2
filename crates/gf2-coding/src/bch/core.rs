@@ -11,7 +11,7 @@ use gf2_core::gfp::Fp;
 use gf2_core::BitVec;
 
 /// Code rates for DVB-T2 standard.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum CodeRate {
     Rate1_2,
     Rate3_5,

@@ -3,7 +3,7 @@
 use crate::bch::CodeRate;
 
 /// DVB-T2 frame size (codeword length).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FrameSize {
     /// Short frame: n = 16200 bits
     Short,
