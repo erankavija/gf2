@@ -102,7 +102,7 @@ impl NrBaseGraph {
         }
     }
 
-    /// Number of systematic base columns (K_b, not the Z-selection K_b').
+    /// Number of systematic base columns K_b in the mother code.
     pub fn systematic_columns(self) -> usize {
         match self {
             Self::Bg1 => nr_5g::bg1::BG1_KB,
@@ -134,7 +134,7 @@ pub struct ColumnFractions {
     pub transmitted: ReducedRational,
     /// Fraction fixed to zero by shortening.
     pub filler: ReducedRational,
-    /// Fraction with no channel information.
+    /// Fraction erased by puncturing.
     pub punctured: ReducedRational,
 }
 
@@ -142,7 +142,7 @@ pub struct ColumnFractions {
 ///
 /// Filler occupies `[filler_start, K_b)`, transmitted parity occupies
 /// `[K_b, parity_end)`, and leading systematic puncturing applies only before
-/// the filler boundary. The lifting size is deliberately absent.
+/// the filler boundary. Boundaries use reduced base-column fractions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NrFloodingProfile {
     base_graph: NrBaseGraph,
@@ -268,8 +268,7 @@ impl NrFloodingProfile {
     }
 }
 
-/// Standard-code identity used by flooding normalization. It carries no
-/// decoder setting and does not change decoding behavior.
+/// Standard-code identity used by flooding normalization.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FloodingProfile {
     /// A DVB-T2 code-table row, which is already its own table key.
@@ -339,7 +338,7 @@ pub enum FloodingWitness {
 }
 
 impl FloodingWitness {
-    /// Derives the exact constructor profile without expanding a matrix.
+    /// Derives the exact constructor profile from its arguments.
     /// NR variants scan the lifting sets; DVB-T2 takes constant time.
     ///
     /// # Panics
@@ -353,8 +352,8 @@ impl FloodingWitness {
                 lifting_factor,
             } => {
                 assert!(
-                    all_lifting_sizes().contains(&(lifting_factor as u16))
-                        && lifting_factor <= u16::MAX as usize,
+                    lifting_factor <= u16::MAX as usize
+                        && all_lifting_sizes().contains(&(lifting_factor as u16)),
                     "invalid lifting factor"
                 );
                 FloodingProfile::Nr5g(NrFloodingProfile::mother(base_graph))
@@ -391,7 +390,7 @@ pub struct FloodingProfileEntry {
 ///
 /// The first call derives witnesses from the DVB-T2 tables and all NR payload
 /// lengths and lifting-size selection intervals; later calls borrow the cached
-/// result. No parity-check matrices are expanded. For P possible payload lengths,
+/// result. For P possible payload lengths,
 /// L lifting sizes, C base columns and U keys, the initial cost is bounded by
 /// O(P L C Q log U) time and O(U) space, where Q is [`NR_KEY_RESOLUTION`].
 /// Unpunctured mother profiles have mother-constructor witnesses.
@@ -422,8 +421,8 @@ pub fn flooding_profile_universe() -> &'static [FloodingProfileEntry] {
                         continue;
                     }
                     // This z is selected precisely when the preceding eligible z
-                    // cannot meet the transmitted-bit budget. Smaller payloads
-                    // underflow the constructor's remaining-systematic count.
+                    // cannot meet the transmitted-bit budget. The constructor
+                    // rejects payloads smaller than the punctured section.
                     if k < 2 * z {
                         break;
                     }
@@ -468,7 +467,7 @@ pub fn flooding_profile_universe() -> &'static [FloodingProfileEntry] {
 }
 
 /// Sorted, distinct default flooding iteration caps used by the standard
-/// codecs. The result derives from the decoder constants, not a separate registry.
+/// codecs, derived from their named decoder constants.
 pub fn flooding_default_caps() -> Vec<usize> {
     let mut caps = vec![DEFAULT_MAX_LDPC_ITERATIONS, SOFT_DECODE_MAX_ITERATIONS];
     caps.sort_unstable();

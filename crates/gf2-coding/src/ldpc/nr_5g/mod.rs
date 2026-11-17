@@ -47,7 +47,9 @@ pub fn shift_table(base_graph: u8, i_ls: usize) -> Vec<Vec<i16>> {
 
 /// Returns the lifting set index for Z, panicking if Z is invalid.
 pub(crate) fn require_lifting_set_index(z: usize) -> usize {
-    lifting::lifting_set_index(z as u16)
+    u16::try_from(z)
+        .ok()
+        .and_then(lifting::lifting_set_index)
         .unwrap_or_else(|| panic!("Z={z} is not a valid 5G NR lifting size"))
 }
 
@@ -153,7 +155,7 @@ pub fn max_payload_for_lifting(base_graph: u8, z: usize) -> usize {
         "base_graph must be 1 or 2, got {base_graph}"
     );
     assert!(
-        is_valid_lifting_size(z as u16),
+        z <= u16::MAX as usize && is_valid_lifting_size(z as u16),
         "Z={z} is not a valid 5G NR lifting size"
     );
     // Candidate K_b' values in descending order: BG1 has the constant 22; BG2
@@ -218,7 +220,7 @@ impl QuasiCyclicLdpc {
             "base_graph must be 1 or 2, got {base_graph}"
         );
         assert!(
-            is_valid_lifting_size(lifting_factor as u16),
+            lifting_factor <= u16::MAX as usize && is_valid_lifting_size(lifting_factor as u16),
             "lifting_factor {lifting_factor} is not a valid 5G NR lifting size"
         );
 
@@ -229,7 +231,7 @@ impl QuasiCyclicLdpc {
         };
 
         let mut qc = Self::new(base_matrix, lifting_factor);
-        qc.flooding_profile = Some(FloodingProfile::Nr5g(NrFloodingProfile::mother(
+        qc.constructor_profile = Some(FloodingProfile::Nr5g(NrFloodingProfile::mother(
             NrBaseGraph::from_number(base_graph),
         )));
         qc
@@ -252,6 +254,7 @@ impl QuasiCyclicLdpc {
     /// - `base_graph` is not 1 or 2
     /// - `target_n <= target_k`
     /// - No valid lifting size exists for the given (n, k)
+    /// - `target_k < 2 * Z` for the selected lifting size
     /// - The mother code has insufficient bits for the target n
     ///
     /// # Complexity
@@ -289,6 +292,10 @@ impl QuasiCyclicLdpc {
         let z = select_lifting_factor(base_graph, target_n, target_k).unwrap_or_else(|| {
             panic!("No valid lifting size for BG{base_graph} with (n={target_n}, k={target_k})")
         });
+        assert!(
+            target_k >= 2 * z,
+            "target_k must be at least 2 * Z (target_k={target_k}, Z={z})"
+        );
 
         let full_k = kb * z;
         let full_n = nb * z;
@@ -798,6 +805,18 @@ mod tests {
     #[should_panic(expected = "not a valid 5G NR lifting size")]
     fn test_nr_5g_invalid_lifting_factor() {
         QuasiCyclicLdpc::nr_5g(2, 100);
+    }
+
+    #[test]
+    #[should_panic(expected = "not a valid 5G NR lifting size")]
+    fn test_lifting_set_index_rejects_truncated_size() {
+        require_lifting_set_index(usize::from(u16::MAX) + 3);
+    }
+
+    #[test]
+    #[should_panic(expected = "not a valid 5G NR lifting size")]
+    fn test_nr_5g_rejects_truncated_lifting_factor() {
+        QuasiCyclicLdpc::nr_5g(2, usize::from(u16::MAX) + 3);
     }
 
     #[test]

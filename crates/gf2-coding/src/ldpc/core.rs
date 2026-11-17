@@ -46,7 +46,7 @@ impl LdpcCode {
     }
 
     /// Standard flooding-normalization identity retained by the constructors.
-    /// Raw parity-check matrices carry no profile; no identity is inferred from edges.
+    /// Returns `None` for codes constructed from raw parity-check matrices.
     pub fn flooding_profile(&self) -> Option<FloodingProfile> {
         self.flooding_profile
     }
@@ -90,22 +90,28 @@ impl LdpcCode {
         &self.h
     }
 
-    /// Creates an LDPC code from a quasi-cyclic structure, retaining any
-    /// standard flooding profile attached by its constructor.
+    /// Creates an LDPC code from a quasi-cyclic structure, transferring its
+    /// standard constructor provenance to the code's authoritative flooding
+    /// profile. The retained QC structure contains only matrix structure.
     pub fn from_quasi_cyclic(qc: &QuasiCyclicLdpc) -> Self {
         let edges = qc.to_edges();
         let m = qc.expanded_rows();
         let n = qc.expanded_cols();
         let mut code = Self::from_edges(m, n, &edges);
-        code.qc = Some(std::sync::Arc::new(qc.clone()));
-        code.flooding_profile = qc.flooding_profile;
+        code.flooding_profile = qc.constructor_profile;
+        let mut structure = qc.clone();
+        structure.constructor_profile = None;
+        code.qc = Some(std::sync::Arc::new(structure));
         code
     }
 
     /// The QC description retained by [`Self::from_quasi_cyclic`],
     /// [`Self::attach_quasi_cyclic`] or the DVB-T2 constructors.
     ///
-    /// Returns `None` for other codes; structure is not inferred from edges.
+    /// [`Self::flooding_profile`] is authoritative. Constructor provenance is
+    /// cleared from this structure, so rebuilding it with [`Self::from_quasi_cyclic`]
+    /// produces a code with `None` as its profile. Returns `None` for codes
+    /// whose QC structure has been dropped or was never attached.
     pub fn quasi_cyclic(&self) -> Option<&QuasiCyclicLdpc> {
         self.qc.as_deref()
     }
@@ -137,7 +143,9 @@ impl LdpcCode {
             sorted(&lifted) == sorted(&self.h)
         });
         if equal {
-            self.qc = Some(std::sync::Arc::new(qc.clone()));
+            let mut structure = qc.clone();
+            structure.constructor_profile = None;
+            self.qc = Some(std::sync::Arc::new(structure));
         }
         equal
     }
@@ -394,7 +402,7 @@ impl QcCirculant {
 /// non-overlapping. Lifted row `r` is parity check [`Self::row_order`]`[r]` and
 /// lifted column `c` is variable [`Self::col_order`]`[c]` of the code; both
 /// orders are the identity unless set by [`Self::with_orders`].
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct QuasiCyclicLdpc {
     base_rows: usize,
     base_cols: usize,
@@ -404,8 +412,22 @@ pub struct QuasiCyclicLdpc {
     /// `None` is the identity.
     row_order: Option<Vec<usize>>,
     col_order: Option<Vec<usize>>,
-    pub(super) flooding_profile: Option<FloodingProfile>,
+    // Transferred to LdpcCode during construction; equality compares structure.
+    pub(super) constructor_profile: Option<FloodingProfile>,
 }
+
+impl PartialEq for QuasiCyclicLdpc {
+    fn eq(&self, other: &Self) -> bool {
+        self.base_rows == other.base_rows
+            && self.base_cols == other.base_cols
+            && self.expansion_factor == other.expansion_factor
+            && self.circulants == other.circulants
+            && self.row_order == other.row_order
+            && self.col_order == other.col_order
+    }
+}
+
+impl Eq for QuasiCyclicLdpc {}
 
 impl QuasiCyclicLdpc {
     /// Creates the structure of a base matrix whose entries are `-1` for a zero
@@ -506,12 +528,13 @@ impl QuasiCyclicLdpc {
             circulants,
             row_order: None,
             col_order: None,
-            flooding_profile: None,
+            constructor_profile: None,
         }
     }
 
     /// Maps lifted row `r` to parity check `row_order[r]` and lifted column
     /// `c` to variable `col_order[c]`.
+    /// A non-identity column order clears standard constructor provenance.
     ///
     /// # Panics
     ///
@@ -531,6 +554,9 @@ impl QuasiCyclicLdpc {
         }
         self.row_order = normalized(row_order, self.expanded_rows(), "Row");
         self.col_order = normalized(col_order, self.expanded_cols(), "Column");
+        if self.col_order.is_some() {
+            self.constructor_profile = None;
+        }
         self
     }
 

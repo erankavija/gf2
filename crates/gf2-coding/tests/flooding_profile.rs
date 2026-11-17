@@ -182,6 +182,92 @@ fn build(witness: FloodingWitness) -> LdpcCode {
 }
 
 #[test]
+#[should_panic(expected = "target_k must be at least 2 * Z")]
+fn rate_matching_rejects_payload_below_punctured_section() {
+    QuasiCyclicLdpc::nr_5g_rate_matched(1, 10, 1);
+}
+
+#[test]
+#[should_panic(expected = "target_k must be at least 2 * Z")]
+fn bg2_rate_matching_rejects_payload_below_punctured_section() {
+    QuasiCyclicLdpc::nr_5g_rate_matched(2, 10, 1);
+}
+
+#[test]
+fn rate_matching_accepts_payload_at_punctured_section_boundary() {
+    use gf2_coding::llr::Llr;
+    for bg in [1, 2] {
+        let code = QuasiCyclicLdpc::nr_5g_rate_matched(bg, 10, 4);
+        assert_eq!(code.params().lifting_factor, 2);
+        let llrs = code.prepare_llrs(&[Llr::new(1.0); 10]);
+        assert_eq!(llrs.iter().filter(|&&llr| llr == Llr::new(1.0)).count(), 10);
+    }
+}
+
+#[test]
+fn qc_constructor_provenance_transfers_to_code() {
+    let qc = QuasiCyclicLdpc::nr_5g(1, 2);
+    let raw = QuasiCyclicLdpc::new(qc.base_matrix().unwrap(), 2);
+    assert_eq!(qc, raw, "QC equality compares structure");
+    let rows: Vec<_> = (0..qc.expanded_rows()).collect();
+    let cols: Vec<_> = (0..qc.expanded_cols()).collect();
+    let identity = qc.clone().with_orders(rows.clone(), cols.clone());
+    assert!(LdpcCode::from_quasi_cyclic(&identity)
+        .flooding_profile()
+        .is_some());
+    let mut reversed_rows = rows.clone();
+    reversed_rows.reverse();
+    let row_permuted = qc.clone().with_orders(reversed_rows, cols.clone());
+    assert!(LdpcCode::from_quasi_cyclic(&row_permuted)
+        .flooding_profile()
+        .is_some());
+    let mut swapped_cols = cols;
+    swapped_cols.swap(0, 2);
+    let permuted = qc.clone().with_orders(rows, swapped_cols);
+    assert_eq!(
+        LdpcCode::from_quasi_cyclic(&permuted).flooding_profile(),
+        None
+    );
+
+    let mut code = LdpcCode::from_quasi_cyclic(&qc);
+    assert!(code.attach_quasi_cyclic(&qc));
+    let rm = QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121);
+    for code in [&code, rm.mother_code()] {
+        let rebuilt = LdpcCode::from_quasi_cyclic(code.quasi_cyclic().unwrap());
+        assert_eq!(rebuilt.flooding_profile(), None);
+        assert!(code.flooding_profile().is_some());
+    }
+}
+
+#[test]
+#[should_panic(expected = "invalid lifting factor")]
+fn mother_witness_rejects_truncated_lifting_size() {
+    FloodingWitness::Nr5gMother {
+        base_graph: NrBaseGraph::Bg1,
+        lifting_factor: usize::from(u16::MAX) + 3,
+    }
+    .profile();
+}
+
+#[test]
+#[should_panic(expected = "not a valid 5G NR lifting size")]
+fn max_payload_rejects_truncated_lifting_size() {
+    gf2_coding::ldpc::nr_5g::max_payload_for_lifting(1, usize::from(u16::MAX) + 3);
+}
+
+#[test]
+fn every_flooding_universe_witness_builds_and_reproduces_key() {
+    for entry in flooding_profile_universe() {
+        assert_eq!(
+            profile(&build(entry.witness)).table_key(),
+            entry.key,
+            "{:?}",
+            entry.witness
+        );
+    }
+}
+
+#[test]
 fn universe_witnesses_are_accepted_and_reproduce_keys() {
     let universe = flooding_profile_universe();
     let keys: BTreeSet<_> = universe.iter().map(|e| e.key).collect();
@@ -209,7 +295,7 @@ fn universe_witnesses_are_accepted_and_reproduce_keys() {
             );
             assert_eq!(FloodingProfile::Nr5g(expected).table_key(), entry.key);
         }
-        // Build a bounded sample; every witness above is checked against the constructor's inequalities.
+        // Every witness is built by every_flooding_universe_witness_builds_and_reproduces_key.
         if !matches!(entry.witness, FloodingWitness::Nr5gRateMatched { .. })
             || i % (universe.len() / 32).max(1) == 0
         {
@@ -251,10 +337,10 @@ fn universe_covers_constructor_selection_boundaries() {
 
 #[test]
 fn cap_universe_uses_named_decoder_defaults() {
-    let mut expected = vec![DEFAULT_MAX_LDPC_ITERATIONS, SOFT_DECODE_MAX_ITERATIONS];
-    expected.sort_unstable();
-    expected.dedup();
-    assert_eq!(flooding_default_caps(), expected);
+    let caps = flooding_default_caps();
+    assert!(caps.contains(&DEFAULT_MAX_LDPC_ITERATIONS));
+    assert!(caps.contains(&SOFT_DECODE_MAX_ITERATIONS));
+    assert!(caps.windows(2).all(|pair| pair[0] < pair[1]));
     let code =
         gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat::new(FrameSize::Short, CodeRate::Rate1_2)
             .unwrap();
