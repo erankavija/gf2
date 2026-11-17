@@ -27,6 +27,8 @@ Optimization never relaxes mathematical or standards conformance.
 - D-10: The tracker cutover runs alone, before the history rewrite; supersedes the timing of D-8.
 - D-11: A commit for work with no JIT issue carries the scope `jit:none`.
 - D-12: The cutover abandons stale branches and cleans the rest with a removal-only commit; supersedes the cleaning rule of D-10.
+- D-13: The tracked tree limit falls with a fixed headroom above the measured tree size.
+- D-14: The history rewrite carries every open-issue branch, and its commit map stays outside both repositories.
 
 ## Decision Details
 
@@ -209,3 +211,34 @@ Optimization never relaxes mathematical or standards conformance.
   tree of a branch unchanged; abandoning landed branches removes refs nobody
   resumes.
 - **Date:** 2026-11-15
+
+### D-13: The tree limit keeps a fixed headroom
+
+- **Chosen:** A change of the tracked tree limit sets it to the measured tree
+  size plus a fixed headroom of 256 kB, stated in
+  `scripts/tracked-budget.toml`. One reset to that form was made when the
+  headroom was declared; after it the limit only falls.
+- **Rejected:** A limit that only falls from the measured size: the tree is
+  not shrinking, so the next ordinary documentation commit was refused.
+- **Rejected:** Rounding to a coarse unit: the headroom would vary between
+  nothing and the unit.
+- **Reasoning:** The budget exists to keep evidence out of the tree
+  (`@/inv/committed-evidence-budget`); a fixed margin admits handoffs and
+  design text between two lowerings without weakening that.
+- **Date:** 2026-11-16
+
+### D-14: The rewrite carries open work and commits no map
+
+- **Chosen:** The history rewrite carries every surviving branch of an open
+  issue as a rewritten ref and deletes the branches of done issues and the
+  branches without an issue. Its map from old to new commit IDs is archived
+  outside both repositories, named by its digest. References to old IDs are
+  rewritten after the rewrite: mechanically where an ID maps one-to-one, by
+  reviewed low-tier workers for commits the rewrite pruned.
+- **Rejected:** A committed map in the code tree: its smallest useful form
+  exceeded the tree budget.
+- **Rejected:** A committed map in the tracker repository: text that needs a
+  lookup table to be read stays unresolved for a reader.
+- **Reasoning:** After the references are rewritten no tracked text depends
+  on the map, so `@/inv/resolvable-references` holds without it.
+- **Date:** 2026-11-17
