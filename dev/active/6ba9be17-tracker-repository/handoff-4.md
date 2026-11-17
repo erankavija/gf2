@@ -12,10 +12,10 @@
 
 ## Cutover record
 
-- Commits on `main`:
+- Main commits and cutover events:
   - `f9234e6da`: merge of the tool;
   - `bb768320e`: merge of the runbook;
-  - `641fa5a46`: P, the owner's go;
+  - Owner's go for `@/issue/6889e6e6` on 2026-11-16;
   - `a5cb565cc`: A, the invariant amendment;
   - `6c886acb5`: C, the cutover commit;
   - `86d282fab`: merge of the `6889e6e6` guidance.
@@ -71,7 +71,7 @@
 - Took over from `gf2-bf`. The owner's order on branch cleaning became charter D-12: removal-only cleaning, abandon to `refs/archive/`, and merged branches deleted.
 - Criteria were reworded several times on the owner's orders, each in its own tracker commit:
   - D-12 (`640b56fc7`);
-  - REQ-11 `port`, added then withdrawn (`b2a8192a8`, `895b63c73`);
+  - REQ-11 `port`, added in the 2026-11-15 tracker edit for `@/issue/e610f5c4`, then withdrawn (`895b63c73`);
   - the forward path only (`895b63c73`);
   - the rehearsal falsifications (`00af93484`);
   - REQ-08 of `e610f5c4`, which excepts the code-side edits.

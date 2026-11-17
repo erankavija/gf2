@@ -6,8 +6,8 @@
 ## Current state
 
 - Wound down at about 23:00 by the owner's order through the steward (`gf2-a2`): the tracker cutover has priority. This epic takes no dispatch, gate or measurement until the owner resumes it. The lead was `gf2-24`. No push; the history rewrite, the benchmark window and the streams `d77176e5`, `ae03bcd0` and `45ecf975` stay paused. `41517289` stays the owner's action.
-- Landed and closed this session: `574ed420` (merge `1ff971676`), `697b9178` (`e3772473e`), `9c0568ee` (`77891d21c`), `d8aee1f4` (`7ecd1bbe2`).
-- Landed, still open: `959ab809` REQ-01 (`6e2d5ec59`). Each failed cargo-ci step keeps its full log under `target/cargo-ci-logs/<stamp>-<pid>/` and prints the path; nextest steps also print each failing test, the error blocks and the summary. REQ-02 and REQ-03 are open. The first captured occurrence (recorded in the issue) reads as a nextest cancellation: every started test passed and 19 were not run.
+- Landed and closed this session: `574ed420`, `697b9178` (`e3772473e`), `9c0568ee` (`77891d21c`), `d8aee1f4` (`7ecd1bbe2`).
+- Landed, still open: `959ab809` REQ-01. Each failed cargo-ci step keeps its full log under `target/cargo-ci-logs/<stamp>-<pid>/` and prints the path; nextest steps also print each failing test, the error blocks and the summary. REQ-02 and REQ-03 are open. The first captured occurrence (recorded in the issue) reads as a nextest cancellation: every started test passed and 19 were not run.
 - Filed this session: `959ab809`, `4f395137` (unseeded `quick_test()` simulations), `1452ba69` (converge the wrapper self-test helpers, after `18276ff1`).
 - No process of this lead runs. No claim lease is held.
 
@@ -46,7 +46,7 @@ The next implementation dispatch is Claude.
 
 - `18276ff1` (steward and owner): REQ-08 option A, with test pools capped at the tokens they reserve and the cap taken from `RAYON_NUM_THREADS`. REQ-05 "issue guidance" means live instructions. A sustained busy host ends `test-budgets` with verdict `error`. The per-epic `test-budgets` requirement is added with `jit gate add` on main at landing. Owner option (a): self-test waits end on events. Option (b), the self-test in the quiet-host path, applies only after a review fails on a timing dependence. The merge goes to the steward.
 - `959ab809`: once the safety net exists, an unmatched nextest line shape is advisory.
-- `058be3826` (subject "unused") stays on main; its reword is in `45ecf975`'s Notes.
+- The tracker commit of 2026-11-15 with subject "unused" was ruled to stay on main with a reword in `45ecf975`'s Notes; the rewrite pruned it.
 - Commits with no issue carry the scope `jit:none` (AGENTS.md, owner).
 - Every main commit, tracker-only ones included, is announced to the carve-out lead first, with main's index empty.
 

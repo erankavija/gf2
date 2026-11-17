@@ -169,7 +169,7 @@
     "Gate runs on fresh or rebuilt worktrees hit the 900 s cargo-ci timeout at load 20+; a warm direct ./scripts/cargo-ci.sh pre-run then --force gate works",
     "The worktree dispatch script refuses while another session holds uncommitted dev/ files in main; create the worktree with git worktree add from main instead",
     "Each main landing by a peer that touches crates/ or scripts/ invalidates cargo-ci verdicts at branch tips; tracker-only main drift does not (merged without re-gating)",
-    "cutover.py inventory (:366-368 at 9aeddb20f) reports any merge-tree conflict as a tracker action, also conflicts outside .jit; fixed under e610f5c4 REQ-01 in the D-12 round",
+    "cutover.py inventory (:366-368 at 59106f4ad) reports any merge-tree conflict as a tracker action, also conflicts outside .jit; fixed under e610f5c4 REQ-01 in the D-12 round",
     "cutover.py --self-test fails after the cutover (HEAD:.gitattributes gone); e610f5c4 REQ-09",
     "jit binary replaced 2026-11-16 01:10 (still 1.0.0): validate checks gate-run records, presets key-only, jit profile diff rejects manifest version 1",
     "8 detached worktrees keep stale .jit stores (named exceptions); epic REQ-09 and 6889e6e6 REQ-03 open until the owner accepts or they are cleaned",
@@ -183,10 +183,10 @@
     "6d5ba9fb": "Blocking Claude review (Claude Sonnet 5.5, beside the Codex gate): PASS at 44d8f5e69; REQ-01 to REQ-08 met; REQ-02 checked with the real jit against scratch roots. cargo-ci and code-review re-passed at merged head 933bde6c0.",
     "durable_artifacts": "the durable directory named in handoff-2.md",
     "6b9e6b14": "lead choices: linked-worktree gate probe is docs-mechanical added to 6889e6e6; second-identity lease on 6ba9be17",
-    "7854cfad": "landed before the cutover under the pre-cutover rule: cargo-ci at 294cbceec and code-review at b1c997544; main drift to the tip was docs and tracker only; check-references, tracked-budget and jit validate passed at tip c67b9ebc6",
-    "d1eba151": "parked 2026-11-16 (steward ruling): branch at 348f302d4; cargo-ci passed at 366f49ac7, code-review failed there on untested env forms the steward had scoped out",
+    "7854cfad": "landed before the cutover under the pre-cutover rule: cargo-ci at 294cbceec and code-review for @/issue/7854cfad on 2026-11-15; main drift to the tip was docs and tracker only; check-references, tracked-budget and jit validate passed at tip c67b9ebc6",
+    "d1eba151": "parked 2026-11-16 (steward ruling); cargo-ci passed at 366f49ac7, code-review failed there on untested env forms the steward had scoped out",
     "18276ff1": "resumed with gf2-f6 (owner, 2026-11-16); fix e1cba325d reviewed PASS; REQ-06 and final gates after the cutover",
-    "port": "applied on main in 97b8e84a9; 30 referenced run records copied into main's store"
+    "port": "applied on main for @/issue/6ba9be17 on 2026-11-16; 30 referenced run records copied into main's store"
   },
   "dispatches": [
     {
@@ -321,7 +321,7 @@
       "kind": "rework (gate-kind enums)",
       "vendor": "Codex",
       "model": "gpt-6-luna",
-      "reviewer": "Claude Sonnet 5.5 blocking PASS + Codex gate PASS at b1c997544"
+      "reviewer": "Claude Sonnet 5.5 blocking PASS + Codex gate PASS for @/issue/7854cfad on 2026-11-15"
     },
     {
       "issue": "d1eba151",

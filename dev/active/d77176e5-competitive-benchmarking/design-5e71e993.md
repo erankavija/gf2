@@ -9,7 +9,7 @@ comparator analysis and the B1 estimate.
 ## Measurement basis
 
 The basis of the B2 design applies: indication, host fraktaali (AMD Ryzen 9
-5900X), `taskset -c 2-5`, 2026-11-12, gf2 at commit `540483f2b`, `--release`
+5900X), `taskset -c 2-5`, 2026-11-12, gf2 at commit `2b922c0dd`, `--release`
 with `-C target-cpu=native`; the comparator side is one round of the external
 arm of `experiments/encode-compare/cutover.sh` with `CUTOVER_CELLS=W1/B1`. The
 night-window table of @/issue/fd9d5416 supersedes the rates.

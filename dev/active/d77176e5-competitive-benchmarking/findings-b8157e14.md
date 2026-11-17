@@ -24,7 +24,7 @@ the load is other jobs, unattributed. FER is a count statistic; no timing is
 stated.
 
 - Harness `experiments/aff3ct-ldpc-gaps/src/bin/dvb_t2_fer_diag.rs` at
-  `dab7098ba`, `cargo build --release -p aff3ct-ldpc-gaps --bin
+  `d36f5b540`, `cargo build --release -p aff3ct-ldpc-gaps --bin
   dvb_t2_fer_diag`, executable SHA-256
   `d92bbee4ced3737f48abe12690b58f53db68986a070080118ceee9ba14ff1ae5`.
 - Command: `target/release/dvb_t2_fer_diag --ebn0 <p> --frames <F> --seed

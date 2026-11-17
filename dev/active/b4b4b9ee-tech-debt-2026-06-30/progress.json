@@ -460,7 +460,7 @@
           "title": "NR rate-matched iterative decoding reads the message from the first target_k positions",
           "classification": "implementation",
           "priority": "normal",
-          "status": "in_progress: worker partial, branch worktree-agent-3464c241 at 35480688f NOT merged; REQ-01 unmet literally; open question for invoker"
+          "status": "in_progress: worker partial, branch worktree-agent-3464c241 NOT merged; REQ-01 unmet literally; open question for invoker"
         },
         {
           "id": "c9022d14-350b-4236-a802-e206e159ad7b",
@@ -1428,7 +1428,7 @@
         },
         {
           "short_id": "f21b25ac",
-          "status": "done: merged ba9387a61, closed 8a3daec11; REQ-04 amended by owner 2026-11-13, filing tracked in 41517289"
+          "status": "done: merged ba9387a61, closed f21b25ac; REQ-04 amended by owner 2026-11-13, filing tracked in 41517289"
         },
         {
           "short_id": "5a3abee1",
@@ -1530,7 +1530,7 @@
         },
         {
           "short_id": "574ed420",
-          "status": "done (1ff971676)"
+          "status": "done (landed 2026-11-15)"
         },
         {
           "short_id": "697b9178",
@@ -1574,7 +1574,7 @@
         },
         {
           "short_id": "959ab809",
-          "status": "REQ-01 landed (6e2d5ec59); REQ-02/03 open"
+          "status": "REQ-01 landed 2026-11-15; REQ-02/03 open"
         },
         {
           "short_id": "4f395137",

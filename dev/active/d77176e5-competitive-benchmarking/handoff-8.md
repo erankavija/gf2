@@ -24,7 +24,7 @@
 | `ae03bcd0` | none | none | completion after branch A lands; REQ-13/14 recorded as they are. Wound down. |
 | `92ec2e2b`, `2bca2b28`, `60c82c4c`, `5e71e993`, `7f9751af` | designs as before | `worktree-agent-2bca2b28` (1 test commit): abandon | after the rewrite |
 
-Branches to abandon: `wip-3461a52a-cb96b9810` (superseded), `jit-259acf37-direct-plane` and `jit-befccab3-toom3` (closed issues), `worktree-agent-2bca2b28`.
+Branches to abandon: the wip branch of issue `3461a52a` (superseded), `jit-259acf37-direct-plane` and `jit-befccab3-toom3` (closed issues), `worktree-agent-2bca2b28`.
 
 Bench-queue run worktrees that hold untracked built arms that must survive the rewrite: `.agents/worktrees/agent-de311215` (the AFF3CT build under `experiments/aff3ct-ldpc-gaps/aff3ct/target`) and `.agents/worktrees/agent-fd9d5416` (the external BCH arms under `experiments/encode-compare/external/target`). The other run worktrees hold rebuildable gf2 output only. When branch A lands, the queue's fd9d5416 command is removed and the cutover's pre-cutover arm is deleted.
 

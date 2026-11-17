@@ -18,10 +18,10 @@ Artifacts outside the tree, where `<gf2-share>` is the directory the history-rew
 
 | Issue | State | Branch head | Where it stands |
 |---|---|---|---|
-| `@/issue/d1c0e062` | done, on main `a383d8a6c` | — | cargo-ci passed at `8faf09b8d`; code-review passed on attempt 3 at `38123e746`. Frees 325,042 bytes. Worktree `target/` removed. |
-| `@/issue/506f76d4` | parked | `worktree-agent-506f76d4` `b65c028cd` | Rework 2 is done and reviewed by the lead. The forced cargo-ci gate at `38da2e2d5` failed: the `test` step exited 100 after 39 s, and the record does not name the test; a solo run of that step passed at 00:17. Missing: a cargo-ci pass, then its third code-review. A failure goes to the steward. It lands only when no window builds `experiments/aff3ct-ldpc-gaps/`. |
+| `@/issue/d1c0e062` | done, on main `a383d8a6c` | — | cargo-ci for @/issue/d1c0e062 passed on 2026-11-15; code-review passed on attempt 3 at `38123e746`. Frees 325,042 bytes. Worktree `target/` removed. |
+| `@/issue/506f76d4` | parked | `worktree-agent-506f76d4` `38da2e2d5` | Rework 2 is done and reviewed by the lead. The forced cargo-ci gate at `38da2e2d5` failed: the `test` step exited 100 after 39 s, and the record does not name the test; a solo run of that step passed at 00:17. Missing: a cargo-ci pass, then its third code-review. A failure goes to the steward. It lands only when no window builds `experiments/aff3ct-ldpc-gaps/`. |
 | `@/issue/66fefd9e` | parked | `worktree-agent-66fefd9e` `e0c9b7b16` | Rework 2 is not gated. Its record names 20 files that other leads retired, so check-references fails on the branch. The fix is a record edit that the session's classifier refuses unless the owner approves it. Missing: that edit, then gates. |
-| `@/issue/da6200b8` | parked | `worktree-agent-da6200b8` `c33d20e56` | Rework 2 is not gated, and its base predates `a33af036b`. Missing: a main merge, then gates after 506f76d4. A third failure goes to the owner, with option B. |
+| `@/issue/da6200b8` | parked | `worktree-agent-da6200b8` `6398f9e90` | Rework 2 is not gated, and its base predates `a33af036b`. Missing: a main merge, then gates after 506f76d4. A third failure goes to the owner, with option B. |
 | `@/issue/0fe85425` | parked | `worktree-agent-0fe85425` `b1eb09c54` | Ungated, base predates `a33af036b`. Missing: the rework that `handoff-39.md` Next 5 listed, retained under Next here, after 506f76d4. |
 | `@/issue/67194d70` | parked, on main | — | REQ-01 recorded. REQ-02 and REQ-03 are covered by `experiments/permanent-statistics/tests/campaign_validation.rs`. Missing: its gates, on main under a hold. |
 | `@/issue/2a4c2684` | backlog, task of 6ba9be17 | — | Waits for 3fb4accb and 6310679b. gf2-00 implements it on gf2-e3's call. |
@@ -38,8 +38,8 @@ Artifacts outside the tree, where `<gf2-share>` is the directory the history-rew
   - Untracked arms kept through reseating: `.agents/worktrees/agent-de311215` and `.agents/worktrees/agent-fd9d5416`.
   - With the owner: the 17 no-issue branches, with the recommendation to delete all (`origin` holds only `main` and `badges`).
 - **Rewords:** a commit that implements or serves an issue carries `jit:<id>`; a free scope conforms otherwise.
-  - Approved: the owner's 36 in `reword-candidates-owner.tsv`, `0012635e024e`, `02d6abb01c05`, `8610e44ccfea` → `docs(jit:c62356d2): …` and `fb93d535c4ac` → `chore(jit:b4b4b9ee): …`.
-  - Pending the owner: `a33af036b983` → `chore(jit:2caf738d): …`, and the five ambiguous `42e42101a94d`, `797e1d5205af`, `79f9117d417b`, `f57fbec1e3d4`, `fceb1c842c57`.
+  - Approved: the owner's 36 in `reword-candidates-owner.tsv`, two tracker record commits of `@/issue/b4b4b9ee` and `@/issue/45ecf975`, `8610e44ccfea` → `docs(jit:c62356d2): …` and a tracker commit → `chore(jit:b4b4b9ee): …`.
+  - Pending the owner: `a33af036b983` → `chore(jit:2caf738d): …`, and the five ambiguous tracker commits of the tech-debt triage of `@/issue/b4b4b9ee`.
   - The other eleven free scopes stay.
 - **2a4c2684 (steward and gf2-e3):** remap pins in a tracker clone mounted in the rewritten checkout, validate there, then fast-forward the primary tracker. The commit map stays in the code repository only. gf2-e3's three additions are in the design file.
 - **Gates:** merge main before any review or plan gate; a verdict on a base that predates `a33af036b` is rerun. A cargo-ci timeout under load is rerun and counts as no verdict. Cargo-ci slots now belong to gf2-e3.
@@ -47,7 +47,7 @@ Artifacts outside the tree, where `<gf2-share>` is the directory the history-rew
 
 ## History rewrite (45ecf975 REQ-04)
 
-Rehearsal 4, run from main `ff0f2259a` and `origin/main` `b68598fc6`:
+Rehearsal 4, run from main `fd91d46e0` and `origin/main` `7a3905408`:
 - bundle verify ok; refs 656 before and after; pack 280.17 MiB → 57.23 MiB; `main` 9958 → 9928 commits; 2879 strip ids.
 - 14 pinned commits mapped, none pruned; commit map 500 KB gzipped.
 - 0 nonconforming subjects left with the scratch reword set; `jit validate` passed.

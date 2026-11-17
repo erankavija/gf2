@@ -2,13 +2,13 @@
 
 Planner: `dev/scripts/migrate-link-labels.py` (read-only over `.jit/`). Both
 migration scripts are executed and retired; the planner regenerates each from a
-checkout of the commit it was planned at, `95c60ccf` for the first and
+checkout of the state it was planned at, the tracker of 2026-10-02 (`@/issue/0dc52df8`) for the first and
 `d9cca8e1` (with `--drop-orphans`) for the second. The table below covers both
-scripts together, planned from the `95c60ccf` labels; `--verify` checks coverage
+scripts together, planned from the labels of 2026-10-02; `--verify` checks coverage
 on a migrated copy.
 
 ```sh
-python3 dev/scripts/migrate-link-labels.py --root <checkout-at-95c60ccf> \
+python3 dev/scripts/migrate-link-labels.py --root <code-checkout-with-the-tracker-of-2026-10-02-at-.jit> \
   --script <first-script>
 python3 dev/scripts/migrate-link-labels.py --root <checkout-at-d9cca8e1> \
   --drop-orphans --script <second-script>

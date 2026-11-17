@@ -1,6 +1,6 @@
 # Current-system investigation: `ae03bcd0`
 
-This is a read-only investigation of the checkout at HEAD `c7834d96`. The epic
+This is a read-only investigation of the checkout at HEAD `16364624`. The epic
 contract is in `.jit/issues/ae03bcd0-8881-4308-99f5-cad2b3c717d1.json:1-45`;
 the planning brief is in `dev/active/ae03bcd0-general-bch/plans/planning-brief.md:10-66`.
 The brief is planning input, not evidence of implementation. No Cargo build,

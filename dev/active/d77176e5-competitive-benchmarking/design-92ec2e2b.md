@@ -8,7 +8,7 @@ $[\,I_k \mid P\,]$ of every row, against M4RI `mzd_echelonize_m4ri`
 ## Measurement basis
 
 Indication, host fraktaali (AMD Ryzen 9 5900X), `taskset -c 2-5`,
-2026-11-12, gf2 at commit `540483f2b`, `--release` with
+2026-11-12, gf2 at commit `2b922c0dd`, `--release` with
 `-C target-cpu=native`. The gf2 side ran a driver built outside the tracked
 tree that times the call of the cutover adapter
 `experiments/encode-compare/src/cutover/current.rs`
@@ -123,7 +123,7 @@ scalar path is the only path and no fallback is needed.
 ## Implementor sweep
 
 `rg 'impl.*\b(MatrixFill|GeneratorMatrixAccess|ParityCheckMatrixAccess)\b.* for' crates experiments`
-at `540483f2b` lists every implementor the change touches; `experiments/`
+at `2b922c0dd` lists every implementor the change touches; `experiments/`
 has none. The change edits each one as follows, and sweeps the rustdoc that
 states the old behavior.
 

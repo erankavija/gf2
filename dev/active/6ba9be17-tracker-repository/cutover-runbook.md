@@ -172,11 +172,11 @@ subcommand or starts the [rollback](#rollback).
   `scripts/tracker-snapshot`, `scripts/check-landing`, the reference checker
   that resolves tracker references through the data root, the `landed` gate
   and the `code-task` preset are on `main` or on the branches step 0 merges.
-- The port of branch-only tracker edits is on `main` (gf2-f6, `97b8e84a9`).
+- The port of branch-only tracker edits is on `main` (gf2-f6; `@/issue/6ba9be17`, 2026-11-16).
 - `<abandon-list>` (rechecked by gf2-f6 right before the window) and
   `<survivor-list>` exist as files.
-- `.jit/references.toml` names the upstream Sionna files as full URLs (on
-  `main` at `d378754e3`), so the reference checker passes after step 6's
+- `.jit/references.toml` names the upstream Sionna files as full URLs (`@/issue/6889e6e6`,
+  2026-11-16), so the reference checker passes after step 6's
   code-side commit drops its exception.
 - The steward's "go" message has arrived and the owner has confirmed.
 - The quiet window is announced to every active session through the steward,

@@ -7,7 +7,7 @@ and reuses this design; its document holds only the B1 specifics.
 ## Measurement basis
 
 Every number here is an indication: host fraktaali (AMD Ryzen 9 5900X),
-`taskset -c 2-5`, 2026-11-12, gf2 at commit `540483f2b`, `--release` with
+`taskset -c 2-5`, 2026-11-12, gf2 at commit `2b922c0dd`, `--release` with
 `-C target-cpu=native`, rustc 1.97.0. The gf2 side ran a driver built outside
 the tracked tree over the public API; it times the call the cutover adapter
 `experiments/encode-compare/src/cutover/current.rs` times

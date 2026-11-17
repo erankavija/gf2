@@ -11,7 +11,7 @@
 - Open: `fd9d5416` (Committed performance receipts), claimed by agent:worker. Preparation merged: `receipt-protocol.md` (linked), `render_receipt.py`, `test_render_receipt.py` (6/6 on a synthetic fixture). Gates doc-review, research-review pending.
 - Open escalations: none.
 - Progress file: `progress.json` here (R-55..R-59, session_notes_s11, surfaced_pitfalls).
-- **Queued measurement:** the bench window (timer `gf2-bench-window-20261002`, 2026-10-01T23:00Z) runs `dbd8787d` (epic 6dc81018, ~3 h) and then `d1b4f85e`'s runner from `.agents/worktrees/agent-d1b4f85e-run` (detached at `eb5575495`), writing `2026-10-02-d1b4f85e-w1w2` in that worktree (~105 min). Host idle until ~04:30Z.
+- **Queued measurement:** the bench window (timer `gf2-bench-window-20261002`, 2026-10-01T23:00Z) runs `dbd8787d` (epic 6dc81018, ~3 h) and then `d1b4f85e`'s runner from `.agents/worktrees/agent-d1b4f85e-run` (detached at `4dff32e2a`), writing `2026-10-02-d1b4f85e-w1w2` in that worktree (~105 min). Host idle until ~04:30Z.
 
 ## What just happened
 
