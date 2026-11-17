@@ -59,7 +59,7 @@ unless resolved below.
 - Commit IDs older than 2026-11-17 in memory, logs and external notes are pre-rewrite IDs. Tracked text and tracker records are rewritten; the old-ID check of the rewrite tools reports none left, with two recorded false positives.
 - A `git fetch` or push from a clone made before the rewrite brings the old history back. Re-clone, or reset to `origin/main`.
 - The cargo token pool refills only when no client holds its lease. A stall at low load is a drained pool: check the pool log's last refill line before waiting for a timeout.
-- The fast tier's 60 s suite budget ends a run with tests not run and none failed; `@/issue/959ab809` holds the captures.
+- A fast-tier run can end with tests not run and none failed. All three captures leave only the 4-slot tests unstarted; the cause is open, with pool-token starvation as the candidate, and `@/issue/959ab809` holds the captures. The `ci` profile sets no suite timeout, which contradicts the earlier reading of a 60 s suite budget.
 - `@/issue/b8157e14` REQ-03 has no window line; its measurements need a harness command first.
 - Earlier traps in the lead handoffs still bind: commit subjects, zsh word splitting, one landing on `main` at a time.
 
