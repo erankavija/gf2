@@ -273,7 +273,7 @@ fn universe_witnesses_are_accepted_and_reproduce_keys() {
     let keys: BTreeSet<_> = universe.iter().map(|e| e.key).collect();
     assert_eq!(keys.len(), universe.len());
     assert!(universe.windows(2).all(|pair| pair[0].key < pair[1].key));
-    for (i, entry) in universe.iter().enumerate() {
+    for entry in universe {
         assert_eq!(entry.witness.profile().table_key(), entry.key);
         if let FloodingWitness::Nr5gRateMatched { base_graph, n, k } = entry.witness {
             let kb = base_graph.systematic_columns();
@@ -294,12 +294,6 @@ fn universe_witnesses_are_accepted_and_reproduce_keys() {
                 r((kb * z + n - k + 2 * z) as u32, z as u32),
             );
             assert_eq!(FloodingProfile::Nr5g(expected).table_key(), entry.key);
-        }
-        // Every witness is built by every_flooding_universe_witness_builds_and_reproduces_key.
-        if !matches!(entry.witness, FloodingWitness::Nr5gRateMatched { .. })
-            || i % (universe.len() / 32).max(1) == 0
-        {
-            assert_eq!(profile(&build(entry.witness)).table_key(), entry.key);
         }
     }
     for bg in [NrBaseGraph::Bg1, NrBaseGraph::Bg2] {
