@@ -22,6 +22,9 @@ use crate::bch::CodeRate;
 
 use crate::bch::dvb_t2::FrameSize as BchFrameSize;
 
+/// Default flooding-LDPC iteration cap of [`DvbT2Concat`].
+pub const DEFAULT_MAX_LDPC_ITERATIONS: usize = 50;
+
 /// Error type returned by [`DvbT2Concat::new`] and [`DvbT2Concat::decode_soft`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConcatError {
@@ -148,7 +151,7 @@ impl DvbT2Concat {
             k_bch,
             k_ldpc,
             n_ldpc,
-            max_ldpc_iterations: 50,
+            max_ldpc_iterations: DEFAULT_MAX_LDPC_ITERATIONS,
         })
     }
 
@@ -183,7 +186,8 @@ impl DvbT2Concat {
         self.ldpc_code.clone()
     }
 
-    /// Set maximum belief-propagation iterations (default 50) for each call
+    /// Set maximum belief-propagation iterations (default
+    /// [`DEFAULT_MAX_LDPC_ITERATIONS`]) for each call
     /// to [`decode_soft`](Self::decode_soft).
     ///
     /// # Panics
@@ -195,7 +199,8 @@ impl DvbT2Concat {
     }
 
     /// Maximum belief-propagation iterations per [`decode_soft`](Self::decode_soft)
-    /// call (default 50; see [`set_max_ldpc_iterations`](Self::set_max_ldpc_iterations)).
+    /// call (default [`DEFAULT_MAX_LDPC_ITERATIONS`]; see
+    /// [`set_max_ldpc_iterations`](Self::set_max_ldpc_iterations)).
     ///
     /// Exposed so an external inner-LDPC decoder (e.g. a GPU LDPC BP stage
     /// paired with [`decode_bch_from_ldpc_codeword`](Self::decode_bch_from_ldpc_codeword))

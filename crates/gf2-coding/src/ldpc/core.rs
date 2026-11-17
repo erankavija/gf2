@@ -2,6 +2,7 @@
 //! belief-propagation decoding and systematic encoding.
 
 use crate::ldpc::edge_layout::EdgeLayout;
+use crate::ldpc::flooding_profile::FloodingProfile;
 use crate::ldpc::min_sum::{min_sum_check_row, MinSumRule};
 use crate::llr::Llr;
 pub use crate::traits::DecodeOutcome;
@@ -15,6 +16,7 @@ pub struct LdpcCode {
     /// Sparse parity-check matrix in dual representation
     h: SpBitMatrixDual,
     qc: Option<std::sync::Arc<QuasiCyclicLdpc>>,
+    pub(super) flooding_profile: Option<FloodingProfile>,
     /// Number of variable nodes (codeword length)
     n: usize,
     /// Number of check nodes (parity checks)
@@ -35,11 +37,18 @@ impl LdpcCode {
         Self {
             h,
             qc: None,
+            flooding_profile: None,
             n,
             m,
             cached_generator: std::sync::Arc::new(std::sync::Mutex::new(None)),
             cached_systematic_cols: std::sync::Arc::new(std::sync::Mutex::new(None)),
         }
+    }
+
+    /// Standard flooding-normalization identity retained by the constructors.
+    /// Raw parity-check matrices carry no profile; no identity is inferred from edges.
+    pub fn flooding_profile(&self) -> Option<FloodingProfile> {
+        self.flooding_profile
     }
 
     /// Returns the codeword length (number of variable nodes).
@@ -81,13 +90,15 @@ impl LdpcCode {
         &self.h
     }
 
-    /// Creates an LDPC code from a quasi-cyclic structure.
+    /// Creates an LDPC code from a quasi-cyclic structure, retaining any
+    /// standard flooding profile attached by its constructor.
     pub fn from_quasi_cyclic(qc: &QuasiCyclicLdpc) -> Self {
         let edges = qc.to_edges();
         let m = qc.expanded_rows();
         let n = qc.expanded_cols();
         let mut code = Self::from_edges(m, n, &edges);
         code.qc = Some(std::sync::Arc::new(qc.clone()));
+        code.flooding_profile = qc.flooding_profile;
         code
     }
 
@@ -138,20 +149,17 @@ impl LdpcCode {
         use crate::ldpc::dvb_t2::{builder, dvb_t2_matrices, params};
 
         let params = params::DvbParams::for_code(params::FrameSize::Short, rate);
-        let table = match rate {
-            crate::bch::CodeRate::Rate1_2 => dvb_t2_matrices::SHORT_RATE_1_2_TABLE,
-            crate::bch::CodeRate::Rate3_5 => dvb_t2_matrices::SHORT_RATE_3_5_TABLE,
-            crate::bch::CodeRate::Rate2_3 => dvb_t2_matrices::SHORT_RATE_2_3_TABLE,
-            crate::bch::CodeRate::Rate3_4 => dvb_t2_matrices::SHORT_RATE_3_4_TABLE,
-            crate::bch::CodeRate::Rate4_5 => dvb_t2_matrices::SHORT_RATE_4_5_TABLE,
-            crate::bch::CodeRate::Rate5_6 => dvb_t2_matrices::SHORT_RATE_5_6_TABLE,
-        };
+        let table = dvb_t2_matrices::code_table(params::FrameSize::Short, rate);
 
         let edges = builder::build_dvb_edges(table, &params);
         let mut code = Self::from_edges(params.m, params.n, &edges);
         code.qc = Some(std::sync::Arc::new(builder::build_dvb_quasi_cyclic(
             table, &params,
         )));
+        code.flooding_profile = Some(FloodingProfile::DvbT2 {
+            frame_size: params::FrameSize::Short,
+            rate,
+        });
         code
     }
 
@@ -162,20 +170,17 @@ impl LdpcCode {
         use crate::ldpc::dvb_t2::{builder, dvb_t2_matrices, params};
 
         let params = params::DvbParams::for_code(params::FrameSize::Normal, rate);
-        let table = match rate {
-            crate::bch::CodeRate::Rate1_2 => dvb_t2_matrices::NORMAL_RATE_1_2_TABLE,
-            crate::bch::CodeRate::Rate3_5 => dvb_t2_matrices::NORMAL_RATE_3_5_TABLE,
-            crate::bch::CodeRate::Rate2_3 => dvb_t2_matrices::NORMAL_RATE_2_3_TABLE,
-            crate::bch::CodeRate::Rate3_4 => dvb_t2_matrices::NORMAL_RATE_3_4_TABLE,
-            crate::bch::CodeRate::Rate4_5 => dvb_t2_matrices::NORMAL_RATE_4_5_TABLE,
-            crate::bch::CodeRate::Rate5_6 => dvb_t2_matrices::NORMAL_RATE_5_6_TABLE,
-        };
+        let table = dvb_t2_matrices::code_table(params::FrameSize::Normal, rate);
 
         let edges = builder::build_dvb_edges(table, &params);
         let mut code = Self::from_edges(params.m, params.n, &edges);
         code.qc = Some(std::sync::Arc::new(builder::build_dvb_quasi_cyclic(
             table, &params,
         )));
+        code.flooding_profile = Some(FloodingProfile::DvbT2 {
+            frame_size: params::FrameSize::Normal,
+            rate,
+        });
         code
     }
 
@@ -399,6 +404,7 @@ pub struct QuasiCyclicLdpc {
     /// `None` is the identity.
     row_order: Option<Vec<usize>>,
     col_order: Option<Vec<usize>>,
+    pub(super) flooding_profile: Option<FloodingProfile>,
 }
 
 impl QuasiCyclicLdpc {
@@ -500,6 +506,7 @@ impl QuasiCyclicLdpc {
             circulants,
             row_order: None,
             col_order: None,
+            flooding_profile: None,
         }
     }
 

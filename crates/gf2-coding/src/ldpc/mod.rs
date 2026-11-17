@@ -5,6 +5,7 @@ mod core;
 pub mod dvb_t2;
 mod edge_layout;
 pub mod encoding;
+pub mod flooding_profile;
 mod layered;
 mod min_sum;
 pub mod nr_5g;

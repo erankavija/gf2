@@ -181,10 +181,26 @@ pub fn max_payload_for_lifting(base_graph: u8, z: usize) -> usize {
         })
 }
 
+use super::flooding_profile::{FloodingProfile, NrBaseGraph, NrFloodingProfile};
 use super::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use crate::traits::{DecoderResult, IterativeSoftDecoder, SoftDecoder};
 use gf2_core::BitVec;
+
+// The constructor and profile witnesses share both Z-selection constraints.
+pub(crate) fn select_lifting_factor(
+    base_graph: u8,
+    target_n: usize,
+    target_k: usize,
+) -> Option<usize> {
+    let bg = NrBaseGraph::from_number(base_graph);
+    let kb_for_z = kb_for_z_selection(base_graph, target_k);
+    let parity_budget = bg.columns() - bg.systematic_columns() - 2;
+    all_lifting_sizes()
+        .into_iter()
+        .map(usize::from)
+        .find(|&z| kb_for_z * z >= target_k && target_k + parity_budget * z >= target_n)
+}
 
 impl QuasiCyclicLdpc {
     /// Creates the 5G NR quasi-cyclic structure of base graph `base_graph`
@@ -212,7 +228,11 @@ impl QuasiCyclicLdpc {
             _ => unreachable!(),
         };
 
-        Self::new(base_matrix, lifting_factor)
+        let mut qc = Self::new(base_matrix, lifting_factor);
+        qc.flooding_profile = Some(FloodingProfile::Nr5g(NrFloodingProfile::mother(
+            NrBaseGraph::from_number(base_graph),
+        )));
+        qc
     }
 
     /// Creates a rate-matched 5G NR LDPC code with exact target dimensions.
@@ -266,34 +286,9 @@ impl QuasiCyclicLdpc {
 
         // `@/citation/ThreeGpp2017` Section 5.2.2: K_b for Z selection depends
         // on B (the input block size) for BG2.
-        let kb_for_z = kb_for_z_selection(base_graph, target_k);
-
-        // The smallest valid Z such that:
-        //   (a) kb_for_z * Z >= target_k  (§5.2.2 Z selection criterion)
-        //   (b) target_k + (N_b - K_b - 2) * Z >= target_n  (enough transmitted bits
-        //       after mandatory 2*Z systematic puncturing)
-        let all_z = all_lifting_sizes();
-        let z = all_z
-            .iter()
-            .copied()
-            .find(|&z| {
-                let z_us = z as usize;
-                kb_for_z * z_us >= target_k && target_k + (nb - kb - 2) * z_us >= target_n
-            })
-            .unwrap_or_else(|| {
-                panic!(
-                    "No valid lifting size for BG{} with (n={}, k={}): \
-                     kb_for_z={}, max possible k = {} * {} = {}",
-                    base_graph,
-                    target_n,
-                    target_k,
-                    kb_for_z,
-                    kb_for_z,
-                    all_z.last().unwrap(),
-                    kb_for_z as u16 * all_z.last().unwrap()
-                )
-            });
-        let z = z as usize;
+        let z = select_lifting_factor(base_graph, target_n, target_k).unwrap_or_else(|| {
+            panic!("No valid lifting size for BG{base_graph} with (n={target_n}, k={target_k})")
+        });
 
         let full_k = kb * z;
         let full_n = nb * z;
@@ -340,7 +335,14 @@ impl QuasiCyclicLdpc {
         let qc = Self::nr_5g(base_graph, z);
         let base = qc.base_matrix().expect("an NR code keeps its base matrix");
         let encoder = encode::NrQcEncoder::new(&base, kb, z, target_k, num_punct_sys, parity_kept);
-        let mother_code = LdpcCode::from_quasi_cyclic(&qc);
+        let mut mother_code = LdpcCode::from_quasi_cyclic(&qc);
+        mother_code.flooding_profile =
+            Some(FloodingProfile::Nr5g(NrFloodingProfile::rate_matched(
+                NrBaseGraph::from_number(base_graph),
+                target_k,
+                z,
+                parity_kept,
+            )));
 
         Nr5gRateMatchedCode {
             mother_code,
@@ -477,7 +479,8 @@ impl Nr5gRateMatchedCode {
     /// Returns a reference to the full mother code.
     ///
     /// The mother code has n = N_b * Z columns and m = M_b * Z rows.
-    /// BP decoding operates on this full code.
+    /// BP decoding operates on this full code. Its flooding profile describes
+    /// this wrapper's rate matching, including filler and punctured positions.
     pub fn mother_code(&self) -> &LdpcCode {
         &self.mother_code
     }
