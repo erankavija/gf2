@@ -7,13 +7,12 @@
 ## Current state
 
 - The history rewrite of `@/issue/45ecf975` REQ-04 ran on 2026-11-17 between 01:34 and 01:53 local, on the owner's go typed in this session. The steward force-pushed `main` at about 02:00 on the owner's word and pushed the tracker to its home.
-  - Old `main` was `789e8697c`, with 10317 commits.
-  - The rewritten `main` was `a705332ea`, with 7949 commits. Then came `b4eb2b35e`, the mechanical old-ID pass of step 11.
+  - `main` had 10317 commits before the rewrite and 7949 after it; its rewritten tip is `a705332ea`. Then came `b4eb2b35e`, the mechanical old-ID pass of step 11.
   - The pack shrank from 280 MiB to 50.17 MiB.
   - The repository went from 82 refs to 77, and every ref is free of `.jit` paths.
 - Landed this session:
-  - `@/issue/2a4c2684` (merge `4f6b337f3`), the separate tracker through the rewrite;
-  - `@/issue/23c47bea` (merge `789e8697c`), step 7 on the kept branch set.
+  - `@/issue/2a4c2684` (merge `c2ef25ffa`), the separate tracker through the rewrite;
+  - `@/issue/23c47bea` (merge `a705332ea`), step 7 on the kept branch set.
 - The step-11 worker pass over 163 references ran on branch `worktree-agent-45ecf975-oldids`, together with the runbook correction `972bd3f03` from the real run. The commits of its landing state its outcome, and the Notes of `@/issue/45ecf975` hold its row counts.
 - Parked, carried through the rewrite as rewritten refs. Every gate reruns on the head that lands; their recorded verdicts name pre-rewrite commits.
   - `@/issue/84022ee3`: REQ-02 tests, code-review passed. Two cargo-ci runs gave no verdict: a 900 s timeout and the 60 s suite budget.
@@ -42,11 +41,11 @@ The run log, the scripts of steps 3 to 7 and 10 to 11, and the scratch rewritten
 ## What happened
 
 - `@/issue/2a4c2684`: one tracked change to the runbook and the rewrite tools, after five reworks.
-  - Its record states the falsified design statements:
-    - leases live in the code repository's `.git/jit/`;
-    - a cleaned branch's head commit is pruned;
-    - pinned and recorded commits can be pruned;
-    - the commit map does not fit the tree budget.
+  - Its record states four design statements the rehearsal falsified, each with the fact that contradicts it:
+    - leases live in the code repository's `.git/jit/`, not under the tracker;
+    - a cleaned branch's head commit is pruned, so an all-zero map entry is no stop condition;
+    - pinned commits can be pruned, so a pruned pin maps to its nearest kept ancestor;
+    - the commit map does not fit the tree budget, which the cutover lowered.
   - Owner decisions changed it twice: the commit map lives in neither repository, and old IDs are fixed after the reseat.
 - Rehearsal 5 ran nine times, each run finding a defect in the runbook or in its own script. The run of 01:08 to 01:20 on the jit binary of 00:35 was clean, cargo-ci in the rewritten checkout included.
 - The real run differed from the rehearsal in two ways, corrected in the runbook:

@@ -8,7 +8,7 @@ scripts together, planned from the labels of 2026-10-02; `--verify` checks cover
 on a migrated copy.
 
 ```sh
-python3 dev/scripts/migrate-link-labels.py --root <tracker-checkout-of-2026-10-02> \
+python3 dev/scripts/migrate-link-labels.py --root <code-checkout-with-the-tracker-of-2026-10-02-at-.jit> \
   --script <first-script>
 python3 dev/scripts/migrate-link-labels.py --root <checkout-at-d9cca8e1> \
   --drop-orphans --script <second-script>
