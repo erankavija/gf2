@@ -41,11 +41,7 @@ The run log, the scripts of steps 3 to 7 and 10 to 11, and the scratch rewritten
 ## What happened
 
 - `@/issue/2a4c2684`: one tracked change to the runbook and the rewrite tools, after five reworks.
-  - Its record states four design statements the rehearsal falsified, each with the fact that contradicts it:
-    - leases live in the code repository's `.git/jit/`, not under the tracker;
-    - a cleaned branch's head commit is pruned, so an all-zero map entry is no stop condition;
-    - pinned commits can be pruned, so a pruned pin maps to its nearest kept ancestor;
-    - the commit map does not fit the tree budget, which the cutover lowered.
+  - Its record keeps, in its section "Falsified design statements", the design statements the rehearsals contradicted, each beside the contradicting result.
   - Owner decisions changed it twice: the commit map lives in neither repository, and old IDs are fixed after the reseat.
 - Rehearsal 5 ran nine times, each run finding a defect in the runbook or in its own script. The run of 01:08 to 01:20 on the jit binary of 00:35 was clean, cargo-ci in the rewritten checkout included.
 - The real run differed from the rehearsal in two ways, corrected in the runbook:
