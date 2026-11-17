@@ -319,7 +319,7 @@
     },
     {
      "short_id": "f970febd",
-     "status": "dispatched",
+     "status": "rework 1 after Claude Opus review (F1 k<2Z constructor wrap, F2 all-witness slow test, F3-F6)",
      "branch": "worktree-agent-f970febd",
      "dispatches": [
       {
@@ -327,6 +327,17 @@
        "model": "gpt-6.1-sol",
        "effort": "high",
        "task": "implementation: multi-file contract type"
+      },
+      {
+       "vendor": "claude",
+       "model": "opus",
+       "task": "review: FAIL, 2 blocking"
+      },
+      {
+       "vendor": "codex",
+       "model": "gpt-6.1-sol",
+       "effort": "high",
+       "task": "rework 1, same tier: findings are specification gaps, not capability"
       }
      ]
     },
@@ -377,7 +388,8 @@
   "ebfaff31": 3,
   "9a1b24fc": 3,
   "3461a52a": 3,
-  "9a1b24fc-A": 2
+  "9a1b24fc-A": 2,
+  "f970febd": 1
  },
  "surfaced_pitfalls": [
   "The window runner waits for a quiet host only before its first job; a single-core job queued after a multi-worker job starts in that job's load tail. Order single-core lines first or add a per-job quiet wait. Tracked as bb28cf4f.",
