@@ -14,7 +14,7 @@ supply no factor. Role "test" means unit-test or integration-test fixtures.
 ## Classification
 
 A row is an explicit fixture, and keeps its named factor, when its role is
-test or fixed harness data, when it lies under `dev/campaigns/` or
+test, when it lies under `dev/campaigns/` or
 `dev/research/`, or when it is the DVB-T2 diagnosis pair
 (`experiments/aff3ct-ldpc-gaps/src/bin/dvb_t2_fer_diag.rs` and
 `experiments/aff3ct-ldpc-gaps/dvb-t2-r12-diagnosis.sh`), or the
@@ -48,7 +48,6 @@ the shared flooding normalization policy.
 |`experiments/aff3ct-ldpc-gaps/dvb-t2-r12-diagnosis.sh`|harness|.75 and .875|D normal 1/2|
 |`dev/research/nr_kernel_feasibility/src/layered_convergence.rs` (NMS_ALPHA)|harness, doc|.75|N BG1 Z=384, mother and RM 1/2|
 |`crates/gf2-coding/tests/ldpc_layered_fer.rs` (flooding_algorithm)|harness, test|D .875; N .75|Pair|
-|`experiments/aff3ct-ldpc-gaps/families/` and `experiments/aff3ct-ldpc-gaps/plans/` entries named 55c3e433-adopted-vs-aff3ct, 55c3e433-check-variants, 55c3e433-integrated-adoption, 55c3e433-nr-route-pilot|fixed harness data|.75|Pair; nr-route-pilot only N mother|
 |`dev/campaigns/` TOML files phase1_fig1, phase1_fig3, phase2_fig4 to fig6 with their _verify variants, phase3_fig7, phase4_fig8 to fig10, quick_fig1, quick_fig3, quick_fig7|harness|.75|N RM|
 |`crates/gf2-coding/src/ldpc/` batch.rs, min_sum.rs, route.rs, dvb_t2/concat.rs|test|.75|synthetic QC, rows, profiles, D short 1/2|
 |`crates/gf2-coding/tests/` dvb_t2_concat_batch_decoder.rs, ldpc_batch_contract.rs, ldpc_check_update_contract.rs, ldpc_decode_allocations.rs, ldpc_decode_dispatch.rs, ldpc_qc_contract.rs, nr5g_external_vectors.rs, tuning_profile_committed.rs, support/fresh_tuning_process.rs|test|.75|D short 1/2 and all D; N mother and RM; N BG1 Z=384; synthetic|
