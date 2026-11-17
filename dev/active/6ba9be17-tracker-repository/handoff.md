@@ -11,8 +11,8 @@
 
 | Issue | Branch head | Gates | Next |
 |---|---|---|---|
-| `6d5ba9fb` gate checkers through the data root | `worktree-agent-6d5ba9fb` at `372cfb032` (main merged at `e1bc4b5d1`) | cargo-ci passed at `e1bc4b5d1` (run after a 900 s timeout at `44d8f5e69`, cold `target/`, no verdict); code-review (Codex) passed at `e1bc4b5d1`, 0 findings. Blocking Claude review: see below. Lead review PASS. | Land: merge main into the branch (tracker and `dev/` only changed since, so cargo-ci inputs should be identical; check with `jit gate evaluate`, which reuses a verdict for identical inputs), merge into main by hand, close. Then dispatch `3fb4accb`. |
-| `28aa2a9d` reference checker against a mounted store | `worktree-agent-28aa2a9d` at `f07572f92` (main merged at `52ecbbd6b`) | cargo-ci passed at `52ecbbd6b`; code-review (Codex) FAILED at `52ecbbd6b`: F1 (REQ-02) and F2 (REQ-04). The lead confirmed both by reading the code. | Rework 1 of 2. The brief is written; dispatch it at a clean start. |
+| `6d5ba9fb` gate checkers through the data root | `worktree-agent-6d5ba9fb` at `e1bc4b5d1` (main merged at `e1bc4b5d1`) | cargo-ci passed at `e1bc4b5d1` (run after a 900 s timeout at `44d8f5e69`, cold `target/`, no verdict); code-review (Codex) passed at `e1bc4b5d1`, 0 findings. Blocking Claude review: see below. Lead review PASS. | Land: merge main into the branch (tracker and `dev/` only changed since, so cargo-ci inputs should be identical; check with `jit gate evaluate`, which reuses a verdict for identical inputs), merge into main by hand, close. Then dispatch `3fb4accb`. |
+| `28aa2a9d` reference checker against a mounted store | `worktree-agent-28aa2a9d` at `52ecbbd6b` (main merged at `52ecbbd6b`) | cargo-ci passed at `52ecbbd6b`; code-review (Codex) FAILED at `52ecbbd6b`: F1 (REQ-02) and F2 (REQ-04). The lead confirmed both by reading the code. | Rework 1 of 2. The brief is written; dispatch it at a clean start. |
 
 - Blocking Claude review of `6d5ba9fb`, which is recorded only here and in gf2-7d's notes. Copy it into the issue at landing: "Blocking Claude review (Claude Sonnet 5.5, beside the Codex gate): PASS at 44d8f5e69; REQ-01 to REQ-08 met; REQ-02 checked with the real jit against scratch roots (checkout and store unchanged by sha256 snapshot). Advisory: docs-mechanical exits 2 when JIT_DATA_DIR is outside any git repository (documented contract)."
 - `28aa2a9d` rework findings, from the code-review run at `52ecbbd6b`:
@@ -30,7 +30,7 @@
 
 ## What happened
 
-- Took over from `gf2-7d`. Its handover: both worktrees cut from main `747cae404` (after `a33af036b`); `6d5ba9fb` implemented by Codex gpt-6.1-sol (high), `28aa2a9d` by Claude Opus 5.5. `28aa2a9d` worker notes: the self-test was red before the implementation but was committed with it; with the data root under the root, untracked unignored store files are now scanned; a data root outside any git repository falls back to all files on disk.
+- Took over from `gf2-7d`. Its handover: both worktrees cut from main `6dd530f1e` (after `a33af036b`); `6d5ba9fb` implemented by Codex gpt-6.1-sol (high), `28aa2a9d` by Claude Opus 5.5. `28aa2a9d` worker notes: the self-test was red before the implementation but was committed with it; with the data root under the root, untracked unignored store files are now scanned; a data root outside any git repository falls back to all files on disk.
 - `6d5ba9fb`: the first cargo-ci (gf2-7d, 01:11:40) timed out at 900 s with no output. The pool had no `cargo-pool-run` waiters and no refill after 01:10:54. After the main merge (one conflict in the issue file, resolved with main's copy) cargo-ci passed in 3 min and code-review passed.
 - `28aa2a9d`: main merged; cargo-ci passed, code-review failed (above).
 - Agreed with `gf2-00` (45ecf975 stream) on `2a4c2684`; see References.

@@ -21,10 +21,10 @@ Every issue below is assigned to `agent:gf2-e9`; the successor reassigns them. E
 | Issue | State | Branch head | Gates | Where it stands |
 |---|---|---|---|---|
 | `@/issue/67194d70` | in progress, on main | — | cargo-ci, code-review never run | REQ-01 is recorded in the issue: the validation passed, 10 of 10 anchors. REQ-02 and REQ-03 still need the gates. |
-| `@/issue/506f76d4` | in progress | `worktree-agent-506f76d4` `ea5b56748` | cargo-ci passed at `eb60cfca7`; code-review failed twice | Second failure: version-1 cold cells. See Next. |
-| `@/issue/d1c0e062` | in progress | `worktree-agent-d1c0e062` `1546a8ffe` | not started | Retirement complete. check-references, docs-mechanical and `jit validate` pass. It frees 337,199 bytes against main `eacbb3a91`. |
-| `@/issue/66fefd9e` | in progress, on main with two failed reviews | `worktree-agent-66fefd9e` `8320233b8`, base `96fc9b751` | rework 2 not gated; one cold cargo-ci timeout | Rework 2: 4 passages rewritten and both inventories reconciled in the issue. A third review failure goes to the owner. |
-| `@/issue/da6200b8` | in progress, on main with two failed reviews | `worktree-agent-da6200b8` `c33d20e56` | rework 2 not gated | Option A allow-list at `6398f9e90`. A third failure goes to the owner, with option B on the table. |
+| `@/issue/506f76d4` | in progress | `worktree-agent-506f76d4` `eb60cfca7` | cargo-ci passed at `eb60cfca7`; code-review failed twice | Second failure: version-1 cold cells. See Next. |
+| `@/issue/d1c0e062` | in progress | `worktree-agent-d1c0e062` `1546a8ffe` | not started | Retirement complete. check-references, docs-mechanical and `jit validate` pass. It frees 337,199 bytes against main `86743f1f5`. |
+| `@/issue/66fefd9e` | in progress, on main with two failed reviews | `worktree-agent-66fefd9e` `67f4592f9`, base `f34c79ef5` | rework 2 not gated; one cold cargo-ci timeout | Rework 2: 4 passages rewritten and both inventories reconciled in the issue. A third review failure goes to the owner. |
+| `@/issue/da6200b8` | in progress, on main with two failed reviews | `worktree-agent-da6200b8` `6398f9e90` | rework 2 not gated | Option A allow-list at `6398f9e90`. A third failure goes to the owner, with option B on the table. |
 | `@/issue/0fe85425` | in progress | `worktree-agent-0fe85425` `b1eb09c54` | ungated | Rework not dispatched. See Next. |
 | `@/issue/5f33fb28` | backlog, blocked by 506f76d4 | — | — | Owner decisions recorded in the issue. |
 | `@/issue/fe2221d5` | backlog, blocked by 506f76d4 | — | — | Interim stopgap, low priority. |
@@ -46,7 +46,7 @@ Every issue below is assigned to `agent:gf2-e9`; the successor reassigns them. E
 - **66fefd9e retired rows:** inventory rows and history entries in files retired by `@/issue/d1c0e062` are marked "retired by owner decision" and drop out.
   - Rework 2 rewrites 4 passages, 68 in total.
   - The branch no longer touches `dispatch-7a816262-phase1.md` (removed by @/issue/d1c0e062) and must not bring it back on merge.
-  - Line numbers in the inventory are at `96fc9b751`.
+  - Line numbers in the inventory are at `f34c79ef5`.
 - **History retirement:** old history files are retired, not edited.
   - This directory keeps one current handoff.
   - This handoff deletes `handoff-38.md` and carries the traps the d1c0e062 branch condensed into it.

@@ -19,7 +19,7 @@ The streams `d77176e5`, `ae03bcd0` and `45ecf975` keep their handoffs of
 ## Owner decisions of this session
 
 - Cutover alone, rehearsed alone, forward-only tool, rollback by git; the gates of its three issues ran after the window.
-- Rewrite rewords: `42e42101a94d`, `797e1d5205af`, `79f9117d417b`, `f57fbec1e3d4`, `fceb1c842c57` take `jit:b4b4b9ee`; `a33af036b983` and the eleven free-scope subjects take `jit:none`. The 26 branches without an issue are deleted at the rewrite. All in the Notes of `@/issue/45ecf975`.
+- The 2026-11-16 rewrite scope ruling for `@/issue/b4b4b9ee`, recorded in `@/issue/45ecf975`, assigns `jit:b4b4b9ee` to the five ambiguous history-rewrite entries; `a33af036b983` and the eleven free-scope subjects take `jit:none`. The 26 branches without an issue are deleted at the rewrite. All in the Notes of `@/issue/45ecf975`.
 - Pushes stay held until the rewrite. A local bundle of all refs replaces the online backup.
 - `18276ff1`: the budget-gate self-test waits on events only (option (a)).
 - jit: run records may be declared machine-local (jit issue f25d6fda, approved by the owner on the jit side); gf2's plan decision D-07 stands.
